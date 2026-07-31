@@ -1,0 +1,194 @@
+[
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Stratocracy.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\StratocracyCharacter.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\StratocracyGameMode.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\StratocracyPlayerController.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_Strategy\\EnvQueryContext_MoveGoal.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_Strategy\\StrategyGameMode.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_Strategy\\StrategyPawn.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_Strategy\\StrategyPlayerController.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_Strategy\\StrategyUnit.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_Strategy\\UI\\StrategyHUD.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_Strategy\\UI\\StrategyTouchControls.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_Strategy\\UI\\StrategyUI.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\AI\\TwinStickAIController.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\AI\\TwinStickNPC.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\AI\\TwinStickNPCDestruction.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\AI\\TwinStickSpawner.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\AI\\TwinStickStateTreeUtility.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\Gameplay\\TwinStickAoEAttack.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\Gameplay\\TwinStickPickup.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\Gameplay\\TwinStickProjectile.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\TwinStickCharacter.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\TwinStickGameMode.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\TwinStickPlayerController.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	},
+	{
+		"file": "E:\\MultiAgent\\Stratocracy\\Source\\Stratocracy\\Variant_TwinStick\\UI\\TwinStickUI.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe",
+			"@E:\\MultiAgent\\Stratocracy\\.vscode\\compileCommands_Default\\Stratocracy.0.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source"
+	}
+]

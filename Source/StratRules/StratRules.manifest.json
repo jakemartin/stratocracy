@@ -1,0 +1,33 @@
+{
+  "rulesCommit": "b23823f773b8a052d609345e021e35c566cfb790",
+  "generator": "sync_stratrules.py",
+  "sourceRepo": "stratocracy-crew",
+  "sourcePrefix": "cpp_reference/",
+  "note": "Vendored verbatim from the git object store at rulesCommit; names are unchanged from the crew repo. T-INT-01 re-derives every hash below from that commit rather than trusting this file, so a hand edit to both a source and its hash here still fails the check.",
+  "ueOwned": [
+    "StratRules.Build.cs",
+    "StratRules.manifest.json"
+  ],
+  "files": {
+    "Ai.good.cpp": "5bffcc489b23a0fb51e4fc2670cfe9810d5947f12b3df856ea8aade75492191e",
+    "Ai.h": "a70a275b7c6c656f7da111ef73fe6c7ba09dc2045856342faac05484d42e024f",
+    "Combat.good.cpp": "d01971acfa85898b2efbd101ca04f64b96e5dc87663351346a5a0c9edc17b68f",
+    "Combat.h": "df01d0ce4d939c4c07ee7bd6af570621a917f1968f390819a75bd71c9f46d688",
+    "Data.good.cpp": "a512cb4092209c02ac2d9f0b382258b5b85a653cc26832e137b7f9184d646a56",
+    "Data.h": "eef9c60e4b2e43bafbac131672eca65b9f8b01887e400e199694e456f72ae3f8",
+    "Driver.good.cpp": "4bd0681f335d190192eea820cc9cc7cc7e18c471ce7e25129b90ecb8d77c9dc3",
+    "Driver.h": "561a622ef33ae51172ab463e452a61413ac75b506dbdc86cb2bfd67881f91dd5",
+    "Economy.good.cpp": "b95a48214a3e7194ddc002edff1894e25a7d18123c53461ff6afb601203f61b9",
+    "Economy.h": "b2678d41075e9f7cc8531de1a400d847e81c6781e479bcd8b24456016f2236f6",
+    "Hex.good.cpp": "04d953672e79e2b3ec7c6196fc86fb56eb22fe5a527caf3cc151c6f813351c4f",
+    "Hex.h": "b8f880c14dec4ea055ef357a7a5bbb3cd4cbb872b8d6c201b2b4ffcc2c1245ca",
+    "Move.good.cpp": "4125cf2d0f9354129a32d0fd30e06bccbb60147a42157ab00ce90ab6d723ae1c",
+    "Move.h": "e3f45e142cb1ea49f226cd01aa1bc257f438e46fca02099fb17d32dfdcb936a4",
+    "Scenario.good.cpp": "1cadd4146949a9d867b1277b0b767e39fd8b63d4606263d24c686c5ea5a80b6e",
+    "Scenario.h": "70042d6f582c9b868a89a462f97bc56e890c428682046737e3b9d32459fd0248",
+    "Turn.good.cpp": "6b511463ddd6a3b3a45f26f44fd5fa016649b6b19253a4fae8d5247e03e893d0",
+    "Turn.h": "a0feecb540986c4ccae3a52f672be0d1c3121d5752e8c50d20e072aefd38b639",
+    "Ui.good.cpp": "498f776dddf252b485b25b0f6909f8253768fb382014b545b6f0eae34137af6e",
+    "Ui.h": "ad4376bde87cdc00654aeb1dd582c68f885c3e5588aeadd4e1333603954dcfe6"
+  }
+}

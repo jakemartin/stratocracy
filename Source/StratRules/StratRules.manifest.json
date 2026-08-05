@@ -1,13 +1,10 @@
 {
-  "rulesCommit": "b23823f773b8a052d609345e021e35c566cfb790",
+  "rulesCommit": "aacd738f23183d8d0d42b8a71b8e7ce0416216fb",
   "generator": "sync_stratrules.py",
   "sourceRepo": "stratocracy-crew",
   "sourcePrefix": "cpp_reference/",
-  "note": "Vendored verbatim from the git object store at rulesCommit; names are unchanged from the crew repo. T-INT-01 re-derives every hash below from that commit rather than trusting this file, so a hand edit to both a source and its hash here still fails the check.",
-  "ueOwned": [
-    "StratRules.Build.cs",
-    "StratRules.manifest.json"
-  ],
+  "modulePrefix": "ue_module/",
+  "note": "Vendored verbatim from the git object store at rulesCommit; names are unchanged from the crew repo. T-INT-01 re-derives every hash below from that commit rather than trusting this file, so a hand edit to both a source and its hash here still fails the check. StratRules.Build.cs is tracked in the crew repo under modulePrefix and is hash-matched from the object store the same way. This manifest is verified by RECOMPUTATION rather than by hash-match: it records rulesCommit, so it cannot itself be stored at that commit.",
   "files": {
     "Ai.good.cpp": "5bffcc489b23a0fb51e4fc2670cfe9810d5947f12b3df856ea8aade75492191e",
     "Ai.h": "a70a275b7c6c656f7da111ef73fe6c7ba09dc2045856342faac05484d42e024f",
@@ -29,5 +26,8 @@
     "Turn.h": "a0feecb540986c4ccae3a52f672be0d1c3121d5752e8c50d20e072aefd38b639",
     "Ui.good.cpp": "498f776dddf252b485b25b0f6909f8253768fb382014b545b6f0eae34137af6e",
     "Ui.h": "ad4376bde87cdc00654aeb1dd582c68f885c3e5588aeadd4e1333603954dcfe6"
+  },
+  "moduleFiles": {
+    "StratRules.Build.cs": "7b4e5e78fe75460cbc1798cc34be77289ad77929e8c63a36a61f8b6f75799493"
   }
 }

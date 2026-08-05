@@ -3,8 +3,9 @@
 // The vendored rules module. Its SOURCES carry zero engine dependencies -- no engine
 // headers, no UObject, no third-party includes, pure C++17 in `namespace strat` --
 // which is what T-INT-04 asserts by compiling them standalone, outside UBT entirely.
-// This file is the UBT wrapper around them and is not itself vendored: it is excluded
-// from T-INT-01's hash comparison and has no counterpart in the crew repo.
+// This file is the UBT wrapper around them. It is tracked in the crew repo at
+// ue_module/StratRules.Build.cs and vendored from the object store like the sources,
+// so T-INT-01 hash-matches it against that commit rather than exempting it.
 //
 // `Core` is the minimum a UBT module declares. Nothing in Source/StratRules/*.h or
 // *.good.cpp includes it; adding a dependency here would not change that, but it

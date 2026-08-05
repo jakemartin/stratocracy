@@ -12,6 +12,11 @@
 				"UMG",
 				"AIModule"
 			]
+		},
+		{
+			"Name": "StratRules",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

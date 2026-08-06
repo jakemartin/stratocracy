@@ -1,0 +1,12 @@
+{
+  "dataCommit": "b1ea992cd4141cbc9fa969a6e5499f8244f5964f",
+  "generator": "sync_stratdata.py",
+  "sourceRepo": "stratocracy-crew",
+  "sourcePrefix": "data/",
+  "note": "Vendored verbatim from the git object store at dataCommit; names are unchanged from the crew repo. These are the \u00a74.8 tables only -- data/ferrum_crossing.json is Stub 7's scenario file and is deliberately not here. T-DATA-05 compares the imported UDataTable rows against these bytes. This manifest records dataCommit, so like StratRules.manifest.json it cannot itself be stored at that commit and is verified by recomputation rather than by hash-match.",
+  "files": {
+    "units.csv": "324c2f7ddff45ede48f89b48c11e05adb458071953530e8ef5aa58c76eb97214",
+    "terrain.csv": "d3c25b514d05b5352a9c28058b59de39261c72d7ae7d0ca4e7cdbd4f6cf8b36d",
+    "effectiveness.csv": "faf0fd5bb9531f7dfe22f135586b4eddf45b9b8a32e314a4d2277c1bd2695cc3"
+  }
+}

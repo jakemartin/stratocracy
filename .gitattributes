@@ -88,3 +88,14 @@
 # nothing to do with the sources. `-text` disables that conversion. These are NOT
 # LFS files -- they are ordinary text that must survive round-tripping unchanged.
 Source/StratRules/** -text
+
+# --- Vendored data tables (GDD §4.8) -----------------------------------------
+#
+# Data/ holds the §4.8 CSVs, vendored from the crew repo by that repo's
+# sync_stratdata.py, plus the manifest recording their sha256 at the source
+# commit. T-DATA-05 compares the imported DataTable rows against these bytes, and
+# the manifest's hashes are recomputed from the crew object store, so the same
+# autocrlf hazard the rule above exists for applies here for the same reason: a
+# fresh clone would check these out as CRLF while the crew blob stays LF, and the
+# comparison would fail for a reason that has nothing to do with the data.
+Data/** -text

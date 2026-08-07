@@ -1,12 +1,14 @@
 {
-  "dataCommit": "b1ea992cd4141cbc9fa969a6e5499f8244f5964f",
+  "dataCommit": "862a225db09437196f5d59691275ffac30db0111",
   "generator": "sync_stratdata.py",
   "sourceRepo": "stratocracy-crew",
   "sourcePrefix": "data/",
-  "note": "Vendored verbatim from the git object store at dataCommit; names are unchanged from the crew repo. These are the \u00a74.8 tables only -- data/ferrum_crossing.json is Stub 7's scenario file and is deliberately not here. T-DATA-05 compares the imported UDataTable rows against these bytes. This manifest records dataCommit, so like StratRules.manifest.json it cannot itself be stored at that commit and is verified by recomputation rather than by hash-match.",
+  "note": "Vendored verbatim from the git object store at dataCommit; names are unchanged from the crew repo. THREE KINDS OF FILE, and being carried here makes none of them another. units.csv, terrain.csv and effectiveness.csv are the \u00a74.8 tables; T-DATA-05 compares the imported UDataTable rows against those bytes. ferrum_crossing.json is Stub 7's scenario file and is NOT a \u00a74.8 table -- T-DATA-05 asserts nothing about it and imports it into no UDataTable. It is carried from 2026-08-07 because \u00a74.9 part 2's bridge loads the shipped scenario through strat::loadScenario, and T-INT-02 requires the headless and in-engine replays to seed GameState from the same bytes. parity_fixture.save is the committed \u00a74.10 save the editor pass REPLAYS -- the subject of T-INT-02 and of T-SAVE-06's in-engine half -- and is likewise imported into no UDataTable; it is carried for the same reason as the scenario, because a fixture re-emitted on the engine side would compare the engine against itself. It is kept fresh at the source by the crew's GATE-REPLAY-FIXTURE, and this copy is kept equal to that source by GATE-DATA-VENDOR. Every file named in `files` below is hash-checked by GATE-DATA-VENDOR regardless of which kind it is. This manifest records dataCommit, so like StratRules.manifest.json it cannot itself be stored at that commit and is verified by recomputation rather than by hash-match.",
   "files": {
     "units.csv": "324c2f7ddff45ede48f89b48c11e05adb458071953530e8ef5aa58c76eb97214",
     "terrain.csv": "d3c25b514d05b5352a9c28058b59de39261c72d7ae7d0ca4e7cdbd4f6cf8b36d",
-    "effectiveness.csv": "faf0fd5bb9531f7dfe22f135586b4eddf45b9b8a32e314a4d2277c1bd2695cc3"
+    "effectiveness.csv": "faf0fd5bb9531f7dfe22f135586b4eddf45b9b8a32e314a4d2277c1bd2695cc3",
+    "ferrum_crossing.json": "3addadc84234fbf7c89c02aa2f2f0efd13c1841347f726d60be05f5058890f3a",
+    "parity_fixture.save": "b62e41084ed08dcfbb7967fd1b71cea600a8eb4880054a434558497f76448593"
   }
 }

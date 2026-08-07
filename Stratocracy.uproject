@@ -12,6 +12,11 @@
 				"UMG",
 				"AIModule"
 			]
+		},
+		{
+			"Name": "StratBridge",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

@@ -1,5 +1,5 @@
 {
-  "rulesCommit": "e19605ee21be88ad4615c164e239cc23ce1a7e92",
+  "rulesCommit": "cb8e12b3a897c7329497ced4d1c6207630f37101",
   "generator": "sync_stratrules.py",
   "sourceRepo": "stratocracy-crew",
   "sourcePrefix": "cpp_reference/",
@@ -20,6 +20,10 @@
     "Hex.h": "b8f880c14dec4ea055ef357a7a5bbb3cd4cbb872b8d6c201b2b4ffcc2c1245ca",
     "Move.good.cpp": "4125cf2d0f9354129a32d0fd30e06bccbb60147a42157ab00ce90ab6d723ae1c",
     "Move.h": "e3f45e142cb1ea49f226cd01aa1bc257f438e46fca02099fb17d32dfdcb936a4",
+    "Replay.good.cpp": "1f29f98f46b9a9f21114a8f2082f6d9cb31c2f98e846bb179dac5b0e63ef9dd3",
+    "Replay.h": "4f52d4f8eea1c4667df7b999c2e3f6d2c08b94cff784a90867ab772a6b46a22b",
+    "Save.good.cpp": "0269a72825c5c02144c29317256006f55d4c6456870a88e2d1301d64af6823dd",
+    "Save.h": "7b3671f2d5c1eadec9ed1802c95601bd5c60fe4b1aa7ad84b4eefd2eb36fd1a8",
     "Scenario.good.cpp": "1cadd4146949a9d867b1277b0b767e39fd8b63d4606263d24c686c5ea5a80b6e",
     "Scenario.h": "70042d6f582c9b868a89a462f97bc56e890c428682046737e3b9d32459fd0248",
     "Turn.good.cpp": "6b511463ddd6a3b3a45f26f44fd5fa016649b6b19253a4fae8d5247e03e893d0",

@@ -1,5 +1,5 @@
 {
-  "dataCommit": "862a225db09437196f5d59691275ffac30db0111",
+  "dataCommit": "c2f58608c77c60c44e6c0fc87988bd3b372beaf5",
   "generator": "sync_stratdata.py",
   "sourceRepo": "stratocracy-crew",
   "sourcePrefix": "data/",
@@ -9,6 +9,6 @@
     "terrain.csv": "d3c25b514d05b5352a9c28058b59de39261c72d7ae7d0ca4e7cdbd4f6cf8b36d",
     "effectiveness.csv": "faf0fd5bb9531f7dfe22f135586b4eddf45b9b8a32e314a4d2277c1bd2695cc3",
     "ferrum_crossing.json": "3addadc84234fbf7c89c02aa2f2f0efd13c1841347f726d60be05f5058890f3a",
-    "parity_fixture.save": "b62e41084ed08dcfbb7967fd1b71cea600a8eb4880054a434558497f76448593"
+    "parity_fixture.save": "482cb605111f777ff5bb0bb332afe36c22cfe9a910b6ec80575435140ea497fd"
   }
 }

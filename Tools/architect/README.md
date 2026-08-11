@@ -388,6 +388,24 @@ iteration nothing outside an Automation test had ever constructed a bridge.
 `UStratScoreboardWidget` — binds its Text Blocks to the model on
 `OnScoreboardRefreshed` and shows *Ferrum Crossing*'s live standings in PIE.
 
+![The scoreboard running in PIE: TURN 1 / 20, Destroyed 0 and 0, Objectives 1/8 and
+1/8, Unit HP 60 and 60](evidence/scoreboard-pie.png)
+
+Three of §2.11.4's rules are visible in that frame, and one of them is visible
+*because* of what it does **not** say:
+
+- **`Destroyed` reads 0, not 200.** Both sides start Ferrum Crossing with 200 Fame. A
+  row bound to `fameTotal` would read 200 here. It reads zero, because the row is
+  `fameCombat` — §2.11.4 excludes passive income "exactly as the tiebreak excludes it",
+  and that exclusion is legible on screen rather than only in a test name.
+- **`Objectives 1/8`** — the N comes from the scenario (Ferrum Crossing's 4 factories +
+  4 towns), not from a literal in the widget.
+- **`TURN 1 / 20`** — the cap is read from the scenario's `turnCap`, which §2.11.4
+  requires in as many words.
+
+The rows are in §2.8 tiebreak order, top to bottom, because that is the order the model
+hands them over — "the layout IS the rule", and the Blueprint does not sort.
+
 The division of labour is worth stating exactly, because it is the honest answer to
 "what did the agent build":
 

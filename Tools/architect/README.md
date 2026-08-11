@@ -373,7 +373,7 @@ Found by running it, and all four are recorded in the code beside the fix:
 | Generated bridge + widget + host compile in UE 5.8 | verified — `StratocracyEditor Win64 Development`, Result: Succeeded |
 | `Stratocracy.StratUI.T-UI-03.*` passes | verified — **10 succeeded, 0 failed, 0 not run** |
 | No regressions elsewhere | verified — the whole `Stratocracy` suite is **18/18** after the host landed too, including `T-INT-02`, `T-INT-03` and `T-DATA-05`, which run over the bridge this change touched |
-| The chain runs in a live PIE session | verified — see the log line below |
+| The scoreboard runs in a live PIE session | verified — real Ferrum Crossing standings on screen; log line below |
 
 ```
 LogStratUI: Scoreboard live: seeded from 'Data/ferrum_crossing.json' (first side 0), drawn for side 0.
@@ -384,10 +384,21 @@ That is the whole path standing up in a running world: `DT_Units`/`DT_Terrain` �
 `FStratScoreboardModel` → the widget, hosted by `AStratScoreboardHUD`. Until this
 iteration nothing outside an Automation test had ever constructed a bridge.
 
-**What is still outstanding, stated plainly:** `WBP_Scoreboard` has no Designer layout
-yet, so the widget draws nothing. The chain is live and the model is populated — the
-panel has no Text Blocks to put it in. Laying out UMG is human work and is not claimed
-here as something the agent did.
+**And it draws.** `WBP_Scoreboard` — a Blueprint deriving from the agent-generated
+`UStratScoreboardWidget` — binds its Text Blocks to the model on
+`OnScoreboardRefreshed` and shows *Ferrum Crossing*'s live standings in PIE.
+
+The division of labour is worth stating exactly, because it is the honest answer to
+"what did the agent build":
+
+| | |
+|---|---|
+| Agent | the bridge projection, the widget class and its row model, the Automation test, the runtime host |
+| Human | the UMG layout inside `WBP_Scoreboard`, the two Blueprint assets' property wiring, and the corrections recorded above |
+
+No number on that panel is computed in Blueprint. Every Text Block is set from an
+`FText` the C++ model already finished — which is what makes T-UI-03's no-widget-side-
+arithmetic clause structurally true of the shipped widget and not only of the test.
 
 ```
 [Success] Stratocracy.StratUI.T-UI-03.ChevronFollowsCriteriaOrder

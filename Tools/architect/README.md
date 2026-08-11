@@ -21,7 +21,7 @@ python architect.py --demo
 
 That rebuilds the tree as it stood *before* the agent ran and replays the recorded
 model calls over it, so the whole three-iteration build happens in front of you —
-scoring, selection, generation, re-scan, all six generated files. Same code path, same
+scoring, selection, generation, re-scan, all seven generated files. Same code path, same
 scorer, same recordings; only the tree is rewound. It works in a fresh clone with only
 `git` and Python 3.10+.
 
@@ -392,8 +392,8 @@ Found by running it, and all four are recorded in the code beside the fix:
 | Claim | Status |
 |---|---|
 | The agent runs live end to end | verified — 4 recorded calls across 2 iterations |
-| The agent runs keyless via `--offline` | verified — replayed from a pristine `HEAD` tree into all 6 files |
-| A fresh clone runs it with no key and no setup | verified — `git clone` + `python architect.py --demo` reproduced all 3 iterations and all 6 files, and fell back to the vendored GDD snapshot on its own when the sibling repo was absent |
+| The agent runs keyless via `--offline` | verified — replays the recorded calls into all 7 generated files |
+| A fresh clone runs it with no key and no setup | verified — `git clone` + `python architect.py --demo` reproduced all 3 iterations and all 7 generated files (2 rewritten, 5 created), and fell back to the vendored GDD snapshot on its own when the sibling repo was absent |
 | Generated bridge + widget + host compile in UE 5.8 | verified — `StratocracyEditor Win64 Development`, Result: Succeeded |
 | `Stratocracy.StratUI.T-UI-03.*` passes | verified — **10 succeeded, 0 failed, 0 not run** |
 | No regressions elsewhere | verified — the whole `Stratocracy` suite is **18/18** after the host landed too, including `T-INT-02`, `T-INT-03` and `T-DATA-05`, which run over the bridge this change touched |

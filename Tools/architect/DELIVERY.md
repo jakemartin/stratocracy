@@ -47,7 +47,7 @@ document, which asks the grader to assemble them.
 
 - [ ] `git status` clean, and **pushed** — the repo is the submission for the code half.
 - [x] **DONE 2026-08-11.** Clean-clone check: `git clone` the repo, then
-      `python architect.py --demo`. Reproduced all 3 iterations and all 6 generated
+      `python architect.py --demo`. Reproduced all 3 iterations and all 7 generated
       files with no API key and no packages, and fell back to the vendored GDD snapshot
       on its own. Note `--demo`, not plain `--offline`: against the finished tree the
       agent correctly finds nothing left with curated context and stops, which is the

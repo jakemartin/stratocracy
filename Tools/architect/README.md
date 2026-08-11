@@ -373,6 +373,21 @@ Found by running it, and all four are recorded in the code beside the fix:
 | Generated bridge + widget + host compile in UE 5.8 | verified — `StratocracyEditor Win64 Development`, Result: Succeeded |
 | `Stratocracy.StratUI.T-UI-03.*` passes | verified — **10 succeeded, 0 failed, 0 not run** |
 | No regressions elsewhere | verified — the whole `Stratocracy` suite is **18/18** after the host landed too, including `T-INT-02`, `T-INT-03` and `T-DATA-05`, which run over the bridge this change touched |
+| The chain runs in a live PIE session | verified — see the log line below |
+
+```
+LogStratUI: Scoreboard live: seeded from 'Data/ferrum_crossing.json' (first side 0), drawn for side 0.
+```
+
+That is the whole path standing up in a running world: `DT_Units`/`DT_Terrain` →
+`FStratBridge` → the authoritative `strat::GameState` → `UiWorld` → `UiSnapshot` →
+`FStratScoreboardModel` → the widget, hosted by `AStratScoreboardHUD`. Until this
+iteration nothing outside an Automation test had ever constructed a bridge.
+
+**What is still outstanding, stated plainly:** `WBP_Scoreboard` has no Designer layout
+yet, so the widget draws nothing. The chain is live and the model is populated — the
+panel has no Text Blocks to put it in. Laying out UMG is human work and is not claimed
+here as something the agent did.
 
 ```
 [Success] Stratocracy.StratUI.T-UI-03.ChevronFollowsCriteriaOrder

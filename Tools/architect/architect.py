@@ -57,6 +57,64 @@ def stamp() -> str:
 
 
 # ---------------------------------------------------------------------------
+# --demo: replay the whole build against a pristine tree
+# ---------------------------------------------------------------------------
+#
+# WHY THIS EXISTS. Run against the CURRENT tree, this agent correctly reports that
+# everything it has curated context for is already built, and stops. That is the right
+# answer and a terrible first impression: a reader who clones the repo and runs
+# `--offline` watches the reasoning layer work and never sees it generate a line.
+#
+# `--demo` rebuilds the tree as it stood before the agent ran and replays the recorded
+# calls over it, so the whole three-iteration build happens in front of you, keyless.
+# Nothing is invented for the demo: same code path, same recordings, same scorer.
+
+# The last commit before the agent's first run.
+DEMO_REV = "4ceaf93"
+
+# Carried in from HEAD rather than taken from DEMO_REV, because the `StratUI` module
+# did not exist then and is NOT agent output -- it is human scaffolding, and the README
+# says so. Without it the `ui_module_exists` probe is false and the scoreboard is
+# correctly blocked, which would demo a dependency the agent never actually faced.
+DEMO_SCAFFOLD = [
+    "Source/StratUI/StratUI.Build.cs",
+    "Source/StratUI/StratUI.h",
+    "Source/StratUI/StratUI.cpp",
+]
+
+
+def build_demo_tree(repo: Path, rev: str, dest: Path) -> Path:
+    """Materialises `Source/` at `rev`, plus the human scaffolding, under `dest`."""
+    import io
+    import subprocess
+    import tarfile
+
+    dest.mkdir(parents=True, exist_ok=True)
+
+    archive = subprocess.run(
+        ["git", "-C", str(repo), "archive", "--format=tar", rev, "Source"],
+        capture_output=True, check=True,
+    ).stdout
+    with tarfile.open(fileobj=io.BytesIO(archive)) as tf:
+        # `filter=` is required on 3.12+ and absent before it.
+        try:
+            tf.extractall(dest, filter="data")
+        except TypeError:
+            tf.extractall(dest)
+
+    for rel in DEMO_SCAFFOLD:
+        blob = subprocess.run(
+            ["git", "-C", str(repo), "show", f"HEAD:{rel}"],
+            capture_output=True, check=True,
+        ).stdout
+        target = dest / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(blob)
+
+    return dest
+
+
+# ---------------------------------------------------------------------------
 # Reporting
 # ---------------------------------------------------------------------------
 
@@ -249,6 +307,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--model", default=None)
     ap.add_argument("--max-iterations", type=int, default=3)
     ap.add_argument("--diff-report", metavar="RUN_DIR", type=Path, default=None)
+    ap.add_argument("--demo", action="store_true",
+                    help="replay the whole recorded build against the tree as it stood "
+                         "before the agent ran; implies --offline --apply and touches "
+                         "nothing in this repo")
+    ap.add_argument("--demo-rev", default=DEMO_REV,
+                    help=f"commit to take Source/ from for --demo (default {DEMO_REV})")
     args = ap.parse_args(argv)
 
     if args.diff_report:
@@ -262,6 +326,24 @@ def main(argv: list[str] | None = None) -> int:
     run_dir = HERE / "runs" / stamp()
     bb = Blackboard(run_dir=run_dir)
     bb.say(f"# Architect run {run_dir.name}")
+
+    if args.demo:
+        # Implied rather than required, because every other combination is a way to get
+        # a demo that is not the thing it claims to be: live would re-generate instead
+        # of replaying, and propose-only would stop after one iteration with nothing for
+        # the re-scan to see.
+        args.offline = True
+        args.apply = True
+        try:
+            args.repo = build_demo_tree(args.repo, args.demo_rev, run_dir / "demo_tree")
+        except Exception as exc:
+            print(f"--demo could not build the pristine tree: {exc}\n"
+                  f"It needs `git` on PATH and this repo's history.", file=sys.stderr)
+            return 2
+        bb.bullet(f"**--demo**: replaying the recorded build over `Source/` as of "
+                  f"`{args.demo_rev}`, plus the human-authored StratUI scaffolding.")
+        bb.bullet(f"demo tree: `{args.repo}` — nothing in the real repo is touched.")
+
     bb.bullet(f"mode: {'OFFLINE replay' if args.offline else 'LIVE'}"
               f"{' + --apply' if args.apply else ' (propose only)'}")
 

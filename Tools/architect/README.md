@@ -12,6 +12,27 @@ assembles by hand, and a parser it owns.
 
 ## Run it
 
+**Start here.** No API key, no packages, nothing touched in the repo:
+
+```bash
+cd Tools/architect
+python architect.py --demo
+```
+
+That rebuilds the tree as it stood *before* the agent ran and replays the recorded
+model calls over it, so the whole three-iteration build happens in front of you —
+scoring, selection, generation, re-scan, all six generated files. Same code path, same
+scorer, same recordings; only the tree is rewound. It works in a fresh clone with only
+`git` and Python 3.10+.
+
+Why it exists: run against the **current** tree, the agent correctly reports that
+everything it has curated context for is already built, and stops. That is the right
+answer and a useless first impression.
+
+---
+
+The ordinary entry points:
+
 ```bash
 cd Tools/architect
 python architect.py
@@ -40,6 +61,8 @@ library, and the only dependency (`anthropic`) is imported lazily on the live pa
 | `--max-iterations N` | cap the loop (default 3) |
 | `--gdd PATH` | point at the GDD (default: `../../../stratocracy-content/Stratocracy_Prototype_GDD.md`) |
 | `--diff-report RUN` | diff what the agent wrote against what is in the tree now |
+| `--demo` | replay the whole recorded build against a pre-agent tree; implies `--offline --apply` and writes only inside the run directory |
+| `--demo-rev REV` | which commit `--demo` takes `Source/` from (default `4ceaf93`, the last commit before the agent ran) |
 
 The API key is read from `ANTHROPIC_API_KEY`, else from `../../../stratocracy-crew/.env`.
 Model defaults to `claude-opus-5`; override with `--model` or `STRATOCRACY_ARCHITECT_MODEL`.
@@ -370,6 +393,7 @@ Found by running it, and all four are recorded in the code beside the fix:
 |---|---|
 | The agent runs live end to end | verified — 4 recorded calls across 2 iterations |
 | The agent runs keyless via `--offline` | verified — replayed from a pristine `HEAD` tree into all 6 files |
+| A fresh clone runs it with no key and no setup | verified — `git clone` + `python architect.py --demo` reproduced all 3 iterations and all 6 files, and fell back to the vendored GDD snapshot on its own when the sibling repo was absent |
 | Generated bridge + widget + host compile in UE 5.8 | verified — `StratocracyEditor Win64 Development`, Result: Succeeded |
 | `Stratocracy.StratUI.T-UI-03.*` passes | verified — **10 succeeded, 0 failed, 0 not run** |
 | No regressions elsewhere | verified — the whole `Stratocracy` suite is **18/18** after the host landed too, including `T-INT-02`, `T-INT-03` and `T-DATA-05`, which run over the bridge this change touched |

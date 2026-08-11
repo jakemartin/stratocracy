@@ -329,3 +329,39 @@ FStratResult FStratBridge::MakeUiSnapshot(strat::UiSnapshot& OutSnapshot) const
 	OutSnapshot = strat::buildUiSnapshot(World);
 	return FStratResult::Ok();
 }
+
+FStratResult FStratBridge::CheckSnapshotFidelity(
+	const strat::UiSnapshot& Snapshot,
+	TArray<FString>&         OutFailures) const
+{
+	OutFailures.Reset();
+
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	// Rebuilt here rather than taken as an argument. The check compares a snapshot
+	// against the state it claims to project, so the world it is measured against
+	// must be this bridge's own -- a caller-supplied one could be a second assembly
+	// that agrees with the snapshot for reasons the state does not.
+	const strat::UiWorld World = MakeUiWorld();
+
+	const strat::UiFidelityResult Result =
+		strat::uiCheckSnapshotFidelity(World, Snapshot);
+
+	for (const strat::UiFidelityFailure& Failure : Result.failures)
+	{
+		OutFailures.Add(FString::Printf(TEXT("clause (%s) %s: %s"),
+			*FromStd(Failure.clause), *FromStd(Failure.field), *FromStd(Failure.detail)));
+	}
+
+	// The module's own verdict, forwarded. See the header for why `ok` is not
+	// re-derived from whether the list came back empty.
+	return Result.ok
+		? FStratResult::Ok()
+		: FStratResult::Fail(
+			FString::Printf(TEXT("snapshot fidelity failed on %d field(s)"),
+				OutFailures.Num()),
+			TEXT("T-UI-05"));
+}

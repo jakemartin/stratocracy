@@ -162,6 +162,27 @@ public:
 	// units in it".
 	FStratResult MakeUiSnapshot(strat::UiSnapshot& OutSnapshot) const;
 
+	// T-UI-05's own check, run over a snapshot this bridge projected, with the
+	// failures handed back as engine strings.
+	//
+	// IT IS EXPOSED HERE RATHER THAN CALLED DIRECTLY BY THE CALLER, and that is
+	// this module's whole reason for existing rather than a convenience. The
+	// vendored `strat` sources carry no `_API` macro -- §4.9 forbids them engine
+	// headers -- so `UnrealEditor-StratBridge.dll` exports `FStratBridge` and
+	// nothing else, and a call to `strat::uiCheckSnapshotFidelity` from any other
+	// module does not link. MEASURED, not assumed: the StratUI Automation test
+	// called it directly and the build failed with LNK2019 on exactly that symbol,
+	// which is the same failure StratBridge.Build.cs records the first bridge
+	// hitting. Every strat entry point a widget or its gate needs arrives through
+	// a method on this class for that reason.
+	//
+	// RETURNS THE MODULE'S VERDICT AND NOT A RECOUNT OF IT. `Result.ok` is
+	// forwarded rather than inferred from an empty failure list: Ui.h's clause (c)
+	// fails a snapshot field carrying no contract entry, and treating "nothing
+	// listed" as success would let this method disagree with the check it ran.
+	FStratResult CheckSnapshotFidelity(const strat::UiSnapshot& Snapshot,
+	                                   TArray<FString>& OutFailures) const;
+
 private:
 	// Owned by value: this object IS the authoritative state.
 	strat::GameState GameState;

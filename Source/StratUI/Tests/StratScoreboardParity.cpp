@@ -261,14 +261,17 @@ namespace StratScoreboardParity
 	 * clause below calls this helper and none of them mentions how a failure is spelt,
 	 * so a change to `Ui.h`'s reporting is reconciled here and no clause moves.
 	 *
-	 * `uiCheckSnapshotFidelity` returns a `UiFidelityResult` -- a STRUCT carrying `ok`,
-	 * three counters, and a `failures` vector of `{clause, field, detail}`. It is not
-	 * itself iterable, and the three failure members are not `id`/`reason`.
+	 * IT GOES THROUGH THE BRIDGE AND NOT THROUGH `strat::` DIRECTLY, and this file is
+	 * not free to choose otherwise. The vendored rules sources carry no `_API` macro,
+	 * so `UnrealEditor-StratBridge.dll` exports `FStratBridge` and nothing beside it;
+	 * calling `strat::uiCheckSnapshotFidelity` from this module fails to LINK.
+	 * Measured -- the first build of this file did exactly that and stopped with
+	 * LNK2019 on that symbol, which is the same failure StratBridge.Build.cs records
+	 * the first bridge hitting. Every strat entry point this gate needs arrives as a
+	 * method on the bridge.
 	 *
-	 * `Result.ok` IS CHECKED AND NOT INFERRED FROM AN EMPTY FAILURE LIST. Ui.h states
-	 * that clause (c) fails a snapshot field carrying no contract entry; treating "no
-	 * failures listed" as success would make this helper agree with a result that said
-	 * otherwise, which is the same class of defect T-UI-05 exists to catch.
+	 * The bridge rebuilds the `UiWorld` itself, so the check measures the snapshot
+	 * against that object's own state rather than against a world this file assembled.
 	 *
 	 * FAILURES ARE FORWARDED, NOT SUMMARISED. A fidelity failure is the rules module
 	 * saying a projected field does not match the state it projects, and the module's
@@ -276,19 +279,11 @@ namespace StratScoreboardParity
 	 * a reader of the test log with strictly less than the code already knew.
 	 */
 	static bool RunSnapshotFidelity(
-		const strat::UiWorld&    World,
+		const FStratBridge&      Bridge,
 		const strat::UiSnapshot& Snapshot,
 		TArray<FString>&         OutFailures)
 	{
-		OutFailures.Reset();
-		const strat::UiFidelityResult Result =
-			strat::uiCheckSnapshotFidelity(World, Snapshot);
-		for (const strat::UiFidelityFailure& Failure : Result.failures)
-		{
-			OutFailures.Add(FString::Printf(TEXT("clause (%s) %s: %s"),
-				*FromStd(Failure.clause), *FromStd(Failure.field), *FromStd(Failure.detail)));
-		}
-		return Result.ok && OutFailures.Num() == 0;
+		return Bridge.CheckSnapshotFidelity(Snapshot, OutFailures).bOk;
 	}
 
 	/**
@@ -976,12 +971,10 @@ bool FStratScoreboardSnapshotFidelityTest::RunTest(const FString& /*Parameters*/
 		return false;
 	}
 
-	// The same gathering the bridge hands to `strat::buildUiSnapshot`, so the check sees
-	// the projection's actual input rather than a second assembly of it.
-	const strat::UiWorld World = Bridge.MakeUiWorld();
-
+	// The bridge measures the snapshot against its own gathering, so the check sees the
+	// projection's actual input rather than a second assembly of it.
 	TArray<FString> Failures;
-	const bool bFaithful = RunSnapshotFidelity(World, Snapshot, Failures);
+	const bool bFaithful = RunSnapshotFidelity(Bridge, Snapshot, Failures);
 
 	// Reported one per line. A collapsed count would leave a reader of the log knowing
 	// only that the panel is untrustworthy, not which field made it so.

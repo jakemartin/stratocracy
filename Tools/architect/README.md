@@ -396,6 +396,7 @@ Found by running it, and all four are recorded in the code beside the fix:
 | A fresh clone runs it with no key and no setup | verified — `git clone` + `python architect.py --demo` reproduced all 3 iterations and all 7 generated files (2 rewritten, 5 created), and fell back to the vendored GDD snapshot on its own when the sibling repo was absent |
 | Generated bridge + widget + host compile in UE 5.8 | verified — `StratocracyEditor Win64 Development`, Result: Succeeded |
 | `Stratocracy.StratUI.T-UI-03.*` passes | verified — **10 succeeded, 0 failed, 0 not run** |
+| A clean clone builds and passes from scratch | verified — `git clone` of `8e401e8`, `Build.bat StratocracyEditor Win64 Development` → Result: Succeeded, then **18/18, 0 failed, 0 not run**. This is the committed state, not a working tree |
 | No regressions elsewhere | verified — the whole `Stratocracy` suite is **18/18** after the host landed too, including `T-INT-02`, `T-INT-03` and `T-DATA-05`, which run over the bridge this change touched |
 | The scoreboard runs in a live PIE session | verified — real Ferrum Crossing standings on screen; log line below |
 

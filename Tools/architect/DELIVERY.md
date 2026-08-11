@@ -52,8 +52,13 @@ document, which asks the grader to assemble them.
       on its own. Note `--demo`, not plain `--offline`: against the finished tree the
       agent correctly finds nothing left with curated context and stops, which is the
       right answer and a useless demonstration. Tell the grader to run `--demo` first.
-- [ ] Re-run the tests and confirm the README's verification table still matches. Never
-      submit a table that claims more than the last run showed.
+- [x] **DONE 2026-08-11.** Tests re-run from a CLEAN CLONE, not the working tree:
+      `git clone` → `Build.bat` → Result: Succeeded → 18/18, 0 failed. Do it this way
+      and not in place. The working tree passed all evening while
+      `BP_TopDownGameMode.uasset` — the GameMode that spawns the HUD — sat uncommitted,
+      so a grader would have cloned a project where nothing put the scoreboard on
+      screen. Every agent-generated file was committed; the hand-set property that
+      starts them was not, and only a clone could show that.
 - [ ] Confirm no `.env` and no key is tracked: `git ls-tree -r HEAD --name-only | grep -i env`
 - [ ] If the WBP is laid out and on screen by then, update the verification table and say
       so. If it is not, **leave the table as it is** — a green test list honestly

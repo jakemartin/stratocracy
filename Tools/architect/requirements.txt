@@ -1,0 +1,9 @@
+# The live path needs exactly one package. Everything else -- GDD parsing, the
+# codebase scan, the scorer, the blackboard, the replay store -- is standard library,
+# so `--offline` runs on a bare Python 3.10+ with nothing installed at all.
+#
+# Verified against 0.73.0 on Python 3.13. The floor is 0.40 because the agent uses
+# `client.messages.stream()`, which the SDK REQUIRES rather than merely offers once
+# max_tokens is high enough that a request could exceed ten minutes -- a non-streaming
+# call at this file's MAX_TOKENS raises ValueError before it is ever sent.
+anthropic>=0.40

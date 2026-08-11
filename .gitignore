@@ -73,3 +73,13 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Exported Cowork project-memory notes (Tools/context/).
+#
+# These are a one-way local mirror of the desktop app's own memory store -- course
+# slide transcriptions, assignment status, working notes. They are reference material
+# for a session working in this repo, NOT part of the game or of any deliverable, and
+# the slide transcriptions are third-party course material besides. Ignored so a
+# `git add -A` cannot sweep them into a commit, which is exactly how they first
+# reached one.
+/Tools/context/

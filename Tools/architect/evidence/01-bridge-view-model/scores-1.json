@@ -1,0 +1,147 @@
+[
+  {
+    "key": "bridge_view_model",
+    "title": "Bridge view-model surface: GameState -> UiWorld -> UiSnapshot on FStratBridge",
+    "score": 95.0,
+    "actionable": true,
+    "components": {
+      "unblocks": 90.0,
+      "open_ids": 0.0,
+      "dagger": 0.0,
+      "critical_path": 0.0,
+      "partial": 0.0,
+      "in_repo": 5.0
+    },
+    "open_ids": [],
+    "blocked_by": [],
+    "reasons": [
+      "BLOCKS 3 downstream candidate(s): scoreboard_widget, production_widget, presentation_statelessness.",
+      "closes no acceptance ID directly -- its value is what it unblocks.",
+      "closes no acceptance ID, so it sits on no \u00a74.11 row.",
+      "untouched in the tree.",
+      "READY: every prerequisite is present in the tree."
+    ]
+  },
+  {
+    "key": "scoreboard_widget",
+    "title": "Live standings scoreboard widget (\u00a72.11.4)",
+    "score": 65.0,
+    "actionable": false,
+    "components": {
+      "unblocks": 30.0,
+      "open_ids": 20.0,
+      "dagger": 10.0,
+      "critical_path": 0.0,
+      "partial": 0.0,
+      "in_repo": 5.0
+    },
+    "open_ids": [
+      "T-UI-03"
+    ],
+    "blocked_by": [
+      "gamestate_to_uiworld"
+    ],
+    "reasons": [
+      "BLOCKS 1 downstream candidate(s): presentation_statelessness.",
+      "would let 1 open acceptance ID(s) close: T-UI-03.",
+      "T-UI-03 carries \u00a74.11's \u2020 -- it needs the editor pass, so it is waiting on a buildable artefact rather than on a ruling.",
+      "row 8 in \u00a74.11; 0 row(s) depend on it.",
+      "untouched in the tree.",
+      "NOT ACTIONABLE: waiting on gamestate_to_uiworld."
+    ]
+  },
+  {
+    "key": "production_widget",
+    "title": "Production menu widget (\u00a72.11.5)",
+    "score": 35.0,
+    "actionable": false,
+    "components": {
+      "unblocks": 0.0,
+      "open_ids": 20.0,
+      "dagger": 10.0,
+      "critical_path": 0.0,
+      "partial": 0.0,
+      "in_repo": 5.0
+    },
+    "open_ids": [
+      "T-UI-04"
+    ],
+    "blocked_by": [
+      "gamestate_to_uiworld",
+      "buildlist_query"
+    ],
+    "reasons": [
+      "blocks nothing else currently in the set.",
+      "would let 1 open acceptance ID(s) close: T-UI-04.",
+      "T-UI-04 carries \u00a74.11's \u2020 -- it needs the editor pass, so it is waiting on a buildable artefact rather than on a ruling.",
+      "row 8 in \u00a74.11; 0 row(s) depend on it.",
+      "untouched in the tree.",
+      "NOT ACTIONABLE: waiting on gamestate_to_uiworld, buildlist_query."
+    ]
+  },
+  {
+    "key": "presentation_statelessness",
+    "title": "Presentation statelessness pass (rebuild widgets from the view model)",
+    "score": 35.0,
+    "actionable": false,
+    "components": {
+      "unblocks": 0.0,
+      "open_ids": 20.0,
+      "dagger": 10.0,
+      "critical_path": 0.0,
+      "partial": 0.0,
+      "in_repo": 5.0
+    },
+    "open_ids": [
+      "T-INT-05"
+    ],
+    "blocked_by": [
+      "gamestate_to_uiworld",
+      "scoreboard_widget"
+    ],
+    "reasons": [
+      "blocks nothing else currently in the set.",
+      "would let 1 open acceptance ID(s) close: T-INT-05.",
+      "T-INT-05 carries \u00a74.11's \u2020 -- it needs the editor pass, so it is waiting on a buildable artefact rather than on a ruling.",
+      "row 9 in \u00a74.11; 0 row(s) depend on it.",
+      "untouched in the tree.",
+      "NOT ACTIONABLE: waiting on gamestate_to_uiworld, scoreboard_widget."
+    ]
+  },
+  {
+    "key": "bridge_event_list",
+    "title": "Bridge ordered event list (\u00a74.9 'command in / events out')",
+    "score": 5.0,
+    "actionable": true,
+    "components": {
+      "unblocks": 0.0,
+      "open_ids": 0.0,
+      "dagger": 0.0,
+      "critical_path": 0.0,
+      "partial": 0.0,
+      "in_repo": 5.0
+    },
+    "open_ids": [],
+    "blocked_by": [],
+    "reasons": [
+      "blocks nothing else currently in the set.",
+      "closes no acceptance ID directly -- its value is what it unblocks.",
+      "closes no acceptance ID, so it sits on no \u00a74.11 row.",
+      "untouched in the tree.",
+      "READY: every prerequisite is present in the tree."
+    ]
+  },
+  {
+    "key": "buildlist_query",
+    "title": "Buildlist query on the Ui.h contract",
+    "score": null,
+    "actionable": false,
+    "components": {},
+    "open_ids": [],
+    "blocked_by": [],
+    "reasons": [
+      "EXCLUDED, not scored: shape unstated in the GDD by explicit decision, and the file is vendored certified bytes in another repo -- T-INT-01 hash-matches it.",
+      "The GDD reserves this shape; a score here would be a vote in it."
+    ]
+  }
+]

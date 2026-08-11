@@ -1,0 +1,18 @@
+# Per-run working output. Each run writes a timestamped directory here, and they
+# accumulate; they are not the deliverable.
+#
+# THE ACCEPTED RUN IS COPIED TO `evidence/` AND TRACKED, which is not belt-and-braces
+# but a lesson this project already paid for once: the A#3 audit found that
+# `stratocracy-crew/build/` was gitignored, so the live run log never reached a clone
+# and later runs overwrote it in place. The fix there was a tracked `evidence/`
+# directory, and the same fix is applied here rather than re-learned.
+runs/
+
+# Never committed. The agent reads the key from ../../../stratocracy-crew/.env or the
+# environment; this entry exists so a local override cannot be added by accident.
+.env
+
+# Python bytecode. The repo's root .gitignore is written for a UE project and covers
+# C++ build output, not this.
+__pycache__/
+*.pyc

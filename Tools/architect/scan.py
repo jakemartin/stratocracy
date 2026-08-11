@@ -217,6 +217,19 @@ _PROBES: list[ProbeSpec] = [
         {".h"},
     ),
     ProbeSpec(
+        "scoreboard_host",
+        "Is there anything OUTSIDE the Automation tests that owns a bridge and can put "
+        "the scoreboard on screen at runtime?",
+        # The marker is a spawnable widget class held by something, which is how UMG is
+        # instantiated from C++. Deliberately NOT a search for `FStratBridge`: that name
+        # already appears in StratScoreboardWidget.h's `StratBuildScoreboardModel`
+        # signature, so the probe would answer YES about a free function that spawns
+        # nothing and owns nothing.
+        r"TSubclassOf<\s*U\w*Scoreboard\w*\s*>",
+        {".h"},
+        within=r"^Source/StratUI/(?!Tests/)",
+    ),
+    ProbeSpec(
         "production_widget",
         "Does a production/build-menu UUserWidget exist (T-UI-04's subject)?",
         r"class\s+\w*_?API\s+U\w*(Production|BuildMenu)\w*\s*:\s*public\s+UUserWidget",

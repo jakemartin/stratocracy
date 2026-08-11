@@ -106,6 +106,7 @@ def _invariants(candidate: Candidate, gddf: GddFacts) -> str:
 STEP_PLANS: dict[str, list[str]] = {
     "bridge_view_model": ["bridge_view_model"],
     "scoreboard_widget": ["scoreboard_h", "scoreboard_cpp", "scoreboard_test"],
+    "scoreboard_host": ["host_h", "host_cpp"],
 }
 
 
@@ -279,6 +280,78 @@ def build(
                 _slice(_read(code, "Source/StratRules/Ui.h"),
                        "enum class UiFieldKind", "// Queries (§4.7 Stub 8)",
                        limit=4000)))
+
+    elif step in {"host_h", "host_cpp"}:
+        parts += [
+            "",
+            "THE PROBLEM. Nothing outside the Automation tests ever constructs an",
+            "`FStratBridge`. `StratBridge.Build.cs` says so itself -- 'Nothing in the",
+            "game module calls the bridge yet.' So the scoreboard is proven by a test",
+            "and cannot appear in a running game: there is no live bridge, no seeded",
+            "scenario, and nothing that creates the widget or refreshes it.",
+            "",
+            "Build the host. An `AHUD` subclass is the natural shape: the map's GameMode",
+            "can point at it without the game module ever depending on this one, which",
+            "matters because the dependency runs StratBridge -> Stratocracy and cannot",
+            "be reversed.",
+            "",
+            ("WHAT TO PRODUCE: exactly ONE file, Source/StratUI/StratScoreboardHUD.h."
+             if step == "host_h" else
+             "WHAT TO PRODUCE: exactly ONE file, Source/StratUI/StratScoreboardHUD.cpp,"
+             " implementing the header below, which is FIXED."),
+            "",
+            "IT MUST, on BeginPlay: load the two DataTables, seed the bridge from the",
+            "shipped scenario, create the widget, add it to the viewport, and refresh",
+            "it. Expose a BlueprintCallable refresh so the game can call it again after",
+            "a command.",
+            "",
+            "CONSTRAINTS THAT ARE NOT NEGOTIABLE:",
+            "",
+            "1. THE HEADER MUST NOT INCLUDE StratBridge.h. It declares a UCLASS, so UHT",
+            "   parses it, and StratBridge.h pulls in the vendored `strat` headers --",
+            "   the thing StratBridge.h's own comment exists to prevent. Forward declare",
+            "   `class FStratBridge;` and hold it as `TUniquePtr<FStratBridge>`. That",
+            "   means an incomplete type at the member declaration, so DECLARE the",
+            "   destructor in the header and DEFINE it in the .cpp -- TUniquePtr cannot",
+            "   instantiate its deleter against an incomplete type at an implicit",
+            "   destructor. Include StratBridge.h only from the .cpp.",
+            "",
+            "2. NO CROSS-MODULE `strat::` CALLS. The vendored sources carry no _API",
+            "   macro, so UnrealEditor-StratBridge.dll exports FStratBridge and nothing",
+            "   beside it; a direct `strat::` call from this module fails to LINK with",
+            "   LNK2019. This is measured, twice. Everything goes through methods on",
+            "   FStratBridge.",
+            "",
+            "3. NO HARDCODED ASSET PATHS OR GAMEPLAY VALUES. The two DataTables, the",
+            "   scenario file name and the viewing side are `UPROPERTY(EditDefaultsOnly)`",
+            "   so they are set on a Blueprint subclass, not baked into C++. The widget",
+            "   class is `UPROPERTY(EditDefaultsOnly) TSubclassOf<UStratScoreboardWidget>`",
+            "   -- never a ConstructorHelpers path literal.",
+            "",
+            "4. FAIL LOUDLY AND SURVIVE. A missing table or an unreadable scenario logs",
+            "   through `LogStratUI` with the bridge's own refusal reason and leaves the",
+            "   HUD without a scoreboard. It must not crash and must not display a panel",
+            "   of zeroes -- the widget already refuses rather than showing zeroes, and",
+            "   this must not defeat that.",
+            _quote("Source/StratUI/StratScoreboardWidget.h -- what you spawn and refresh "
+                   "(READ ONLY)", _read(code, "Source/StratUI/StratScoreboardWidget.h")),
+            _quote("Source/StratBridge/StratBridge.h -- the bridge API, the ONLY way to "
+                   "reach the rules (READ ONLY)",
+                   _read(code, "Source/StratBridge/StratBridge.h")),
+            _quote("Source/StratUI/StratUI.Build.cs -- your module (READ ONLY)",
+                   _read(code, "Source/StratUI/StratUI.Build.cs")),
+            _quote("Source/StratUI/StratUI.h -- the log category (READ ONLY)",
+                   _read(code, "Source/StratUI/StratUI.h")),
+            _quote("Source/StratUI/Tests/StratScoreboardParity.cpp -- how the test loads "
+                   "the tables and seeds the scenario; do the same thing (READ ONLY, "
+                   "first 190 lines)",
+                   "\n".join(_read(code, "Source/StratUI/Tests/StratScoreboardParity.cpp")
+                             .splitlines()[:190])),
+        ]
+        for rel, body in produced.items():
+            parts.append(_quote(
+                f"{rel} -- generated by the previous step; treat as FIXED and do not "
+                f"restate it", body))
 
     else:
         # Every other candidate reaches generation only if the scorer selects it, which

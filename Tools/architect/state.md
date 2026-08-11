@@ -1,19 +1,15 @@
 # Architect state
 
-_Last run 2026-08-11 17:07 UTC._
+_Last run 2026-08-11 19:30 UTC._
 
 ## BUILT
 
-- `Source/StratBridge/StratBridge.h` — applied (iteration 1, step `bridge_view_model`, replay)
-- `Source/StratBridge/StratBridge.cpp` — applied (iteration 1, step `bridge_view_model`, replay)
-- `Source/StratUI/StratScoreboardWidget.h` — applied (iteration 2, step `scoreboard_h`, replay)
-- `Source/StratUI/StratScoreboardWidget.cpp` — applied (iteration 2, step `scoreboard_cpp`, replay)
-- `Source/StratUI/Tests/StratScoreboardParity.cpp` — applied (iteration 2, step `scoreboard_test`, replay)
+- `Source/StratUI/StratScoreboardHUD.h` — applied (iteration 1, step `host_h`, live)
+- `Source/StratUI/StratScoreboardHUD.cpp` — applied (iteration 1, step `host_cpp`, live)
 
 ## DECISIONS
 
-- iteration 1: selected `bridge_view_model` at score 95; runner-up scoreboard_widget was blocked on gamestate_to_uiworld
-- iteration 2: selected `scoreboard_widget` at score 65; runner-up production_widget was blocked on buildlist_query
+- iteration 1: selected `scoreboard_host` at score 35; runner-up production_widget was blocked on buildlist_query
 
 ## NEXT
 

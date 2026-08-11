@@ -125,11 +125,34 @@ _SUBJECTS: list[Candidate] = [
         ),
     ),
     Candidate(
+        key="scoreboard_host",
+        title="Runtime host: own a bridge, seed the scenario, put the scoreboard on screen",
+        closes=[],   # closes nothing itself; it is what a runtime assertion stands on
+        probe="scoreboard_host",
+        requires=["ui_module_exists", "gamestate_to_uiworld", "scoreboard_widget"],
+        artifact="Source/StratUI/ (HUD or subsystem)",
+        gdd_basis=(
+            "§4.9 names the bridge as the only code that knows both worlds, and §4.7 "
+            "Stub 8 has widgets bind to the view model it projects. Nothing outside the "
+            "Automation tests constructs an FStratBridge -- StratBridge.Build.cs says so "
+            "in as many words ('Nothing in the game module calls the bridge yet') -- so "
+            "no widget can be fed at runtime, only in a test."
+        ),
+    ),
+    Candidate(
         key="presentation_statelessness",
         title="Presentation statelessness pass (rebuild widgets from the view model)",
         closes=["T-INT-05"],
         probe="scoreboard_widget",   # it asserts OVER widgets; no widgets, nothing to assert
-        requires=["ui_module_exists", "gamestate_to_uiworld", "scoreboard_widget"],
+        # `scoreboard_host` is a REAL prerequisite and not a convenience. T-INT-05 asserts
+        # that widgets can be REBUILT from the current view model after any event
+        # sequence; that quantifies over a runtime path which builds them from the view
+        # model in the first place, and no such path exists while the only code
+        # constructing a bridge is a test. Added 2026-08-11 after the widget landed and
+        # the gap became visible -- the candidate set is edited when the tree teaches
+        # something, which is the same reason the probes were.
+        requires=["ui_module_exists", "gamestate_to_uiworld", "scoreboard_widget",
+                  "scoreboard_host"],
         artifact="Source/StratUI/Tests/",
         gdd_basis=(
             "§4.11 row 9: 'T-INT-05 did not run, and what it lacks is the real "

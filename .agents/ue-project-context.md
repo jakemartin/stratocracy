@@ -116,12 +116,37 @@ Every number a widget draws equals **exactly one** `strat::UiSnapshot` field. No
 ratios, no derived values. This is `T-UI-03`'s defining clause, and it is what keeps the screen
 and the rules from drifting.
 
-### `defIndex` row order is load-bearing
+### `DT_Units` row order is load-bearing. `DT_Terrain` row order is not. Do not conflate them.
 
-`defIndex` indexes the definition vectors, and a §4.10 Build command carries a `defIndex` in its
-`unitId` field. `DT_Units` / `DT_Terrain` in a different order than the headless loader's would
-resolve the same replay log to a **different unit type, silently**. Row order is taken from the
-table and then *asserted* equal to `strat::loadUnits` over the same vendored CSV — never assumed.
+**Units.** A §4.10 Build command carries a `defIndex` in its `unitId` field, and `applyCommand`
+uses it as a **raw, bounds-checked-only index** into the definitions vector — no name lookup
+(`Replay.good.cpp:486-487`). So `DT_Units` in a different order than the headless loader's
+resolves the same replay log to a **different unit type, silently**. Row order is taken from the
+table and then *asserted* equal to `strat::loadUnits` over the same vendored CSV by
+`GATE-BRIDGE-DEFS` — never assumed.
+
+That test exists because `T-INT-02` **cannot** catch this: the parity fixture carries no Build
+command, since the AI that produced it emits none on the shipped scenario
+(`StratBridgeParity.cpp:157-162`). The one divergence unit order can cause is the one the replay
+never exercises.
+
+**Terrain.** Ruled not load-bearing, on evidence, phase 0 / 2026-08-12. No `SaveCommand` field
+carries a terrain index (`Save.h:59-68`); seeding resolves every hex's terrain **by name**
+(`Replay.good.cpp:299-308`); and `canonicalStateBytes` — what `FStratBridge::StateHash()` actually
+hashes via `strat::canonicalStateHash` — emits no terrain field at all, not even the
+`terrainIndex` an `Objective` carries. Terrain indices are live *within* a build and never
+externalized, so any order is self-consistent. `T-DATA-05.TerrainTableMatchesCsv`'s name-keyed
+field parity is sufficient and no positional terrain test is needed.
+
+**Do not reach for `stateHash` in `Driver.h` to reason about this.** That is the debug driver's
+own digest over `Session`, it *does* fold raw terrain indices (`Driver.good.cpp:494`), and it is
+a different function over a different type — `Save.h:12-16` disclaims the conflation explicitly.
+Mistaking the two makes terrain order look transitively proven when it is not proven at all; it
+simply does not need to be.
+
+**What would flip the terrain ruling:** a save format that serialized board state, or a snapshot
+cached across builds. Either externalizes a terrain index, and terrain would then need a
+`GATE-BRIDGE-DEFS`-shaped positional test of its own.
 
 ### Never write a `/Game/` path literal into *gameplay* C++
 

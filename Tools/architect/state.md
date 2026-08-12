@@ -31,10 +31,50 @@ _Last run 2026-08-11 19:30 UTC._
 - **`HexSize` on `AStratBoardActor`** is centre-to-centre spacing for a pointy-top layout, the
   only axial→world constant in the project; must be matched to whatever tile mesh phase 5 picks.
 - **`EnhancedInput` is absent from `StratPlay.Build.cs` by design**; phase 4 adds it. Do not
-  "fix" it early.
+  "fix" it early. — **Discharged in phase 4**: `EnhancedInput` is now Private in
+  `StratPlay.Build.cs`; `StratBridge` moved Public → Private there in the same change.
 - **A `bDone`/`bLockedThisTurn` producer does not exist yet.** Phase 4's selection machine must
   write those onto the built view model via `ApplyView(model)`, never into an actor.
-  `T-INT-05.NoActorHoldsPresentationBits` pins the negative only.
+  `T-INT-05.NoActorHoldsPresentationBits` pins the negative only. — **Discharged in phase 4**:
+  `FStratSelectionMachine::DecorateViewModel`, called between `BuildViewModel` and `ApplyView`,
+  writes both bits from the machine's own `TSet`s; no actor holds either.
+- **`SubmitCapture` has no affordance and the machine never emits `Capture`.** The phase-4
+  command list is literally move → attack, wait, end turn; which hex offers a capture and how
+  the player is told is an unanswered UI question. The applier's `switch` will need one new arm.
+  (Phase 4 deferral, carried forward.)
+- **The hot-seat hand-over key is deliberately unbound.** `SetViewingSide` on a keypress would
+  let either player see the other's board at any time; the confirmation screen is UI work no
+  phase owns. (Phase 4 deferral, carried forward.)
+- **`SetLockedThisTurn` has a writer and no shipping caller** (§2.11.6 guided opening is out of
+  milestone), so `bLockedThisTurn` is false in every running path. Its clause calls the setter
+  itself and discloses in four places that it pins machine behaviour, not that any shipping path
+  produces a lock. **When §2.11.6's producer lands it needs a clause of its own; this one will
+  not cover it.** (Phase 4 deferral, carried forward.)
+- **The attack branch's "already acted" refusal
+  (`StratSelectionMachine.cpp:258-263`) is unreachable by any click sequence**, because
+  `NotifyCommandApplied` marks an attacker DONE on the same event. Ruled an acceptable
+  defensive guard, not dead code — it guards a disagreement between the model's `bHasActed`
+  (rules-side) and the machine's `DoneUnits` (engine-side, per-session) that a loaded save, a
+  replayed log, or phase 6's PIE can produce even though no scripted sequence in this suite can.
+  It carries no comment saying it is unexercised and why; that debt is currently owned quietly
+  in `strat-gameplay-engineer`'s lane, deferred here rather than built, per the scope fence.
+- **`ReplayRecordedLogOnto` does no save round trip** — no serialize, no parse, no
+  `FStratSaveIdentity`. `SerializeRecordedSave` + `T-SAVE-06.SaveRoundTripsToEqualHash` already
+  cover that path; a second entry point there would be a second policy over the same bytes.
+- **`ETriggerEvent::Started` on all four input actions is asserted, not measured** — no input
+  asset exists yet to test against. Discharged the first time the controller runs in PIE with
+  real assets, i.e. no earlier than phase 5.
+- **`Saved/AutomationReport/index.json` is UTF-8-with-BOM, not UTF-16.** First bytes are
+  `EF BB BF`; all three UTF-16 codecs fail to parse it and `utf-8-sig` succeeds. Two separate
+  gate passes reported UTF-16 for this file and were both wrong. **A phase-6 gate that
+  hardcodes UTF-16 to parse the report will read zero tests and may not say so** — the same
+  failure shape as the bare-`Stratocracy.uproject` test command that exits in ~1s having run
+  nothing. Recorded here so a phase-6 reader hits it before writing that parser.
+- **`.agents/ue-project-context.md:195` reads "51/51, hot-seat phase 3"** against a measured
+  66/66 as of phase 4, and its line-41 module-arrow row for `StratPlay` does not mention
+  `EnhancedInput`, added to that module's `Build.cs` this phase. That file is outside this
+  steward's lane (`.agents/` is not `Config/` or `Tools/architect/`) — recorded here as a
+  handoff rather than edited.
 
 ## Hot-seat milestone
 
@@ -274,8 +314,148 @@ _Last run 2026-08-11 19:30 UTC._
     the same `HexSize`, but the prose is stronger than the code. Follow-up
     for `strat-gameplay-engineer`.
 
-**Phases 0-3 are closed.** Phase 4 is next and requires the editor CLOSED:
-PlayerController with Enhanced Input, the selection state machine as a plain
-testable struct, the `STRAT-CMD` log line, and a hot-seat replay-parity test.
-Out-of-scope list unchanged: production menu (§2.11.5), guided opening
-(§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.
+### Phase 4
+
+- **Completed:** 2026-08-12
+- **Exit criterion:** "PlayerController with Enhanced Input, the selection
+  state machine as a plain testable struct, the `STRAT-CMD` log line; build
+  green; hot-seat replay-parity test green."
+- **Met, but only after a `BLOCK` on the first gate.** The re-gate cause is
+  the most transferable finding in this phase — record why it failed before
+  what landed.
+
+  **The first gate — `VERDICT: BLOCK`, three findings.**
+  - **Finding 1 — a split clause left the recording joint unpinned.** The
+    chain the criterion needs is *clicks → outcomes → submissions →
+    `RecordedLog()` → replay → equal hash*. Two clauses covered the ends;
+    **the joint "that `StratSubmitSelectionCommand` calls a recording entry
+    point at all" was pinned by nothing.** The StratPlay clause was
+    self-referential — it drove both bridges through the same submission
+    function, so any path, recording or not, yielded equal hashes, and its
+    count assertion counted `STRAT-CMD accepted` lines emitted by that same
+    function, making it both subject and witness. Routing submission through
+    a non-recording apply path would have left both clauses green with
+    `RecordedLog()` empty after a full hot-seat session — exactly what
+    phase 6's PIE gate leans on. Closed by two new engine-typed methods,
+    `int32 RecordedCommandCount() const` and
+    `FStratResult ReplayRecordedLogOnto(FStratBridge& Fresh) const`, and
+    repointing the gating clause onto them. **The general lesson: a clause
+    whose expectation is produced by the code under test pins nothing, and
+    splitting one clause across two modules can drop the joint between them.**
+  - **Finding 2 — `EStratSelectionCommand::Attack` was executed by no test.**
+    All four references were inside `StratSelectionMachine.cpp`;
+    `SubmitAttackAtHex` had zero test callers. A q/r transposition at
+    `StratBridge.cpp:739-742` would have refused every attack in the game
+    with the suite green at 62/62. Move was implicitly protected because its
+    destination is read out of `ReachableHexes` inside a clause asserting
+    acceptance; Attack had no such clause. The conversion turned out to be
+    **correct** — `Hex.h:11-14` declares `q` then `r` — but correct-and-untested
+    was still a `BLOCK`. Closed by three clauses; the transposition check
+    takes its coordinate from the vendored fixture's own `strat::Hex{3,4}`
+    (entry 17) rather than from `AttackTargetHexes`, **specifically so a
+    double transposition cannot cancel**, asserts `q != r` first, and submits
+    the transposed `{4,3}` as a foil observed refused.
+  - **Finding 3** was prose stating `strat::saveCommandName` is "file-local"
+    when it has external linkage and merely carries no `_API` macro — the
+    conclusion held, the stated reason did not, and a wrong reason tells the
+    next reader no pin is possible anywhere.
+
+  **What landed, once the re-gate passed with zero findings:**
+  - `Source/StratPlay/StratSelectionMachine.h`/`.cpp`,
+    `StratPlayerController.h`/`.cpp` (new); `Source/StratBridge/StratBridge.h`/
+    `.cpp`, `StratPlay.Build.cs`, `StratGameMode.h`/`.cpp`,
+    `StratBoardActor.h`/`.cpp` (modified). No new module —
+    `Stratocracy.uproject` unchanged, confirmed by the gate rather than
+    assumed.
+  - `FStratSelectionMachine` is a **plain non-reflected struct**, drivable
+    with no actor, no world, no PIE, no Slate. `AStratPlayerController` holds
+    it by value as a non-`UPROPERTY`.
+  - Enhanced Input: five `EditDefaultsOnly TObjectPtr` properties
+    (`SelectionMappingContext` + `SelectAction`, `CancelAction`,
+    `WaitAction`, `EndTurnAction`), **null by default and null-safe at every
+    use site**, because phase 5 authors the assets. `EnhancedInput` added to
+    `StratPlay.Build.cs` (Private); `StratBridge` moved Public → Private
+    there.
+  - The `STRAT-CMD` line:
+    `STRAT-CMD accepted kind=%s unit=%d hex=%d,%d turn=%d side=%d hash=%s`,
+    sole call site `StratSubmitSelectionCommand`. `kind` spells
+    `Move`/`Attack`/`EndTurn` to match the save format's own words so a gate
+    can compare a line to a `commandLog` entry with no translation table.
+    `unit`/`hex` are **always numeric**, carrying `-1`/`-1,-1` where the kind
+    has no such field, so the line's shape never depends on its content.
+    `turn`/`side` are read **before** submission, `hash` is `StateHash()`
+    **after**. Refusals log `STRAT-CMD refused …` — a deliberately different
+    phrase, so `grep "STRAT-CMD accepted"` counts only commands that applied.
+  - Suite **66/66** (was 51; +15), `succeeded 66 / failed 0 / notRun 0`,
+    `reportCreatedOn 2026.08.12-21.47.20`, read from the report by the gate.
+
+  Decisions that foreclose alternatives — recorded with their reasons:
+  - **`StratPlay` still names no `strat::` type; the translation went into
+    the bridge.** Six new engine-typed `STRATBRIDGE_API` methods: `Turn`,
+    `SideToMove`, `ReachableHexes`, `AttackTargetHexes`, `SubmitMoveToHex`,
+    `SubmitAttackAtHex`. The rejected alternative was a `strat::Hex`-naming
+    helper inside a `StratPlay` `.cpp` — legal by the letter of the linker
+    rule, since naming is not calling — killed because it would put a second
+    spelling of the axial coordinate in the one module that is supposed to
+    have none.
+  - **`AttackTargetHexes` is an enumeration, not a range check.** `Ui.h`
+    declares no target-enumeration counterpart to `uiReachable`, so it walks
+    the live unit list and asks `uiForecast` per enemy, keeping the module's
+    `legal`. No distance is compared and no `UnitDef` range is read. If such
+    a function is ever vendored, the body becomes a forward and no caller
+    changes.
+  - **The machine holds no mirror of the rules state.** `bHasMoved`/
+    `bHasActed` are read off the view model every call. The rejected
+    alternative — optimistic state advanced and rolled back on refusal — was
+    killed because the rollback path is the one no test exercises. This is
+    why a refused command cannot desynchronise the machine.
+  - **The view model is rebuilt on every event, not read from
+    `GetViewModel()`** ("a record, not a source"); otherwise what a click
+    means would depend on when `ApplyView` last ran.
+  - **`bDone`/`bLockedThisTurn` reach the model through
+    `FStratSelectionMachine::DecorateViewModel`**, called between
+    `BuildViewModel` and `ApplyView` — the seam phase 3 left owing. The bits
+    live in the machine's `TSet`s; no actor holds them, neither is a
+    `UPROPERTY` on an actor. `bDone` is set on a Wait and on an accepted
+    Attack, **never** derived from `bHasMoved && bHasActed`.
+  - **`GameMode` sets `PlayerControllerClass` but still not `HUDClass`** — a
+    bare controller with null input assets is inert and says so once; a bare
+    scoreboard HUD refuses every refresh and reads as a bridge bug.
+  - **An empty recorded log is a refusal, not a successful no-op**
+    (`ReplayRecordedLogOnto` arm 5). A deliberate departure from
+    `RecordedLog()`'s "empty is an ordinary answer" posture, because as a
+    *replay input* empty returns success and equal hashes and proves
+    nothing. Scenario identity is compared by `strat::scenarioHash` over the
+    seeded bytes, not by the `scenarioId` label a file chose.
+  - Both phase 3 non-gating findings were taken and confirmed mechanical:
+    `StratBridge` → `PrivateDependencyModuleNames`, and the three
+    axial→world copies in `AStratBoardActor` collapsed into one private
+    `LocalLocationOfHex`.
+
+  **T-UI-02 foil weaker than phase 1's, by construction, and the gate
+  verified the argument rather than waving it through:** 69 divergent hexes
+  across 5 of 5 active units (occupancy, impassable Water, weighted
+  Woods/Mountains) vs phase 1's 122 across 10 of 10, because `StratPlay`
+  cannot see a unit's `move` and so the disc radius is the largest distance
+  the real reachable set itself contains. Every reachable hex is reached in
+  ≤ `move` steps and axial distance never exceeds step count, so the
+  phase-4 disc is a strict subset of the classic one — conservative, the
+  only direction a self-computed value may lean.
+
+  Two corrections to carry forward as measurements — the numbered
+  UTF-8-with-BOM and `.agents/ue-project-context.md:195` staleness items
+  live under NEXT above, next to the other deferred debt.
+
+**Phases 0-4 are closed.** Phase 5 is next and requires the editor OPEN: hex
+mesh + terrain material instances, Input Mapping Context + Input Actions, the
+Blueprints and Widget Blueprints, `Lvl_FerrumCrossing`, with `Config` map
+defaults flipped last. Out-of-scope list unchanged: production menu
+(§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, AI
+opponent, move-undo.
+
+Note for phase 5's builder, from the engineer: the five input assets must be
+authored and set on a `BP_` subclass of `AStratPlayerController`, all
+`UInputAction`s Digital/bool; the GameMode Blueprint's `PlayerControllerClass`
+must point at that `BP_` subclass (the C++ default is the floor, not the
+answer); and **tile meshes must be traceable on `ECC_Visibility` or picking
+returns nothing.**

@@ -11,6 +11,7 @@
 
 #include "StratCameraPawn.h"
 #include "StratPlay.h"
+#include "StratPlayerController.h"
 
 #include "Engine/World.h"
 
@@ -26,9 +27,22 @@ AStratGameMode::AStratGameMode()
 	// camera pawn; this is the floor, not the ceiling.
 	DefaultPawnClass = AStratCameraPawn::StaticClass();
 
-	// `HUDClass` and `PlayerControllerClass` are deliberately left alone. The header block
-	// gives both reasons: a bare C++ scoreboard HUD would refuse every refresh and look
-	// like a bridge bug, and there is no Strat player controller until phase 4 builds one.
+	// PHASE 4 SET THIS, AS THE HEADER SAID IT WOULD. The same shape as `DefaultPawnClass`
+	// above -- a `UClass*` from `StaticClass()`, resolved by the linker, with no `/Game/`
+	// literal. It is set here rather than left to a Blueprint because the alternative
+	// default is `APlayerController`, which binds nothing: the result would be a seeded,
+	// correctly drawn match that no click can touch, and that failure reads as "the input
+	// assets are wrong" when in fact no Stratocracy input path was installed at all.
+	//
+	// `AStratPlayerController` IS SAFE AS A BARE C++ DEFAULT IN A WAY `AStratScoreboardHUD`
+	// IS NOT, which is the whole difference from the line below. It runs inert with null
+	// input assets and says so once; a bare scoreboard HUD would refuse every refresh in its
+	// own words and read as a bridge bug. Phase 5's GameMode Blueprint overrides this with a
+	// BP_ subclass carrying the mapping context and the four actions; this is the floor.
+	PlayerControllerClass = AStratPlayerController::StaticClass();
+
+	// `HUDClass` is deliberately left alone. The header block gives the reason: a bare C++
+	// scoreboard HUD would refuse every refresh and look like a bridge bug.
 
 	PrimaryActorTick.bCanEverTick = false;
 }

@@ -39,12 +39,27 @@
 // `ApplyView` spawns, moves and destroys actors to match the model on every refresh, so
 // every arrow of influence runs model -> actor and nothing runs the other way.
 //
-// NOTE ON WHAT IS NOT HERE, and each absence is a decision rather than an oversight:
+// `EnhancedInput` ARRIVED IN PHASE 4 AND NOT BEFORE, which this file's previous version
+// said it would: "a module that declares an input dependency before it has an input path
+// invites the first person who needs a key binding to put it in the nearest actor. Added in
+// the phase that adds the controller, not before." `AStratPlayerController` is that
+// controller, and it is the only file in this module that includes an Enhanced Input header.
+// It is a PRIVATE dependency: the mapping context and the four actions are declared as
+// `TObjectPtr<UInputMappingContext>` / `TObjectPtr<UInputAction>` forward-declared in that
+// class's header, so no dependent of this module needs the plugin's include paths to compile
+// against it.
 //
-// - `EnhancedInput`. The PlayerController, the mapping contexts and the selection state
-//   machine are phase 4's, and a module that declares an input dependency before it has
-//   an input path invites the first person who needs a key binding to put it in the
-//   nearest actor. Added in the phase that adds the controller, not before.
+// `StratBridge` MOVED FROM PUBLIC TO PRIVATE IN THE SAME PASS, closing a non-gating finding
+// the phase 3 gate recorded. The measurement that put it on the list at all is unchanged and
+// still the reason it is named AT ALL -- 4 x LNK2019, quoted below -- but `Public` was the
+// wrong strength of the same statement: nothing in this module's HEADERS names `FStratBridge`
+// beyond a forward declaration, so the arrow was being re-exported to every dependent of
+// `StratPlay` for no caller's benefit. `Private` links identically and stops the propagation.
+// If a header here ever needs the type as more than a forward declaration, that is itself the
+// bug -- it would mean a `UCLASS` header including `StratBridge.h`, which puts the vendored
+// rules headers in front of UHT.
+//
+// NOTE ON WHAT IS NOT HERE, and each absence is a decision rather than an oversight:
 //
 // - `Stratocracy`. Nothing here names FUnitRow or FTerrainRow. The two DataTables arrive
 //   as `UDataTable*` properties and are handed straight to `FStratBridge::LoadDefinitions`
@@ -85,16 +100,25 @@ public class StratPlay : ModuleRules
 			// this module's presentation is engine primitives; none of it is a plugin.
 			"Engine",
 			// The view model and the scoreboard HUD.
-			"StratUI",
-			// `FStratBridge` itself: `StratMatchSubsystem.cpp` constructs one, calls
-			// LoadDefinitions and LoadScenarioFromFile on it, and holds it in a TPimplPtr
-			// whose deleter references the imported destructor. See the header block for
-			// the 4 x LNK2019 this line was added to fix -- the transitive arrow through
-			// StratUI carried the includes and not the import library.
-			"StratBridge"
+			"StratUI"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			// `FStratBridge` itself: `StratMatchSubsystem.cpp` constructs one, calls
+			// LoadDefinitions and LoadScenarioFromFile on it, and holds it in a TPimplPtr
+			// whose deleter references the imported destructor; `StratSelectionMachine.cpp`
+			// and `StratPlayerController.cpp` call the engine-typed façade methods. See the
+			// header block for the 4 x LNK2019 this line was added to fix -- the transitive
+			// arrow through StratUI carried the includes and not the import library -- and
+			// for why it is Private rather than Public.
+			"StratBridge",
+
+			// Enhanced Input. `AStratPlayerController` adds a `UInputMappingContext` on
+			// BeginPlay and binds four `UInputAction`s through `UEnhancedInputComponent`.
+			// Private because no header in this module includes an Enhanced Input header:
+			// the five asset properties are forward-declared `TObjectPtr`s.
+			"EnhancedInput"
+		});
 
 		PublicIncludePaths.AddRange(new string[] {
 			"StratPlay"

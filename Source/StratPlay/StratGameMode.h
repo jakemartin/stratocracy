@@ -37,10 +37,15 @@
 // runs without a scoreboard -- which `UStratMatchSubsystem::HandBridgeToScoreboard` treats
 // as a configuration rather than a fault.
 //
-// `PlayerControllerClass` IS ALSO NOT SET, for the same kind of reason and a different
-// one: there is no Strat player controller yet. Phase 4 builds it, with Enhanced Input and
-// the selection state machine, and sets it here in the same pass. Setting a class now that
-// phase 4 would replace would be a line whose only content is that it will be changed.
+// `PlayerControllerClass` IS SET, AND IT IS THE ONE PLACE THIS CLASS DIFFERS FROM `HUDClass`
+// ABOVE. Phase 4 landed `AStratPlayerController` and set it here in the same pass, as this
+// block previously said it would. The asymmetry with the HUD is deliberate and is about how
+// the two behave unconfigured: a bare `AStratPlayerController` with null input assets is
+// inert, logs one line saying so, and leaves a correct match on screen; a bare
+// `AStratScoreboardHUD` refuses every refresh in its own words and looks like a bridge bug.
+// Left unset, the engine's own `APlayerController` would bind nothing at all, and a seeded
+// match that no click can touch reads as an input-asset fault rather than as a missing
+// controller class -- which is the wrong file to send the next reader to.
 //
 // NOT IN THIS ROUND, with reasons:
 // - Turn hand-over, end-of-match, restart. All of them read or move rules state, which is

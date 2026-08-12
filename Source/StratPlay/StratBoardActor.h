@@ -291,6 +291,27 @@ private:
 	UPROPERTY()
 	TArray<FStratTerrainLayer> TerrainLayers;
 
+	/**
+	 * The axial -> local-space conversion, and now the ONLY copy of the formula.
+	 *
+	 * WHY THIS EXISTS AT ALL, recorded because it closes a finding rather than adding a
+	 * feature. The header block above claims `WorldLocationOfHex` is "the only axial ->
+	 * world conversion in the project", and the phase 3 gate measured that the file
+	 * contained THREE copies of the expressions -- `WorldLocationOfHex`, `ApplyHexes` and
+	 * `FillOverlay` -- differing only in Z. They could not disagree, because all three read
+	 * the same `HexSize`; but the prose was stronger than the code, and the next edit to
+	 * either constant would have had to find all three. Now there is one, and the claim in
+	 * the header block is a fact about the file.
+	 *
+	 * LOCAL AND NOT WORLD, because two of the three callers want local: the tile and
+	 * overlay components sit at the board's root, so they add instances in component space,
+	 * and asking for a world location only to untransform it would be the same arithmetic
+	 * twice. `WorldLocationOfHex` is this plus one `TransformPosition`.
+	 *
+	 * @param LocalZ  the plane to place it on. 0 for tiles, `OverlayZOffset` for a highlight.
+	 */
+	FVector LocalLocationOfHex(FIntPoint Hex, double LocalZ) const;
+
 	/** Finds or creates the layer for a terrain id, registering the component. */
 	FStratTerrainLayer& LayerFor(FName TerrainId);
 

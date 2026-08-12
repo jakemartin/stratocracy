@@ -361,6 +361,178 @@ public:
 	FStratResult Forecast(int32 AttackerId, const strat::Hex& DefenderHex,
 	                      strat::UiForecast& OutForecast) const;
 
+	// ---- The engine-typed façade -----------------------------------------
+	// The six methods below say exactly what the five above say, in `int32` and
+	// `FIntPoint`, and they exist for one reason: `StratPlay` NAMES NO `strat::`
+	// TYPE. That is not a style rule it could bend -- `StratPlay.Build.cs` and
+	// `StratMatchSubsystem.h` both state it, and the actor headers that would
+	// otherwise carry such a type are parsed by UHT, which must never see the
+	// vendored headers. A gameplay caller therefore cannot spell
+	// `std::vector<strat::ReachEntry>` or `strat::Hex` to CALL the typed methods
+	// above, even though calling them would link perfectly well.
+	//
+	// SO THE TRANSLATION HAPPENS HERE, IN THE ONE MODULE THAT IS ALLOWED TO SEE
+	// BOTH WORLDS, and it happens exactly once. The alternative was a translation
+	// helper in `StratPlay` that named `strat::Hex` in a .cpp only -- legal by the
+	// letter of the linker rule, since naming is not calling -- and it was rejected
+	// because it puts a second spelling of the axial coordinate in the module that
+	// is supposed to have none, and because the next person to need one puts it in
+	// an actor. `FIntPoint::X` is `q` and `FIntPoint::Y` is `r`, the same encoding
+	// `FStratHexView::Hex` and `FStratUnitView::Hex` already carry, so a gameplay
+	// caller passes the view model's own value straight back in.
+	//
+	// THEY ADD NO POLICY. Each one forwards to the typed method beside it and
+	// converts the container; every refusal is the typed method's, in its words.
+	// The one exception is documented on `AttackTargetHexes`, and it is an
+	// enumeration rather than a rule.
+	//
+	// OUT OF LINE, DELIBERATELY, all six. An inline body here would force the
+	// caller's translation unit to instantiate over `strat::Hex` and defeat the
+	// whole point; it would also hide them from the link line, which is how the
+	// 4 x LNK2019 measured on `StratPlay` stayed invisible until a real caller
+	// existed (`StratPlay.Build.cs`).
+
+	// §4.10's `{turn, side}` stamp, readable before a command is submitted.
+	//
+	// READ BEFORE, NOT AFTER, AND THAT IS THE WHOLE REASON THESE EXIST. The five
+	// `Submit*` methods stamp the command with the turn and side live at the
+	// instant of submission -- "the command that closes turn N is tagged N" -- so a
+	// log line that wants to report which turn a command belonged to must read
+	// these first. Reading them afterwards tags an `EndTurn` with N+1 and describes
+	// a command that was never submitted. `AStratPlayerController` does exactly
+	// this for its `STRAT-CMD accepted` line.
+	//
+	// Both return 0 on an unseeded bridge, which is not a sentinel: an unseeded
+	// bridge holds a default-constructed `TurnState` and this is faithfully what it
+	// says. Ask `IsSeeded()` to tell that apart from a real turn 0.
+	int32 Turn() const;
+	int32 SideToMove() const;
+
+	// `Reachable`, as parallel arrays. `OutHexes[i]` is reached at `OutCosts[i]`,
+	// in the module's canonical order, and the two are always the same length.
+	//
+	// TWO ARRAYS RATHER THAN AN `FStratReachEntry` STRUCT, because the only
+	// consumer that exists -- the movement overlay -- wants the hexes and not the
+	// costs, and a reflected mirror of `ReachEntry` would be a third spelling of a
+	// value `FStratViewModel` deliberately does not carry. When a §2.11 cost
+	// readout needs one, `OutCosts` is already here to build it from.
+	//
+	// THE REFUSAL IS `Reachable`'s AND SO IS THE NON-EMPTINESS. A successful call
+	// yields at least one entry -- the unit's own hex at cost 0 -- so an empty
+	// result is always a failure wearing one, and this method never manufactures
+	// the empty answer that a hex-distance filter would produce for a surrounded
+	// unit. T-UI-02 measured 122 divergent hexes across 10 of 10 units between the
+	// real query and `distance <= move`; this is the routing that makes the real
+	// one the only one reachable from gameplay code.
+	FStratResult ReachableHexes(int32 UnitId, TArray<FIntPoint>& OutHexes,
+	                            TArray<int32>& OutCosts) const;
+
+	// Every hex this unit may legally attack right now, ascending unit id.
+	//
+	// AN ENUMERATION, NOT A RANGE CHECK, and the distinction is the only reason
+	// this is defensible in a file that computes nothing. It walks the live unit
+	// list, and for each unit not on the attacker's side it ASKS `Forecast` --
+	// which is `strat::uiForecast` and nothing else -- keeping the hex when the
+	// module answers `legal`. No distance is compared here, no range is read off a
+	// `UnitDef`, and no §2.6 rule is restated. If a target is missing it is missing
+	// from `uiForecast`, and T-UI-01 is the gate that says so.
+	//
+	// WHY IT IS HERE AND NOT IN THE SELECTION MACHINE: `uiForecast` carries no
+	// `_API` macro, so the loop can only run in this module (8 x LNK2019, this
+	// header's opening measurement). A gameplay-side loop would have had to
+	// approximate, and approximating §2.6 is the same substitution T-UI-02 catches
+	// for movement.
+	//
+	// THE RULES MODULE OFFERS NO TARGET ENUMERATION OF ITS OWN. `Ui.h` declares
+	// `uiReachable` for movement and has no counterpart for attack; this is that
+	// counterpart, assembled from single-target answers rather than invented. If
+	// one is ever vendored, this method's body becomes a forward to it and no
+	// caller changes.
+	//
+	// AN EMPTY RESULT IS AN ANSWER HERE, unlike `ReachableHexes`, and for the
+	// reason `RecordedLog` is off the refusal channel: a unit with nothing in
+	// reach is an ordinary board position, and there is no null move for attack the
+	// way there is for movement.
+	FStratResult AttackTargetHexes(int32 AttackerId, TArray<FIntPoint>& OutHexes) const;
+
+	// `SubmitMove` and `SubmitAttack`, in `FIntPoint`. X = q, Y = r. They stamp
+	// `{turn, side}` and record exactly as their typed counterparts do, because
+	// they ARE their typed counterparts with one conversion in front.
+	FStratResult SubmitMoveToHex(int32 UnitId, FIntPoint DestHex);
+	FStratResult SubmitAttackAtHex(int32 UnitId, FIntPoint TargetHex);
+
+	// ---- The recording joint, in engine types -----------------------------
+	// `RecordedLog().size()` and "replay it onto another bridge", reachable from a
+	// module that may not name `strat::SaveCommand`.
+	//
+	// THEY EXIST BECAUSE THE JOINT WAS UNPINNABLE, and that is the whole reason,
+	// so it is written down rather than left to be inferred. Phase 4 shipped two
+	// green clauses either side of it: `T-SAVE-05.HotSeatReplayParity` pins
+	// clicks -> outcomes -> submissions, and `T-SAVE-05.RecordedLogReplaysToEqualHash`
+	// pins `SubmitMoveToHex`/`SubmitEndTurn` -> `RecordedLog()` -> replay -> equal
+	// hash. Neither pins that `StratSubmitSelectionCommand` calls a *recording*
+	// entry point at all. The StratPlay clause could not: it drove both bridges
+	// through the same submission function, so any path -- recording or not --
+	// yielded equal hashes, and its command count came from log lines that same
+	// function emitted. Subject and witness were one object. Route a fourth arm of
+	// `StratSelectionMachine.cpp`'s switch through a non-recording apply and both
+	// clauses stay green while `RecordedLog()` comes back empty after a full
+	// hot-seat session -- exactly the property §4.10 needs and exactly what phase
+	// 6's PIE gate leans on when it compares a `STRAT-CMD accepted` line against a
+	// `commandLog` entry.
+	//
+	// `StratPlay` CANNOT NAME `strat::SaveCommand`, so it could not read
+	// `RecordedLog()` and could not build the `TArray<strat::SaveCommand>` that
+	// `ReplayLog` takes. These two are the same shape as the six engine-typed
+	// façade methods above and for the same reason: a module-side value to read
+	// instead of a proxy the code under test produced
+	// (`.agents/ue-project-context.md:189-191`).
+	//
+	// `RecordedCommandCount` IS OFF THE REFUSAL CHANNEL, exactly as `RecordedLog`
+	// is: zero is an answer, it is what a freshly seeded match has, and there is
+	// nothing here for a refusal to say.
+	//
+	// `ReplayRecordedLogOnto` IS ON IT, and refuses six things rather than
+	// no-opping, because a no-op and a full replay are indistinguishable at the
+	// call site and the whole point of this method is to be distinguishable.
+	// Six here means six guard arms in this method's own body, in this order;
+	// `ReplayLog`'s own refusals -- the per-command index, the all-or-nothing
+	// rollback -- are downstream of arm 6 and are deliberately not counted:
+	//
+	//   1. `&Fresh == this` -- replaying a log onto its own recorder would apply
+	//      every command a second time and append it a second time.
+	//   2. this bridge unseeded -- there is no match here to replay.
+	//   3. `Fresh` unseeded -- phase 1's `RefusesUnseeded` is the local precedent.
+	//   4. `Fresh` already carries commands -- the target is meant to be fresh, and
+	//      replaying onto a played match produces a hash comparison that means
+	//      nothing while looking like it means something.
+	//   5. an EMPTY recorded log here. This is the one that DEPARTS from
+	//      `RecordedLog`'s "empty is an ordinary answer" posture, deliberately: as
+	//      a *query* an empty log is a fact about a match, but as the *input to a
+	//      replay* it is a no-op that returns Ok() and equal hashes and proves
+	//      nothing -- which is the precise failure this method was added to make
+	//      visible. Refusing it means a caller that forgot to assert the count
+	//      still fails instead of passing vacuously.
+	//   6. `Fresh` seeded from a different scenario, compared by
+	//      `strat::scenarioHash` over the two retained scenarios rather than by
+	//      scenario id, because the id is a label and the hash is the bytes. A
+	//      mismatched target would refuse partway through `replayLog` with an
+	//      index, or -- worse -- accept and hash differently; naming the scenario
+	//      up front says which of the two happened.
+	//
+	// ON SUCCESS `Fresh` ENDS UP RECORDING WHAT IT REPLAYED, because `ReplayLog`
+	// appends on success. That is not incidental: it is what makes
+	// seed -> replay -> serialize a fixed point, and it means a caller may chain
+	// this without the copy silently becoming a bridge with state but no log.
+	//
+	// NOT A SAVE ROUND TRIP. Nothing here serializes, parses, or touches
+	// `FStratSaveIdentity` -- `SerializeRecordedSave` owns that and
+	// `T-SAVE-06.SaveRoundTripsToEqualHash` already pins it. This is the shorter
+	// path that exists so a module that cannot spell the format can still ask
+	// whether the commands were recorded.
+	int32        RecordedCommandCount() const;
+	FStratResult ReplayRecordedLogOnto(FStratBridge& Fresh) const;
+
 private:
 	// The five typed methods' shared tail: stamps `{turn, side}` off the live
 	// TurnState and hands the command to `Submit`. Private because the stamp is

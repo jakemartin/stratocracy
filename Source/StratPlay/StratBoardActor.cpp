@@ -89,22 +89,29 @@ void AStratBoardActor::BeginPlay()
 	}
 }
 
-FVector AStratBoardActor::WorldLocationOfHex(FIntPoint Hex) const
+FVector AStratBoardActor::LocalLocationOfHex(FIntPoint Hex, double LocalZ) const
 {
 	// POINTY-TOP AXIAL, X = q and Y = r. `HexSize` is the CENTRE-TO-CENTRE distance
 	// between two adjacent hexes, which is why the row step carries the sqrt(3)/2 and the
 	// column step does not: for a pointy-top layout the horizontal neighbour is exactly
 	// one spacing away and the row below is offset by half of one.
 	//
-	// The board plane is the actor's XY. Z is the actor's own -- the header block records
-	// why terrain does not vary it.
+	// THE ONLY COPY OF THIS FORMULA IN THE PROJECT, and it is the only copy as of phase 4 --
+	// see the declaration for the three-copy finding this consolidation closes.
 	const double Q = static_cast<double>(Hex.X);
 	const double R = static_cast<double>(Hex.Y);
 
-	const double LocalX = HexSize * (Q + R * 0.5);
-	const double LocalY = HexSize * (UE_DOUBLE_SQRT_3 * 0.5) * R;
+	return FVector(
+		HexSize * (Q + R * 0.5),
+		HexSize * (UE_DOUBLE_SQRT_3 * 0.5) * R,
+		LocalZ);
+}
 
-	return GetActorTransform().TransformPosition(FVector(LocalX, LocalY, 0.0));
+FVector AStratBoardActor::WorldLocationOfHex(FIntPoint Hex) const
+{
+	// The board plane is the actor's XY. Z is the actor's own -- the header block records
+	// why terrain does not vary it.
+	return GetActorTransform().TransformPosition(LocalLocationOfHex(Hex, 0.0));
 }
 
 FStratTerrainLayer& AStratBoardActor::LayerFor(FName TerrainId)
@@ -202,12 +209,8 @@ bool AStratBoardActor::ApplyHexes(const TArray<FStratHexView>& Hexes, FString& O
 		// Added in COMPONENT-LOCAL space -- the component sits at the board's root, so the
 		// local offset is the same one `WorldLocationOfHex` transforms, and asking for the
 		// world location and then untransforming it would be the same arithmetic twice.
-		const double Q = static_cast<double>(Hex.Hex.X);
-		const double R = static_cast<double>(Hex.Hex.Y);
-		const FVector Local(
-			HexSize * (Q + R * 0.5),
-			HexSize * (UE_DOUBLE_SQRT_3 * 0.5) * R,
-			0.0);
+		// THE FORMULA ITSELF IS `LocalLocationOfHex`'s and used to be repeated here.
+		const FVector Local = LocalLocationOfHex(Hex.Hex, 0.0);
 
 		const int32 InstanceIndex = Layer.Tiles->AddInstance(FTransform(Local), /*bWorldSpace=*/false);
 
@@ -292,12 +295,9 @@ void AStratBoardActor::FillOverlay(UHierarchicalInstancedStaticMeshComponent* Ov
 
 	for (const FIntPoint& Hex : Hexes)
 	{
-		const double Q = static_cast<double>(Hex.X);
-		const double R = static_cast<double>(Hex.Y);
-		const FVector Local(
-			HexSize * (Q + R * 0.5),
-			HexSize * (UE_DOUBLE_SQRT_3 * 0.5) * R,
-			static_cast<double>(OverlayZOffset));
+		// The overlay plane only -- the third former copy of the formula, now the same
+		// call the tiles make with a different Z.
+		const FVector Local = LocalLocationOfHex(Hex, static_cast<double>(OverlayZOffset));
 
 		Overlay->AddInstance(FTransform(Local), /*bWorldSpace=*/false);
 	}

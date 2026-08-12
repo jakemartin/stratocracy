@@ -610,3 +610,204 @@ FStratResult FStratBridge::SerializeRecordedSave(const FStratSaveIdentity& Ident
 	OutText = FromStd(strat::serializeSave(S));
 	return FStratResult::Ok();
 }
+
+// ---------------------------------------------------------------------------
+// The engine-typed façade. See the header block on these: they exist so that
+// `StratPlay` can ask a rules question without naming a `strat::` type, and they
+// add no policy of their own. Every refusal below is forwarded from the typed
+// method beside it, unaltered, so a gameplay-side failure reads in the words of
+// the layer that actually refused.
+// ---------------------------------------------------------------------------
+
+int32 FStratBridge::Turn() const
+{
+	// The live turn number, not a copy kept anywhere. See the header on why a
+	// caller must read this BEFORE submitting.
+	return GameState.turn.turnNumber;
+}
+
+int32 FStratBridge::SideToMove() const
+{
+	return GameState.turn.activeSide;
+}
+
+FStratResult FStratBridge::ReachableHexes(int32           UnitId,
+                                          TArray<FIntPoint>& OutHexes,
+                                          TArray<int32>&     OutCosts) const
+{
+	// Cleared up front for `Reachable`'s own reason: a refusal must not leave the
+	// caller holding a previous call's set and read it as this call's answer.
+	OutHexes.Reset();
+	OutCosts.Reset();
+
+	std::vector<strat::ReachEntry> Reach;
+	const FStratResult Asked = Reachable(UnitId, Reach);
+	if (!Asked.bOk)
+	{
+		return Asked;
+	}
+
+	// Copied in the order the module emitted, with nothing sorted, filtered or
+	// re-costed. `Reachable`'s header states that property of itself and this
+	// method would silently take it away.
+	OutHexes.Reserve(static_cast<int32>(Reach.size()));
+	OutCosts.Reserve(static_cast<int32>(Reach.size()));
+	for (const strat::ReachEntry& E : Reach)
+	{
+		OutHexes.Add(FIntPoint(E.hex.q, E.hex.r));
+		OutCosts.Add(E.cost);
+	}
+
+	return FStratResult::Ok();
+}
+
+FStratResult FStratBridge::AttackTargetHexes(int32 AttackerId, TArray<FIntPoint>& OutHexes) const
+{
+	OutHexes.Reset();
+
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	// The attacker's side, read off the authoritative unit list. A malformed
+	// question -- an id that is not on the board -- is refused here in the same
+	// words `Forecast` and `Reachable` use, rather than coming back as an empty
+	// target list that a caller would draw as "nothing to attack".
+	const strat::GameUnit* Attacker = nullptr;
+	for (const strat::GameUnit& U : GameState.units)
+	{
+		if (U.id == AttackerId)
+		{
+			Attacker = &U;
+			break;
+		}
+	}
+	if (Attacker == nullptr)
+	{
+		return FStratResult::Fail(FString::Printf(TEXT("no unit with id %d"), AttackerId));
+	}
+
+	const int32 AttackerSide = Attacker->side;
+
+	// ONE `Forecast` CALL PER CANDIDATE, and the module's `legal` is the whole of
+	// the decision. Nothing here compares a distance or reads a range: the
+	// candidates are "every unit not on the attacker's side" and the filter is the
+	// rules module's answer about each one.
+	//
+	// The order is `GameState.units`' -- ascending unit id, the same order
+	// `FStratViewModel::Units` carries -- so two calls on the same state produce
+	// the same array, without this method sorting anything.
+	for (const strat::GameUnit& U : GameState.units)
+	{
+		if (U.side == AttackerSide)
+		{
+			continue;
+		}
+
+		strat::UiForecast Forecasted;
+		const FStratResult Asked = Forecast(AttackerId, U.hex, Forecasted);
+		if (!Asked.bOk)
+		{
+			// A refusal here is about the bridge or the tables and not about this
+			// candidate -- `Forecast` answers "out of range" and "same side" with
+			// Ok() and `legal` false. Forwarded rather than skipped, because a
+			// partial target list drawn as a complete one is how a player learns
+			// the wrong thing about a board.
+			OutHexes.Reset();
+			return Asked;
+		}
+
+		if (Forecasted.legal)
+		{
+			OutHexes.Add(FIntPoint(U.hex.q, U.hex.r));
+		}
+	}
+
+	return FStratResult::Ok();
+}
+
+FStratResult FStratBridge::SubmitMoveToHex(int32 UnitId, FIntPoint DestHex)
+{
+	return SubmitMove(UnitId, strat::Hex{DestHex.X, DestHex.Y});
+}
+
+FStratResult FStratBridge::SubmitAttackAtHex(int32 UnitId, FIntPoint TargetHex)
+{
+	return SubmitAttack(UnitId, strat::Hex{TargetHex.X, TargetHex.Y});
+}
+
+// ---------------------------------------------------------------------------
+// The recording joint, in engine types. See the header for why these exist at
+// all -- they are the two values `StratPlay` needs and cannot spell.
+// ---------------------------------------------------------------------------
+
+int32 FStratBridge::RecordedCommandCount() const
+{
+	// The container's own count, not a parallel counter. A counter maintained
+	// beside `Recorded` is a second thing that can disagree with it, and the
+	// disagreement would show up as a test that trusts the counter while the log
+	// it stands for is empty -- which is the exact defect this method exists to
+	// expose.
+	return static_cast<int32>(Recorded.size());
+}
+
+FStratResult FStratBridge::ReplayRecordedLogOnto(FStratBridge& Fresh) const
+{
+	if (&Fresh == this)
+	{
+		return FStratResult::Fail(TEXT("target bridge is this bridge"));
+	}
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+	if (!Fresh.IsSeeded())
+	{
+		return FStratResult::Fail(TEXT("target bridge has no scenario loaded"));
+	}
+	if (Fresh.RecordedCommandCount() != 0)
+	{
+		return FStratResult::Fail(FString::Printf(
+			TEXT("target bridge is not fresh: it has already applied %d command(s)"),
+			Fresh.RecordedCommandCount()));
+	}
+	if (Recorded.empty())
+	{
+		// Refused rather than replayed. An empty log replays to Ok() and to an
+		// equal hash on any target seeded from the same scenario, so a silent
+		// success here is indistinguishable from a full session's worth of
+		// commands -- and telling those two apart is the only job this method has.
+		return FStratResult::Fail(TEXT("no commands have been recorded"));
+	}
+
+	// The scenario's bytes, not its label. `scenarioId` is a name a file chose;
+	// `scenarioHash` is the module's digest over the thing that was actually
+	// seeded, and it is the same function `SerializeRecordedSave` writes into a
+	// §4.10 header for the same reason.
+	const std::string MineHash  = strat::scenarioHash(LoadedScenario);
+	const std::string TheirHash = strat::scenarioHash(Fresh.ScenarioData());
+	if (MineHash != TheirHash)
+	{
+		return FStratResult::Fail(
+			FString::Printf(TEXT("target bridge seeded from a different scenario (%s vs %s)"),
+				*FromStd(LoadedScenario.scenarioId), *FromStd(Fresh.ScenarioData().scenarioId)),
+			FromStd(TheirHash));
+	}
+
+	// `ReplayLog` owns all-or-nothing, the refusal wording and the index, and the
+	// append that leaves `Fresh` recording what it replayed. Nothing is re-decided
+	// here; this method is the guard band in front of it and the type conversion.
+	TArray<strat::SaveCommand> Log;
+	Log.Reserve(static_cast<int32>(Recorded.size()));
+	for (const strat::SaveCommand& C : Recorded)
+	{
+		Log.Add(C);
+	}
+
+	return Fresh.ReplayLog(Log);
+}

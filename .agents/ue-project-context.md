@@ -172,8 +172,18 @@ Build.bat StratocracyEditor Win64 Development -project="E:\MultiAgent\Stratocrac
 ### Headless test run
 
 ```
-"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "Stratocracy.uproject" -ExecCmds="Automation RunTests Stratocracy;Quit" -unattended -nopause -nosplash -nullrhi -ReportExportPath="Saved/AutomationReport"
+"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "E:\MultiAgent\Stratocracy\Stratocracy.uproject" -ExecCmds="Automation RunTests Stratocracy;Quit" -unattended -nopause -nosplash -nullrhi -ReportExportPath="E:\MultiAgent\Stratocracy\Saved\AutomationReport"
 ```
+
+**Both paths must be absolute, and this is measured.** A bare `"Stratocracy.uproject"` makes the
+engine exit in about a second with *"Project file not found"* / *"Could not find a valid project
+file, the engine will exit now"* — before automation starts, and without writing a log, because
+it dies ahead of log init. `cd`-ing to the repo root does not help: the engine resolves a bare
+`.uproject` against its own install and search paths, not the process working directory. For the
+same reason a relative `-ReportExportPath` lands the report under
+`C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\Saved\`, not in the repo.
+
+A run that reports "Project file not found" has run **zero** tests. Do not read that as a pass.
 
 ### The editor holds a write lock on the module DLLs
 

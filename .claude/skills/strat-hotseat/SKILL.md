@@ -61,10 +61,15 @@ Build.bat StratocracyEditor Win64 Development -project="E:\MultiAgent\Stratocrac
 Headless test run:
 
 ```
-"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "Stratocracy.uproject" -ExecCmds="Automation RunTests Stratocracy;Quit" -unattended -nopause -nosplash -nullrhi -ReportExportPath="Saved/AutomationReport"
+"C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "E:\MultiAgent\Stratocracy\Stratocracy.uproject" -ExecCmds="Automation RunTests Stratocracy;Quit" -unattended -nopause -nosplash -nullrhi -ReportExportPath="E:\MultiAgent\Stratocracy\Saved\AutomationReport"
 ```
 
 Pass these into the agent prompt rather than letting an agent recall them.
+
+**Both paths in the test command must be absolute.** A bare `"Stratocracy.uproject"` exits in
+about a second with *"Project file not found"*, before any test runs and without writing a log —
+`cd`-ing to the repo root does not help. A run reporting that has run **zero** tests; never read
+it as a pass.
 
 ## The scope fence
 

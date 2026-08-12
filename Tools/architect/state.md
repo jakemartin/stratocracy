@@ -20,6 +20,12 @@ _Last run 2026-08-11 19:30 UTC._
 - `bridge_event_list` — Bridge ordered event list (§4.9 'command in / events out') (actionable)
 - `buildlist_query` — Buildlist query on the Ui.h contract (actionable, excluded: shape unstated in the GDD by explicit decision, and the file is vendored certified bytes in another repo -- T-INT-01 hash-matches it)
 - **Hot-seat milestone, out of scope**: production menu (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.
+- The **owned-bridge-path leak on `AStratScoreboardHUD` is not pinned.** Proving it needs an
+  allocation counter behind `FStratBridge` — offered by `strat-gameplay-engineer` during phase 2
+  and **declined as new production surface beyond phase 2's exit criterion**. The tests prove the
+  *adopted* bridge is not freed (`T-UI-03.EndPlayLeavesAnAdoptedBridgeUsable`); they do not prove
+  the owned one is. Stated honestly in `StratScoreboardHUDSeam.cpp:31-37`. Out of scope for the
+  hot-seat milestone.
 
 ## Hot-seat milestone
 
@@ -101,3 +107,48 @@ _Last run 2026-08-11 19:30 UTC._
     Woods=2/Mountains=3 cost.
   - Plus `T-UI-01.*` (3 clauses) and `T-SAVE-06.*` (5 clauses) in
     `StratBridgeQueryParity.cpp` / `StratBridgeSaveRecording.cpp`.
+
+### Phase 2
+
+- **Completed:** 2026-08-12
+- **Exit criterion:** "`StratViewModel.h/.cpp` in `StratUI`; `AdoptBridge` +
+  `SetViewingSide` on `AStratScoreboardHUD`; build green; all existing tests
+  still green".
+- **Met.** Evidence, all verified by the gate in source rather than taken
+  from builder reports:
+  - `Source/StratUI/StratViewModel.h`/`.cpp` — a fully reflected view model
+    that **names no `strat::` type at all**: `FIntPoint` hexes (X=q, Y=r),
+    `FName` terrain/unit ids, `EStratResultTier`. `StratViewModel.h` includes
+    only `CoreMinimal.h` and its own `.generated.h`, and forward-declares
+    `class FStratBridge`. Built by one `STRATUI_API` free function
+    `StratBuildViewModel(const FStratBridge&, int32 ViewingSide,
+    FStratViewModel&, FString&)`, deliberately a free function so it is
+    assertable with no actor and no Slate in existence.
+  - `AdoptBridge`, `SetViewingSide`, and `GetViewingSide` on
+    `AStratScoreboardHUD`. **Ownership is represented by which of two members
+    is non-null, with no `bOwns` bool**: `TPimplPtr<FStratBridge> OwnedBridge`
+    (freed in `EndPlay`) vs raw `FStratBridge* AdoptedBridge` (**never freed
+    here**; `EndPlay` nulls it and destroys nothing). `AdoptBridge` does
+    `OwnedBridge.Reset(); AdoptedBridge = &InBridge;` in that order, so no
+    interval exists with both set. `BeginPlay` still calls `SeedBridge` when
+    `AdoptedBridge == nullptr`, keeping the owned path alive for the
+    pre-existing tests.
+  - Suite **44/44** (was 31; +13), report `Saved/AutomationReport/index.json`,
+    `reportCreatedOn 2026.08.12-18.06.16`, `succeeded 44 / failed 0 / notRun
+    0`, every entry `Success`. All 31 pre-existing tests present and passing.
+  - New clauses: six `T-INT-05.*` on the builder
+    (`Source/StratUI/Tests/StratViewModelParity.cpp`) and seven `T-UI-03.*` on
+    the HUD seam (`Source/StratUI/Tests/StratScoreboardHUDSeam.cpp`).
+- **Two contracts phase 3 inherits — recorded here explicitly, they are the
+  reason the phase was worth gating:**
+  - **`AdoptBridge` refuses an unseeded bridge.** So
+    `UStratMatchSubsystem` **must seed before handing over**. That ordering
+    is now a contract, not a convention.
+  - **`FStratUnitView::bDone` and `bLockedThisTurn` are declared and left
+    false, with no producer.** `Ui.h:186-197` puts the presentation block in
+    the view model precisely so T-INT-05 can rebuild from the model alone.
+    Phase 3's selection machine must write them **onto the built model, never
+    keep its own copy in an actor** — if it does, T-INT-05 silently becomes
+    false with no compiler diagnostic. `T-INT-05.PresentationBitsAreDefaulted`
+    pins the negative; nothing can pin the positive obligation until the
+    owner exists.

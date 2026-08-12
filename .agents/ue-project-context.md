@@ -187,7 +187,9 @@ Naming: **`Stratocracy.<Module>.<AcceptanceID>.<Clause>`** — e.g.
 A test that derives what it then asserts is testing itself. `StratScoreboardParity.cpp` is the
 reference shape.
 
-Baseline as of this writing: **31 tests, 31 passing** from a clean clone.
+The count moves every phase and goes stale the moment it is restated — read it from
+`Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
+number here. Last observed here: 44/44, hot-seat phase 2, 2026-08-12.
 
 ### Build
 

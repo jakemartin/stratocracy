@@ -35,6 +35,33 @@
 // pointer. The refresh path below is already written that way: `RefreshScoreboard`
 // reads through `GetBridge()` and does not care who allocated it.
 //
+// THAT DEBT IS NOW HALF PAID, and the half that is paid is the seam rather than the
+// move. `AdoptBridge` lets a foreign owner -- phase 3's `UStratMatchSubsystem`, per
+// `Tools/architect/state.md` -- hand this HUD a bridge it did not create, and the
+// ownership question is answered by WHICH MEMBER IS SET rather than by a flag anyone
+// has to maintain:
+//
+//   `OwnedBridge`   a TPimplPtr, non-null exactly when this HUD allocated the bridge.
+//                   EndPlay resets it, which frees it.
+//   `AdoptedBridge` a raw observing pointer, non-null exactly when the bridge belongs to
+//                   somebody else. EndPlay clears the pointer and frees NOTHING.
+//
+// AT MOST ONE IS EVER NON-NULL. `AdoptBridge` releases the owned one before taking the
+// borrowed one, so there is no state in which this class both owns and borrows, and
+// therefore no state in which "who frees it" has two answers. `GetBridge()` prefers the
+// adopted pointer and is the ONLY reader of either member, so every path through this
+// class -- refresh, liveness, teardown -- sees the same bridge without knowing which
+// kind it is. Two members rather than one pointer plus a `bOwns` bool because a bool can
+// disagree with the pointer beside it and a null member cannot disagree with itself; the
+// cost is one pointer on an actor that exists once per player.
+//
+// THE OWNED PATH IS NOT REPLACED AND MUST NOT BE. A map whose GameMode names this HUD
+// class and nothing else still seeds its own bridge on BeginPlay and still frees it, and
+// the Automation pass in Source/StratUI/Tests/ still constructs a bare `FStratBridge`
+// and hands it to the builder. Adoption is a second path beside the first, so the debt
+// above is discharged the day the subsystem lands rather than the day this HUD stops
+// compiling.
+//
 // WHY THIS HEADER MUST NEVER INCLUDE StratBridge.h. It declares a UCLASS, so UHT
 // parses it. `StratBridge.h` includes the vendored `strat` headers (Data.h, Ui.h, ...)
 // and its own comment records why that is safe THERE: it "declares no reflected types
@@ -175,7 +202,111 @@ public:
 	bool IsScoreboardLive() const;
 
 	/**
-	 * The bridge this HUD created, or null if setup refused.
+	 * Takes a bridge this HUD did not create, and gives up the one it did.
+	 *
+	 * THE BORROWING SEAM the header block's debt names. Phase 3's `UStratMatchSubsystem`
+	 * owns the authoritative `strat::GameState` and hands it here; this HUD then draws a
+	 * match it does not own, which is what §4.1's "never own rules" asks of an actor.
+	 * After this call `GetBridge()` returns `InBridge`, `EndPlay` frees NOTHING, and any
+	 * bridge this HUD had allocated for itself is already destroyed.
+	 *
+	 * BY REFERENCE AND NOT BY POINTER, so there is no null case and therefore no
+	 * "un-adopt" that would leave this HUD with neither bridge. Handing ownership back is
+	 * not a supported transition and is not needed by any caller: the subsystem outlives
+	 * the HUD in phase 3's arrangement, and a HUD that has adopted keeps drawing until the
+	 * world goes away.
+	 *
+	 * CALL IT BEFORE OR AFTER BeginPlay, both work and they do different things. Called
+	 * before (the subsystem's path), `SeedBridge` is skipped entirely and this HUD never
+	 * allocates a bridge at all -- the adopted one is already seeded and seeding a second
+	 * time would give the map two `strat::GameState`s to disagree over. Called after, the
+	 * HUD's own bridge is destroyed here and the caller's takes its place.
+	 *
+	 * IT DOES NOT REFRESH, deliberately. Refreshes are requested by whoever changed the
+	 * state -- the constructor comment on this class records why there is no automatic
+	 * poll -- and adopting is a change of source, not of state. A caller that wants the
+	 * panel to show the new bridge calls `RefreshScoreboard` next; until it does, the
+	 * scoreboard keeps showing the last model it successfully built, which is the same
+	 * promise `Refresh` makes about every other refusal.
+	 *
+	 * REFUSES AN UNSEEDED BRIDGE, in this class's own words rather than deferring to a
+	 * refusal on every refresh forever after. `FStratBridge::MakeUiSnapshot` refuses a
+	 * bridge with nothing to project precisely so that "not loaded yet" cannot be mistaken
+	 * for "a match in which nothing has happened", and adopting one would turn that into a
+	 * permanent, unattributed blank panel. Seed first, then hand it over.
+	 *
+	 * NOT A UFUNCTION and it cannot be: `FStratBridge` is not a reflected type, and making
+	 * it one would mean putting the vendored headers in front of UHT. The handover is C++,
+	 * between the subsystem and this class.
+	 *
+	 * @param OutFailureReason  why the bridge was not adopted; empty on success. On a
+	 *                          refusal NOTHING changes -- the previous bridge, owned or
+	 *                          adopted, is still in place and still whoever's it was.
+	 */
+	bool AdoptBridge(FStratBridge& InBridge, FString& OutFailureReason);
+
+	/**
+	 * Changes which `strat` side the scoreboard is drawn FOR.
+	 *
+	 * THIS IS WHAT MAKES HOT-SEAT WORK on the existing panel. §2.11.4's two columns are
+	 * YOU and ENEMY, and which side is "YOU" is a property of whose screen this is, not of
+	 * the match -- `StratScoreboardWidget.h` is explicit that `sideToMove` and the viewing
+	 * side differ every other turn. The turn loop calls this at the hand-over and the same
+	 * scoreboard reads for the other player.
+	 *
+	 * IT MUTATES NO GAME STATE, and that is a guarantee rather than an observation: it
+	 * touches one `int32` on this actor and then asks the widget to rebuild. It submits no
+	 * command, it does not touch the bridge, and it cannot change what the rules module
+	 * holds. A view of a match is not a move in it.
+	 *
+	 * IT REFRESHES WHEN THERE IS A SCOREBOARD TO REFRESH, because a viewing side that has
+	 * changed without the panel changing is the same value being wrong on screen -- and
+	 * the reconciliation posture this project takes is that presentation is REBUILT from
+	 * the model rather than patched towards it. When there is no widget up, the new side
+	 * is stored and the next successful refresh uses it.
+	 *
+	 * ON A FAILED REFRESH THE SIDE HAS STILL CHANGED, and the return value says the
+	 * refresh failed rather than that the set did. That ordering is deliberate: the widget
+	 * leaves its `Model` untouched on refusal, so the panel still shows the OLD side's
+	 * correct standings, and a caller that retried the refresh later would get the new
+	 * side without having to re-set it. The alternative -- rolling the side back -- would
+	 * mean a hot-seat hand-over silently staying with the previous player.
+	 *
+	 * @param InViewingSide     which `strat` side is the "YOU" column; NOT `sideToMove`.
+	 *                          Range-checked in the .cpp, where SIDE_COUNT is reachable.
+	 * @param OutFailureReason  the refusing layer's own words; empty on success.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Scoreboard")
+	bool SetViewingSide(int32 InViewingSide, FString& OutFailureReason);
+
+	/**
+	 * Which `strat` side the scoreboard is currently drawn FOR.
+	 *
+	 * A READER AND NOTHING ELSE. It does not clamp, does not refresh, does not touch the
+	 * bridge, and cannot fail. `SetViewingSide` remains the only writer, and this exists so
+	 * that reading the stored side costs nothing and changes nothing -- a getter that
+	 * repaired a value on the way out would make "what is stored" and "what is returned"
+	 * two different questions, and the interesting question about this field is precisely
+	 * whether a refused `SetViewingSide` left it alone.
+	 *
+	 * IT CLOSES A COVERAGE HOLE RATHER THAN ADDING A FEATURE. `ViewingSide` is protected,
+	 * and the only other window onto it -- the widget's `Model` -- cannot be opened
+	 * headless, because `UStratScoreboardWidget` is `Abstract` and needs a WBP asset to
+	 * exist at all. So `T-UI-03.SetViewingSideRefusesOutOfRange` could pin the return value
+	 * of a refusal but not its defining consequence, that THE STORED SIDE IS UNCHANGED.
+	 * With this reader that clause is checkable from an Automation test with no assets.
+	 *
+	 * IT IS NOT A WINDOW ONTO THE PANEL. On a failed refresh inside `SetViewingSide` the
+	 * stored side has already moved while the widget still shows the previous side's
+	 * standings -- that divergence is deliberate and documented on `SetViewingSide`, and
+	 * this function reports the STORED side, not the drawn one. A caller wanting to know
+	 * what is on screen asks the widget's model, not this.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Scoreboard")
+	int32 GetViewingSide() const;
+
+	/**
+	 * The bridge this HUD is reading, whether it created it or adopted it.
 	 *
 	 * NOT A UFUNCTION and it cannot be: `FStratBridge` is not a reflected type, and
 	 * making it one would mean putting the vendored headers in front of UHT. C++ within
@@ -184,9 +315,17 @@ public:
 	 *
 	 * BORROWED, NEVER STORED. `MakeUiWorld` hands out pointers into bridge-owned memory
 	 * and the bridge's own header warns that world must not outlive it; the same applies
-	 * one level up to this pointer, which dies with the HUD and therefore with the map.
+	 * one level up to this pointer. An OWNED bridge dies with the HUD and therefore with
+	 * the map; an ADOPTED one outlives it, and a caller holding this pointer past EndPlay
+	 * is relying on somebody else's lifetime either way.
+	 *
+	 * THE ONLY READER OF EITHER MEMBER. Adoption is expressed here and nowhere else, so
+	 * no path through this class has to know which kind of bridge it has.
 	 */
-	FStratBridge* GetBridge() const { return Bridge.Get(); }
+	FStratBridge* GetBridge() const
+	{
+		return AdoptedBridge != nullptr ? AdoptedBridge : OwnedBridge.Get();
+	}
 
 	/** The scoreboard widget, or null when setup refused. Read-only on purpose: the HUD
 	 *  creates and owns it, and a second creator is a second lifetime to reason about. */
@@ -315,16 +454,42 @@ protected:
 
 private:
 	/**
-	 * The authoritative `strat::GameState`, one level of indirection down.
+	 * The authoritative `strat::GameState`, one level of indirection down, WHEN THIS HUD
+	 * IS THE OWNER. Null once a bridge has been adopted, and null before setup runs.
 	 *
 	 * NOT A UPROPERTY -- `FStratBridge` is not a reflected type and must not become one.
 	 * Held by TPimplPtr rather than by value for exactly that reason: a by-value member
 	 * would require the full definition here, and the full definition is the include
-	 * this whole file is arranged to refuse.
+	 * this whole file is arranged to refuse. And by TPimplPtr rather than TUniquePtr for
+	 * the C4150 the header block measures.
+	 *
+	 * THIS MEMBER IS WHAT FREES THE BRIDGE, and it is the only thing in the project that
+	 * frees one this HUD allocated. `EndPlay` resets it; `AdoptBridge` resets it before
+	 * taking a foreign bridge, because a HUD that kept its own alive underneath an adopted
+	 * one would be leaking a whole `strat::GameState` per level load with nothing to point
+	 * at.
 	 *
 	 * The widget holds no pointer to this. `Refresh` takes the bridge by reference per
 	 * call and copies engine-typed values out of the snapshot, so teardown order between
 	 * the two is not something anyone has to get right.
 	 */
-	TPimplPtr<FStratBridge> Bridge;
+	TPimplPtr<FStratBridge> OwnedBridge;
+
+	/**
+	 * A bridge belonging to somebody else, or null. Set only by `AdoptBridge`.
+	 *
+	 * RAW, AND RAW IS THE POINT. Every smart pointer available here would claim some share
+	 * of a lifetime this class does not have any share of. `EndPlay` sets it to null and
+	 * DESTROYS NOTHING; if the owner outlives this HUD, which is the arrangement phase 3's
+	 * `UStratMatchSubsystem` has, that is correct, and if it does not, the owner tore down
+	 * a bridge while an actor was still drawing from it and the fix is in the owner.
+	 *
+	 * NOT A UPROPERTY -- `FStratBridge` is not a UObject, so there is nothing here for the
+	 * garbage collector to keep alive and nothing it could null out. The lifetime is C++'s
+	 * and is stated in `AdoptBridge`'s contract.
+	 *
+	 * NEVER NON-NULL AT THE SAME TIME AS `OwnedBridge`. See the header block; `GetBridge()`
+	 * would still be well-defined if it were, but "who frees it" would not be.
+	 */
+	FStratBridge* AdoptedBridge = nullptr;
 };

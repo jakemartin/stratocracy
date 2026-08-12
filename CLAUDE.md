@@ -13,8 +13,9 @@ the engine asks them for answers and never decides an outcome itself.
 3. **Never `#include "StratBridge.h"` from a header that declares a `UCLASS`/`USTRUCT`/`UENUM`.**
    It would put the vendored headers in front of UHT. Forward declare, include from the `.cpp`,
    and hold the bridge as `TPimplPtr` — never `TUniquePtr` (measured: `C4150`).
-4. **Never write a `/Game/` path literal into C++.** Asset references are `EditDefaultsOnly`
-   properties set on a Blueprint default.
+4. **Never write a `/Game/` path literal into gameplay C++.** Asset references are
+   `EditDefaultsOnly` properties set on a Blueprint default. Automation-test fixtures and the
+   import commandlet are the two standing exceptions.
 5. **Never `cat` the GDD.** It is at `E:\MultiAgent\stratocracy-content\Stratocracy_Prototype_GDD.md`,
    446 KB with ~100 KB lines. Grep it or slice it.
 6. **Agents do not commit.** Staging and commits are the user's call.

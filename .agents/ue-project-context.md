@@ -53,6 +53,13 @@ no C++ depends on — one reached only from asset data, like a GameMode Blueprin
 built by UBT otherwise, and the failure presents as *"my classes don't appear in the editor"*
 alongside a **green** build.
 
+**With one exception, and it is not optional: a directory with no `IMPLEMENT_MODULE` must NOT be
+listed.** `Source/StratRules/` is deliberately absent from that array — it holds vendored C++ that
+declares no module object, and listing it once **made the editor abort at startup** with *"The game
+module 'StratRules' could not be successfully initialized"*. Recorded at `StratBridge.cpp:10-14`.
+Before adding a directory to `Modules`, confirm it carries `IMPLEMENT_MODULE`. An audit that flags
+`StratRules` as an unregistered module has this backwards.
+
 ---
 
 ## Hard constraints, with their measurements
@@ -116,10 +123,17 @@ and the rules from drifting.
 resolve the same replay log to a **different unit type, silently**. Row order is taken from the
 table and then *asserted* equal to `strat::loadUnits` over the same vendored CSV — never assumed.
 
-### Never write a `/Game/` path literal into C++
+### Never write a `/Game/` path literal into *gameplay* C++
 
 Asset references are `EditDefaultsOnly` `TObjectPtr` properties set on a Blueprint default, not
 `ConstructorHelpers` string lookups. A renamed asset must not be a compile-time break.
+
+Two places legitimately carry the literal, because neither has a Blueprint default to hold a
+property and both fail loudly rather than silently: **automation tests** loading a fixture
+(`LoadTable(TEXT("/Game/StratData/DT_Units.DT_Units"))`, as the existing parity tests do) and
+**`ImportStratDataCommandlet`**, which *authors* those packages and is the producer of the path
+rather than a consumer of it. The rule binds gameplay and widget code. There are zero
+`ConstructorHelpers` asset lookups in this tree; keep it that way.
 
 ---
 

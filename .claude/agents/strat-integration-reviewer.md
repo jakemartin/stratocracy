@@ -61,10 +61,16 @@ StratPlay → StratUI     (when it exists)
 report that does has bad ground truth, and the fix is this file and the context file, not the
 tree. **`StratUI` must not gain a `Stratocracy` dependency.** No cycle may appear.
 
-**6. New modules registered.**
-Any new `Source/<Module>/` directory must appear in `Stratocracy.uproject`'s `Modules` array,
-and must carry `PCHUsage = NoPCHs` and `bUseUnity = false` if its `.cpp` files reach
-`StratBridge.h`.
+**6. New modules registered — unless they have no module object.**
+Any new `Source/<Module>/` directory carrying `IMPLEMENT_MODULE` must appear in
+`Stratocracy.uproject`'s `Modules` array, and must carry `PCHUsage = NoPCHs` and
+`bUseUnity = false` if its `.cpp` files reach `StratBridge.h`.
+
+**`Source/StratRules/` is deliberately absent from that array and must stay absent.** It holds
+vendored C++ with no `IMPLEMENT_MODULE`, and listing it once made the editor abort at startup —
+*"The game module 'StratRules' could not be successfully initialized"*, recorded at
+`StratBridge.cpp:10-14`. Flagging it as unregistered is a false positive that costs a startup
+abort to discover. Check for `IMPLEMENT_MODULE` before you report a missing registration.
 
 **7. `Source/Stratocracy/` untouched.**
 ```bash

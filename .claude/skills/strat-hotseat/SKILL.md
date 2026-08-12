@@ -43,12 +43,38 @@ gate returns `PASS`.
 | # | Editor | Agents | Exit criterion |
 |---|---|---|---|
 | **0** | closed | `strat-data-steward` | `DT_Units`/`DT_Terrain` row order proven equal to `units.csv`/`terrain.csv` (or explicitly escalated); 18/18 tests green; `git status` clean |
-| **1** | closed | `strat-gameplay-engineer` → `strat-test-author` | `FStratBridge` gains `Reachable`, `Forecast`, the five `Submit*` façade methods, `RecordedLog`, `SerializeRecordedSave`; build green; new StratBridge parity tests green |
+| **1** | closed | `strat-gameplay-engineer` → `strat-test-author` | `FStratBridge` gains `Forecast`, the five `Submit*` façade methods, `RecordedLog`, `SerializeRecordedSave` (`Reachable` is **already landed and untested** — see below); build green; parity tests green for **every** one of those methods **including `Reachable`** |
 | **2** | closed | `strat-gameplay-engineer` → `strat-test-author` | `StratViewModel.h/.cpp` in `StratUI`; `AdoptBridge` + `SetViewingSide` on `AStratScoreboardHUD`; build green; **all 18 existing tests still green** |
 | **3** | closed | `strat-gameplay-engineer` → `strat-test-author` | `StratPlay` module created **and registered in `Stratocracy.uproject`**; board actor, unit actor, match subsystem, camera pawn, game mode; build green; hex-layout round-trip and view-reconcile tests green |
 | **4** | closed | `strat-gameplay-engineer` → `strat-test-author` | PlayerController with Enhanced Input, the selection state machine as a plain testable struct, the `STRAT-CMD` log line; build green; **hot-seat replay-parity test green** |
 | **5** | **open** | `strat-editor-builder` → `strat-data-steward` | Hex mesh + terrain material instances, Input Mapping Context + Input Actions, the Blueprints and Widget Blueprints, `Lvl_FerrumCrossing`; `Config` map defaults flipped last |
 | **6** | **open** | `strat-editor-builder` → `strat-test-author` → `strat-data-steward` | PIE playtest screenshots plus every `assert_log_contains` passing; full suite green; evidence assembled under `Tools/architect/evidence/` |
+
+### Phase 1 carries a debt from the smoke test — do not let it close silently
+
+`FStratBridge::Reachable` was landed early by smoke test S5 and shipped at `e0cc53d` **with no
+test**. Build green, gated `VERDICT: PASS`, zero coverage.
+
+The trap: phase 1's brief used to list `Reachable` among the methods to *add*, so an agent reading
+it sees the method already present, ticks it off, and writes tests only for what it actually wrote.
+"New StratBridge parity tests green" is then satisfied by tests for `Forecast` and `Submit*` alone,
+and `Reachable` ships permanently untested — including the clause that exists precisely to catch a
+hex-distance filter standing in for a real reachability query, which the GDD records as having
+already happened once.
+
+**Phase 1 does not close until these five clauses exist and pass**, named by the engineer in its
+own report:
+
+| Clause | Property it pins |
+|---|---|
+| `T-UI-02.MatchesModuleQuery` | `Reachable` returns exactly what `strat::uiReachable` returns — entry for entry, in order. Catches the bridge sorting, filtering or re-costing. |
+| `T-UI-02.NotHexDistance` | The set differs from a naive `hexDistance <= move` filter on Ferrum Crossing. **Without this, a regression to a distance filter passes the clause above whenever that clause is also broken.** |
+| `T-UI-02.RefusesUnknownUnit` | An unknown id returns `bOk == false` with an empty out-param, distinguishable from a legitimate result. |
+| `T-UI-02.SuccessIsNeverEmpty` | Every `bOk == true` call yields at least the unit's own hex at cost 0 — the property that makes the refusal channel meaningful. |
+| `T-UI-02.RefusesUnseeded` | An unloaded or unseeded bridge refuses with a distinct reason rather than an empty set. |
+
+All five live in `Source/StratBridge/Tests/`, because `StratBridge` is the only module that can call
+both sides.
 
 ## Commands — verbatim, never reconstructed
 

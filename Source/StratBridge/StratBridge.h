@@ -37,6 +37,13 @@
 // out") and the widgets. T-INT-02, T-INT-03 and T-SAVE-06 assert over the state
 // hash and the rejection channel, which is what this file provides. The event list
 // is ruled to live headless, and no acceptance ID names it as its subject.
+//
+// THE RECORDED LOG BELOW IS NOT THAT EVENT LIST, and the two are easy to conflate
+// because both are ordered and both come out of `Submit`. The log is §4.10's
+// `commandLog` -- what was ASKED, in the format's own type, replayable -- and the
+// event list is what HAPPENED, which is the thing a presentation layer animates.
+// A save cannot be written from the second and a hit-flash cannot be driven from
+// the first. Landing the log does not close `bridge_event_list`.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -49,6 +56,26 @@
 #include "Ui.h"
 
 class UDataTable;
+
+// The two §4.10 header fields this object CANNOT know, supplied by the caller.
+//
+// `rulesCommit` is the crew commit the vendored sources were taken at and
+// `dataHash` is the digest over the §4.8 data set; both live in manifests this
+// module does not read, and Save.h states the posture in as many words -- "every
+// field is SUPPLIED, never recomputed here", which is what keeps save part (a)'s
+// dependency set empty. A bridge that went and read a manifest to fill these in
+// would be asserting agreement it is in no position to assert, and `checkHeader`
+// would then compare a file against the file's own source of truth.
+//
+// The other three header fields are deliberately NOT here: `scenarioId` and
+// `scenarioHash` come off the scenario this bridge actually loaded, and
+// `stateHash` off the state it actually holds. Taking those as arguments too
+// would let a caller write a save that describes a match this object is not in.
+struct FStratSaveIdentity
+{
+	FString RulesCommit;
+	FString DataHash;
+};
 
 // A refusal carries the reason the owning module gave. `Id` is that module's own
 // failing-invariant tag where it supplied one (e.g. "T-SAVE-05"), empty otherwise.
@@ -102,10 +129,98 @@ public:
 	// would make T-INT-03's "no partial application" clause true of the bridge
 	// while hiding whether it is true of the rules module -- the gate would
 	// then assert a property of this file rather than of the thing under test.
+	//
+	// IT IS ALSO THE ONE PLACE A COMMAND IS RECORDED, and that is why the five
+	// typed methods below funnel through it rather than each appending for
+	// themselves. `RecordedLog` claims to be every command this bridge applied;
+	// recording per-caller makes that claim true only of the callers that
+	// remembered, and the failure mode is a save that replays to a different
+	// state with nothing to point at. Appended ONLY on success, so a rejected
+	// command leaves the log exactly as §4.9 leaves the state.
 	FStratResult Submit(const strat::SaveCommand& Command);
 
+	// ---- Typed commands (§4.9's five, and no others) ----------------------
+	// One method per `strat::SaveCommandKind`, checked against Save.h:54: Move,
+	// Attack, Build, Capture, EndTurn. There is no Wait -- §2.11.1's "wait" is the
+	// selection machine spending a unit's turn and it reaches no rules module, so
+	// a sixth method here would be inventing a command the format cannot carry.
+	//
+	// THEY EXIST TO STAMP `{turn, side}`, which is the whole content of the
+	// façade. §4.10 tags every log entry with them and `applyCommand` REFUSES an
+	// entry whose tag disagrees with the live turn (Replay.good.cpp:379-386), so
+	// a caller assembling a raw SaveCommand has to know the turn number and the
+	// active side to get a command accepted at all -- two facts it would then be
+	// holding a copy of. These read them off the authoritative TurnState at the
+	// instant of submission and never from a caller argument. There is
+	// deliberately no overload that lets a caller supply its own tag.
+	//
+	// STAMPED BEFORE APPLICATION, and that ordering is load-bearing for EndTurn
+	// alone: the command that closes turn N is tagged N, and reading the tag back
+	// off the state afterwards would tag it N+1 and make the log unreplayable at
+	// the first turn boundary.
+	//
+	// `SubmitBuild` TAKES A defIndex AND SAYS SO. Save.h:64 carries it in a field
+	// spelled `unitId`, and `applyCommand` uses it as a raw bounds-checked index
+	// into the definitions vector with no name lookup -- the reason `DT_Units`
+	// row order is load-bearing (phase 0, `Tools/architect/state.md`). The
+	// parameter is named for what the rules module does with it rather than for
+	// what the format calls it, because the format's spelling is the trap.
+	FStratResult SubmitMove(int32 UnitId, const strat::Hex& DestHex);
+	FStratResult SubmitAttack(int32 UnitId, const strat::Hex& TargetHex);
+	FStratResult SubmitBuild(const strat::Hex& FactoryHex, int32 DefIndex);
+	FStratResult SubmitCapture(int32 UnitId);
+	FStratResult SubmitEndTurn();
+
 	// Replays a whole log, all-or-nothing (T-SAVE-05's property, the module's).
+	//
+	// RECORDS THE WHOLE LOG ON SUCCESS and nothing on failure, which follows from
+	// what `replayLog` guarantees rather than being a second policy: it works on a
+	// copy and assigns only after the last command succeeds, so "applied" and
+	// "recorded" stay the same set. A caller that seeds and then replays a loaded
+	// log therefore ends up with a recorded log equal to the one it loaded, which
+	// is what makes save -> load -> save a fixed point.
 	FStratResult ReplayLog(const TArray<strat::SaveCommand>& Log);
+
+	// ---- Recorded log ----------------------------------------------------
+	// Every command this bridge applied, in the order it applied them. §4.10's
+	// `commandLog` field, and the input to `SerializeRecordedSave` below.
+	//
+	// NOT ON THE REFUSAL CHANNEL, deliberately, and the difference from
+	// `Reachable` is the point rather than an inconsistency. An empty reach set is
+	// never an answer -- `reachable` always includes the unit's own hex at cost 0 --
+	// so there it is always a failure wearing one. An empty command log IS an
+	// answer: it is what a freshly seeded match has, and a match that has taken no
+	// command is an ordinary state and not a fault. There is nothing here for a
+	// refusal to say.
+	//
+	// CLEARED BY A RESEED. `LoadDefinitions` and `LoadScenarioFromFile` both drop
+	// it, because a log is only meaningful against the seed it was recorded from:
+	// carried across a reseed it would serialize into a save whose `commandLog`
+	// replays to a state its own `stateHash` disagrees with, and T-SAVE-06 would
+	// then be catching the bridge rather than the format.
+	const std::vector<strat::SaveCommand>& RecordedLog() const { return Recorded; }
+
+	// The §4.10 file for the match this object is in: the recorded log above, the
+	// header fields the caller supplies (see FStratSaveIdentity), the loaded
+	// scenario's id and hash, and this state's canonical hash.
+	//
+	// SERIALIZES, AND DOES NOT WRITE. There is no path here, no FFileHelper call
+	// and no slot: where a save lives is the save-slot UI's question and that is
+	// out of this milestone. Handing back the text keeps the format testable
+	// without a disk, which is the posture Save.h takes on `parseSave`.
+	//
+	// EVERY FIELD IS SOMEONE ELSE'S ANSWER. `formatVersion` is
+	// `strat::kFormatVersion`; `scenarioHash` is `strat::scenarioHash` over the
+	// retained scenario; `stateHash` is `strat::canonicalStateHash`; `seed` is 0
+	// because Save.h says it MUST be and no RNG ships; and `result` is read off a
+	// snapshot this bridge projected rather than compared here, so the
+	// InProgress-is-null mapping stays Ui.good.cpp:228's and the spelling stays
+	// `strat::tierName`'s. The bytes are `strat::serializeSave`'s.
+	//
+	// REFUSES ON AN UNSEEDED BRIDGE rather than emitting a save of an empty match,
+	// on the same line MakeUiSnapshot holds: a caller must not be able to mistake
+	// "nothing is loaded" for "a match in which nothing has happened".
+	FStratResult SerializeRecordedSave(const FStratSaveIdentity& Identity, FString& OutText) const;
 
 	// ---- Queries ---------------------------------------------------------
 	// §4.10's canonical state hash, computed by the rules module.
@@ -217,7 +332,42 @@ public:
 	// least one entry.
 	FStratResult Reachable(int32 UnitId, std::vector<strat::ReachEntry>& OutReach) const;
 
+	// T-UI-01's pre-commit forecast for one attack, as `strat::uiForecast` returns
+	// it -- distance, damage, whether the defender dies, whether a counter fires
+	// and for how much. Routed here for the same reason `Reachable` is: the symbol
+	// carries no `_API` macro and a widget calling it directly is the LNK2019 this
+	// header opens with.
+	//
+	// TWO CHANNELS, AND THEY ANSWER DIFFERENT QUESTIONS. `FStratResult` says
+	// whether the query could be ASKED; `OutForecast.legal` says what the rules
+	// ANSWERED. "Out of range", "same side", "no unit on that hex" and "a unit
+	// cannot attack itself" are all answers -- the module states each with its own
+	// reason and a UI shows them -- so they come back as Ok() with `legal` false,
+	// and folding them into a refusal would make an ordinary hover look like a
+	// fault. A refusal here means the bridge is not loaded, is not seeded, holds a
+	// unit outside its own table, or was handed an attacker id that does not exist.
+	//
+	// THE UNKNOWN-ATTACKER CASE IS A REFUSAL, matching `Reachable` exactly and
+	// deliberately not left to the module. `uiForecast` would answer it with
+	// `legal` false and "no such unit", which is spelled the same way as "out of
+	// range" and is not the same kind of thing: one is the rules declining an
+	// attack, the other is the caller naming a unit that is not on the board. The
+	// resulting rule is crisp and is what a gate can pin -- bOk false means the
+	// question was malformed, bOk true means the rules answered it.
+	//
+	// COMPUTES NOTHING. Not the distance, not the damage, not the counter. If a
+	// number here is wrong it is wrong in Combat.cpp, which is the property §2.6's
+	// "the forecast is exactly what resolves" rests on.
+	FStratResult Forecast(int32 AttackerId, const strat::Hex& DefenderHex,
+	                      strat::UiForecast& OutForecast) const;
+
 private:
+	// The five typed methods' shared tail: stamps `{turn, side}` off the live
+	// TurnState and hands the command to `Submit`. Private because the stamp is
+	// the guarantee -- a public entry point taking a half-filled command would let
+	// a caller opt out of it.
+	FStratResult SubmitStamped(strat::SaveCommand Command);
+
 	// Owned by value: this object IS the authoritative state.
 	strat::GameState GameState;
 
@@ -235,6 +385,12 @@ private:
 	// copied-out guided list because the file is the source and a second
 	// extraction is a second thing that can disagree with it.
 	strat::Scenario LoadedScenario;
+
+	// §4.10's `commandLog`, accumulated as the match is played. Held as the
+	// module's own `SaveCommand` rather than as an engine mirror of it, because
+	// the only consumers are `serializeSave` and `replayLog` and a mirror would be
+	// a second spelling of the format that could disagree with the first.
+	std::vector<strat::SaveCommand> Recorded;
 
 	// Assembles the combat stat block for one unit exactly as the driver's
 	// `combatUnit` does: every stat LOOKED UP from the UnitDef at `defIndex`,

@@ -154,12 +154,16 @@ namespace StratBridgeParity
 // a different unit type -- and it would do so SILENTLY, because both worlds would
 // still produce a self-consistent game.
 //
-// This is not covered by T-INT-02 today, and the gap is stated rather than left to
-// be discovered: the parity fixture carries no Build command, because the AI that
-// produced it emits none on the shipped scenario. So the divergence this check
-// exists to catch is exactly the one the replay cannot currently see, and a
-// GATE-DATA-VENDOR pass does not close it either -- that gate compares BYTES on
-// disk and says nothing about the order the importer produced from them.
+// WHY THIS CHECK IS KEPT EVEN THOUGH T-INT-02 WOULD ALSO CATCH THE FAILURE. The
+// parity fixture's 169-command log carries 22 Build commands, each with a raw
+// defIndex (measured on `Data/parity_fixture.save`: Attack 74, Move 49, Build 22,
+// Capture 12, EndTurn 12; entry 0 is a Build). So a mis-ordered DT_Units WOULD move
+// T-INT-02's canonical state hash, and this check is not the only net under that
+// failure. It is the sharper one: it names the offending row and field directly,
+// where T-INT-02 surfaces the same defect as an opaque hash mismatch three hundred
+// commands downstream of the command that caused it. A GATE-DATA-VENDOR pass is not
+// a substitute for either -- that gate compares BYTES on disk and says nothing about
+// the order the importer produced from them.
 //
 // It mints no acceptance ID, on the GATE-DATA-VENDOR / GATE-AI-SMOKE precedent.
 // ---------------------------------------------------------------------------

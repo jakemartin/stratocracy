@@ -6,6 +6,8 @@ _Last run 2026-08-11 19:30 UTC._
 
 - `Source/StratUI/StratScoreboardHUD.h` — applied (iteration 1, step `host_h`, live)
 - `Source/StratUI/StratScoreboardHUD.cpp` — applied (iteration 1, step `host_cpp`, live)
+- `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
+  covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 
 ## DECISIONS
 
@@ -17,7 +19,6 @@ _Last run 2026-08-11 19:30 UTC._
 - `production_widget` — Production menu widget (§2.11.5) (blocked on buildlist_query)
 - `bridge_event_list` — Bridge ordered event list (§4.9 'command in / events out') (actionable)
 - `buildlist_query` — Buildlist query on the Ui.h contract (actionable, excluded: shape unstated in the GDD by explicit decision, and the file is vendored certified bytes in another repo -- T-INT-01 hash-matches it)
-- **Deferred, not built** — `FStratBridge::Reachable` landed at `e0cc53d` with zero tests. Its five clauses are phase 1 work (hot-seat milestone).
 - **Hot-seat milestone, out of scope**: production menu (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.
 
 ## Hot-seat milestone
@@ -68,3 +69,35 @@ _Last run 2026-08-11 19:30 UTC._
     comparison is therefore the correct and sufficient check for terrain; no
     GATE-BRIDGE-DEFS-shaped terrain test is needed. Suite is 18/18 and git
     status is clean apart from this steward's own edits.
+
+### Phase 1
+
+- **Completed:** 2026-08-12
+- **Exit criterion:** "`FStratBridge` gains `Forecast`, the five `Submit*` façade
+  methods, `RecordedLog`, `SerializeRecordedSave`; build green; parity tests
+  green for every one of those methods including `Reachable`".
+- **Met.** Evidence:
+  - Engineer added, additions only (349 insertions, 0 deletions, confirmed by
+    the gate against `HEAD` `b0a55c5`), to `Source/StratBridge/StratBridge.h`/
+    `.cpp`: `FStratSaveIdentity`, `SubmitMove`, `SubmitAttack`, `SubmitBuild`,
+    `SubmitCapture`, `SubmitEndTurn`, `RecordedLog`, `SerializeRecordedSave`,
+    `Forecast`, private `SubmitStamped` + `Recorded`.
+  - The five command kinds are `Move, Attack, Build, Capture, EndTurn`
+    (`Source/StratRules/Save.h:54`) — **there is no `Wait`**. The orchestration
+    brief said `Wait` and was wrong; recorded here so the next reader does not
+    re-introduce it. `Wait` is a UI-level concept the save format cannot
+    carry.
+  - Suite **31/31** (was 18; +13), report
+    `Saved/AutomationReport/index.json`, `reportCreatedOn
+    2026.08.12-16.31.54`, `succeeded 31 / failed 0 / notRun 0`.
+  - `Reachable`'s five clauses are now green in
+    `Source/StratBridge/Tests/StratBridgeQueryParity.cpp`, closing the
+    zero-coverage debt from `e0cc53d`: `T-UI-02.MatchesModuleQuery`
+    (`:245-311`), `.NotHexDistance` (`:336-474`), `.RefusesUnknownUnit`
+    (`:490-551`), `.SuccessIsNeverEmpty` (`:564-621`), `.RefusesUnseeded`
+    (`:637-704`). `NotHexDistance` measured **122 divergent hexes across 10 of
+    10 units**, from three causes: occupancy (a friendly unit blocks a
+    distance-1 hex), impassable Water at moveCost 0, and weighted
+    Woods=2/Mountains=3 cost.
+  - Plus `T-UI-01.*` (3 clauses) and `T-SAVE-06.*` (5 clauses) in
+    `StratBridgeQueryParity.cpp` / `StratBridgeSaveRecording.cpp`.

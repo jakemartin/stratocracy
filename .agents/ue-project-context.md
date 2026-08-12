@@ -125,10 +125,11 @@ resolves the same replay log to a **different unit type, silently**. Row order i
 table and then *asserted* equal to `strat::loadUnits` over the same vendored CSV by
 `GATE-BRIDGE-DEFS` — never assumed.
 
-That test exists because `T-INT-02` **cannot** catch this: the parity fixture carries no Build
-command, since the AI that produced it emits none on the shipped scenario
-(`StratBridgeParity.cpp:157-162`). The one divergence unit order can cause is the one the replay
-never exercises.
+The fixture carries 22 Build commands, each with a raw `defIndex`, so a mis-ordered `DT_Units`
+**would** move `T-INT-02`'s canonical state hash. `GATE-BRIDGE-DEFS` is therefore no longer the
+only net under that failure — but it remains the sharper one, because it names the offending row
+directly instead of surfacing as an opaque hash mismatch three hundred commands later. Keep the
+test; fix the rationale. (`StratBridgeParity.cpp:158-162`.)
 
 **Terrain.** Ruled not load-bearing, on evidence, phase 0 / 2026-08-12. No `SaveCommand` field
 carries a terrain index (`Save.h:59-68`); seeding resolves every hex's terrain **by name**
@@ -186,7 +187,7 @@ Naming: **`Stratocracy.<Module>.<AcceptanceID>.<Clause>`** — e.g.
 A test that derives what it then asserts is testing itself. `StratScoreboardParity.cpp` is the
 reference shape.
 
-Baseline as of this writing: **18 tests, 18 passing** from a clean clone.
+Baseline as of this writing: **31 tests, 31 passing** from a clean clone.
 
 ### Build
 

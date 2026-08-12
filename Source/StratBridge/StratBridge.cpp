@@ -110,6 +110,10 @@ FStratResult FStratBridge::LoadDefinitions(const UDataTable* UnitTable, const UD
 	// every unit unmarked until a scenario is loaded again, which is absence and
 	// not a wrong answer.
 	LoadedScenario = strat::Scenario();
+	// And the recorded log with it. Every Build entry in it carries a defIndex
+	// into the vector that just moved, so the log is not merely old -- it names
+	// different unit types than it did a line ago.
+	Recorded.clear();
 	return FStratResult::Ok();
 }
 
@@ -163,6 +167,11 @@ FStratResult FStratBridge::LoadScenarioFromFile(const FString& ScenarioFilePath,
 	// guided-seat list for units that are not there.
 	LoadedScenario = std::move(Parsed);
 
+	// A new seed, so the old log describes a match that no longer exists. Cleared
+	// on the success path only: a failed load leaves the previous match intact and
+	// its log with it.
+	Recorded.clear();
+
 	bSeeded = true;
 	return FStratResult::Ok();
 }
@@ -179,7 +188,85 @@ FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 	{
 		return FStratResult::Fail(FromStd(R.reason), FromStd(R.failedId));
 	}
+
+	// AFTER the module accepted it, and only then. §4.9 says a rejected command
+	// changes nothing; a log that recorded the attempt would be a change.
+	Recorded.push_back(Command);
 	return FStratResult::Ok();
+}
+
+FStratResult FStratBridge::SubmitStamped(strat::SaveCommand Command)
+{
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	// READ, not decided, and read BEFORE the command is applied. `applyCommand`
+	// refuses an entry whose tag disagrees with the live turn, and an EndTurn read
+	// back afterwards would carry the turn it opened rather than the one it closed.
+	Command.turn = GameState.turn.turnNumber;
+	Command.side = GameState.turn.activeSide;
+
+	return Submit(Command);
+}
+
+FStratResult FStratBridge::SubmitMove(int32 UnitId, const strat::Hex& DestHex)
+{
+	strat::SaveCommand C;
+	C.kind    = strat::SaveCommandKind::Move;
+	C.unitId  = UnitId;
+	C.hex     = DestHex;
+	C.hasUnit = true;
+	C.hasHex  = true;
+	return SubmitStamped(C);
+}
+
+FStratResult FStratBridge::SubmitAttack(int32 UnitId, const strat::Hex& TargetHex)
+{
+	strat::SaveCommand C;
+	C.kind    = strat::SaveCommandKind::Attack;
+	C.unitId  = UnitId;
+	C.hex     = TargetHex;
+	C.hasUnit = true;
+	C.hasHex  = true;
+	return SubmitStamped(C);
+}
+
+FStratResult FStratBridge::SubmitBuild(const strat::Hex& FactoryHex, int32 DefIndex)
+{
+	strat::SaveCommand C;
+	C.kind = strat::SaveCommandKind::Build;
+	// The format's `unitId` field, which for a Build is the §2.4 ROW INDEX and not
+	// a unit id. Save.h:64 names both meanings on one line; this is the second.
+	C.unitId  = DefIndex;
+	C.hex     = FactoryHex;
+	C.hasUnit = true;
+	C.hasHex  = true;
+	return SubmitStamped(C);
+}
+
+FStratResult FStratBridge::SubmitCapture(int32 UnitId)
+{
+	strat::SaveCommand C;
+	C.kind    = strat::SaveCommandKind::Capture;
+	C.unitId  = UnitId;
+	C.hasUnit = true;
+	// No hex: Save.h:66 states Capture names none, and a hex set here would be a
+	// field of another kind's command, which the parser REFUSES rather than
+	// ignores.
+	C.hasHex  = false;
+	return SubmitStamped(C);
+}
+
+FStratResult FStratBridge::SubmitEndTurn()
+{
+	strat::SaveCommand C;
+	C.kind = strat::SaveCommandKind::EndTurn;
+	// The one kind that names neither a unit nor a hex (Save.h:66-67).
+	C.hasUnit = false;
+	C.hasHex  = false;
+	return SubmitStamped(C);
 }
 
 FStratResult FStratBridge::ReplayLog(const TArray<strat::SaveCommand>& Log)
@@ -203,6 +290,11 @@ FStratResult FStratBridge::ReplayLog(const TArray<strat::SaveCommand>& Log)
 			FString::Printf(TEXT("%s (at index %d)"), *FromStd(R.reason), R.failedIndex),
 			FromStd(R.failedId));
 	}
+
+	// All-or-nothing at the module means all-or-nothing here: `replayLog` assigned
+	// only after the last command succeeded, so appending the whole log keeps
+	// "recorded" equal to "applied" without this file re-deciding either.
+	Recorded.insert(Recorded.end(), AsVector.begin(), AsVector.end());
 	return FStratResult::Ok();
 }
 
@@ -415,5 +507,106 @@ FStratResult FStratBridge::Reachable(int32 UnitId, std::vector<strat::ReachEntry
 	// the module and never recomputes movement" is structural here only for as
 	// long as that stays true.
 	OutReach = strat::uiReachable(World, UnitId);
+	return FStratResult::Ok();
+}
+
+FStratResult FStratBridge::Forecast(int32 AttackerId, const strat::Hex& DefenderHex,
+                                    strat::UiForecast& OutForecast) const
+{
+	// Reset up front, exactly as Reachable clears its vector: a refusal must not
+	// leave the caller holding a previous forecast's damage number and read it as
+	// this one's.
+	OutForecast = strat::UiForecast();
+
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	// Reachable's reason, unchanged: MakeUiWorld SKIPS a unit whose defIndex is
+	// outside the loaded table, so without this the attacker would arrive at
+	// `findUiUnit` as "no unit with id N" -- blaming the caller's argument for a
+	// fault in the table.
+	for (const strat::GameUnit& U : GameState.units)
+	{
+		if (U.defIndex < 0 || static_cast<size_t>(U.defIndex) >= Units.size())
+		{
+			return FStratResult::Fail(FString::Printf(
+				TEXT("unit %d carries defIndex %d, outside the loaded unit table"),
+				U.id, U.defIndex));
+		}
+	}
+
+	const strat::UiWorld World = MakeUiWorld();
+
+	// The malformed-question case, refused here rather than left to the module.
+	// See the header: `uiForecast` spells "no such unit" the same way it spells
+	// "out of range", and those are not the same kind of thing.
+	if (strat::findUiUnit(World, AttackerId) == nullptr)
+	{
+		return FStratResult::Fail(FString::Printf(TEXT("no unit with id %d"), AttackerId));
+	}
+
+	// The one line this method exists for. Nothing above it computed a distance
+	// and nothing below it adjusts a damage number -- T-UI-01's "the forecast is
+	// exactly what resolves" is structural only for as long as that holds. The
+	// DEFENDER is deliberately not pre-checked: an empty hex, a friendly unit and
+	// a target out of range are answers this returns with the module's own reason.
+	OutForecast = strat::uiForecast(World, AttackerId, DefenderHex);
+	return FStratResult::Ok();
+}
+
+// ---------------------------------------------------------------------------
+// Recorded log -> §4.10 save (row 10 part (a)).
+// ---------------------------------------------------------------------------
+
+FStratResult FStratBridge::SerializeRecordedSave(const FStratSaveIdentity& Identity,
+                                                 FString&                  OutText) const
+{
+	OutText.Reset();
+
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	// `result` is read off a projection rather than compared here. Ui.good.cpp:228
+	// owns the InProgress-is-null mapping and `tierName` owns the spelling; a
+	// `tier != InProgress` written in this file would be a second copy of the first
+	// and a second spelling of the second, and the save would then be able to
+	// disagree with the scoreboard about whether the match is over.
+	strat::UiSnapshot Snapshot;
+	const FStratResult Projected = MakeUiSnapshot(Snapshot);
+	if (!Projected.bOk)
+	{
+		return Projected;
+	}
+
+	strat::Save S;
+	S.formatVersion = strat::kFormatVersion;
+	S.rulesCommit   = ToStd(Identity.RulesCommit);
+	S.dataHash      = ToStd(Identity.DataHash);
+	// The loaded scenario's own id and the module's digest over it -- not a
+	// caller's claim about which scenario this is.
+	S.scenarioId    = LoadedScenario.scenarioId;
+	S.scenarioHash  = strat::scenarioHash(LoadedScenario);
+	// Save.h:78: reserved, MUST be 0. No RNG ships, so there is nothing for a
+	// non-zero value to mean.
+	S.seed          = 0;
+	S.commandLog    = Recorded;
+	S.stateHash     = strat::canonicalStateHash(GameState);
+	S.hasResult     = Snapshot.match.hasResult;
+	S.result        = S.hasResult ? std::string(strat::tierName(Snapshot.match.resultTier))
+	                              : std::string();
+
+	OutText = FromStd(strat::serializeSave(S));
 	return FStratResult::Ok();
 }

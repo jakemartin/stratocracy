@@ -365,3 +365,55 @@ FStratResult FStratBridge::CheckSnapshotFidelity(
 				OutFailures.Num()),
 			TEXT("T-UI-05"));
 }
+
+FStratResult FStratBridge::Reachable(int32 UnitId, std::vector<strat::ReachEntry>& OutReach) const
+{
+	// Cleared up front so a refusal cannot leave the caller holding a previous
+	// call's set and read it as this call's answer.
+	OutReach.clear();
+
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	// MakeUiSnapshot's refusal, made here for its reason AND one more.
+	// MakeUiWorld SKIPS a unit whose defIndex is outside the loaded table, so
+	// without this loop such a unit would reach `findUiUnit` below as "no unit
+	// with id N" -- a refusal blaming the caller's argument for a fault in the
+	// table. Validating first keeps those two answers from being spelled the
+	// same way.
+	for (const strat::GameUnit& U : GameState.units)
+	{
+		if (U.defIndex < 0 || static_cast<size_t>(U.defIndex) >= Units.size())
+		{
+			return FStratResult::Fail(FString::Printf(
+				TEXT("unit %d carries defIndex %d, outside the loaded unit table"),
+				U.id, U.defIndex));
+		}
+	}
+
+	// Borrowed for the length of this call and never escaping it, exactly as in
+	// MakeUiSnapshot: every pointer in the world points into `this`.
+	const strat::UiWorld World = MakeUiWorld();
+
+	// The module's own finder, over the world the query will resolve against --
+	// not a scan of `GameState.units`. Asking a different list would let this
+	// check pass where `uiReachable` then finds nothing, which is the one
+	// disagreement the check exists to prevent.
+	if (strat::findUiUnit(World, UnitId) == nullptr)
+	{
+		return FStratResult::Fail(FString::Printf(TEXT("no unit with id %d"), UnitId));
+	}
+
+	// The one line this method exists for. Nothing above it narrowed the set and
+	// nothing below it reorders, re-costs or trims one -- §2.5's "the UI queries
+	// the module and never recomputes movement" is structural here only for as
+	// long as that stays true.
+	OutReach = strat::uiReachable(World, UnitId);
+	return FStratResult::Ok();
+}

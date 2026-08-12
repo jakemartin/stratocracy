@@ -183,6 +183,40 @@ public:
 	FStratResult CheckSnapshotFidelity(const strat::UiSnapshot& Snapshot,
 	                                   TArray<FString>& OutFailures) const;
 
+	// ---- Rules queries ---------------------------------------------------
+	// T-UI-02's set for one unit, as `strat::uiReachable` returns it -- hex for
+	// hex, cost for cost, in the module's canonical order.
+	//
+	// WHY IT IS A METHOD HERE RATHER THAN A CALL AT THE CALL SITE: the same
+	// measurement this header opens with. `strat::uiReachable` carries no `_API`
+	// macro, so a movement-highlight actor or a widget that called it directly
+	// would not link -- the 8 x LNK2019 recorded above, and the single LNK2019
+	// CheckSnapshotFidelity records from the StratUI test that tried it. Every
+	// rules answer a presentation layer needs arrives as a method on this class;
+	// this is the movement one, and it is the first of them a gameplay module
+	// (rather than a test) will reach for.
+	//
+	// WHAT IT FORECLOSES, AND DELIBERATELY: a hex-distance filter standing in
+	// for a real query. Move.h weights cost by terrain and blocks pathing on
+	// occupancy, so `distance <= move` agrees with the rules on an empty plain
+	// and lies everywhere else. T-UI-02 exists to catch that substitution, and
+	// a gate can only prefer the routed query if there IS a routed query. This
+	// is it.
+	//
+	// COMPUTES NOTHING, on the same line MakeUiSnapshot holds. It gathers the
+	// same `UiWorld` and forwards the module's vector unchanged -- no filter, no
+	// sort, no re-cost, no truncation. If a cost here is wrong it is wrong in
+	// Move.cpp.
+	//
+	// REFUSES RATHER THAN HANDING BACK AN EMPTY SET. `uiReachable` returns the
+	// empty vector for an unknown unit id and for missing tables, and those are
+	// its ONLY empty results -- `reachable` always includes the unit's own hex at
+	// cost 0, the null move -- so an empty vector is never an answer, it is
+	// always a failure wearing one. The caller cannot tell which failure from the
+	// vector; this method says. A successful call therefore always yields at
+	// least one entry.
+	FStratResult Reachable(int32 UnitId, std::vector<strat::ReachEntry>& OutReach) const;
+
 private:
 	// Owned by value: this object IS the authoritative state.
 	strat::GameState GameState;

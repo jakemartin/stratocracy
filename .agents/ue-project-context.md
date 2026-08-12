@@ -27,6 +27,9 @@ The rules are *deterministic and headless*. The engine never decides an outcome;
 StratRules ──┐  (vendored; ALSO compiled into StratBridge as Vendored/*.strat.cpp)
              │
 Stratocracy ─┴──▶ StratBridge ──▶ StratUI ──▶ StratPlay
+                        └────────────────────────┘
+                     (StratPlay also depends on StratBridge directly —
+                      measured, see "Hard constraints" below)
 ```
 
 | Module | Depends on | Holds |
@@ -35,7 +38,7 @@ Stratocracy ─┴──▶ StratBridge ──▶ StratUI ──▶ StratPlay
 | `Stratocracy` | Core, CoreUObject, Engine, InputCore, EnhancedInput, …, `StratRules` | Game module: UE template code + `StratData/` row structs and the import commandlet. |
 | `StratBridge` | Core, CoreUObject, Engine, **`Stratocracy`** | `FStratBridge` — the only code that knows both worlds. Owns the authoritative `strat::GameState`. |
 | `StratUI` | Core, CoreUObject, Engine, `StratBridge`; private UMG/Slate/SlateCore | The UMG surface and the reflected view model. |
-| `StratPlay` *(planned)* | …, EnhancedInput, `StratUI` | Gameplay actors, camera, input, the match subsystem. |
+| `StratPlay` | …, `StratBridge`, `StratUI` | Gameplay actors, camera, input, the match subsystem. |
 
 Each arrow is load-bearing and each has a recorded reason. Read the `.Build.cs` header block
 before you change one.
@@ -189,7 +192,7 @@ reference shape.
 
 The count moves every phase and goes stale the moment it is restated — read it from
 `Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
-number here. Last observed here: 44/44, hot-seat phase 2, 2026-08-12.
+number here. Last observed here: 51/51, hot-seat phase 3, 2026-08-12.
 
 ### Build
 

@@ -22,10 +22,19 @@ _Last run 2026-08-11 19:30 UTC._
 - **Hot-seat milestone, out of scope**: production menu (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.
 - The **owned-bridge-path leak on `AStratScoreboardHUD` is not pinned.** Proving it needs an
   allocation counter behind `FStratBridge` — offered by `strat-gameplay-engineer` during phase 2
-  and **declined as new production surface beyond phase 2's exit criterion**. The tests prove the
-  *adopted* bridge is not freed (`T-UI-03.EndPlayLeavesAnAdoptedBridgeUsable`); they do not prove
-  the owned one is. Stated honestly in `StratScoreboardHUDSeam.cpp:31-37`. Out of scope for the
-  hot-seat milestone.
+  and **declined as new production surface beyond phase 2's exit criterion**; offered again in
+  phase 3 and **declined a second time**. The tests prove the *adopted* bridge is not freed
+  (`T-UI-03.EndPlayLeavesAnAdoptedBridgeUsable`); `T-INT-05.SubsystemSeedsBeforeHandover` proves
+  the *consequence* that the HUD reads the subsystem's bridge and not one it allocated, but
+  neither proves the owned path itself. Stated honestly in `StratScoreboardHUDSeam.cpp:31-37`.
+  Out of scope for the hot-seat milestone.
+- **`HexSize` on `AStratBoardActor`** is centre-to-centre spacing for a pointy-top layout, the
+  only axial→world constant in the project; must be matched to whatever tile mesh phase 5 picks.
+- **`EnhancedInput` is absent from `StratPlay.Build.cs` by design**; phase 4 adds it. Do not
+  "fix" it early.
+- **A `bDone`/`bLockedThisTurn` producer does not exist yet.** Phase 4's selection machine must
+  write those onto the built view model via `ApplyView(model)`, never into an actor.
+  `T-INT-05.NoActorHoldsPresentationBits` pins the negative only.
 
 ## Hot-seat milestone
 
@@ -152,3 +161,121 @@ _Last run 2026-08-11 19:30 UTC._
     false with no compiler diagnostic. `T-INT-05.PresentationBitsAreDefaulted`
     pins the negative; nothing can pin the positive obligation until the
     owner exists.
+
+### Phase 3
+
+- **Completed:** 2026-08-12
+- **Exit criterion:** "`StratPlay` module created and registered in
+  `Stratocracy.uproject`; board actor, unit actor, match subsystem, camera
+  pawn, game mode; build green; hex-layout round-trip and view-reconcile
+  tests green."
+- **Met.** Gate passed with **zero findings**. Evidence:
+  - New module `StratPlay`, registered in `Stratocracy.uproject` (+5 lines) as
+    `Runtime`/`Default`, **and** carrying `IMPLEMENT_MODULE(FDefaultModuleImpl,
+    StratPlay)` at `StratPlay.cpp:14`. The gate verified both, specifically
+    because `Source/StratRules/` is the local precedent for a module with a
+    `Build.cs` and no `.uproject` entry — copying that shape would have
+    produced a green build and a module that never loads.
+  - Classes: `AStratBoardActor : AActor`, `AStratUnitActor : AActor`,
+    `UStratMatchSubsystem : UWorldSubsystem`, `AStratCameraPawn : APawn`,
+    `AStratGameMode : AGameModeBase`. Reflected structs `FStratTerrainLayer`,
+    `FStratMatchConfig`.
+  - Suite **51/51** (was 44; +7), `Saved/AutomationReport/index.json`,
+    `reportCreatedOn 2026.08.12-19.11.44`, `succeeded 51 / failed 0 / notRun
+    0 / succeededWithWarnings 0`. All 44 baseline tests still plain
+    `Success`, none downgraded. Read from the report by the gate, not taken
+    from a builder.
+  - The seven new clauses, by full name:
+    `Stratocracy.StratPlay.T-UI-02.BoardHexRoundTrip`,
+    `.T-UI-02.ReachOverlayIsNotComputedHere` (both
+    `Source/StratPlay/Tests/StratBoardPicking.cpp`),
+    `.T-INT-05.ApplyViewSpawnsMovesAndDestroys`,
+    `.T-INT-05.NoActorHoldsPresentationBits` (both
+    `Tests/StratMatchReconcile.cpp`), `.T-INT-05.SubsystemSeedsBeforeHandover`,
+    `.T-INT-05.StartMatchRefusalLeavesNoBridge`,
+    `.T-UI-03.SetViewingSideMutatesNoState` (all
+    `Tests/StratMatchLifecycle.cpp`).
+
+  Decisions worth preserving because they foreclose alternatives:
+  - **Tile HISM components are created from data, keyed by `FName`
+    `TerrainId`, not seven `CreateDefaultSubobject` calls.** The
+    declared-in-C++ alternative was rejected because it makes
+    `StratBoardActor` a second author of the §4.8 terrain table, and because
+    phase 0 ruled `DT_Terrain` row order *not* load-bearing — so a positional
+    array would draw Water as Woods after a table edit, silently. Cost: tiles
+    do not appear individually in the Blueprint component tree; phase 5
+    styles them through the keyed `TerrainMeshes` map.
+  - **There is deliberately no `HexAtWorldLocation`.** Picking is an
+    instance-index lookup only. A rounding inverse of `WorldLocationOfHex`
+    would disagree with the forward map at tile edges, and disagreeing about
+    which hex the cursor is on is how a player attacks the wrong unit.
+  - **`UWorldSubsystem`, not GameInstance and not the GameMode.** GameInstance
+    outlives the map while the seeded state is per-map; the GameMode is an
+    actor, and putting `strat::GameState` on an actor reinstates the §4.1
+    debt this phase discharges. The GameMode holds configuration only.
+  - **`AGameModeBase`, not `AGameMode`** — `AGameMode`'s `MatchState` machine
+    would be a second, engine-side answer to "is the match over" beside
+    `strat::UiMatchView`.
+  - **`StartMatch` is all-or-nothing on the rules side, deliberately not on
+    the presentation side.** A failed load resets the bridge to null so
+    `GetBridge()` can never hand out a half-loaded one; a missing tile mesh
+    returns `false` with the match live. `T-INT-05.StartMatchRefusalLeavesNoBridge`
+    pins the first across four refusal paths — including the one where
+    `LoadDefinitions` succeeded and a half-loaded bridge genuinely existed.
+
+  **The measured link fact — the phase's most transferable finding:**
+  `StratPlay.Build.cs` must name `StratBridge` **directly**; relying on
+  `StratUI`'s public `StratBridge` dependency produced 4 × `LNK2019`. The
+  missing symbols were exactly the out-of-line `STRATBRIDGE_API` ones —
+  `FStratBridge::LoadDefinitions`, `LoadScenarioFromFile`, the constructor,
+  and the destructor via `TPimplPtr`'s `DeleterFunc<FStratBridge>` — while
+  `IsSeeded()` and `GetBridge()`, being header-inline, never appeared. **A
+  smaller caller would not have surfaced this.** A transitive public
+  dependency propagates include paths but **not the import library**. This is
+  categorically **not** the `strat::`-across-a-module error measured 8× on
+  this project: those symbols arrive *unadorned* in `namespace strat`,
+  whereas these arrived `__declspec(dllimport)`, proving the header and the
+  `_API` macro both resolved.
+
+  Deferred, recorded because a positive obligation is now owed to phase 4:
+  - **`HexSize` on `AStratBoardActor`** is centre-to-centre spacing for a
+    pointy-top layout and is the only axial→world constant in the project.
+    It must be matched to whatever tile mesh phase 5 picks.
+  - **`EnhancedInput` is absent from `StratPlay.Build.cs` by design**; phase 4
+    adds it. Anyone finding it missing should not "fix" it early.
+  - **A `bDone`/`bLockedThisTurn` producer does not exist yet.** Phase 4's
+    selection machine must write those onto the built view model via the
+    `ApplyView(model)` seam, **never** into an actor. Nothing can pin that
+    positive obligation until the owner exists;
+    `T-INT-05.NoActorHoldsPresentationBits` currently pins the negative.
+  - **Deferred a second time, and say so explicitly:** proving
+    `AStratScoreboardHUD` does not *also* allocate an owned bridge needs a
+    production-side reader (`bool OwnsItsBridge() const`) or the allocation
+    counter offered and declined in phase 2. `T-INT-05.SubsystemSeedsBeforeHandover`
+    proves the *consequence* — the HUD reads the subsystem's bridge, that
+    bridge is not the one it allocated, and an `EndTurn` on the subsystem's
+    bridge moves the HUD's `StateHash` and lengthens its log — but not the
+    member. This is the second phase running in which the direct check was
+    offered and declined as production surface beyond the exit criterion.
+    Record that it has now been deferred twice.
+
+  Two non-gating observations from the gate, for a later phase and not this
+  milestone:
+  - `StratPlay.Build.cs:94` lists `StratBridge` under
+    `PublicDependencyModuleNames`; nothing in the module's headers names
+    `FStratBridge` beyond a forward declaration, so `Private` would be the
+    tighter statement and would stop the arrow being re-exported to phase 4's
+    dependents.
+  - `AStratBoardActor` contains **three** copies of the axial→world
+    expressions (`WorldLocationOfHex`, `ApplyHexes` at
+    `StratBoardActor.cpp:205-210`, `FillOverlay` at `:295-300`), differing
+    only in Z, while its header block claims to be "the only axial → world
+    conversion in the project". They cannot disagree today because they read
+    the same `HexSize`, but the prose is stronger than the code. Follow-up
+    for `strat-gameplay-engineer`.
+
+**Phases 0-3 are closed.** Phase 4 is next and requires the editor CLOSED:
+PlayerController with Enhanced Input, the selection state machine as a plain
+testable struct, the `STRAT-CMD` log line, and a hot-seat replay-parity test.
+Out-of-scope list unchanged: production menu (§2.11.5), guided opening
+(§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.

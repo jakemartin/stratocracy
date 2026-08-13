@@ -75,6 +75,41 @@ _Last run 2026-08-11 19:30 UTC._
   `EnhancedInput`, added to that module's `Build.cs` this phase. That file is outside this
   steward's lane (`.agents/` is not `Config/` or `Tools/architect/`) — recorded here as a
   handoff rather than edited.
+- **Phase 6 risk, and the most consequential open item: the `STRAT-CMD` click-to-command gate
+  is unclosed.** No `playtest_key` or `playtest_click` produced any `LogStratPlay` output. The
+  builder isolated this to the harness rather than asserting it — it reproduced total input
+  silence on Epic's own shipped TopDown template with known-good assets
+  (`CharMoveComp.Velocity` identical before and after a viewport click). `Escape` still ends
+  PIE, so events reach the editor-level handler but not game input; consistent with the PIE
+  viewport not holding Slate keyboard focus under `bShowMouseCursor=true`. Phase 4's standing
+  debt — "`ETriggerEvent::Started` on all four input actions is asserted, not measured" —
+  therefore remains open, and phase 6's `assert_log_contains` gate depends on solving it.
+- **`AWorldSettings` is unreachable through the NeoStack Lua API**, so no level's GameMode
+  override can be authored that way. Exact failures: `configure("actor","WorldSettings")`,
+  `select_actor`, `get_actor_properties`, `open_asset` on the sub-object path, and
+  `invoke({actor_label="WorldSettings"})` all failed; `configure` accepts only
+  `actor|landscape`. (Worked around this phase for the `Config` question by reading the two
+  levels' binary `.umap` bytes directly instead — see Phase 5 below.)
+- **`array_count("DefaultKeyMappings.Mappings")` → `property not found`** — dot-path into a
+  struct's array is unsupported; write the whole struct instead.
+- **`FKey` `ImportText` takes the bare name.** `Key=(KeyName="X")` silently produced `Key=()`;
+  `Key=LeftMouseButton` succeeded. A silent empty-key write is exactly the kind of failure that
+  reads as an input bug later.
+- Three findings for `strat-gameplay-engineer`, none blocking: (1) `AStratCameraPawn` sets
+  `Arm->bInheritYaw = false` at `StratCameraPawn.cpp:59`, pinning the camera to world yaw 0 so
+  spawn rotation cannot turn the view — measured, `PlayerStart` yaw `-90` and `0` give
+  pixel-identical framing; Ferrum Crossing's long axis (2800×1385, long axis on world X) is
+  stuck on the screen's short axis. An `ArmYaw` property or `bInheritYaw = true` fixes it; the
+  builder compensated with `DefaultArmLength = 3600`. (2) `AStratBoardActor` has
+  `TerrainMeshes` but no `TerrainMaterials` map, which is the sole reason there are seven
+  near-identical `SM_HexTile_*` assets instead of one mesh and seven materials. (3)
+  `MI_Terrain_Water.Color` reads back `(0.02, 0.09, 0.30)` yet renders pale blue, and darkening
+  every terrain colour ~55% produced no visible change — the harvested `M_Mono` does not
+  respond linearly to `Color`; a purpose-built opaque `M_StratTile` would remove the guesswork.
+- **Scope note:** `BP_StratCamera` is a sixth Blueprint beyond the four the brief named. The
+  builder judged it inside "the Blueprints" because `AStratCameraPawn`'s C++ default
+  `DefaultArmLength = 1200` shows about a third of the board. It holds no logic — four float
+  defaults only. Recorded so a gate can evaluate the judgement rather than rediscover it.
 
 ## Hot-seat milestone
 
@@ -446,12 +481,12 @@ _Last run 2026-08-11 19:30 UTC._
   UTF-8-with-BOM and `.agents/ue-project-context.md:195` staleness items
   live under NEXT above, next to the other deferred debt.
 
-**Phases 0-4 are closed.** Phase 5 is next and requires the editor OPEN: hex
-mesh + terrain material instances, Input Mapping Context + Input Actions, the
-Blueprints and Widget Blueprints, `Lvl_FerrumCrossing`, with `Config` map
-defaults flipped last. Out-of-scope list unchanged: production menu
-(§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, AI
-opponent, move-undo.
+**Phases 0-5 are closed**, including the `Config` map-defaults flip (see Phase
+5 above). Phase 6 is next; its `assert_log_contains` gate depends on closing
+the unresolved click-to-command input gate recorded under NEXT — that item is
+this milestone's one standing blocker. Out-of-scope list unchanged:
+production menu (§2.11.5), guided opening (§2.11.6), info panel, toasts,
+save-slot UI, AI opponent, move-undo.
 
 Note for phase 5's builder, from the engineer: the five input assets must be
 authored and set on a `BP_` subclass of `AStratPlayerController`, all
@@ -459,3 +494,94 @@ authored and set on a `BP_` subclass of `AStratPlayerController`, all
 must point at that `BP_` subclass (the C++ default is the floor, not the
 answer); and **tile meshes must be traceable on `ECC_Visibility` or picking
 returns nothing.**
+
+### Phase 5
+
+- **Completed:** 2026-08-12
+- **Exit criterion:** "hex mesh + terrain material instances, Input Mapping
+  Context + Input Actions, the Blueprints and Widget Blueprints,
+  `Lvl_FerrumCrossing`, with `Config` map defaults flipped last."
+- **Met**, with one item carried forward unresolved (the click-to-command
+  input gate — see NEXT) that is explicitly outside this exit criterion's
+  wording. Evidence:
+  - Assets: 13 material instances under `/Game/StratArt/Materials/`, 9 hex
+    meshes under `/Game/StratArt/Meshes/`, 5 Enhanced Input assets under
+    `/Game/StratInput/`, 5 Blueprints under `/Game/StratPlay/`, and
+    `/Game/StratMaps/Lvl_FerrumCrossing`.
+  - `HexSize = 200.0`, derived from `SM_Tile_Hex`'s across-flats width along X
+    (2 × 100.0). The collision hulls read out as an exact regular hexagonal
+    prism — vertices `(±99.9998, 0)`, `(0, ±115.4694)`,
+    `(±99.9998, ±57.7347)` — not a bounding approximation. Neighbours abut
+    with zero overlap.
+  - `SM_Hex` was rejected for tiles because its collision is a single box of
+    half-extent `(87.68, 101.24)` which at a 151.9 row pitch overlaps
+    neighbours by ~50 units, producing coplanar ambiguous hits and wrong-hex
+    picking near row edges. Used only as `OverlayMesh`, where the C++
+    disables collision.
+  - The template's `Floor` actor was deleted from `Lvl_FerrumCrossing`. It
+    sits at `Z=0`, coplanar with the tile tops, and would have contested
+    every `GetHitResultUnderCursor(ECC_Visibility)` — the one asset-side way
+    picking could have silently failed.
+  - Terrain keys `Plains, Woods, Mountains, Water, Town, Bridge, Factory`
+    read from the `Id` column of `Data/terrain.csv`; unit keys
+    `Infantry, Tank, Artillery, Recon` from `Data/units.csv`.
+  - PIE confirms the live match: `LogStratPlay: Match live: seeded from
+    '.../Data/ferrum_crossing.json' (first side 0), drawn for side 0, 99
+    hexes and 10 units on screen.` `BP_StratPlayerController_C_0`
+    possessing, mapping context added, no missing-context warning.
+  - `IMC_Selection.DefaultKeyMappings`: `IA_Select`→`LeftMouseButton`;
+    `IA_Cancel`→`RightMouseButton`, `Escape`; `IA_Wait`→`W`;
+    `IA_EndTurn`→`Enter`, `SpaceBar`. Storage location verified against all
+    11 pre-existing IMCs in the project rather than guessed.
+  - `Lvl_TopDown`, `BP_TopDownGameMode` untouched by the builder.
+
+  **The `Config` flip — measured before flipping, not taken from the builder
+  or the brief.** The builder's escalation argued `GlobalDefaultGameMode` is
+  load-bearing for `Lvl_TopDown`'s existing scoreboard evidence, because it
+  could not author a World Settings GameMode override on `Lvl_FerrumCrossing`
+  (`AWorldSettings` unreachable through NeoStack — see NEXT) and inferred
+  `Lvl_TopDown` must therefore also rely on the global default, making a flip
+  unsafe. That inference rested on an untested premise, which I checked by
+  measurement rather than accepting or overriding on argument alone:
+  - **`Lvl_TopDown` already carries its own World Settings GameMode
+    Override, as a hard package reference.** Extracted printable ASCII
+    strings directly from the binary `Content/TopDown/Lvl_TopDown.umap`:
+    it contains `/Game/TopDown/Blueprints/BP_TopDownGameMode`,
+    `BP_TopDownGameMode_C`, and the literal property name
+    `DefaultGameMode`. `DefaultGameMode` is `AWorldSettings`'s own override
+    property — confirmed against the engine header,
+    `WorldSettings.h:631-634`: `UPROPERTY(EditAnywhere, BlueprintReadOnly,
+    Category=GameMode, meta=(DisplayName="GameMode Override"))
+    TSubclassOf<class AGameModeBase> DefaultGameMode;`. The same extraction
+    against `Content/StratMaps/Lvl_FerrumCrossing.umap` finds `WorldSettings`
+    / `WorldSettings1` (the actor exists) but **no GameMode string of any
+    kind** — consistent with the builder's report that it could not write
+    one. A level's own World Settings override always takes precedence over
+    the config global, so flipping `GlobalDefaultGameMode` cannot strip
+    `Lvl_TopDown`'s GameMode; the dilemma the builder raised does not apply
+    to it.
+  - **The existing scoreboard/match PIE evidence was never produced via the
+    global default in the first place.** `Saved/Logs/Stratocracy.log:4911`:
+    `LogGlobalStatus: UEngine::Browse Started Browse:
+    "/Game/StratMaps/Lvl_FerrumCrossing?game=/Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C"`
+    — an explicit `?game=` override, followed at `:4926` by `LogLoad: Game
+    class is 'BP_StratGameMode_C'` and at `:4930` by `LogStratPlay: Match
+    live: seeded from '.../ferrum_crossing.json' ...`. The reproduction path
+    names its map and GameMode explicitly and does not read
+    `GlobalDefaultGameMode` at all.
+  - Both checks say the flip is safe on evidence, not inference, so **all
+    three lines were flipped together** — see Files changed below. No
+    outstanding `Config` item remains from this job.
+
+  Decisions worth preserving because they foreclose alternatives:
+  - **`GameDefaultMap`/`EditorStartupMap`/`GlobalDefaultGameMode` were
+    treated as one decision, not three**, once both measurements confirmed
+    no conflict — the task brief allowed treating the GameMode line
+    independently if a real conflict existed; none did, so splitting them
+    would have been unmotivated caution.
+  - **A binary `.umap` cannot be diffed for row order or struct content**,
+    but a targeted ASCII-string extraction over its raw bytes is a legitimate
+    measurement for "does this package reference symbol X at all" — it does
+    not require the editor. Used here in place of the escalation the brief
+    anticipated; recorded so a future steward reaches for it before assuming
+    "binary, therefore unknowable" for this narrower class of question.

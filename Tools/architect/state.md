@@ -1,6 +1,6 @@
 # Architect state
 
-_Last run 2026-08-13 (record-keeping update: two owed wait clauses discharged)._
+_Last run 2026-08-13 (AI-opponent milestone, phase A closed: bridge AI surface)._
 
 ## BUILT
 
@@ -20,8 +20,9 @@ _Last run 2026-08-13 (record-keeping update: two owed wait clauses discharged)._
 - `bridge_event_list` — Bridge ordered event list (§4.9 'command in / events out') (actionable)
 - `buildlist_query` — Buildlist query on the Ui.h contract (actionable, excluded: shape unstated in the GDD by explicit decision, and the file is vendored certified bytes in another repo -- T-INT-01 hash-matches it)
 - **Hot-seat milestone is COMPLETE (phase 6 closed 2026-08-13); see "Hot-seat milestone —
-  COMPLETE" below.** Out of scope, unchanged: production menu (§2.11.5), guided opening
-  (§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.
+  COMPLETE" below.** The AI-opponent milestone is now current (phase A closed 2026-08-13; see
+  "## AI-opponent milestone" below). Remaining out of scope, unchanged: production menu
+  (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, move-undo.
 - **The two clauses owed since phase 6 are now written and green — discharged.**
   `Stratocracy.StratPlay.T-INT-05.WaitIsDistinguishableFromAttack` and
   `.T-INT-05.WaitWithNothingSelectedIsANoOp`, in a new file
@@ -1027,6 +1028,126 @@ renders, units spawn from the scenario, click-to-select → move → attack
 with the deterministic forecast, wait, end turn advances sides, and the
 scoreboard follows the active side.
 
-Out-of-scope list, unchanged, stays under NEXT: production menu (§2.11.5),
+Out-of-scope list at the time this milestone closed: production menu (§2.11.5),
 guided opening (§2.11.6), info panel, toasts, save-slot UI, AI opponent,
-move-undo.
+move-undo. **The AI opponent has since become its own milestone — see
+"## AI-opponent milestone" below.** The remaining out-of-scope items are
+unchanged and stay under NEXT: production menu (§2.11.5), guided opening
+(§2.11.6), info panel, toasts, save-slot UI, move-undo.
+
+## AI-opponent milestone
+
+The GDD's §2.9 AI is already vendored and certified — this milestone authors
+no AI and re-tests none of its decision quality. `Source/StratRules/Ai.h:84`
+declares `strat::nextCommand(const AiState&, int side)`, a pure function with
+no RNG and no clock (`Ai.h:2`, confirmed by direct read: *"Zero engine
+dependencies. Pure function of state; no RNG, no clock, no I/O."*). The GDD
+§3 ledger already records `T-AI-01..06 (6/6) + GATE-AI-SMOKE` verified
+upstream against `cpp_reference/Ai.good.cpp`. `T-AI-02/03/04/05` are someone
+else's proof, not this milestone's to redo — this milestone's job is
+integration: get the engine to call `nextCommand`, apply what it returns
+through the same path a player's command takes, and drive a turn loop and a
+gate around that.
+
+Two structural facts, worth preserving because they foreclose alternatives
+future phases might otherwise re-derive:
+- `Driver.h:120`'s `aiStateOf` takes the driver's `Session`, which the bridge
+  does not have. `MakeAiState` is the fifth composition, on the precedent
+  `StratBridge.h:248-256` already documents for `MakeUiWorld`.
+- `Ai.h:62-66` omits Capture deliberately; `openTurn` runs `captureTick`
+  (`Replay.good.cpp:264-270`) from the EndTurn arm (`:529-535`), so **the AI
+  captures without ever emitting Capture**. `SubmitCapture`'s missing
+  affordance stays out of scope.
+
+### Phase A — CLOSED
+
+- **Completed:** 2026-08-13.
+- **Exit criterion:** bridge AI surface — build green, parity tests green.
+- **Met.** `Source/StratBridge/StratBridge.h` (+198 lines) and `.cpp` (+219
+  lines), additions only, confirmed by `git diff --stat` against `HEAD`
+  `f04f5a4`; nothing staged. New untracked test file
+  `Source/StratBridge/Tests/StratAiBridgeParity.cpp` (1577 lines).
+  - Surface: plain `EStratAiCommandKind`/`FStratAiCommand`, `NextAiCommand`,
+    `SubmitBuildAtHex`, `SetBuildlistByIds`, `BuildlistDefIndexes`, private
+    `MakeAiState`.
+  - Suite **78/78**, `succeeded 78 / succeededWithWarnings 0 / failed 0 /
+    notRun 0`, `reportCreatedOn 2026.08.13-19.03.16`
+    (`Saved/AutomationReport/index.json`, read `utf-8-sig`) — read directly
+    from the report by this steward, not taken from a builder number. **The
+    pre-phase baseline was 69, not 67**; verified against the phase-6-close
+    NEXT entry recording 69/69 after the two wait clauses. 78 − 69 = 9 new
+    clauses, all `state: "Success"`: `Stratocracy.StratBridge.T-AI-01.`
+    `CommandsSubmitUnchangedAndRecord`, `.AiBoardAgreesWithRulesQueries`,
+    `.BuiltThisTurnReachesTheAi`, `.AttackTargetIdResolvesToItsHex`,
+    `.RefusalsAreDistinguishableFromEndTurn`, `.SubmitBuildAtHexMatchesSubmitBuild`,
+    `T-AI-06.SameStateYieldsSameCommandSequence`,
+    `GATE-BRIDGE-DEFS.BuildlistResolvesInLoaderOrder`,
+    `.BuildlistRefusalsLeavePriorListIntact` — all found by name in the
+    report's `tests` array by this steward.
+  - Each self-play game ran 156 commands (22 Build, 55 Move, 68 Attack, 11
+    EndTurn) to a terminal §2.8 result, 59 of 68 attacks foil-eligible off
+    the `q==r` diagonal. No hex, unit id, defIndex or turn number is written
+    down in the test file.
+  - `Ai.h:1-2` read directly for this record: "headless baseline opponent AI
+    (GDD §4.7 Stub 6, §4.11 row 6)... Pure function of state; no RNG, no
+    clock, no I/O."
+
+  **Decisions and debts recorded from the phase:**
+  - **`CheckAiStateComposition` was proposed by `strat-test-author` and
+    declined.** `strat::isFlagUnit` (`Replay.good.cpp:142-144`) is
+    token-for-token the expression `aiStateOf` inlines at
+    `Driver.good.cpp:424`, and it is folded into `canonicalStateBytes`
+    (`Replay.good.cpp:183`) → `canonicalStateHash` →
+    `FStratBridge::StateHash()`, already gated against the headless fixture
+    by `T-INT-02.ReplayParityWithHeadless`. So `isFlag` is witnessed through
+    another gate and is not unpinned — a different call from the
+    twice-declined phase-2/3 allocation-counter debt, which had no witness
+    at all. `economy` needs no separate witness because `A.economy =
+    GameState.economy` is a whole-struct copy with no per-field
+    transcription for an omission to hide in.
+  - **Owed to phase B's test-author, deliberately deferred to avoid a second
+    full suite run:** three case-insensitive comparisons in
+    `StratAiBridgeParity.cpp`, verified by direct read of those exact lines
+    — `1133-1135` (`TestEqual` on the `GATE-BRIDGE-DEFS` positional
+    comparison), `1029-1034` (pairwise `TestNotEqual` on refusal reasons),
+    `1240` (`FString::Contains`, case-insensitive by default in UE 5.8).
+    None is live today — both sides of each comparison are byte-identical by
+    construction — but the shape is unsafe. Fix with `TestEqualSensitive` /
+    `ESearchCase::CaseSensitive`.
+  - **General measurement worth reusing:** `FString::operator!=`,
+    `FString::Contains`, and `TestEqual(FString)` are all case-INSENSITIVE in
+    UE 5.8 (`TestEqualSensitive` is the strict variant). Same family as
+    phase 6's "an absence needs a control" — a clause that could not fail.
+  - **Hazard for phase B:** `FStratAiCommand`'s default-constructed value
+    reads as a genuine `EndTurn`, so `FStratResult::bOk` is the only thing
+    separating "refused to answer" from "ended its turn." A turn loop that
+    ignores `bOk` gets a clean, instant, empty turn with no fault.
+  - **Engineer decisions preserved:** kind mapping is a refusing `switch`,
+    not a `static_cast`, because `Ai.h` lives in another repository and a
+    re-vendored enumerator would otherwise silently produce a value the
+    engine enum lacks. Buildlist ids match on exact bytes because `FName`
+    compares case-insensitively and would widen the §4.8 id space in engine
+    code rather than data. An unresolvable attack target refuses rather than
+    defaulting `Hex`, because `FIntPoint(0,0)` is a real hex on this board.
+    Duplicates in the buildlist are preserved — that is how §2.9's build mix
+    is expressed. `LoadDefinitions` clears the buildlist (defIndexes into a
+    vector a reload moves); `LoadScenarioFromFile` does not.
+  - **Vendoring was already done, confirmed by direct read:**
+    `Source/StratBridge/Vendored/Ai.strat.cpp` already existed (since
+    `0897cb5`) and already includes `../../StratRules/Ai.good.cpp`, so
+    `strat::nextCommand` was in the DLL with no `.Build.cs` change needed.
+
+### Phase B — planned (editor CLOSED)
+
+AI turn runner as a plain testable struct in `StratPlay`, match wiring, a
+`STRAT-AI` log line.
+
+### Phase C — planned (editor OPEN)
+
+Buildlist as authored data, side-is-AI and pacing defaults on
+`BP_StratGameMode`.
+
+### Phase D — planned (editor OPEN)
+
+PIE playtest plus a machine-repeatable AI-vs-AI gate, evidence under
+`Tools/architect/evidence/07-ai-opponent/`.

@@ -49,6 +49,7 @@
 #include "CoreMinimal.h"
 
 // Vendored rules headers, by short name via StratRules' PublicIncludePaths.
+#include "Ai.h"
 #include "Data.h"
 #include "Replay.h"
 #include "Save.h"
@@ -94,6 +95,55 @@ struct FStratResult
 		R.Reason = InReason;
 		return R;
 	}
+};
+
+// ---------------------------------------------------------------------------
+// §2.9's opponent AI, in engine types.
+//
+// PLAIN AND NOT REFLECTED, exactly as `FStratResult` above is, and for that
+// struct's reason: this header must declare no `UCLASS`/`USTRUCT`/`UENUM`, because
+// the moment it declares one UHT parses it and the vendored `strat` headers it
+// includes go in front of the header tool. A `UENUM` here would cost that, and no
+// widget binds to an AI command -- the consumer is `StratPlay`'s C++, which can
+// name a plain struct perfectly well.
+//
+// FOUR ENUMERATORS, NOT FIVE. `Ai.h:67` declares `Build, Move, Attack, EndTurn` and
+// this mirrors it exactly. There is deliberately no `None`: a fifth value would be
+// a command the rules module cannot produce, and inventing one would let a caller
+// believe the AI said something it has no vocabulary for. Capture is likewise
+// absent, and that is the rules module's ruling rather than an omission here --
+// §2.9's capture behaviour IS the Move onto the objective, and `openTurn`'s
+// `captureTick` completes it at the turn boundary the EndTurn arm reaches.
+enum class EStratAiCommandKind : uint8
+{
+	Build,
+	Move,
+	Attack,
+	EndTurn,
+};
+
+// One `strat::AiCommand`, in `int32` and `FIntPoint`. X = q, Y = r, the same
+// encoding `FStratUnitView::Hex` and the engine-typed façade already carry.
+//
+// `Hex` IS ALREADY RESOLVED FOR AN ATTACK, and that is the one field where this
+// struct is not a field-for-field copy of the module's. `AiCommand::targetId` names
+// a UNIT and `SubmitAttackAtHex` takes a HEX, so somebody has to look the unit up
+// on the authoritative board -- and `StratPlay` cannot, because the board it can
+// see is a view model rebuilt on its own schedule rather than the state the command
+// was decided against. `NextAiCommand` does that lookup at the instant it asks, so
+// `Hex` is submittable as it stands for Move, Attack and Build alike. `TargetId` is
+// kept beside it for logging, and is NOT the thing to submit.
+struct FStratAiCommand
+{
+	// Defaults mirror `strat::AiCommand`'s own, EndTurn included. A refused
+	// `NextAiCommand` leaves this value here, and it is NOT distinguishable from a
+	// genuine EndTurn by inspection -- `FStratResult::bOk` is the only thing that
+	// tells them apart, which is why that method refuses rather than answering.
+	EStratAiCommandKind Kind     = EStratAiCommandKind::EndTurn;
+	int32               UnitId   = -1;    // Move, Attack
+	int32               TargetId = -1;    // Attack -- for logging, never for submission
+	FIntPoint           Hex      = FIntPoint(0, 0);   // Move dest, Build factory, Attack target hex
+	int32               DefIndex = -1;    // Build -- an index into UnitDefs()
 };
 
 class STRATBRIDGE_API FStratBridge
@@ -461,6 +511,117 @@ public:
 	FStratResult SubmitMoveToHex(int32 UnitId, FIntPoint DestHex);
 	FStratResult SubmitAttackAtHex(int32 UnitId, FIntPoint TargetHex);
 
+	// `SubmitBuild`, in `FIntPoint`. It closes the one hole in the façade above:
+	// `SubmitBuild` names `strat::Hex` and had no engine-typed counterpart, so Build
+	// was the single §4.9 command a module that cannot spell `strat::` could not
+	// issue. §2.9's AI emits Build as one of its four kinds, so that hole was about
+	// to become load-bearing.
+	//
+	// `DefIndex`, AND IT IS THE SAME LOAD-BEARING INDEX AS EVERYWHERE ELSE. It is
+	// what `SaveCommandKind::Build` carries in the field the format spells `unitId`,
+	// and `applyCommand` uses it as a raw bounds-checked index into the definitions
+	// vector with no name lookup -- the reason `DT_Units` row order is load-bearing
+	// (phase 0). This method does NOT resolve a name; `SetBuildlistByIds` below is
+	// where names are resolved, exactly once, against `UnitDefs()`.
+	//
+	// ROUTED THROUGH `SubmitBuild`, so it stamps `{turn, side}` and records in
+	// `RecordedLog()` on the same path as every other command. A second, non-
+	// recording apply path is the precise defect `ReplayRecordedLogOnto` was added
+	// to make visible; this method must never become one.
+	FStratResult SubmitBuildAtHex(FIntPoint FactoryHex, int32 DefIndex);
+
+	// ---- §2.9's opponent AI ----------------------------------------------
+	// The AI's next command for `Side`, as `strat::nextCommand` returns it.
+	//
+	// ROUTED HERE FOR THIS HEADER'S OPENING MEASUREMENT. `strat::nextCommand`
+	// carries no `_API` macro, so a subsystem or controller that called it directly
+	// would not link -- the 8 x LNK2019 above. `Ai.good.cpp` is compiled INTO this
+	// module (`Vendored/Ai.strat.cpp`), so this is the only place in the tree the
+	// call can be made from at all.
+	//
+	// IT DECIDES NOTHING, on the same line `MakeUiSnapshot` and `Reachable` hold.
+	// Every arm of §2.9 -- which unit, which target, whether an exchange trades
+	// down, what to build -- is `Ai.h`'s. This method GATHERS an `AiState` and
+	// forwards, and the only transformation it performs on the answer is the target
+	// hex resolution documented on `FStratAiCommand::Hex`, which is a lookup on the
+	// authoritative board rather than a rule.
+	//
+	// THE ATTACK ARM RESOLVES `targetId` -> `Hex` HERE, DELIBERATELY. The
+	// alternative was handing `TargetId` to `StratPlay` and letting it find the hex
+	// on the view model. That was rejected twice over: the view model is rebuilt on
+	// the caller's own schedule, so it can describe a board one command older than
+	// the one the AI decided against; and it would put a "which unit is on which
+	// hex" derivation in the module that is supposed to hold no rules answers. If
+	// the named target is not on the board this REFUSES rather than submitting an
+	// attack at (0,0) -- `AiCommand::hex` is default-constructed for an Attack, and
+	// (0,0) is a real hex on this board.
+	//
+	// REFUSES ON AN UNLOADED OR UNSEEDED BRIDGE, and `Reachable`'s
+	// `RefusesUnseeded` clause is the shape. An unseeded bridge holds a default
+	// `GameState` with no units, and `nextCommand` over it answers EndTurn --
+	// perfectly reasonably, and indistinguishably from a turn in which a live AI
+	// genuinely has nothing left to do. A caller that drove an AI turn loop against
+	// an unseeded bridge would therefore see a clean, instant, empty turn and no
+	// fault of any kind. That is the failure this refusal exists to make loud.
+	//
+	// AN UNKNOWN `Side` IS A REFUSAL for the reason `Forecast`'s unknown attacker
+	// is: the rules module would answer it (`nextCommand` finds no units for side
+	// 7 and says EndTurn), and "the AI has finished" and "you asked about a side
+	// that does not exist" are not the same kind of thing.
+	FStratResult NextAiCommand(int32 Side, FStratAiCommand& Out) const;
+
+	// §2.9's default buildlist, set BY UNIT ID and resolved here against
+	// `UnitDefs()`.
+	//
+	// BY NAME AND NOT BY INDEX, AND THAT IS THE WHOLE POINT OF THE METHOD.
+	// `AiState::buildlist` is a vector of defIndexes, and a defIndex is the same
+	// raw, bounds-checked-only index a §4.10 Build command carries -- phase 0's
+	// hazard, the one that resolves the same log to a different unit type in
+	// silence. Only this module can see `UnitDefs()`, so only this module can turn
+	// "Infantry" into that index; a defIndex-only setter would push the resolution
+	// out to a caller that would end up hand-writing 0 and 1 into a config, which
+	// is precisely how the hazard gets reintroduced.
+	//
+	// REFUSES ON ANY UNRESOLVABLE ID AND NAMES IT, never substituting a default
+	// (§4.8's posture). All-or-nothing: the stored list is replaced only after every
+	// entry resolved, so a partially-resolved buildlist cannot exist -- the same
+	// discipline `loadUnits` uses when it leaves `out` untouched on any defect. A
+	// silently-dropped entry would change §2.9's build MIX, which is data with no
+	// other witness in the tree.
+	//
+	// DUPLICATES ARE LEGAL AND ARE THE POINT. §2.9 describes "mostly Infantry, an
+	// occasional Tank" and gives no ratio, so `Ai.h:49-53` makes the list caller-
+	// supplied DATA; repetition is how a ratio is expressed in it. Deduplicating
+	// here would silently flatten every mix to 1:1.
+	//
+	// AN EMPTY LIST IS ACCEPTED and configures an AI that never builds --
+	// `chooseBuild` returns -1 with nothing affordable to choose. It is an ordinary
+	// configuration, on `RecordedLog`'s line, and it is distinguishable from the
+	// unresolvable-id case because that one refuses.
+	//
+	// COMPARED AS EXACT UTF-8 BYTES, not by `FName`'s own operator==. `FName`
+	// compares case-insensitively, so `SetBuildlistByIds({"infantry"})` would
+	// resolve under that comparison while `Data/units.csv` says `Infantry` -- a
+	// widening of the §4.8 id space decided here rather than by the data. The
+	// argument is `FName` because that is what the view model and a `DataTable` row
+	// name are; the MATCH is on the bytes.
+	//
+	// CLEARED BY `LoadDefinitions`, for `RecordedLog`'s reason exactly: the stored
+	// values are indexes into the vector that just moved, so after a reload they do
+	// not merely go stale, they name different unit types.
+	FStratResult SetBuildlistByIds(const TArray<FName>& UnitIds);
+
+	// The resolved buildlist, as defIndexes into `UnitDefs()`, in the order it was
+	// set. Empty on a bridge whose buildlist was never set or whose definitions were
+	// reloaded underneath it.
+	//
+	// THE DEFINDEXES AND NOT THE NAMES, because the defIndexes are what is stored
+	// and what `AiState::buildlist` receives. A names reader would have to project
+	// back through `UnitDefs()`, which is a second derivation that can disagree with
+	// the first -- and the value a caller would then be checking is not the value the
+	// AI is handed.
+	TArray<int32> BuildlistDefIndexes() const;
+
 	// ---- The recording joint, in engine types -----------------------------
 	// `RecordedLog().size()` and "replay it onto another bridge", reachable from a
 	// module that may not name `strat::SaveCommand`.
@@ -540,6 +701,37 @@ private:
 	// a caller opt out of it.
 	FStratResult SubmitStamped(strat::SaveCommand Command);
 
+	// §2.9's input, GATHERED and not decided -- `MakeUiWorld`'s sibling, and it
+	// exists for exactly `MakeUiWorld`'s reason. `strat::nextCommand` takes a
+	// `strat::AiState`, and the only other function in the tree that produces one is
+	// the headless driver's `aiStateOf(const Session&)` (`Driver.h:120`). A Session
+	// is the driver's own type and this object does not have one, so before this
+	// method no engine-side caller could reach the AI at all. This mirrors
+	// `aiStateOf` member for member so the two compositions cannot disagree.
+	//
+	// PRIVATE, WHERE `MakeUiWorld` IS PUBLIC, and the asymmetry is deliberate. A
+	// `UiWorld` is a bundle of BORROWED pointers that a test legitimately wants to
+	// inspect beside the snapshot built from it; an `AiState` is a by-value COPY of
+	// the board with nothing to inspect that `State()` and `UnitDefs()` do not
+	// already say, and exposing it would offer a caller a second, staler spelling of
+	// the state this object is authoritative for. `NextAiCommand` is the surface.
+	//
+	// EVERY MEMBER OF `AiState` IS COMPOSED, AND COMPLETENESS IS THE POINT rather
+	// than a tidiness goal. A silently-empty `builtThisTurn` is the sharpest case:
+	// §2.7's "one build per factory per turn" would then read as unspent at every
+	// factory, the AI would queue a second build per factory per turn, and every one
+	// of them would be REFUSED by `markBuilt` downstream -- a green build, a running
+	// match, and an opponent that stalls on its own refused command. Nine members,
+	// against `Ai.h:40-60`.
+	//
+	// COPIES UNITS FAITHFULLY, INCLUDING A UNIT WHOSE `defIndex` IS OUT OF RANGE,
+	// where `MakeUiWorld` skips it. The two are answering different questions:
+	// dropping a unit from a projection hides it from a display, while dropping one
+	// from the AI's board hides an enemy from the opponent's reasoning and is a rule
+	// change wearing a guard's clothes. `NextAiCommand` validates the whole roster
+	// up front and refuses, so this method is never reached with such a unit.
+	strat::AiState MakeAiState() const;
+
 	// Owned by value: this object IS the authoritative state.
 	strat::GameState GameState;
 
@@ -563,6 +755,12 @@ private:
 	// the only consumers are `serializeSave` and `replayLog` and a mirror would be
 	// a second spelling of the format that could disagree with the first.
 	std::vector<strat::SaveCommand> Recorded;
+
+	// §2.9's buildlist, as defIndexes, held in the module's own type because that is
+	// what `AiState::buildlist` is. It is CONFIGURATION and not match state, which is
+	// why `LoadScenarioFromFile` leaves it alone while `LoadDefinitions` clears it:
+	// a reseed does not move the table these index into, and a table reload does.
+	std::vector<int> Buildlist;
 
 	// Assembles the combat stat block for one unit exactly as the driver's
 	// `combatUnit` does: every stat LOOKED UP from the UnitDef at `defIndex`,

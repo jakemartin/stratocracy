@@ -114,6 +114,10 @@ FStratResult FStratBridge::LoadDefinitions(const UDataTable* UnitTable, const UD
 	// into the vector that just moved, so the log is not merely old -- it names
 	// different unit types than it did a line ago.
 	Recorded.clear();
+	// And §2.9's buildlist, for exactly that reason: its entries ARE defIndexes
+	// into the vector that just moved. Carried across a reload it would silently
+	// tell the AI to build a different unit type than the caller named.
+	Buildlist.clear();
 	return FStratResult::Ok();
 }
 
@@ -739,6 +743,221 @@ FStratResult FStratBridge::SubmitMoveToHex(int32 UnitId, FIntPoint DestHex)
 FStratResult FStratBridge::SubmitAttackAtHex(int32 UnitId, FIntPoint TargetHex)
 {
 	return SubmitAttack(UnitId, strat::Hex{TargetHex.X, TargetHex.Y});
+}
+
+FStratResult FStratBridge::SubmitBuildAtHex(FIntPoint FactoryHex, int32 DefIndex)
+{
+	// The same one conversion in front of the same typed method the other two do.
+	// Nothing is validated here that `SubmitBuild` -> `SubmitStamped` -> `Submit`
+	// does not validate: the defIndex bound is `applyCommand`'s, the factory
+	// ownership is Economy.h's, the once-per-turn allowance is `Turn.h::canBuildAt`'s,
+	// and every refusal comes back in the words of whichever of them said no.
+	return SubmitBuild(strat::Hex{FactoryHex.X, FactoryHex.Y}, DefIndex);
+}
+
+// ---------------------------------------------------------------------------
+// §2.9's opponent AI. See the header for why the call can only be made here.
+// ---------------------------------------------------------------------------
+
+strat::AiState FStratBridge::MakeAiState() const
+{
+	strat::AiState A;
+
+	// Member for member with `aiStateOf` (Driver.good.cpp:409-427). Nine of them,
+	// against Ai.h:40-60; the order below is that declaration's order so a reader
+	// can check completeness by walking the two side by side.
+	A.bounds      = GameState.bounds;
+	A.terrain     = GameState.terrain;
+	// `A.units` is filled below.
+	A.unitDefs    = Units;
+	A.terrainDefs = Terrain;
+	A.economy     = GameState.economy;
+	A.turn        = GameState.turn;
+	A.buildlist   = Buildlist;
+	// SET EXPLICITLY EVEN THOUGH `A.turn` ALREADY CARRIES IT. `TurnState` owns the
+	// per-factory record (Turn.h:100, "row 5 owns it now, not the driver") and
+	// `AiState` restates it as its own member, so `aiStateOf` assigns both -- and so
+	// does this. Assigning only `turn` and trusting the AI to reach through it would
+	// leave `builtThisTurn` empty for whichever of the two `Ai.good.cpp` actually
+	// reads, and an empty one re-permits a second build per factory per turn: the AI
+	// queues it, `markBuilt` refuses it, and the opponent stalls on its own command
+	// with nothing on fire.
+	A.builtThisTurn = GameState.turn.builtThisTurn;
+
+	for (const strat::GameUnit& U : GameState.units)
+	{
+		strat::AiUnit AU;
+		AU.id       = U.id;
+		AU.side     = U.side;
+		AU.defIndex = U.defIndex;
+		AU.hex      = U.hex;
+		AU.hp       = U.hp;
+		// The module's own derivation from the per-side designation, read through
+		// `isFlagUnit` rather than by comparing `flagUnit[side]` in-line, for
+		// `MakeUiWorld`'s reason: a dead flag is absent from `units` and what that
+		// means belongs to the module that owns the designation. `isFlag` is NOT a
+		// field on `GameUnit` and there is nothing here to copy.
+		AU.isFlag   = strat::isFlagUnit(GameState, U);
+		A.units.push_back(AU);
+	}
+
+	// `placement` is deliberately not carried: `AiUnit` has no such field. §4.7
+	// Stub 6 says the AI sees only what a player could read off the board, and where
+	// a unit was deployed is scenario data the UI projection needs and §2.9 does not.
+	return A;
+}
+
+FStratResult FStratBridge::NextAiCommand(int32 Side, FStratAiCommand& Out) const
+{
+	// Reset up front so a refusal cannot leave the caller holding a previous call's
+	// command and read it as this call's answer -- `Reachable`'s discipline. Note
+	// that the reset value READS AS EndTurn, which is why every path below refuses
+	// rather than falling through to it.
+	Out = FStratAiCommand();
+
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+	if (Side < 0 || Side >= strat::SIDE_COUNT)
+	{
+		return FStratResult::Fail(FString::Printf(
+			TEXT("side %d is outside the %d sides this match has"), Side, strat::SIDE_COUNT));
+	}
+
+	// `Reachable`'s roster check, for its reason and one specific to this method:
+	// `MakeAiState` copies every unit faithfully rather than skipping a broken one,
+	// so a defIndex outside the loaded table would reach `Ai.good.cpp` and be used
+	// to look up a stat block. Refusing here is the only place that can name the
+	// unit and the index.
+	for (const strat::GameUnit& U : GameState.units)
+	{
+		if (U.defIndex < 0 || static_cast<size_t>(U.defIndex) >= Units.size())
+		{
+			return FStratResult::Fail(FString::Printf(
+				TEXT("unit %d carries defIndex %d, outside the loaded unit table"),
+				U.id, U.defIndex));
+		}
+	}
+
+	// The one line this method exists for. Nothing above it decided a command and
+	// nothing below it adjusts one -- the hex resolution further down is a lookup on
+	// the authoritative board, not an amendment to what §2.9 chose.
+	const strat::AiCommand C = strat::nextCommand(MakeAiState(), Side);
+
+	// A SWITCH AND NOT A CAST, unlike `ToStratUnitType` above. That cast rides on a
+	// static_assert and a runtime parity test pinning `EUnitType` to
+	// `strat::UnitType`; no such gate exists for `AiCommandKind`, and the two enums
+	// live in different repositories. A re-vendored `Ai.h` that added a fifth
+	// enumerator would make a cast produce a value `EStratAiCommandKind` does not
+	// have, silently; this arm makes it a refusal that names the number.
+	switch (C.kind)
+	{
+	case strat::AiCommandKind::Build:   Out.Kind = EStratAiCommandKind::Build;   break;
+	case strat::AiCommandKind::Move:    Out.Kind = EStratAiCommandKind::Move;    break;
+	case strat::AiCommandKind::Attack:  Out.Kind = EStratAiCommandKind::Attack;  break;
+	case strat::AiCommandKind::EndTurn: Out.Kind = EStratAiCommandKind::EndTurn; break;
+	default:
+		Out = FStratAiCommand();
+		return FStratResult::Fail(FString::Printf(
+			TEXT("the rules module returned AiCommandKind %d, which this bridge has no name for"),
+			static_cast<int32>(C.kind)));
+	}
+
+	Out.UnitId   = C.unitId;
+	Out.TargetId = C.targetId;
+	Out.DefIndex = C.defIndex;
+	// X = q, Y = r, the encoding the rest of the façade already carries. For Move
+	// this is the destination and for Build the factory; for Attack it is
+	// default-constructed and is REPLACED below.
+	Out.Hex      = FIntPoint(C.hex.q, C.hex.r);
+
+	if (Out.Kind == EStratAiCommandKind::Attack)
+	{
+		// `AiCommand` names an Attack's victim by UNIT ID and leaves `hex` at its
+		// default, while `SubmitAttackAtHex` takes a hex. Resolved HERE, against the
+		// authoritative unit list, at the instant the command was decided -- see the
+		// header for why the caller must not do this off a view model.
+		const strat::GameUnit* Target = strat::findGameUnit(GameState, C.targetId);
+		if (Target == nullptr)
+		{
+			// Refused rather than left at (0,0). (0,0) is a real hex on this board,
+			// so an unresolved target would submit an attack somewhere plausible
+			// instead of failing.
+			Out = FStratAiCommand();
+			return FStratResult::Fail(FString::Printf(
+				TEXT("the AI named target unit %d, which is not on the board"), C.targetId));
+		}
+		Out.Hex = FIntPoint(Target->hex.q, Target->hex.r);
+	}
+
+	return FStratResult::Ok();
+}
+
+FStratResult FStratBridge::SetBuildlistByIds(const TArray<FName>& UnitIds)
+{
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+
+	// Built aside and assigned only after every entry resolved, so a refusal leaves
+	// the previous buildlist byte-identical -- `loadUnits`' own "out is left
+	// untouched on failure" discipline, and the reason a half-resolved §2.9 build
+	// mix cannot exist.
+	std::vector<int> Next;
+	Next.reserve(static_cast<size_t>(UnitIds.Num()));
+
+	for (int32 Index = 0; Index < UnitIds.Num(); ++Index)
+	{
+		// Exact UTF-8 bytes, NOT FName::operator==, which compares case-
+		// insensitively and would widen the §4.8 id space by a decision taken here
+		// rather than in the data. See the header.
+		const std::string Wanted = ToStd(UnitIds[Index].ToString());
+
+		int32 Resolved = INDEX_NONE;
+		for (size_t I = 0; I < Units.size(); ++I)
+		{
+			if (Units[I].id == Wanted)
+			{
+				Resolved = static_cast<int32>(I);
+				break;
+			}
+		}
+
+		if (Resolved == INDEX_NONE)
+		{
+			// NAMED, AND NOT SUBSTITUTED. §4.8's posture: a caller that misspelled a
+			// unit id must find out here, not by watching an opponent build the
+			// wrong thing for twenty turns. The position is reported because
+			// duplicates are legal, so the id alone does not say which entry failed.
+			return FStratResult::Fail(FString::Printf(
+				TEXT("buildlist entry %d names unit id '%s', which is not in the loaded unit table"),
+				Index, *UnitIds[Index].ToString()));
+		}
+
+		// Appended, never deduplicated: repetition is how §2.9's build MIX is
+		// expressed, and this list is data (Ai.h:49-53).
+		Next.push_back(Resolved);
+	}
+
+	Buildlist = std::move(Next);
+	return FStratResult::Ok();
+}
+
+TArray<int32> FStratBridge::BuildlistDefIndexes() const
+{
+	TArray<int32> Out;
+	Out.Reserve(static_cast<int32>(Buildlist.size()));
+	for (const int Def : Buildlist)
+	{
+		Out.Add(Def);
+	}
+	return Out;
 }
 
 // ---------------------------------------------------------------------------

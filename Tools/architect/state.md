@@ -1,6 +1,6 @@
 # Architect state
 
-_Last run 2026-08-13 (AI-opponent milestone, phase A closed: bridge AI surface)._
+_Last run 2026-08-13 (AI-opponent milestone, phase B closed: AI turn runner)._
 
 ## BUILT
 
@@ -20,9 +20,21 @@ _Last run 2026-08-13 (AI-opponent milestone, phase A closed: bridge AI surface).
 - `bridge_event_list` — Bridge ordered event list (§4.9 'command in / events out') (actionable)
 - `buildlist_query` — Buildlist query on the Ui.h contract (actionable, excluded: shape unstated in the GDD by explicit decision, and the file is vendored certified bytes in another repo -- T-INT-01 hash-matches it)
 - **Hot-seat milestone is COMPLETE (phase 6 closed 2026-08-13); see "Hot-seat milestone —
-  COMPLETE" below.** The AI-opponent milestone is now current (phase A closed 2026-08-13; see
+  COMPLETE" below.** The AI-opponent milestone is now current (phase B closed 2026-08-13; see
   "## AI-opponent milestone" below). Remaining out of scope, unchanged: production menu
   (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, move-undo.
+- **`UStratMatchSubsystem::RunAiTurnsNow`'s return value is an untested production contract —
+  phase D's gate must not be built on it.** A §2.8 result reached mid-turn ends with the rules
+  module correctly refusing the winning side's closing EndTurn
+  (`STRAT-AI refused phase=apply kind=EndTurn ... reason=[T-SAVE-05] no match is running`), so
+  `FStratAiTurnRunner::RunTurn` returns `bOk = false` and `RunAiTurnsNow` returns `false` for a
+  game that finished *correctly* — result, turn count, recorded log, replay parity and handover
+  silence are all right; only the return value misreports. `strat-test-author` asserted neither
+  `true` nor `false` (either would be wrong or would demand the defect) and instead left a
+  tripwire, `AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ..., Occurrences 0)` at
+  `StratAiMatchClauses.cpp:607`, so a future fix to this fails loudly rather than silently.
+  Carried into phase D's brief per the phase B gate's explicit instruction — see "Phase B —
+  CLOSED" below for the full account.
 - **The two clauses owed since phase 6 are now written and green — discharged.**
   `Stratocracy.StratPlay.T-INT-05.WaitIsDistinguishableFromAttack` and
   `.T-INT-05.WaitWithNothingSelectedIsANoOp`, in a new file
@@ -1137,10 +1149,164 @@ future phases might otherwise re-derive:
     `0897cb5`) and already includes `../../StratRules/Ai.good.cpp`, so
     `strat::nextCommand` was in the DLL with no `.Build.cs` change needed.
 
-### Phase B — planned (editor CLOSED)
+### Phase B — CLOSED
 
-AI turn runner as a plain testable struct in `StratPlay`, match wiring, a
-`STRAT-AI` log line.
+- **Completed:** 2026-08-13. Gate returned `VERDICT: PASS` twice — an initial pass, then a
+  narrow re-gate after a post-pass production change (see "The post-gate fix" below).
+- **Exit criterion (literal):** "AI turn runner as a plain testable struct in `StratPlay`, match
+  wiring, a `STRAT-AI` log line; build green; tests green." **Met.**
+- **Suite, read directly from the report (`Saved/AutomationReport/index.json`, `utf-8-sig`),
+  not taken from a builder number:** `reportCreatedOn 2026.08.13-20.22.26`, `succeeded 86 /
+  succeededWithWarnings 0 / failed 0 / notRun 0`, 86 entries in `tests`, all `state: "Success"`.
+  Baseline entering the phase was 78 (phase A's close). 86 − 78 = 8, and the eight new
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` sites are found directly in the two new test files, not
+  guessed from a name pattern: in `StratAiTurnRunnerClauses.cpp` —
+  `Stratocracy.StratPlay.T-AI-01.RefusalIsNotATurnEnd`, `.T-AI-01.SubmitRefusalStopsTheTurn`,
+  `.T-AI-01.LoopBoundIsAReportedFault`, `.T-AI-01.EveryKindRoutesToARecordingSubmit`,
+  `.T-AI-06.SameStateYieldsSameAiTurn`; in `StratAiMatchClauses.cpp` —
+  `Stratocracy.StratPlay.T-INT-05.EmptyAiSidesRunsNoAiTurn`,
+  `.T-INT-05.BuildlistRefusalLeavesTheMatchLive`,
+  `.T-INT-05.BothSidesAiReachesAResultWithinTheBound`. (An earlier name-pattern search over the
+  report missed the three `T-INT-05` clauses — they don't contain the substring `T-AI` — and
+  wrongly implied only 5 new tests; re-derived correctly by grepping the test files themselves,
+  which reconciles exactly to 8.) The seven `T-AI-01`/`T-AI-06` `StratBridge` clauses from phase
+  A (`AiBoardAgreesWithRulesQueries`, `AttackTargetIdResolvesToItsHex`, `BuiltThisTurnReachesTheAi`,
+  `CommandsSubmitUnchangedAndRecord`, `RefusalsAreDistinguishableFromEndTurn`,
+  `SubmitBuildAtHexMatchesSubmitBuild`, `SameStateYieldsSameCommandSequence`) are still present in
+  the 86 and still `Success`, unchanged carryover from the 78 baseline. Report file mtime
+  **16:22:26** local — confirmed directly via `os.stat`, 4 hours behind the `reportCreatedOn`
+  field's `20:22:26`, consistent with that field being UTC; both point at the same report, no
+  discrepancy in substance.
+- **What landed** (verified against `git status --porcelain=v1 -uall`, not taken from a builder
+  report): new and untracked — `Source/StratPlay/StratAiTurnRunner.h`/`.cpp`
+  (`IStratAiTurnPort`, production adapter `FStratBridgeAiTurnPort`, `FStratAiTurnOutcome`,
+  `FStratAiTurnRunner`, all plain non-reflected structs), `Source/StratPlay/Tests/StratAiTurnRunnerClauses.cpp`,
+  `Source/StratPlay/Tests/StratAiMatchClauses.cpp`. Modified — `StratMatchSubsystem.h`/`.cpp`
+  (five `EditAnywhere` AI fields on `FStratMatchConfig`; `IsSideAi`, `IsAiTurnDue`,
+  `RunAiTurnsIfDue`, `RunAiTurnsNow`), `StratGameMode.cpp` and `StratPlayerController.cpp` call
+  sites, and `Source/StratBridge/Tests/StratAiBridgeParity.cpp` (the three case-insensitivity
+  fixes carried as debt from phase A — see below). No `.Build.cs` change, no `.uproject` change,
+  no new module. Nothing staged, nothing committed.
+
+  **Decisions that foreclose alternatives — recorded with the measurement behind each:**
+  - **The runner's rules side is an `IStratAiTurnPort` interface, not `FStratBridge&`.** The
+    shipping AI never refuses, never fails a submission, and never loops, so all three fault arms
+    of `RunTurn` are unreachable through a real bridge and would ship unexecuted — the exact state
+    phase A's second gate finding blocked on. A scripted port is the only way a test can make the
+    AI refuse.
+  - **`bOk` is branched on before `Kind` is ever named**, and a refusal does not print the
+    command's fields, because `FStratAiCommand`'s default value is a plausible-looking `EndTurn`
+    nobody decided.
+  - **AI commands bypass `StratSubmitSelectionCommand`** (it takes a click-shaped
+    `FStratSelectionOutcome` with no Build kind) but still go out through the four recording entry
+    points. Consequence a gate can rely on: `grep -c "STRAT-CMD accepted"` counts human commands,
+    `grep -c "STRAT-AI applied"` counts AI commands, no overlap, `RecordedCommandCount()` is the
+    sum.
+  - **Loop bound `MaxCommandsPerTurn` default 256; `<= 0` refuses rather than meaning
+    unbounded.** Phase A measured a whole self-play game at 156 commands across 11 turns
+    (~14/turn), so 256 is an order of magnitude above anything observed. Unbounded is the one
+    configuration where a looping AI hangs PIE and the suite, reachable from a Blueprint default
+    with no compiler diagnostic. Outer bound `AiMaxConsecutiveTurns` default 64.
+  - **Pacing is before the turn, not between commands** (`AiTurnDelaySeconds`, default `0.0` =
+    synchronous). A per-command delay would make the runner an incremental machine with resumable
+    mid-turn state — a mirror of the rules state by another name. Zero default is what makes the
+    AI path drivable from a test with no ticking world.
+  - **`SideToMove()` is read once at entry**, so a side changing underneath the loop ends it; the
+    successful exit is an applied EndTurn, never "the side changed."
+  - **The runner holds no mirror** — turn, side and hash are read off the port at the instant they
+    are printed; the AI is re-asked after every applied command. Same discipline as
+    `FStratSelectionMachine`.
+
+  **The `STRAT-AI` format strings** (`LogStratPlay`; `applied`/`turn-ended` at `Log`, `refused` at
+  `Warning`) — recorded verbatim, phase D builds a parser on them:
+  ```
+  STRAT-AI applied kind=%s unit=%d hex=%d,%d def=%d target=%d turn=%d side=%d hash=%s
+  STRAT-AI refused phase=%s kind=%s unit=%d hex=%d,%d def=%d target=%d turn=%d side=%d reason=%s
+  STRAT-AI turn-ended side=%d turn=%d commands=%d hash=%s
+  ```
+  `phase` ∈ `decide` | `apply` | `bound` | `handover`. `def` and `target` are this line's two
+  additions over `STRAT-CMD` (a `defIndex` is phase 0's load-bearing raw index; `TargetId` names
+  the unit the AI chose, which the resolved hex does not tell you). `turn`/`side` read before
+  submission, `hash` after.
+
+  **The post-gate fix, recorded because the reasoning generalises.** The first gate's Observation
+  2 found `StratAiTurnRunner.h:231` already false in its own diff — it claimed the runner emits
+  every `STRAT-AI` line, while `RunAiTurnsNow` emitted a hand-written **two-field** `phase=handover`
+  line not following the declared nine-field format, which phase D's parser would have tripped on.
+  Closed immediately rather than deferred, because the editor was closed at that moment and phase
+  C is editor-open, so deferring cost a full close→build→reopen cycle. The engineer declined the
+  naive remedy (copy the format string into `StratMatchSubsystem.cpp`) because that satisfies the
+  letter while recreating the cause — two nine-field `UE_LOG` sites free to drift apart again,
+  which is what had just happened inside a single diff. Instead it exported
+  `STRATPLAY_API StratLogAiTurnRefusal(...)` so `StratAiTurnRunner.cpp` remains the **sole holder**
+  of the format string, verified here directly: `grep -c "STRAT-AI refused"` finds 3 occurrences in
+  `StratAiTurnRunner.cpp` (the format literal at `:79` plus its two other call sites) and 2 in
+  `StratMatchSubsystem.cpp` (both calls into `StratLogAiTurnRefusal`, no literal), and
+  `grep -n "STRAT-AI refused phase"` — the actual format-string text — returns exactly one hit,
+  `StratAiTurnRunner.cpp:79` (a second match at `:209` is a comment, not code). **Generalisable:
+  when two sites must agree on a format, route one into the other rather than copying — a copy
+  makes the prose true today and false again on the next edit.**
+
+  **The deferred finding — the gate was explicit this must be written down before the phase
+  closes.** An AI-vs-AI game that reaches a §2.8 result **mid-turn** ends with the rules module
+  refusing the winning side's closing EndTurn:
+  ```
+  STRAT-AI refused phase=apply kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=6 side=1 reason=[T-SAVE-05] no match is running
+  ```
+  So `FStratAiTurnRunner::RunTurn` returns `bOk = false` and `UStratMatchSubsystem::RunAiTurnsNow`
+  returns **false for a game that finished correctly**, while the result, turn count, recorded
+  log, replay parity and handover silence are all right. **Finishing is reported as a fault**,
+  distinguishable from a genuine mid-game refusal only by reading the refusal text. It is loud,
+  not silent — `StratGameMode.cpp:126` and `StratPlayerController.cpp:383` both complain — which
+  is why the gate ruled it non-blocking for an exit criterion about the runner, the wiring and the
+  log line. `strat-test-author` asserted the return value **neither** way: asserting `true` fails
+  on a correct game today, asserting `false` would make the clause demand the defect. It left
+  `AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ..., Occurrences 0)` at
+  `StratAiMatchClauses.cpp:607` as a tripwire, so a future fix fails the clause loudly and gets
+  revisited deliberately. **Consequence recorded in NEXT above, in terms a phase-D reader cannot
+  miss:** `RunAiTurnsNow`'s return value is now an untested production contract, and phase D's
+  gate must not be built on it.
+
+  **Carried-forward debt, also recorded because it must reach phase D's brief rather than rest on
+  a gate observation:**
+  - **`Stratocracy.StratPlay.T-INT-05.HandoverRefusalCarriesTheFixedFields`** — proposed by the
+    engineer, ruled by the re-gate as correctly deferred to phase D, provided the debt is carried
+    into phase D's brief rather than resting on a gate observation. That is what this entry does.
+    Today `StratAiMatchClauses.cpp:730` asserts only the handover line's *absence*, so nothing
+    executes its content; the shared formatter is already covered by three executed refusal arms
+    (`decide`, `apply`, `bound`), leaving only `StratLogAiTurnRefusal`'s forward and its single call
+    site dark. Phase D owns the field parser this clause would assert against — writing it earlier
+    means writing the expected shape twice.
+  - **The paced path (`AiTurnDelaySeconds > 0`) needs a ticking world** and is not covered by the
+    synchronous tests; discharged by phase D's PIE playtest.
+  - **`StratGameMode.cpp:98-104`** moved an early `return` inside an `else` so the opening AI turn
+    is reached on the warning path too — correct and reasoned, but it changes control flow of an
+    existing method that **no clause in this diff exercises**; the AI-first-side-with-missing-tile-mesh
+    path is argued, not measured.
+  - **`StratAiMatchClauses.cpp:560-562`** prose is now cosmetically stale (says the handover line
+    is "emitted by `RunAiTurnsNow` — not by the runner"; still true of the call site, but now reads
+    as if the format lives there). `strat-test-author`'s lane; the re-gate ruled it cosmetic, not
+    misleading — worth a one-line touch when that file is next opened, not worth a cycle.
+  - **Phase A's three case-insensitivity debts are DISCHARGED** — `StratAiBridgeParity.cpp` at
+    1029-1039, 1138-1145, 1250-1256, now `TestNotEqualSensitive` / `TestEqualSensitive` /
+    `ESearchCase::CaseSensitive`, both tests still passing. The sharpest was the `GATE-BRIDGE-DEFS`
+    positional comparison: it pins that `SetBuildlistByIds` matches on **bytes** rather than
+    `FName`'s case-insensitive operator, so a case-insensitive assertion there would have agreed
+    with the very widening the clause forbids. Line 1244's `Contains(FString::FromInt(...))` was
+    deliberately left alone — digits have no case.
+
+  **Phase C handoff — recorded here so phase C's builder reads it.** Phase C must set these on
+  `BP_StratGameMode`'s `MatchConfig`; none has a hardcoded value and none is an asset path:
+  `AiSides` (e.g. `[1]`; empty today, which is why the AI is off and why the 78 baseline held),
+  `AiBuildlistUnitIds` (`FName` ids matching `Data/units.csv` byte for byte — the bridge compares
+  exact UTF-8, not `FName`'s case-insensitive operator; duplicates express §2.9's build mix and
+  are preserved), and `AiTurnDelaySeconds` for pacing. `AiMaxCommandsPerTurn` (256) and
+  `AiMaxConsecutiveTurns` (64) have safe defaults phase C need not touch.
+
+  **A file outside this steward's lane, mentioned so a future phase commit does not drop it:**
+  `.agents/ue-project-context.md:195` carried a stale `78/78, AI-opponent phase A` count. It has
+  been corrected here (no crew agent owns that file) to `86/86, AI-opponent phase B` and the
+  re-gate confirmed the edit correct against the report it read. It is unstaged.
 
 ### Phase C — planned (editor OPEN)
 

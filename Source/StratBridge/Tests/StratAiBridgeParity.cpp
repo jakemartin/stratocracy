@@ -1026,11 +1026,16 @@ bool FStratAiRefusalsAreDistinguishableTest::RunTest(const FString& /*Parameters
 	AddInfo(FString::Printf(TEXT("unseeded: '%s'"),  *Unseeded2.Reason));
 	AddInfo(FString::Printf(TEXT("bad side: '%s'"),  *BadSide.Reason));
 
-	TestNotEqual(TEXT("'not loaded' and 'not seeded' are different refusals"),
+	// `TestNotEqualSensitive` AND NOT `TestNotEqual`. `TestNotEqual(FString)` compares
+	// case-INSENSITIVELY in UE 5.8, exactly as `FString::operator!=` does -- so two refusals
+	// that differed only in case would read as "the same refusal" and this clause would fail
+	// for a reason nobody would guess. Not live today (the three sentences differ in far more
+	// than case), and fixed because the shape is what a later edit inherits.
+	TestNotEqualSensitive(TEXT("'not loaded' and 'not seeded' are different refusals"),
 		Unloaded1.Reason, Unseeded2.Reason);
-	TestNotEqual(TEXT("'not loaded' and 'unknown side' are different refusals"),
+	TestNotEqualSensitive(TEXT("'not loaded' and 'unknown side' are different refusals"),
 		Unloaded1.Reason, BadSide.Reason);
-	TestNotEqual(TEXT("'not seeded' and 'unknown side' are different refusals"),
+	TestNotEqualSensitive(TEXT("'not seeded' and 'unknown side' are different refusals"),
 		Unseeded2.Reason, BadSide.Reason);
 
 	// The unknown-side refusal names the side it was asked about. A caller that passed a
@@ -1130,7 +1135,14 @@ bool FStratAiBuildlistResolvesInLoaderOrderTest::RunTest(const FString& /*Parame
 
 		// THE COMPARISON. Left side: the id the loader put at that defIndex. Right side:
 		// the id that was asked for at that position. Neither is written in this file.
-		TestEqual(
+		//
+		// `TestEqualSensitive` AND NOT `TestEqual`, AND IT IS THIS CLAUSE'S WHOLE SUBJECT.
+		// `TestEqual(FString)` compares case-INSENSITIVELY in UE 5.8, and the property being
+		// pinned here is that `SetBuildlistByIds` matches on BYTES rather than on `FName`'s
+		// case-insensitive comparison (`StratBridge.h:602-607`). Asserted with a
+		// case-insensitive comparison, "Infantry" would satisfy a resolution to "INFANTRY"
+		// and the clause would agree with the very widening it exists to forbid.
+		TestEqualSensitive(
 			*FString::Printf(TEXT("buildlist entry %d resolves to the def whose id was asked for"), Index),
 			FromStd(Defs[static_cast<size_t>(Def)].id), Wanted[Index].ToString());
 	}
@@ -1235,9 +1247,12 @@ bool FStratAiBuildlistRefusalsLeaveListIntactTest::RunTest(const FString& /*Para
 	// The reason names BOTH the id and the position. Duplicates are legal, so the id
 	// alone does not say which entry failed -- and a caller with "Infantry" three times
 	// and one typo needs the index to find it.
+	// `ESearchCase::CaseSensitive`, because `FString::Contains` DEFAULTS to IgnoreCase in UE
+	// 5.8 -- the same defect this file's own case clause below was almost shipped with. The
+	// refusal must name the id as it was given, not a case-folded lookalike of it.
 	TestTrue(
 		*FString::Printf(TEXT("the refusal ('%s') names the offending id"), *Refused.Reason),
-		Refused.Reason.Contains(Nonsense.ToString()));
+		Refused.Reason.Contains(Nonsense.ToString(), ESearchCase::CaseSensitive));
 	TestTrue(
 		*FString::Printf(TEXT("the refusal ('%s') names the offending position %d"),
 			*Refused.Reason, BadPosition),

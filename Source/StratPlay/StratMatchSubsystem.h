@@ -81,6 +81,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/TimerHandle.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "Templates/PimplPtr.h"
 #include "Templates/SubclassOf.h"
@@ -180,6 +181,85 @@ struct FStratMatchConfig
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Presentation")
 	TSubclassOf<AStratUnitActor> UnitActorClass;
+
+	// ---- §2.9's opponent -------------------------------------------------
+	// EVERY FIELD BELOW HAS A DEFAULT THAT PRESERVES HOT-SEAT EXACTLY. An empty `AiSides`
+	// means no side is played by the AI, which is the game phases 0-6 shipped; nothing in
+	// this block runs until a Blueprint default says otherwise. That is deliberate: a
+	// milestone that turned the AI on by defaulting it on would change the meaning of every
+	// existing test and every existing PIE session in the same pass that introduced it.
+
+	/**
+	 * Which `strat` sides are played by §2.9's AI rather than by a human.
+	 *
+	 * A LIST AND NOT TWO BOOLS, because "is side N the AI" is the only question anyone asks
+	 * of it and a list answers that for any side count without this file naming 2. §2.8 is
+	 * two-sided today; a bool pair would be this module deciding that, which is a scenario
+	 * fact (`Data/ferrum_crossing.json`) and not an engine one.
+	 *
+	 * BOTH SIDES IS A LEGAL VALUE and is what phase D's AI-vs-AI gate configures. It is
+	 * bounded by `AiMaxConsecutiveTurns` below rather than by a rule forbidding it.
+	 *
+	 * NOT RANGE-CHECKED HERE. A side that does not exist simply never matches
+	 * `sideToMove`, so the AI never runs for it -- the same outcome as leaving it out, and
+	 * without this file inventing an upper bound on a number the scenario owns.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
+	TArray<int32> AiSides;
+
+	/**
+	 * §2.9's buildlist, BY UNIT ID, handed to `FStratBridge::SetBuildlistByIds` after
+	 * seeding.
+	 *
+	 * BY NAME AND NEVER BY INDEX, and the bridge's own header explains why at length: a
+	 * defIndex is the raw, bounds-checked-only index a §4.10 Build command carries, and a
+	 * config full of hand-written 0s and 1s is exactly how phase 0's hazard gets
+	 * reintroduced. Resolution happens once, inside the module that can see `UnitDefs()`.
+	 *
+	 * DUPLICATES ARE THE POINT. §2.9 describes "mostly Infantry, an occasional Tank" and
+	 * gives no ratio, so repetition in this list IS the ratio. The bridge preserves them.
+	 *
+	 * EMPTY CONFIGURES AN AI THAT NEVER BUILDS, which is an ordinary configuration and not
+	 * a fault -- and it is the default, so phase C authoring this list is what turns
+	 * production on. It is distinguishable from a misspelled id, because an unresolvable id
+	 * refuses by name.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
+	TArray<FName> AiBuildlistUnitIds;
+
+	/**
+	 * The AI turn runner's termination bound. See `FStratAiTurnRunner::MaxCommandsPerTurn`
+	 * for why 256 and why zero is a refusal rather than "unbounded".
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
+	int32 AiMaxCommandsPerTurn = 256;
+
+	/**
+	 * How many AI turns may run back to back before this subsystem calls it a fault.
+	 *
+	 * IT IS A SECOND, OUTER BOUND AND IT GUARDS A DIFFERENT FAILURE. `AiMaxCommandsPerTurn`
+	 * bounds one turn; this bounds the handover loop that runs when BOTH sides are AI and
+	 * the match never reaches a §2.8 result. Ferrum Crossing's `turnCap` is 20, so 64
+	 * clears a whole AI-vs-AI game with room for a longer scenario; it exists so that a
+	 * scenario whose cap never fires cannot spin forever inside one call.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
+	int32 AiMaxConsecutiveTurns = 64;
+
+	/**
+	 * §2.11's pacing: seconds to wait before an AI turn starts.
+	 *
+	 * ZERO RUNS SYNCHRONOUSLY AND IS THE DEFAULT, which is what keeps the AI path drivable
+	 * from a test with no ticking world. A positive value schedules a timer instead, so a
+	 * human can see the board they just handed over before it changes under them.
+	 *
+	 * BEFORE THE TURN AND NOT BETWEEN COMMANDS. A per-command delay would make
+	 * `FStratAiTurnRunner` an incremental machine holding resumable state between ticks, and
+	 * resumable state part-way through a turn is a mirror of the rules state by another
+	 * name -- the shape `FStratSelectionMachine` refused for the same reason.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
+	float AiTurnDelaySeconds = 0.0f;
 };
 
 /**
@@ -356,7 +436,67 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
 	AStratUnitActor* FindUnitActor(int32 UnitId) const;
 
+	// ---- §2.9's opponent -------------------------------------------------
+	// THIS CLASS DRIVES THE AI AND DOES NOT IMPLEMENT IT. Every command comes from
+	// `FStratAiTurnRunner`, which gets every command from `FStratBridge::NextAiCommand`,
+	// which is `strat::nextCommand`. What is decided here is only WHEN a turn runs and
+	// WHETHER it is this side's, and both of those are read from configuration and the view
+	// model rather than derived.
+
+	/** Whether `FStratMatchConfig::AiSides` names this side. Configuration, not a rule. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|AI")
+	bool IsSideAi(int32 Side) const;
+
+	/**
+	 * True when a live, unfinished match is waiting on a side the config calls AI.
+	 *
+	 * IT ASKS THE VIEW MODEL AND CACHES NOTHING. `sideToMove` and `hasResult` are the rules
+	 * module's answers, read fresh; a `bAiTurnPending` flag beside them could disagree, and
+	 * the disagreement would present as an AI that plays after the match is over.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|AI")
+	bool IsAiTurnDue() const;
+
+	/**
+	 * Runs the AI's turn if one is due -- immediately, or after `AiTurnDelaySeconds`.
+	 *
+	 * THE ENTRY POINT CALLERS USE. `AStratGameMode::BeginPlay` calls it once the match is
+	 * live (so an AI that moves first does), and `AStratPlayerController` calls it after a
+	 * command the human's side applied (so an AI that moves second does). Neither of them
+	 * checks whose turn it is -- that check lives here, once.
+	 *
+	 * A `true` RETURN WITH A DELAY CONFIGURED MEANS "SCHEDULED", NOT "PLAYED", and that
+	 * ambiguity is the price of pacing. `RunAiTurnsNow` is what a caller that needs the turn
+	 * to have happened by the time it returns calls -- and it is what every test calls,
+	 * because the default delay is zero and the delayed path needs a ticking world.
+	 *
+	 * NOTHING DUE IS `true` AND NOT A REFUSAL. "It is the human's turn" is the ordinary
+	 * state of a hot-seat game and is not an error to report.
+	 */
+	bool RunAiTurnsIfDue(FString& OutFailureReason);
+
+	/**
+	 * Plays every consecutive AI turn that is due, synchronously, and reconciles after.
+	 *
+	 * THE TESTABLE ENTRY POINT, and the one the delayed path eventually calls. It loops
+	 * while the side to move is an AI side and the match has no result, bounded by
+	 * `AiMaxConsecutiveTurns` -- so a one-AI hot-seat game plays exactly one turn here and
+	 * phase D's AI-vs-AI game plays to a §2.8 result in one call.
+	 *
+	 * A REFUSED AI TURN STOPS THE LOOP AND IS REPORTED. Commands already applied stand; the
+	 * runner cannot undo one and neither can this. The alternative -- swallow it and hand
+	 * play back -- is the silent-empty-turn failure the whole phase is shaped around.
+	 *
+	 * REFRESHES PRESENTATION ON THE WAY OUT, including on the refusal path. The board moved
+	 * whether or not the turn finished, and a screen that still shows the pre-AI board is a
+	 * screen that disagrees with the rules module.
+	 */
+	bool RunAiTurnsNow(FString& OutFailureReason);
+
 private:
+	/** `RunAiTurnsNow`, reached from the pacing timer. Its refusal is logged, not returned. */
+	void OnAiTurnTimer();
+
 	/**
 	 * Hands the seeded bridge to the scoreboard HUD, if there is one.
 	 *
@@ -412,6 +552,21 @@ private:
 	 *  after `StartMatch`. */
 	UPROPERTY(Transient)
 	int32 ViewingSide = 0;
+
+	/** The pacing timer, when `AiTurnDelaySeconds` is positive. Cleared in `Deinitialize`. */
+	FTimerHandle AiTurnTimer;
+
+	/**
+	 * Guards against re-entering the AI loop.
+	 *
+	 * IT IS NOT A MIRROR OF RULES STATE, which is the distinction that makes it acceptable
+	 * in a class whose header refuses a `bSeeded` bool three paragraphs down. It records a
+	 * fact about THIS OBJECT'S CALL STACK -- an AI turn is on it -- and nothing else can
+	 * answer that. The path it guards is real: `RunAiTurnsNow` reconciles, reconciliation
+	 * can reach a HUD refresh, and a re-entrant call would interleave two AI turns'
+	 * commands into one log.
+	 */
+	bool bAiTurnRunning = false;
 
 	// THERE IS NO `bSeeded` MIRROR HERE, deliberately. `IsMatchLive()` asks
 	// `Bridge->IsSeeded()` from the .cpp, where the definition is available. A bool beside

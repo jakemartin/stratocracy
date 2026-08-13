@@ -24,6 +24,7 @@
 
 #include "StratMatchSubsystem.h"
 
+#include "StratAiTurnRunner.h"
 #include "StratBoardActor.h"
 #include "StratPlay.h"
 #include "StratUnitActor.h"
@@ -37,6 +38,7 @@
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
 #include "Misc/Paths.h"
+#include "TimerManager.h"
 
 namespace
 {
@@ -93,6 +95,16 @@ bool UStratMatchSubsystem::DoesSupportWorldType(const EWorldType::Type WorldType
 
 void UStratMatchSubsystem::Deinitialize()
 {
+	// THE PACING TIMER FIRST, AND BEFORE THE BRIDGE IS FREED. `OnAiTurnTimer` submits commands
+	// through the bridge this function is about to destroy, and a timer that fired during
+	// teardown would be doing that against a freed object. The timer manager dies with the
+	// world too, so this is belt and braces -- which is the correct amount of caution for a
+	// callback that writes to a `TPimplPtr` being reset four lines down.
+	if (UWorld* const World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(AiTurnTimer);
+	}
+
 	// TORN DOWN IN THE ORDER THINGS DEPEND ON EACH OTHER, even though nothing here
 	// currently does. The unit actors hold no pointer into the bridge and the board holds
 	// no pointer to a unit -- every one of them was handed values, per call -- so this
@@ -226,6 +238,33 @@ bool UStratMatchSubsystem::StartMatch(const FStratMatchConfig& Config, FString& 
 	// seeded match -- see the declaration on why this function is all-or-nothing on the
 	// rules side and not on the presentation side.
 
+	// ---- §2.9's buildlist, if this match has an AI ---------------------------
+	// AFTER SEEDING AND NOT BEFORE, for a reason that is the bridge's rather than this
+	// file's: `LoadDefinitions` CLEARS the stored buildlist, because the values are indexes
+	// into the vector it just rebuilt and after a reload they do not merely go stale, they
+	// name different unit types. Setting it before that call would leave an AI that silently
+	// never builds.
+	//
+	// AN EMPTY LIST IS SKIPPED ENTIRELY rather than passed through as an empty set. Both
+	// configure an AI that never builds; skipping keeps a hot-seat match's call sequence
+	// byte-for-byte what it was before this phase, so nothing that passed at 78/78 can move
+	// because a property with a safe default appeared.
+	//
+	// A REFUSAL IS A COMPLAINT AND NOT A TEARDOWN. The match is seeded and correct; what is
+	// wrong is one configured unit id, and an AI that does not build is a diminished match
+	// rather than no match. It joins the same verdict a missing tile mesh joins, and for the
+	// same reason -- see the declaration on why this function is all-or-nothing on the rules
+	// side and not on the configuration side.
+	FString BuildlistReason;
+	if (ActiveConfig.AiBuildlistUnitIds.Num() > 0)
+	{
+		const FStratResult Buildlist = Fresh->SetBuildlistByIds(ActiveConfig.AiBuildlistUnitIds);
+		if (!Buildlist.bOk)
+		{
+			BuildlistReason = DescribeRefusal(TEXT("SetBuildlistByIds"), Buildlist);
+		}
+	}
+
 	// ---- The board ---------------------------------------------------------
 	// SPAWNED RATHER THAN PLACED IN THE LEVEL, and this is a decision worth its line. A
 	// placed board would be an actor a designer could delete, duplicate, or leave pointing
@@ -282,6 +321,10 @@ bool UStratMatchSubsystem::StartMatch(const FStratMatchConfig& Config, FString& 
 
 	// ---- One verdict, assembled from the parts that refused ----------------
 	TArray<FString> Complaints;
+	if (!BuildlistReason.IsEmpty())
+	{
+		Complaints.Add(BuildlistReason);
+	}
 	if (!PresentationReason.IsEmpty())
 	{
 		Complaints.Add(PresentationReason);
@@ -499,6 +542,208 @@ AStratUnitActor* UStratMatchSubsystem::FindUnitActor(int32 UnitId) const
 {
 	const TObjectPtr<AStratUnitActor>* const Found = UnitActors.Find(UnitId);
 	return Found != nullptr ? Found->Get() : nullptr;
+}
+
+// ---------------------------------------------------------------------------
+// §2.9's opponent. WHEN a turn runs, and nothing about WHAT it does.
+//
+// EVERY COMMAND BELOW COMES FROM `FStratAiTurnRunner`, which gets each one from
+// `FStratBridge::NextAiCommand`. This class contributes three facts and no fourth: whether
+// the config calls this side AI, whether the match is still running, and how many turns may
+// run back to back. None of the three is a rules answer.
+//
+// THE LOOP ASKS THE VIEW MODEL EVERY ITERATION AND CACHES NOTHING. `sideToMove` and
+// `hasResult` are the rules module's, re-read after every AI turn, on the same discipline
+// `FStratSelectionMachine` states for `bHasMoved`/`bHasActed`: there is no mirror to go
+// stale, because the mirror was never made.
+// ---------------------------------------------------------------------------
+
+bool UStratMatchSubsystem::IsSideAi(int32 Side) const
+{
+	return ActiveConfig.AiSides.Contains(Side);
+}
+
+bool UStratMatchSubsystem::IsAiTurnDue() const
+{
+	if (!IsMatchLive())
+	{
+		return false;
+	}
+
+	// THE MATCH-OVER CHECK COMES FROM `hasResult` AND IS NEVER INFERRED FROM `ResultTier`.
+	// `FStratMatchView` says so on the field: the two are read separately so they cannot
+	// disagree. An AI that kept playing past a §2.8 result would be submitting commands the
+	// rules module refuses, one per turn, forever.
+	FStratViewModel Model;
+	FString         Reason;
+	if (!BuildViewModel(Model, Reason))
+	{
+		// Not "no turn is due" as a fact about the match -- it is this object being unable to
+		// tell. Reported by the caller that acts on it; here it is simply not due, because
+		// running an AI turn against a state we could not read would be worse.
+		return false;
+	}
+
+	return !Model.Match.bHasResult && IsSideAi(Model.Match.SideToMove);
+}
+
+bool UStratMatchSubsystem::RunAiTurnsIfDue(FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	if (!IsAiTurnDue())
+	{
+		// ORDINARY AND NOT A REFUSAL. It is the human's turn, or the match is over, or there
+		// is no match. See the declaration.
+		return true;
+	}
+
+	// THE SYNCHRONOUS PATH IS THE DEFAULT AND THE TESTED ONE. `AiTurnDelaySeconds` is 0 out of
+	// the box, so unless a Blueprint default asks for pacing this call plays the turn before
+	// it returns -- which is what makes the AI drivable from an automation test with no
+	// ticking world.
+	if (ActiveConfig.AiTurnDelaySeconds <= 0.0f)
+	{
+		return RunAiTurnsNow(OutFailureReason);
+	}
+
+	UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		// Configured for pacing with no world to time against. Falls back to running rather
+		// than to refusing: the turn is due, and a match that silently stops handing over is a
+		// worse failure than one that paces badly.
+		return RunAiTurnsNow(OutFailureReason);
+	}
+
+	// ONE TIMER, RESET RATHER THAN STACKED. A second call while one is pending replaces it;
+	// two pending timers would run two AI turn loops against the same state, and the second
+	// would find it is no longer the AI's turn and do nothing -- which is harmless today and
+	// is exactly the kind of thing that stops being harmless when both sides are AI.
+	World->GetTimerManager().ClearTimer(AiTurnTimer);
+	World->GetTimerManager().SetTimer(AiTurnTimer, this, &UStratMatchSubsystem::OnAiTurnTimer,
+		ActiveConfig.AiTurnDelaySeconds, /*bLoop=*/false);
+
+	return true;
+}
+
+void UStratMatchSubsystem::OnAiTurnTimer()
+{
+	FString Reason;
+	if (!RunAiTurnsNow(Reason))
+	{
+		// NOWHERE TO RETURN IT TO. A timer has no caller, so the refusal is logged at Warning
+		// here rather than dropped -- the runner has already logged the specific
+		// `STRAT-AI refused` line, and this one says which path was driving.
+		UE_LOG(LogStratPlay, Warning, TEXT("The paced AI turn refused: %s"), *Reason);
+	}
+}
+
+bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	FStratBridge* const Live = Bridge.Get();
+	if (Live == nullptr)
+	{
+		OutFailureReason = TEXT("there is no bridge: StartMatch has not run, or it refused");
+		return false;
+	}
+
+	if (bAiTurnRunning)
+	{
+		// See the member's declaration on why this flag is not the mirror this class refuses
+		// elsewhere. Reported rather than silently skipped, because a re-entrant call means a
+		// caller ordering that nobody intended.
+		OutFailureReason = TEXT("an AI turn is already running on this subsystem");
+		return false;
+	}
+
+	TGuardValue<bool> ReentrancyGuard(bAiTurnRunning, true);
+
+	FStratAiTurnRunner Runner;
+	Runner.MaxCommandsPerTurn = ActiveConfig.AiMaxCommandsPerTurn;
+
+	FStratBridgeAiTurnPort Port(Live);
+
+	int32       TurnsRun     = 0;
+	const int32 MaxTurns     = ActiveConfig.AiMaxConsecutiveTurns;
+	FString     StopReason;
+
+	while (TurnsRun < MaxTurns)
+	{
+		// ASKED AGAIN EVERY ITERATION. After an AI turn the side has changed and the match may
+		// have reached a §2.8 result; both are the rules module's answers and both are re-read
+		// rather than predicted from what the runner reported.
+		FStratViewModel Model;
+		FString         ModelReason;
+		if (!BuildViewModel(Model, ModelReason))
+		{
+			StopReason = ModelReason;
+			break;
+		}
+
+		if (Model.Match.bHasResult || !IsSideAi(Model.Match.SideToMove))
+		{
+			// The ordinary exit: the match ended, or it is a human's turn.
+			break;
+		}
+
+		const FStratAiTurnOutcome Outcome = Runner.RunTurn(Port);
+		++TurnsRun;
+
+		if (!Outcome.bOk)
+		{
+			// THE HARD STOP. Whatever the runner applied stands; it has already logged the
+			// `STRAT-AI refused` line naming the phase. Handing play back with the AI's turn
+			// half-played and no fault reported is the failure this whole phase is shaped
+			// around, so the reason travels up.
+			StopReason = Outcome.FailureReason;
+			break;
+		}
+	}
+
+	if (StopReason.IsEmpty() && TurnsRun >= MaxTurns)
+	{
+		// THE OUTER BOUND, REPORTED FOR `FStratAiTurnRunner::MaxCommandsPerTurn`'s REASON. A
+		// silent stop here reads as an AI that decided to hand over, which is precisely what
+		// it did not do.
+		//
+		// `phase=handover` IS THE FOURTH PHASE AND IT IS THIS FUNCTION'S, not the runner's:
+		// `FStratAiTurnRunner` plays ONE turn and cannot see that this is the ninth in a row.
+		// It goes out through `StratLogAiTurnRefusal` and NOT through a `UE_LOG` here, which
+		// is a correction rather than a preference -- the line was written by hand in this
+		// file for the length of one diff, carried `phase=` and `reason=` alone, and so was
+		// the single `STRAT-AI` line a phase-D field parser built on the declared format
+		// would have failed to split. `StratAiTurnRunner.cpp` holds the only copy of that
+		// format string; `Port` supplies the live turn and side the bound was reached at.
+		StopReason = FString::Printf(
+			TEXT("%d consecutive AI turns ran without the match reaching a human turn or a ")
+			TEXT("result (AiMaxConsecutiveTurns is %d)"),
+			TurnsRun, MaxTurns);
+		StratLogAiTurnRefusal(TEXT("handover"), Port.Turn(), Port.SideToMove(), StopReason);
+	}
+
+	// RECONCILED ON BOTH PATHS. The board moved whether or not the turn finished; a screen
+	// still showing the pre-AI board disagrees with the rules module either way. The refresh's
+	// own refusal does not overwrite an AI refusal -- the AI's is the one that explains the
+	// other.
+	FString RefreshReason;
+	const bool bRefreshed = RefreshPresentation(RefreshReason);
+
+	if (!StopReason.IsEmpty())
+	{
+		OutFailureReason = StopReason;
+		return false;
+	}
+
+	if (!bRefreshed)
+	{
+		OutFailureReason = RefreshReason;
+		return false;
+	}
+
+	return true;
 }
 
 AStratScoreboardHUD* UStratMatchSubsystem::FindScoreboardHUD() const

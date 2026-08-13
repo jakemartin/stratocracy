@@ -357,6 +357,34 @@ bool AStratPlayerController::HandleSelectionEvent(EStratSelectionEvent Event,
 		}
 
 		SelectionMachine.NotifyCommandApplied(Outcome);
+
+		// ---- §2.9's opponent, if the command just handed play to it -----------
+		// AFTER `NotifyCommandApplied` AND BEFORE THE REFRESH BELOW, and both halves of that
+		// placement are load-bearing. After, because the machine's DONE set must be cleared by
+		// the human's own accepted EndTurn before the AI's commands change the board -- calling
+		// it first would leave the machine advancing across a turn boundary it had not been
+		// told about. Before, because the refresh at the end of this function is the DECORATED
+		// one, and it is the screen the player is left looking at: refreshing first would paint
+		// the pre-AI board and then let the subsystem's own undecorated refresh overwrite it,
+		// so the last thing drawn would be the one without `bDone` on it.
+		//
+		// ASKED AFTER EVERY ACCEPTED COMMAND AND NOT ONLY AFTER AN EndTurn. `RunAiTurnsIfDue`
+		// reads `sideToMove` off the rules module; this file inferring "an EndTurn means it is
+		// now the other side's turn" would be a turn rule restated in the input path, and it
+		// would be wrong the day a scenario gives a side two turns in a row.
+		//
+		// ITS REFUSAL DOES NOT FAIL THE PLAYER'S COMMAND. The human's command applied -- that
+		// is what the accepted `STRAT-CMD` line above claims and it remains true. The AI's
+		// failure is reported on its own line, in `FStratAiTurnRunner`'s words, so the two are
+		// not conflated in a log.
+		if (UStratMatchSubsystem* const AiMatch = GetMatch())
+		{
+			FString AiReason;
+			if (!AiMatch->RunAiTurnsIfDue(AiReason))
+			{
+				UE_LOG(LogStratPlay, Warning, TEXT("The AI turn refused: %s"), *AiReason);
+			}
+		}
 	}
 
 	// The machine's own refusal -- an illegal click, a finished unit, a locked unit --

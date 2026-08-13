@@ -98,9 +98,36 @@ void AStratGameMode::BeginPlay()
 		else
 		{
 			UE_LOG(LogStratPlay, Error, TEXT("No match this session: %s"), *LastFailureReason);
+			return;
 		}
-		return;
+	}
+	else
+	{
+		UE_LOG(LogStratPlay, Log, TEXT("Match started by %s."), *GetName());
 	}
 
-	UE_LOG(LogStratPlay, Log, TEXT("Match started by %s."), *GetName());
+	// ---- §2.9's opponent, if it moves first ---------------------------------
+	// REACHED ON BOTH SURVIVING PATHS ABOVE, AND THAT IS WHY THE EARLY `return` MOVED INSIDE
+	// THE `else`. A missing tile mesh returns `false` from `StartMatch` with a live, correctly
+	// seeded match behind it; if the AI holds the first side in that match, returning on the
+	// warning path would leave the game sitting on the AI's turn forever behind a scoreboard
+	// that looks fine. Only the no-match path returns without asking, because there is nothing
+	// to ask about.
+	//
+	// IT DOES NOT CHECK WHOSE TURN IT IS. `RunAiTurnsIfDue` does, once, and a second copy of
+	// that check here would be a second authority on it. In a hot-seat match with no
+	// `AiSides` configured -- which is the default and is every match before phase C -- this
+	// call builds one view model, finds a human's turn and returns true.
+	if (Match->IsMatchLive())
+	{
+		FString AiReason;
+		if (!Match->RunAiTurnsIfDue(AiReason))
+		{
+			// NOT FOLDED INTO `LastFailureReason`. That property answers "why is there no
+			// match, or why is it incompletely drawn"; an AI turn that refused is a different
+			// question about a match that exists, and `FStratAiTurnRunner` has already logged
+			// the `STRAT-AI refused` line naming the phase that failed.
+			UE_LOG(LogStratPlay, Warning, TEXT("The opening AI turn refused: %s"), *AiReason);
+		}
+	}
 }

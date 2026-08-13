@@ -1,6 +1,6 @@
 # Architect state
 
-_Last run 2026-08-11 19:30 UTC._
+_Last run 2026-08-13 (record-keeping update: two owed wait clauses discharged)._
 
 ## BUILT
 
@@ -22,9 +22,39 @@ _Last run 2026-08-11 19:30 UTC._
 - **Hot-seat milestone is COMPLETE (phase 6 closed 2026-08-13); see "Hot-seat milestone —
   COMPLETE" below.** Out of scope, unchanged: production menu (§2.11.5), guided opening
   (§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.
-- Two clauses owed to the next test-author phase: `T-INT-05.WaitIsDistinguishableFromAttack`,
-  `T-INT-05.WaitWithNothingSelectedIsANoOp` (writable since phase 6's `STRAT-WAIT spent` line
-  landed; see Phase 6 — CLOSED for detail).
+- **The two clauses owed since phase 6 are now written and green — discharged.**
+  `Stratocracy.StratPlay.T-INT-05.WaitIsDistinguishableFromAttack` and
+  `.T-INT-05.WaitWithNothingSelectedIsANoOp`, in a new file
+  `Source/StratPlay/Tests/StratSelectionWaitClauses.cpp` (untracked at time of writing — staging
+  is the user's call). Suite **69/69**, `succeeded 69 / succeededWithWarnings 0 / failed 0 /
+  notRun 0`, `reportCreatedOn 2026.08.13-16.47.36` (`Saved/AutomationReport/index.json`, read
+  `utf-8-sig`); both entries `state: "Success"`. All 67 pre-existing tests still pass, none
+  downgraded. `WaitIsDistinguishableFromAttack` pins that a wait and an accepted attack differ
+  in the machine's *returned value* (`Command == None` naming no unit vs `Command == Attack`
+  carrying `UnitId`/`Hex`), that both units end `bDone == true`, that both re-clicks refuse
+  identically, and that `FStratBridge::StateHash()` is unmoved by the wait but moved by the
+  attack — expectations taken from `FStratSelectionOutcome`, `AttackTargetHexes`'s own first
+  element, and `StateHash()` against its own earlier reading; no hex literal, no predicted hash.
+  `WaitWithNothingSelectedIsANoOp` pins the guard at `StratSelectionMachine.cpp:156-160`:
+  `Command == None`, selection stays `INDEX_NONE`, a refusal reason is set, nothing joins
+  `DoneUnits` (every `bDone` false on the decorated model), state hash unmoved, no `STRAT-WAIT
+  spent` line emitted. Neither clause asserts the log line's *existence* — only its absence on
+  the no-op path and its presence as a positive control on a real wait driven through the same
+  capture in the same run; the line was never the property worth pinning, the wait/attack
+  distinguishability was.
+  - **Technique worth reusing: pinning a refusal string with no module-side accessor.** The
+    guard's `TEXT("nothing is selected")` at `StratSelectionMachine.cpp:158` is an inline
+    literal exposed by neither `FStratSelectionMachine` nor `FStratSelectionOutcome`. The clause
+    does not hardcode a copy — that would fail on a harmless wording edit while still passing if
+    the guard were replaced by a different arm producing a different sentence. Instead it
+    asserts non-emptiness plus inequality against the machine's own done-set refusal, produced
+    by the same machine in the same run.
+  - **Technique worth reusing: a log-silence assertion needs a positive control.** Asserting "no
+    `STRAT-WAIT spent` line appeared" is worthless if the capture cannot speak, so the clause
+    first drives a real wait through the same live `GLog` capture and requires the count to rise
+    before reading the silence on the guarded path — the general remedy for the failure mode
+    that cost phase 6 six rounds: measuring an absence without first proving the instrument can
+    register a presence.
 - Standing debt, ruled out of any future phase's scope by the phase-6 reviewer: NeoStack input
   injection reaches `UGameViewportClient::InputKey` but never `UPlayerInput`, so no playtest is
   machine-repeatable. This is a NeoStack plugin issue outside this repository.
@@ -977,10 +1007,11 @@ returns nothing.**
   destruction or encounter-result line exists in `LogStratPlay`, so the
   encounter narrative stays visual. If a later phase wants a log-backed
   outcome, it is a `FStratBridge`-routed line, not a widget one.
-- **Two clauses now writable, owed to the next test-author phase** — they
+- **Two clauses were writable, owed to the next test-author phase** — they
   were not writable before phase 6 because the `STRAT-WAIT spent` line did
   not yet exist: `T-INT-05.WaitIsDistinguishableFromAttack` and
-  `T-INT-05.WaitWithNothingSelectedIsANoOp`.
+  `T-INT-05.WaitWithNothingSelectedIsANoOp`. **Discharged 2026-08-13** — see
+  the record under NEXT above.
 - **A wait leaves no trace in `RecordedLog()` and cannot** — the vendored
   format has no `Wait` kind; a replay reproduces state hashes but not the
   player experience.

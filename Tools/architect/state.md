@@ -76,14 +76,24 @@ _Last run 2026-08-11 19:30 UTC._
   steward's lane (`.agents/` is not `Config/` or `Tools/architect/`) — recorded here as a
   handoff rather than edited.
 - **Phase 6 risk, and the most consequential open item: the `STRAT-CMD` click-to-command gate
-  is unclosed.** No `playtest_key` or `playtest_click` produced any `LogStratPlay` output. The
-  builder isolated this to the harness rather than asserting it — it reproduced total input
-  silence on Epic's own shipped TopDown template with known-good assets
-  (`CharMoveComp.Velocity` identical before and after a viewport click). `Escape` still ends
-  PIE, so events reach the editor-level handler but not game input; consistent with the PIE
-  viewport not holding Slate keyboard focus under `bShowMouseCursor=true`. Phase 4's standing
-  debt — "`ETriggerEvent::Started` on all four input actions is asserted, not measured" —
-  therefore remains open, and phase 6's `assert_log_contains` gate depends on solving it.
+  is unclosed.** No `playtest_key` or `playtest_click` produced any `LogStratPlay` output.
+  **Correction to this record, made in phase 6:** the original claim here — "total input
+  silence, reproduced on Epic's own shipped TopDown template with known-good assets" — had a
+  confounded control and is **not established**. The "TopDown template" the control actually
+  drove was `Lvl_FerrumCrossing` launched under the TopDown template's GameMode (a consequence
+  of the stale-config bug found in phase 6 — see below), and `Lvl_FerrumCrossing`'s `Floor`
+  actor had been deleted in phase 5 (recorded above, "The template's `Floor` actor was deleted
+  from `Lvl_FerrumCrossing`"). A click on that map hits nothing under the cursor, so
+  `CharMoveComp.Velocity` legitimately stayed zero for a reason having nothing to do with
+  whether input reaches the game. `Escape` still ending PIE is real and unaffected by this
+  correction. The underlying question — does simulated input reach `StratPlayerController` at
+  all — is **still open**, restated accurately with new, still-confounded-a-different-way
+  measurements under Phase 6 below. Phase 4's standing debt — "`ETriggerEvent::Started` on all
+  four input actions is asserted, not measured" — remains open, and phase 6's
+  `assert_log_contains` gate still depends on solving it. **Do not action the phase-6 escalation
+  that asks to repoint `Lvl_FerrumCrossing`'s GameMode or `GlobalDefaultGameMode` again** — see
+  Phase 6 below: the running editor was serving a stale, pre-flip config, and the on-disk
+  `Config/DefaultEngine.ini` needs no change.
 - **`AWorldSettings` is unreachable through the NeoStack Lua API**, so no level's GameMode
   override can be authored that way. Exact failures: `configure("actor","WorldSettings")`,
   `select_actor`, `get_actor_properties`, `open_asset` on the sub-object path, and
@@ -110,6 +120,16 @@ _Last run 2026-08-11 19:30 UTC._
   builder judged it inside "the Blueprints" because `AStratCameraPawn`'s C++ default
   `DefaultArmLength = 1200` shows about a third of the board. It holds no logic — four float
   defaults only. Recorded so a gate can evaluate the judgement rather than rediscover it.
+- **The map→GameMode binding is a single unguarded line.**
+  `Config/DefaultEngine.ini:4` (`GlobalDefaultGameMode`) is now the *only*
+  thing binding `Lvl_FerrumCrossing` to `BP_StratGameMode_C`, because
+  `AWorldSettings` is unreachable through the NeoStack Lua API and the level
+  carries no World Settings override — unlike `Lvl_TopDown`, which does (see
+  Phase 5's `Config` flip evidence above). This fact is not recorded in
+  `.agents/ue-project-context.md`, which is where a future config edit would
+  most plausibly be checked against. Owed to a future doc pass. **No crew
+  agent owns `.agents/ue-project-context.md`** — this is a flag, not a task
+  the steward takes.
 
 ## Hot-seat milestone
 
@@ -585,3 +605,154 @@ returns nothing.**
     not require the editor. Used here in place of the escalation the brief
     anticipated; recorded so a future steward reaches for it before assuming
     "binary, therefore unknowable" for this narrower class of question.
+
+  **Committed as `d310aa1`** ("Phase 5: the global default was never
+  load-bearing, and the floor would have eaten every click"), 35 files
+  changed, pushed to `origin/master`. Parent `ed27d5a` (phase 4).
+
+  **It took two gate passes — the block is worth recording, same reasoning
+  as phase 4's.**
+  - **First gate: `VERDICT: BLOCK`, one finding.** All eleven substantive
+    checks passed; the block was the index. 28 asset files were staged
+    (`A`/`AM`) while `Config/DefaultEngine.ini` was unstaged and all five
+    `Content/StratPlay/` Blueprints were **untracked** (`??`, no ignore rule —
+    simply never added). A commit from that index would have landed
+    `Lvl_FerrumCrossing` referencing five Blueprints absent from the
+    repository, and without the `GlobalDefaultGameMode` line that is the
+    level's only map→GameMode binding. Owner was **the user**, not a crew
+    agent, per the "agents do not commit" non-negotiable.
+  - **A second, narrower trap found while clearing it, worth recording as a
+    measurement:** most assets showed `AM` — staged, then modified again by
+    the editor afterwards. Committing in that state captures **stale asset
+    bytes** while the working tree holds newer ones: a commit that is a
+    snapshot of a state nobody ever ran. Resolved by re-running `git add -A`
+    to collapse every `AM` → `A` before committing. Likely cause is Unreal's
+    Git revision-control plugin auto-staging assets on save — meaning **the
+    index goes stale again the moment the editor touches a file.** Expect
+    this on every asset phase, i.e. phase 6.
+  - **Re-gate: `VERDICT: PASS`, zero findings**, audited against `d310aa1`
+    rather than the working tree. The stale-bytes risk was confirmed clean:
+    `git diff HEAD` empty, `git lfs fsck` OK, and four asset blobs
+    (`BP_StratGameMode.uasset`, `Lvl_FerrumCrossing.umap`,
+    `SM_HexTile_Plains.uasset`, `IMC_Selection.uasset`) hashing identically on
+    both sides. The committed snapshot is the state measured working in PIE.
+  - The gate also confirmed `.agents/ue-project-context.md` shows **no**
+    drift from the tree at HEAD — module table (lines 37-41), the
+    `StratRules`-deliberately-absent note (lines 60-64), and the vendored-path
+    row (line 173, `rulesCommit cb8e12b`) all match measurement. Nothing in
+    `d310aa1` invalidated it. Recorded so the existing staleness flag for that
+    file (phase 4, `:195`) is not over-read as still-live everywhere.
+
+### Phase 6 — in progress
+
+- **Status:** in progress, not closed. No gate has run. This is a checkpoint
+  so a fresh session can resume without re-measuring.
+- **Exit criterion (unchanged, not yet met):** the `assert_log_contains`
+  clause over `STRAT-CMD` closing the click-to-command input gate, plus
+  on-disk evidence in `Tools/architect/evidence/`. Neither exists yet — see
+  "Not yet produced" below.
+
+  **Finding 1 — the running editor was serving a stale config; the on-disk
+  `Config/DefaultEngine.ini` needed no change.** `Config/DefaultEngine.ini:4`
+  reads `GlobalDefaultGameMode=/Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C`,
+  flipped in `d310aa1` (phase 5). The running `UnrealEditor` process
+  (PID 34576) started **2026-08-12 18:11:07**; `DefaultEngine.ini` was last
+  written **2026-08-12 19:01:37**. The editor read its config at startup and
+  held the **pre-flip** `GlobalDefaultGameMode` in memory for the rest of that
+  process's life. Consequence, measured: every `playtest_start({map=
+  '/Game/StratMaps/Lvl_FerrumCrossing'})` in that process launched the map
+  under the **TopDown template GameMode** — the PIE world contained
+  `BP_TopDownController_C_0`/`BP_TopDownCharacter_C_1`, no
+  `AStratPlayerController`, no `AStratCameraPawn`, no `AStratBoardActor`, and
+  `playtest_observe` showed pure sky. **`Lvl_FerrumCrossing` does not need a
+  World Settings GameMode Override and `GlobalDefaultGameMode` does not need
+  repointing** — the phase-6 builder's gating escalation asked for one of
+  those two, and the ask rested on the premise that the on-disk config is
+  wrong. Measurement refutes that premise. **The fix is to restart the
+  editor**, not to touch `Config/`. Generalised: **a long-lived editor
+  silently serves the config it started with**, so any `Config/` change
+  measured only on disk is unproven until a process that started after the
+  write reads it. Phase 5's own PIE evidence never exercised the global
+  default in the first place — `Saved/Logs/Stratocracy.log:4911` used an
+  explicit `?game=` override — which is why the staleness went unseen until
+  now.
+
+  **Finding 2 — correction owed to phase 5's own record.** See the corrected
+  NEXT bullet above ("Phase 6 risk, and the most consequential open item").
+  Phase 5's "total input silence, reproduced on Epic's own shipped TopDown
+  template with known-good assets" claim had a confounded control: the
+  "TopDown template" it actually drove was `Lvl_FerrumCrossing` under the
+  TopDown GameMode (a consequence of Finding 1's stale-config bug), and that
+  map's `Floor` actor had already been deleted in phase 5, so a click hit
+  nothing and `CharMoveComp.Velocity` legitimately stayed zero. That specific
+  claim is retracted; the underlying input question is not — see Finding 3.
+
+  **Finding 3 — the input question, restated accurately, still open, and
+  itself confounded.** After the phase-6 builder travelled the live PIE onto
+  the real GameMode by console (`open /Game/StratMaps/Lvl_FerrumCrossing?game=
+  /Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C`), the match verified
+  good:
+  - `LogStratPlay: Match live: seeded from
+    'E:/MultiAgent/Stratocracy/Data/ferrum_crossing.json' (first side 0),
+    drawn for side 0, 99 hexes and 10 units on screen.`
+  - `LogStratUI: Scoreboard live on an adopted bridge (this HUD seeded
+    nothing), drawn for side 0.`
+  - `BP_StratCamera_C_0.ArmPitch = -60.000000`, `BP_StratBoard_C_0` present.
+  - `SelectionMappingContext`/`SelectAction`/`WaitAction` all bound to the
+    `/Game/StratInput/` assets, `EnhancedPlayerInput_0` present,
+    `bShowMouseCursor = True`.
+
+  Yet simulated input **still** did not reach the game: `playtest_key`
+  returned `consumed=false` for `W` and `Enter`; `playtest_click` returned
+  `consumed=true` but produced no `LogStratPlay` line even on clicks landing
+  on tiles; `playtest_console` returned `consumed=true` with commands
+  executing in the PIE PlayerController. `Tilde` was consumed without opening
+  the game console, so the consumer sits above `UGameViewportClient`.
+
+  **This measurement is itself confounded and is not yet grounds for
+  declaring a NeoStack defect.** That session reached the live match by
+  in-PIE console travel rather than a clean PIE start, in a process running
+  stale config (Finding 1). The decided next step is a **clean-PIE re-test
+  after an editor restart**, before any human-in-the-loop fallback or harness
+  -defect conclusion.
+
+  What could not be measured, and why:
+  - `LastExecutedPlayModeType` is **not settable** through the NeoStack
+    settings API: `[FAIL] set -> … property 'LastExecutedPlayModeType' is not
+    exposed for edit or blueprint access`.
+  - `playtest_start({viewport='new_window'})` was accepted without error but
+    still produced an in-viewport session — PIE could not be put in its own
+    focusable window, the one lever that would discriminate the Slate-focus
+    hypothesis.
+  - `LevelEditorPlaySettings.GameGetsMouseControl` was toggled
+    `False → True → False` and **restored to its measured original**; it
+    changed nothing.
+
+  **Finding 4 — two harness facts, worth writing down regardless of how the
+  input question resolves.**
+  - Any NeoStack script calling a `playtest_*` function has its Lua `return`
+    value **discarded** — the MCP response carries only the connector's
+    `[OK] …` echoes. Workaround used: `write_config(...)` as a readback
+    channel, because its echo prints the value it wrote. This cost the
+    builder several blind calls.
+  - `playtest_key` rejects `BackQuote` (`ok=false ; Unknown input key`);
+    `Tilde` is the accepted spelling.
+
+  **Finding 5 — one unchased observation, not a finding.** The scoreboard
+  HUD did not appear in the `playtest_observe` capture despite
+  `LogStratUI: Scoreboard live …`. May simply be how `playtest_observe`
+  composites. Nobody investigated it.
+
+  **Not yet produced:** no `assert_log_contains` clause, no on-disk
+  screenshot; `Tools/architect/evidence/` has nothing to assemble. The
+  builder deliberately wrote no clause rather than hand over one that
+  witnesses itself.
+
+  **Resume pointer, agreed next action, in order:**
+  1. Restart the Unreal editor, so it reads the flipped
+     `GlobalDefaultGameMode` (Finding 1).
+  2. Restart Claude Code — NeoStack's `unreal_status` reports OK for an
+     editor opened after Claude Code started while `execute_script` is
+     silently absent; only a restart re-latches it.
+  3. Re-dispatch `strat-editor-builder` for a **clean-PIE** input re-test
+     with no console travel, to produce an unconfounded answer to Finding 3.

@@ -166,6 +166,42 @@ FStratSelectionOutcome FStratSelectionMachine::HandleEvent(EStratSelectionEvent 
 		// beside it, and `bDone` is unreachable from `bHasMoved`/`bHasActed` in exactly
 		// this case.
 		DoneUnits.Add(SelectedUnitId);
+
+		// THE WAIT'S ONLY WITNESS, AND IT IS DELIBERATELY NOT A `STRAT-CMD` LINE.
+		//
+		// Phase 6's playtest saw Move, Attack and EndTurn in the log and could not see a
+		// Wait at all, because a wait submits nothing: it reaches no rules module, so
+		// `StratSubmitSelectionCommand` returns early on `Command == None` and no
+		// `STRAT-CMD` line is ever printed. The only trace left was that clicking the unit
+		// afterwards said "unit N has finished this turn" -- and an accepted Attack adds to
+		// `DoneUnits` too (`NotifyCommandApplied`, below), so that sentence cannot tell a
+		// wait from an attack. In the captured session it did not.
+		//
+		// `STRAT-WAIT spent` IS A DIFFERENT PHRASE FROM `STRAT-CMD accepted` FOR THE SAME
+		// REASON `STRAT-CMD refused` IS (phase 4): `grep "STRAT-CMD accepted"` is a reliable
+		// count of commands that actually applied to `strat::GameState`, and a wait applied
+		// none. It does not even share the `STRAT-CMD` prefix, because unlike a refusal there
+		// was no command here to refuse -- `strat::SaveCommandKind` has no `Wait` (phase 1
+		// recorded the orchestration brief as wrong about that), so a `kind=Wait` line would
+		// be a claim about a save format that cannot carry it.
+		//
+		// `unit=`/`turn=`/`side=` ARE THE ACCEPTED LINE'S OWN SPELLING AND ORDER, so a gate
+		// can read this beside those lines with no translation table. There is deliberately
+		// no `hash=`: the machine holds no bridge here, and more to the point a wait moves no
+		// rules state, so printing an unchanged hash would dress a presentation-only event as
+		// a rules event. Its absence is the structural tell.
+		//
+		// IT LOGS WHERE THE WAIT IS APPLIED, NOT WHERE IT IS REQUESTED. The
+		// nothing-is-selected arm above has already broken out, so a no-op wait cannot reach
+		// this line and report a success.
+		//
+		// `side` is `Model.Match.SideToMove` -- the same quantity `ActiveSide` authorised the
+		// wait with, and never `Model.ViewingSide`.
+		UE_LOG(LogStratPlay, Log,
+			TEXT("STRAT-WAIT spent unit=%d turn=%d side=%d (no rules command submitted; ")
+			TEXT("the save format has no Wait kind)"),
+			SelectedUnitId, Model.Match.Turn, ActiveSide);
+
 		SelectedUnitId = INDEX_NONE;
 		break;
 	}

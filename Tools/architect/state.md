@@ -19,7 +19,15 @@ _Last run 2026-08-11 19:30 UTC._
 - `production_widget` — Production menu widget (§2.11.5) (blocked on buildlist_query)
 - `bridge_event_list` — Bridge ordered event list (§4.9 'command in / events out') (actionable)
 - `buildlist_query` — Buildlist query on the Ui.h contract (actionable, excluded: shape unstated in the GDD by explicit decision, and the file is vendored certified bytes in another repo -- T-INT-01 hash-matches it)
-- **Hot-seat milestone, out of scope**: production menu (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.
+- **Hot-seat milestone is COMPLETE (phase 6 closed 2026-08-13); see "Hot-seat milestone —
+  COMPLETE" below.** Out of scope, unchanged: production menu (§2.11.5), guided opening
+  (§2.11.6), info panel, toasts, save-slot UI, AI opponent, move-undo.
+- Two clauses owed to the next test-author phase: `T-INT-05.WaitIsDistinguishableFromAttack`,
+  `T-INT-05.WaitWithNothingSelectedIsANoOp` (writable since phase 6's `STRAT-WAIT spent` line
+  landed; see Phase 6 — CLOSED for detail).
+- Standing debt, ruled out of any future phase's scope by the phase-6 reviewer: NeoStack input
+  injection reaches `UGameViewportClient::InputKey` but never `UPlayerInput`, so no playtest is
+  machine-repeatable. This is a NeoStack plugin issue outside this repository.
 - The **owned-bridge-path leak on `AStratScoreboardHUD` is not pinned.** Proving it needs an
   allocation counter behind `FStratBridge` — offered by `strat-gameplay-engineer` during phase 2
   and **declined as new production surface beyond phase 2's exit criterion**; offered again in
@@ -687,72 +695,307 @@ returns nothing.**
   nothing and `CharMoveComp.Velocity` legitimately stayed zero. That specific
   claim is retracted; the underlying input question is not — see Finding 3.
 
-  **Finding 3 — the input question, restated accurately, still open, and
-  itself confounded.** After the phase-6 builder travelled the live PIE onto
-  the real GameMode by console (`open /Game/StratMaps/Lvl_FerrumCrossing?game=
-  /Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C`), the match verified
-  good:
-  - `LogStratPlay: Match live: seeded from
-    'E:/MultiAgent/Stratocracy/Data/ferrum_crossing.json' (first side 0),
-    drawn for side 0, 99 hexes and 10 units on screen.`
-  - `LogStratUI: Scoreboard live on an adopted bridge (this HUD seeded
-    nothing), drawn for side 0.`
-  - `BP_StratCamera_C_0.ArmPitch = -60.000000`, `BP_StratBoard_C_0` present.
-  - `SelectionMappingContext`/`SelectAction`/`WaitAction` all bound to the
-    `/Game/StratInput/` assets, `EnhancedPlayerInput_0` present,
-    `bShowMouseCursor = True`.
+  **Finding 3 — superseded below.** The original text here reported the
+  input question as "still open, and itself confounded," pending a clean-PIE
+  re-test after an editor restart. That re-test has since run (full editor
+  restart, standalone-window PIE via a human-pressed Play button) and the
+  question is **not** resolved — it is narrower and more precisely located.
+  See "The symptom, stated precisely" and "Ruled out" below, which correct
+  this finding in place rather than being appended beside it.
 
-  Yet simulated input **still** did not reach the game: `playtest_key`
-  returned `consumed=false` for `W` and `Enter`; `playtest_click` returned
-  `consumed=true` but produced no `LogStratPlay` line even on clicks landing
-  on tiles; `playtest_console` returned `consumed=true` with commands
-  executing in the PIE PlayerController. `Tilde` was consumed without opening
-  the game console, so the consumer sits above `UGameViewportClient`.
+  **Ruled out, each with its measurement:**
+  - **Stale editor config** — fixed (Finding 1 stands). Cold PIE now comes up
+    on `BP_StratGameMode_C` with the match seeded (`99 hexes and 10 units on
+    screen`). Not the input cause.
+  - **`WBP_Scoreboard` blocking mouse input** — root `VerticalBox_35` and all
+    five panels are `SelfHitTestInvisible`; only ten small top-left
+    TextBlocks are `Visible`. `DesiredFocusWidget = none`.
+  - **Editor-process state / input-device→local-player mapping** — a **full
+    editor restart** was tried (fresh process, fresh `LocalPlayer`, PIE via
+    the Play button, standalone window) and a real user click on a cyan unit
+    still produced no feedback and no `STRAT-CMD`.
+  - **UE 5.8 input-mode filtering** — ruled out **by measurement**.
+    `UEnhancedInputDeveloperSettings`: `bEnableInputModeFiltering=True`,
+    `DefaultInputMode=(GameplayTags=((TagName="EnhancedInput.Modes.Default")))`,
+    `DefaultMappingContextInputModeQuery` with
+    `QueryTokenStream=(0,1,2,1,0)` decoding to **`AllTagsMatch{EnhancedInput.
+    Modes.Default}`** — which matches the player's mode exactly.
+    `ShouldFilterMappingByInputMode()`/`GetInputModeQuery()` have exactly
+    **one** call site in the whole plugin,
+    `EnhancedInputSubsystemInterface.cpp:978-986`, inside
+    `RebuildControlMappings` — **not** at evaluation time. A PIE restart with
+    `LogEnhancedInput` verified at `VeryVerbose` produced **zero**
+    `"Not applying mappings from IMC"` lines while other
+    `LogEnhancedInput: Verbose:` lines from the same startup printed
+    normally.
+  - **`UGameViewportClient::IgnoreInput()`** — ruled out by enumerating all
+    four `SetIgnoreInput` call sites engine-wide; only
+    `FInputModeUIOnly::ApplyInputMode` (`PlayerController.cpp:6384`) and an
+    editor-module SceneState file set `true`, and `SetInputMode` appears
+    **zero** times in `Source/` with zero matching nodes in any of the seven
+    Strat Blueprint/Widget graphs.
+  - **Input-gating calls in the project** — grep across all of `Source/` for
+    `SetInputMode`, `FInputModeUIOnly/GameAndUI/GameOnly`, `DisableInput`,
+    `EnableInput`, `bBlockInput`, `SetIgnoreMoveInput/LookInput`,
+    `Push/PopInputComponent`, `SetPause`: **zero hits**.
 
-  **This measurement is itself confounded and is not yet grounds for
-  declaring a NeoStack defect.** That session reached the live match by
-  in-PIE console travel rather than a clean PIE start, in a process running
-  stale config (Finding 1). The decided next step is a **clean-PIE re-test
-  after an editor restart**, before any human-in-the-loop fallback or harness
-  -defect conclusion.
+  **Established correct, and should not be re-measured:**
+  - All six key→action mappings are live on the player:
+    `GetAll EnhancedPlayerInput EnhancedActionMappings` shows
+    `BP_StratPlayerController_C_0.EnhancedPlayerInput_0.EnhancedActionMappings`
+    = `IA_Select`←`LeftMouseButton`, `IA_Cancel`←`RightMouseButton`/`Escape`,
+    `IA_Wait`←`W`, `IA_EndTurn`←`Enter`/`SpaceBar`.
+  - `IMC_Selection` applied at `Priority: 0`; `Input Mode:
+    EnhancedInput.Modes.Default`; `STATE Playing`; controller possessing
+    `BP_StratCamera_C_0`; `DefaultPlayerInputClass`/
+    `DefaultInputComponentClass` are `EnhancedPlayerInput`/
+    `EnhancedInputComponent` in config **and** live on the actor.
+  - The four `IA_*` assets are `ValueType=Boolean`, empty
+    `Triggers`/`Modifiers`, `bConsumeInput=True`.
 
-  What could not be measured, and why:
-  - `LastExecutedPlayModeType` is **not settable** through the NeoStack
-    settings API: `[FAIL] set -> … property 'LastExecutedPlayModeType' is not
-    exposed for edit or blueprint access`.
-  - `playtest_start({viewport='new_window'})` was accepted without error but
-    still produced an in-viewport session — PIE could not be put in its own
-    focusable window, the one lever that would discriminate the Slate-focus
-    hypothesis.
-  - `LevelEditorPlaySettings.GameGetsMouseControl` was toggled
-    `False → True → False` and **restored to its measured original**; it
-    changed nothing.
+  **The symptom, stated precisely.** In a **standalone PIE window** (verified
+  1286×760, title `Stratocracy Preview [NetMode: Standalone 0]`, not the
+  2538×1352 editor frame), two independent devices were held for ~50 s each —
+  `W` and the left mouse button — and **every** action stayed
+  `None - 0.000s (false)` on the `showdebug enhancedinput` overlay, with
+  `LogInput`, `LogEnhancedInput` and `LogStratPlay` silent at verified
+  `VeryVerbose`. `STRAT-CMD` has **never** appeared in any log file. The
+  break is upstream of `UPlayerInput`, in `UGameViewportClient::InputKey`'s
+  dispatch to the local player.
 
-  **Finding 4 — two harness facts, worth writing down regardless of how the
-  input question resolves.**
-  - Any NeoStack script calling a `playtest_*` function has its Lua `return`
-    value **discarded** — the MCP response carries only the connector's
-    `[OK] …` echoes. Workaround used: `write_config(...)` as a readback
-    channel, because its echo prints the value it wrote. This cost the
-    builder several blind calls.
-  - `playtest_key` rejects `BackQuote` (`ok=false ; Unknown input key`);
-    `Tilde` is the accepted spelling.
+  **Premises retired — recorded as corrections, they cost this phase hours:**
+  1. **"The console opens, therefore keys reach the viewport and the
+     game."** False as an exclusion. `GameViewportClient.cpp:767-770`: when
+     `IgnoreInput()` is true the console still receives every key while the
+     PlayerController receives none. The observation never had exclusionary
+     power.
+  2. **"`consumed=true`/`consumed=false` indicates delivery."** It does not.
+     `consumed` means some Slate widget claimed the event; it was measured
+     unstable between sessions for the same key.
+  3. **"Simulated input bypasses Slate focus."** False for keys — Slate
+     routes keys to the focused widget, so `playtest_key` returns
+     `consumed=false` in an unfocused viewport and does not escape the focus
+     variable.
+  4. **This section's own earlier "total input silence reproduced on
+     known-good assets"** — already retracted in Finding 2; its control was
+     confounded.
+  5. **The `showdebug enhancedinput` overlay proves the mapping context is
+     applied, NOT that any handler is bound.** It is populated by the
+     subsystem, independent of `BindAction`.
 
-  **Finding 5 — one unchased observation, not a finding.** The scoreboard
-  HUD did not appear in the `playtest_observe` capture despite
-  `LogStratUI: Scoreboard live …`. May simply be how `playtest_observe`
-  composites. Nobody investigated it.
+  **New observations, recorded as deferrals — not this milestone:**
+  - **`AStratPlayerController::SetupInputComponent`
+    (`StratPlayerController.cpp:123-142`) guards each `BindAction` with
+    `if (Action != nullptr)` and logs nothing on the null branch.** A null
+    action binds silently; only the mapping context has a warning. So "the
+    four action defaults are correct" is **un-witnessed** — the log cannot
+    distinguish four bindings from zero. Same half-pinned shape as the
+    phase-4 findings. Owner: `strat-gameplay-engineer`.
+  - **`AStratPlayerController::OnSelect` returns silently on a trace miss**
+    (`StratPlayerController.cpp:198-204`), making "input never arrived" and
+    "picking failed" indistinguishable in the log. This unobservability cost
+    six sessions of ambiguity. Owner: `strat-gameplay-engineer`.
+  - **`LogUIActionRouter: Error: Using CommonUI without a
+    CommonGameViewportClient derived game viewport client. CommonUI Input
+    routing will not function correctly.`** appears in every session, with
+    `Found 0 derived classes`. CommonUI is a template leftover — no
+    `CommonUI`/`UCommon`/`CommonActivatableWidget` match anywhere in
+    `Source/`, and the three `CommonUI.*` cvars in `DefaultGame.ini:10-12`
+    are leftovers too. Probably inert, but it is an `Error` on the input
+    path that nobody has investigated.
+  - **`LogStratPlay: Verbose: BP_StratPlayerController_C_0 could not paint an
+    initial screen …: scoreboard refresh refused: there is no scoreboard
+    widget to refresh`** alongside `LogStratUI: Scoreboard live on an
+    adopted bridge` — the HUD has a scoreboard widget, the PlayerController
+    does not. This is the resolution of the phase-6 "Finding 5" unchased
+    observation below: not a screenshot-compositing artifact but a real
+    widget-ownership mismatch, still unchased for cause.
+  - **The screenshot pipeline excludes the UI layer**: `playtest_observe`
+    and plain `HighResShot` do not composite the canvas layer; only
+    `Shot showui` does. **No playtest may use a screenshot to prove a widget
+    drew.** `Shot showui` captures the whole editor window in docked
+    sessions and needs cropping for evidence.
+  - **`playtest_start` overrides the editor's Play dropdown** and forces
+    in-viewport PIE, silently ignoring `PlayMode_InEditorFloating`. Only a
+    human-pressed Play button produces a standalone window. This is why the
+    focus confound could not be removed by any agent-initiated session.
+  - **`Escape` is the PIE-stop key** in the preview window — sending it via
+    `playtest_key` ends the session.
+  - **NeoStack `execute_script` discards Lua `return` values**; `print()` is
+    the only output channel. `read_log('output', …)` reports the
+    live-locked `Stratocracy.log` as empty while `Grep`/`Read` read it fine.
+    `playtest_key` rejects `BackQuote`; `Tilde` is accepted.
 
-  **Not yet produced:** no `assert_log_contains` clause, no on-disk
-  screenshot; `Tools/architect/evidence/` has nothing to assemble. The
-  builder deliberately wrote no clause rather than hand over one that
-  witnesses itself.
+  **Not yet produced:** no `assert_log_contains` clause, no on-disk evidence
+  in `Tools/architect/evidence/`, and no `STRAT-CMD` line. The blocker is
+  unresolved and is the milestone's one standing item.
 
-  **Resume pointer, agreed next action, in order:**
-  1. Restart the Unreal editor, so it reads the flipped
-     `GlobalDefaultGameMode` (Finding 1).
-  2. Restart Claude Code — NeoStack's `unreal_status` reports OK for an
-     editor opened after Claude Code started while `execute_script` is
-     silently absent; only a restart re-latches it.
-  3. Re-dispatch `strat-editor-builder` for a **clean-PIE** input re-test
-     with no console travel, to produce an unconfounded answer to Finding 3.
+  **Status line.** The decided next step is a **C++ diagnostic probe** —
+  `UE_LOG` in an `InputKey` override plus `GetGameViewport()->IgnoreInput()`
+  logged from `BeginPlay` — which is `strat-gameplay-engineer`'s lane and
+  requires the editor **closed** for a build, reversing phase 6's
+  editor-open invariant. That decision is the user's and has not been taken.
+  Keep the scope fence: none of the deferrals above enters this milestone.
+
+  **Update — the probe ran, found the cause, and has been stripped.**
+
+  **The cause and fix, verified against source.**
+  `AStratPlayerController` had `PrimaryActorTick.bCanEverTick = false`.
+  `APlayerController::TickActor` → `TickPlayerInput` →
+  `UPlayerInput::ProcessInputStack` is the *only* evaluator of Enhanced Input
+  trigger state machines — the one place bound `BindAction` delegates fire.
+  With the tick off, every key was still received and buffered at
+  `InputKey`, every `BindAction` call still ran and logged no warning, the
+  mapping context was still applied, and the console — handled upstream at
+  the viewport-client layer, never through `ProcessInputStack` — still
+  worked. Nothing observable pointed at the tick flag. Now `true`, set
+  explicitly in the constructor rather than left to
+  `APlayerController`'s own default, with the reasoning written in place
+  (`Source/StratPlay/StratPlayerController.cpp:37-70`) specifically so a
+  future reader who re-derives "this controller polls nothing, so it need
+  not tick" — the exact reasoning that produced the bug in phase 4 — hits
+  the correction before re-introducing it. **The general mechanism, not just
+  the line: a `UCLASS` on the input path that disables its own tick still
+  receives input and dispatches none of it, and the failure presents as a
+  green build with every binding correctly configured.**
+  Confirmed by reading the constructor and `SetupInputComponent` directly
+  (`StratPlayerController.cpp:37-200`) rather than taken from a report.
+
+  **The diagnostic probe is fully stripped.** `grep "STRAT-PROBE"` across
+  `Source/` returns one hit, and it is inside the constructor's explanatory
+  comment, not code; no `InputKey` override exists anywhere under
+  `Source/StratPlay/`. The four `else` Warning branches on
+  `SetupInputComponent`'s null `BindAction` guards (`StratPlayerController.cpp:165-199`)
+  are confirmed **permanent** in the source's own comment block
+  (`:147-154`, "THIS PART IS PERMANENT... not to be stripped with them") and
+  stay.
+
+  **Acceptance ID — confirmed, not reassigned.**
+  `strat-test-author`'s `Stratocracy.StratPlay.T-UI-02.ControllerTicksSoInputDispatches`
+  (`Source/StratPlay/Tests/StratPlayerControllerTick.cpp`) is **confirmed**
+  over `strat-gameplay-engineer`'s proposed `T-PLAY-01`, on the same two
+  grounds the test's own header states, independently re-verified here:
+  `grep -c "T-PLAY"` against the GDD returns **0** (own measurement, not
+  copied), and the GDD's actual `T-UI-02`
+  (`Stratocracy_Prototype_GDD.md:2505`, "the reachable-hex highlight
+  displays exactly the T-MOVE-01 set") is the acceptance ID StratPlay's
+  existing click-to-hex-to-reach chain already uses
+  (`BoardHexRoundTrip`, `ReachOverlayIsNotComputedHere`,
+  `SelectionMachineUsesTheQueryNotDistance`) — the controller's tick is the
+  first link in that same chain, since no click reaches the highlight
+  without it. No test in `Source/StratPlay/Tests/` mints an ID, and minting
+  one is not this steward's lane either; `T-UI-02` is the correct reuse.
+
+  **Suite count, read from the report, not asserted.**
+  `Saved/AutomationReport/index.json`: `reportCreatedOn 2026.08.13-15.05.30`,
+  `succeeded 66 / failed 0 / notRun 0`. `ControllerTicksSoInputDispatches`
+  does **not** appear in that report's test list — confirmed by direct
+  search of the JSON — so the suite stands at **66/66 with the 67th clause
+  compiled but not yet run**, matching the phase-6 status exactly.
+  `strat-test-author` re-runs it after this steward.
+
+  **Two further clauses owed, not built** (per the engineer's proposal,
+  recorded here as owed rather than authored — writing tests is
+  `strat-test-author`'s lane, not this one's):
+  - `T-INT-05.WaitIsDistinguishableFromAttack` — pin that a wait yields
+    `Command == None` while an accepted attack yields `Command == Attack`
+    with unit and hex, read off the outcome struct (no `UE_LOG` can satisfy
+    this; it is a struct-field expectation).
+  - `T-INT-05.WaitWithNothingSelectedIsANoOp`.
+
+  **Harness facts, recorded for the next agent to hit them before
+  re-discovering them:**
+  - `playtest_log_marker`'s `since=` filter is off by one — the marker's own
+    line is excluded from what it returns.
+  - The in-game console cycles **small → full → closed**, and a full-screen
+    console silently swallows every keystroke.
+  - `playtest_start` forces in-viewport PIE and ignores the Play dropdown;
+    only a human-pressed Play button produces a standalone window.
+  - `Escape` is the PIE-stop key in the preview window.
+
+  Phase 6 evidence assembled under
+  `Tools/architect/evidence/06-hotseat-playtest/` — see that directory's
+  own `blackboard.md` for the full account, including a correction this
+  steward made to the task's own framing (measured **13** side flips across
+  the 27 `STRAT-CMD accepted` lines, not the stated 12).
+
+### Phase 6 — CLOSED
+
+- **Completed:** 2026-08-13. `strat-integration-reviewer` returned
+  `VERDICT: PASS`, zero findings, all twelve standing constraints clean, and
+  the probe strip verified complete (no `InputKey` override, no `BeginPlay`
+  dump, no live `STRAT-PROBE` emitter; the single occurrence is inside an
+  explanatory comment at `StratPlayerController.cpp:56`). The tick fix and
+  all four `else` Warnings survived the strip. Nothing staged or committed;
+  `HEAD` stayed `d310aa1` throughout — staging/committing is the user's call.
+- **Exit criterion met:** "PIE playtest screenshots plus every
+  `assert_log_contains` passing; full suite green; evidence assembled under
+  `Tools/architect/evidence/`."
+  - Suite **67/67**, `succeeded 67 / succeededWithWarnings 0 / failed 0 /
+    notRun 0`, `reportCreatedOn 2026.08.13-15.29.04`, with
+    `Stratocracy.StratPlay.T-UI-02.ControllerTicksSoInputDispatches` present
+    **by name** and `Success` (it had compiled but not yet run as of the
+    2026.08.13-15.05.30 report cited above).
+  - Eight assertions pass, re-derived independently by the reviewer from the
+    preserved log (`md5 baa918eade6b1061e9346c47a3b82d54`,
+    `grep -c "STRAT-CMD accepted"` = 27, `refused` = 0, `Selection:` = 6).
+  - Evidence under `Tools/architect/evidence/06-hotseat-playtest/`.
+- **A false positive struck, not carried forward — the reviewer's reasoning
+  is the keeper, not this steward's original flag.** This record previously
+  flagged `ScreenShot00041.png`'s `Destroyed` row rendering `50` for side 1
+  as a probable scoreboard defect, reasoning from a false premise: that the
+  row is a unit count capped at 5. **It is not a count.** `Destroyed` binds
+  `strat::UiSideView::fameCombat` — Fame from kills, GDD §2.11.4 — per
+  `Source/StratUI/StratScoreboardWidget.cpp:214` (tooltip: *"Fame from
+  kills. Factory income does not count at the cap."*), pinned by
+  `Stratocracy.StratUI.T-UI-03.DestroyedBindsCombatFame`
+  (`Source/StratUI/Tests/StratScoreboardParity.cpp:406-424`, including
+  `TestFalse(… "Destroyed shows a bare value, not X of N")`). So
+  `Destroyed 0 / 50` means side 1 held 50 combat Fame and side 0 held none —
+  **independent corroboration of the user's otherwise-unlogged "a red unit
+  won the encounter,"** not a contradiction of it. The misreading itself is
+  the lesson: reading a bare-value row as a bounded count is what produced
+  the phantom defect. Both this steward and the reviewer made that error
+  once; the pinning test is what settled it. `blackboard.md` under the
+  evidence directory has been corrected in place rather than superseded.
+- **Cause and fix, generalised for reuse:** a `UCLASS` on the input path
+  that disables its own tick still receives input and dispatches none of
+  it, and the failure presents as a green build with every binding
+  correctly configured. `AStratPlayerController::PrimaryActorTick.bCanEverTick`
+  `false` → `true`, set explicitly in the constructor with the reasoning
+  written in place (`StratPlayerController.cpp:37-70`).
+- **Standing debt, left open by the reviewer's judgement — do not spend
+  another phase on it.** NeoStack input injection reaches
+  `UGameViewportClient::InputKey` (the in-game console provably toggles
+  under simulated input) but never reaches `UPlayerInput`, so the playtest
+  is **not machine-repeatable**: the eight assertions document one stored
+  artifact rather than defend a repeatable gate. This is judged a NeoStack
+  plugin issue outside this repository. The phase's actual regression — the
+  tick flag — *is* netted repeatably, by
+  `T-UI-02.ControllerTicksSoInputDispatches`.
+- **Combat-outcome gap, unresolved and not this phase's job to close:** no
+  destruction or encounter-result line exists in `LogStratPlay`, so the
+  encounter narrative stays visual. If a later phase wants a log-backed
+  outcome, it is a `FStratBridge`-routed line, not a widget one.
+- **Two clauses now writable, owed to the next test-author phase** — they
+  were not writable before phase 6 because the `STRAT-WAIT spent` line did
+  not yet exist: `T-INT-05.WaitIsDistinguishableFromAttack` and
+  `T-INT-05.WaitWithNothingSelectedIsANoOp`.
+- **A wait leaves no trace in `RecordedLog()` and cannot** — the vendored
+  format has no `Wait` kind; a replay reproduces state hashes but not the
+  player experience.
+- **`.agents/ue-project-context.md:195` drift is already fixed** — it now
+  reads 67/67, hot-seat phase 6, 2026-08-13 (confirmed above, this
+  steward's own edit, dated 2026-08-13). No action owed from a future
+  reader; recorded here so it is not re-flagged.
+
+## Hot-seat milestone — COMPLETE
+
+With phase 6 closed, the hot-seat milestone is complete. Ferrum Crossing
+renders, units spawn from the scenario, click-to-select → move → attack
+with the deterministic forecast, wait, end turn advances sides, and the
+scoreboard follows the active side.
+
+Out-of-scope list, unchanged, stays under NEXT: production menu (§2.11.5),
+guided opening (§2.11.6), info panel, toasts, save-slot UI, AI opponent,
+move-undo.

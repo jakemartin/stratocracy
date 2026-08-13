@@ -192,7 +192,7 @@ reference shape.
 
 The count moves every phase and goes stale the moment it is restated — read it from
 `Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
-number here. Last observed here: 66/66, hot-seat phase 4, 2026-08-12.
+number here. Last observed here: 67/67, hot-seat phase 6, 2026-08-13.
 
 **That report is UTF-8 with a BOM** — first bytes `EF BB BF`. Measured in phase 4, after two
 agents reported it as UTF-16: all three UTF-16 codecs fail on it and `utf-8-sig` succeeds. A

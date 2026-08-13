@@ -41,8 +41,32 @@ AStratPlayerController::AStratPlayerController()
 	// cursor, and the alternative -- discovering it is hidden in PIE -- costs a build.
 	bShowMouseCursor = true;
 
-	// This controller polls nothing. Every path below runs from an input trigger.
-	PrimaryActorTick.bCanEverTick = false;
+	// THIS CONTROLLER MUST TICK, AND NOT BECAUSE IT POLLS ANYTHING. It polls nothing: every
+	// path below runs from an input trigger. It ticks because THE TRIGGERS ARE EVALUATED
+	// DURING THE TICK. `APlayerController::TickActor` calls `TickPlayerInput`, which calls
+	// `PlayerInput->ProcessInputStack(...)`, and that is the one place Enhanced Input walks
+	// its trigger state machines and fires the delegates `SetupInputComponent` bound. A
+	// controller with `bCanEverTick = false` still RECEIVES every key -- `InputKey` runs, the
+	// key is buffered -- and then nothing ever drains the stack, so every action sits at
+	// `None - 0.000s (false)` forever and not one bound delegate is called.
+	//
+	// MEASURED IN PHASE 6, at the cost of a long investigation. `bCanEverTick = false` stood
+	// here from phase 4 with the reasoning "this controller polls nothing", which is true and
+	// which does not survive the fact that undoes it. The symptom was maximally misleading:
+	// standalone PIE showed `STRAT-PROBE ... InputKey key=... event=...` for every key,
+	// `IgnoreInput=FALSE`, a valid `LocalPlayer_0` at `ControllerId=0`, all four `BindAction`
+	// calls proven to have run (zero `is unset` warnings) -- and still zero `STRAT-CMD` lines.
+	// The console kept working throughout, which read as "input is fine", but the console is
+	// handled at the viewport-client layer UPSTREAM of player-input processing and needs no
+	// controller tick at all. Do not re-derive "polls nothing, so need not tick" from this
+	// file; that derivation is what cost phase 6.
+	//
+	// SET EXPLICITLY TO `true` RATHER THAN BY DELETING THE LINE. `APlayerController`'s own
+	// constructor already enables ticking, so removing the assignment would work -- and would
+	// leave nothing here for the next reader to hit before writing `false` again.
+	// `bTickEvenWhenPaused` is deliberately not touched: `APlayerController` sets it, and
+	// input during pause is its concern rather than this class's.
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void AStratPlayerController::BeginPlay()
@@ -120,25 +144,58 @@ void AStratPlayerController::SetupInputComponent()
 	// held key. A repeated Move is refused by the rules module the second time (the unit has
 	// moved), so the visible symptom would be a log full of refusals rather than a wrong
 	// board; it is still the wrong event.
+	// AND EACH NULL BRANCH NOW SAYS SO BY NAME. THIS PART IS PERMANENT. It outlived the
+	// temporary phase 6 diagnostics on purpose and is not to be stripped with them. Until
+	// phase 6 these four guards were silent on the null side, so a log in which no input ever
+	// arrived was consistent with four bindings AND with zero bindings, and the difference
+	// between those two is the difference between an asset gap and an engine one. Phase 6
+	// spent a standalone PIE session, a `showdebug enhancedinput` overlay and a
+	// `GetAll EnhancedPlayerInput` probe establishing by other means what these four lines
+	// state directly. "The defaults are set" is now an observation rather than an assertion.
+	//
+	// WARNING AND NOT ERROR, because a null action asset is a Blueprint-default gap that a
+	// property on this class fixes -- unlike the non-Enhanced `InputComponent` above, which no
+	// configuration here can fix and which is therefore an Error. The property NAME is in each
+	// message because that is the thing the reader must go and set.
 	if (SelectAction != nullptr)
 	{
 		EnhancedInput->BindAction(SelectAction, ETriggerEvent::Started, this,
 			&AStratPlayerController::OnSelect);
+	}
+	else
+	{
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("%s: SelectAction is unset; no primary-click binding exists."), *GetName());
 	}
 	if (CancelAction != nullptr)
 	{
 		EnhancedInput->BindAction(CancelAction, ETriggerEvent::Started, this,
 			&AStratPlayerController::OnCancel);
 	}
+	else
+	{
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("%s: CancelAction is unset; no cancel binding exists."), *GetName());
+	}
 	if (WaitAction != nullptr)
 	{
 		EnhancedInput->BindAction(WaitAction, ETriggerEvent::Started, this,
 			&AStratPlayerController::OnWait);
 	}
+	else
+	{
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("%s: WaitAction is unset; no wait binding exists."), *GetName());
+	}
 	if (EndTurnAction != nullptr)
 	{
 		EnhancedInput->BindAction(EndTurnAction, ETriggerEvent::Started, this,
 			&AStratPlayerController::OnEndTurn);
+	}
+	else
+	{
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("%s: EndTurnAction is unset; no end-turn binding exists."), *GetName());
 	}
 }
 

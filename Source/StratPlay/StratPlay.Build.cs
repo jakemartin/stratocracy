@@ -118,6 +118,18 @@ public class StratPlay : ModuleRules
 			// Private because no header in this module includes an Enhanced Input header:
 			// the five asset properties are forward-declared `TObjectPtr`s.
 			"EnhancedInput"
+
+			// NO `InputCore` HERE, DELIBERATELY, AND THE READER WHO ADDS ONE `FKey` CALL WILL
+			// NEED IT BACK. It stood here while the phase 6 diagnostic `InputKey` override
+			// existed, because `FKey::ToString` and `FKey::IsGamepadKey` are `INPUTCORE_API`
+			// rather than inline: omitting it was measured as 2 x LNK2019 on
+			// `UnrealEditor-StratPlay.dll` naming `__imp_?IsGamepadKey@FKey@@QEBA_NXZ` and
+			// `__imp_?ToString@FKey@@QEBA?AVFString@@XZ`, then `LNK1120: 2 unresolved
+			// externals`. The declarations resolved fine -- `InputCoreTypes.h` arrives
+			// transitively through `Engine` -- so the failure is a link one and reads as a
+			// missing function rather than a missing module. The override is gone and no file
+			// in this module now calls an `FKey` method, so the line goes with it rather than
+			// staying on as a dependency nothing justifies.
 		});
 
 		PublicIncludePaths.AddRange(new string[] {

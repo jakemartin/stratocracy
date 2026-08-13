@@ -1,6 +1,6 @@
 # Architect state
 
-_Last run 2026-08-13 (AI-opponent milestone, phase B closed: AI turn runner)._
+_Last run 2026-08-13 (AI-opponent milestone, phase C closed: buildlist and AI defaults authored on `BP_StratGameMode`; phase D — PIE playtest and AI-vs-AI gate — is current)._
 
 ## BUILT
 
@@ -20,9 +20,19 @@ _Last run 2026-08-13 (AI-opponent milestone, phase B closed: AI turn runner)._
 - `bridge_event_list` — Bridge ordered event list (§4.9 'command in / events out') (actionable)
 - `buildlist_query` — Buildlist query on the Ui.h contract (actionable, excluded: shape unstated in the GDD by explicit decision, and the file is vendored certified bytes in another repo -- T-INT-01 hash-matches it)
 - **Hot-seat milestone is COMPLETE (phase 6 closed 2026-08-13); see "Hot-seat milestone —
-  COMPLETE" below.** The AI-opponent milestone is now current (phase B closed 2026-08-13; see
-  "## AI-opponent milestone" below). Remaining out of scope, unchanged: production menu
-  (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, move-undo.
+  COMPLETE" below.** The AI-opponent milestone is now current (phase C closed 2026-08-13; phase D
+  — PIE playtest and a machine-repeatable AI-vs-AI gate — is next; see "## AI-opponent milestone"
+  below). Remaining out of scope, unchanged: production menu (§2.11.5), guided opening (§2.11.6),
+  info panel, toasts, save-slot UI, move-undo.
+- **Phase D's acceptance must not be written against seeing a Tank built.** `strat::chooseBuild`
+  (`Ai.good.cpp:275-289`) always buys the cheapest *affordable* buildlist entry; with Infantry
+  (100 Fame) and Tank (300 Fame) both in `BP_StratGameMode`'s authored `AiBuildlistUnitIds`, the
+  Tank entry is unreachable at the rules layer regardless of how many times it repeats — §2.9's
+  "an occasional Tank" is not an observable outcome. `StratBridge.h:592-600`'s comment claims
+  duplicates in the buildlist express a ratio; that is true of what the bridge preserves and false
+  of what the rules layer does with it. This is a vendored-behaviour observation for
+  `E:\MultiAgent\stratocracy-crew`, not a task for this repo. See "Phase C — CLOSED" below for the
+  full account.
 - **`UStratMatchSubsystem::RunAiTurnsNow`'s return value is an untested production contract —
   phase D's gate must not be built on it.** A §2.8 result reached mid-turn ends with the rules
   module correctly refusing the winning side's closing EndTurn
@@ -152,7 +162,11 @@ _Last run 2026-08-13 (AI-opponent milestone, phase B closed: AI turn runner)._
   `actor|landscape`. (Worked around this phase for the `Config` question by reading the two
   levels' binary `.umap` bytes directly instead — see Phase 5 below.)
 - **`array_count("DefaultKeyMappings.Mappings")` → `property not found`** — dot-path into a
-  struct's array is unsupported; write the whole struct instead.
+  struct's array is unsupported; write the whole struct instead. **Generalises to struct members,
+  not just arrays** — phase C (AI-opponent milestone) hit the same failure on
+  `get`/`set("self", "MatchConfig.AiSides")`, a plain (non-array) struct field, and had to read
+  and rewrite the whole `MatchConfig` struct. Whole-struct read/write is the standing workaround
+  for both cases.
 - **`FKey` `ImportText` takes the bare name.** `Key=(KeyName="X")` silently produced `Key=()`;
   `Key=LeftMouseButton` succeeded. A silent empty-key write is exactly the kind of failure that
   reads as an input bug later.
@@ -1308,10 +1322,105 @@ future phases might otherwise re-derive:
   been corrected here (no crew agent owns that file) to `86/86, AI-opponent phase B` and the
   re-gate confirmed the edit correct against the report it read. It is unstaged.
 
-### Phase C — planned (editor OPEN)
+### Phase C — CLOSED
 
-Buildlist as authored data, side-is-AI and pacing defaults on
-`BP_StratGameMode`.
+- **Completed:** 2026-08-13. Gate returned `VERDICT: PASS`, zero findings. Editor OPEN,
+  `strat-editor-builder` sole builder, no build, no test run — correctly out of scope for an
+  asset-only phase, so phase B's 86/86 still describes the tree.
+- **Exit criterion:** `BP_StratGameMode`'s `MatchConfig` carries the AI opponent's authored
+  data — `AiSides`, `AiBuildlistUnitIds`, `AiTurnDelaySeconds` — set as Blueprint defaults.
+  **Met.**
+- **Exactly one changed path, confirmed by the gate and re-confirmed here against `HEAD`
+  `3d864aa`:** `Content/StratPlay/BP_StratGameMode.uasset`, unstaged (`git status
+  --porcelain=v1 -uall` shows only ` M Content/StratPlay/BP_StratGameMode.uasset`). LFS pointer
+  `git diff` re-measured directly: `oid sha256:4ba9df4ea0…` → `d5129a45c…`, `size 22635` →
+  `22882`. `HEAD` unmoved.
+- **Values set, per the builder's post-save readback — re-measured here by printable-ASCII
+  extraction over the smudged 22882-byte working-tree binary (min run length lowered to 3 to
+  catch the 4-letter "Tank", which a 5-char threshold silently drops):**
+  ```
+  AiSides=(1)
+  AiBuildlistUnitIds=("Infantry","Infantry","Infantry","Tank")
+  AiTurnDelaySeconds=0.500000
+  AiMaxCommandsPerTurn=256   (untouched)
+  AiMaxConsecutiveTurns=64   (untouched)
+  ```
+  `AiSides`, `AiBuildlistUnitIds`, `AiTurnDelaySeconds` each appear as exact-spelling name-table
+  strings; `AiMaxCommandsPerTurn`/`AiMaxConsecutiveTurns` appear **zero** times. `Infantry` and
+  `Tank` each appear exactly once, byte-identical to `Data/units.csv`'s `Id` column — no
+  `Artillery`, no `Recon`, no case or whitespace variant. `UnitTable`, `TerrainTable`,
+  `ScenarioFile`, `BoardActorClass`, `UnitActorClass` all preserved across the rewrite (present,
+  unchanged shape).
+
+  **What extraction proves and what it cannot.** String presence, non-appearance, and exact id
+  spelling are measured facts, above. `AiSides == (1)`, the buildlist's arity of 4, and
+  `AiTurnDelaySeconds == 0.5` **cannot** be proven by string extraction — those rest on the
+  builder's readback alone. **UE delta-serializes only properties differing from the archetype**,
+  so for a Blueprint default the *absence* of `AiMaxCommandsPerTurn`/`AiMaxConsecutiveTurns` in
+  the package is the positive evidence those equal their C++ defaults (`= 256` at
+  `StratMatchSubsystem.h:235`, `= 64` at `:247`, both re-read directly for this record) — and
+  symmetrically, the three properties that *do* appear are thereby proven non-default. This is
+  the delta-serialization counterpart to the ASCII-string-extraction technique phase 5 used for
+  "does this package reference symbol X at all." Phase D's PIE evidence is the natural place to
+  close the value gap: an AI that takes a turn at all confirms `AiSides`, and a 0.5 s delay is
+  visible.
+
+- **Finding — the buildlist cannot express a ratio, and a bridge comment says it can. This
+  reaches phase D's brief, not just a gate observation.** Re-read directly:
+  `strat::chooseBuild` (`Source/StratRules/Ai.good.cpp:275-289`) collects every *affordable*
+  buildlist entry and takes the minimum under `buildPriorityLess`, which is ascending
+  `costFame` (`Ai.good.cpp:224-231`, comment: *"§2.9: it spends and replaces losses instead of
+  hoarding, so the cheapest affordable buildlist unit is bought rather than saving for a dearer
+  one."*). **Duplicates carry no weight at the rules layer.** `Data/units.csv` re-read directly:
+  `Infantry,...,100,...` / `Tank,...,300,...` — any economy that can afford a Tank can also
+  afford an Infantry and will always choose the Infantry. With Infantry in the list at all, **the
+  Tank entry is not rare, it is unreachable**, and §2.9's "an occasional Tank" is not observable
+  in phase D by any amount of playing.
+
+  `Source/StratBridge/StratBridge.h:592-600` (re-read directly) states the opposite of that
+  effect: *"DUPLICATES ARE LEGAL AND ARE THE POINT. §2.9 describes 'mostly Infantry, an
+  occasional Tank' and gives no ratio, so `Ai.h:49-53` makes the list caller-supplied DATA;
+  repetition is how a ratio is expressed in it. Deduplicating here would silently flatten every
+  mix to 1:1."* That prose is correct about the **bridge** — `SetBuildlistByIds`
+  (`StratBridge.cpp:910-930`) does preserve duplicates and compares exact UTF-8 bytes, and
+  `GATE-BRIDGE-DEFS.BuildlistResolvesInLoaderOrder` pins it — and wrong about the **effect**: the
+  rules layer never reads the repetition. **Filed as an upstream observation, not a task; not
+  edited.** Fix, if ever wanted, is upstream in `E:\MultiAgent\stratocracy-crew`, in
+  `Ai.good.cpp`'s `chooseBuild`.
+
+  **Phase D consequence:** phase D's acceptance must not be written against seeing a Tank built —
+  that is an outcome the rules cannot produce with this buildlist.
+
+- **The buildlist mix is `strat-editor-builder`'s judgement, not the GDD's — recorded as such.**
+  §2.9 (re-read directly, `Stratocracy_Prototype_GDD.md:436`): *"(§2.7) — from a default
+  buildlist (mostly Infantry, an occasional Tank),"* no ratio given. `Ai.h:49-52` (re-read
+  directly) independently confirms the omission is deliberate: *"§2.9 describes it as 'mostly
+  Infantry, an occasional Tank' and gives no ratio or rule, so the list is DATA the caller
+  supplies; inventing a ratio here would be a rule the GDD does not have."* The builder authored
+  `Infantry, Infantry, Infantry, Tank` (3:1) as the smallest list reading as "mostly Infantry, an
+  occasional Tank," and excluded Artillery and Recon on the reasoning that §2.9's buildlist
+  clause names only Infantry and Tank, while the four-way `Infantry > Recon > Artillery > Tank`
+  tie-break at GDD line 438 (re-read directly, confirmed the exact string) orders whatever the
+  list contains rather than stating the list's contents. Recorded as the builder's judgement where
+  the GDD is silent, same posture already taken on `buildlist_query` under NEXT. Worth noting: the
+  finding above means the 3:1 ratio has no runtime effect regardless.
+
+- **Latent hazard, not live today.** `AiBuildlistUnitIds` is `TArray<FName>`
+  (`StratMatchSubsystem.h:228`, re-read directly), and in a non-case-preserving build
+  `FName::ToString()` returns the first-interned casing. Benign now because `DT_Units` interns
+  the same ids from the same CSV, but it is a path by which an exact-byte comparison could one
+  day see a casing it did not author.
+
+- **NeoStack: struct sub-paths fail, generalising the existing array note.** `get`/`set` on
+  `MatchConfig.AiSides` failed with `property not found`; the whole `MatchConfig` struct had to
+  be read and rewritten. Folded into the existing `array_count("DefaultKeyMappings.Mappings")`
+  entry under NEXT rather than a second, separate one — whole-struct read/write is the standing
+  workaround for both arrays and struct members.
+
+- **Nothing needed flipping this phase; confirmed untouched, not merely stated.** `Config/`:
+  `git status` shows no `Config/` path modified. `Lvl_TopDown`, `BP_TopDownGameMode`,
+  `GlobalDefaultGameMode`: no other path appears in `git status --porcelain=v1 -uall` beyond
+  `BP_StratGameMode.uasset`, so all three were untouched by construction.
 
 ### Phase D — planned (editor OPEN)
 

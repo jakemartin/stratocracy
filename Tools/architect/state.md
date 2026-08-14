@@ -2037,10 +2037,17 @@ passing in isolation: `Expected 'one accepted command emits exactly one line' to
     (`Tools/architect/`) — a future pass should either add a small assertion harness over the
     fixtures directory or a `README` in it stating the required flag.
 - **Findings outside this steward's lane, recorded here as flags, not tasks:** the gate also
-  found a stale `LegalityDisagrees` doc arm in `Source/StratCombatLog.h` (owed to
+  found a stale `LegalityDisagrees` doc arm in `Source/StratBridge/StratCombatLog.h:171` (owed to
   `strat-gameplay-engineer`'s phase-5 doc pass) and `.agents/ue-project-context.md:195` still
   reading "93/93" when the suite is now 103/103 (no crew agent owns that file — see the
-  standing flag under NEXT above).
+  standing flag under NEXT above). **Correction to this bullet's own prior wording:** it named the
+  path `Source/StratCombatLog.h` — no such file (`ls Source/StratCombatLog.h` → "No such file or
+  directory"). The file is `Source/StratBridge/StratCombatLog.h`; verified with
+  `ls Source/StratBridge/StratCombatLog.h` and `grep -n "LegalityDisagrees"
+  Source/StratBridge/StratCombatLog.h` → `171: LegalityDisagrees = 1 << 2,`, confirming both the
+  path and the line the arm actually sits on before writing this correction. Caught by the
+  fourth gate; not introduced by the third gate's fix, and pre-existing in this entry since it
+  was first written.
 
 ### Phase 4 — not started
 

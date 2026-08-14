@@ -1,0 +1,136 @@
+[2026.08.14-00.29.41:489][557]LogWorld: Bringing World /Game/StratMaps/UEDPIE_0_Lvl_FerrumCrossing.Lvl_FerrumCrossing up for play (max tick rate 0) at 2026.08.13-20.29.41
+[2026.08.14-00.29.41:489][557]LogWorld: Bringing up level for play took: 0.000570
+[2026.08.14-00.29.41:492][557]LogOnline: OSS: Created online subsystem instance for: :Context_1
+[2026.08.14-00.29.41:493][557]LogWindows: WindowsPlatformFeatures enabled
+[2026.08.14-00.29.41:493][557]LogEnhancedInput: Enhanced Input local player subsystem has initialized the user settings!
+[2026.08.14-00.29.41:493][557]LogModuleManager: InternalLoadLibrary: 'Voice' ('C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Voice.dll')
+[2026.08.14-00.29.41:494][557]LogModuleManager: InternalLoadLibrary: 'MovieSceneCapture' ('C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-MovieSceneCapture.dll')
+[2026.08.14-00.29.41:498][557]LogStratUI: Bridge adopted: this HUD now draws a match it does not own and will not destroy.
+[2026.08.14-00.29.41:498][557]LogStratPlay: Match live: seeded from 'E:/MultiAgent/Stratocracy/Data/ferrum_crossing.json' (first side 0), drawn for side 0, 99 hexes and 10 units on screen.
+[2026.08.14-00.29.41:498][557]LogStratPlay: Match started by BP_StratGameMode_C_0.
+[2026.08.14-00.29.41:499][557]LogStratUI: Scoreboard live on an adopted bridge (this HUD seeded nothing), drawn for side 0.
+[2026.08.14-00.29.41:499][557]PIE: Server logged in
+[2026.08.14-00.29.41:501][557]PIE: Play in editor total start time 0.128 seconds.
+[2026.08.14-00.29.41:511][557]LogSlate: Display: Font face '../../Content/Slate/Fonts/Roboto-Bold.ttf' subface index 0 successfully added to font face map in Game thread.
+[2026.08.14-00.29.41:542][557]LogRenderer: Recreating Persistent SBTs due to initializer changes: 
+		NumShaderSlotsPerGeometrySegment changed: current: 1 - new: 2
+		NumGeometrySegments changed: current: 0 - new: 512
+[2026.08.14-00.29.51:972][534]LogStratPlay: STRAT-CMD accepted kind=Move unit=3 hex=1,5 turn=1 side=0 hash=31e8aab6f2d5854d
+[2026.08.14-00.29.53:331][697]LogStratPlay: STRAT-CMD accepted kind=Move unit=2 hex=1,3 turn=1 side=0 hash=c4e4c4aeea2f1c13
+[2026.08.14-00.29.54:374][822]LogStratPlay: STRAT-CMD accepted kind=Move unit=4 hex=1,2 turn=1 side=0 hash=a8e7a887c1c12e7e
+[2026.08.14-00.29.55:649][975]LogStratPlay: STRAT-CMD accepted kind=Move unit=5 hex=0,5 turn=1 side=0 hash=2f713d3a1ae1ee3c
+[2026.08.14-00.29.56:634][ 93]LogStratPlay: STRAT-CMD accepted kind=Move unit=1 hex=-1,4 turn=1 side=0 hash=397b623e9ff6bd50
+[2026.08.14-00.29.58:286][291]LogStratPlay: STRAT-CMD accepted kind=EndTurn unit=-1 hex=-1,-1 turn=1 side=0 hash=ed8985964a2ff648
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=0 target=-1 turn=1 side=1 hash=74eec2c9f5e8ea5d
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=8,1 def=-1 target=-1 turn=1 side=1 hash=9d61f69193e29173
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI applied kind=Move unit=7 hex=6,3 def=-1 target=-1 turn=1 side=1 hash=625939d114f4e26e
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI applied kind=Move unit=10 hex=4,4 def=-1 target=-1 turn=1 side=1 hash=6a35f52b96566b11
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI applied kind=Move unit=11 hex=4,6 def=-1 target=-1 turn=1 side=1 hash=d177972d64551ebf
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI applied kind=Move unit=6 hex=5,4 def=-1 target=-1 turn=1 side=1 hash=32fe4f6e5cb34155
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI applied kind=Move unit=9 hex=6,4 def=-1 target=-1 turn=1 side=1 hash=0f5e76ea37c175fd
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=1 side=1 hash=0113ee62ff8e214a
+[2026.08.14-00.29.58:793][351]LogStratPlay: STRAT-AI turn-ended side=1 turn=1 commands=8 hash=0113ee62ff8e214a
+[2026.08.14-00.30.05:080][103]LogStratPlay: STRAT-CMD accepted kind=Move unit=3 hex=3,4 turn=2 side=0 hash=f4b1c0623b01a2a6
+[2026.08.14-00.30.06:029][217]LogStratPlay: STRAT-CMD accepted kind=Attack unit=3 hex=4,4 turn=2 side=0 hash=0ebc766f59f3f788
+[2026.08.14-00.30.07:755][424]LogStratPlay: Selection: (3,5) is not in unit 5's reachable set
+[2026.08.14-00.30.08:626][528]LogStratPlay: Selection: (3,5) is not in unit 5's reachable set
+[2026.08.14-00.30.13:052][ 59]LogStratPlay: STRAT-CMD accepted kind=Move unit=5 hex=2,5 turn=2 side=0 hash=048ebecc42289cb1
+[2026.08.14-00.30.14:779][265]LogStratPlay: Selection: (4,3) is not in unit 2's reachable set
+[2026.08.14-00.30.15:769][384]LogStratPlay: STRAT-CMD accepted kind=Move unit=2 hex=3,3 turn=2 side=0 hash=244c37c1eed19ef6
+[2026.08.14-00.30.18:055][658]LogStratPlay: STRAT-CMD accepted kind=Move unit=4 hex=3,2 turn=2 side=0 hash=888f8942d02ed2eb
+[2026.08.14-00.30.20:600][963]LogStratPlay: STRAT-CMD accepted kind=EndTurn unit=-1 hex=-1,-1 turn=2 side=0 hash=551762390fe2780e
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=0 target=-1 turn=2 side=1 hash=a63faf50e6b7576e
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=6,0 def=-1 target=-1 turn=2 side=1 hash=1acefd315294cdac
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Move unit=7 hex=5,2 def=-1 target=-1 turn=2 side=1 hash=5f3812e7b3020b15
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=3,4 def=-1 target=3 turn=2 side=1 hash=a2717605c8ad8bec
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Move unit=10 hex=0,7 def=-1 target=-1 turn=2 side=1 hash=3f97be49d08ddce2
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Move unit=6 hex=4,4 def=-1 target=-1 turn=2 side=1 hash=d28fc729cabdbd04
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Attack unit=6 hex=3,4 def=-1 target=3 turn=2 side=1 hash=19de6a7a135311fc
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Move unit=9 hex=5,3 def=-1 target=-1 turn=2 side=1 hash=8c3cb4da95c2df41
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Attack unit=9 hex=3,2 def=-1 target=4 turn=2 side=1 hash=ff53a1c9dc7bbdd8
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Move unit=12 hex=5,4 def=-1 target=-1 turn=2 side=1 hash=fcf2799456f06b79
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=Move unit=11 hex=2,7 def=-1 target=-1 turn=2 side=1 hash=9f58274614a22be3
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=2 side=1 hash=acac94410cfa7ef6
+[2026.08.14-00.30.21:100][ 23]LogStratPlay: STRAT-AI turn-ended side=1 turn=2 commands=12 hash=acac94410cfa7ef6
+[2026.08.14-00.30.27:412][779]LogStratPlay: STRAT-CMD accepted kind=Move unit=5 hex=2,6 turn=3 side=0 hash=d59718b774ba5b2c
+[2026.08.14-00.30.28:029][853]LogStratPlay: STRAT-CMD accepted kind=Attack unit=5 hex=2,7 turn=3 side=0 hash=0af782e97e138da1
+[2026.08.14-00.30.30:188][109]LogStratPlay: Selection: (4,3) is not in unit 2's reachable set
+[2026.08.14-00.30.34:627][640]LogStratPlay: STRAT-CMD accepted kind=Move unit=2 hex=5,1 turn=3 side=0 hash=f4c1e34b21d7e14c
+[2026.08.14-00.30.35:652][763]LogStratPlay: STRAT-CMD accepted kind=Attack unit=2 hex=6,0 turn=3 side=0 hash=b3c0d6e8b08ef77d
+[2026.08.14-00.30.38:485][103]LogStratPlay: STRAT-CMD accepted kind=EndTurn unit=-1 hex=-1,-1 turn=3 side=0 hash=a2f34686343710c9
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=5,2 def=0 target=-1 turn=3 side=1 hash=d1af32a27f05d122
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=0 target=-1 turn=3 side=1 hash=affd75d5547ccbde
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=2,7 def=0 target=-1 turn=3 side=1 hash=7b99aff5414e6f35
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Attack unit=8 hex=5,1 def=-1 target=2 turn=3 side=1 hash=fde3d723edf3f99f
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Attack unit=13 hex=5,1 def=-1 target=2 turn=3 side=1 hash=4117684916bc1a96
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Attack unit=7 hex=5,1 def=-1 target=2 turn=3 side=1 hash=aeb6ab4d9dd0f805
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Attack unit=9 hex=5,1 def=-1 target=2 turn=3 side=1 hash=c75bfce160d6bcda
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=3,1 def=-1 target=-1 turn=3 side=1 hash=dd132efde7369d89
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=13 hex=3,2 def=-1 target=-1 turn=3 side=1 hash=dea902d3f4313cee
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=7 hex=4,0 def=-1 target=-1 turn=3 side=1 hash=ae92d11c53f3c15c
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=9 hex=4,1 def=-1 target=-1 turn=3 side=1 hash=1acfe73481f139e2
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=6 hex=0,3 def=-1 target=-1 turn=3 side=1 hash=f1ecf060e8331fe6
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Attack unit=6 hex=-1,4 def=-1 target=1 turn=3 side=1 hash=8029360558db59d1
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=12 hex=3,4 def=-1 target=-1 turn=3 side=1 hash=57eb8600f37beaf2
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=14 hex=5,4 def=-1 target=-1 turn=3 side=1 hash=eec12308878b1bc5
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Attack unit=15 hex=2,6 def=-1 target=5 turn=3 side=1 hash=c2dfdc01a50a0189
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=15 hex=4,4 def=-1 target=-1 turn=3 side=1 hash=14461c2c39a027cd
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=10 hex=-1,3 def=-1 target=-1 turn=3 side=1 hash=e5214593063f7fd8
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=-1,4 def=-1 target=1 turn=3 side=1 hash=8ee127929ffff92d
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Attack unit=11 hex=2,6 def=-1 target=5 turn=3 side=1 hash=8ec738095d5555d7
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=Move unit=11 hex=-1,7 def=-1 target=-1 turn=3 side=1 hash=fdd92f9578284d88
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=3 side=1 hash=3d551e141d20589b
+[2026.08.14-00.30.38:986][163]LogStratPlay: STRAT-AI turn-ended side=1 turn=3 commands=22 hash=3d551e141d20589b
+[2026.08.14-00.30.44:230][788]LogStratPlay: STRAT-CMD accepted kind=Move unit=5 hex=2,5 turn=4 side=0 hash=7830451fcbd0f503
+[2026.08.14-00.30.44:665][840]LogStratPlay: STRAT-CMD accepted kind=Attack unit=5 hex=3,4 turn=4 side=0 hash=8f245fdce4e0be8e
+[2026.08.14-00.30.46:579][ 68]LogStratPlay: STRAT-CMD accepted kind=Attack unit=1 hex=0,3 turn=4 side=0 hash=e0cc2e4931090c22
+[2026.08.14-00.30.48:264][267]LogStratPlay: STRAT-CMD accepted kind=EndTurn unit=-1 hex=-1,-1 turn=4 side=0 hash=b7a61bb530bc8885
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=5,2 def=0 target=-1 turn=4 side=1 hash=0363c5141230b4bf
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=0 target=-1 turn=4 side=1 hash=af77d7aff9823ad8
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=2,7 def=0 target=-1 turn=4 side=1 hash=8e3881241a8b33fc
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=7 hex=1,1 def=-1 target=-1 turn=4 side=1 hash=c89e4f057a6484e7
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=0,4 def=-1 target=-1 turn=4 side=1 hash=eb64093f9724aa7a
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=9 hex=2,1 def=-1 target=-1 turn=4 side=1 hash=2c5f86e0431fdbf5
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Attack unit=9 hex=-1,4 def=-1 target=1 turn=4 side=1 hash=e5e5c555e78512aa
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=13 hex=1,2 def=-1 target=-1 turn=4 side=1 hash=614aa1d6f595ab8b
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=16 hex=3,1 def=-1 target=-1 turn=4 side=1 hash=3cb7dcac6ea9cc5d
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=-1,4 def=-1 target=1 turn=4 side=1 hash=a56430908e43c86a
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Attack unit=6 hex=-1,4 def=-1 target=1 turn=4 side=1 hash=1eacfb416f212837
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Attack unit=8 hex=-1,4 def=-1 target=1 turn=4 side=1 hash=a0cb70e417dc8b14
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Attack unit=12 hex=2,5 def=-1 target=5 turn=4 side=1 hash=d6a0d8f19c50946b
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=12 hex=1,3 def=-1 target=-1 turn=4 side=1 hash=07b1702d6ac82c03
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=15 hex=1,4 def=-1 target=-1 turn=4 side=1 hash=b0fa76c8ec4ef7c7
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=14 hex=3,4 def=-1 target=-1 turn=4 side=1 hash=841fdca13e3bf1ac
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Attack unit=14 hex=2,5 def=-1 target=5 turn=4 side=1 hash=04d33ab0269e373c
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=17 hex=5,4 def=-1 target=-1 turn=4 side=1 hash=1e6eadc967f00a3f
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=11 hex=-2,5 def=-1 target=-1 turn=4 side=1 hash=816e7591749beacb
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Attack unit=11 hex=-1,4 def=-1 target=1 turn=4 side=1 hash=65aa4631dd57edc4
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=Move unit=18 hex=0,6 def=-1 target=-1 turn=4 side=1 hash=a61a4b44ede02306
+[2026.08.14-00.30.48:763][327]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=4 side=1 hash=971dd3d7fccf9fc1
+[2026.08.14-00.30.48:764][327]LogStratPlay: STRAT-AI turn-ended side=1 turn=4 commands=22 hash=971dd3d7fccf9fc1
+[2026.08.14-00.30.51:161][614]LogStratPlay: STRAT-CMD accepted kind=Attack unit=1 hex=-1,3 turn=5 side=0 hash=1e6f7313e5cd3744
+[2026.08.14-00.30.52:669][795]LogStratPlay: STRAT-CMD accepted kind=EndTurn unit=-1 hex=-1,-1 turn=5 side=0 hash=18bc5e3d779776d4
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=5,2 def=0 target=-1 turn=5 side=1 hash=e5c01bbbc7cbf679
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=0 target=-1 turn=5 side=1 hash=a09b6ad8cafaf87e
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=2,7 def=0 target=-1 turn=5 side=1 hash=3e7f7e251caf4eb4
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Move unit=7 hex=-1,2 def=-1 target=-1 turn=5 side=1 hash=ffe09e29a0820057
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Attack unit=9 hex=-1,4 def=-1 target=1 turn=5 side=1 hash=d9c70f5a602fde1a
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Move unit=16 hex=1,1 def=-1 target=-1 turn=5 side=1 hash=6c3edebe08210ceb
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Move unit=19 hex=3,1 def=-1 target=-1 turn=5 side=1 hash=294d6d72571262af
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=-1,4 def=-1 target=1 turn=5 side=1 hash=4d06fa5981e7c10a
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Attack unit=6 hex=-1,4 def=-1 target=1 turn=5 side=1 hash=d062821eed9d8b97
+[2026.08.14-00.30.53:169][855]LogStratPlay: STRAT-AI applied kind=Attack unit=8 hex=-1,4 def=-1 target=1 turn=5 side=1 hash=1b3e6cb52d43262e
+[2026.08.14-00.30.53:169][855]LogStratPlay: Warning: STRAT-AI refused phase=apply kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=5 side=1 reason=[T-SAVE-05] no match is running
+[2026.08.14-00.30.53:171][855]LogStratPlay: Warning: The paced AI turn refused: the rules module refused the AI's EndTurn for side 1 after 10 applied command(s): [T-SAVE-05] no match is running
+[2026.08.14-00.30.59:329][588]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden
+[2026.08.14-00.30.59:329][588]LogWorld: BeginTearingDown for /Game/StratMaps/UEDPIE_0_Lvl_FerrumCrossing
+[2026.08.14-00.30.59:329][588]LogWorld: UWorld::CleanupWorld for Lvl_FerrumCrossing, bSessionEnded=true, bCleanupResources=true
+[2026.08.14-00.30.59:329][588]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
+[2026.08.14-00.30.59:331][588]LogPlayLevel: Display: Shutting down PIE online subsystems
+[2026.08.14-00.30.59:334][588]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
+[2026.08.14-00.30.59:351][588]LogSlate: Updating window title bar state: overlay mode, drag disabled, window buttons hidden, title bar hidden
+[2026.08.14-00.30.59:352][588]LogAudioMixer: Deinitializing Audio Bus Subsystem for audio device with ID 2
+[2026.08.14-00.30.59:352][588]LogAudioMixer: Display: FAudioMixerWasapi::StopAudioStream() InstanceID=2, StreamState=4
+[2026.08.14-00.30.59:358][588]LogAudioMixerWasapi: Display: FWasapiServiceWatcher stopped.
+[2026.08.14-00.30.59:364][588]LogUObjectHash: Compacting FUObjectHashTables data took   0.45ms
+[2026.08.14-00.30.59:392][590]LogPlayLevel: Display: Destroying online subsystem :Context_1

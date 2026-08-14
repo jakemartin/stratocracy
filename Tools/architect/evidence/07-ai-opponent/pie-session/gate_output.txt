@@ -1,0 +1,8 @@
+STRAT-AI gate: pie-session\session1-completed-game.log
+  applied lines:            74
+  turn-ended lines:         4
+  terminal refusals (ok):   1
+  blocking refusals:        0
+  parse failures:           0
+PASS
+EXIT=0

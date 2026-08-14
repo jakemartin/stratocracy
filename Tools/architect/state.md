@@ -1,6 +1,6 @@
 # Architect state
 
-_Last run 2026-08-13 (AI-opponent milestone, phase C closed: buildlist and AI defaults authored on `BP_StratGameMode`; phase D — PIE playtest and AI-vs-AI gate — is current)._
+_Last run 2026-08-13 (AI-opponent milestone, phase D CLOSED: piece (a), the `STRAT-AI` log parser and gate, proven green against a real isolated AI-vs-AI log (87/87 suite, harness-echo parse defect found and fixed) with its own gate half — an initial `BLOCK`, corrected, then `PASS`; piece (b), the PIE playtest, assembled from two separate sessions in one log — the completed game (74/4/1/0/0, exit 0 PASS) and a separate screenshot run (8/1/0/0/0, exit 0 PASS) — with its own PIE half gate — an initial `BLOCK` on three miscounted claims, corrected, then `PASS` on the fourth gate. Phase D's exit criterion is MET and the phase is CLOSED. The AI-opponent milestone is now COMPLETE.)_
 
 ## BUILT
 
@@ -15,6 +15,38 @@ _Last run 2026-08-13 (AI-opponent milestone, phase C closed: buildlist and AI de
 
 ## NEXT
 
+- **A claim in a document is checkable against an artifact, and the artifact wins — this has now
+  cost six corrections across four separate occasions in this milestone alone.** (Corrected count:
+  the earlier "four separate corrections" undercounted its own tally by conflating occasions with
+  corrections — the fourth occasion below is itself three miscounts across two files plus one
+  propagation into this file, so six corrections total, on four occasions.) Phase D's gate-half
+  produced three prose errors caught by the reviewer's gate on the first occasion: two technical
+  (misreading UE 5.8's `AddExpectedMessagePlain(Occurrences=0)` semantics; overstating what the
+  `:610` tripwire's substring match actually pins down), one pure bookkeeping (this file and the
+  phase evidence blackboard both claiming "no reviewer verdict exists yet" a hundred-plus lines
+  after a `BLOCK` verdict on the same piece was already recorded in the same file) — caught
+  respectively by checking the code against the claim and by reading the document's own history. A
+  fourth occasion, same class, different artifact: `pie-session/narrative.md` and
+  `pie-screenshots/narrative.md` hand-transcribed `STRAT-AI applied` command counts (a turn-3 span
+  and count, a turn-5 Build/Move/Attack breakdown, a session-2 Move count sourced from "the brief"
+  rather than the log printed three lines above the claim) that a `grep -c` against the checked-in
+  slice — the artifact sitting in the same directory — falsifies; propagated once into `state.md`
+  before the reviewer's re-gate caught it (2026-08-13, `pie-session`/`pie-screenshots`
+  `narrative.md` BLOCK findings) — three miscounts plus the one propagation, six corrections in
+  total across the four occasions. Where a narrative states a count a one-line command counts
+  exactly, derive it and name the command, rather than reading it off a log by eye or trusting a
+  dispatching agent's number over the artifact in hand — this applies to counts, to "has a verdict
+  run yet" bookkeeping, and to slice boundaries alike; a document is never its own authority over
+  the tree or the log it describes.
+- **Slice a growing log by content markers, never by EOF.** "To EOF" of a file a running editor is
+  still appending to means "to whenever the cut happened to run," not a fixed boundary, and a
+  line-number range into a rotating log is a fragile name even when stable at cut time (a
+  neighbouring session's content can ride along under a boundary chosen for a different reason).
+  Bound evidence slices by a session's own open/shutdown line, a turn boundary, or a result line;
+  name the file for what it *is*, not for where it sat in the log when cut. Applied to both PIE
+  session slices in `evidence/07-ai-opponent/` (`pie-session/session1-completed-game.log`,
+  `pie-screenshots/session2-screenshot-run.log`); see `evidence/07-ai-opponent/blackboard.md:267-275`
+  for the original derivation.
 - `presentation_statelessness` — Presentation statelessness pass (rebuild widgets from the view model) (actionable)
 - `production_widget` — Production menu widget (§2.11.5) (blocked on buildlist_query)
 - `bridge_event_list` — Bridge ordered event list (§4.9 'command in / events out') (actionable)
@@ -42,7 +74,7 @@ _Last run 2026-08-13 (AI-opponent milestone, phase C closed: buildlist and AI de
   silence are all right; only the return value misreports. `strat-test-author` asserted neither
   `true` nor `false` (either would be wrong or would demand the defect) and instead left a
   tripwire, `AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ..., Occurrences 0)` at
-  `StratAiMatchClauses.cpp:607`, so a future fix to this fails loudly rather than silently.
+  `StratAiMatchClauses.cpp:610`, so a future fix to this fails loudly rather than silently.
   Carried into phase D's brief per the phase B gate's explicit instruction — see "Phase B —
   CLOSED" below for the full account.
 - **The two clauses owed since phase 6 are now written and green — discharged.**
@@ -1276,7 +1308,7 @@ future phases might otherwise re-derive:
   log line. `strat-test-author` asserted the return value **neither** way: asserting `true` fails
   on a correct game today, asserting `false` would make the clause demand the defect. It left
   `AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ..., Occurrences 0)` at
-  `StratAiMatchClauses.cpp:607` as a tripwire, so a future fix fails the clause loudly and gets
+  `StratAiMatchClauses.cpp:610` as a tripwire, so a future fix fails the clause loudly and gets
   revisited deliberately. **Consequence recorded in NEXT above, in terms a phase-D reader cannot
   miss:** `RunAiTurnsNow`'s return value is now an untested production contract, and phase D's
   gate must not be built on it.
@@ -1422,7 +1454,261 @@ future phases might otherwise re-derive:
   `GlobalDefaultGameMode`: no other path appears in `git status --porcelain=v1 -uall` beyond
   `BP_StratGameMode.uasset`, so all three were untouched by construction.
 
-### Phase D — planned (editor OPEN)
+**Phase D opened, 2026-08-13 (editor OPEN; piece (a) below touched neither editor nor build).**
+Folded under "Phase D — CLOSED" below — this is a dated sub-record of the phase's opening state,
+not a current status; matches the single-heading convention used by phases A/B/C.
 
 PIE playtest plus a machine-repeatable AI-vs-AI gate, evidence under
 `Tools/architect/evidence/07-ai-opponent/`.
+
+**Piece (a) done, 2026-08-13, by `strat-data-steward`: the `STRAT-AI` parser and gate.**
+`Tools/architect/strat_ai_log_gate.py` parses all three `STRAT-AI` shapes into structured
+dataclasses (`StratAiApplied`, `StratAiRefused`, `StratAiTurnEnded`; an unparseable line is a
+fourth, `StratAiParseFailure`, reported, never skipped) and a CLI gate (`run_gate`/`main`) that
+exits non-zero on any parse failure, any non-terminal refusal, or (by default) a log with zero
+`STRAT-AI` lines. Literals re-read directly from `Source/StratPlay/StratAiTurnRunner.cpp`
+(lines 78-89, 208-210, 318-336), not transcribed from this file. The one refusal shape the gate
+must let through — `phase=apply kind=EndTurn reason=[T-SAVE-05] no match is running`, the
+terminal "match already finished correctly" case this milestone's phase B recorded — is isolated
+in `is_terminal_handover_refusal()`, checked on all four of phase/kind/reason-prefix/reason-
+substring together so no unrelated refusal is waved through by accident. Proven against four
+hand-authored fixture logs under `Tools/architect/evidence/07-ai-opponent/fixtures/` (no real AI
+log exists yet — this dispatch touched neither the editor nor a build), captured verbatim in
+`Tools/architect/evidence/07-ai-opponent/gate_self_test_output.txt`; see that directory's
+`blackboard.md` for the full account, including why fixtures stand in for a real log at this
+stage. **`Stratocracy.StratPlay.T-INT-05.HandoverRefusalCarriesTheFixedFields`
+(`strat-test-author`'s lane) can now be written against this parser's field contract** — see the
+dispatch report for the exact dataclass field names and types. **Still open in phase D:** the PIE
+playtest itself, and gating a real AI-vs-AI log (headless or PIE-produced) rather than synthetic
+fixtures.
+
+**Piece (a), continued, 2026-08-13, same day, by `strat-data-steward`: the owed clause landed, and
+the gate ran against a real log for the first time. (Dated record: at the moment this bullet was
+written, the PIE half and the reviewer gate were both outstanding; superseded by "Piece (b)" and
+"Phase D — CLOSED" below, which report both complete.)**
+
+- `Stratocracy.StratPlay.T-INT-05.HandoverRefusalCarriesTheFixedFields` now exists
+  (`Source/StratPlay/Tests/StratAiMatchClauses.cpp:922`), asserting against the parser's ten-field
+  contract. Suite **87 succeeded / 0 failed / 0 notRun, 87 entries**
+  (`Tools/architect/evidence/07-ai-opponent/suite-87/index.json`, `reportCreatedOn
+  2026.08.13-21.38.06`); macro set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` went 86 → 87,
+  delta +1, agreeing exactly.
+- **Correction, checked and found not to require any edit here:** `phase=handover` is not one of
+  `FStratAiTurnRunner`'s fault arms and is not reachable through `IStratAiTurnPort`. Read directly,
+  `StratMatchSubsystem.cpp:706-724`: it is `UStratMatchSubsystem::RunAiTurnsNow`'s own outer bound
+  (`StopReason.IsEmpty() && TurnsRun >= MaxTurns`), emitted by that function via
+  `StratLogAiTurnRefusal` after a run of turns that all *succeeded* — the source comment at
+  `:712-713` states this outright. Neither this section nor the gate's code attributed
+  `phase=handover` to the runner, so nothing needed correcting; recorded so a future reader does
+  not re-introduce that misattribution.
+- **A full-suite log is the wrong corpus for this gate.** Gated against `Saved/Logs/` full-suite
+  output (249 `STRAT-AI` lines): exit 1, 5 parse failures + 6 blocking refusals, **all 11 correct
+  behaviour being misreported** — the suite deliberately manufactures refusals as fixtures
+  (scripted-port refusals, `MaxCommandsPerTurn is 0`, `definitions are not loaded`, two
+  handover-adjacent lines). The gate is built for one isolated real match, not a synchronous test
+  suite's log; pointing it at the latter will always trip it by design.
+- **Real corpus, and independent corroboration of correctness.** Ran
+  `Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultWithinTheBound` alone
+  (`-ReportExportPath=...\Saved\AutomationReportIsolated`, keeping the 87/87 artifacts
+  unclobbered), captured at `Tools/architect/evidence/07-ai-opponent/real-game/isolated-run.log`
+  (= `Saved/Logs/Stratocracy.log` at that point, confirmed by grepping its own `Cmd: Automation
+  RunTests ...` and `Test Completed. Result={Success}` lines). Pre-fix gate output: **156 applied,
+  11 turn-ended, 1 terminal refusal, 0 blocking, 1 parse failure.** 156 commands across 11 turns
+  is exactly what phase A measured for a self-play game — independent confirmation the gate reads
+  a real, complete, deterministic match, and that its terminal-refusal branch fires correctly on a
+  real finish.
+- **The one real defect, found and fixed here.** The single parse failure was line 3290, not a
+  production line at all:
+  `LogAutomationController: Suppressed expected ('Warning') level log message or higher matching
+  'STRAT-AI refused' 1 times.` — versus a genuine line two entries earlier,
+  `LogStratPlay: STRAT-AI turn-ended side=0 turn=1 commands=8 hash=02cd799951334a5f`.
+  `find_strat_ai_payload` matched the bare substring `STRAT-AI` anywhere in the line, so the
+  automation harness's own commentary about a suppressed expected-error match was parsed as if it
+  were the runner's own output. **Fixed** by anchoring on the `LogStratPlay:` category — the only
+  category `StratAiTurnRunner.cpp` logs through — and searching for the `STRAT-AI ` payload only
+  after that marker; an allowlist of one known-good category, not a blocklist of
+  `LogAutomationController` specifically. Confirmed the fix does not weaken the drift check:
+  `fixtures/fail_format_drift.log` (three genuine, malformed `LogStratPlay:` lines) still reports
+  **3 parse failures**, unchanged. **Pinned with a new fixture**,
+  `fixtures/pass_harness_echo_ignored.log` (two genuine lines plus the exact harness-echo string
+  copied from the real log). Re-run against `real-game/isolated-run.log` post-fix: **exit 0,
+  clean** (`real-game/gate_output.txt`).
+- **Lesson worth generalising:** every fixture built for this gate before this update was
+  hand-authored *in production shape* only — a parser tested exclusively against inputs shaped
+  like its happy path cannot discover a defect that only a genuinely adversarial, differently-
+  shaped input (here: the test harness's own commentary, sharing a substring with the target but
+  not its category) will trigger. The self-test could not have caught this on its own; it took a
+  real log.
+- Full account, all six log excerpts, and the suite-log caveat stated in full:
+  `Tools/architect/evidence/07-ai-opponent/blackboard.md`.
+- **Reviewer gate on this piece: `VERDICT: PASS`, after an initial `BLOCK` and a fix.** The
+  reviewer's first pass returned `BLOCK` on a prose finding in the evidence blackboard (the
+  `Occurrences = 0` / T-SAVE-05 passage misread UE 5.8's expected-message semantics — see that
+  file's "Limits" section, CORRECTED). The passage was fixed in place; a narrow re-gate then
+  returned `VERDICT: PASS`, zero gating findings, scope confirmed by file mtime since no
+  intermediate commit exists to diff against. That re-gate also surfaced five non-gating
+  observations (prose staleness and precision gaps), fixed in the same steward pass that recorded
+  this — see the blackboard's "Reviewer gate on this piece" section for the full sequence.
+- **Still open, and phase D is NOT closed by this update:** the PIE playtest itself has not been
+  run — the user drives it in a later sitting. The gate half's reviewer gate is now `PASS`; the PIE
+  half's has not run and cannot until PIE runs. **(This bullet is a piece-(a)-era record, written
+  before the PIE playtest existed; superseded by "Piece (b)" immediately below, which reports the
+  playtest having run. Left in place rather than deleted, because it is true of the moment it
+  describes — see the phase-close entry below for the current, final status.)**
+
+**Piece (b), 2026-08-13, same day, by `strat-data-steward`: the PIE playtest, driven by the user,
+assembled here. Phase D's exit criterion is now MET. This piece's own narrow re-gate has since run
+— an initial `BLOCK` on three miscounted claims, corrected, then `VERDICT: PASS` on the fourth
+gate — see "Phase D — CLOSED" below for the full sequence.**
+
+- **Two separate PIE windows exist in one log, `Saved/Logs/Stratocracy.log` — kept
+  distinct, not merged.** Both open with the identical `LogWorld: Bringing World
+  /Game/StratMaps/UEDPIE_0_Lvl_FerrumCrossing.Lvl_FerrumCrossing up for play` line. **Re-cut
+  2026-08-13, later still, once the "3481 vs 3480" line count below was traced to a live, growing
+  log rather than a slicing error — both slices are now bounded by their own open/shutdown markers,
+  never by EOF or by a neighbouring session's start; see `blackboard.md`'s "Re-cut" section for the
+  full account.**
+  - **Session 1 — the completed game.** Bounded by full-log lines 3249 (open) to 3384 (this
+    session's own `Destroying online subsystem :Context_1`), sliced to
+    `Tools/architect/evidence/07-ai-opponent/pie-session/session1-completed-game.log`. Gate run
+    directly against the slice: **exit 0, PASS — 74 applied / 4 turn-ended / 1 terminal refusal /
+    0 blocking / 0 parse failures**, unchanged from the pre-re-cut result, reproducing the
+    dispatching agent's reported numbers exactly.
+  - **Session 2 — the screenshot run, a separate short session.** Bounded by full-log lines 3443
+    (open) to 3480 (this session's own `Destroying online subsystem :Context_2`), sliced to
+    `.../pie-screenshots/session2-screenshot-run.log`. Gate: **exit 0, PASS — 8
+    applied / 1 turn-ended / 0 terminal / 0 blocking / 0 parse failures**, unchanged from the
+    pre-re-cut result, also reproducing exactly.
+  - Both gate outputs captured verbatim in each directory's `gate_output.txt`.
+- **The paced path is discharged with a number, read from session 1's own timestamps.** Delay from
+  each human `STRAT-CMD accepted kind=EndTurn` to the next `STRAT-AI applied`, all five turns:
+  **0.507, 0.500, 0.501, 0.499, 0.500 s**, against `AiTurnDelaySeconds = 0.500000`. A sixth data
+  point from session 2's single turn: 0.501 s. This debt had no synchronous test coverage (needs a
+  ticking world); PIE is the only thing in the project that exercises it. Full table with line
+  numbers: `pie-session/narrative.md`.
+- **Pacing is per-turn, not per-command — confirmed independently.** Inter-command gaps within an
+  AI turn are 0.000 s (every `applied` line in one AI turn shares the same millisecond timestamp).
+  Observed at runtime, not re-argued from source — phase B's design decision.
+- **`AiSides=(1)` confirmed at runtime, in both sessions independently.** Every `STRAT-AI` line in
+  both slices carries `side=1`; every `STRAT-CMD` line carries `side=0`.
+- **The terminal-refusal case observed in the wild for the first time**, session 1 line 3371 (full
+  log): `STRAT-AI refused phase=apply kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=5 side=1
+  reason=[T-SAVE-05] no match is running`. The human lost all units; the match reached a §2.8
+  result mid-AI-turn; the rules module correctly refused the winner's own closing `EndTurn`; the
+  gate classified it terminal and passed. Previously this shape existed only in a hand-authored
+  fixture and one headless run — this is its first live-PIE observation.
+- **Phase C's Tank prediction is now empirically confirmed.** All **12** `STRAT-AI applied
+  kind=Build` lines across both sessions (11 in session 1, 1 in session 2) carry `def=0`.
+  `Data/units.csv` row order (proven phase 0) is `Infantry, Tank, Artillery, Recon`, so `def=0` is
+  Infantry and Tank (`def=1`) never appears — 12 opportunities, zero Tanks, despite Tank being a
+  quarter of the authored buildlist. Phase C predicted this by reading `chooseBuild`; it is now
+  measured, twice.
+- **The gate handles PIE corpus shape — the open limit is now closed.** Both slices gate with
+  **0 parse failures**; the `LogStratPlay:` anchor, proven previously only against a headless
+  automation-test log, now parses PIE output correctly. `blackboard.md`'s "What remains open"
+  section is updated to record this closed.
+- **Command-channel disjointness held in a real session.** Session 1: 23 `STRAT-CMD accepted`
+  (12 Move, 6 Attack, 5 EndTurn) vs 74 `STRAT-AI applied` (11 Build, 37 Move, 22 Attack, 4
+  EndTurn) — no overlap, counted directly.
+- **The phase C value gap is CLOSED.** `strat-editor-builder` read `BP_StratGameMode`'s
+  `MatchConfig` live off the running CDO and the dispatching agent independently re-read it in the
+  same session: `AiSides=(1)`, `AiBuildlistUnitIds=("Infantry","Infantry","Infantry","Tank")`,
+  `AiTurnDelaySeconds=0.500000`, `AiMaxCommandsPerTurn=256`, `AiMaxConsecutiveTurns=64` — every
+  phase C expectation confirmed, no discrepancy. That CDO reading is not repeated by this steward
+  pass — `execute_script` was disconnected this session (editor opened after the session started,
+  the known NeoStack connector latch) — but three of the five values are independently
+  corroborated *behaviourally* by this PIE log itself: `AiSides=(1)` (runtime), `AiTurnDelaySeconds
+  = 0.500000` (the five-plus-one delay measurements), and the Infantry/Infantry/Infantry/Tank
+  buildlist's Tank entry never being reached. `AiMaxCommandsPerTurn=256` and
+  `AiMaxConsecutiveTurns=64` are not falsifiable from a 5-turn, ≤22-command-per-turn game and are
+  taken on the prior CDO reading, not re-measured here. Note the CDO read shows 256/64
+  **positively**, where phase C's ASCII extraction could only infer them from absence; the two
+  techniques agree, and phase C's "What extraction proves and what it cannot" paragraph (see
+  "Phase C — CLOSED" below) should be read alongside this as its open gap now closed.
+- **Screenshots.** `ScreenShot00042.png` (20:37:00, `TURN 1 / 20`, `Unit HP 60/60`) and
+  `ScreenShot00043.png` (20:37:08, `TURN 2 / 20`, `Unit HP 60/70`) both fall inside **session 2's**
+  window (opened 20:36:56) — copied to `pie-screenshots/`. Viewed directly by this steward: both
+  are full-editor-window captures, not viewport-only; `00043`'s legible Output Log panel matches
+  `pie-screenshots/session2-screenshot-run.log` line for line (STRAT-CMD accepted EndTurn turn=1
+  side=0, AI's Build, six Moves, EndTurn, turn-ended side=1 turn=1 commands=8 — `grep -c
+  "kind=Move" session2-screenshot-run.log` = 6). **These
+  screenshots depict session 2's short run, not session 1's completed game — stated explicitly in
+  `pie-screenshots/narrative.md` so this is never conflated.**
+- **CORRECTED — the "3481 vs 3480" line originally recorded here as a discrepancy is not one.**
+  `Saved/Logs/Stratocracy.log` is a live log a running editor keeps appending to (`[UsageMonitor]`
+  lines land roughly every 90 seconds, plus unrelated engine noise); its line count is not a fixed
+  fact about the file. The brief's 3480, this steward's original 3481, and a later re-measurement
+  of 3518 were each correct at the instant taken — there is nothing to reconcile beyond "the file
+  was still growing." Named slice boundaries (3249, 3442, 3443) landed exactly where the brief
+  specified and every gate count reproduced exactly; the "to EOF" boundary itself was the actual
+  problem, fixed by the re-cut above. **Generalisable lesson, for any future PIE or headless
+  capture: slicing a log against EOF produces a non-reproducible artifact whenever the source is
+  still being written — bound evidence slices by content markers, never by end-of-file.**
+- Evidence: `Tools/architect/evidence/07-ai-opponent/pie-session/` (session 1: sliced log,
+  `gate_output.txt`, `narrative.md`) and `.../pie-screenshots/` (session 2: sliced log,
+  `gate_output.txt`, `narrative.md`, both PNGs). Full account and the "Update" section:
+  `blackboard.md`.
+- **Phase D's exit criterion — "PIE playtest done, machine-repeatable AI-vs-AI gate built and
+  proven, evidence assembled" — is MET.** This piece's own narrow re-gate has since run and closed
+  the phase — see "Phase D — CLOSED" immediately below.
+
+### Phase D — CLOSED
+
+- **Completed:** 2026-08-13. `strat-integration-reviewer` gated both halves of this phase, each with
+  its own `BLOCK`-then-`PASS` sequence, honestly recorded here rather than only the final verdict:
+  - **Gate half** (piece (a), the `STRAT-AI` parser/gate): first gate `VERDICT: BLOCK` on one prose
+    finding (the `Occurrences = 0` / T-SAVE-05 passage misreading UE 5.8's expected-message
+    semantics — see `evidence/07-ai-opponent/blackboard.md`'s "Limits" section, CORRECTED); fixed in
+    place; narrow re-gate `VERDICT: PASS`, zero gating findings.
+  - **PIE half** (piece (b), the PIE playtest evidence): first gate `VERDICT: BLOCK` on three
+    miscounted claims in `pie-session/narrative.md` and `pie-screenshots/narrative.md` — a turn-3
+    span/count, a turn-5 Build/Move/Attack breakdown, and a session-2 Move count sourced from "the
+    brief" rather than the log printed three lines above the claim (the fourth occasion recorded
+    under NEXT above, "six corrections across four occasions"); fixed in place, each replaced by a
+    `grep -c` derivation run and confirmed against the checked-in slice; **`VERDICT: PASS` on the
+    fourth gate** (the second gate on the PIE half, the fourth gate this phase in total counting
+    both halves' first-and-re-gate pairs), zero findings.
+  - This closing pass additionally fixed the reviewer's five non-gating observations from that
+    fourth gate: the tally-noun imprecision under NEXT (corrected above to "six corrections across
+    four occasions"), the three now-stale "has not run" sites (`state.md:3`, `:1550-1551` [that
+    bullet's own text, dated and marked superseded rather than deleted], `:1554-1555`, `:1650`, all
+    rewritten to state the actual `BLOCK`→fix→`PASS` sequence), the piece-(a)-era "PIE playtest has
+    not been run" bullet immediately above the piece (b) section (left in place, dated, and marked
+    superseded rather than deleted, since it was true of the moment it describes), the NEXT-block
+    merge (checked — nothing lost), and the two narrative-derivation commands
+    (`pie-session/narrative.md`'s pacing-count derivation and `pie-screenshots/narrative.md`'s Move
+    count) — both now state their intent explicitly (channel- and kind-qualified `grep -c`) rather
+    than returning the right number for a reason the command itself does not say.
+- **Exit criterion met:** PIE playtest run, plus a machine-repeatable AI-vs-AI gate proven, evidence
+  assembled under `Tools/architect/evidence/07-ai-opponent/`.
+- **Measured, not reported — the record a future phase needs:**
+  - Suite **87/87**, 0 failed / 0 notRun; macro set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
+    went 86 → 87.
+  - **The owed clause is discharged:**
+    `Stratocracy.StratPlay.T-INT-05.HandoverRefusalCarriesTheFixedFields`
+    (`StratAiMatchClauses.cpp:922`), executing the previously-dark `handover` arm. `phase=handover`
+    is `RunAiTurnsNow`'s own outer bound (`StratMatchSubsystem.cpp:724`, reached after turns that all
+    *succeeded*), **not** a `FStratAiTurnRunner` fault arm, and needs no scripted port — an earlier
+    brief in this phase claimed otherwise and was wrong; corrected in place, not repeated.
+  - **The gate** (`Tools/architect/strat_ai_log_gate.py`) is proven against three real corpora: the
+    headless isolated run, PIE session 1, PIE session 2 — plus five fixtures. Exit 0 on all three
+    real logs.
+  - **Paced path discharged with numbers:** 0.507 / 0.500 / 0.501 / 0.499 / 0.500 s across session 1,
+    plus 0.501 s in session 2, against `AiTurnDelaySeconds = 0.500000`. Inter-command gaps within a
+    turn 0.000 s, confirming phase B's per-turn-not-per-command decision at runtime.
+  - **`AiSides=(1)` confirmed at runtime, and phase C's value gap is closed** by the live CDO read
+    (`AiSides=(1)`, buildlist arity 4, `AiTurnDelaySeconds=0.500000`, `AiMaxCommandsPerTurn=256`,
+    `AiMaxConsecutiveTurns=64`, no discrepancy). Phase C's "What extraction proves and what it
+    cannot" paragraph (see "Phase C — CLOSED" above) should be read with this: its open gap is now
+    closed, and the CDO read shows 256/64 positively where extraction could only infer them from
+    absence.
+  - **Phase C's Tank prediction is empirically confirmed:** 12 of 12 `Build` lines carry `def=0`
+    (Infantry); Tank (`def=1`) never appears.
+  - **The terminal-refusal case was observed in a real game for the first time** (session 1, full-log
+    3371) and the gate classified it correctly.
+- **Gates unchanged by this closing pass's prose edits** — re-run directly, not assumed: session 1 →
+  `74 applied / 4 turn-ended / 1 terminal / 0 blocking / 0 parse failures`, exit 0; session 2 →
+  `8 applied / 1 turn-ended / 0 terminal / 0 blocking / 0 parse failures`, exit 0.
+
+**The AI-opponent milestone is now COMPLETE**, phases A–D closed. Out-of-scope list unchanged:
+production menu (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, move-undo.

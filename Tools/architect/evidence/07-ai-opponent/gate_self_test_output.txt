@@ -1,0 +1,66 @@
+== pass_terminal_result.log ==
+STRAT-AI gate: Tools\architect\evidence\07-ai-opponent\fixtures\pass_terminal_result.log
+  applied lines:            4
+  turn-ended lines:         1
+  terminal refusals (ok):   1
+  blocking refusals:        0
+  parse failures:           0
+PASS
+EXIT=0
+
+== fail_mixed_faults.log ==
+STRAT-AI gate: Tools\architect\evidence\07-ai-opponent\fixtures\fail_mixed_faults.log
+  applied lines:            1
+  turn-ended lines:         1
+  terminal refusals (ok):   0
+  blocking refusals:        1
+  parse failures:           1
+    FAIL line 3: unparseable STRAT-AI line: 'STRAT-AI applied kind=Build unti=-1 hex=2,2 def=0 target=-1 turn=1 side=1 hash=bbbb2222'
+    FAIL line 2: non-terminal STRAT-AI refused phase=apply kind=Move turn=1 side=1 reason='[T-MOVE-02] hex is not reachable this turn'
+FAIL
+EXIT=1
+
+== fail_format_drift.log ==
+STRAT-AI gate: Tools\architect\evidence\07-ai-opponent\fixtures\fail_format_drift.log
+  applied lines:            0
+  turn-ended lines:         0
+  terminal refusals (ok):   0
+  blocking refusals:        0
+  parse failures:           3
+    FAIL line 1: unparseable STRAT-AI line: 'STRAT-AI applied kind=Move unit=3 pos=4,4 def=-1 target=-1 turn=1 side=1 hash=aaaa1111'
+    FAIL line 2: unparseable STRAT-AI line: 'STRAT-AI applied kind=Attack unit=7 pos=4,4 def=-1 target=3 turn=1 side=1 hash=bbbb2222'
+    FAIL line 3: unparseable STRAT-AI line: 'STRAT-AI applied kind=EndTurn unit=-1 pos=-1,-1 def=-1 target=-1 turn=1 side=1 hash=cccc3333'
+FAIL
+EXIT=1
+
+== pass_harness_echo_ignored.log ==
+STRAT-AI gate: Tools\architect\evidence\07-ai-opponent\fixtures\pass_harness_echo_ignored.log
+  applied lines:            1
+  turn-ended lines:         1
+  terminal refusals (ok):   0
+  blocking refusals:        0
+  parse failures:           0
+PASS
+EXIT=0
+
+== empty.log (no --allow-empty) ==
+STRAT-AI gate: Tools\architect\evidence\07-ai-opponent\fixtures\empty.log
+  applied lines:            0
+  turn-ended lines:         0
+  terminal refusals (ok):   0
+  blocking refusals:        0
+  parse failures:           0
+    FAIL: zero STRAT-AI lines found in this log at all -- either no AI side played, or this is the wrong log file. Pass --allow-empty if an AI-less run is genuinely expected.
+FAIL
+EXIT=1
+
+== empty.log (--allow-empty) ==
+STRAT-AI gate: Tools\architect\evidence\07-ai-opponent\fixtures\empty.log
+  applied lines:            0
+  turn-ended lines:         0
+  terminal refusals (ok):   0
+  blocking refusals:        0
+  parse failures:           0
+    OK (allowed): zero STRAT-AI lines found in this log at all -- either no AI side played, or this is the wrong log file. Pass --allow-empty if an AI-less run is genuinely expected.
+PASS
+EXIT=0

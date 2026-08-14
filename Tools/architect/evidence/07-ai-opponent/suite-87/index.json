@@ -1,0 +1,3455 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "STATION-ALPHA",
+			"instance": "ABC3AAD647220598A3448A8D01C8E221",
+			"instanceName": "STATION-ALPHA-41356",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9168] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 3080",
+			"cPUModel": "12th Gen Intel(R) Core(TM) i9-12900K",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.08.13-21.38.06",
+	"succeeded": 87,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 1.1104506254196167,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "BuildlistRefusalsLeavePriorListIntact",
+			"fullTestPath": "Stratocracy.StratBridge.GATE-BRIDGE-DEFS.BuildlistRefusalsLeavePriorListIntact",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0077604986727237701,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unresolvable-id refusal: 'buildlist entry 2 names unit id 'NoSuchUnitIdInDT_Units', which is not in the loaded unit table'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BuildlistResolvesInLoaderOrder",
+			"fullTestPath": "Stratocracy.StratBridge.GATE-BRIDGE-DEFS.BuildlistResolvesInLoaderOrder",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0080353021621704102,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MappedDefsMatchLoaderOrder",
+			"fullTestPath": "Stratocracy.StratBridge.GATE-BRIDGE-DEFS.MappedDefsMatchLoaderOrder",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0079804994165897369,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AiBoardAgreesWithRulesQueries",
+			"fullTestPath": "Stratocracy.StratBridge.T-AI-01.AiBoardAgreesWithRulesQueries",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0089942999184131622,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "self-play: 156 commands: Build 22, Move 55, Attack 68, EndTurn 11; terminal=yes, observer-stopped=no; checked 55 Moves, 68 Attacks, 22 Builds",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AttackTargetIdResolvesToItsHex",
+			"fullTestPath": "Stratocracy.StratBridge.T-AI-01.AttackTargetIdResolvesToItsHex",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083728991448879242,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "self-play: 156 commands: Build 22, Move 55, Attack 68, EndTurn 11; terminal=yes, observer-stopped=no; 68 attacks checked, 59 foil-eligible",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BuiltThisTurnReachesTheAi",
+			"fullTestPath": "Stratocracy.StratBridge.T-AI-01.BuiltThisTurnReachesTheAi",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081714987754821777,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "self-play: 156 commands: Build 22, Move 55, Attack 68, EndTurn 11; terminal=yes, observer-stopped=no; 22 fresh Build proposals",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "prefix run: 0 commands: Build 0, Move 0, Attack 0, EndTurn 0; terminal=no, observer-stopped=yes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "after the build the AI answered Move at (q=2,r=1)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CommandsSubmitUnchangedAndRecord",
+			"fullTestPath": "Stratocracy.StratBridge.T-AI-01.CommandsSubmitUnchangedAndRecord",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082935020327568054,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "self-play: 156 commands: Build 22, Move 55, Attack 68, EndTurn 11; terminal=yes, observer-stopped=no",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RefusalsAreDistinguishableFromEndTurn",
+			"fullTestPath": "Stratocracy.StratBridge.T-AI-01.RefusalsAreDistinguishableFromEndTurn",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083937011659145355,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unloaded: 'definitions are not loaded'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unseeded: 'no scenario is loaded'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "bad side: 'side 2 is outside the 2 sides this match has'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SubmitBuildAtHexMatchesSubmitBuild",
+			"fullTestPath": "Stratocracy.StratBridge.T-AI-01.SubmitBuildAtHexMatchesSubmitBuild",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.008281998336315155,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "prefix A: 0 commands: Build 0, Move 0, Attack 0, EndTurn 0; terminal=no, observer-stopped=yes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "prefix B: 0 commands: Build 0, Move 0, Attack 0, EndTurn 0; terminal=no, observer-stopped=yes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SameStateYieldsSameCommandSequence",
+			"fullTestPath": "Stratocracy.StratBridge.T-AI-06.SameStateYieldsSameCommandSequence",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081795975565910339,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-AI-06: 156 identical commands across two independently seeded bridges",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReplayParityWithHeadless",
+			"fullTestPath": "Stratocracy.StratBridge.T-INT-02.ReplayParityWithHeadless",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0077027007937431335,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "fixture: 169 commands, result Decisive",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RejectionSafety",
+			"fullTestPath": "Stratocracy.StratBridge.T-INT-03.RejectionSafety",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081047005951404572,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "refusal reason: [T-SAVE-05] no unit 999999",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "CommandKindNamesMatchFormat",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-05.CommandKindNamesMatchFormat",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0080420970916748047,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05: fixture kinds present: 5 of 5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RecordedLogReplaysToEqualHash",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-05.RecordedLogReplaysToEqualHash",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0080038011074066162,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "leg 0: {turn 1, side 0} unit 1 -> axial(2,1)=offset[2,1]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "refusal: unit 6 is not side 0's to move",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "leg 1: {turn 1, side 1} unit 6 -> axial(7,0)=offset[7,0]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "leg 2: {turn 2, side 0} unit 1 -> axial(0,0)=offset[0,0]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05: 5 accepted commands, 1 refused, hash 3ccba0c050948caa on both bridges",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReplayRecordedLogOntoRefuses",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-05.ReplayRecordedLogOntoRefuses",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082952976226806641,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05 refusal 1: target bridge is this bridge",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05 refusal 2: no scenario is loaded",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05 refusal 3: target bridge has no scenario loaded",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05 refusal 4: target bridge is not fresh: it has already applied 1 command(s)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05 refusal 5: no commands have been recorded",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05 refusal 6: target bridge seeded from a different scenario (ferrum_crossing vs ferrum_crossing_variant)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RecordedLogMatchesSubmissions",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-06.RecordedLogMatchesSubmissions",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081354975700378418,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "turn boundary: EndTurn tagged {turn 1, side 1}, next command {turn 2, side 0}",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RejectedCommandIsNotRecorded",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-06.RejectedCommandIsNotRecorded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.00808749720454216,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "refusal reason: no unit 999999",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReseedClearsRecordedLog",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-06.ReseedClearsRecordedLog",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083795003592967987,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "failed-load reason: scenario file unreadable at E:/MultiAgent/Stratocracy/Data/no_such_scenario_exists.json",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SerializedSaveRoundTrips",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-06.SerializedSaveRoundTrips",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0086153000593185425,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SerializeRefusesUnseeded",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-06.SerializeRefusesUnseeded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083549991250038147,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TurnAndSideAreReadBeforeStamp",
+			"fullTestPath": "Stratocracy.StratBridge.T-SAVE-06.TurnAndSideAreReadBeforeStamp",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083095990121364594,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-06: EndTurn read {turn 1, side 0} before submission, stamped {turn 1, side 0}, and the bridge now reads {turn 1, side 1}",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AttackTargetsAreForecastLegal",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-01.AttackTargetsAreForecastLegal",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0085604973137378693,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-01 at the seeded opening: 0 enumerated targets, 50 omitted enemy hexes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-01 at the fixture's turn 1 position: 3 enumerated targets, 69 omitted enemy hexes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-01 total: 3 enumerated targets checked for legality, 119 omitted enemy hexes checked for illegality",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ForecastMatchesModule",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-01.ForecastMatchesModule",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083528980612754822,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "forecasting the fixture's own turn 1 side 1 attack: unit 9 -> axial(3,4)=offset[5,4]",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "forecast: legal=1 distance=3 damage=8 defenderDies=0 counterFires=0 counterDamage=0",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ForecastRefusesUnaskableAndAnswersIllegal",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-01.ForecastRefusesUnaskableAndAnswersIllegal",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082967989146709442,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "self-target reason: a unit cannot attack itself",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "friendly-target reason: same side",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "empty-target reason at axial(0,0)=offset[0,0]: no unit on that hex",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "out-of-range reason (distance 11 vs rangeMax 1): out of range",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ForecastResetsOutParamOnRefusal",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-01.ForecastResetsOutParamOnRefusal",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.008284199982881546,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SubmitAttackAtHexIsNotTransposed",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-01.SubmitAttackAtHexIsNotTransposed",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083689987659454346,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-01 foil refusal: no unit stands on the target hex",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-01: unit 9 attacked axial(3,4)=offset[5,4] (accepted, recorded) and axial(4,3)=offset[5,3] (refused)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MatchesModuleQuery",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-02.MatchesModuleQuery",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083454996347427368,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NotHexDistance",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-02.NotHexDistance",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0080684982240200043,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank, move 5) at axial(-2,4)=offset[0,4]: distance filter would offer axial(0,0)=offset[0,0] -- terrain Plains (moveCost 1), occupant -1, hexDistance 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank, move 5) at axial(-2,4)=offset[0,4]: distance filter would offer axial(1,0)=offset[1,0] -- terrain Plains (moveCost 1), occupant -1, hexDistance 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank, move 5) at axial(-2,4)=offset[0,4]: distance filter would offer axial(2,0)=offset[2,0] -- terrain Plains (moveCost 1), occupant -1, hexDistance 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank, move 5) at axial(-2,4)=offset[0,4]: distance filter would offer axial(3,0)=offset[3,0] -- terrain Plains (moveCost 1), occupant -1, hexDistance 5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank, move 5) at axial(-2,4)=offset[0,4]: distance filter would offer axial(0,1)=offset[0,1] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank, move 5) at axial(-2,4)=offset[0,4]: distance filter would offer axial(1,1)=offset[1,1] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1: 17 further divergent hexes not listed",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2 (Infantry, move 3) at axial(0,3)=offset[1,3]: distance filter would offer axial(3,0)=offset[3,0] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2 (Infantry, move 3) at axial(0,3)=offset[1,3]: distance filter would offer axial(-1,3)=offset[0,3] -- terrain Plains (moveCost 1), occupant 4, hexDistance 1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2 (Infantry, move 3) at axial(0,3)=offset[1,3]: distance filter would offer axial(3,3)=offset[4,3] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2 (Infantry, move 3) at axial(0,3)=offset[1,3]: distance filter would offer axial(-2,4)=offset[0,4] -- terrain Plains (moveCost 1), occupant 1, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2 (Infantry, move 3) at axial(0,3)=offset[1,3]: distance filter would offer axial(-2,5)=offset[0,5] -- terrain Plains (moveCost 1), occupant 5, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2 (Infantry, move 3) at axial(0,3)=offset[1,3]: distance filter would offer axial(-1,5)=offset[1,5] -- terrain Plains (moveCost 1), occupant 3, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2: 4 further divergent hexes not listed",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry, move 3) at axial(-1,5)=offset[1,5]: distance filter would offer axial(-1,2)=offset[0,2] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry, move 3) at axial(-1,5)=offset[1,5]: distance filter would offer axial(0,2)=offset[1,2] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry, move 3) at axial(-1,5)=offset[1,5]: distance filter would offer axial(1,2)=offset[2,2] -- terrain Woods (moveCost 2), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry, move 3) at axial(-1,5)=offset[1,5]: distance filter would offer axial(-1,3)=offset[0,3] -- terrain Plains (moveCost 1), occupant 4, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry, move 3) at axial(-1,5)=offset[1,5]: distance filter would offer axial(0,3)=offset[1,3] -- terrain Plains (moveCost 1), occupant 2, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry, move 3) at axial(-1,5)=offset[1,5]: distance filter would offer axial(2,3)=offset[3,3] -- terrain Woods (moveCost 2), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3: 4 further divergent hexes not listed",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4 (Artillery, move 3) at axial(-1,3)=offset[0,3]: distance filter would offer axial(2,2)=offset[3,2] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4 (Artillery, move 3) at axial(-1,3)=offset[0,3]: distance filter would offer axial(0,3)=offset[1,3] -- terrain Plains (moveCost 1), occupant 2, hexDistance 1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4 (Artillery, move 3) at axial(-1,3)=offset[0,3]: distance filter would offer axial(2,3)=offset[3,3] -- terrain Woods (moveCost 2), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4 (Artillery, move 3) at axial(-1,3)=offset[0,3]: distance filter would offer axial(-2,4)=offset[0,4] -- terrain Plains (moveCost 1), occupant 1, hexDistance 1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4 (Artillery, move 3) at axial(-1,3)=offset[0,3]: distance filter would offer axial(-2,5)=offset[0,5] -- terrain Plains (moveCost 1), occupant 5, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4 (Artillery, move 3) at axial(-1,3)=offset[0,3]: distance filter would offer axial(-1,5)=offset[1,5] -- terrain Plains (moveCost 1), occupant 3, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4: 4 further divergent hexes not listed",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon, move 7) at axial(-2,5)=offset[0,5]: distance filter would offer axial(0,0)=offset[0,0] -- terrain Plains (moveCost 1), occupant -1, hexDistance 5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon, move 7) at axial(-2,5)=offset[0,5]: distance filter would offer axial(5,0)=offset[5,0] -- terrain Water (moveCost 0), occupant -1, hexDistance 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon, move 7) at axial(-2,5)=offset[0,5]: distance filter would offer axial(4,2)=offset[5,2] -- terrain Water (moveCost 0), occupant -1, hexDistance 6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon, move 7) at axial(-2,5)=offset[0,5]: distance filter would offer axial(5,2)=offset[6,2] -- terrain Factory (moveCost 1), occupant -1, hexDistance 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon, move 7) at axial(-2,5)=offset[0,5]: distance filter would offer axial(-1,3)=offset[0,3] -- terrain Plains (moveCost 1), occupant 4, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon, move 7) at axial(-2,5)=offset[0,5]: distance filter would offer axial(0,3)=offset[1,3] -- terrain Plains (moveCost 1), occupant 2, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5: 10 further divergent hexes not listed",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 6 (Tank, move 5) at axial(8,4)=offset[10,4]: distance filter would offer axial(10,0)=offset[10,0] -- terrain Plains (moveCost 1), occupant -1, hexDistance 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 6 (Tank, move 5) at axial(8,4)=offset[10,4]: distance filter would offer axial(6,1)=offset[6,1] -- terrain Woods (moveCost 2), occupant -1, hexDistance 5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 6 (Tank, move 5) at axial(8,4)=offset[10,4]: distance filter would offer axial(9,1)=offset[9,1] -- terrain Plains (moveCost 1), occupant 8, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 6 (Tank, move 5) at axial(8,4)=offset[10,4]: distance filter would offer axial(5,2)=offset[6,2] -- terrain Factory (moveCost 1), occupant -1, hexDistance 5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 6 (Tank, move 5) at axial(8,4)=offset[10,4]: distance filter would offer axial(4,3)=offset[5,3] -- terrain Water (moveCost 0), occupant -1, hexDistance 5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 6 (Tank, move 5) at axial(8,4)=offset[10,4]: distance filter would offer axial(8,3)=offset[9,3] -- terrain Plains (moveCost 1), occupant 7, hexDistance 1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 6: 6 further divergent hexes not listed",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 7 (Infantry, move 3) at axial(8,3)=offset[9,3]: distance filter would offer axial(9,1)=offset[9,1] -- terrain Plains (moveCost 1), occupant 8, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 7 (Infantry, move 3) at axial(8,3)=offset[9,3]: distance filter would offer axial(6,2)=offset[7,2] -- terrain Woods (moveCost 2), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 7 (Infantry, move 3) at axial(8,3)=offset[9,3]: distance filter would offer axial(5,3)=offset[6,3] -- terrain Woods (moveCost 2), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 7 (Infantry, move 3) at axial(8,3)=offset[9,3]: distance filter would offer axial(9,3)=offset[10,3] -- terrain Plains (moveCost 1), occupant 10, hexDistance 1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 7 (Infantry, move 3) at axial(8,3)=offset[9,3]: distance filter would offer axial(5,4)=offset[7,4] -- terrain Woods (moveCost 2), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 7 (Infantry, move 3) at axial(8,3)=offset[9,3]: distance filter would offer axial(8,4)=offset[10,4] -- terrain Plains (moveCost 1), occupant 6, hexDistance 1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 7: 1 further divergent hexes not listed",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 8 (Infantry, move 3) at axial(9,1)=offset[9,1]: distance filter would offer axial(6,1)=offset[6,1] -- terrain Woods (moveCost 2), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 8 (Infantry, move 3) at axial(9,1)=offset[9,1]: distance filter would offer axial(6,2)=offset[7,2] -- terrain Woods (moveCost 2), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 8 (Infantry, move 3) at axial(9,1)=offset[9,1]: distance filter would offer axial(8,3)=offset[9,3] -- terrain Plains (moveCost 1), occupant 7, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 8 (Infantry, move 3) at axial(9,1)=offset[9,1]: distance filter would offer axial(9,3)=offset[10,3] -- terrain Plains (moveCost 1), occupant 10, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 8 (Infantry, move 3) at axial(9,1)=offset[9,1]: distance filter would offer axial(8,4)=offset[10,4] -- terrain Plains (moveCost 1), occupant 6, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 9 (Artillery, move 3) at axial(8,5)=offset[10,5]: distance filter would offer axial(8,2)=offset[9,2] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 9 (Artillery, move 3) at axial(8,5)=offset[10,5]: distance filter would offer axial(9,2)=offset[10,2] -- terrain Plains (moveCost 1), occupant -1, hexDistance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 9 (Artillery, move 3) at axial(8,5)=offset[10,5]: distance filter would offer axial(8,3)=offset[9,3] -- terrain Plains (moveCost 1), occupant 7, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 9 (Artillery, move 3) at axial(8,5)=offset[10,5]: distance filter would offer axial(9,3)=offset[10,3] -- terrain Plains (moveCost 1), occupant 10, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 9 (Artillery, move 3) at axial(8,5)=offset[10,5]: distance filter would offer axial(8,4)=offset[10,4] -- terrain Plains (moveCost 1), occupant 6, hexDistance 1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 10 (Recon, move 7) at axial(9,3)=offset[10,3]: distance filter would offer axial(5,0)=offset[5,0] -- terrain Water (moveCost 0), occupant -1, hexDistance 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 10 (Recon, move 7) at axial(9,3)=offset[10,3]: distance filter would offer axial(4,1)=offset[4,1] -- terrain Plains (moveCost 1), occupant -1, hexDistance 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 10 (Recon, move 7) at axial(9,3)=offset[10,3]: distance filter would offer axial(9,1)=offset[9,1] -- terrain Plains (moveCost 1), occupant 8, hexDistance 2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 10 (Recon, move 7) at axial(9,3)=offset[10,3]: distance filter would offer axial(3,2)=offset[4,2] -- terrain Plains (moveCost 1), occupant -1, hexDistance 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 10 (Recon, move 7) at axial(9,3)=offset[10,3]: distance filter would offer axial(4,2)=offset[5,2] -- terrain Water (moveCost 0), occupant -1, hexDistance 6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 10 (Recon, move 7) at axial(9,3)=offset[10,3]: distance filter would offer axial(2,3)=offset[3,3] -- terrain Woods (moveCost 2), occupant -1, hexDistance 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 10: 18 further divergent hexes not listed",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-02: 10 of 10 units diverge from a hexDistance filter, 122 divergent hexes in total",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReachableHexesMatchesReachable",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-02.ReachableHexesMatchesReachable",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0078797005116939545,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-02: 242 reachable entries compared across 10 units",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RefusesUnknownUnit",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-02.RefusesUnknownUnit",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.008161500096321106,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RefusesUnseeded",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-02.RefusesUnseeded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083203017711639404,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SuccessIsNeverEmpty",
+			"fullTestPath": "Stratocracy.StratBridge.T-UI-02.SuccessIsNeverEmpty",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082494020462036133,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "VendoredCsvMatchesManifest",
+			"fullTestPath": "Stratocracy.StratData.GATE-DATA-VENDOR.VendoredCsvMatchesManifest",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082964003086090088,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "manifest dataCommit = c2f58608c77c60c44e6c0fc87988bd3b372beaf5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.04"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EffectivenessTableMatchesCsv",
+			"fullTestPath": "Stratocracy.StratData.T-DATA-05.EffectivenessTableMatchesCsv",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0085843987762928009,
+			"dateTime": "2026.08.13-21.38.04",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EUnitTypeMirrorsStratUnitType",
+			"fullTestPath": "Stratocracy.StratData.T-DATA-05.EUnitTypeMirrorsStratUnitType",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081451013684272766,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TerrainTableMatchesCsv",
+			"fullTestPath": "Stratocracy.StratData.T-DATA-05.TerrainTableMatchesCsv",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082826986908912659,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnitTableMatchesCsv",
+			"fullTestPath": "Stratocracy.StratData.T-DATA-05.UnitTableMatchesCsv",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083086006343364716,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EveryKindRoutesToARecordingSubmit",
+			"fullTestPath": "Stratocracy.StratPlay.T-AI-01.EveryKindRoutesToARecordingSubmit",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0084147006273269653,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "13 commands through both routes: 2 Build, 9 Move, 1 Attack, 1 EndTurn",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LoopBoundIsAReportedFault",
+			"fullTestPath": "Stratocracy.StratPlay.T-AI-01.LoopBoundIsAReportedFault",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.070955097675323486,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'STRAT-AI refused' 2 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RefusalIsNotATurnEnd",
+			"fullTestPath": "Stratocracy.StratPlay.T-AI-01.RefusalIsNotATurnEnd",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.068169601261615753,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "the rules module's refusal, forwarded below: 'definitions are not loaded'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'STRAT-AI refused' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SubmitRefusalStopsTheTurn",
+			"fullTestPath": "Stratocracy.StratPlay.T-AI-01.SubmitRefusalStopsTheTurn",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.033778101205825806,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "the measured opening turn is 8 commands; the submission of command 4 is refused",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'STRAT-AI refused' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SameStateYieldsSameAiTurn",
+			"fullTestPath": "Stratocracy.StratPlay.T-AI-06.SameStateYieldsSameAiTurn",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082070007920265198,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ApplyViewSpawnsMovesAndDestroys",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.ApplyViewSpawnsMovesAndDestroys",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.011648301035165787,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 6 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BothSidesAiReachesAResultWithinTheBound",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultWithinTheBound",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.01781189814209938,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "RunAiTurnsNow returned false; reason: 'the rules module refused the AI's EndTurn for side 1 after 16 applied command(s): [T-SAVE-05] no match is running'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "11 AI turns, 156 commands, bound is 64; result: yes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 3 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'STRAT-AI refused' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BuildlistRefusalLeavesTheMatchLive",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.BuildlistRefusalLeavesTheMatchLive",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0084600001573562622,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "the refusal, forwarded from the bridge: 'SetBuildlistByIds refused: buildlist entry 2 names unit id 'NoSuchUnitIdInDT_Units', which is not in the loaded unit table'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 2 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'Match seeded from' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DoneIsNotDerivedFromTurnFlags",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.DoneIsNotDerivedFromTurnFlags",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0053563006222248077,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EmptyAiSidesRunsNoAiTurn",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.EmptyAiSidesRunsNoAiTurn",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.061080999672412872,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 3 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HandoverRefusalCarriesTheFixedFields",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.HandoverRefusalCarriesTheFixedFields",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.011580701917409897,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "RunAiTurnsNow returned false; reason: '1 consecutive AI turns ran without the match reaching a human turn or a result (AiMaxConsecutiveTurns is 1)'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "the handover line: 'STRAT-AI refused phase=handover kind=None unit=-1 hex=-1,-1 def=-1 target=-1 turn=1 side=1 reason=1 consecutive AI turns ran without the match reaching a human turn or a result (AiMaxConsecutiveTurns is 1)'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 3 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'STRAT-AI refused' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "LockedUnitIsWrittenAndNotSelectable",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.LockedUnitIsWrittenAndNotSelectable",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082823000848293304,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "NOTE: SetLockedThisTurn has no caller in any shipping path -- §2.11.6 is out of this milestone -- so this clause drives it directly and pins the machine's behaviour, not the game's.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "locked-selection reason: unit 1 is locked this turn",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NoActorHoldsPresentationBits",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.NoActorHoldsPresentationBits",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.010345600545406342,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 7 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SelectionMachineWritesDoneOntoModel",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.SelectionMachineWritesDoneOntoModel",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0078936032950878143,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StartMatchRefusalLeavesNoBridge",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.StartMatchRefusalLeavesNoBridge",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.010805100202560425,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'No match this session' 4 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SubsystemSeedsBeforeHandover",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.SubsystemSeedsBeforeHandover",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.010569799691438675,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WaitIsDistinguishableFromAttack",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.WaitIsDistinguishableFromAttack",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0053673982620239258,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "the shared trace phase 6 could not read a wait out of -- waiter: 'unit 6 has finished this turn' / attacker: 'unit 10 has finished this turn'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-INT-05: unit 6 waited and unit 10 attacked axial(5,1) on turn 1, after 10 advancing moves over 2 turns",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "WaitWithNothingSelectedIsANoOp",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.WaitWithNothingSelectedIsANoOp",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.079903602600097656,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "the machine's refusal: nothing is selected",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STRAT-WAIT spent unit=1 turn=1 side=0 (no rules command submitted; the save format has no Wait kind)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "the done-set refusal, for contrast: unit 1 has finished this turn",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "HotSeatReplayParity",
+			"fullTestPath": "Stratocracy.StratPlay.T-SAVE-05.HotSeatReplayParity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.036803398281335831,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "leg 0: {turn 1, side 0} unit 1 -> axial(2,1)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "refused: unit 6 is not side 0's to move",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "leg 1: {turn 1, side 1} unit 6 -> axial(7,0)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "leg 2: {turn 2, side 0} unit 1 -> axial(0,0)",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-SAVE-05: 5 accepted commands, 5 recorded by the bridge (5 accepted lines), 1 refused, 1 waits; hash 3ccba0c050948caa on both bridges",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'STRAT-CMD refused' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "StratCmdLineShape",
+			"fullTestPath": "Stratocracy.StratPlay.T-SAVE-05.StratCmdLineShape",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.065340600907802582,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STRAT-CMD accepted kind=Move unit=1 hex=2,1 turn=1 side=0 hash=3c28ca63a33c7ad6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STRAT-CMD accepted kind=EndTurn unit=-1 hex=-1,-1 turn=1 side=0 hash=76b3e9675ff2b2ca",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RefusedCommandLeavesMachineConsistent",
+			"fullTestPath": "Stratocracy.StratPlay.T-TURN-01.RefusedCommandLeavesMachineConsistent",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0087611004710197449,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "refusal: unit 1 is not side 1's to move",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'STRAT-CMD refused' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ClickedAttackIsAcceptedAndRecorded",
+			"fullTestPath": "Stratocracy.StratPlay.T-UI-01.ClickedAttackIsAcceptedAndRecorded",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.023930598050355911,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "STRAT-CMD accepted kind=Attack unit=10 hex=5,1 turn=1 side=1 hash=cefb3120ddf0fea2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-01: unit 10 (side 1) attacked axial(5,1) on turn 1, after 10 advancing moves over 2 turns",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "BoardHexRoundTrip",
+			"fullTestPath": "Stratocracy.StratPlay.T-UI-02.BoardHexRoundTrip",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0094923004508018494,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ControllerTicksSoInputDispatches",
+			"fullTestPath": "Stratocracy.StratPlay.T-UI-02.ControllerTicksSoInputDispatches",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0053275004029273987,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ReachOverlayIsNotComputedHere",
+			"fullTestPath": "Stratocracy.StratPlay.T-UI-02.ReachOverlayIsNotComputedHere",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.010023701936006546,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SelectionMachineUsesTheQueryNotDistance",
+			"fullTestPath": "Stratocracy.StratPlay.T-UI-02.SelectionMachineUsesTheQueryNotDistance",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0054326988756656647,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank) at axial(-2,4), foil radius 5: a distance filter would offer axial(0,0) -- terrain Plains, occupant -1, distance 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank) at axial(-2,4), foil radius 5: a distance filter would offer axial(1,0) -- terrain Plains, occupant -1, distance 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank) at axial(-2,4), foil radius 5: a distance filter would offer axial(2,0) -- terrain Plains, occupant -1, distance 4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 1 (Tank) at axial(-2,4), foil radius 5: a distance filter would offer axial(3,0) -- terrain Plains, occupant -1, distance 5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2 (Infantry) at axial(0,3), foil radius 3: a distance filter would offer axial(3,0) -- terrain Plains, occupant -1, distance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 2 (Infantry) at axial(0,3), foil radius 3: a distance filter would offer axial(3,3) -- terrain Plains, occupant -1, distance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry) at axial(-1,5), foil radius 3: a distance filter would offer axial(-1,2) -- terrain Plains, occupant -1, distance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry) at axial(-1,5), foil radius 3: a distance filter would offer axial(0,2) -- terrain Plains, occupant -1, distance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 3 (Infantry) at axial(-1,5), foil radius 3: a distance filter would offer axial(1,2) -- terrain Woods, occupant -1, distance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4 (Artillery) at axial(-1,3), foil radius 3: a distance filter would offer axial(2,2) -- terrain Plains, occupant -1, distance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 4 (Artillery) at axial(-1,3), foil radius 3: a distance filter would offer axial(2,3) -- terrain Woods, occupant -1, distance 3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon) at axial(-2,5), foil radius 7: a distance filter would offer axial(0,0) -- terrain Plains, occupant -1, distance 5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon) at axial(-2,5), foil radius 7: a distance filter would offer axial(5,0) -- terrain Water, occupant -1, distance 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon) at axial(-2,5), foil radius 7: a distance filter would offer axial(4,2) -- terrain Water, occupant -1, distance 6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "unit 5 (Recon) at axial(-2,5), foil radius 7: a distance filter would offer axial(5,2) -- terrain Factory, occupant -1, distance 7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "T-UI-02 (phase 4 foil): 5 of 5 active-side units diverge; 69 divergent hexes total -- 20 occupied, 49 empty ground",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "probe: unit 1 at axial(-2,4) clicking axial(0,0) (terrain Plains) -- inside the naive disc, outside ReachableHexes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "machine's refusal: (0,0) is not in unit 1's reachable set",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "rules module's refusal: destination is not reachable within 5 movement",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SetViewingSideMutatesNoState",
+			"fullTestPath": "Stratocracy.StratPlay.T-UI-03.SetViewingSideMutatesNoState",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.010434899479150772,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 4 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.38.05"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "MirrorsSnapshotFieldForField",
+			"fullTestPath": "Stratocracy.StratUI.T-INT-05.MirrorsSnapshotFieldForField",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0084262974560260773,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NamesResolveThroughTheTables",
+			"fullTestPath": "Stratocracy.StratUI.T-INT-05.NamesResolveThroughTheTables",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0085536986589431763,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "OrdersArePreserved",
+			"fullTestPath": "Stratocracy.StratUI.T-INT-05.OrdersArePreserved",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0084365010261535645,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "PresentationBitsAreDefaulted",
+			"fullTestPath": "Stratocracy.StratUI.T-INT-05.PresentationBitsAreDefaulted",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081249997019767761,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RefusesOutOfRangeViewingSide",
+			"fullTestPath": "Stratocracy.StratUI.T-INT-05.RefusesOutOfRangeViewingSide",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0080269016325473785,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RefusesUnseededBridge",
+			"fullTestPath": "Stratocracy.StratUI.T-INT-05.RefusesUnseededBridge",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081984028220176697,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AdoptBridgeRefusesUnseededBridge",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.AdoptBridgeRefusesUnseededBridge",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082442015409469604,
+			"dateTime": "2026.08.13-21.38.05",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "AdoptedBridgeIsWhatTheHudReads",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.AdoptedBridgeIsWhatTheHudReads",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082094967365264893,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ChevronFollowsCriteriaOrder",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.ChevronFollowsCriteriaOrder",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082623027265071869,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ColumnsFollowViewingSide",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.ColumnsFollowViewingSide",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.008226100355386734,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "DestroyedBindsCombatFame",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.DestroyedBindsCombatFame",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082079023122787476,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "EndPlayLeavesAnAdoptedBridgeUsable",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.EndPlayLeavesAnAdoptedBridgeUsable",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0093988999724388123,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "GetViewingSideIsPure",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.GetViewingSideIsPure",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083881989121437073,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "NoEngagementsMirrorsZeroCombatFame",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.NoEngagementsMirrorsZeroCombatFame",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081846974790096283,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "ObjectivesBindHeldOfScenarioTotal",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.ObjectivesBindHeldOfScenarioTotal",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0080510005354881287,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RefusesRatherThanShowingZeroes",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.RefusesRatherThanShowingZeroes",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0081489980220794678,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "RowsInTiebreakOrder",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.RowsInTiebreakOrder",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082858987152576447,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SetViewingSideAcceptsInRange",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.SetViewingSideAcceptsInRange",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082951970398426056,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SetViewingSideRefusesOutOfRange",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.SetViewingSideRefusesOutOfRange",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.008355800062417984,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SetViewingSideSwapsColumnsWithoutMutatingState",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.SetViewingSideSwapsColumnsWithoutMutatingState",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083158016204833984,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "SnapshotFidelity",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.SnapshotFidelity",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083348006010055542,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "TurnAgainstCap",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.TurnAgainstCap",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0082970000803470612,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		},
+		{
+			"testDisplayName": "UnitHpBindsSurvivingStrength",
+			"fullTestPath": "Stratocracy.StratUI.T-UI-03.UnitHpBindsSurvivingStrength",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"ABC3AAD647220598A3448A8D01C8E221"
+			],
+			"duration": 0.0083002001047134399,
+			"dateTime": "2026.08.13-21.38.06",
+			"entries": [],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

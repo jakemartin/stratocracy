@@ -1,0 +1,93 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "STATION-ALPHA",
+			"instance": "3FE11ECA4BF2F544E2E9EBA1048DAB41",
+			"instanceName": "STATION-ALPHA-36436",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9168] ",
+			"model": "Default",
+			"gPU": "NVIDIA GeForce RTX 3080",
+			"cPUModel": "12th Gen Intel(R) Core(TM) i9-12900K",
+			"rAMInGB": 64,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.08.13-21.41.20",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 0.035418801009654999,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "BothSidesAiReachesAResultWithinTheBound",
+			"fullTestPath": "Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultWithinTheBound",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"3FE11ECA4BF2F544E2E9EBA1048DAB41"
+			],
+			"duration": 0.035418801009654999,
+			"dateTime": "2026.08.13-21.41.20",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "RunAiTurnsNow returned false; reason: 'the rules module refused the AI's EndTurn for side 1 after 16 applied command(s): [T-SAVE-05] no match is running'",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.41.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "11 AI turns, 156 commands, bound is 64; result: yes",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.08.13-21.41.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'no tile mesh for terrain' 3 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.41.20"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Suppressed expected ('Warning') level log message or higher matching 'STRAT-AI refused' 1 times.",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": 0,
+					"timestamp": "2026.08.13-21.41.20"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

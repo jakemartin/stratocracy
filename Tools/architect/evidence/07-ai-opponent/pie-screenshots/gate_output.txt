@@ -1,0 +1,8 @@
+STRAT-AI gate: pie-screenshots\session2-screenshot-run.log
+  applied lines:            8
+  turn-ended lines:         1
+  terminal refusals (ok):   0
+  blocking refusals:        0
+  parse failures:           0
+PASS
+EXIT=0

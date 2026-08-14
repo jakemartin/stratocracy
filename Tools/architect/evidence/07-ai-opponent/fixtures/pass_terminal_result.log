@@ -1,0 +1,6 @@
+[2026.08.13-21.05.10:001][100]LogStratPlay: Log: STRAT-AI applied kind=Build unit=-1 hex=2,2 def=0 target=-1 turn=1 side=1 hash=aaaa1111
+[2026.08.13-21.05.10:050][101]LogStratPlay: Log: STRAT-AI applied kind=Move unit=3 hex=4,4 def=-1 target=-1 turn=1 side=1 hash=bbbb2222
+[2026.08.13-21.05.10:090][102]LogStratPlay: Log: STRAT-AI applied kind=EndTurn unit=-1 hex=-1,-1 def=-1 target=-1 turn=1 side=1 hash=cccc3333
+[2026.08.13-21.05.10:091][102]LogStratPlay: Log: STRAT-AI turn-ended side=1 turn=1 commands=3 hash=cccc3333
+[2026.08.13-21.05.11:400][210]LogStratPlay: Log: STRAT-AI applied kind=Attack unit=7 hex=4,4 def=-1 target=3 turn=6 side=1 hash=dddd4444
+[2026.08.13-21.05.11:401][210]LogStratPlay: Warning: STRAT-AI refused phase=apply kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=6 side=1 reason=[T-SAVE-05] no match is running

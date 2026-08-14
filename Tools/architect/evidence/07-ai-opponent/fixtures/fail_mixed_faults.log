@@ -1,0 +1,4 @@
+[2026.08.13-21.06.00:001][300]LogStratPlay: Log: STRAT-AI applied kind=Move unit=3 hex=4,4 def=-1 target=-1 turn=1 side=1 hash=aaaa1111
+[2026.08.13-21.06.00:050][301]LogStratPlay: Warning: STRAT-AI refused phase=apply kind=Move unit=3 hex=9,9 def=-1 target=-1 turn=1 side=1 reason=[T-MOVE-02] hex is not reachable this turn
+[2026.08.13-21.06.00:090][302]LogStratPlay: Log: STRAT-AI applied kind=Build unti=-1 hex=2,2 def=0 target=-1 turn=1 side=1 hash=bbbb2222
+[2026.08.13-21.06.00:120][303]LogStratPlay: Log: STRAT-AI turn-ended side=1 turn=1 commands=2 hash=cccc3333

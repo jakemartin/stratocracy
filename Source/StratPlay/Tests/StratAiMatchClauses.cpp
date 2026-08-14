@@ -557,9 +557,12 @@ bool FStratAiBuildlistRefusalLeavesTheMatchLiveTest::RunTest(const FString& /*Pa
 // legal value and the thing the handover loop was written for; `AiMaxConsecutiveTurns` exists
 // so that a scenario whose turn cap never fires cannot spin forever inside one call.
 //
-// THE `phase=handover` ABSENCE IS THE POINT OF THE CLAUSE. That line is emitted by
-// `RunAiTurnsNow` -- not by the runner -- when the outer bound is reached with no result and
-// no human turn, and it means the game did NOT finish. A clause that only asserted
+// THE `phase=handover` ABSENCE IS THE POINT OF THE CLAUSE. That line's CALL SITE is
+// `RunAiTurnsNow` -- not the runner -- reached when the outer bound is reached with no result
+// and no human turn, and it means the game did NOT finish. (The FORMAT it goes out through is
+// `StratAiTurnRunner.cpp`'s and only that file's; `RunAiTurnsNow` reaches it by calling
+// `StratLogAiTurnRefusal`. Its fields are pinned by `.T-INT-05.HandoverRefusalCarriesTheFixedFields`
+// at the bottom of this file, which is the control for the silence asserted here.) A clause that only asserted
 // "RunAiTurnsNow returned true" would be green on a run that spun to the bound, because the
 // bound's own stop reason is a refusal the return value reports and the tester might read as
 // a §2.8 result. So three facts are asserted together: the match has a result, the number of
@@ -732,6 +735,372 @@ bool FStratAiBothSidesAiReachesAResultWithinTheBoundTest::RunTest(const FString&
 	// And once there is a result, nothing further is due -- an AI that kept playing past a
 	// §2.8 result would submit one refused command per turn, forever.
 	TestFalse(TEXT("no AI turn is due once the match has a result"), Subsystem->IsAiTurnDue());
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// The `STRAT-AI refused` splitter, mirroring `Tools/architect/strat_ai_log_gate.py`'s
+// `_REFUSED_RE` field for field.
+//
+// IT SPLITS AND DOES NOT EXPECT. Nothing below decides what a field SHOULD say; it only turns
+// one log line into named values, so the clause can compare each of them against something the
+// module produced. The field NAMES and their ORDER are the assertion this helper does make --
+// `phase kind unit hex def target turn side reason`, each token required to carry its own key --
+// because that order is precisely what the phase-D parser's anchored regex depends on, and a
+// reordered format string would slide every value one field to the left with no other symptom.
+//
+// THE PYTHON PARSER'S ATTRIBUTE NAMES ARE REUSED VERBATIM (`hex_x`/`hex_y` become `HexX`/`HexY`,
+// `def_index` becomes `DefIndex`) so a reader can go line -> dataclass attribute -> this struct
+// with no translation table. That single shared shape is the entire reason this clause was
+// deferred from phase B to phase D: written earlier it would have spelled the field shape a
+// second time, before the parser that owns it existed.
+// ---------------------------------------------------------------------------
+namespace StratAiMatchClauses
+{
+	struct FStratAiRefusedFields
+	{
+		FString Phase;
+		FString Kind;
+		int32   Unit     = 0;
+		int32   HexX     = 0;
+		int32   HexY     = 0;
+		int32   DefIndex = 0;
+		int32   Target   = 0;
+		int32   Turn     = 0;
+		int32   Side     = 0;
+		FString Reason;
+	};
+
+	static bool ParseInt(const FString& Token, int32& Out, FString& OutError)
+	{
+		// `Atoi` answers 0 for anything unparseable, so the numeric check comes FIRST -- without
+		// it a field that had turned into a word would read as a plausible `0`.
+		if (!Token.IsNumeric())
+		{
+			OutError = FString::Printf(TEXT("'%s' is not an integer"), *Token);
+			return false;
+		}
+		Out = FCString::Atoi(*Token);
+		return true;
+	}
+
+	static bool TakeKeyed(const TArray<FString>& Tokens, int32 Index, const TCHAR* Key,
+	                      FString& OutValue, FString& OutError)
+	{
+		if (!Tokens.IsValidIndex(Index))
+		{
+			OutError = FString::Printf(TEXT("no field %d, expected '%s='"), Index, Key);
+			return false;
+		}
+
+		const FString Expected = FString(Key) + TEXT("=");
+		if (!Tokens[Index].StartsWith(Expected, ESearchCase::CaseSensitive))
+		{
+			OutError = FString::Printf(TEXT("field %d is '%s', expected it to start '%s'"),
+				Index, *Tokens[Index], *Expected);
+			return false;
+		}
+
+		OutValue = Tokens[Index].RightChop(Expected.Len());
+		return true;
+	}
+
+	static bool ParseRefusedLine(const FString& Line, FStratAiRefusedFields& Out, FString& OutError)
+	{
+		static const FString Prefix(TEXT("STRAT-AI refused "));
+		static const FString ReasonKey(TEXT(" reason="));
+
+		if (!Line.StartsWith(Prefix, ESearchCase::CaseSensitive))
+		{
+			OutError = FString::Printf(TEXT("does not begin '%s'"), *Prefix);
+			return false;
+		}
+
+		const FString Rest      = Line.RightChop(Prefix.Len());
+		const int32   ReasonAt  = Rest.Find(ReasonKey, ESearchCase::CaseSensitive,
+			ESearchDir::FromStart);
+		if (ReasonAt == INDEX_NONE)
+		{
+			OutError = FString::Printf(TEXT("carries no '%s' field"), *ReasonKey);
+			return false;
+		}
+
+		// `reason=` IS LAST AND TAKES THE REST OF THE LINE, exactly as the parser's `(?P<reason>.+)$`
+		// does: it is the one free-text field and it contains spaces in every real refusal.
+		Out.Reason = Rest.RightChop(ReasonAt + ReasonKey.Len());
+
+		TArray<FString> Tokens;
+		Rest.Left(ReasonAt).ParseIntoArray(Tokens, TEXT(" "), /*InCullEmpty=*/true);
+
+		FString HexPair;
+		if (!TakeKeyed(Tokens, 0, TEXT("phase"),  Out.Phase, OutError) ||
+		    !TakeKeyed(Tokens, 1, TEXT("kind"),   Out.Kind,  OutError) ||
+		    !TakeKeyed(Tokens, 3, TEXT("hex"),    HexPair,   OutError))
+		{
+			return false;
+		}
+
+		FString UnitText, DefText, TargetText, TurnText, SideText;
+		if (!TakeKeyed(Tokens, 2, TEXT("unit"),   UnitText,   OutError) ||
+		    !TakeKeyed(Tokens, 4, TEXT("def"),    DefText,    OutError) ||
+		    !TakeKeyed(Tokens, 5, TEXT("target"), TargetText, OutError) ||
+		    !TakeKeyed(Tokens, 6, TEXT("turn"),   TurnText,   OutError) ||
+		    !TakeKeyed(Tokens, 7, TEXT("side"),   SideText,   OutError))
+		{
+			return false;
+		}
+
+		if (Tokens.Num() != 8)
+		{
+			OutError = FString::Printf(
+				TEXT("expected 8 keyed fields before 'reason=', found %d"), Tokens.Num());
+			return false;
+		}
+
+		FString HexXText, HexYText;
+		if (!HexPair.Split(TEXT(","), &HexXText, &HexYText))
+		{
+			OutError = FString::Printf(TEXT("hex field '%s' is not 'x,y'"), *HexPair);
+			return false;
+		}
+
+		return ParseInt(UnitText,   Out.Unit,     OutError)
+		    && ParseInt(HexXText,   Out.HexX,     OutError)
+		    && ParseInt(HexYText,   Out.HexY,     OutError)
+		    && ParseInt(DefText,    Out.DefIndex, OutError)
+		    && ParseInt(TargetText, Out.Target,   OutError)
+		    && ParseInt(TurnText,   Out.Turn,     OutError)
+		    && ParseInt(SideText,   Out.Side,     OutError);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// T-INT-05 -- THE HANDOVER REFUSAL CARRIES THE FIXED FIELDS.
+//
+// THE DEBT THIS DISCHARGES, AND WHY IT WAITED. Phase B's re-gate deferred this clause to phase D
+// on one condition: phase D owns the field parser (`Tools/architect/strat_ai_log_gate.py`), and
+// writing the clause earlier would have spelled the expected field shape a second time, in a
+// second place, with nothing keeping the two in step. The clause is written against that
+// parser's `StratAiRefused` shape and reuses its attribute names.
+//
+// WHAT WAS DARK BEFORE IT. `.BothSidesAiReachesAResultWithinTheBound` asserts the handover
+// line's ABSENCE and nothing else, so the `handover` arm and its one call site --
+// `StratMatchSubsystem.cpp:724`'s `StratLogAiTurnRefusal` and the forward it goes through --
+// were executed by no test at all. Three of the shared formatter's four `phase` values were
+// already executed by the runner's own clauses; this is the fourth, and it is the only one whose
+// caller lives outside `StratAiTurnRunner.cpp`. An absence assertion over a line no test has
+// ever seen produced is a silence with no instrument behind it -- THIS CLAUSE IS THAT
+// INSTRUMENT, and it is what makes the other clause's zero mean something.
+//
+// HOW THE ARM IS DRIVEN, AND A CORRECTION TO THE BRIEF THAT ASKED FOR THIS. No scripted port is
+// used and none is needed: `phase=handover` is NOT one of `FStratAiTurnRunner`'s three fault
+// arms, which is why it is not reachable through the runner's port at all. It is the
+// SUBSYSTEM's outer bound, and `RunAiTurnsNow` reaches it after turns that all SUCCEEDED
+// (`StopReason.IsEmpty() && TurnsRun >= MaxTurns`). So the production path is driven whole:
+// both sides AI -- the configuration the guard was written for -- and `AiMaxConsecutiveTurns`
+// lowered to 1, which is a `FStratMatchConfig` field a Blueprint default can set. The AI never
+// refuses anything here; it simply never gives the board back inside the bound, which is the
+// literal meaning of the phase.
+//
+// WHERE EVERY EXPECTED VALUE COMES FROM -- the point of the clause and the reason for its name:
+//   - `turn` and `side` are `FStratBridge::Turn()` / `SideToMove()`, READ OFF THE LIVE BRIDGE
+//     after the call. `StratLogAiTurnRefusal` is passed `Port.Turn()` / `Port.SideToMove()`,
+//     which are forwards onto those same two methods, and nothing between the log call and the
+//     return moves the rules state -- `RefreshPresentation` is presentation.
+//   - `reason` is compared BYTE FOR BYTE against `RunAiTurnsNow`'s own `OutFailureReason`.
+//     `StopReason` is both logged and returned, so the sentence is never transcribed here.
+//   - `unit`, `hex`, `def` and `target` are `INDEX_NONE`, the engine constant the formatter
+//     itself prints for `bHasCommand=false` -- not a hand-written -1.
+//   - `phase` and `kind` are the two unavoidable literals. `handover` is the arm selector
+//     (`StratMatchSubsystem.cpp:724`) and `None` is the formatter's spelling for "there was no
+//     command" (`StratAiTurnRunner.cpp:82`); both are in the parser's declared domains
+//     (`strat_ai_log_gate.py:61-62`). There is no module-side reader that returns either.
+//
+// EVERY STRING COMPARISON IS CASE SENSITIVE, this file's rule throughout.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratAiHandoverRefusalCarriesTheFixedFieldsTest,
+	"Stratocracy.StratPlay.T-INT-05.HandoverRefusalCarriesTheFixedFields",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratAiHandoverRefusalCarriesTheFixedFieldsTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratAiMatchClauses;
+
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	// THIS CLAUSE PRODUCES THE WARNING ON PURPOSE -- it is the thing under test. `Occurrences = 0`
+	// means one or more. It is deliberately the broad phrase and not `phase=handover`, so that a
+	// second, unintended refusal is absorbed here rather than failing as an unexpected warning
+	// and hiding behind the framework's message instead of this clause's own: the count of
+	// handover lines is asserted below, exactly, and that is where a stray refusal must surface.
+	AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FTestWorldScope Scope;
+	if (!TestNotNull(TEXT("a transient world was created"), Scope.World))
+	{
+		return false;
+	}
+
+	UStratMatchSubsystem* const Subsystem = Scope.World->GetSubsystem<UStratMatchSubsystem>();
+	if (!TestNotNull(TEXT("the world has a match subsystem"), Subsystem))
+	{
+		return false;
+	}
+
+	FStratMatchConfig Base;
+	FString           Error;
+	if (!TestTrue(TEXT("the match config assembles"), MakeConfig(Base, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// ---- Which sides exist, asked of the projection ----------------------------
+	// The same reasoning as the clause above: a real side is never a literal here.
+	TArray<int32> Sides;
+	{
+		FString StartReason;
+		Subsystem->StartMatch(Base, StartReason);
+		if (!TestTrue(TEXT("the scouting match is live"), Subsystem->IsMatchLive()))
+		{
+			AddError(StartReason);
+			return false;
+		}
+
+		FStratViewModel Model;
+		if (!TestTrue(TEXT("the view model builds"), Subsystem->BuildViewModel(Model, Error)))
+		{
+			AddError(Error);
+			return false;
+		}
+		for (const FStratUnitView& Unit : Model.Units)
+		{
+			Sides.AddUnique(Unit.Side);
+		}
+		Sides.Sort();
+	}
+
+	if (!TestTrue(TEXT("the seeded scenario deploys units for more than one side"), Sides.Num() >= 2))
+	{
+		return false;
+	}
+
+	// ---- Both sides AI, and a bound the game cannot finish inside --------------
+	FStratMatchConfig BothAi = Base;
+	BothAi.AiSides               = Sides;
+	BothAi.AiBuildlistUnitIds    = UnitIdsFrom(BothAi);
+	BothAi.AiMaxConsecutiveTurns = 1;
+
+	FStratAiCapture Capture;
+
+	FString StartReason;
+	Subsystem->StartMatch(BothAi, StartReason);
+	if (!TestTrue(TEXT("the AI-vs-AI match is live"), Subsystem->IsMatchLive()))
+	{
+		AddError(StartReason);
+		return false;
+	}
+
+	const FStratBridge* const Live = Subsystem->GetBridge();
+	if (!TestNotNull(TEXT("the live match has a bridge"), Live))
+	{
+		return false;
+	}
+
+	const int32 LinesBefore = Capture.Lines.Num();
+
+	FString    RunReason;
+	const bool bRan = Subsystem->RunAiTurnsNow(RunReason);
+	Capture.Settle();
+
+	// RECORDED, NOT ASSERTED -- this file's standing rule for this return value.
+	AddInfo(FString::Printf(TEXT("RunAiTurnsNow returned %s; reason: '%s'"),
+		bRan ? TEXT("true") : TEXT("false"), *RunReason));
+
+	// ---- The bound really was the stop, and the AI really did not hand back ----
+	// Both are module-side readings and both are what makes `phase=handover` the CORRECT phase
+	// for this line rather than merely the one that was printed.
+	if (!TestTrue(TEXT("the capture saw the AI's commands, so it is not blind"),
+			Capture.CountFrom(LinesBefore, TEXT("STRAT-AI applied")) > 0))
+	{
+		return false;
+	}
+	TestEqual(TEXT("exactly one AI turn ran, which is the bound this match was configured with"),
+		Capture.CountFrom(LinesBefore, TEXT("STRAT-AI turn-ended")), BothAi.AiMaxConsecutiveTurns);
+
+	FStratViewModel After;
+	if (TestTrue(TEXT("the view model builds after the bounded run"),
+			Subsystem->BuildViewModel(After, Error)))
+	{
+		TestFalse(TEXT("the bound stopped a game that had NOT reached a §2.8 result"),
+			After.Match.bHasResult);
+	}
+	else
+	{
+		AddError(Error);
+	}
+	TestTrue(TEXT("an AI turn is still due -- the board was never handed back, which is what 'handover' means"),
+		Subsystem->IsAiTurnDue());
+
+	TestFalse(TEXT("and the bound reported itself: the call came back with a reason"),
+		RunReason.IsEmpty());
+
+	// ---- The line, and its fields ---------------------------------------------
+	TArray<FString> Handovers;
+	for (int32 I = FMath::Max(0, LinesBefore); I < Capture.Lines.Num(); ++I)
+	{
+		if (Capture.Lines[I].Contains(TEXT("phase=handover"), ESearchCase::CaseSensitive))
+		{
+			Handovers.Add(Capture.Lines[I]);
+		}
+	}
+
+	if (!TestEqual(
+			*FString::Printf(TEXT("exactly one handover refusal was emitted (STRAT-AI lines seen: %s)"),
+				*Capture.TextFrom(LinesBefore)),
+			Handovers.Num(), 1))
+	{
+		return false;
+	}
+
+	AddInfo(FString::Printf(TEXT("the handover line: '%s'"), *Handovers[0]));
+
+	FStratAiRefusedFields Fields;
+	FString               ParseError;
+	if (!TestTrue(
+			*FString::Printf(TEXT("the handover line splits on the phase-D field contract (%s): '%s'"),
+				*ParseError, *Handovers[0]),
+			ParseRefusedLine(Handovers[0], Fields, ParseError)))
+	{
+		AddError(FString::Printf(TEXT("%s -- in: '%s'"), *ParseError, *Handovers[0]));
+		return false;
+	}
+
+	// The two literals. See the header block: neither has a module-side reader.
+	TestEqualSensitive(TEXT("phase= is the fourth phase, spelled as the parser's domain has it"),
+		*Fields.Phase, TEXT("handover"));
+	TestEqualSensitive(TEXT("kind= is None: a handover refusal is about no command at all"),
+		*Fields.Kind, TEXT("None"));
+
+	// The four fixed numerics. `INDEX_NONE` is the constant the formatter itself prints.
+	TestEqual(TEXT("unit= carries INDEX_NONE"),   Fields.Unit,     INDEX_NONE);
+	TestEqual(TEXT("hex= carries INDEX_NONE,"),   Fields.HexX,     INDEX_NONE);
+	TestEqual(TEXT("hex= carries ,INDEX_NONE"),   Fields.HexY,     INDEX_NONE);
+	TestEqual(TEXT("def= carries INDEX_NONE"),    Fields.DefIndex, INDEX_NONE);
+	TestEqual(TEXT("target= carries INDEX_NONE"), Fields.Target,   INDEX_NONE);
+
+	// The three that are read off the module rather than written down here.
+	TestEqual(TEXT("turn= is the bridge's live turn at the bound"),
+		Fields.Turn, Live->Turn());
+	TestEqual(TEXT("side= is the bridge's live side to move at the bound"),
+		Fields.Side, Live->SideToMove());
+	TestEqualSensitive(
+		TEXT("reason= is byte for byte the reason RunAiTurnsNow returned -- one sentence, not two"),
+		*Fields.Reason, *RunReason);
 
 	return true;
 }

@@ -1,0 +1,8 @@
+STRAT-AI gate: Tools\architect\evidence\07-ai-opponent\real-game\isolated-run.log
+  applied lines:            156
+  turn-ended lines:         11
+  terminal refusals (ok):   1
+  blocking refusals:        0
+  parse failures:           0
+PASS
+EXIT=0

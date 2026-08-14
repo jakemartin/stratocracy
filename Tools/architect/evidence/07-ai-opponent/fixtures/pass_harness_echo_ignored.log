@@ -1,0 +1,3 @@
+[2026.08.13-21.06.00:001][300]LogStratPlay: Log: STRAT-AI applied kind=Move unit=3 hex=4,4 def=-1 target=-1 turn=1 side=1 hash=aaaa1111
+[2026.08.13-21.06.00:050][301]LogStratPlay: Log: STRAT-AI turn-ended side=1 turn=1 commands=1 hash=aaaa1111
+[2026.08.13-21.41.20:766][599]LogAutomationController: Suppressed expected ('Warning') level log message or higher matching 'STRAT-AI refused' 1 times.

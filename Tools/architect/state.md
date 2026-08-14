@@ -27,8 +27,12 @@ worktree in all nine files), suite unmoved at 103/103, and the standing finding 
 `strat::chooseBuild`'s cheapest-affordable selection makes a buildlist's repeated entries
 inert — a vendored-behaviour question for `stratocracy-crew`, not a defect here. **THE
 LOG-BACKED COMBAT OUTCOME MILESTONE IS NOW COMPLETE — five phases closed, no phase 6 was ever
-planned for it.** See "Log-backed combat outcome milestone" below. The prior entry (AI-opponent
-milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" further down.)_
+planned for it.** See "Log-backed combat outcome milestone" below. **POST-MILESTONE, 2026-08-14,
+NOT A PHASE:** `a2d370a` discharged the deferred `ESearchCase::CaseSensitive` tightening on the
+T-SAVE-05 grep-contract clause and opened a narrower `STRAT-CMD refused`-shape residual in its
+place; suite is now **104/104** (was 103/103 as of phase 5, above). See "Grep-contract
+case-sensitivity tightening" below. The prior entry (AI-opponent milestone, phase D CLOSED,
+COMPLETE) is preserved under "AI-opponent milestone" further down.)_
 
 ## BUILT
 
@@ -277,13 +281,16 @@ milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" 
      `bHasActed == true` while the machine's own `DoneUnits` is empty (a machine built against a
      match already in progress). Proposed by `strat-gameplay-engineer`, correctly not written in
      a doc pass. Owner: `strat-test-author`.
-  2. Tighten `Source/StratPlay/Tests/StratHotSeatReplayParity.cpp`'s shape `TestTrue`
-     (`Line.StartsWith(TEXT("STRAT-CMD accepted "))`) to `ESearchCase::CaseSensitive`. Residual:
-     a case-only change to the `STRAT-CMD accepted` emitter would slip past today — confirmed by
-     re-reading the assertion directly; it currently relies on a whole-tree case-variant census
-     (also re-confirmed this phase, exactly two lowercase hits, both illustrative, in the test
-     files themselves) rather than on its own shape. Deliberately not done in phase 5:
-     retightening an assertion is a code change, not a doc change. Owner: a code phase.
+  2. **DISCHARGED, `a2d370a`, 2026-08-14 — see "Grep-contract case-sensitivity tightening"
+     below.** Tighten `Source/StratPlay/Tests/StratHotSeatReplayParity.cpp`'s shape `TestTrue`
+     (`Line.StartsWith(TEXT("STRAT-CMD accepted "))`) to `ESearchCase::CaseSensitive`. Residual
+     as originally recorded: a case-only change to the `STRAT-CMD accepted` emitter would slip
+     past today — confirmed by re-reading the assertion directly; it currently relies on a
+     whole-tree case-variant census (also re-confirmed this phase, exactly two lowercase hits,
+     both illustrative, in the test files themselves) rather than on its own shape. Deliberately
+     not done in phase 5: retightening an assertion is a code change, not a doc change. Owner: a
+     code phase. **A new, narrower residual on the `refused` shape replaces this one — see NEXT
+     below and the new section.**
   3. A line-number citation living inside a `TestEqual` message string in
      `Source/StratPlay/Tests/StratSelectionWaitClauses.cpp`
      (`StratSelectionMachine.cpp:156-160`). Currently accurate, but unreachable by a doc pass
@@ -298,6 +305,19 @@ milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" 
   "avoid one-corpus proof" precedent (a different scenario/buildlist/first side, genuinely
   different game content) — the host-independence half was discharged in this milestone's
   phase 4.
+- **New residual, opened `a2d370a`, 2026-08-14 — replaces discharged item 2 above: a case-only
+  change to the `STRAT-CMD refused` shape is caught by nothing.** Cannot be closed with an
+  expected-message gate — verified against `UE_5.8\Engine\Source\Runtime\Core\Public\Misc\
+  AutomationTest.h`: `FAutomationExpectedMessage::Matches` uses `FString::Contains` at its
+  `IgnoreCase` default; `EAutomationExpectedMessageFlags::Exact` adds only a length equality,
+  and a case variant has identical length; both constructors build the pattern with
+  `ERegexPatternFlags::CaseInsensitive` hardcoded, not parameterized. Closing it needs a clause
+  asserting the `refused` spelling the way `T-SAVE-05.GrepContractRejectsACaseVariant` now
+  asserts `accepted`. Stated at measured width only: ICU (which backs `FRegexPattern`) honours
+  inline mode modifiers such as `(?-i)` in general, but whether that route is actually usable
+  here was **not established either way** — the bundled ICU ships `include` and `lib` only, no
+  regex compiler source, so the test-author correctly declined to assert it in either direction.
+  Owner: `strat-test-author`.
 
 ## Hot-seat milestone
 
@@ -2438,3 +2458,82 @@ doc pass that corrected the two stale citations and one stale flag-pair this fil
 `.agents/ue-project-context.md` were carrying, discharged the unexercised-guard comment debt,
 and recorded — against the vendored source, not on argument — that `strat::chooseBuild` makes
 buildlist repetition inert at the rules layer.
+
+## Grep-contract case-sensitivity tightening (not a phase)
+
+- **Landed:** `a2d370a`, "A grep contract a case-only change would have slipped past, and a
+  build command nobody could run", 2026-08-14. Editor closed throughout; tree clean at `a2d370a`,
+  pushed to `origin/master`. **This is not a phase and does not reopen the log-backed combat
+  outcome milestone (CLOSED, COMPLETE above).** It discharges NEXT item 2 carried out of that
+  milestone's phase 5 (the deferred `ESearchCase::CaseSensitive` tightening) and opens a new,
+  narrower residual — see NEXT.
+- **4 files, 316 insertions, 39 deletions** (`git show --shortstat a2d370a`, re-verified
+  directly, matches exactly): `Tests/StratHotSeatReplayParity.cpp`,
+  `Tests/StratSelectionWaitClauses.cpp` (both `strat-test-author`'s lane), plus
+  `.agents/ue-project-context.md` and `.claude/skills/strat-hotseat/SKILL.md`.
+- **Suite 103 → 104.** `Saved/AutomationReport/index.json`, read as `utf-8-sig`:
+  `reportCreatedOn 2026.08.14-18.44.32`, `succeeded 104 / succeededWithWarnings 0 / failed 0 /
+  notRun 0`, 104 test entries, every one `state: "Success"` (all re-derived directly, not taken
+  from a report). Independent corroboration: `IMPLEMENT_SIMPLE_AUTOMATION_TEST` across `Source/`
+  totals **104** across 20 files, `IMPLEMENT_COMPLEX_AUTOMATION_TEST` totals **0** — the
+  count-new-clauses-by-macro method this project prefers over an acceptance-ID grep, re-run
+  directly rather than trusted from the brief.
+- **One new clause:** `Stratocracy.StratPlay.T-SAVE-05.GrepContractRejectsACaseVariant`, in the
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` block of that name in `StratHotSeatReplayParity.cpp`
+  (re-read directly).
+- **The change.** `FString::StartsWith` defaults to `ESearchCase::IgnoreCase` in UE 5.8, so the
+  T-SAVE-05 clause asserting the `STRAT-CMD accepted ` line shape (via the new shared predicate
+  function `IsGrepContractAcceptedLine`) accepted any casing while the phase-6 grep it stands
+  in for would not. Only that assertion was tightened, to `ESearchCase::CaseSensitive`.
+- **Design ruling, preserved with its reason — instruments loose, claims strict.** The capture
+  filter in `FStratCmdCapture::Serialize` and the `CountStartingWith` member function stay
+  `IgnoreCase` deliberately. Tighten the filter instead and a case-mangled line never reaches
+  the strict claim: `Lines.Num()` reads 0, the arity clause goes red first and returns early,
+  and the failure surfaces as "no line at all" rather than "the line is spelled wrong" — the
+  instrument must be able to SEE the defect the claim is unable to ACCEPT. The pre-existing
+  fail-safe count argument (the `CountStartingWith` calls counting `"STRAT-CMD accepted"` and
+  `"STRAT-CMD refused"`) was re-derived rather than inherited this pass and survives in its
+  original shape *because* the filter stayed loose. A future reader is the most likely one to
+  "fix" this without understanding it — recorded here with the reason so that doesn't happen.
+- **What the new clause actually proves.** Its load-bearing assertion is that the bare
+  `StartsWith` expression the pass deleted still ACCEPTS the same case variant the new predicate
+  refuses — the defect named rather than described, not merely an absence asserted. Reverting
+  `CaseSensitive` turns the clause red. It also pins its own fixture with
+  `Equals(..., ESearchCase::CaseSensitive)` false and `Equals(..., ESearchCase::IgnoreCase)` true,
+  inside that same clause, because a bare `TestEqual` on those two strings would call them equal
+  and make the whole fixture meaningless — the same case-insensitivity trap already on record in
+  this project's history (`ue-fstring-comparison-is-case-insensitive`).
+- **The new residual, carried to NEXT above:** a case-only change to the `STRAT-CMD refused`
+  shape is caught by nothing, and closing it needs an equivalent clause for that shape. Stated
+  at measured width, including the one thing the brief's draft overclaimed and the
+  test-author correctly declined to assert either way (ICU inline mode modifiers,
+  unverifiable from this tree's bundled headers-and-libs-only ICU) — see the NEXT entry for the
+  exact citations (`AutomationTest.h`'s `Matches`, `Exact`, and both constructors' hardcoded
+  `ERegexPatternFlags::CaseInsensitive`).
+- **Gating, recorded honestly, including the exception.** Two full gates (`VERDICT: PASS`, zero
+  findings each) and one micro re-gate (`VERDICT: PASS`, zero findings). **The final
+  comment-only edit was coordinator-verified, not gated** — the reviewer had itself authored and
+  verified the replacement sentence, so gating text it dictated would have been circular. The
+  mechanical comment-only proof was run independently: the non-comment changed lines in both
+  `Tests/` files are exactly the previously-gated code (the predicate, one call-site
+  substitution, the new clause), `StratSelectionWaitClauses.cpp` contributes zero non-comment
+  lines, and the macro census was unchanged at 104. This one edit did not pass the gate, and
+  that is recorded here rather than left to be implied by the rest of the entry.
+- **`Build.bat`, also fixed this pass, not flagged.** `.agents/ue-project-context.md` and
+  `.claude/skills/strat-hotseat/SKILL.md` both carried `Build.bat` as a bare command in a
+  "verbatim, never reconstructed" block. It is **not on `PATH`**
+  (`E:\MultiAgent\Stratocracy` shell: `command -v Build.bat` fails) — it lives at
+  `C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat`, confirmed present at
+  that path directly. Every agent handed the bare form had worked around it silently and never
+  written it down. Both files now carry the full path plus the PowerShell call-operator caveat
+  (`& "C:\…\Build.bat" …` needed from PowerShell, not from the Bash tool), verified to run
+  verbatim from both shells. This file has previously carried standing flags about `.agents/`
+  being unowned — this is one of those items fixed, not flagged again.
+- **A method lesson worth recording.** The same defect shape — a universal quantifier standing
+  in for the argument's actual scope — recurred a fifth time in this milestone-adjacent pass: an
+  early draft of the `refused`-residual paragraph claimed "there is NO way to spell a
+  case-sensitive expected message in this engine version," a universal over *every possible
+  regex pattern* derived from a measurement of *what two constructors accept as parameters* —
+  different SUBJECT from what was measured, which is why an "enumerate the set" habit does not
+  catch it. The working check: ask whether the sentence's subject is the thing you actually
+  measured. Corrected to the narrower, true claim before landing.

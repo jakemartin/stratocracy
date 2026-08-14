@@ -218,8 +218,18 @@ is on the game thread, and **nothing pins that**.
 ### Build
 
 ```
-Build.bat StratocracyEditor Win64 Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex
+"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" StratocracyEditor Win64 Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex
 ```
+
+**`Build.bat` is NOT on `PATH`, and this is measured** (2026-08-14, `command -v Build.bat` →
+nothing; the file exists only at the Engine path above). This block previously recorded the bare
+`Build.bat …` form as if it were runnable, and every agent handed that form has silently worked
+around it — one by `cd`-ing to `Engine\Build\BatchFiles`, another by reporting
+`The term 'Build.bat' is not recognized as the name of a cmdlet, function, script file, or
+operable program` and then recovering. The cost was invisible because the workaround always
+succeeded, so nothing was ever written down. Same failure class as the bare `"Stratocracy.uproject"`
+trap below: a command recorded as verbatim that does not run as written. From PowerShell the full
+path needs the call operator (`& "C:\…\Build.bat" …`); from the Bash tool it does not.
 
 ### Headless test run
 

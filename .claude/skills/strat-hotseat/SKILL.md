@@ -81,7 +81,7 @@ both sides.
 Build:
 
 ```
-Build.bat StratocracyEditor Win64 Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex
+"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" StratocracyEditor Win64 Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex
 ```
 
 Headless test run:
@@ -91,6 +91,10 @@ Headless test run:
 ```
 
 Pass these into the agent prompt rather than letting an agent recall them.
+
+**`Build.bat` is not on `PATH`** — measured 2026-08-14, after this file had carried the bare
+`Build.bat …` form long enough for every agent to silently work around it. Pass the full Engine
+path above. From PowerShell it also needs the call operator (`& "C:\…\Build.bat" …`).
 
 **Both paths in the test command must be absolute.** A bare `"Stratocracy.uproject"` exits in
 about a second with *"Project file not found"*, before any test runs and without writing a log —

@@ -295,15 +295,42 @@ namespace StratSelectionWaitClauses
 	 * LETTERS, never in case, and every emitter spells its prefix upper case; so no line
 	 * that should be rejected here can be admitted by case-folding alone.
 	 *
-	 * AND UNLIKE THE `TestTrue` SHAPE ASSERTION IN `StratHotSeatReplayParity.cpp` -- see the
-	 * matching block there, which does NOT get this guarantee -- the direction of any
-	 * hypothetical error here is the safe one, for BOTH halves of the clause. An
-	 * over-permissive filter can only ADD lines. That pushes `LinesAfterNoOp` above zero and
-	 * turns the silence clause RED, and it cannot break the positive control either, since a
-	 * case-mangled line would still be counted and `LinesAfterRealWait > LinesAfterNoOp`
-	 * would still hold. There is no input, case-variant or otherwise, that makes this clause
-	 * pass when it should fail. If a lower-case `strat-wait` emitter is ever added the
-	 * filter should become `CaseSensitive` anyway, to keep the two captures consistent.
+	 * THE DIRECTION OF ANY HYPOTHETICAL ERROR HERE IS THE SAFE ONE, FOR BOTH HALVES OF THE
+	 * CLAUSE. An over-permissive filter can only ADD lines. That pushes `LinesAfterNoOp`
+	 * above zero and turns the silence clause RED, and it cannot break the positive control
+	 * either, since a case-mangled line would still be counted and
+	 * `LinesAfterRealWait > LinesAfterNoOp` would still hold. There is no input,
+	 * case-variant or otherwise, that makes this clause pass when it should fail.
+	 *
+	 * EVERY ASSERTION IN THIS FILE THAT READS THE CAPTURE IS A COUNT, WHICH IS THE WHOLE OF
+	 * THE ARGUMENT. The scope of that sentence is load-bearing, and an earlier draft of it
+	 * dropped the qualifier and was simply false: this file makes plenty of assertions that
+	 * are not counts -- `Machine.IsDone(WaiterId)`, `Waited.FailureReason.IsEmpty()`,
+	 * `GetSelectedUnitId()`, `Bridge.StateHash()` against a watermark -- and the claim was
+	 * written as though none of them existed. They do. The point is that NOT ONE OF THEM
+	 * READS A CAPTURED LINE, so the filter's case-folding cannot reach them however it is
+	 * spelled.
+	 *
+	 * MEASURED, rather than asserted in the general: exactly two assertions here take their
+	 * subject from this device -- `LinesAfterNoOp == 0` and
+	 * `LinesAfterRealWait > LinesAfterNoOp` -- and both turn on HOW MANY lines there are,
+	 * never on what any one of them SAYS. They are not even the same shape of count: one is
+	 * an exact `TestEqual`, the other a strict inequality. "All counts" is the property the
+	 * argument needs; "all `TestEqual` on an exact count" would be another sentence claiming
+	 * more than it can carry. `Capture.Lines` is read in one other place -- the `AddInfo` loop
+	 * that dumps the whole window UNCONDITIONALLY after both assertions, pass or fail -- and
+	 * that asserts nothing.
+	 *
+	 * THAT IS WHAT DISTINGUISHES THIS CAPTURE from `StratHotSeatReplayParity.cpp`'s, whose
+	 * `STRAT-CMD` capture keeps the same loose filter for the same reason, but which also
+	 * carries an assertion whose subject is a SPELLING rather than an arity -- the phase-6
+	 * grep contract -- and that one gets no guarantee from any count. It is therefore
+	 * `ESearchCase::CaseSensitive` there, through `IsGrepContractAcceptedLine`, and shown
+	 * able to fail by `T-SAVE-05.GrepContractRejectsACaseVariant`. Nothing in THIS file
+	 * asserts a spelling, so nothing here needs the same treatment: the split is
+	 * instruments-loose / claims-strict, not file-by-file. If a clause is ever added below
+	 * that asserts what a `STRAT-WAIT` line SAYS rather than how many there are, that clause
+	 * -- and not this filter -- is what must be `CaseSensitive`.
 	 */
 	struct FStratWaitCapture final : public FOutputDevice
 	{

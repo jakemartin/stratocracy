@@ -291,12 +291,17 @@ namespace StratHotSeatReplayParity
 	 * token, which is exactly how a counting gate must do it.
 	 *
 	 * THAT FILTER AND `CountStartingWith` ARE BOTH CASE-INSENSITIVE, AND UNLIKE THE
-	 * `STRAT-AI` CAPTURES THEY ARE LEFT THAT WAY KNOWINGLY. `FString::StartsWith` defaults
-	 * to `ESearchCase::IgnoreCase` in UE 5.8, and this project has already shipped a clause
-	 * that could not fail because of exactly that default -- so the omission needs a reason
-	 * rather than a shrug. It has one, but the reason is NOT uniform across the assertions
-	 * below, and the two halves are worth separating because only one of them is safe by
-	 * construction.
+	 * `STRAT-AI` CAPTURES THEY ARE LEFT THAT WAY KNOWINGLY -- while the grep-contract
+	 * ASSERTION they feed is, as of this pass, `ESearchCase::CaseSensitive`.
+	 * `FString::StartsWith` defaults to `ESearchCase::IgnoreCase` in UE 5.8, and this project
+	 * has already shipped a clause that could not fail because of exactly that default -- so
+	 * neither the tightening nor the two omissions may be a shrug.
+	 *
+	 * THE LINE DRAWN HERE IS BETWEEN INSTRUMENTS AND CLAIMS. The filter and the counter are
+	 * INSTRUMENTS: their job is to collect candidate lines for inspection, and they stay
+	 * permissive on purpose. `IsGrepContractAcceptedLine` is the CLAIM, and it is strict.
+	 * The file is therefore not half-tightened; it is tightened exactly where an assertion
+	 * is made about a spelling, and left loose exactly where a line is being gathered.
 	 *
 	 * FIRST, WHAT CASE CANNOT REACH AT ALL. The prefixes that occur anywhere in this tree --
 	 * `STRAT-CMD`, `STRAT-WAIT`, `STRAT-AI`, `STRAT-COMBAT`, and `STRAT-PROBE` (a phase-6
@@ -309,29 +314,104 @@ namespace StratHotSeatReplayParity
 	 * `RefusedLines` are compared with `TestEqual` against module-side numbers
 	 * (`AcceptedCommands.Num()`, `Refusals`), so an over-permissive prefix can only ADD a
 	 * line and drive an exact-count comparison RED. A looser filter cannot make those pass
-	 * when they should fail.
+	 * when they should fail. THAT ARGUMENT SURVIVES THIS PASS IN ITS ORIGINAL SHAPE PRECISELY
+	 * BECAUSE THE FILTER WAS NOT TIGHTENED. Had it been, the direction would have flipped --
+	 * a stricter filter can only DROP a line -- which is still red against an exact count,
+	 * but red in a different clause and with a different message. The counts are fail-safe
+	 * either way; the reason to keep the loose direction is the next paragraph.
 	 *
-	 * THIRD, AND THIS IS THE PART A SCOPE CLAIM MUST NOT SWALLOW: NOT EVERY ASSERTION HERE
-	 * IS A COUNT. The shape clause ends with a `TestTrue` --
-	 * `Line.StartsWith(TEXT("STRAT-CMD accepted "))`, "the line a phase-6 grep looks for" --
-	 * and that one is NOT fail-safe by construction. Its subject reached it through this
-	 * same case-insensitive filter, so a hypothetical emitter spelling the prefix
-	 * `strat-cmd accepted` would be ADMITTED by the filter, counted as one line by the
-	 * `TestEqual(Capture.Lines.Num(), 1)` above it, and then ACCEPTED by the `TestTrue`.
-	 * Every count in this file would also still balance, because a case-mangled line is
-	 * still exactly one line. The preceding `TestEqual` therefore does not rescue it; it
-	 * gates on arity, and the hole is spelling.
+	 * THIRD, AND THIS IS WHY THE INSTRUMENTS STAY LOOSE: NOT EVERY ASSERTION HERE IS A COUNT.
+	 * The shape clause ends with a `TestTrue` over `IsGrepContractAcceptedLine` -- "the line
+	 * a phase-6 grep looks for" -- and that one is NOT fail-safe by construction, because it
+	 * is the only assertion in this file whose subject is a SPELLING rather than an arity. It
+	 * is therefore the assertion that must carry `ESearchCase::CaseSensitive`, and it now
+	 * does. A hypothetical emitter spelling the prefix `strat-cmd accepted` is still ADMITTED
+	 * by the filter, still counted as one line by the `TestEqual(Capture.Lines.Num(), 1)`
+	 * above it, and still balances every count in this file -- and is then REJECTED by the
+	 * `TestTrue`, which is the one clause named after the property that actually broke.
 	 *
-	 * SO WHAT MAKES THAT ONE SAFE IS AN EXTERNAL MEASUREMENT, NOT THE ASSERTION'S SHAPE: a
-	 * case-variant census over all of `Source/` (combat-outcome phase 5) found NO lower-case
-	 * spelling of any log prefix anywhere in the tree -- the only lower-case occurrences that
-	 * exist are the illustrative ones inside this comment and its counterpart in
-	 * `StratSelectionWaitClauses.cpp`. The clause discriminates correctly over every input
-	 * the tree can actually produce. What it would not detect is a case-ONLY change to the
-	 * emitter -- which is exactly the phase-6 grep contract this `TestTrue` exists to pin.
-	 * Making it `ESearchCase::CaseSensitive` would close that, and it is deliberately NOT
-	 * done here: retightening an assertion is a code change, not a doc change. Recorded as
-	 * deferred rather than quietly owned.
+	 * TIGHTENING THE FILTER WOULD HAVE MADE THAT SAME EMITTER INVISIBLE INSTEAD:
+	 * `Lines.Num()` would read 0, the arity clause would go red first and return early, and
+	 * the grep contract would be reported as "no line at all" rather than as "the line is
+	 * spelled wrong". The instrument is deliberately able to SEE the defect that the claim is
+	 * deliberately unable to ACCEPT. `CountStartingWith` is left loose for the same reason:
+	 * tightening it would move the same failure into a count and duplicate a signal the
+	 * `TestTrue` already carries, under a message that names arithmetic rather than spelling.
+	 *
+	 * AND THE TIGHTENED CLAIM IS SHOWN ABLE TO FAIL, which is the whole reason the tightening
+	 * was worth a code change at all. `T-SAVE-05.GrepContractRejectsACaseVariant` constructs
+	 * this device directly, hands it a correct line and that same line lower-cased, and
+	 * asserts that the FILTER admits both while `IsGrepContractAcceptedLine` accepts the
+	 * first and refuses the second. It also asserts, against the bare `StartsWith` overload,
+	 * that the lower-case line WOULD have passed before this pass -- so the clause names the
+	 * defect it closed instead of asserting an absence. A `CaseSensitive` predicate that
+	 * nothing ever exercises is the same unfalsifiable claim with better-looking source.
+	 *
+	 * THE EXTERNAL MEASUREMENT THAT USED TO CARRY THIS IS NOW ONLY BACKGROUND: a case-variant
+	 * census over all of `Source/` (combat-outcome phase 5) found NO lower-case spelling of
+	 * any log prefix anywhere in the tree -- the only lower-case occurrences that exist are
+	 * the illustrative ones inside this comment, its counterpart in
+	 * `StratSelectionWaitClauses.cpp`, and the synthetic line the falsifiability clause
+	 * builds at run time. A census is a fact about today's tree and cannot survive a future
+	 * case-ONLY change to the emitter, which is exactly the phase-6 grep contract this
+	 * `TestTrue` exists to pin. That is what is now closed, and it is closed in code rather
+	 * than in a comment.
+	 *
+	 * THE RESIDUAL, STATED PLAINLY. The capture filter and `CountStartingWith` remain
+	 * `IgnoreCase`, so a case-only change to the `STRAT-CMD` emitter is caught by exactly ONE
+	 * assertion in this file -- the shape clause's `TestTrue` -- and by no count anywhere.
+	 * That is the intended design and not an oversight; see THIRD above. What is NOT covered
+	 * either way is a case-only change to the `refused` shape, since no clause here asserts
+	 * that spelling with a `TestTrue`; `RefusedLines` counts it through the same loose
+	 * counter, and a lower-case `strat-cmd refused` would still be counted and still balance.
+	 *
+	 * AND THE OBVIOUS COUNTER-ARGUMENT TO THAT RESIDUAL DOES NOT HOLD, which is worth the
+	 * lines because it is the first thing a careful reader will reach for. The gating clause
+	 * declares `AddExpectedMessagePlain(TEXT("STRAT-CMD refused"), ...)`, which looks like a
+	 * second net under the refusal spelling. IT IS NOT ONE: the expected-message machinery is
+	 * case-insensitive by the ENGINE'S OWN CONSTRUCTION, on BOTH of its paths, so it cannot be
+	 * made to care about case at all. Read out of UE 5.8's `AutomationTest.h` rather than
+	 * taken on report:
+	 *   - `FAutomationExpectedMessage::Matches`, non-regex path, is
+	 *     `Message.Contains(MessagePatternString) && (!IsExactCompareType() || Message.Len()
+	 *     == MessagePatternString.Len())`. `FString::Contains` defaults to
+	 *     `ESearchCase::IgnoreCase` -- and note that even the `Exact` compare type only adds a
+	 *     LENGTH equality, which a case variant satisfies, so `Exact` is case-blind too.
+	 *   - the regex path is no better: BOTH `FAutomationExpectedMessage` constructors build
+	 *     their pattern as `FRegexPattern(..., ERegexPatternFlags::CaseInsensitive)`,
+	 *     HARDCODED rather than taken as a parameter (`ERegexPatternFlags::CaseInsensitive =
+	 *     (1 << 0)`, `Internationalization/Regex.h`).
+	 * SO THE CLAIM, AT EXACTLY THE WIDTH IT WAS MEASURED AT: neither
+	 * `FAutomationExpectedMessage` constructor EXPOSES case sensitivity, and the PLAIN STRING
+	 * this file passes folds case on both paths. That covers the call site completely --
+	 * `AddExpectedMessagePlain(TEXT("STRAT-CMD refused"), ...)` passes a bare literal with no
+	 * pattern syntax in it, so whichever path it routes to, it folds case. The declaration is
+	 * a VERBOSITY gate, not a spelling gate, and the residual above stands.
+	 *
+	 * AN EARLIER DRAFT OF THIS BLOCK SAID INSTEAD that "there is NO way to spell a
+	 * case-sensitive expected message in this engine version", and that is left recorded here
+	 * because the way it was wrong is more useful than the correction. It was not wrong by a
+	 * detail. IT CLAIMED SOMETHING THE MEASUREMENT COULD NOT REACH: what was measured is what
+	 * the two constructors take as PARAMETERS, and what was written is a universal over every
+	 * possible PATTERN. Those are different propositions, and no amount of re-reading
+	 * `AutomationTest.h` could have settled the second one.
+	 *
+	 * THE CONCRETE COUNTER-ROUTE OFFERED WAS AN INLINE MODE MODIFIER -- `(?-i)` at the head of
+	 * a pattern on the regex path, which Perl-family engines honour regardless of the flags
+	 * the pattern was compiled with. I could NOT settle that from this tree and I am not going
+	 * to assert it in either direction: `FRegexPattern` is ICU-backed
+	 * (`ICURegex.cpp`'s `GetICURegexFlags` maps `ERegexPatternFlags::CaseInsensitive` to
+	 * `UREGEX_CASE_INSENSITIVE`, handed to `icu::RegexPattern::compile`), and the bundled ICU
+	 * at `ThirdParty/ICU/icu4c-64_1/` ships INCLUDE HEADERS AND PREBUILT LIBS ONLY -- there is
+	 * no `regexcmp.cpp` to read, and `uregex.h` / `regex.h` document the API rather than the
+	 * pattern syntax. Verifying it would take running a pattern, which is a clause, which is
+	 * not what this pass is.
+	 *
+	 * AND THE RESIDUAL DOES NOT NEED IT SETTLED, which is the point. The narrow claim above is
+	 * true whether or not `(?-i)` works, because this file passes no modifier. A sentence that
+	 * needs an unresolved question answered was claiming more than the argument needed --
+	 * which is the same defect, one layer up, and the reason the wide version should never
+	 * have been written.
 	 *
 	 * UNBUFFERED, AND THAT ONE OVERRIDE IS WHAT BOUNDS THE WINDOW. MEASURED, 2026-08-14:
 	 * without it this clause failed 1 run in 4 on byte-identical code -- "one accepted command
@@ -453,6 +533,27 @@ namespace StratHotSeatReplayParity
 				OutValues.Add(Value);
 			}
 		}
+	}
+
+	/**
+	 * THE PHASE-6 GREP CONTRACT, AS A PREDICATE. `ESearchCase::CaseSensitive`, and that is
+	 * the point of the function existing rather than the comparison being written inline.
+	 *
+	 * `FString::StartsWith` defaults to `ESearchCase::IgnoreCase` in UE 5.8, so the inline
+	 * form this replaces admitted `strat-cmd accepted ` -- a spelling a real `grep` would
+	 * miss, on the one assertion in this file that exists specifically to pin what a real
+	 * grep will find. See the block on `FStratCmdCapture` for why the capture filter and
+	 * `CountStartingWith` are deliberately NOT tightened alongside it.
+	 *
+	 * IT IS A NAMED FUNCTION SO THAT THE CLAUSE THAT ASSERTS THE CONTRACT AND THE CLAUSE THAT
+	 * PROVES THAT ASSERTION CAN FAIL ARE ASKING THE SAME CODE. Spelling the predicate twice
+	 * would let `T-SAVE-05.GrepContractRejectsACaseVariant` go on passing over its own
+	 * private copy after somebody loosened the shipped one, which is the exact shape of
+	 * unfalsifiability this pass was opened to remove.
+	 */
+	static bool IsGrepContractAcceptedLine(const FString& Line)
+	{
+		return Line.StartsWith(TEXT("STRAT-CMD accepted "), ESearchCase::CaseSensitive);
 	}
 }
 
@@ -909,8 +1010,11 @@ bool FStratCmdLineShapeTest::RunTest(const FString& /*Parameters*/)
 		const FString Line = Capture.Lines[0];
 		AddInfo(Line);
 
+		// CASE-SENSITIVE, via the shared predicate. A real `grep` would break on a case-only
+		// change to the emitter, so the clause that stands in for it must too --
+		// `T-SAVE-05.GrepContractRejectsACaseVariant` is what shows this can go red.
 		TestTrue(TEXT("T-SAVE-05: the line a phase-6 grep looks for"),
-			Line.StartsWith(TEXT("STRAT-CMD accepted ")));
+			IsGrepContractAcceptedLine(Line));
 
 		TArray<FString> Keys;
 		TArray<FString> Values;
@@ -1419,4 +1523,136 @@ bool FStratHotSeatClickedAttackTest::RunTest(const FString& /*Parameters*/)
 		bAttacked);
 
 	return bAttacked;
+}
+
+// ---------------------------------------------------------------------------
+// T-SAVE-05 -- THE GREP CONTRACT REJECTS A CASE VARIANT, AND THE INSTRUMENT THAT FEEDS IT
+// DOES NOT.
+//
+// WHY THIS CLAUSE EXISTS AT ALL. `IsGrepContractAcceptedLine` is `ESearchCase::CaseSensitive`
+// as of this pass, and the shape clause above leans on it for "the line a phase-6 grep looks
+// for". But NO INPUT THIS TREE CAN PRODUCE EXERCISES THE STRICTNESS: a case-variant census
+// over all of `Source/` found no lower-case spelling of any log prefix, so on every real run
+// the tightened predicate and the old loose one return the same answer for the same reason.
+// A `CaseSensitive` comparison that nothing ever pushes against is the same unfalsifiable
+// claim as the `IgnoreCase` one it replaced, wearing better-looking source. This project has
+// already shipped a commit titled "a gate whose own fixtures could not fail it"; an absence
+// proves nothing until the instrument is shown able to speak.
+//
+// SO THE INPUT IS SYNTHETIC, AND IT HAS TO BE. The lower-case line is manufactured HERE
+// because manufacturing it in the emitter would be a change to code this file is not allowed
+// to touch -- and, more to the point, a permanent lie in the shipped log format. What is fed
+// in is not a hand-typed second literal either: it is the correct line put through
+// `FString::ToLower()`, so the two differ in CASE ONLY BY CONSTRUCTION rather than by my
+// having typed them carefully. `T-SAVE-05.StratCmdLineShape` above is what pins that the
+// correct line's shape is the one the emitter really produces; this clause pins only what the
+// predicate does with a case variant of it.
+//
+// THE THREE THINGS ASSERTED, AND THE ORDER MATTERS:
+//   1. A CONTROL. The capture filter ADMITS the lower-case line. Without this the clause
+//      could pass because the device silently swallowed its own fixture, and "rejected by
+//      the predicate" and "never reached the predicate" are different facts.
+//   2. THE POSITIVE DIRECTION. The predicate accepts the correctly-spelled line -- otherwise
+//      a predicate that returned `false` for everything would satisfy point 3 and pin
+//      nothing.
+//   3. THE NEGATIVE DIRECTION. The predicate REFUSES the lower-case line.
+// plus a fourth, which is the receipt: the BARE `StartsWith` overload -- the exact expression
+// this pass replaced -- still ACCEPTS that same lower-case line. That is the defect, named
+// rather than described, and it is what makes point 3 a change in behaviour instead of a
+// restatement.
+//
+// `FString`'s `==`, `Contains` and `TestEqual` are all `IgnoreCase` in UE 5.8, which is why
+// every comparison below spells `ESearchCase::CaseSensitive` explicitly. A `TestEqual` on the
+// two lines would report them EQUAL and the clause would be quietly meaningless.
+//
+// NO LOG IS EMITTED HERE. The device is driven through `Serialize` directly, which is the
+// method `FOutputDeviceRedirector` would call with the formatted message anyway, so the
+// clause needs no engine timing, no `GLog->Flush()`, and no emitter it does not own.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGrepContractCaseTest,
+	"Stratocracy.StratPlay.T-SAVE-05.GrepContractRejectsACaseVariant",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGrepContractCaseTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratHotSeatReplayParity;
+
+	// The shape `StratSelectionMachine.cpp` emits and `T-SAVE-05.StratCmdLineShape` pins,
+	// field for field. The VALUES are immaterial here -- this clause is about the prefix.
+	const FString Correct =
+		TEXT("STRAT-CMD accepted kind=Move unit=0 hex=0,0 turn=1 side=0 hash=0000");
+	const FString Lowered = Correct.ToLower();
+
+	// The fixture is a CASE VARIANT and nothing else, and this is asserted rather than
+	// assumed -- `FString::operator==` is IgnoreCase in UE 5.8, so the two would compare
+	// EQUAL and a reader could not tell a case variant from a copy.
+	TestFalse(TEXT("T-SAVE-05: the two fixture lines differ, case-sensitively"),
+		Correct.Equals(Lowered, ESearchCase::CaseSensitive));
+	TestTrue(TEXT("T-SAVE-05: and differ in NOTHING BUT case -- so what the predicate does "
+	              "with them turns on case alone"),
+		Correct.Equals(Lowered, ESearchCase::IgnoreCase));
+
+	FStratCmdCapture Capture;
+	TestEqual(TEXT("the capture's window starts empty, so both lines below are its own"),
+		Capture.Lines.Num(), 0);
+
+	Capture.Serialize(*Correct, ELogVerbosity::Log, FName(TEXT("LogStrat")));
+	Capture.Serialize(*Lowered, ELogVerbosity::Log, FName(TEXT("LogStrat")));
+
+	// ---- 1. THE CONTROL: the instrument is shown able to speak ------------------
+	// The filter is DELIBERATELY case-insensitive -- see the block on `FStratCmdCapture`.
+	// This asserts that choice as a fact rather than leaving it as a comment, and it is what
+	// makes the rejection below a statement about the PREDICATE and not about the device.
+	if (!TestEqual(
+			TEXT("T-SAVE-05: the capture filter is deliberately IgnoreCase, so the lower-case "
+			     "line REACHES the assertion instead of vanishing into the filter"),
+			Capture.Lines.Num(), 2))
+	{
+		for (const FString& L : Capture.Lines)
+		{
+			AddInfo(L);
+		}
+		return false;
+	}
+
+	const FString Admitted = Capture.Lines[0];
+	const FString Variant  = Capture.Lines[1];
+	AddInfo(Admitted);
+	AddInfo(Variant);
+
+	// The counter is left loose for the same reason, and that is pinned here too: a
+	// case-mangled line is still counted as one accepted line, so every count in this file
+	// still balances and the `TestTrue` is the ONLY thing standing between the tree and a
+	// broken phase-6 grep.
+	TestEqual(
+		TEXT("T-SAVE-05: `CountStartingWith` is deliberately IgnoreCase too -- it counts the "
+		     "case variant, which is why no count in this file can catch a spelling change"),
+		Capture.CountStartingWith(TEXT("STRAT-CMD accepted")), 2);
+
+	// ---- 2. THE POSITIVE DIRECTION ---------------------------------------------
+	TestTrue(
+		TEXT("T-SAVE-05: the grep contract ACCEPTS the correctly-spelled line -- without this "
+		     "a predicate that refused everything would satisfy the clause below"),
+		IsGrepContractAcceptedLine(Admitted));
+
+	// ---- 3. THE NEGATIVE DIRECTION: the property this whole clause exists for ---
+	TestFalse(
+		TEXT("T-SAVE-05: and REFUSES a case-only variant of it -- a real `grep` for "
+		     "`STRAT-CMD accepted ` would find nothing, and so does the clause that stands in "
+		     "for that grep"),
+		IsGrepContractAcceptedLine(Variant));
+
+	// ---- 4. THE RECEIPT: the expression this pass replaced still admits it ------
+	// NOT a duplicate of point 3 with the sense flipped. This is the OLD predicate, spelled
+	// exactly as the shape clause used to spell it, and it is green -- which is the evidence
+	// that the tightening changed behaviour rather than decorating source. If UE ever changes
+	// `StartsWith`'s default, this line goes red and the residual paragraph in the
+	// `FStratCmdCapture` block needs rewriting, which is the right thing for it to do.
+	TestTrue(
+		TEXT("T-SAVE-05: the bare `StartsWith` overload this pass replaced ACCEPTS the same "
+		     "case variant -- that is the defect that was closed, named rather than described"),
+		Variant.StartsWith(TEXT("STRAT-CMD accepted ")));
+
+	return true;
 }

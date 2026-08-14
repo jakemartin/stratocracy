@@ -1,0 +1,14 @@
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\pie-run\ai-vs-ai-pie-session-slice.log
+  test:                       (pre-sliced input, no automation markers)
+  slice (1-based lines):      1..266
+  STRAT-AI applied kind=Attack:  68
+  STRAT-COMBAT resolved:         68
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0

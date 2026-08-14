@@ -13,8 +13,14 @@ mistake phase D's entry already documents paying for once), both fixed in place;
 resolved` pairing is unreachable in an
 AI-vs-AI match (measured 0), the real pairing is `STRAT-AI applied kind=Attack` ↔ `STRAT-COMBAT
 resolved` by ordered identity, proven 68/68 with zero mismatches by
-`Tools/architect/strat_combat_pairing_gate.py`, suite 93 → 103. Three phases closed; phases 4–5
-not started. See "Log-backed combat outcome milestone" below. The prior entry
+`Tools/architect/strat_combat_pairing_gate.py`, suite 93 → 103; phase 4 CLOSED MET, gated once,
+`VERDICT: PASS`, zero findings, 2026-08-14 — the only phase this milestone that did not need a
+re-gate — the live PIE path (`Saved/Logs/Stratocracy_2.log`, `--pre-sliced` mode added to the
+gate for its first non-automation corpus), same gate PASS, 68/68 again, and all eleven
+`STRAT-AI turn-ended` hashes byte-identical to phase 3's headless run — the phase-D "avoid
+one-corpus proof" precedent is now PARTLY discharged: the HOST-independence half IS discharged,
+the CONTENT-independence half is NOT and is carried forward as its own future work. Four phases
+closed; phase 5 not started. See "Log-backed combat outcome milestone" below. The prior entry
 (AI-opponent milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone"
 further down.)_
 
@@ -1748,10 +1754,10 @@ A combat outcome carried on a log line routed through `FStratBridge`, not comput
 nothing else (`Source/StratRules/Replay.good.cpp:413-470`) — the rules layer hands back no damage,
 death, counter, or fame. The outcome is instead assembled from `strat::uiForecast` captured
 **before** the submit plus the measured state delta **after**, both on one log line with an
-agreement flag. Three phases CLOSED (phase 3 MET-AS-CORRECTED, gated three times — first two
+agreement flag. Four phases CLOSED (phase 3 MET-AS-CORRECTED, gated three times — first two
 `VERDICT: BLOCK`, both fixed in place, third `VERDICT: PASS` with zero findings — see "Phase 3"
-below for the full history); phases 4–5
-planned and not started.
+below for the full history; phase 4 MET, gated once, `VERDICT: PASS`, zero findings, first gate —
+see "Phase 4" below); phase 5 planned and not started.
 
 ### Phase 1 — CLOSED (editor closed)
 
@@ -2049,11 +2055,174 @@ passing in isolation: `Expected 'one accepted command emits exactly one line' to
   fourth gate; not introduced by the third gate's fix, and pre-existing in this entry since it
   was first written.
 
-### Phase 4 — not started
+### Phase 4 — CLOSED (editor OPEN), MET
 
-- (editor OPEN) — PIE run driven by `RunAiTurnsNow` so no simulated input is needed,
-  routing around the standing NeoStack injection blocker; evidence sliced by session markers,
-  never to EOF (the phase-D-era lesson under "AI-opponent milestone" applies unchanged).
+- **Completed:** 2026-08-14.
+- **Exit criterion:** the live PIE path, so no simulated input is needed, routing around the
+  standing NeoStack injection blocker. **MET.** **Correction to this line's own wording:**
+  nothing external calls `RunAiTurnsNow` — it has no `UFUNCTION` and is unreachable from Lua. The
+  real chain is `AStratGameMode::BeginPlay` → `RunAiTurnsIfDue` → the paced timer →
+  `RunAiTurnsNow` internally, once a turn is due. The limits section below already states this
+  correctly (the entry was self-correcting); this line is fixed to match rather than invite a
+  reader to think an agent invoked `RunAiTurnsNow` directly.
+- **Gated 2026-08-14, `VERDICT: PASS`, zero findings, FIRST GATE — the only phase in this
+  milestone that did not need a re-gate.** The reviewer re-derived everything independently as a
+  third derivation: the slice diffs identical to `sed -n '3462,3727p'`, contamination clean
+  (first `STRAT-` line is 3481, after the 3462 cut), counts 68/68/0/0/0 plus the one
+  `[T-SAVE-05]` refusal, 68× `agree=1 diverge=0`, the 11-hash diff at exit 0, and
+  `fameBefore=200 fameAfter=700` verbatim — plus confirmed no screenshot substitution anywhere
+  and that `--pre-sliced` leaves the pairing loop, both parsers, and `GateResult.passed`
+  byte-unchanged. Before writing this line, `grep -n "gated\|VERDICT\|verdict"
+  Tools/architect/state.md` was run (per the standing lesson, now paid for three times in this
+  file's own phase-3 history) and the top-of-file banner and mid-file summary were checked
+  alongside this entry — the exact site that produced a `BLOCK` last time — and updated to match.
+- **The corpus:** `Saved/Logs/Stratocracy_2.log` — a NEW file after a Claude Code restart. No
+  line number was carried forward from `Stratocracy.log`; everything below was re-derived
+  directly against `Stratocracy_2.log`.
+- **Markers, verified rather than trusted, all four checked with `awk`/`grep` before use:**
+  open `3462: LogPlayLevel: Creating play world package: .../Lvl_FerrumCrossing`,
+  `3469: LogLoad: Game class is 'BP_StratGameMode_AiVsAi_C'`; close
+  `3724: LogWorld: BeginTearingDown for .../Lvl_FerrumCrossing`,
+  `3727: LogPlayLevel: Display: Shutting down PIE online subsystems`. **Cut `3462 -> 3727`**
+  (the builder's recommendation): this puts the `Game class is 'BP_StratGameMode_AiVsAi_C'` line
+  INSIDE the slice, so the corpus identifies its own GameMode rather than relying on a claim in a
+  narrative.
+- **The contamination check, verified rather than assumed.** `grep -n "Game class is"
+  Saved/Logs/Stratocracy_2.log` finds it twice — an earlier, pre-travel PIE session under the
+  shipping GameMode (`BP_StratGameMode_C` at line 3427, travel to `Lvl_FerrumCrossing` again at
+  3462 under `BP_StratGameMode_AiVsAi_C`). `grep -n "STRAT-" Saved/Logs/Stratocracy_2.log | awk
+  -F: '$1<3462' | wc -l` → **0**. No `STRAT-*` line exists before the slice boundary, so the
+  earlier session produced none and there is no contamination — measured, not inferred, because
+  this is exactly the class of boundary claim this project has been wrong about before.
+- **Slice checked in:** `Tools/architect/evidence/08-combat-pairing-gate/pie-run/ai-vs-ai-pie-session-slice.log`,
+  cut by `sed -n '3462,3727p'`, 266 lines, named for what it is (one PIE session's own AI-vs-AI
+  match). First and last lines are the open/close markers themselves.
+- **Counts, all re-derived, all matching the builder's report exactly:**
+  `STRAT-AI applied kind=Attack` = **68**, `STRAT-COMBAT resolved` = **68**,
+  `STRAT-COMBAT refused` = **0**, `STRAT-COMBAT divergence` = **0**, `STRAT-CMD accepted` (any
+  kind) = **0**, `STRAT-AI refused` = **1** (kind=EndTurn, `[T-SAVE-05] no match is running`).
+  Every one of the 68 `resolved` lines reads `agree=1 diverge=0`. Kind census: 68 Attack / 55
+  Move / 22 Build / 11 EndTurn. The three zeros carry a positive control from the same
+  instrument on the same file: `resolved`=68 proves the grep can see `STRAT-COMBAT` lines, so a
+  zero elsewhere is a real absence, not a blind grep. `STRAT-COMBAT resolved` confirmed emitted
+  BEFORE its `STRAT-AI applied` partner throughout this corpus (checked directly, not assumed
+  from phase 3's) — the bridge logs during `Submit`, the runner after.
+- **The gate's first PIE corpus.** `strat_combat_pairing_gate.py`'s slicer was built for
+  headless automation logs and hard-requires `Test Started.`/`Test Completed.` markers, which a
+  PIE session log carries none of. Added `--pre-sliced` (mirrors `strat_ai_log_gate.py`'s own
+  established posture of "point this at an ALREADY isolated log"): the entire given file is
+  treated as the slice and the marker search is skipped; the pairing logic, parsers, and every
+  failure mode are unchanged. Proven backward-compatible (the unaffected phase-3 corpus,
+  relocated by log rotation to `Saved/Logs/Stratocracy-backup-2026.08.14-14.23.36.log`, still
+  gates clean; all ten checked-in fixtures still return the same seven `EXIT=1`/three `EXIT=0`)
+  and proven able to fail in the new mode too — self-test grew from 11 to **13** fixtures, the
+  two new ones exercising `--pre-sliced` specifically (a clean corpus passes with no automation
+  markers at all; an ordering-scramble corpus still fails).
+- **Gate run against the checked-in slice, gate output verbatim:**
+  ```
+  STRAT-COMBAT pairing gate: .../pie-run/ai-vs-ai-pie-session-slice.log
+    test:                       (pre-sliced input, no automation markers)
+    slice (1-based lines):      1..266
+    STRAT-AI applied kind=Attack:  68
+    STRAT-COMBAT resolved:         68
+    STRAT-COMBAT refused:          0
+    STRAT-COMBAT divergence:       0
+    STRAT-AI terminal refusals:    1
+    STRAT-AI blocking refusals:    0
+    STRAT-COMBAT parse failures:   0
+    STRAT-AI parse failures:       0
+    pairing mismatches:            0
+  PASS
+  ```
+  Full output in `evidence/08-combat-pairing-gate/pie-run/gate_output.txt`.
+- **Host independence, confirmed by hash diff — NOT content independence, and this run does not
+  claim to be.** 68/68 is EXACTLY phase 3's headless number; with deterministic rules, a
+  deterministic AI, and the same scenario/buildlist/first side, that is expected — the same game
+  replayed through a different host, not a new game. Settled by measurement: all eleven
+  `STRAT-AI turn-ended` hashes (turn/side/commands/hash, four fields each) diffed between this
+  slice and phase 3's headless corpus (`evidence/08-combat-pairing-gate/real-run/t-int-05-both-sides-ai-slice.log`)
+  are **byte-identical** — `diff pie_hashes.txt headless_hashes.txt` produces no output, exit
+  code 0. Full listing in `evidence/08-combat-pairing-gate/pie-run/hash_diff.txt`. **This
+  confirms the same live-PIE path with no simulated input reaches the same result as headless
+  automation. Coordinator's ruling, recorded as written: the phase-D "avoid one-corpus proof"
+  precedent is PARTLY discharged, not fully and not "still fully open."** The HOST-independence
+  half — the same game surviving a different host (PIE vs. headless automation) — IS discharged
+  by this run's identical-hash result. The CONTENT-independence half — a different scenario,
+  buildlist, or first side, genuinely different game content rather than a different way of
+  driving the same one — is NOT discharged and is out of phase 4's scope; it is carried to NEXT
+  as its own future work, not folded into this phase's closure. The identical-hash result makes
+  that remaining limit concrete rather than theoretical: this project now has two runs of the
+  exact same game through two different hosts, not two different games.
+- **Two honest limits, self-reported by the builder, recorded rather than smoothed over:**
+  1. **`AiTurnDelaySeconds` does not pace per turn.** The whole game ran in ~4 ms
+     (`16.15.29:141` → `:145`, confirmed directly on the slice). The delay paces *entry into*
+     `RunAiTurnsIfDue`; once inside, `RunAiTurnsNow` — "plays every consecutive AI turn that is
+     due, synchronously, and reconciles after," per its own doc comment in
+     `StratMatchSubsystem.h` — plays every remaining AI turn in one call. **Cited by the
+     function's doc comment, not a line number** (the standing "cite functions, not line numbers"
+     lesson: a line-number citation is accurate today and rots on the next edit to that file).
+     **Consequence: there are no distinct seed / mid-progression / result screenshots of this
+     match** — confirmed: no screenshot in `Saved/Screenshots/WindowsEditor/` postdates phase D's
+     captures (`ScreenShot00042.png`/`00043.png`, both dated Aug 13 20:37, already checked into
+     `evidence/07-ai-opponent/pie-screenshots/`). **The builder explicitly refused to present the
+     earlier shipping-GameMode session's pristine seed image as this match's seed — recorded here
+     approvingly; that is the correct call and the opposite of what this project has been burned
+     by** (a confounded control standing in for the real one — the hot-seat phase-6 precedent).
+     This also corrects phase D's "0.5 s pacing" reading as it applies to this run: the pacing is
+     real, but it is not per-turn once a paced entry fires.
+     **A committed message this correction cannot reach:** `eda3b4b` ("An AI-vs-AI GameMode, so
+     the corpus does not come from a config that exists nowhere") carries the premise
+     "`AiTurnDelaySeconds` stays 0.5 so turns pace as phase D measured and mid-progression
+     screenshots mean something." This run falsifies that premise — there is no per-turn pacing
+     once `RunAiTurnsIfDue` fires, so no mid-progression screenshot from this path means what
+     that message says it means. The commit message is immutable; this paragraph is the
+     correction, written down plainly enough that a reader of `git log` alone, without this file,
+     is still misled by that one message and needs to find this correction to know it.
+  2. **No result tier is logged.** No `STRAT-*` line carries one, and the match subsystem is
+     unreachable from Lua. The observable finish evidence is the turn count plus the
+     `[T-SAVE-05] no match is running` signature at whole-file lines 3716-3717 — which is what a
+     CORRECT §2.8 finish looks like, not a fault (the same terminal-refusal shape phases 1 and 3
+     already established). Reached turn 6; eleven `STRAT-AI turn-ended` lines; the killing blow
+     at whole-file line 3714 took side 1's fame `fameBefore=200` → `fameAfter=700`, confirmed
+     verbatim by `sed -n '3714,3717p' Saved/Logs/Stratocracy_2.log`.
+- **Log-rotation note, not a finding:** `Saved/Logs/Stratocracy.log` (no `_2`) was rotated
+  between phase 3 and phase 4 by the editor restart — it is now a short, unrelated 3492-line
+  session with zero occurrences of `BothSidesAiReachesAResultWithinTheBound`. Not data loss: the
+  byte-identical phase-3 content is preserved at
+  `Saved/Logs/Stratocracy-backup-2026.08.14-14.23.36.log`, confirmed still gate-clean. Nothing in
+  phase 3's evidence or `state.md` entry depends on the live `Stratocracy.log` path remaining
+  stable.
+- **Evidence:** `Tools/architect/evidence/08-combat-pairing-gate/pie-run/` — the checked-in
+  slice, `gate_output.txt`, `hash_diff.txt`, and `blackboard.md` recording all of the above with
+  the commands run beside every number.
+- **`.agents/ue-project-context.md` drift, unowned by any crew agent, flag only:** `:195` still
+  reads "93/93" against an actual 103; `:198`'s "Measured in phase 4" refers to the HOT-SEAT
+  milestone's phase 4 and now collides in name with this combat-outcome milestone's own phase 4 —
+  worth qualifying by milestone name whenever that file is next touched. No crew agent owns
+  `.agents/`; this is a flag, not a task this steward takes.
+- **Deferred, out of phase 4's scope, its own future work:** a content-independent corpus — a
+  different scenario, buildlist, or first side — to discharge the content-independence half of
+  the phase-D "avoid one-corpus proof" precedent (the host-independence half is now discharged —
+  see the hash-diff bullet above). This phase's identical-hash result shows that remaining half
+  is concretely, not merely theoretically, open.
+- **Gate debt, real and non-gating, NOT to be built now (scope fence stands; phase 5 is the doc
+  pass) — recorded so it is discharged before this gate is pointed at a corpus anyone has not
+  eyeballed.** `--pre-sliced` returns `PASS` and exit 0 on an EMPTY or WRONG corpus. Measured
+  directly: an empty file through `--pre-sliced` prints `slice (1-based lines): 1..0`, every
+  count zero, `PASS`, `EXIT=0`. The marker-slicing path hard-fails on a wrong file via
+  `SliceFailure`; `--pre-sliced` has no equivalent self-identification check, and
+  `GateResult.passed` carries no non-zero floor — zero applied attacks and zero resolved lines
+  currently reads as a trivially-satisfied pairing rather than "nothing was actually checked."
+  **This does not touch phase 4's result** — that slice is content-bounded, carries both boundary
+  markers as its own first and last lines, and has 68 real pairs — but the flag trades a
+  structural corpus-identity guard for caller discipline, and neither this file nor the pie-run
+  blackboard previously recorded that trade. This project has already shipped a commit titled "a
+  gate whose own fixtures could not fail it"; a known silent-pass in the instrument this
+  milestone's results rest on is exactly that class of debt. **Owed shape, per the reviewer:** a
+  `--expect-min-pairs N` argument, or an outright refusal on a zero-event pre-sliced corpus, plus
+  a 14th self-test fixture proving the new guard can itself fail. Owner: this steward's own lane
+  (`Tools/architect/`), next time the gate script is touched — not this phase.
+
 - **Phase 5** — the doc pass.
 
 - **`Combat.h::resolveDamage`/`defenderCanCounter` is the sole producer of `uiForecast`

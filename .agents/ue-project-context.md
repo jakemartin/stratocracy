@@ -192,9 +192,10 @@ reference shape.
 
 The count moves every phase and goes stale the moment it is restated — read it from
 `Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
-number here. Last observed here: 93/93, combat-outcome phase 2, 2026-08-14.
+number here. Last observed here: 103/103, combat-outcome phase 3, 2026-08-14.
 
-**That report is UTF-8 with a BOM** — first bytes `EF BB BF`. Measured in phase 4, after two
+**That report is UTF-8 with a BOM** — first bytes `EF BB BF`. Measured in the hot-seat milestone's
+phase 4 (not the combat-outcome milestone's, which is the AI-vs-AI PIE run), after two
 agents reported it as UTF-16: all three UTF-16 codecs fail on it and `utf-8-sig` succeeds. A
 reader that hardcodes the wrong codec sees zero tests and may not say so — the same silent-zero
 shape as the bare `"Stratocracy.uproject"` test command below.

@@ -414,12 +414,29 @@ class GateResult:
         return "\n".join(lines)
 
 
-def run_gate(log_path: str | Path, test_path: str = DEFAULT_TEST_PATH) -> GateResult:
+def run_gate(
+    log_path: str | Path, test_path: str = DEFAULT_TEST_PATH, pre_sliced: bool = False,
+) -> GateResult:
+    """`pre_sliced=True` is the PIE-corpus escape hatch, added phase 4: a PIE session log carries
+    no `Test Started.` / `Test Completed.` automation markers at all -- those only exist in a
+    headless `RunTests` log, this gate's first corpus. This does NOT relax "slice by content
+    markers, never EOF" -- it moves the obligation to the CALLER, matching
+    `strat_ai_log_gate.py`'s own established posture (its docstring: "Point this at an ISOLATED,
+    real AI-vs-AI match log"). The caller is expected to have already cut the file to one
+    session's own markers (e.g. `LogPlayLevel: Creating play world package: ...` at open,
+    `LogPlayLevel: Display: Shutting down PIE online subsystems` at close) with a real `grep`/`sed`
+    against verified line numbers, exactly as `slice_by_test_name` does internally for the
+    automation-log case. With `pre_sliced=True` the ENTIRE given file is treated as that slice;
+    `test_path` is not consulted and `slice_bounds` reports the whole file's own line count.
+    """
     path = Path(log_path)
     text = path.read_text(encoding="utf-8", errors="replace")
     all_lines = text.splitlines()
 
-    bounds = slice_by_test_name(all_lines, test_path)
+    if pre_sliced:
+        bounds: tuple[int, int] | SliceFailure = (0, len(all_lines))
+    else:
+        bounds = slice_by_test_name(all_lines, test_path)
     if isinstance(bounds, SliceFailure):
         return GateResult(
             log_path=str(path), test_path=test_path, slice_bounds=None,
@@ -516,7 +533,7 @@ def run_gate(log_path: str | Path, test_path: str = DEFAULT_TEST_PATH) -> GateRe
 
     return GateResult(
         log_path=str(path),
-        test_path=test_path,
+        test_path=(test_path if not pre_sliced else "(pre-sliced input, no automation markers)"),
         slice_bounds=(start + 1, end),  # 1-based, inclusive
         applied_attacks=applied_attacks,
         combat_resolved=combat_resolved,
@@ -591,12 +608,12 @@ def check_self_test() -> tuple[bool, str]:
         if not ok:
             all_ok = False
 
-    def gate_on(text: str, test_path: str = _FIXTURE_TEST_PATH) -> GateResult:
+    def gate_on(text: str, test_path: str = _FIXTURE_TEST_PATH, pre_sliced: bool = False) -> GateResult:
         with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False, encoding="utf-8") as f:
             f.write(text)
             tmp_path = f.name
         try:
-            return run_gate(tmp_path, test_path=test_path)
+            return run_gate(tmp_path, test_path=test_path, pre_sliced=pre_sliced)
         finally:
             Path(tmp_path).unlink(missing_ok=True)
 
@@ -716,6 +733,29 @@ def check_self_test() -> tuple[bool, str]:
            "pairing still passes clean", r.passed and len(r.combat_resolved) == 1,
            f"passed={r.passed}, combat_resolved={len(r.combat_resolved)}")
 
+    # 12. --pre-sliced mode (added phase 4, for a PIE-session corpus with no automation
+    #     markers): a clean pairing, given as the RAW body with no Test Started/Completed
+    #     wrapper at all, still passes when pre_sliced=True.
+    pre_sliced_clean = "\n".join([
+        _resolved_line(10, (3, 4)), _applied_attack_line(10, (3, 4)),
+        _resolved_line(9, (5, 2), turn=2), _applied_attack_line(9, (5, 2), turn=2),
+    ])
+    r = gate_on(pre_sliced_clean, pre_sliced=True)
+    record("--pre-sliced mode passes a clean corpus with no automation markers at all",
+           r.passed and r.slice_bounds == (1, 4),
+           f"passed={r.passed}, slice_bounds={r.slice_bounds}")
+
+    # 13. --pre-sliced mode still catches a real fault (ordering scramble) -- proving the flag
+    #     skips ONLY the marker search, not the pairing check itself.
+    pre_sliced_scrambled = "\n".join([
+        _resolved_line(10, (3, 4)), _applied_attack_line(9, (5, 2)),
+        _resolved_line(9, (5, 2), turn=2), _applied_attack_line(10, (3, 4), turn=2),
+    ])
+    r = gate_on(pre_sliced_scrambled, pre_sliced=True)
+    record("--pre-sliced mode still fails a real ordering-scramble fault",
+           (not r.passed) and bool(r.pairing_mismatches),
+           f"passed={r.passed}, mismatches={len(r.pairing_mismatches)}")
+
     return all_ok, "\n".join(report_lines)
 
 
@@ -735,6 +775,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("log_path", nargs="?", help="Path to a Stratocracy .log file to gate.")
     parser.add_argument("--test-path", default=DEFAULT_TEST_PATH,
                          help=f"Full automation test path to slice on (default: {DEFAULT_TEST_PATH}).")
+    parser.add_argument("--pre-sliced", action="store_true",
+                         help=(
+                             "Treat log_path as ALREADY sliced to one session by the caller "
+                             "(e.g. a PIE session log cut on its own open/close markers with sed) "
+                             "and skip the automation Test Started/Completed marker search "
+                             "entirely. Ignores --test-path. Added phase 4 for the gate's first "
+                             "PIE-session corpus, which carries no automation markers at all."
+                         ))
     parser.add_argument("--self-test", action="store_true",
                          help="Run the fixture self-test proving this gate can FAIL, and exit.")
     args = parser.parse_args(argv)
@@ -748,7 +796,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.log_path:
         parser.error("log_path is required unless --self-test is given")
 
-    result = run_gate(args.log_path, test_path=args.test_path)
+    result = run_gate(args.log_path, test_path=args.test_path, pre_sliced=args.pre_sliced)
     print(result.render())
     return 0 if result.passed else 1
 

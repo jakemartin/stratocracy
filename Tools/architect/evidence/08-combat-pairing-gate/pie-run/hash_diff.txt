@@ -1,0 +1,30 @@
+$ grep -o "STRAT-AI turn-ended.*hash=[a-f0-9]*" pie-run/ai-vs-ai-pie-session-slice.log | grep -oE "side=[0-9]+ turn=[0-9]+ commands=[0-9]+ hash=[a-f0-9]+" > pie_hashes.txt
+$ grep -o "STRAT-AI turn-ended.*hash=[a-f0-9]*" ../real-run/t-int-05-both-sides-ai-slice.log | grep -oE "side=[0-9]+ turn=[0-9]+ commands=[0-9]+ hash=[a-f0-9]+" > headless_hashes.txt
+$ diff pie_hashes.txt headless_hashes.txt
+diff exit code: 0
+
+-- pie_hashes.txt (11 lines) --
+side=0 turn=1 commands=8 hash=02cd799951334a5f
+side=1 turn=1 commands=10 hash=b00cf144ba3786e5
+side=0 turn=2 commands=8 hash=09e3d1c73d1a3ec2
+side=1 turn=2 commands=13 hash=cc34120916720b81
+side=0 turn=3 commands=13 hash=a00e8967a86cc32b
+side=1 turn=3 commands=12 hash=8b0cc86c04ee3209
+side=0 turn=4 commands=18 hash=6fa79f14f2bdb43f
+side=1 turn=4 commands=17 hash=248363e85662c959
+side=0 turn=5 commands=12 hash=38844b6cc607ef35
+side=1 turn=5 commands=18 hash=150703fa43920371
+side=0 turn=6 commands=11 hash=3d3de2cf1755f09e
+
+-- headless_hashes.txt (11 lines, from evidence/08-combat-pairing-gate/real-run/t-int-05-both-sides-ai-slice.log) --
+side=0 turn=1 commands=8 hash=02cd799951334a5f
+side=1 turn=1 commands=10 hash=b00cf144ba3786e5
+side=0 turn=2 commands=8 hash=09e3d1c73d1a3ec2
+side=1 turn=2 commands=13 hash=cc34120916720b81
+side=0 turn=3 commands=13 hash=a00e8967a86cc32b
+side=1 turn=3 commands=12 hash=8b0cc86c04ee3209
+side=0 turn=4 commands=18 hash=6fa79f14f2bdb43f
+side=1 turn=4 commands=17 hash=248363e85662c959
+side=0 turn=5 commands=12 hash=38844b6cc607ef35
+side=1 turn=5 commands=18 hash=150703fa43920371
+side=0 turn=6 commands=11 hash=3d3de2cf1755f09e

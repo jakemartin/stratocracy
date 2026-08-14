@@ -171,3 +171,71 @@ namespace EStratCombatDivergence
 		LegalityDisagrees = 1 << 2,
 	};
 }
+
+// ---------------------------------------------------------------------------
+// The divergence rule, promoted out of `StratBridge.cpp` so it can be FALSIFIED.
+//
+// WHAT GAP THIS CLOSES. `DivergenceMask`'s non-zero arms and `ForecastAgrees == 0`
+// were unreachable from any test, and not for want of trying. Phase 2's gate measured
+// it against the vendored sources: `strat::uiForecast` and `strat::applyCommand` reach
+// the same `resolveDamage` / `defenderCanCounter` over the same stat blocks, so a
+// forecast-illegal attack that nonetheless applies is not CONSTRUCTIBLE through the
+// bridge -- 74 Attacks driven, zero divergences, which is the right number and also
+// no evidence at all that the detector works. A clause that cannot fail pins nothing.
+//
+// The remedy is a seam, not a foil. Rather than inventing a fake rules module that
+// disagrees with itself -- which would pin the fake and not the rule -- the mask
+// computation is lifted to a free function over a hand-buildable `FStratCombatOutcome`.
+// A test writes a deliberately wrong `DefenderHpAfter` into a struct it owns and reads
+// the mask straight back. No submit, no snapshot, no `strat::` anything.
+//
+// THERE IS EXACTLY ONE COPY OF THE RULE, and that is the point of doing it this way
+// rather than by giving the test its own reimplementation. `CaptureAfter` CALLS these;
+// it does not keep a parallel copy. If these two functions and the emitter ever drift,
+// the drift is a compile error or a behaviour change, never a silent second opinion.
+//
+// NO `_API` DECORATION, DELIBERATELY -- the same ruling the `LogStratBridge` block
+// above makes for the same reason. Both call sites are in-module: the emitter in
+// `Source/StratBridge/StratBridge.cpp` and the clauses in `Source/StratBridge/Tests/`,
+// which UBT compiles into `UnrealEditor-StratBridge.dll` alongside it. An undecorated
+// extern function links across translation units within one DLL; it is only a
+// cross-MODULE call that becomes the `LNK2019` this project measured 8x. Adding
+// `STRATBRIDGE_API` here would widen the exported surface for a caller nobody has
+// written. If one is ever written -- an outcome handed to `StratPlay` that the gameplay
+// module then wants to re-score -- the decoration is the fix, made then, with the caller
+// in hand.
+//
+// WHAT IS DELIBERATELY NOT IN HERE. No measurability guard. The three-state
+// `ForecastAgrees` (-1 for "the comparison could not be made") is a property of the
+// CAPTURE -- it asks whether a forecast was queried and whether a defender and an
+// attacker HP were resolvable off the snapshots -- and it stays with the capture in
+// `CaptureAfter`. `StratDivergenceMaskOf` answers only "given these numbers, which
+// clauses failed", and its precondition is stated on it. Folding the guard in here
+// would make the mask function unable to distinguish "agreed" from "unmeasurable",
+// which is precisely the two-state collapse `ForecastAgrees`' doc comment refuses.
+// ---------------------------------------------------------------------------
+
+/**
+ * Did one combatant lose what it was predicted to lose?
+ *
+ * A DEAD UNIT HAS NO "AFTER" HP, so death and damage cannot be checked by the same
+ * comparison. When both sides agree the unit died, the only thing left to check is
+ * that the predicted blow was at least large enough to empty the pool -- the excess
+ * is not observable anywhere and asserting on it would be inventing a clause.
+ *
+ * `HpBefore` / `HpAfter` carry `FStratCombatOutcome`'s sentinel discipline: `INDEX_NONE`
+ * means "no value here", and a surviving unit with an unmeasurable HP disagrees by
+ * construction rather than comparing -1 against a real number.
+ */
+bool StratLossAgrees(int32 HpBefore, int32 HpAfter, bool bDied, int32 ExpectedDamage, bool bExpectDeath);
+
+/**
+ * Which `EStratCombatDivergence` clauses did NOT hold for this outcome.
+ *
+ * Returns `EStratCombatDivergence::None` (0) when every clause held. PRECONDITION: the
+ * outcome is measurable -- `bForecastQueried` is true, `DefenderId` is not `INDEX_NONE`,
+ * and `AttackerHpBefore` is not `INDEX_NONE`. Called on an outcome that fails any of
+ * those, the return value is meaningless rather than wrong; `CaptureAfter` is what
+ * decides measurability, and it leaves `ForecastAgrees` at -1 instead of calling this.
+ */
+int32 StratDivergenceMaskOf(const FStratCombatOutcome& Outcome);

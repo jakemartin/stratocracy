@@ -187,6 +187,68 @@ FStratResult FStratBridge::LoadScenarioFromFile(const FString& ScenarioFilePath,
 }
 
 // ---------------------------------------------------------------------------
+// The divergence rule. DECLARED in StratCombatLog.h -- see that file for why it is a
+// free function over an engine-typed struct rather than a member or a file-local
+// helper, and why it carries no `_API` macro. Defined here rather than inline in the
+// header so the emitter below and the in-module clauses link against the same object
+// code, and so a drift between the two shows up as a link error rather than as two
+// silently-different inlinings.
+//
+// NOTHING IN EITHER FUNCTION NAMES A `strat::` TYPE. That is what makes them callable
+// from a clause that never seeds a board.
+// ---------------------------------------------------------------------------
+bool StratLossAgrees(int32 HpBefore, int32 HpAfter, bool bDied, int32 ExpectedDamage, bool bExpectDeath)
+{
+	if (bDied != bExpectDeath)
+	{
+		return false;
+	}
+	if (bDied)
+	{
+		return ExpectedDamage >= HpBefore;
+	}
+	if (HpBefore == INDEX_NONE || HpAfter == INDEX_NONE)
+	{
+		return false;
+	}
+	return (HpBefore - HpAfter) == ExpectedDamage;
+}
+
+int32 StratDivergenceMaskOf(const FStratCombatOutcome& Outcome)
+{
+	int32 Mask = EStratCombatDivergence::None;
+
+	if (!Outcome.bForecastLegal)
+	{
+		// The rules applied an attack the forecast called illegal. That is the two
+		// halves of §2.6 disagreeing about whether the act was even available, and it
+		// is a sharper fault than any damage mismatch.
+		Mask |= EStratCombatDivergence::LegalityDisagrees;
+	}
+
+	if (!StratLossAgrees(Outcome.DefenderHpBefore, Outcome.DefenderHpAfter, Outcome.bDefenderDied,
+	                     Outcome.ForecastDamage, Outcome.bForecastDefenderDies))
+	{
+		Mask |= EStratCombatDivergence::DefenderLoss;
+	}
+
+	// A counter that does not fire predicts a loss of ZERO, which is not the same as
+	// predicting nothing -- and `counterFires` true with `counterDamage` 0 predicts
+	// zero too. Folding both through the same expected-damage comparison is what
+	// keeps a 0-damage counter from reading as a divergence.
+	const int32 ExpectedCounter    = Outcome.bForecastCounterFires ? Outcome.ForecastCounterDamage : 0;
+	const bool  bExpectAttackerDie = Outcome.bForecastCounterFires
+	                                 && Outcome.ForecastCounterDamage >= Outcome.AttackerHpBefore;
+	if (!StratLossAgrees(Outcome.AttackerHpBefore, Outcome.AttackerHpAfter, Outcome.bAttackerDied,
+	                     ExpectedCounter, bExpectAttackerDie))
+	{
+		Mask |= EStratCombatDivergence::CounterLoss;
+	}
+
+	return Mask;
+}
+
+// ---------------------------------------------------------------------------
 // StratCombatObservation -- the `STRAT-COMBAT` family, and the only place in the
 // project that compares §2.6's forecast against what §2.6 actually did.
 //
@@ -198,7 +260,8 @@ FStratResult FStratBridge::LoadScenarioFromFile(const FString& ScenarioFilePath,
 // reads both and DERIVES NEITHER -- every predicted number is `uiForecast`'s and
 // every measured number is one snapshot field minus the same snapshot field.
 //
-// THE ONE PIECE OF ARITHMETIC IN HERE IS `LossAgrees`, AND IT DECIDES NOTHING.
+// THE ONE PIECE OF ARITHMETIC THIS BLOCK REACHES IS `StratDivergenceMaskOf`
+// (declared in StratCombatLog.h, defined just above), AND IT DECIDES NOTHING.
 // It is the divergence detector; it compares two answers that already exist and
 // its result reaches a log line and nothing else. No caller branches on it, no
 // state depends on it, and if it were deleted the game would play identically.
@@ -244,31 +307,13 @@ namespace StratCombatObservation
 		return nullptr;
 	}
 
-	/**
-	 * Did one combatant lose what it was predicted to lose?
-	 *
-	 * A DEAD UNIT HAS NO "AFTER" HP, so death and damage cannot be checked by the same
-	 * comparison. When both sides agree the unit died, the only thing left to check is
-	 * that the predicted blow was at least large enough to empty the pool -- the excess
-	 * is not observable anywhere and asserting on it would be inventing a clause.
-	 */
-	bool LossAgrees(int32 HpBefore, int32 HpAfter, bool bDied, int32 ExpectedDamage, bool bExpectDeath)
-	{
-		if (bDied != bExpectDeath)
-		{
-			return false;
-		}
-		if (bDied)
-		{
-			return ExpectedDamage >= HpBefore;
-		}
-		if (HpBefore == INDEX_NONE || HpAfter == INDEX_NONE)
-		{
-			return false;
-		}
-		return (HpBefore - HpAfter) == ExpectedDamage;
-	}
-
+	// `LossAgrees` AND THE MASK RULE USED TO LIVE HERE. They are now `StratLossAgrees`
+	// and `StratDivergenceMaskOf` in StratCombatLog.h, promoted in the combat-outcome
+	// milestone because their non-agreement arms were unreachable from any clause: a
+	// forecast-illegal attack that applies is not constructible through the bridge, the
+	// two rules entry points sharing `resolveDamage` / `defenderCanCounter` (74 Attacks
+	// measured, zero divergences). The functions moved; the reasoning that shaped them
+	// moved with them and is not restated here. `CaptureAfter` below calls them.
 	void CaptureBefore(const FStratBridge&        Bridge,
 	                   const strat::SaveCommand&  Command,
 	                   FStratCombatOutcome&       Out,
@@ -369,34 +414,12 @@ namespace StratCombatObservation
 			return;   // ForecastAgrees stays -1
 		}
 
-		int32 Mask = EStratCombatDivergence::None;
-
-		if (!Out.bForecastLegal)
-		{
-			// The rules applied an attack the forecast called illegal. That is the two
-			// halves of §2.6 disagreeing about whether the act was even available, and it
-			// is a sharper fault than any damage mismatch.
-			Mask |= EStratCombatDivergence::LegalityDisagrees;
-		}
-
-		if (!LossAgrees(Out.DefenderHpBefore, Out.DefenderHpAfter, Out.bDefenderDied,
-		                Out.ForecastDamage, Out.bForecastDefenderDies))
-		{
-			Mask |= EStratCombatDivergence::DefenderLoss;
-		}
-
-		// A counter that does not fire predicts a loss of ZERO, which is not the same as
-		// predicting nothing -- and `counterFires` true with `counterDamage` 0 predicts
-		// zero too. Folding both through the same expected-damage comparison is what
-		// keeps a 0-damage counter from reading as a divergence.
-		const int32 ExpectedCounter    = Out.bForecastCounterFires ? Out.ForecastCounterDamage : 0;
-		const bool  bExpectAttackerDie = Out.bForecastCounterFires
-		                                 && Out.ForecastCounterDamage >= Out.AttackerHpBefore;
-		if (!LossAgrees(Out.AttackerHpBefore, Out.AttackerHpAfter, Out.bAttackerDied,
-		                ExpectedCounter, bExpectAttackerDie))
-		{
-			Mask |= EStratCombatDivergence::CounterLoss;
-		}
+		// ONE CALL, AND NO SECOND COPY OF THE RULE. Everything above this line is
+		// measurement -- reading two snapshots and a forecast. The clause comparison
+		// itself is `StratDivergenceMaskOf`, and the reason it is not written out here
+		// is that a clause hand-building an `FStratCombatOutcome` must exercise the same
+		// bytes this emitter does, not a sibling of them.
+		const int32 Mask = StratDivergenceMaskOf(Out);
 
 		Out.DivergenceMask  = Mask;
 		Out.ForecastAgrees  = (Mask == EStratCombatDivergence::None) ? 1 : 0;

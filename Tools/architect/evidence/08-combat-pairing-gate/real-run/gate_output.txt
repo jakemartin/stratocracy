@@ -1,0 +1,31 @@
+== against Saved/Logs/Stratocracy.log (full session log, gate slices internally) ==
+STRAT-COMBAT pairing gate: Saved\Logs\Stratocracy.log
+  test:                       Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultWithinTheBound
+  slice (1-based lines):      4179..4474
+  STRAT-AI applied kind=Attack:  68
+  STRAT-COMBAT resolved:         68
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0
+
+== against the checked-in slice t-int-05-both-sides-ai-slice.log (same slice, standalone file) ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\real-run\t-int-05-both-sides-ai-slice.log
+  test:                       Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultWithinTheBound
+  slice (1-based lines):      1..296
+  STRAT-AI applied kind=Attack:  68
+  STRAT-COMBAT resolved:         68
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0

@@ -1,0 +1,149 @@
+== fail_blocking_ai_refusal.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_blocking_ai_refusal.log
+  test:                       Stratocracy.Fixture.FIX-01.FixtureTest
+  slice (1-based lines):      1..5
+  STRAT-AI applied kind=Attack:  1
+  STRAT-COMBAT resolved:         1
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    0
+  STRAT-AI blocking refusals:    1
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+    FAIL line 4: non-terminal STRAT-AI refused phase=apply kind=Attack turn=2 side=1 reason='some other refusal reason entirely'
+FAIL
+EXIT=1
+
+== fail_divergence_present.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_divergence_present.log
+  test:                       Stratocracy.Fixture.FIX-01.FixtureTest
+  slice (1-based lines):      1..5
+  STRAT-AI applied kind=Attack:  1
+  STRAT-COMBAT resolved:         1
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       1
+  STRAT-AI terminal refusals:    0
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+    FAIL line 3: STRAT-COMBAT divergence attacker=10 defender=5 hex=3,4 diverge=1
+FAIL
+EXIT=1
+
+== fail_format_drift.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_format_drift.log
+  test:                       Stratocracy.Fixture.FIX-01.FixtureTest
+  slice (1-based lines):      1..4
+  STRAT-AI applied kind=Attack:  1
+  STRAT-COMBAT resolved:         0
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    0
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   1
+  STRAT-AI parse failures:       0
+  pairing mismatches:            1
+    FAIL line 2: unparseable STRAT-COMBAT line: 'STRAT-COMBAT resolved attacker=10 THIS IS NOT THE REST OF THE LINE'
+    FAIL pair index 0: applied line 3, resolved line None: STRAT-AI applied kind=Attack (unit=10 hex=3,4) has no corresponding STRAT-COMBAT resolved at this position -- more applied attacks than resolutions. Possible causes: the !bSeeded silent path (phase 1), or a submission not routed through FStratBridge::Submit.
+FAIL
+EXIT=1
+
+== fail_missing_markers.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_missing_markers.log
+  test:  Stratocracy.Fixture.FIX-01.FixtureTest
+  FAIL: slicing failed -- no 'Test Started.' marker found for Path={Stratocracy.Fixture.FIX-01.FixtureTest} -- this log does not contain a run of the expected test, or the test's full path has drifted.
+FAIL
+EXIT=1
+
+== fail_ordering_scramble.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_ordering_scramble.log
+  test:                       Stratocracy.Fixture.FIX-01.FixtureTest
+  slice (1-based lines):      1..6
+  STRAT-AI applied kind=Attack:  2
+  STRAT-COMBAT resolved:         2
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    0
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            2
+    FAIL pair index 0: applied line 3, resolved line 2: identity mismatch: applied (unit=9, hex=5,2) != resolved (attacker=10, hex=3,4)
+    FAIL pair index 1: applied line 5, resolved line 4: identity mismatch: applied (unit=10, hex=3,4) != resolved (attacker=9, hex=5,2)
+FAIL
+EXIT=1
+
+== fail_silent_path_gap.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_silent_path_gap.log
+  test:                       Stratocracy.Fixture.FIX-01.FixtureTest
+  slice (1-based lines):      1..5
+  STRAT-AI applied kind=Attack:  2
+  STRAT-COMBAT resolved:         1
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    0
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            1
+    FAIL pair index 1: applied line 4, resolved line None: STRAT-AI applied kind=Attack (unit=9 hex=5,2) has no corresponding STRAT-COMBAT resolved at this position -- more applied attacks than resolutions. Possible causes: the !bSeeded silent path (phase 1), or a submission not routed through FStratBridge::Submit.
+FAIL
+EXIT=1
+
+== fail_truncated_no_completed.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_truncated_no_completed.log
+  test:  Stratocracy.Fixture.FIX-01.FixtureTest
+  FAIL: slicing failed -- 'Test Started.' found at line 1 for Path={Stratocracy.Fixture.FIX-01.FixtureTest}, but no matching 'Test Completed.' marker follows it -- the log is truncated mid-test, or the process did not exit cleanly. This log has no 'Log file closed' line to fall back on; it ends '**** TEST COMPLETE. EXIT CODE: 0 ****' when it exits cleanly, and that marker itself is not a valid substitute for THIS test's own boundary.
+FAIL
+EXIT=1
+
+== pass_clean_pairing.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\pass_clean_pairing.log
+  test:                       Stratocracy.Fixture.FIX-01.FixtureTest
+  slice (1-based lines):      1..6
+  STRAT-AI applied kind=Attack:  2
+  STRAT-COMBAT resolved:         2
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    0
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0
+
+== pass_commentary_echo_ignored.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\pass_commentary_echo_ignored.log
+  test:                       Stratocracy.Fixture.FIX-01.FixtureTest
+  slice (1-based lines):      1..5
+  STRAT-AI applied kind=Attack:  1
+  STRAT-COMBAT resolved:         1
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    0
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0
+
+== pass_terminal_refusal_ok.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\pass_terminal_refusal_ok.log
+  test:                       Stratocracy.Fixture.FIX-01.FixtureTest
+  slice (1-based lines):      1..5
+  STRAT-AI applied kind=Attack:  1
+  STRAT-COMBAT resolved:         1
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0
+

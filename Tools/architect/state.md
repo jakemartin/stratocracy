@@ -2,11 +2,21 @@
 
 _Last run 2026-08-14 (log-backed combat outcome milestone: phase 1 CLOSED — the `STRAT-COMBAT`
 emitter on `FStratBridge::Submit`, gated three times, zero findings, plus an unplanned 1-in-4 test
-flake in a `GLog` capture found and fixed on source-level proof, not a probe; phase 2 CLOSED
-pending a gate now running — six new clauses in `StratCombatOutcomeParity.cpp`, suite 87 → 93,
-including the first-ever execution of the `adied=1` counter-kill arm. Two phases closed; phases
-3–5 not started. See "Log-backed combat outcome milestone" below. The prior entry (AI-opponent
-milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" further down.)_
+flake in a `GLog` capture found and fixed on source-level proof, not a probe; phase 2 CLOSED,
+`VERDICT: PASS`, zero findings — six new clauses in `StratCombatOutcomeParity.cpp`, suite 87 → 93,
+including the first-ever execution of the `adied=1` counter-kill arm; phase 3 CLOSED
+MET-AS-CORRECTED, gated THREE TIMES: first two `VERDICT: BLOCK` (a fixture-count miscount in this
+file; then this file's OWN mid-file summary line still claiming "no reviewer verdict yet" after
+this same file's phase-3 entry already recorded the first `BLOCK` — the other half of the exact
+mistake phase D's entry already documents paying for once), both fixed in place; third
+`VERDICT: PASS`, zero findings, 2026-08-14 — the brief's `STRAT-CMD accepted` ↔ `STRAT-COMBAT
+resolved` pairing is unreachable in an
+AI-vs-AI match (measured 0), the real pairing is `STRAT-AI applied kind=Attack` ↔ `STRAT-COMBAT
+resolved` by ordered identity, proven 68/68 with zero mismatches by
+`Tools/architect/strat_combat_pairing_gate.py`, suite 93 → 103. Three phases closed; phases 4–5
+not started. See "Log-backed combat outcome milestone" below. The prior entry
+(AI-opponent milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone"
+further down.)_
 
 ## BUILT
 
@@ -1738,7 +1748,10 @@ A combat outcome carried on a log line routed through `FStratBridge`, not comput
 nothing else (`Source/StratRules/Replay.good.cpp:413-470`) — the rules layer hands back no damage,
 death, counter, or fame. The outcome is instead assembled from `strat::uiForecast` captured
 **before** the submit plus the measured state delta **after**, both on one log line with an
-agreement flag. Two phases closed; phases 3–5 planned and not started.
+agreement flag. Three phases CLOSED (phase 3 MET-AS-CORRECTED, gated three times — first two
+`VERDICT: BLOCK`, both fixed in place, third `VERDICT: PASS` with zero findings — see "Phase 3"
+below for the full history); phases 4–5
+planned and not started.
 
 ### Phase 1 — CLOSED (editor closed)
 
@@ -1856,13 +1869,182 @@ passing in isolation: `Expected 'one accepted command emits exactly one line' to
     emitter rather than the damage figure. The clause's real independence is at `:476-479`. The code
     is right; the wording overstates it.
 
-### Not started
+### Phase 3 — CLOSED (editor closed), MET-AS-CORRECTED
 
-- **Phase 3** (editor closed) — AI-vs-AI headless proof that every `STRAT-CMD accepted kind=Attack`
-  pairs 1:1 with a `STRAT-COMBAT resolved`, counts derived by a named command, **and it must
-  account for the `!bSeeded` silent path** (phase 1's second documented hole above:
-  `resolved + refused` is not the count of attacks submitted).
-- **Phase 4** (editor OPEN) — PIE run driven by `RunAiTurnsNow` so no simulated input is needed,
+- **Completed:** 2026-08-14.
+- **Exit criterion as WRITTEN in the brief:** "AI-vs-AI headless proof that every
+  `STRAT-CMD accepted kind=Attack` pairs 1:1 with a `STRAT-COMBAT resolved`, counts derived by a
+  named command, and it must account for the `!bSeeded` silent path." **That criterion names the
+  wrong pairing and cannot be met as written** — `STRAT-CMD accepted` is the HUMAN selection
+  applier's line (`StratSelectionMachine.cpp`); the AI path never emits it
+  (`StratAiTurnRunner.cpp:242-247`: routing AI commands through `StratSubmitSelectionCommand`
+  would mean inventing a click). Measured over the AI-vs-AI slice:
+  `grep -c "STRAT-CMD accepted kind=Attack" slice.log` → **0**. No gate can pair a line the
+  corpus never contains.
+- **MET-AS-CORRECTED.** The real pairing — `STRAT-AI applied kind=Attack` ↔ `STRAT-COMBAT
+  resolved` — is proven 1:1 by **ordered identity** on `(unit, hex)` vs `(attacker, hex)`, not
+  merely by matching totals, by `Tools/architect/strat_combat_pairing_gate.py`.
+- **Gated THREE times, 2026-08-14. `VERDICT: PASS`, zero findings, on the third — PHASE 3 IS
+  CLOSED.** Full history, honestly kept rather than only the final verdict:
+  - **First gate: `VERDICT: BLOCK`, one finding.** The gate and fixtures were correct; the finding
+    was a prose miscount in this file — "eight distinct FAIL fixtures plus two PASS controls,"
+    naming a checked-in fixture that does not exist and omitting `pass_terminal_refusal_ok.log`
+    from the PASS list. Fixed in place, corrected below (see "Ten checked-in fixtures...").
+    No code, fixture, or gate-script change was implied or made.
+  - **Second gate, on the fix for the first: `VERDICT: BLOCK`, one finding, in this file again.**
+    The reviewer independently re-derived every number in the corrected passage (7 fail / 3 pass,
+    7×`EXIT=1` / 3×`EXIT=0`, 11 in-script assertions with "unmatched resolved line" as case 4) and
+    confirmed all of it correct, then found that this file's OWN mid-file summary line still read
+    "phase 3 MET-AS-CORRECTED, no reviewer verdict yet" after this same file's own phase-3 entry
+    had already recorded the first `BLOCK`. **This is the exact mistake `state.md` already
+    recorded paying for once, in the phase-D entry above** ("this file and the phase evidence
+    blackboard both claiming 'no reviewer verdict exists yet' a hundred-plus lines after a
+    `BLOCK` verdict on the same piece was already recorded in the same file") — the same
+    bookkeeping class the NEXT section's lesson names explicitly ("this applies to counts, to
+    'has a verdict run yet' bookkeeping, and to slice boundaries alike"), repeated here despite
+    being written down as a thing to derive rather than carry forward. Fixed in place. No code,
+    fixture, or gate-script change was implied or made by this finding either.
+  - **Third gate: `VERDICT: PASS`, zero findings.** The reviewer re-ran the whole-file
+    verdict-status grep itself across 28 sites, confirmed no phase-3 `PASS` claim existed anywhere
+    before this gate, that no true statement had been deleted by either fix, and that only the two
+    documents in this steward's lane had moved (file-mtime scan). This entry is that closing
+    record.
+  - **The general lesson, restated because it recurred once even after being written down twice:**
+    a "has a gate run yet" / "what did it say" claim is exactly as checkable against the file's
+    own history as a fixture count is against a directory. Before writing ANY verdict-status
+    sentence in this file, run:
+    ```
+    grep -n "gated\|VERDICT\|verdict" Tools/architect/state.md
+    ```
+    and make every site consistent — not just the one nearest the edit. This is the literal
+    command that caught the second finding; run it, do not re-derive that it should be run.
+- **Seam extraction, landed by `strat-gameplay-engineer` ahead of this piece (piece (a)):**
+  `Source/StratBridge/StratCombatLog.h` gained `StratLossAgrees` and `StratDivergenceMaskOf` as
+  two engine-typed, undecorated, in-module-only free functions; `CaptureAfter` now calls them
+  instead of holding a second copy of the rule. **Correction to this file's own prior wording:**
+  the phase-2 entry above said "promote `StratLossAgrees` and `StratDivergenceMaskOf`" as if both
+  already existed as named functions — only `StratLossAgrees` did; `StratDivergenceMaskOf`'s
+  logic was seventeen inline lines inside `CaptureAfter`, so its half of this work was an
+  EXTRACTION, not a promotion of an existing name. Recorded here so a future reader does not
+  repeat the same imprecision this file itself carried forward once already.
+  `StratDivergenceMaskOf` is deliberately PARTIAL — its precondition is that the outcome is
+  already known measurable, and the measurability guard itself stays in `CaptureAfter` rather
+  than folding into the mask function, precisely so `ForecastAgrees`'s three-state result
+  (agree / disagree / unmeasurable) cannot collapse to two. Moving the guard into the promoted
+  function would make it unable to distinguish "agreed" from "could not be measured."
+- **Test suite, landed ahead of this piece (piece (b)):** 10 new clauses in a new
+  `Source/StratBridge/Tests/StratDivergenceRuleClauses.cpp`, each demonstrated red under a
+  mutated expectation and green again on restored bytes. Suite **93 → 103**,
+  `succeeded=103 failed=0 notRun=0` (`Saved/AutomationReport/index.json`, read `utf-8-sig`).
+  Count method: set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`, per the standing project
+  rule for counting new clauses.
+- **The gate itself (piece (c), this entry):** `Tools/architect/strat_combat_pairing_gate.py`.
+  Parses both the `STRAT-COMBAT` family (anchored on the `LogStratBridge:` category, three
+  shapes: `resolved` / `refused` / `divergence`, plus a `StratCombatParseFailure` for anything
+  else) and reuses `strat_ai_log_gate`'s `STRAT-AI` parser — one copy of that parsing rule, not a
+  second one. Slices a log to one test's own `Test Started.` / `Test Completed.` markers, keyed
+  on the test's full `Path={...}`; a missing or unterminated marker pair is a **hard failure**,
+  never a silent scan to EOF (this log has no `Log file closed` line at all — it ends `**** TEST
+  COMPLETE. EXIT CODE: 0 ****`). Asserts the pairing by **ordered identity**, not count-equality:
+  position *i*'s `STRAT-AI applied kind=Attack (unit, hex)` must equal position *i*'s
+  `STRAT-COMBAT resolved (attacker, hex)`, and a length mismatch between the two lists is itself
+  a failure — the structural net under the `!bSeeded` silent path and the `ReplayLog` gap, rather
+  than a floor check that would wave a real gap through as a harmless miscount.
+- **Ten checked-in fixtures under `Tools/architect/evidence/08-combat-pairing-gate/fixtures/`
+  prove the gate can genuinely FAIL, each via the real CLI, not a mocked function.** Split derived
+  directly from the directory, not counted by eye: `ls .../fixtures/ | grep -c '^fail_'` → **7**,
+  `ls .../fixtures/ | grep -c '^pass_'` → **3** (10 total, matching `gate_self_test_output.txt`'s
+  seven `EXIT=1` blocks and three `EXIT=0` blocks). The seven FAIL fixtures: an ordering-scrambled
+  corpus with an unchanged multiset (the case a count-only or set-only check would pass, `fail_ordering_scramble.log`),
+  an unmatched applied attack — the silent-path shape (`fail_silent_path_gap.log`), a malformed
+  `STRAT-COMBAT` line (`fail_format_drift.log`), a `divergence` line (`fail_divergence_present.log`),
+  a non-terminal `STRAT-AI refused` line (`fail_blocking_ai_refusal.log`), no markers at all
+  (`fail_missing_markers.log`), and a truncated (`Started` with no `Completed`) log
+  (`fail_truncated_no_completed.log`). The three PASS controls, named in full: `pass_clean_pairing.log`,
+  `pass_terminal_refusal_ok.log` (the lone `[T-SAVE-05]` terminal handover refusal alone does not
+  fail the gate), and `pass_commentary_echo_ignored.log` (a `LogAutomationController:`-echoed
+  `STRAT-COMBAT` line proven ignored by the category anchor). **Correction to this file's own
+  prior wording:** an earlier pass of this entry said "eight distinct FAIL fixtures plus two PASS
+  controls," naming an "unmatched resolved line" fixture that is not checked in — that scenario
+  exists only as case 4 of the in-script `check_self_test()`, over an inline corpus built with
+  `tempfile`, not among the checked-in `.log` files this sentence was describing — and omitting
+  `pass_terminal_refusal_ok.log` from the PASS list. The two errors summed to the right total (10)
+  by cancelling, which is how it passed unnoticed the first time; caught by the reviewer's gate on
+  phase 3, `VERDICT: BLOCK`, one finding, 2026-08-14. **The in-script `check_self_test()` corpora
+  and the checked-in CLI fixtures are two distinct sets and must not be totalled together again** —
+  `check_self_test()` exercises 11 assertions (including the unmatched-resolved-line case that has
+  no checked-in counterpart), the fixtures directory holds 10 files, and neither number is the
+  other. `gate_self_test_output.txt` is every CHECKED-IN fixture's real, unedited CLI output and
+  exit code; `self_test_internal_fixtures_output.txt` is the separate `--self-test` run.
+- **Measured against the real log, verbatim commands recorded in
+  `evidence/08-combat-pairing-gate/blackboard.md`:**
+  `Saved/Logs/Stratocracy.log`, 5169 lines, session opened `08/14/26 10:16:47`. Slice bounded by
+  `Test Started.`/`Test Completed.` for
+  `Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultWithinTheBound`, found at lines
+  **4179..4474** by `grep -n ... | grep -E "Test Started|Test Completed"`.
+  `STRAT-AI applied kind=Attack` = **68**, `STRAT-COMBAT resolved` = **68**, `STRAT-AI refused`
+  = **1** (kind=EndTurn, `[T-SAVE-05] no match is running` — the known terminal handover
+  refusal), `STRAT-COMBAT divergence` = **0**, `STRAT-COMBAT refused` = **0**. Kind census on
+  `STRAT-AI applied`: 68 Attack / 55 Move / 22 Build / 11 EndTurn. Whole-log (unsliced)
+  `STRAT-COMBAT resolved` count is **493** — the other 425 are bridge/fixture tests that submit
+  directly and emit no `STRAT-AI` line, confirming slicing is mandatory and not optional
+  ergonomics. The gate against the full log and against a standalone checked-in copy of just the
+  slice (`real-run/t-int-05-both-sides-ai-slice.log`) report **identical figures and PASS**,
+  confirming the checked-in slice is a faithful, self-contained copy of what was graded.
+- **The `!bSeeded` silent path fired zero times in this corpus** — a measurement, not a
+  guarantee — and is handled structurally by TWO independent nets, not one:
+  1. The pairing's own length-mismatch arm: `applied_attack_count == combat_resolved_count`
+     (measured 68 == 68) is what a future firing of that path would break, and the gate's
+     length-mismatch check (proven able to fire by `fail_silent_path_gap.log`) reports a real gap
+     with the cause named in the message rather than a silent miscount.
+  2. An unseeded `Submit` still produces an observable line at the AI layer even though it
+     produces none at the combat layer: `Port.Submit` returning false makes
+     `StratAiTurnRunner.cpp` emit `STRAT-AI refused phase=apply kind=Attack ...`, and
+     `is_terminal_handover_refusal` will NOT whitelist that shape (it matches only
+     `phase=apply kind=EndTurn` with the `[T-SAVE-05]` reason) — so it surfaces as a blocking
+     `STRAT-AI` refusal, proven able to fire by `fail_blocking_ai_refusal.log`.
+- **The corrected pairing, confirmed by THREE independent derivations, not one:** the source read
+  of `StratAiTurnRunner.cpp:242-247` (AI commands structurally cannot emit `STRAT-CMD`), the
+  `grep -c` counts on the real slice (0 / 68 / 68 against a 493 whole-log figure), and the gate's
+  own pass/fail behaviour across ten checked-in fixtures — 7 fail_ / 3 pass_, per
+  `ls .../fixtures/ | grep -c '^fail_'` / `'^pass_'` (correctly PASS on the clean and
+  terminal-refusal-only corpora, correctly FAIL on the seven fault shapes, including one — the
+  ordering scramble — that a count-only check would have missed).
+- **Carried forward, unchanged:** `ReplayLog` does not route through `Submit` — a combat log
+  loaded from disk in a fresh process emits no `STRAT-COMBAT` line at all; this gate reads a
+  live-session log only and says nothing about a replayed one. Still open.
+- **Handed to phase 4, unchanged from the milestone's original scoping:** phase 4 (editor OPEN)
+  and phase 5 (the doc pass) remain not started. Phase 4's carried-forward constraint: drive it
+  with `RunAiTurnsNow` so no simulated input is needed, routing around the standing NeoStack
+  injection blocker, and slice evidence by session markers — never to EOF, the same discipline
+  this phase's own gate enforces on `Test Started.`/`Test Completed.` markers.
+- **Deferred debt, two items, neither gating, both recorded rather than fixed now:**
+  - **`StratDivergenceRuleClauses.cpp:12` cites 483 resolutions, restated without a run anchor.**
+    That figure is phase 1's (`483 resolutions, 49 kills, agreement on every one`); the current
+    session log this phase measured against carries 493 `STRAT-COMBAT resolved` lines
+    (`grep -c "STRAT-COMBAT resolved" Saved/Logs/Stratocracy.log`). The two numbers are not in
+    conflict — different runs measure different totals as the suite grows — but the comment
+    presents 483 as if it were this run's count with nothing tying it to the run it actually came
+    from. Owner: `strat-test-author`'s lane (`Source/StratBridge/Tests/`).
+  - **The ten checked-in fixtures under `evidence/08-combat-pairing-gate/fixtures/` have no
+    re-runnable assertion binding each `.log` to its expected verdict.** `gate_self_test_output.txt`
+    records what each one returned at the time it was captured; nothing re-checks that a future
+    parser edit still produces the same verdict on the same bytes, so a regression there could
+    leave the recorded table silently stale. Relatedly, running any of the ten fixtures without
+    `--test-path Stratocracy.Fixture.FIX-01.FixtureTest` fails it for the wrong reason (no marker
+    found for the default `T-INT-05` path) with nothing in the fixtures directory itself saying
+    so — a reader has to already know to pass that flag. Owner: this steward's own lane
+    (`Tools/architect/`) — a future pass should either add a small assertion harness over the
+    fixtures directory or a `README` in it stating the required flag.
+- **Findings outside this steward's lane, recorded here as flags, not tasks:** the gate also
+  found a stale `LegalityDisagrees` doc arm in `Source/StratCombatLog.h` (owed to
+  `strat-gameplay-engineer`'s phase-5 doc pass) and `.agents/ue-project-context.md:195` still
+  reading "93/93" when the suite is now 103/103 (no crew agent owns that file — see the
+  standing flag under NEXT above).
+
+### Phase 4 — not started
+
+- (editor OPEN) — PIE run driven by `RunAiTurnsNow` so no simulated input is needed,
   routing around the standing NeoStack injection blocker; evidence sliced by session markers,
   never to EOF (the phase-D-era lesson under "AI-opponent milestone" applies unchanged).
 - **Phase 5** — the doc pass.
@@ -1871,12 +2053,19 @@ passing in isolation: `Expected 'one accepted command emits exactly one line' to
   (`Ui.h:345-350`), which is what makes "the forecast is what resolves" structural rather than
   incidental; phase 1 is the first time that claim has been measured in-engine rather than
   asserted — 483 resolutions, 49 kills, agreement on every one.
-- **Phase-3 seam, carried forward from phase 2:** promote `StratLossAgrees` /
-  `StratDivergenceMaskOf` to engine-typed free functions in `StratCombatLog.h` so a foil for the
-  `divergence` mask can be hand-built rather than left permanently unfalsifiable.
-- **Phase-3 pairing-gate trap, carried forward from phase 1:** an unseeded-refused attack emits no
-  `STRAT-COMBAT` line at all, so a 1:1 `STRAT-CMD accepted kind=Attack` ↔ `STRAT-COMBAT resolved`
-  pairing gate must account for that silent path or it will misreport a real gap as a miscount.
+- **Phase-3 seam, carried forward from phase 2 — DISCHARGED in phase 3.** `StratLossAgrees` /
+  `StratDivergenceMaskOf` are now engine-typed free functions in `StratCombatLog.h`
+  (`strat-gameplay-engineer`, piece (a)), and 10 clauses in `StratDivergenceRuleClauses.cpp`
+  (`strat-test-author`, piece (b)) hand-build a foil for the `divergence` mask rather than
+  leaving it permanently unfalsifiable. See "Phase 3 — CLOSED" above.
+- **Phase-3 pairing-gate trap, carried forward from phase 1 — DISCHARGED in phase 3, AND
+  RESTATED.** The original wording assumed the pairing was `STRAT-CMD accepted kind=Attack` ↔
+  `STRAT-COMBAT resolved`; that pairing is unreachable in an AI-vs-AI match (`STRAT-CMD accepted`
+  is human-only, measured 0 occurrences — see "Phase 3 — CLOSED" above). The gate that actually
+  ships accounts for the `!bSeeded` silent path structurally, against the real pairing
+  (`STRAT-AI applied kind=Attack` ↔ `STRAT-COMBAT resolved`): a length mismatch between the two
+  event lists is itself a failure, proven able to fire by `fail_silent_path_gap.log` in
+  `evidence/08-combat-pairing-gate/fixtures/`, and measured zero hits in the real corpus.
 - **Phase-1 hole carried forward:** `ReplayLog` does not route through `Submit`, so a combat log
   loaded from disk in a fresh process emits nothing — in-process replay is unaffected.
 - **The `GLog`-capture requirement (`CanBeUsedOnMultipleThreads`) now lives in

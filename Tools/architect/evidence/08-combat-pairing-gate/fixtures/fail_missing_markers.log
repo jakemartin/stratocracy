@@ -1,0 +1,2 @@
+[t][1]LogStratBridge: STRAT-COMBAT resolved attacker=10 defender=5 hex=3,4 turn=1 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=3 fdies=0 fcounter=1 fcdmg=1 ahpBefore=12 ahpAfter=11 ahpMax=12 adied=0 dhpBefore=12 dhpAfter=9 dhpMax=12 ddied=0 fameBefore=100 fameAfter=100 fameCombatBefore=0 fameCombatAfter=0 agree=1 diverge=0
+[t][1]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=3,4 def=-1 target=5 turn=1 side=1 hash=deadbeef

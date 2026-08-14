@@ -1,0 +1,12 @@
+[OK] clean corpus passes -- expected PASS, got PASS
+[OK] ordering scramble fails despite equal multiset -- passed=False, mismatches=2
+[OK] unmatched applied attack (silent-path shape) fails -- passed=False, mismatches=1
+[OK] unmatched resolved line fails -- passed=False, mismatches=1
+[OK] malformed STRAT-COMBAT line is a parse failure, not silence -- passed=False, parse_failures=1
+[OK] a divergence line fails the gate -- passed=False, divergences=1
+[OK] a non-terminal STRAT-AI refused line fails the gate -- passed=False, blocking_refusals=1
+[OK] the terminal T-SAVE-05 handover refusal alone does not fail the gate -- passed=True, terminal=1, blocking=0
+[OK] missing Test Started/Completed markers is a hard failure -- passed=False, slice_failure=SliceFailure(reason="no 'Test Started.' marker found for Path={Stratocracy.Fixture.FIX-01.FixtureTest} -- this log does not contain a run of the expected test, or the test's full path has drifted.")
+[OK] Test Started with no Test Completed is a hard failure -- passed=False, slice_failure=SliceFailure(reason="'Test Started.' found at line 1 for Path={Stratocracy.Fixture.FIX-01.FixtureTest}, but no matching 'Test Completed.' marker follows it -- the log is truncated mid-test, or the process did not exit cleanly. This log has no 'Log file closed' line to fall back on; it ends '**** TEST COMPLETE. EXIT CODE: 0 ****' when it exits cleanly, and that marker itself is not a valid substitute for THIS test's own boundary.")
+[OK] an echoed STRAT-COMBAT line under LogAutomationController is ignored, and the real pairing still passes clean -- passed=True, combat_resolved=1
+SELF-TEST: ALL FIXTURES CORRECT

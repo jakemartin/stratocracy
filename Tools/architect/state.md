@@ -740,13 +740,17 @@ returns nothing.**
     `d310aa1` invalidated it. Recorded so the existing staleness flag for that
     file (phase 4, `:195`) is not over-read as still-live everywhere.
 
-### Phase 6 — in progress
+**Phase 6 mid-flight checkpoint, 2026-08-12, by the phase-6 builder.** Folded under
+"Phase 6 — CLOSED" below, whose gate is the phase's actual authority; this record is
+kept for its measurements, not for its status line.
 
-- **Status:** in progress, not closed. No gate has run. This is a checkpoint
-  so a fresh session can resume without re-measuring.
-- **Exit criterion (unchanged, not yet met):** the `assert_log_contains`
+- **Status (2026-08-12, SUPERSEDED — Phase 6 closed 2026-08-13, `VERDICT: PASS`; see
+  "Phase 6 — CLOSED" below):** ~~in progress, not closed. No gate has run.~~ This was a
+  checkpoint so a fresh session could resume without re-measuring.
+- **Exit criterion (as of 2026-08-12, not yet met at that time; MET by
+  2026-08-13 close — see "Phase 6 — CLOSED" below):** the `assert_log_contains`
   clause over `STRAT-CMD` closing the click-to-command input gate, plus
-  on-disk evidence in `Tools/architect/evidence/`. Neither exists yet — see
+  on-disk evidence in `Tools/architect/evidence/`. Neither existed yet — see
   "Not yet produced" below.
 
   **Finding 1 — the running editor was serving a stale config; the on-disk

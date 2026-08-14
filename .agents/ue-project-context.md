@@ -192,7 +192,8 @@ reference shape.
 
 The count moves every phase and goes stale the moment it is restated — read it from
 `Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
-number here. Last observed here: 103/103, combat-outcome phase 3, 2026-08-14.
+number here. Last observed here: 106/106, 2026-08-14, after the two `STRAT-CMD refused`
+grep-contract clauses (103 at combat-outcome phase 3 → 104 at the `accepted` tightening → 106).
 
 **That report is UTF-8 with a BOM** — first bytes `EF BB BF`. Measured in the hot-seat milestone's
 phase 4 (not the combat-outcome milestone's, which is the AI-vs-AI PIE run), after two

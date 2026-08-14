@@ -358,12 +358,25 @@ namespace StratHotSeatReplayParity
 	 * than in a comment.
 	 *
 	 * THE RESIDUAL, STATED PLAINLY. The capture filter and `CountStartingWith` remain
-	 * `IgnoreCase`, so a case-only change to the `STRAT-CMD` emitter is caught by exactly ONE
-	 * assertion in this file -- the shape clause's `TestTrue` -- and by no count anywhere.
-	 * That is the intended design and not an oversight; see THIRD above. What is NOT covered
-	 * either way is a case-only change to the `refused` shape, since no clause here asserts
-	 * that spelling with a `TestTrue`; `RefusedLines` counts it through the same loose
-	 * counter, and a lower-case `strat-cmd refused` would still be counted and still balance.
+	 * `IgnoreCase`, so a case-only change to the `STRAT-CMD accepted` emitter is caught by
+	 * exactly ONE assertion in this file -- the shape clause's `TestTrue` -- and by no count
+	 * anywhere. That is the intended design and not an oversight; see THIRD above.
+	 *
+	 * THE `refused` HALF USED TO BE UNCOVERED ENTIRELY AND IS NOT ANY MORE. This block
+	 * previously recorded that no clause asserted the refusal's spelling, so `RefusedLines`
+	 * counted a lower-case `strat-cmd refused` right through and every count still balanced.
+	 * `IsGrepContractRefusedLine` closed that, and it is exercised in TWO places rather than
+	 * one -- which is where the two halves now differ, deliberately:
+	 *   - `T-SAVE-05.StratCmdRefusedLineShape` asserts it over a REAL captured refusal, the
+	 *     counterpart of what `StratCmdLineShape` does for the accepted line;
+	 *   - the gating clause asserts a STRICT COUNT (`CountMatching`) beside the loose
+	 *     `RefusedLines`, which the accepted side has no counterpart for.
+	 * The strict count does not tighten the instrument -- `CountStartingWith` is untouched and
+	 * still `IgnoreCase` -- it is a second CLAIM over the same loosely-gathered lines. So the
+	 * see/accept asymmetry THIRD argues for is preserved on both halves: a case-mangled line is
+	 * still ADMITTED and still counted by the instrument, and is then refused by the claim.
+	 * `T-SAVE-05.GrepContractRejectsARefusedCaseVariant` asserts exactly that divergence, on
+	 * the same two lines, so the pairing is pinned rather than asserted here in prose.
 	 *
 	 * AND THE OBVIOUS COUNTER-ARGUMENT TO THAT RESIDUAL DOES NOT HOLD, which is worth the
 	 * lines because it is the first thing a careful reader will reach for. The gating clause
@@ -554,6 +567,74 @@ namespace StratHotSeatReplayParity
 	static bool IsGrepContractAcceptedLine(const FString& Line)
 	{
 		return Line.StartsWith(TEXT("STRAT-CMD accepted "), ESearchCase::CaseSensitive);
+	}
+
+	/**
+	 * THE SAME CONTRACT FOR THE OTHER HALF OF THE LINE PAIR. `ESearchCase::CaseSensitive`,
+	 * shared for the same reason, and NOT a copy of the accepted predicate with a word
+	 * swapped -- the two lines are not parallel and this file should not pretend they are.
+	 *
+	 * WHAT IS THE SAME: both begin `STRAT-CMD `, both are told apart on the SECOND TOKEN, and
+	 * both end that token with a trailing space so the predicate cannot be satisfied by a
+	 * longer word starting with the same letters.
+	 *
+	 * WHAT DIFFERS, MEASURED OFF THE EMITTER RATHER THAN ASSUMED. The two `UE_LOG` calls in
+	 * `StratSubmitSelectionCommand` are, VERBATIM AND WITH NO PADDING INSIDE THE BACKTICKS --
+	 * every space between the delimiters is a space the emitter really writes, and the columns
+	 * below are aligned by padding OUTSIDE the closing backtick instead:
+	 *     `STRAT-CMD accepted kind=%s unit=%d hex=%d,%d turn=%d side=%d hash=%s`     (Log)
+	 *     `STRAT-CMD refused kind=%s unit=%d hex=%d,%d turn=%d side=%d reason=%s`    (Warning)
+	 * ONE space after `accepted` and ONE after `refused`, which is what the two predicates'
+	 * trailing spaces are matching. An earlier draft of this block padded the refusal to two
+	 * spaces to line the columns up, which put layout inside a quotation whose entire authority
+	 * is that it is verbatim: a reader checking the single-space predicate against it would have
+	 * found the two disagree with no way to tell which was wrong. The predicate was always
+	 * right. Alignment now happens where it cannot be mistaken for content.
+	 *
+	 * -- the sixth field is `reason=` and not `hash=`, and its value is the RULES MODULE'S
+	 * PROSE, which contains spaces and is of no fixed length. So this predicate deliberately
+	 * pins the PREFIX ONLY and no clause below tries to `ParseFields` a refusal into exactly
+	 * six values, which the accepted side can do and this side cannot. A predicate written by
+	 * analogy would have claimed a shape the emitter does not have.
+	 *
+	 * THE VERBOSITY DIFFERENCE IS WHY THIS PREDICATE IS OWED AT ALL. Because refusals are
+	 * `Warning`, every clause that provokes one declares
+	 * `AddExpectedMessagePlain(TEXT("STRAT-CMD refused"), ...)`, and that declaration LOOKS
+	 * like a spelling gate. It is not one -- see the block on `FStratCmdCapture` for the
+	 * read out of `AutomationTest.h`: `Matches` folds case on the plain path, `Exact` adds
+	 * only a length equality that a case variant satisfies, and both constructors hardcode
+	 * `ERegexPatternFlags::CaseInsensitive` on the regex path. It gates VERBOSITY. Until this
+	 * predicate shipped, nothing in the tree asserted what a `refused` line SAYS.
+	 *
+	 * FILE-LOCAL AND NAMED, for the reason `IsGrepContractAcceptedLine` is: the clause that
+	 * ASSERTS the contract and the clause that PROVES the assertion can fail must ask the
+	 * same code, or the proof goes on passing over a private copy after the shipped one is
+	 * loosened.
+	 */
+	static bool IsGrepContractRefusedLine(const FString& Line)
+	{
+		return Line.StartsWith(TEXT("STRAT-CMD refused "), ESearchCase::CaseSensitive);
+	}
+
+	/**
+	 * How many gathered lines satisfy a STRICT predicate. The counterpart of
+	 * `FStratCmdCapture::CountStartingWith`, and deliberately NOT a replacement for it: the
+	 * counter on the device is an INSTRUMENT and stays `IgnoreCase`, so a case-mangled line is
+	 * still SEEN; this is a CLAIM over what was seen, so it is strict. Keeping them separate is
+	 * what lets a clause assert both "the instrument admitted it" and "the contract refuses it"
+	 * about the same line.
+	 */
+	static int32 CountMatching(const TArray<FString>& Lines, bool (*Predicate)(const FString&))
+	{
+		int32 Count = 0;
+		for (const FString& Line : Lines)
+		{
+			if (Predicate(Line))
+			{
+				++Count;
+			}
+		}
+		return Count;
 	}
 }
 
@@ -829,6 +910,19 @@ bool FStratHotSeatReplayParityTest::RunTest(const FString& /*Parameters*/)
 	TestEqual(TEXT("T-SAVE-05: the refusal logged in the OTHER shape, so a grep for `accepted` "
 	               "counts only commands that applied"),
 		RefusedLines, Refusals);
+
+	// AND THE SAME COUNT AGAIN, STRICTLY. `RefusedLines` above came from `CountStartingWith`,
+	// which is `IgnoreCase` by design and would count `strat-cmd refused` as a refusal; this
+	// one is `IsGrepContractRefusedLine`, which is what a phase-6 `grep` would actually find.
+	// THE TWO ARE NOT REDUNDANT AND THE PAIRING IS THE POINT: the loose count proves the line
+	// was EMITTED and reached the capture, the strict count proves it was SPELLED the way the
+	// gate reads it. A case-only change to the emitter leaves the first green and turns this
+	// one red -- which is exactly the residual this pass was opened to close.
+	// `T-SAVE-05.GrepContractRejectsARefusedCaseVariant` is what shows this can go red.
+	TestEqual(
+		TEXT("T-SAVE-05: and the refusal is spelled the way a phase-6 `grep \"STRAT-CMD refused \"` "
+		     "would find it -- case-sensitively, which the IgnoreCase count above cannot say"),
+		CountMatching(Capture.Lines, &IsGrepContractRefusedLine), Refusals);
 
 	const FString DrivenHash = Bridge.StateHash();
 	TestNotEqual(
@@ -1653,6 +1747,343 @@ bool FStratGrepContractCaseTest::RunTest(const FString& /*Parameters*/)
 		TEXT("T-SAVE-05: the bare `StartsWith` overload this pass replaced ACCEPTS the same "
 		     "case variant -- that is the defect that was closed, named rather than described"),
 		Variant.StartsWith(TEXT("STRAT-CMD accepted ")));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// T-SAVE-05 -- THE `STRAT-CMD refused` LINE'S SHAPE, ON A REAL REFUSAL.
+//
+// WHAT WAS UNPINNED BEFORE THIS CLAUSE, stated at the width it was measured at. No assertion
+// anywhere in this tree said what a `refused` line SAYS. `RefusedLines` came from
+// `CountStartingWith`, which is `IgnoreCase` by design; and the
+// `AddExpectedMessagePlain(TEXT("STRAT-CMD refused"), ...)` declarations that sit beside every
+// provoked refusal are a VERBOSITY gate rather than a spelling gate -- read out of UE 5.8's
+// `AutomationTest.h` in the block on `FStratCmdCapture` above. So a case-only change to the
+// refusal emitter was caught by nothing, while the `accepted` half had both a strict predicate
+// and a clause proving that predicate could fail. This closes the asymmetry.
+//
+// THE LINE IS CAPTURED OFF `GLog`, NOT RECONSTRUCTED, for the same reason
+// `T-SAVE-05.StratCmdLineShape` captures its own: a clause that re-formatted the literal the
+// emitter writes would agree with any mistake in it. The synthetic-line clause below is about
+// what the PREDICATE does with a case variant; THIS clause is what ties the predicate to the
+// string the module really produces. Neither is sufficient alone -- a strict predicate no
+// shipped assertion runs is a hole one level up, which is the shape this pass exists to avoid
+// repeating.
+//
+// WHERE THE EXPECTATIONS COME FROM, field by field:
+//   - `kind`, `unit`, `hex`  -- the hand-built outcome that was submitted.
+//   - `turn`, `side`         -- `Bridge.Turn()` / `Bridge.SideToMove()` READ BEFORE
+//                               submission, which is where the emitter reads them.
+//   - `reason`               -- `StratSubmitSelectionCommand`'s OWN out-parameter, the rules
+//                               module's prose. Not a literal, and not re-derived here.
+// The refusal is HAND-BUILT because the machine will never emit an illegal command -- that is
+// the T-UI-02 property -- and `StratSubmitSelectionCommand` is precisely the function whose job
+// is to refuse one.
+//
+// WHY THIS CLAUSE DOES NOT ASSERT SIX PARSED FIELDS THE WAY THE ACCEPTED ONE DOES, and this is
+// the place the two shapes genuinely part company rather than a shortcut. The emitter's sixth
+// field is `reason=%s`, and `%s` is the rules module's prose: it contains spaces, so
+// `ParseFields` -- which splits on space and keeps only `key=value` tokens -- cannot recover it
+// as one value, and its token count is not fixed. The accepted line ends in `hash=%s`, a single
+// space-free token, which is why THAT clause can assert `Keys.Num() == 6` and this one asserts
+// the first six keys IN ORDER out of at least six. Writing this clause by analogy with the
+// other would have claimed a shape the emitter does not have.
+//
+// THE REFUSAL IS EMITTED AT `Warning`, so the declaration below is REQUIRED: without it the
+// automation framework charges the warning to this test and the suite comes back
+// `succeededWithWarnings`.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratCmdRefusedLineShapeTest,
+	"Stratocracy.StratPlay.T-SAVE-05.StratCmdRefusedLineShape",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratCmdRefusedLineShapeTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratHotSeatReplayParity;
+
+	AddExpectedMessagePlain(TEXT("STRAT-CMD refused"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FStratBridge Bridge;
+	FString Error;
+	if (!TestTrue(TEXT("the bridge seeds from the shipped scenario"), SeedBridge(Bridge, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	FStratSelectionMachine Machine;
+	FStratBridgeRulesQuery Query(&Bridge);
+
+	FStratViewModel Model;
+	if (!TestTrue(TEXT("the model builds"), Refresh(Bridge, Machine, Model, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// A unit of the side that is NOT to move. Moving it is illegal by §2.11.1, and the
+	// UNIT IS THE MODEL'S OWN -- there is no coordinate literal here.
+	const FStratUnitView* Enemy = nullptr;
+	for (const FStratUnitView& U : Model.Units)
+	{
+		if (U.Side != Model.Match.SideToMove)
+		{
+			Enemy = &U;
+			break;
+		}
+	}
+	if (!TestNotNull(TEXT("the side that is not to move has a unit to build a refusal around"), Enemy))
+	{
+		return false;
+	}
+
+	FStratSelectionOutcome Illegal;
+	Illegal.Command = EStratSelectionCommand::Move;
+	Illegal.UnitId  = Enemy->UnitId;
+	Illegal.Hex     = Enemy->Hex;
+
+	const FString HashBefore  = Bridge.StateHash();
+	const int32   CountBefore = Bridge.RecordedCommandCount();
+	const int32   TurnBefore  = Bridge.Turn();
+	const int32   SideBefore  = Bridge.SideToMove();
+
+	FString RefusalReason;
+	FString Line;
+	{
+		FStratCmdCapture Capture;
+
+		const bool bApplied = StratSubmitSelectionCommand(Bridge, Illegal, RefusalReason);
+		Capture.Settle();
+
+		if (!TestFalse(TEXT("T-SAVE-05: a command for the side that is not to move is refused"),
+				bApplied))
+		{
+			return false;
+		}
+		TestEqual(TEXT("T-SAVE-05: and changes nothing"), Bridge.StateHash(), HashBefore);
+		TestEqual(TEXT("T-SAVE-05: and is not recorded"),
+			Bridge.RecordedCommandCount(), CountBefore);
+
+		if (!TestEqual(TEXT("one refused command emits exactly one STRAT-CMD line"),
+				Capture.Lines.Num(), 1))
+		{
+			for (const FString& L : Capture.Lines)
+			{
+				AddInfo(L);
+			}
+			return false;
+		}
+		Line = Capture.Lines[0];
+	}
+	AddInfo(Line);
+
+	// ---- THE GREP CONTRACT, CASE-SENSITIVELY --------------------------------
+	// The shipped assertion the predicate exists for. `T-SAVE-05.GrepContractRejectsARefused
+	// CaseVariant` is what shows this can go red on a case-only change.
+	TestTrue(
+		TEXT("T-SAVE-05: the refusal is spelled the way a phase-6 `grep \"STRAT-CMD refused \"` "
+		     "would find it"),
+		IsGrepContractRefusedLine(Line));
+
+	// AND IT IS NOT THE OTHER LINE. §4.10's counting gate rests on `grep \"STRAT-CMD accepted\"`
+	// returning only commands that APPLIED, which the emitter's own comment calls out; that
+	// property is a claim about the refusal, so it is asserted here rather than assumed.
+	TestFalse(
+		TEXT("T-SAVE-05: and does NOT carry the accepted phrase, so a grep for `accepted` counts "
+		     "only commands that applied"),
+		IsGrepContractAcceptedLine(Line));
+	TestFalse(
+		TEXT("T-SAVE-05: nor anywhere within the line -- including inside the rules module's own "
+		     "reason text"),
+		Line.Contains(TEXT("STRAT-CMD accepted"), ESearchCase::CaseSensitive));
+
+	// ---- THE FIELDS ---------------------------------------------------------
+	// The first six keys IN ORDER. `>=` rather than `==` because `reason=`'s value is prose and
+	// may contribute further `key=value`-shaped tokens -- see the clause header for why this is
+	// a real difference from the accepted line rather than a weaker assertion of the same thing.
+	TArray<FString> Keys;
+	TArray<FString> Values;
+	ParseFields(Line, Keys, Values);
+
+	const TCHAR* const ExpectedKeys[] = { TEXT("kind"), TEXT("unit"), TEXT("hex"), TEXT("turn"),
+	                                      TEXT("side"), TEXT("reason") };
+	if (!TestTrue(
+			*FString::Printf(TEXT("T-SAVE-05: the refused line opens with six key=value fields "
+			                      "(parsed %d)"), Keys.Num()),
+			Keys.Num() >= static_cast<int32>(UE_ARRAY_COUNT(ExpectedKeys))))
+	{
+		return false;
+	}
+	for (int32 i = 0; i < static_cast<int32>(UE_ARRAY_COUNT(ExpectedKeys)); ++i)
+	{
+		TestEqual(*FString::Printf(TEXT("T-SAVE-05: field %d is `%s`"), i, ExpectedKeys[i]),
+			Keys[i], FString(ExpectedKeys[i]));
+	}
+
+	// THE PROVENANCE OF EVERY VALUE. `kind` is the SAVE FORMAT's spelling, pinned against
+	// `strat::saveCommandName` by `Stratocracy.StratBridge.T-SAVE-05.CommandKindNamesMatchFormat`
+	// -- this module cannot call that function (8 x LNK2019), which is why the word is a literal
+	// HERE and not unpinned anywhere.
+	TestEqual(TEXT("T-SAVE-05: kind is the save format's `Move`"), Values[0], FString(TEXT("Move")));
+	TestEqual(TEXT("T-SAVE-05: unit is the submitted outcome's unit"),
+		Values[1], FString::FromInt(Illegal.UnitId));
+	TestEqual(TEXT("T-SAVE-05: hex is the submitted outcome's hex, q,r"),
+		Values[2], FString::Printf(TEXT("%d,%d"), Illegal.Hex.X, Illegal.Hex.Y));
+	TestEqual(TEXT("T-SAVE-05: turn is the bridge's turn READ BEFORE submission"),
+		Values[3], FString::FromInt(TurnBefore));
+	TestEqual(TEXT("T-SAVE-05: side is the bridge's side to move READ BEFORE submission"),
+		Values[4], FString::FromInt(SideBefore));
+
+	// `reason` is the one field the accepted line has no counterpart for, and its expectation is
+	// the OUT-PARAMETER the same call filled -- the rules module's own prose, compared whole
+	// rather than through `ParseFields`, which cannot recover a value containing spaces.
+	TestFalse(TEXT("T-SAVE-05: the refusal carries the rules module's own reason"),
+		RefusalReason.IsEmpty());
+	TestTrue(
+		*FString::Printf(TEXT("T-SAVE-05: and the line's `reason=` is that same string, whole -- "
+		                      "`%s`"), *RefusalReason),
+		Line.Contains(FString::Printf(TEXT("reason=%s"), *RefusalReason), ESearchCase::CaseSensitive));
+	TestTrue(TEXT("T-SAVE-05: and `reason=` is the LAST field, so the prose cannot swallow one"),
+		Line.EndsWith(FString::Printf(TEXT("reason=%s"), *RefusalReason), ESearchCase::CaseSensitive));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// T-SAVE-05 -- THE REFUSED GREP CONTRACT REJECTS A CASE VARIANT, AND THE INSTRUMENT THAT
+// FEEDS IT DOES NOT.
+//
+// The `refused` counterpart of `T-SAVE-05.GrepContractRejectsACaseVariant`, and it exists for
+// the same reason: `IsGrepContractRefusedLine` is `ESearchCase::CaseSensitive`, two shipped
+// assertions now lean on it, and NO INPUT THIS TREE CAN PRODUCE EXERCISES THE STRICTNESS --
+// every real emitter spells the prefix correctly, so on every real run the strict predicate and
+// a loose one agree for the same reason. A `CaseSensitive` comparison nothing pushes against is
+// unfalsifiable no matter how it is spelled.
+//
+// SAME FOUR LOAD-BEARING ASSERTIONS AS THE ACCEPTED CLAUSE, and the order matters:
+//   1. A CONTROL -- the capture filter ADMITS the lower-case line, so "rejected by the
+//      predicate" is distinguishable from "never reached the predicate".
+//   2. THE POSITIVE -- the predicate accepts the correctly-spelled line, without which a
+//      predicate returning `false` for everything would satisfy point 3.
+//   3. THE NEGATIVE -- the predicate REFUSES the case variant.
+//   4. THE RECEIPT -- the loose expression still ACCEPTS the same variant, which names the
+//      defect rather than describing it.
+//
+// AND ONE MORE THAN THAT CLAUSE HAS, which is the improvement rather than a copy. §4.10's
+// counting gate rests on the two shapes being TOLD APART ON THE SECOND TOKEN: a `grep
+// "STRAT-CMD accepted"` must count applied commands and no refusals. Point 5 asserts the two
+// predicates are mutually exclusive on correctly-spelled lines of both kinds -- which neither
+// predicate's own clause can say, because each sees only one shape. A refused predicate that
+// had been written as `StartsWith(TEXT("STRAT-CMD "))` would pass points 1-4 unchanged and fail
+// only here.
+//
+// THE FIXTURE-INTEGRITY TRAP IS PINNED, NOT ASSUMED. `FString`'s `==`, `Contains` and
+// `TestEqual` are all `IgnoreCase` in UE 5.8, so `TestEqual(Correct, Lowered)` would report the
+// two EQUAL and render the fixture meaningless. Both directions are asserted explicitly below.
+//
+// NO LOG IS EMITTED HERE, so no `AddExpectedMessagePlain` is owed: the device is driven through
+// `Serialize` directly -- the method `FOutputDeviceRedirector` would call with the formatted
+// message anyway -- and nothing reaches `GLog` at `Warning` or any other verbosity.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGrepContractRefusedCaseTest,
+	"Stratocracy.StratPlay.T-SAVE-05.GrepContractRejectsARefusedCaseVariant",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGrepContractRefusedCaseTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratHotSeatReplayParity;
+
+	// The shape `StratSelectionMachine.cpp` emits and `T-SAVE-05.StratCmdRefusedLineShape` pins
+	// against a REAL captured refusal. The values are immaterial here -- this clause is about
+	// the prefix -- but the trailing `reason=` prose is kept because it is what makes this line
+	// structurally unlike the accepted one.
+	const FString CorrectRefused =
+		TEXT("STRAT-CMD refused kind=Move unit=0 hex=0,0 turn=1 side=0 reason=not your unit");
+	const FString LoweredRefused = CorrectRefused.ToLower();
+
+	// The fixture is a CASE VARIANT and nothing else -- asserted, because `FString::operator==`
+	// is IgnoreCase in UE 5.8 and a reader could not otherwise tell a variant from a copy.
+	TestFalse(TEXT("T-SAVE-05: the two fixture lines differ, case-sensitively"),
+		CorrectRefused.Equals(LoweredRefused, ESearchCase::CaseSensitive));
+	TestTrue(TEXT("T-SAVE-05: and differ in NOTHING BUT case -- so what the predicate does with "
+	              "them turns on case alone"),
+		CorrectRefused.Equals(LoweredRefused, ESearchCase::IgnoreCase));
+
+	FStratCmdCapture Capture;
+	TestEqual(TEXT("the capture's window starts empty, so both lines below are its own"),
+		Capture.Lines.Num(), 0);
+
+	Capture.Serialize(*CorrectRefused, ELogVerbosity::Warning, FName(TEXT("LogStratPlay")));
+	Capture.Serialize(*LoweredRefused, ELogVerbosity::Warning, FName(TEXT("LogStratPlay")));
+
+	// ---- 1. THE CONTROL -----------------------------------------------------
+	if (!TestEqual(
+			TEXT("T-SAVE-05: the capture filter is deliberately IgnoreCase, so the lower-case "
+			     "refusal REACHES the assertion instead of vanishing into the filter"),
+			Capture.Lines.Num(), 2))
+	{
+		for (const FString& L : Capture.Lines)
+		{
+			AddInfo(L);
+		}
+		return false;
+	}
+
+	const FString Admitted = Capture.Lines[0];
+	const FString Variant  = Capture.Lines[1];
+	AddInfo(Admitted);
+	AddInfo(Variant);
+
+	// The counter is loose for the same reason, and that is pinned rather than left in a
+	// comment: a case-mangled refusal is still counted as a refusal by `CountStartingWith`, so
+	// the count clause in the gating test still balances and cannot catch a spelling change.
+	// That is precisely why the STRICT count beside it exists.
+	TestEqual(
+		TEXT("T-SAVE-05: `CountStartingWith` counts the case variant as a refusal -- which is why "
+		     "the IgnoreCase count in the gating clause cannot catch a spelling change"),
+		Capture.CountStartingWith(TEXT("STRAT-CMD refused")), 2);
+	TestEqual(
+		TEXT("T-SAVE-05: while the STRICT count over the same two lines finds one -- the pair of "
+		     "counts in the gating clause part company exactly here"),
+		CountMatching(Capture.Lines, &IsGrepContractRefusedLine), 1);
+
+	// ---- 2. THE POSITIVE DIRECTION ------------------------------------------
+	TestTrue(
+		TEXT("T-SAVE-05: the refused grep contract ACCEPTS the correctly-spelled line -- without "
+		     "this a predicate that refused everything would satisfy the clause below"),
+		IsGrepContractRefusedLine(Admitted));
+
+	// ---- 3. THE NEGATIVE DIRECTION: the property this clause exists for -----
+	TestFalse(
+		TEXT("T-SAVE-05: and REFUSES a case-only variant of it -- a real `grep \"STRAT-CMD "
+		     "refused \"` would find nothing, and so does the clause that stands in for it"),
+		IsGrepContractRefusedLine(Variant));
+
+	// ---- 4. THE RECEIPT -----------------------------------------------------
+	// The loose expression -- the bare `StartsWith` default, which is what every existing
+	// reading of a refusal in this file uses -- still ACCEPTS the variant. That is the defect,
+	// named rather than described. If UE ever changes `StartsWith`'s default this goes red, and
+	// the residual paragraph in the `FStratCmdCapture` block needs rewriting.
+	TestTrue(
+		TEXT("T-SAVE-05: the bare `StartsWith` overload ACCEPTS the same case variant -- that is "
+		     "the hole this predicate closes, named rather than described"),
+		Variant.StartsWith(TEXT("STRAT-CMD refused ")));
+
+	// ---- 5. THE TWO SHAPES ARE TOLD APART ON THE SECOND TOKEN ---------------
+	// Not present in the accepted clause, and the reason it is here: each predicate's own
+	// falsifiability clause sees only its own shape, so neither can say the pair discriminates.
+	// A refused predicate spelled `StartsWith(TEXT("STRAT-CMD "))` passes 1-4 and fails here.
+	const FString CorrectAccepted =
+		TEXT("STRAT-CMD accepted kind=Move unit=0 hex=0,0 turn=1 side=0 hash=0000");
+	TestFalse(TEXT("T-SAVE-05: the refused contract does not admit an ACCEPTED line"),
+		IsGrepContractRefusedLine(CorrectAccepted));
+	TestFalse(TEXT("T-SAVE-05: and the accepted contract does not admit a REFUSED line -- the two "
+	              "are told apart on the second token, which is what §4.10's counting gate rests on"),
+		IsGrepContractAcceptedLine(Admitted));
 
 	return true;
 }

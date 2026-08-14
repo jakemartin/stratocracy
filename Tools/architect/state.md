@@ -39,8 +39,12 @@ including 0, as an opt-out of the default); a 14th in-script self-test case prov
 falsifiable, and a new 11th checked-in fixture (`fixtures/fail_pre_sliced_zero_events.log`, empty)
 demonstrates it against the actual defect. This is a Python-only change — no `IMPLEMENT_SIMPLE_
 AUTOMATION_TEST` clause, so the 104/104 C++ suite count is unmoved. See "Pre-sliced zero-event
-guard" below. The prior entry (AI-opponent milestone, phase D CLOSED,
-COMPLETE) is preserved under "AI-opponent milestone" further down.)_
+guard" below. **ALSO POST-MILESTONE, 2026-08-14, NOT A PHASE:** the `STRAT-CMD refused`
+grep-contract residual that the previous item opened is now DISCHARGED — two new clauses,
+`T-SAVE-05.StratCmdRefusedLineShape` and `T-SAVE-05.GrepContractRejectsARefusedCaseVariant`,
+close it the same way the `accepted` side was closed; suite is now **106/106** (was 104/104).
+See "STRAT-CMD refused grep-contract residual" below. The prior entry (AI-opponent milestone,
+phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" further down.)_
 
 ## BUILT
 
@@ -314,19 +318,17 @@ COMPLETE) is preserved under "AI-opponent milestone" further down.)_
   "avoid one-corpus proof" precedent (a different scenario/buildlist/first side, genuinely
   different game content) — the host-independence half was discharged in this milestone's
   phase 4.
-- **New residual, opened `a2d370a`, 2026-08-14 — replaces discharged item 2 above: a case-only
-  change to the `STRAT-CMD refused` shape is caught by nothing.** Cannot be closed with an
-  expected-message gate — verified against `UE_5.8\Engine\Source\Runtime\Core\Public\Misc\
-  AutomationTest.h`: `FAutomationExpectedMessage::Matches` uses `FString::Contains` at its
-  `IgnoreCase` default; `EAutomationExpectedMessageFlags::Exact` adds only a length equality,
-  and a case variant has identical length; both constructors build the pattern with
-  `ERegexPatternFlags::CaseInsensitive` hardcoded, not parameterized. Closing it needs a clause
-  asserting the `refused` spelling the way `T-SAVE-05.GrepContractRejectsACaseVariant` now
-  asserts `accepted`. Stated at measured width only: ICU (which backs `FRegexPattern`) honours
-  inline mode modifiers such as `(?-i)` in general, but whether that route is actually usable
-  here was **not established either way** — the bundled ICU ships `include` and `lib` only, no
-  regex compiler source, so the test-author correctly declined to assert it in either direction.
-  Owner: `strat-test-author`.
+- **DISCHARGED, this pass, 2026-08-14 — see "STRAT-CMD refused grep-contract residual" below.**
+  The residual as originally opened by `a2d370a`: a case-only change to the `STRAT-CMD refused`
+  shape was caught by nothing. Cannot be closed with an expected-message gate — verified against
+  `UE_5.8\Engine\Source\Runtime\Core\Public\Misc\AutomationTest.h`:
+  `FAutomationExpectedMessage::Matches` uses `FString::Contains` at its `IgnoreCase` default;
+  `EAutomationExpectedMessageFlags::Exact` adds only a length equality, and a case variant has
+  identical length; both constructors build the pattern with `ERegexPatternFlags::CaseInsensitive`
+  hardcoded, not parameterized. Closed instead with `IsGrepContractRefusedLine`, a dedicated
+  `ESearchCase::CaseSensitive` predicate, and two new clauses — see the new section for the full
+  account, including the falsifiability measurement's stated limit (it exercised the predicate,
+  not an edited emitter, so the closure is a sound inference rather than a directly observed one).
 
 ## Hot-seat milestone
 
@@ -2635,3 +2637,89 @@ buildlist repetition inert at the rules layer.
   and that `--test-path Stratocracy.Fixture.FIX-01.FixtureTest` is undocumented in the fixtures
   directory itself. Touched only insofar as the new fixture's own note above states its mode;
   the rest is unchanged and not this task.
+
+## STRAT-CMD refused grep-contract residual (not a phase)
+
+- **Landed:** 2026-08-14, uncommitted at the time of writing; the commit follows this entry in
+  the same push (no hash to cite yet — do not invent one). **Not a phase, does not reopen the
+  log-backed combat outcome milestone (CLOSED, COMPLETE above).** It discharges the residual
+  `a2d370a` opened (NEXT, "New residual, opened `a2d370a`" — now marked DISCHARGED there) and
+  is placed consistently with "Grep-contract case-sensitivity tightening" and "Pre-sliced
+  zero-event guard" above: two post-milestone items, now three.
+- **Files: two, in two different lanes.**
+  `Source/StratPlay/Tests/StratHotSeatReplayParity.cpp` (`strat-test-author`'s lane) and
+  `.agents/ue-project-context.md` (this steward's — its stale suite count, now rewritten to
+  `106/106` with the `103 → 104 → 106` progression recorded in place of the stale `103/103`
+  reading). Both dirty in `git status` at the time of this entry; `Source/StratSelectionMachine.cpp`
+  (the emitter) is **not** among the dirty files — confirmed by `git status --porcelain`, which
+  lists only these two paths as modified against `HEAD` `47ec9bf`.
+- **Suite 104 → 106.** `Saved/AutomationReport/index.json`, read as `utf-8-sig`:
+  `reportCreatedOn 2026.08.14-20.28.52`, `succeeded 106 / succeededWithWarnings 0 / failed 0 /
+  notRun 0`, 106 entries in `tests`, every one `state: "Success"` (re-derived directly with a
+  short Python script, not taken from a report or from the brief). Independent corroboration:
+  `grep -rc IMPLEMENT_SIMPLE_AUTOMATION_TEST Source --include=*.cpp` sums to **106** across the
+  tree, `IMPLEMENT_COMPLEX_AUTOMATION_TEST`/`_CLASS` sums to **0** — the count-new-clauses-by-macro
+  method this project prefers over an acceptance-ID grep.
+- **Two new clauses**, both re-read directly and both `state: "Success"` in the report:
+  `Stratocracy.StratPlay.T-SAVE-05.StratCmdRefusedLineShape` and
+  `.T-SAVE-05.GrepContractRejectsARefusedCaseVariant`. Plus a strict-count `TestEqual`
+  (`CountMatching(Capture.Lines, &IsGrepContractRefusedLine)` against `Refusals`) added inside the
+  existing `T-SAVE-05.HotSeatReplayParity` clause, and a rewrite of the now-false residual
+  paragraph in the `FStratCmdCapture` doc block that previously stated the `refused` shape was
+  covered by nothing.
+- **The emitter was not touched.** `Source/StratPlay/StratSelectionMachine.cpp` is absent from
+  `git status --porcelain`'s output against `HEAD` `47ec9bf` — confirmed directly, not assumed
+  from the brief.
+- **Design decision 1 — deliberately did NOT copy the `accepted` predicate's shape.** The refused
+  line's sixth field is `reason=%s`, filled with `refuse()`'s vendored prose
+  (`Source/StratRules/Replay.good.cpp`), which contains spaces, so `ParseFields` (splits on space,
+  keeps only `key=value` tokens) cannot recover it as one value and the field count is not fixed.
+  `IsGrepContractRefusedLine` therefore asserts only the prefix
+  (`StartsWith(TEXT("STRAT-CMD refused "), ESearchCase::CaseSensitive)`); the shape clause asserts
+  the first six keys out of `Keys.Num() >= 6` rather than `== 6`, and pins the `reason=` value with
+  `Line.EndsWith("reason=" + RefusalReason, ESearchCase::CaseSensitive)`. Recorded because "make it
+  match the accepted clause" is exactly the change a future reader would otherwise make.
+- **Design decision 2 — a cross-shape mutual-exclusivity assertion the `accepted` side lacks.**
+  `GrepContractRejectsARefusedCaseVariant`'s point 5 asserts the two predicates do not both accept
+  a correctly-spelled line of either kind (a refused line is rejected by
+  `IsGrepContractAcceptedLine` and vice versa). A refused predicate written loosely as
+  `StartsWith("STRAT-CMD ")` would pass every other assertion in the clause and fail only this one.
+- **Design decision 3 — instruments stay loose, claims go strict, on both halves now.** The
+  capture filter and `CountStartingWith` are untouched (`IgnoreCase`); the new strict `TestEqual`
+  is a second claim over the same loosely-gathered lines. Same ruling already recorded for the
+  `accepted` side under "Grep-contract case-sensitivity tightening" above, now holding on both.
+- **Falsifiability, and its stated limit.** Measured: dropped `ESearchCase::CaseSensitive` from
+  `IsGrepContractRefusedLine`, rebuilt, ran `Stratocracy.StratPlay.T-SAVE-05`, got 4 succeeded / 1
+  failed with the strict-vs-loose counts parting company (1 asserted, 2 read in the case-variant
+  clause) and the mutual-exclusivity assertion no longer false; reverted, rebuilt, re-ran to
+  106/0/0/0; `Saved/AutomationProbe/` confirmed absent afterward (`ls` against the path fails —
+  directory does not exist). **The limit, stated in its own terms:** the probe exercised the
+  PREDICATE, not an edited emitter — no run in that pass contained a genuinely mis-spelled real
+  line, because `StratSelectionMachine.cpp` is outside the test lane. So "a case-only emitter
+  change is now caught" is a sound inference (a real captured line is read through a predicate
+  shown able to reject a variant) rather than a directly observed one. **This applies equally to
+  the `accepted` side**, whose protection has the same structure; its earlier entry did not state
+  this limit and should be read as no stronger than this one.
+- **Gating, recorded honestly, including what was not gated.** `VERDICT: PASS`, zero findings, two
+  non-gating observations. **The final one-block edit was coordinator-verified, not gated** — the
+  reviewer had identified both the defect and its correct value (the header block quoted the
+  emitter's format string with two spaces after `refused`, alignment padding leaking into a
+  quotation inside a paragraph headed "MEASURED OFF THE EMITTER RATHER THAN ASSUMED"; the shipped
+  predicate was always correct at one space). Re-verified with `cat -A` on the emitter; the
+  alignment padding moved outside the backticks.
+- **My own verification of that round, and its stated limit.** I confirmed the predicate's
+  single-space literal, zero double-space occurrences file-wide, an unchanged macro census, and a
+  green build — but could NOT isolate that round's delta from the cumulative diff without the
+  intermediate tree state, so "that round added no non-comment lines" rests on those indirect
+  checks rather than a line-by-line isolation. Recorded rather than implied away, per the brief's
+  own instruction.
+- **Not a defect, recorded so a future failure does not confuse anyone:** the shape clause's early
+  `return false` paths exit after `AddExpectedMessagePlain` is declared, so an already-failing run
+  would stack a spurious "expected message did not occur" error on top of the real failure.
+  Reviewer rated it reachable only on a failing run; agreed, deliberately not changed.
+- **Still open, untouched by this pass, carried forward:** the checked-in `.log` fixtures under
+  `evidence/08-combat-pairing-gate/fixtures/` have no re-runnable assertion binding each file to
+  its expected verdict, and `--test-path` is documented nowhere in that directory (this steward's
+  lane). Also still open: `T-INT-05.AlreadyActedGuardFiresOnAForeignModel` (`strat-test-author`'s
+  lane), the `chooseBuild` buildlist-ratio question for `stratocracy-crew`, and the
+  content-independence corpus.

@@ -64,6 +64,17 @@ disk in a fresh process emits no `STRAT-COMBAT` line at all. A reader pointing t
 replayed-log session, expecting the pairing to hold, will see it fail for that reason and should
 look here first, not at the parser.
 
+THE `--pre-sliced` ZERO-EVENT GUARD (discharged debt, phase-5-adjacent, this steward's own lane).
+`--pre-sliced` (above) has no `Test Started.`/`Test Completed.` marker to fail on, so an empty or
+wrong file previously produced `applied_attacks == combat_resolved == 0` and the ordered-identity
+check -- vacuously true over two empty lists -- returned `PASS`. `run_gate` now refuses that
+shape by default (`GuardRefusal`, rendered as a `GUARD REFUSED:` line, distinct text the way
+`SliceFailure` already is, same non-zero exit as any other failure per this script's existing
+convention of not branching on exit code); `--expect-min-pairs N` is the stronger, caller-opt-in
+floor for callers who know how many pairs to expect, and passing it (any N, including 0) replaces
+the structural default rather than stacking under it. See `run_gate`'s own docstring for the full
+argument, including why the default is scoped to `--pre-sliced` only.
+
 Nothing in this module writes to `Data/` or `Source/`. It only reads a log path given on argv.
 """
 
@@ -275,6 +286,21 @@ class SliceFailure:
     reason: str
 
 
+@dataclass
+class GuardRefusal:
+    """A structural or caller-declared refusal, DISTINCT from a `PairingMismatch`: this fires
+    before the pairing check has anything to disagree about, because the corpus itself proved
+    nothing. Rendered as its own labelled line (`GUARD REFUSED: ...`), the same textual-shape
+    convention `SliceFailure` already uses to separate "the corpus could not even be identified"
+    from "the corpus was identified and found wrong" -- this script has never used a second exit
+    code to make that distinction (`SliceFailure` and a `pairing_mismatches` failure both return
+    1 via `main`'s single `0 if result.passed else 1`), so a new refusal channel follows that same
+    precedent rather than inventing a third exit value.
+    """
+
+    reason: str
+
+
 def slice_by_test_name(lines: list[str], test_path: str) -> tuple[int, int] | SliceFailure:
     """Returns the (start, end) 0-based half-open Python slice bounds of one automation test's
     own `Test Started.` / `Test Completed.` line pair, matched on its full `Path={test_path}`.
@@ -354,10 +380,13 @@ class GateResult:
 
     pairing_mismatches: list[PairingMismatch]
     slice_failure: SliceFailure | None
+    guard_refusal: GuardRefusal | None = None
 
     @property
     def passed(self) -> bool:
         if self.slice_failure is not None:
+            return False
+        if self.guard_refusal is not None:
             return False
         return not (
             self.combat_parse_failures
@@ -410,12 +439,15 @@ class GateResult:
                 f"    FAIL pair index {mm.index}: applied line {mm.applied_line_no}, "
                 f"resolved line {mm.resolved_line_no}: {mm.detail}"
             )
+        if self.guard_refusal is not None:
+            lines.append(f"    GUARD REFUSED: {self.guard_refusal.reason}")
         lines.append("PASS" if self.passed else "FAIL")
         return "\n".join(lines)
 
 
 def run_gate(
     log_path: str | Path, test_path: str = DEFAULT_TEST_PATH, pre_sliced: bool = False,
+    expect_min_pairs: int | None = None,
 ) -> GateResult:
     """`pre_sliced=True` is the PIE-corpus escape hatch, added phase 4: a PIE session log carries
     no `Test Started.` / `Test Completed.` automation markers at all -- those only exist in a
@@ -428,6 +460,43 @@ def run_gate(
     against verified line numbers, exactly as `slice_by_test_name` does internally for the
     automation-log case. With `pre_sliced=True` the ENTIRE given file is treated as that slice;
     `test_path` is not consulted and `slice_bounds` reports the whole file's own line count.
+
+    THE `--pre-sliced` ZERO-EVENT GUARD (this steward's own debt, discharged here). Marker
+    slicing hard-fails on a wrong corpus via `SliceFailure` -- it cannot even locate the test's
+    own boundary and refuses to guess one. `--pre-sliced` has no marker to fail on, so an empty
+    file, or a wrong file, or a corpus with a typo'd `LogStratBridge:`/`LogStratPlay:` category
+    previously read as `applied_attacks == combat_resolved == 0`, which the pairing check (an
+    ordered `zip`, vacuously true over two empty lists) waved through as `PASS`. That inverted
+    the gate's own purpose: zero applied attacks and zero resolved lines is not a trivially
+    satisfied pairing, it is proof nothing was checked at all.
+
+    SCOPED TO `pre_sliced=True` ONLY, DELIBERATELY. A marker-sliced corpus can legitimately
+    contain zero attacks -- pointing this gate (with its default `--test-path`, or any other) at
+    a real automation test that never attacks is a valid, boring PASS, and a blanket zero-event
+    refusal would fire on that good run. Marker slicing already carries its own structural
+    corpus-identity guard (`SliceFailure` on a missing/mismatched `Test Started.`/`Test
+    Completed.` pair) that `--pre-sliced` was built specifically to trade away; the zero-event
+    guard below exists to give `--pre-sliced` an equivalent, not to duplicate a check the
+    marker-sliced path does not need.
+
+    TWO GUARDS, NOT ONE, AND WHY BOTH.
+    - **Structural, on by default:** a `--pre-sliced` corpus with ZERO `STRAT-AI applied
+      kind=Attack` lines AND ZERO `STRAT-COMBAT resolved` lines is refused outright, with no flag
+      required and nothing for a caller to forget. This is the floor the debt asked for.
+    - **Caller-supplied, opt-in:** `expect_min_pairs` (CLI `--expect-min-pairs N`) additionally
+      requires `min(len(applied_attacks), len(combat_resolved)) >= N`. This is STRONGER than the
+      structural floor (it can catch, say, "68 expected, only 3 present" -- a corpus that is
+      very much non-empty and would sail past the structural check) but it depends on the caller
+      knowing and passing the right number, which is exactly the "caller discipline" the original
+      debt entry complained `--pre-sliced` already trades a structural guard away for. Offering
+      only `--expect-min-pairs` would leave the exact defect this gate shipped with -- a forgotten
+      flag reproduces `PASS` on an empty file. Offering only the structural floor would leave a
+      68-vs-3 corpus undetected. Both are kept; neither alone is a full answer.
+    - **`--expect-min-pairs 0` is the explicit override for a genuinely empty `--pre-sliced`
+      corpus.** If a caller passes it, that is a stated claim ("I checked, zero pairs is
+      correct here") rather than silence, so it replaces the structural default rather than
+      stacking under it -- passing `--expect-min-pairs` at all (any value, including 0) opts out
+      of the structural zero-event refusal and relies on the floor instead.
     """
     path = Path(log_path)
     text = path.read_text(encoding="utf-8", errors="replace")
@@ -487,6 +556,31 @@ def run_gate(
         else:  # pragma: no cover -- exhaustiveness guard
             raise AssertionError(f"unhandled parsed type: {type(parsed)!r}")
 
+    # ---- The zero-event / min-pairs guard. See run_gate's docstring for the full argument. ----
+    guard_refusal: GuardRefusal | None = None
+    if expect_min_pairs is not None:
+        floor_n = min(len(applied_attacks), len(combat_resolved))
+        if floor_n < expect_min_pairs:
+            guard_refusal = GuardRefusal(
+                reason=(
+                    f"--expect-min-pairs {expect_min_pairs} was not met: only {floor_n} paired "
+                    f"(applied, resolved) event(s) found ({len(applied_attacks)} applied "
+                    f"attack(s), {len(combat_resolved)} resolved line(s))."
+                )
+            )
+    elif pre_sliced and not applied_attacks and not combat_resolved:
+        guard_refusal = GuardRefusal(
+            reason=(
+                "--pre-sliced corpus produced ZERO 'STRAT-AI applied kind=Attack' lines and "
+                "ZERO 'STRAT-COMBAT resolved' lines -- nothing was actually checked. An empty "
+                "or wrong file previously read as a trivially-satisfied pairing (0 == 0) and "
+                "returned PASS; refused structurally instead, because --pre-sliced has no "
+                "Test Started/Completed marker to fail on the way the marker-sliced path does. "
+                "If this corpus is legitimately combat-free, say so explicitly with "
+                "--expect-min-pairs 0, which overrides this default refusal."
+            )
+        )
+
     # ---- The pairing check: ORDERED IDENTITY on (unit, hex) vs (attacker, hex). ----
     # A length mismatch is itself a failure -- it is the structural net under the `!bSeeded`
     # silent path and the `ReplayLog` gap: either would make these two lists a different
@@ -545,6 +639,7 @@ def run_gate(
         ai_terminal_refusals=ai_terminal_refusals,
         pairing_mismatches=pairing_mismatches,
         slice_failure=None,
+        guard_refusal=guard_refusal,
     )
 
 
@@ -608,12 +703,18 @@ def check_self_test() -> tuple[bool, str]:
         if not ok:
             all_ok = False
 
-    def gate_on(text: str, test_path: str = _FIXTURE_TEST_PATH, pre_sliced: bool = False) -> GateResult:
+    def gate_on(
+        text: str, test_path: str = _FIXTURE_TEST_PATH, pre_sliced: bool = False,
+        expect_min_pairs: int | None = None,
+    ) -> GateResult:
         with tempfile.NamedTemporaryFile("w", suffix=".log", delete=False, encoding="utf-8") as f:
             f.write(text)
             tmp_path = f.name
         try:
-            return run_gate(tmp_path, test_path=test_path, pre_sliced=pre_sliced)
+            return run_gate(
+                tmp_path, test_path=test_path, pre_sliced=pre_sliced,
+                expect_min_pairs=expect_min_pairs,
+            )
         finally:
             Path(tmp_path).unlink(missing_ok=True)
 
@@ -756,6 +857,24 @@ def check_self_test() -> tuple[bool, str]:
            (not r.passed) and bool(r.pairing_mismatches),
            f"passed={r.passed}, mismatches={len(r.pairing_mismatches)}")
 
+    # 14. THE ZERO-EVENT GUARD ITSELF (this steward's own debt, discharged here). An EMPTY
+    #     --pre-sliced corpus must be REFUSED by default -- not read as a trivially-satisfied
+    #     0-applied/0-resolved pairing, which is exactly the defect this case exists to catch: if
+    #     `run_gate`'s zero-event guard is removed, this fixture regresses to `passed=True` and
+    #     this record() call fails. `--expect-min-pairs 0` is the caller's explicit override for
+    #     a genuinely combat-free corpus, and must be honoured -- proving the override is not
+    #     itself dead code, and that the guard checks the RIGHT thing (presence of events) rather
+    #     than merely refusing every --pre-sliced call unconditionally.
+    empty_pre_sliced = ""
+    r_default = gate_on(empty_pre_sliced, pre_sliced=True)
+    r_overridden = gate_on(empty_pre_sliced, pre_sliced=True, expect_min_pairs=0)
+    record(
+        "--pre-sliced empty corpus is refused by default, but --expect-min-pairs 0 overrides it",
+        (not r_default.passed) and (r_default.guard_refusal is not None) and r_overridden.passed,
+        f"default: passed={r_default.passed} guard_refusal={r_default.guard_refusal!r}; "
+        f"overridden: passed={r_overridden.passed}",
+    )
+
     return all_ok, "\n".join(report_lines)
 
 
@@ -783,6 +902,15 @@ def main(argv: list[str] | None = None) -> int:
                              "entirely. Ignores --test-path. Added phase 4 for the gate's first "
                              "PIE-session corpus, which carries no automation markers at all."
                          ))
+    parser.add_argument("--expect-min-pairs", type=int, default=None, metavar="N",
+                         help=(
+                             "Require at least N paired (STRAT-AI applied kind=Attack, "
+                             "STRAT-COMBAT resolved) events. Stronger than, and opts OUT of, the "
+                             "default --pre-sliced zero-event structural refusal below -- "
+                             "passing this flag at all (including --expect-min-pairs 0) is a "
+                             "caller's explicit claim about the corpus and replaces the default "
+                             "rather than stacking under it. Works in either slicing mode."
+                         ))
     parser.add_argument("--self-test", action="store_true",
                          help="Run the fixture self-test proving this gate can FAIL, and exit.")
     args = parser.parse_args(argv)
@@ -796,7 +924,10 @@ def main(argv: list[str] | None = None) -> int:
     if not args.log_path:
         parser.error("log_path is required unless --self-test is given")
 
-    result = run_gate(args.log_path, test_path=args.test_path, pre_sliced=args.pre_sliced)
+    result = run_gate(
+        args.log_path, test_path=args.test_path, pre_sliced=args.pre_sliced,
+        expect_min_pairs=args.expect_min_pairs,
+    )
     print(result.render())
     return 0 if result.passed else 1
 

@@ -31,7 +31,15 @@ planned for it.** See "Log-backed combat outcome milestone" below. **POST-MILEST
 NOT A PHASE:** `a2d370a` discharged the deferred `ESearchCase::CaseSensitive` tightening on the
 T-SAVE-05 grep-contract clause and opened a narrower `STRAT-CMD refused`-shape residual in its
 place; suite is now **104/104** (was 103/103 as of phase 5, above). See "Grep-contract
-case-sensitivity tightening" below. The prior entry (AI-opponent milestone, phase D CLOSED,
+case-sensitivity tightening" below. **ALSO POST-MILESTONE, 2026-08-14, NOT A PHASE:** the
+`--pre-sliced` zero-event gate debt (phase 5's item 4, carried in NEXT) is DISCHARGED —
+`Tools/architect/strat_combat_pairing_gate.py` now refuses a zero-applied/zero-resolved
+`--pre-sliced` corpus by default and accepts an explicit `--expect-min-pairs N` floor (any N,
+including 0, as an opt-out of the default); a 14th in-script self-test case proves the guard is
+falsifiable, and a new 11th checked-in fixture (`fixtures/fail_pre_sliced_zero_events.log`, empty)
+demonstrates it against the actual defect. This is a Python-only change — no `IMPLEMENT_SIMPLE_
+AUTOMATION_TEST` clause, so the 104/104 C++ suite count is unmoved. See "Pre-sliced zero-event
+guard" below. The prior entry (AI-opponent milestone, phase D CLOSED,
 COMPLETE) is preserved under "AI-opponent milestone" further down.)_
 
 ## BUILT
@@ -295,12 +303,13 @@ COMPLETE) is preserved under "AI-opponent milestone" further down.)_
      `Source/StratPlay/Tests/StratSelectionWaitClauses.cpp`
      (`StratSelectionMachine.cpp:156-160`). Currently accurate, but unreachable by a doc pass
      because it sits inside an assertion string rather than a comment. Same owner class as item 2.
-  4. **`--pre-sliced` gate debt on `Tools/architect/strat_combat_pairing_gate.py`, confirmed
-     untouched by phase 5** (`git diff --stat ae2f22a -- Tools/architect/` empty). It returns
-     `PASS` and exit 0 on an empty or wrong pre-sliced corpus. Owed shape: `--expect-min-pairs N`
-     or an outright refusal on a zero-event pre-sliced corpus, plus a 14th self-test fixture
-     proving the new guard can itself fail. **This is this steward's own lane** — carry it, next
-     time the gate script is touched, not folded into an unrelated pass.
+  4. **DISCHARGED, 2026-08-14 — see "Pre-sliced zero-event guard" below.** `--pre-sliced` gate
+     debt on `Tools/architect/strat_combat_pairing_gate.py`, confirmed untouched by phase 5
+     (`git diff --stat ae2f22a -- Tools/architect/` empty at the time). It returned `PASS` and
+     exit 0 on an empty or wrong pre-sliced corpus. Shipped both halves of the owed shape — a
+     structural default refusal on a zero-event `--pre-sliced` corpus, AND a caller-supplied
+     `--expect-min-pairs N` floor, the latter opting out of the former when passed explicitly
+     (including `N=0`) — plus a 14th self-test case proving the guard can itself fail.
   Also unchanged and still open, carried again: the content-independence half of the phase-D
   "avoid one-corpus proof" precedent (a different scenario/buildlist/first side, genuinely
   different game content) — the host-independence half was discharged in this milestone's
@@ -2537,3 +2546,92 @@ buildlist repetition inert at the rules layer.
   different SUBJECT from what was measured, which is why an "enumerate the set" habit does not
   catch it. The working check: ask whether the sentence's subject is the thing you actually
   measured. Corrected to the narrower, true claim before landing.
+
+## Pre-sliced zero-event guard (not a phase)
+
+- **Landed:** 2026-08-14, this steward's own lane only (`Tools/architect/`). Discharges the
+  `--pre-sliced` gate debt carried out of the log-backed combat outcome milestone's phase 5 (NEXT
+  item 4, and the phase-4 section's original "Owed shape, per the reviewer" paragraph). **Not a
+  phase, does not reopen the milestone.** Tree clean at `c778f7c` before this pass; nothing
+  staged or committed by this pass — that is the user's call.
+- **The defect, reproduced directly before any edit, not quoted from the brief:** an empty file
+  through `python Tools/architect/strat_combat_pairing_gate.py <file> --pre-sliced` printed
+  `slice (1-based lines): 1..0`, every count `0`, `pairing mismatches: 0`, `PASS`, `EXIT=0`. Zero
+  applied attacks paired vacuously true against zero resolved lines — an ordered-identity loop
+  over two empty lists asserts nothing and disagrees with nothing.
+- **Design chosen: BOTH halves of the reviewer's stated shape, not one.** A structural default
+  refusal (`GuardRefusal`, no flag needed, cannot be forgotten) fires when `--pre-sliced` yields
+  zero `STRAT-AI applied kind=Attack` AND zero `STRAT-COMBAT resolved` lines. `--expect-min-pairs
+  N` is additionally offered as a strictly stronger, caller-opt-in floor (`min(applied, resolved)
+  >= N`) that catches a non-empty but short corpus (e.g. 68 expected, 3 present) the structural
+  check alone would miss. Passing `--expect-min-pairs` at all — including `N=0` — is read as the
+  caller's explicit claim about the corpus and REPLACES the structural default rather than
+  stacking under it, so a genuinely combat-free `--pre-sliced` session (if one is ever a real
+  corpus) has a stated, auditable way to pass rather than needing the guard disabled. Rejected:
+  shipping `--expect-min-pairs` alone, because a forgotten flag reproduces the exact defect this
+  debt exists to close; shipping the structural refusal alone, because it cannot catch a
+  short-but-nonzero corpus and the reviewer's brief asked for the stronger option too.
+- **Scope: `--pre-sliced` only, deliberately, not the marker-sliced path.** A marker-sliced
+  corpus (the default mode) can legitimately contain zero attacks — a real automation test that
+  never attacks, sliced correctly by its own `Test Started.`/`Test Completed.` pair, is a boring,
+  correct `PASS`, and a blanket zero-event refusal there would fire on a good run. Marker slicing
+  already carries its own structural corpus-identity guard (`SliceFailure` on a missing or
+  mismatched marker pair) that `--pre-sliced` was built specifically to trade away for caller
+  convenience on a PIE session log with no automation markers at all; the new guard restores an
+  equivalent for the mode that gave that guard up, rather than duplicating a check the
+  marker-sliced path does not need. `--expect-min-pairs` is NOT scope-restricted — it is a plain,
+  useful floor in either mode — but only `--pre-sliced`'s empty corpus gets an unconditional
+  default.
+- **Exit code and channel: matched the script's own existing convention, not invented.**
+  `SliceFailure` and a `PairingMismatch` failure already share one exit code
+  (`main`'s `return 0 if result.passed else 1` has never branched on failure kind) and are
+  distinguished by RENDERED TEXT alone — `SliceFailure` prints its own `"FAIL: slicing failed --
+  {reason}"` branch instead of the normal count table. The new `GuardRefusal` follows the same
+  precedent: a `GUARD REFUSED: {reason}` line appended to the normal, full count table (unlike
+  `SliceFailure`, the guard fires only after parsing succeeds, so the counts are worth showing),
+  same terminal `PASS`/`FAIL` word, same `EXIT=1`. No new exit value was introduced.
+- **Falsifiability — the non-negotiable.** Self-test case 14 (`check_self_test`, 14th `record()`
+  call) asserts, in one case: an empty `--pre-sliced` corpus is refused by default
+  (`r_default.passed is False` AND `r_default.guard_refusal is not None`), AND the same corpus
+  with `--expect-min-pairs 0` passes (`r_overridden.passed is True`) — proving both that the
+  guard actually fires and that the override is not itself dead code. Delete the zero-event
+  branch in `run_gate` and this case regresses to `passed=True` on the default call, failing the
+  `record()`. Verified directly: `--self-test` prints `[OK] --pre-sliced empty corpus is refused
+  by default, but --expect-min-pairs 0 overrides it -- default: passed=False guard_refusal=...;
+  overridden: passed=True`.
+- **Two counts, kept distinct, per the brief's own warning about conflating them.** In-script
+  `--self-test` cases: **13 → 14** (one new `record()` call). Checked-in `.log` fixtures in
+  `evidence/08-combat-pairing-gate/fixtures/`: **10 → 11** — a new empty file,
+  `fail_pre_sliced_zero_events.log`, added because the defect this debt closes was itself
+  demonstrated with an empty file, and a fixture proving it belongs beside the other ten. It is
+  run with `--pre-sliced` (not `--test-path`) — `--pre-sliced` ignores `--test-path` entirely, so
+  it carries none of the other ten fixtures' `--test-path Stratocracy.Fixture.FIX-01.FixtureTest`
+  trap. Noted so a future reader does not conflate the 14 and the 11.
+- **Regression evidence, all re-run after the change, not assumed:**
+  - `--self-test`: all 14 cases `[OK]`, `SELF-TEST: ALL FIXTURES CORRECT`, `EXIT=0`.
+  - All 10 pre-existing `.log` fixtures, each run with `--test-path
+    Stratocracy.Fixture.FIX-01.FixtureTest` (the documented trap, applied correctly): the 7
+    `fail_*` fixtures each print `FAIL`/`EXIT=1`, the 3 `pass_*` fixtures each print
+    `PASS`/`EXIT=0` — identical to `gate_self_test_output.txt`'s recorded table, unchanged by
+    this pass.
+  - The real phase-4 PIE corpus, `evidence/08-combat-pairing-gate/pie-run/ai-vs-ai-pie-session-
+    slice.log` (266 lines), run with `--pre-sliced`: unchanged — `STRAT-AI applied kind=Attack:
+    68`, `STRAT-COMBAT resolved: 68`, `pairing mismatches: 0`, `PASS`, `EXIT=0`. The guard did
+    not fire because the corpus is non-empty; this is the control proving the guard admits a good
+    corpus, not merely that it rejects a bad one.
+  - The new fixture itself, `fail_pre_sliced_zero_events.log` (0 bytes), through `--pre-sliced`
+    with no `--expect-min-pairs`: `GUARD REFUSED: --pre-sliced corpus produced ZERO ... EXIT=1` —
+    the exact defect this debt closes, now caught.
+- **Files changed:** `Tools/architect/strat_combat_pairing_gate.py` (edited — new `GuardRefusal`
+  dataclass, `guard_refusal` field on `GateResult`, the guard computation in `run_gate`, the
+  `--expect-min-pairs` CLI flag, self-test case 14, plus docstring updates at the module banner
+  and `run_gate`'s own docstring); `Tools/architect/evidence/08-combat-pairing-gate/fixtures/
+  fail_pre_sliced_zero_events.log` (new, empty). `git diff --stat`: one file changed, 134
+  insertions, 3 deletions in the `.py`; the fixture is untracked. Nothing staged, nothing
+  committed — this steward does not commit.
+- **Out of scope, recorded and carried forward, not built:** the separate debt that the 10
+  checked-in `.log` fixtures have no re-runnable assertion binding each to its expected verdict
+  in `gate_self_test_output.txt` (so a future parser edit could leave that table silently stale),
+  and that `--test-path Stratocracy.Fixture.FIX-01.FixtureTest` is undocumented in the fixtures
+  directory itself. Touched only insofar as the new fixture's own note above states its mode;
+  the rest is unchanged and not this task.

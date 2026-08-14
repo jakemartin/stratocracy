@@ -66,6 +66,7 @@
 #include "CoreGlobals.h"
 #include "Engine/DataTable.h"
 #include "Math/IntPoint.h"
+#include "HAL/CriticalSection.h"
 #include "Misc/OutputDevice.h"
 #include "Misc/OutputDeviceRedirector.h"
 #include "Misc/Paths.h"
@@ -252,6 +253,22 @@ namespace StratSelectionWaitClauses
 	 * USED FOR ONE THING ONLY, AND IT IS NOT "THE LINE EXISTS". See this file's header block:
 	 * the no-op clause reads this capture's SILENCE on the guarded path, and proves the
 	 * capture is live by driving a real wait through it in the same clause.
+	 *
+	 * UNBUFFERED, AND THE SILENCE CLAUSE IS WHY IT MATTERS MOST HERE. Without the override,
+	 * `FOutputDeviceRedirector` can deliver a device lines that were emitted BEFORE it was
+	 * constructed: a line it cannot broadcast on the primary-thread fast path is queued
+	 * (OutputDeviceRedirector.cpp:937) and later drained to whichever devices sit in
+	 * `BufferedOutputDevices` AT DRAIN TIME (:553). An earlier clause's `STRAT-WAIT spent`
+	 * line could therefore land inside this window and make `LinesAfterNoOp` non-zero with
+	 * nothing at all wrong in the module -- the same defect measured as a 1-in-4 failure of
+	 * `T-UI-01.ClickedAttackIsAcceptedAndRecorded` on 2026-08-14.
+	 *
+	 * IT DOES NOT WEAKEN THE POSITIVE CONTROL, and that was checked before it was made. The
+	 * override removes only a route by which lines from OUTSIDE the window arrive; lines
+	 * emitted INSIDE it now arrive synchronously, within the emitting `UE_LOG` call (:905),
+	 * strictly sooner than before. The real wait's line is in `Lines` before `HandleEvent` has
+	 * returned, so `LinesAfterRealWait > LinesAfterNoOp` is if anything more reliable. Both
+	 * halves of the clause keep exactly the meaning they had.
 	 */
 	struct FStratWaitCapture final : public FOutputDevice
 	{
@@ -273,17 +290,25 @@ namespace StratSelectionWaitClauses
 			}
 		}
 
+		/** See the block above. Removing this line reopens the late-delivery hole. */
+		virtual bool CanBeUsedOnMultipleThreads() const override { return true; }
+
 		virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type /*Verbosity*/,
 		                       const FName& /*Category*/) override
 		{
 			const FString Line(Message);
 			if (Line.StartsWith(TEXT("STRAT-WAIT")))
 			{
+				FScopeLock Lock(&Mutex);
 				Lines.Add(Line);
 			}
 		}
 
-		/** The redirector may buffer; flush before counting. */
+		/**
+		 * Kept, and no longer load-bearing. An unbuffered device already holds every line by
+		 * the time the emitting `UE_LOG` returns; this now only pushes the OTHER devices'
+		 * buffers so a failure message's surrounding log reads in order.
+		 */
 		void Settle()
 		{
 			if (GLog != nullptr)
@@ -291,6 +316,9 @@ namespace StratSelectionWaitClauses
 				GLog->Flush();
 			}
 		}
+
+	private:
+		FCriticalSection Mutex;
 	};
 }
 

@@ -14,6 +14,12 @@
 // carries the module object the loader requires and can be listed safely.
 IMPLEMENT_MODULE(FDefaultModuleImpl, StratBridge)
 
+// The bridge's first log category. Declared in StratCombatLog.h, which StratBridge.h
+// includes; defined here, in the module .cpp, exactly as StratPlay.cpp:16 defines
+// LogStratPlay. Before this line the module contained zero UE_LOG calls -- measured,
+// `grep -rn UE_LOG Source/StratBridge/` was empty at 538cfe0.
+DEFINE_LOG_CATEGORY(LogStratBridge)
+
 namespace
 {
 	// EUnitType mirrors strat::UnitType, and the mirror is pinned by
@@ -180,6 +186,305 @@ FStratResult FStratBridge::LoadScenarioFromFile(const FString& ScenarioFilePath,
 	return FStratResult::Ok();
 }
 
+// ---------------------------------------------------------------------------
+// StratCombatObservation -- the `STRAT-COMBAT` family, and the only place in the
+// project that compares §2.6's forecast against what §2.6 actually did.
+//
+// WHY IT HAS TO BE ASSEMBLED AT ALL. `applyCommand`'s Attack case returns
+// `okResult(1)` and nothing else (Replay.good.cpp:413-470). No damage, no death,
+// no counter, no fame comes back through the return channel, so an observer has
+// exactly two places to look: `strat::uiForecast` BEFORE the submit, and the
+// difference between two `strat::UiSnapshot`s taken either side of it. This block
+// reads both and DERIVES NEITHER -- every predicted number is `uiForecast`'s and
+// every measured number is one snapshot field minus the same snapshot field.
+//
+// THE ONE PIECE OF ARITHMETIC IN HERE IS `LossAgrees`, AND IT DECIDES NOTHING.
+// It is the divergence detector; it compares two answers that already exist and
+// its result reaches a log line and nothing else. No caller branches on it, no
+// state depends on it, and if it were deleted the game would play identically.
+// That is the line between a diagnostic and the rules answer §4.1 forbids this
+// module to compute, and it is why `strat::uiResolveForGate` (Ui.h:355-361) is
+// NOT called from here: that function is the gate's independent oracle, and a
+// production caller would make phase 2's clauses check the bridge against a value
+// the bridge itself had just asked for.
+//
+// WHY IT IS FILE-LOCAL FREE FUNCTIONS AND NOT `FStratBridge` METHODS. Every one
+// of them needs only the bridge's PUBLIC surface -- `State()`, `MakeUiSnapshot`,
+// `Forecast` -- so making them members would widen the exported class for no
+// caller. They are not `static` members for the same reason.
+// ---------------------------------------------------------------------------
+namespace StratCombatObservation
+{
+	/** The pre-submit projection, kept alive across `applyCommand` so the fame and HP
+	 *  fields have a "before" to be measured against. */
+	struct FBefore
+	{
+		bool              bValid = false;
+		strat::UiSnapshot Snapshot;
+	};
+
+	const strat::UiUnitView* FindUnitById(const strat::UiSnapshot& S, int32 Id)
+	{
+		return (Id == INDEX_NONE) ? nullptr : strat::findUiUnitView(S, Id);
+	}
+
+	/** The unit standing on a hex, by walking the snapshot's own unit list. Deliberately
+	 *  NOT a board lookup into `GameState`: the measured side of this record must come
+	 *  off the same projection the screen reads, or a divergence here could be a
+	 *  projection bug wearing a combat bug's clothes. */
+	const strat::UiUnitView* FindUnitOnHex(const strat::UiSnapshot& S, const strat::Hex& H)
+	{
+		for (const strat::UiUnitView& U : S.units)
+		{
+			if (U.hex.q == H.q && U.hex.r == H.r)
+			{
+				return &U;
+			}
+		}
+		return nullptr;
+	}
+
+	/**
+	 * Did one combatant lose what it was predicted to lose?
+	 *
+	 * A DEAD UNIT HAS NO "AFTER" HP, so death and damage cannot be checked by the same
+	 * comparison. When both sides agree the unit died, the only thing left to check is
+	 * that the predicted blow was at least large enough to empty the pool -- the excess
+	 * is not observable anywhere and asserting on it would be inventing a clause.
+	 */
+	bool LossAgrees(int32 HpBefore, int32 HpAfter, bool bDied, int32 ExpectedDamage, bool bExpectDeath)
+	{
+		if (bDied != bExpectDeath)
+		{
+			return false;
+		}
+		if (bDied)
+		{
+			return ExpectedDamage >= HpBefore;
+		}
+		if (HpBefore == INDEX_NONE || HpAfter == INDEX_NONE)
+		{
+			return false;
+		}
+		return (HpBefore - HpAfter) == ExpectedDamage;
+	}
+
+	void CaptureBefore(const FStratBridge&        Bridge,
+	                   const strat::SaveCommand&  Command,
+	                   FStratCombatOutcome&       Out,
+	                   FBefore&                   Before)
+	{
+		Out.AttackerId = Command.unitId;
+		Out.TargetHex  = FIntPoint(Command.hex.q, Command.hex.r);
+		// READ BEFORE THE SUBMIT, for the reason `StratSubmitSelectionCommand` reads them
+		// before: the command that closes turn N is tagged N, and a post-submit read of a
+		// turn-ending resolution would describe a turn nobody played in.
+		Out.Turn       = Bridge.State().turn.turnNumber;
+		Out.ActiveSide = Bridge.State().turn.activeSide;
+
+		Before.bValid = Bridge.MakeUiSnapshot(Before.Snapshot).bOk;
+		if (Before.bValid)
+		{
+			if (const strat::UiUnitView* Attacker = FindUnitById(Before.Snapshot, Out.AttackerId))
+			{
+				Out.AttackerSide     = Attacker->side;
+				Out.AttackerHpBefore = Attacker->hp;
+				Out.AttackerHpMax    = Attacker->hpMax;
+			}
+			if (const strat::UiUnitView* Defender = FindUnitOnHex(Before.Snapshot, Command.hex))
+			{
+				Out.DefenderId       = Defender->id;
+				Out.DefenderHpBefore = Defender->hp;
+				Out.DefenderHpMax    = Defender->hpMax;
+			}
+			if (Out.AttackerSide >= 0 && Out.AttackerSide < strat::SIDE_COUNT)
+			{
+				const strat::UiSideView& S = Before.Snapshot.side[Out.AttackerSide];
+				Out.AttackerFameTotalBefore  = S.fameTotal;
+				Out.AttackerFameCombatBefore = S.fameCombat;
+			}
+		}
+
+		// THE FORECAST, and the two channels are kept apart exactly as
+		// `FStratBridge::Forecast`'s "TWO CHANNELS" block says to: `bOk` is whether the
+		// question could be ASKED, `legal` is what the rules ANSWERED. An out-of-range
+		// attack is Ok() with legal=false. (Cited by function name -- this comment first
+		// said `StratBridge.h:392-399`, and the same diff that wrote it pushed the target
+		// 24 lines down and left it pointing at `Reachable`.)
+		strat::UiForecast F;
+		Out.bForecastQueried = Bridge.Forecast(Out.AttackerId, Command.hex, F).bOk;
+		if (Out.bForecastQueried)
+		{
+			Out.bForecastLegal          = F.legal;
+			Out.ForecastDistance        = F.distance;
+			Out.ForecastDamage          = F.damage;
+			Out.bForecastDefenderDies   = F.defenderDies;
+			Out.bForecastCounterFires   = F.counterFires;
+			Out.ForecastCounterDamage   = F.counterDamage;
+		}
+	}
+
+	void CaptureAfter(const FStratBridge& Bridge, const FBefore& Before, FStratCombatOutcome& Out)
+	{
+		Out.bApplied = true;
+
+		strat::UiSnapshot After;
+		const bool bAfterValid = Bridge.MakeUiSnapshot(After).bOk;
+		if (!bAfterValid || !Before.bValid)
+		{
+			// Left at -1 / unmeasurable rather than guessed. See `ForecastAgrees`.
+			return;
+		}
+
+		// ABSENCE FROM THE ROSTER IS THE DEATH TEST, and it is the only one available:
+		// the snapshot carries no "is dead" field because a dead unit is not projected.
+		if (const strat::UiUnitView* Attacker = FindUnitById(After, Out.AttackerId))
+		{
+			Out.AttackerHpAfter = Attacker->hp;
+		}
+		else
+		{
+			Out.bAttackerDied = (Out.AttackerHpBefore != INDEX_NONE);
+		}
+
+		if (const strat::UiUnitView* Defender = FindUnitById(After, Out.DefenderId))
+		{
+			Out.DefenderHpAfter = Defender->hp;
+		}
+		else
+		{
+			Out.bDefenderDied = (Out.DefenderId != INDEX_NONE);
+		}
+
+		if (Out.AttackerSide >= 0 && Out.AttackerSide < strat::SIDE_COUNT)
+		{
+			const strat::UiSideView& S = After.side[Out.AttackerSide];
+			Out.AttackerFameTotalAfter  = S.fameTotal;
+			Out.AttackerFameCombatAfter = S.fameCombat;
+		}
+
+		// ---- The agreement, the reason this record exists at all ----------
+		if (!Out.bForecastQueried || Out.DefenderId == INDEX_NONE || Out.AttackerHpBefore == INDEX_NONE)
+		{
+			return;   // ForecastAgrees stays -1
+		}
+
+		int32 Mask = EStratCombatDivergence::None;
+
+		if (!Out.bForecastLegal)
+		{
+			// The rules applied an attack the forecast called illegal. That is the two
+			// halves of §2.6 disagreeing about whether the act was even available, and it
+			// is a sharper fault than any damage mismatch.
+			Mask |= EStratCombatDivergence::LegalityDisagrees;
+		}
+
+		if (!LossAgrees(Out.DefenderHpBefore, Out.DefenderHpAfter, Out.bDefenderDied,
+		                Out.ForecastDamage, Out.bForecastDefenderDies))
+		{
+			Mask |= EStratCombatDivergence::DefenderLoss;
+		}
+
+		// A counter that does not fire predicts a loss of ZERO, which is not the same as
+		// predicting nothing -- and `counterFires` true with `counterDamage` 0 predicts
+		// zero too. Folding both through the same expected-damage comparison is what
+		// keeps a 0-damage counter from reading as a divergence.
+		const int32 ExpectedCounter    = Out.bForecastCounterFires ? Out.ForecastCounterDamage : 0;
+		const bool  bExpectAttackerDie = Out.bForecastCounterFires
+		                                 && Out.ForecastCounterDamage >= Out.AttackerHpBefore;
+		if (!LossAgrees(Out.AttackerHpBefore, Out.AttackerHpAfter, Out.bAttackerDied,
+		                ExpectedCounter, bExpectAttackerDie))
+		{
+			Mask |= EStratCombatDivergence::CounterLoss;
+		}
+
+		Out.DivergenceMask  = Mask;
+		Out.ForecastAgrees  = (Mask == EStratCombatDivergence::None) ? 1 : 0;
+	}
+
+	/** Every field numeric, fixed order, -1 where a field has no value -- phase 4's
+	 *  `STRAT-CMD` discipline, so the line's SHAPE never depends on its content. */
+	FString DescribeCommonFields(const FStratCombatOutcome& O)
+	{
+		return FString::Printf(
+			TEXT("attacker=%d defender=%d hex=%d,%d turn=%d side=%d attackerSide=%d ")
+			TEXT("fqueried=%d flegal=%d fdist=%d fdmg=%d fdies=%d fcounter=%d fcdmg=%d"),
+			O.AttackerId, O.DefenderId, O.TargetHex.X, O.TargetHex.Y,
+			O.Turn, O.ActiveSide, O.AttackerSide,
+			O.bForecastQueried ? 1 : 0, O.bForecastLegal ? 1 : 0,
+			O.ForecastDistance, O.ForecastDamage,
+			O.bForecastDefenderDies ? 1 : 0, O.bForecastCounterFires ? 1 : 0,
+			O.ForecastCounterDamage);
+	}
+
+	/**
+	 * THE EMITTER. One call site, in `FStratBridge::Submit`, on the Attack kind only.
+	 *
+	 * `refused` IS A DIFFERENT PHRASE FROM `resolved`, and it does not contain the word
+	 * `resolved`, for the reason `STRAT-CMD refused` does not contain `accepted`
+	 * (StratSelectionMachine.cpp:571-575): `grep -c "STRAT-COMBAT resolved"` must count
+	 * attacks that ACTUALLY APPLIED, and a refusal that shared the phrase would inflate
+	 * it silently. `STRAT-COMBAT divergence` is a third phrase for the same reason -- it
+	 * is greppable on its own, and it is emitted BESIDE the resolved line rather than
+	 * instead of it, so the resolved count stays a count of resolutions.
+	 */
+	void EmitResolved(const FStratCombatOutcome& O)
+	{
+		UE_LOG(LogStratBridge, Log,
+			TEXT("STRAT-COMBAT resolved %s ahpBefore=%d ahpAfter=%d ahpMax=%d adied=%d ")
+			TEXT("dhpBefore=%d dhpAfter=%d dhpMax=%d ddied=%d ")
+			TEXT("fameBefore=%d fameAfter=%d fameCombatBefore=%d fameCombatAfter=%d ")
+			TEXT("agree=%d diverge=%d"),
+			*DescribeCommonFields(O),
+			O.AttackerHpBefore, O.AttackerHpAfter, O.AttackerHpMax, O.bAttackerDied ? 1 : 0,
+			O.DefenderHpBefore, O.DefenderHpAfter, O.DefenderHpMax, O.bDefenderDied ? 1 : 0,
+			O.AttackerFameTotalBefore, O.AttackerFameTotalAfter,
+			O.AttackerFameCombatBefore, O.AttackerFameCombatAfter,
+			O.ForecastAgrees, O.DivergenceMask);
+
+		if (O.ForecastAgrees == 0)
+		{
+			// The defect Ui.h:346 says the forecast's construction exists to catch, caught
+			// on a real submit rather than in a gate fixture. Error level because there is
+			// no benign reading of it: either the screen lied to the player or the rules
+			// module has two answers for one question.
+			UE_LOG(LogStratBridge, Error,
+				TEXT("STRAT-COMBAT divergence %s diverge=%d"),
+				*DescribeCommonFields(O), O.DivergenceMask);
+		}
+	}
+
+	/**
+	 * `Log` AND NOT `Warning`, AND THAT LEVEL IS MEASURED RATHER THAN CHOSEN BY TASTE.
+	 *
+	 * A refused attack is the rules module correctly saying no -- "which is the interface
+	 * working", in StratPlayerController.cpp:267's words. It is what a player gets for
+	 * clicking an out-of-range hex, and it is not a fault.
+	 *
+	 * The first cut emitted it at `Warning`, matching `STRAT-CMD refused`. MEASURED: the
+	 * automation framework captures warnings into whichever test provoked them, and this
+	 * one line downgraded two existing tests that deliberately submit illegal attacks --
+	 * `T-SAVE-06.RejectedCommandIsNotRecorded` and
+	 * `T-UI-01.SubmitAttackAtHexIsNotTransposed` -- taking the suite from
+	 * 87/0/0/0 to 85 succeeded / 0 failed / 0 notRun / 2 succeededWithWarnings, with no
+	 * test failing and nothing in the tree actually broken. `STRAT-CMD refused` gets away
+	 * with `Warning` because it is emitted from `StratPlay` on a path no bridge test
+	 * takes; this one sits under every test in the project that submits a command.
+	 *
+	 * `STRAT-COMBAT divergence` KEEPS ITS `Error` LEVEL, and the asymmetry is the point:
+	 * automation treats a logged error as a test FAILURE, and a forecast that disagrees
+	 * with its own resolution should fail whatever suite observes it. That is an
+	 * obligation on any future test that provokes a divergence deliberately -- it must
+	 * declare the error with `AddExpectedError`, and it must not lower this level.
+	 */
+	void EmitRefused(const FStratCombatOutcome& O, const FString& Reason)
+	{
+		UE_LOG(LogStratBridge, Log,
+			TEXT("STRAT-COMBAT refused %s reason=%s"),
+			*DescribeCommonFields(O), *Reason);
+	}
+}
+
 FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 {
 	if (!bSeeded)
@@ -187,15 +492,51 @@ FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 		return FStratResult::Fail(TEXT("no scenario is loaded"));
 	}
 
+	// THE ONE OBSERVATION POINT, AND IT SITS BELOW THE `!bSeeded` GUARD ABOVE. An attack
+	// submitted to an unseeded bridge returns there and reaches neither emitter -- no
+	// `resolved`, no `refused`, no line of any kind. That is the right answer (there is
+	// no state to project, and a line of all -1 would say less than no line) but it is
+	// NOT a free choice, because it makes `resolved + refused` something other than the
+	// count of attacks submitted. A pairing gate that assumes those numbers reconcile
+	// would be silently off by however many commands arrived before a scenario did.
+	//
+	// `SubmitAttackAtHex` -> `SubmitAttack` -> `SubmitStamped` -> here, and the only
+	// other callers of this method in the tree (StratBridgeParity.cpp:340,
+	// StratBridgeSaveRecording.cpp:466) hand it a raw SaveCommand and also arrive here.
+	// Both of those submit a DELIBERATELY ILLEGAL command that refuses, so no attack in
+	// the tree today APPLIES without passing a typed arm -- observing in `SubmitAttack`
+	// would not currently miss anything. It is still the wrong place: the guarantee this
+	// method gives is that a future raw Attack which does apply cannot escape, and
+	// observing in both places would double-count every attack instead.
+	const bool bIsAttack = (Command.kind == strat::SaveCommandKind::Attack);
+
+	FStratCombatOutcome              Outcome;
+	StratCombatObservation::FBefore  Before;
+	if (bIsAttack)
+	{
+		StratCombatObservation::CaptureBefore(*this, Command, Outcome, Before);
+	}
+
 	const strat::ReplayResult R = strat::applyCommand(GameState, Command, Tables());
 	if (!R.ok)
 	{
+		if (bIsAttack)
+		{
+			StratCombatObservation::EmitRefused(Outcome, FromStd(R.reason));
+		}
 		return FStratResult::Fail(FromStd(R.reason), FromStd(R.failedId));
 	}
 
 	// AFTER the module accepted it, and only then. §4.9 says a rejected command
 	// changes nothing; a log that recorded the attempt would be a change.
 	Recorded.push_back(Command);
+
+	if (bIsAttack)
+	{
+		StratCombatObservation::CaptureAfter(*this, Before, Outcome);
+		StratCombatObservation::EmitResolved(Outcome);
+	}
+
 	return FStratResult::Ok();
 }
 

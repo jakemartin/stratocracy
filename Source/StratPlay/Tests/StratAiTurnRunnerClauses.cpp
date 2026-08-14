@@ -53,6 +53,7 @@
 #include "CoreGlobals.h"
 #include "Engine/DataTable.h"
 #include "Math/IntPoint.h"
+#include "HAL/CriticalSection.h"
 #include "Misc/OutputDevice.h"
 #include "Misc/OutputDeviceRedirector.h"
 #include "Misc/Paths.h"
@@ -226,6 +227,27 @@ namespace StratAiTurnRunnerClauses
 	 * `StartsWith` AND `Contains` ARE CASE SENSITIVE HERE, on purpose. Both default to
 	 * IgnoreCase in UE 5.8, and a case-insensitive match on a fixed-field log line is a
 	 * comparison that cannot fail.
+	 *
+	 * UNBUFFERED, AND THE OVERRIDE IS LOAD-BEARING. The `LinesBefore` watermarks the clauses
+	 * below take do NOT make this device safe on their own: a watermark bounds by INDEX, and
+	 * the failure mode bounds by TIME. `FOutputDeviceRedirector` queues a line it cannot
+	 * broadcast on the primary-thread fast path (OutputDeviceRedirector.cpp:937) and later
+	 * drains it to whichever devices sit in `BufferedOutputDevices` AT DRAIN TIME (:553), so a
+	 * line emitted before the watermark can still be APPENDED after it and counted as though
+	 * it fell inside the window. That is MEASURED on this project, in
+	 * `StratHotSeatReplayParity.cpp` -- 1 failure in 4 runs on byte-identical code, three
+	 * pre-window lines landing inside a window that should have held one.
+	 *
+	 * `CanBeUsedOnMultipleThreads() == true` puts the device in `UnbufferedOutputDevices`
+	 * (:440-447), which only the synchronous broadcast at :905 -- inside the emitting `UE_LOG`
+	 * itself -- ever feeds. `FlushBufferedItems` cannot reach it. Emission order and delivery
+	 * order become the same order, and a watermark then means what it reads as. It is also the
+	 * engine's own idiom for a device registered around a test: `FAutomationTestOutputDevice`
+	 * overrides it with the comment "Make it unbuffered by returning true"
+	 * (AutomationTest.h:1345).
+	 *
+	 * The override promises the device needs no external locking, so `Lines` is mutated under
+	 * `Mutex`. Direct reads of `Lines` are game-thread-only, as every call site below is.
 	 */
 	struct FStratAiCapture final : public FOutputDevice
 	{
@@ -247,17 +269,25 @@ namespace StratAiTurnRunnerClauses
 			}
 		}
 
+		/** See the block above. Removing this line reopens the late-delivery hole. */
+		virtual bool CanBeUsedOnMultipleThreads() const override { return true; }
+
 		virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type /*Verbosity*/,
 		                       const FName& /*Category*/) override
 		{
 			const FString Line(Message);
 			if (Line.StartsWith(TEXT("STRAT-AI"), ESearchCase::CaseSensitive))
 			{
+				FScopeLock Lock(&Mutex);
 				Lines.Add(Line);
 			}
 		}
 
-		/** The redirector may buffer; flush before counting. */
+		/**
+		 * Kept, and no longer load-bearing. An unbuffered device already holds every line by
+		 * the time the emitting `UE_LOG` returns; this now only pushes the OTHER devices'
+		 * buffers so a failure message's surrounding log reads in order.
+		 */
 		void Settle()
 		{
 			if (GLog != nullptr)
@@ -290,6 +320,9 @@ namespace StratAiTurnRunnerClauses
 			}
 			return Slice.Num() > 0 ? FString::Join(Slice, TEXT(" | ")) : FString(TEXT("<nothing>"));
 		}
+
+	private:
+		FCriticalSection Mutex;
 	};
 
 	/**

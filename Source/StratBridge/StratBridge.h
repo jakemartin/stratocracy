@@ -56,6 +56,11 @@
 #include "Scenario.h"
 #include "Ui.h"
 
+// Engine-typed only, and includes nothing vendored. It is separate from this header so
+// that a future UHT-parsed header can include it without inheriting this one's `strat`
+// includes -- see its own prose block.
+#include "StratCombatLog.h"
+
 class UDataTable;
 
 // The two §4.10 header fields this object CANNOT know, supplied by the caller.
@@ -187,6 +192,46 @@ public:
 	// remembered, and the failure mode is a save that replays to a different
 	// state with nothing to point at. Appended ONLY on success, so a rejected
 	// command leaves the log exactly as §4.9 leaves the state.
+	//
+	// IT IS ALSO THE ONE PLACE A `STRAT-COMBAT` LINE IS EMITTED, for exactly the
+	// reason it is the one place a command is recorded. `SubmitAttackAtHex` calls
+	// `SubmitAttack` calls `SubmitStamped` calls this, and the two raw-command
+	// callers in the tree call this directly, so this is the single point every
+	// Attack passes through once -- a `…Logged` sibling of `SubmitAttack` would be
+	// a second path a caller could take that skips the line, which is the failure
+	// this placement exists to make unreachable. See StratCombatLog.h for the
+	// record's shape and StratBridge.cpp's `StratCombatObservation` block for what
+	// is captured on each side of `applyCommand`.
+	//
+	// TWO KINDS OF ATTACK REACH NO LINE AT ALL, and both matter to anyone counting.
+	//
+	// FIRST, an attack refused by the `!bSeeded` guard at the top of this method.
+	// That return sits ABOVE the capture, so a command submitted to an unseeded
+	// bridge produces neither `resolved` nor `refused`. Defensible -- there is no
+	// state to project and nothing to measure, and a line of all -1 would say less
+	// than no line -- but the consequence is load-bearing for a gate:
+	// `resolved + refused` IS NOT THE COUNT OF ATTACKS SUBMITTED. A 1:1 pairing
+	// gate that assumes it is would be silently off by however many commands
+	// arrived before a scenario did.
+	//
+	// SECOND, `ReplayLog` DOES NOT PASS THROUGH HERE. Measured: it calls
+	// `strat::replayLog` on the whole vector and appends to `Recorded` itself --
+	// see `FStratBridge::ReplayLog` in the .cpp, cited by name because a line
+	// number here has already gone stale twice in one diff.
+	//
+	// THE REASON FOR THAT SECOND EXCLUSION COVERS ONE SHAPE AND NOT THE OTHER, and
+	// it is narrowed here deliberately rather than left to sound general. It holds
+	// for the IN-PROCESS ROUND TRIP -- `ReplayRecordedLogOnto` hands a log to
+	// `Fresh.ReplayLog`, and this process already emitted a line for every one of
+	// those attacks when they first resolved, so observing them again would make
+	// `grep -c "STRAT-COMBAT resolved"` count one match twice. It DOES NOT hold for
+	// a log loaded from disk in a FRESH PROCESS: those attacks were never observed
+	// by anyone, and today they replay silently. That case is a real gap, not a
+	// deliberate exclusion, and nothing in the tree needs it closed yet.
+	//
+	// If a later phase needs replayed attacks observed, the fix is to route
+	// `ReplayLog` through this method command by command AND to accept that it
+	// stops being all-or-nothing at the module -- not to add a second emitter.
 	FStratResult Submit(const strat::SaveCommand& Command);
 
 	// ---- Typed commands (§4.9's five, and no others) ----------------------

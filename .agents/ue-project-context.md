@@ -192,12 +192,27 @@ reference shape.
 
 The count moves every phase and goes stale the moment it is restated — read it from
 `Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
-number here. Last observed here: 86/86, AI-opponent phase B, 2026-08-13.
+number here. Last observed here: 93/93, combat-outcome phase 2, 2026-08-14.
 
 **That report is UTF-8 with a BOM** — first bytes `EF BB BF`. Measured in phase 4, after two
 agents reported it as UTF-16: all three UTF-16 codecs fail on it and `utf-8-sig` succeeds. A
 reader that hardcodes the wrong codec sees zero tests and may not say so — the same silent-zero
 shape as the bare `"Stratocracy.uproject"` test command below.
+
+**Any `FOutputDevice` that captures `GLog` inside a clause MUST override
+`CanBeUsedOnMultipleThreads()` to return `true`.** Measured 2026-08-14, after a clause failed
+1 run in 4 on byte-identical code while passing in isolation. `FOutputDeviceRedirector` queues
+lines it cannot broadcast on the primary-thread fast path, and `FlushBufferedItems` drains that
+queue to whichever devices sit in `BufferedOutputDevices` **at drain time**
+(`OutputDeviceRedirector.cpp:553`) — so a capture registering mid-stream inherits the queue's
+tail, and a `GLog->Flush()` in the capture's own settle step is itself enough to trigger the
+drain. The override routes the device to `UnbufferedOutputDevices` (`:440-447`), fed only by the
+synchronous broadcast inside the emitting `UE_LOG` (`:905`), so the window it sees equals the
+object's lifetime by construction rather than by timing. Engine precedent:
+`AutomationTest.h:1345`, `:1396`. All four captures in `Source/StratPlay/Tests/` carry it; a
+fifth without it reintroduces the flake. Note the lock guards the append only — every read of the
+line array is unlocked and game-thread-only, which is safe solely because every `STRAT-*` emitter
+is on the game thread, and **nothing pins that**.
 
 ### Build
 

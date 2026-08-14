@@ -1,6 +1,12 @@
 # Architect state
 
-_Last run 2026-08-13 (AI-opponent milestone, phase D CLOSED: piece (a), the `STRAT-AI` log parser and gate, proven green against a real isolated AI-vs-AI log (87/87 suite, harness-echo parse defect found and fixed) with its own gate half — an initial `BLOCK`, corrected, then `PASS`; piece (b), the PIE playtest, assembled from two separate sessions in one log — the completed game (74/4/1/0/0, exit 0 PASS) and a separate screenshot run (8/1/0/0/0, exit 0 PASS) — with its own PIE half gate — an initial `BLOCK` on three miscounted claims, corrected, then `PASS` on the fourth gate. Phase D's exit criterion is MET and the phase is CLOSED. The AI-opponent milestone is now COMPLETE.)_
+_Last run 2026-08-14 (log-backed combat outcome milestone: phase 1 CLOSED — the `STRAT-COMBAT`
+emitter on `FStratBridge::Submit`, gated three times, zero findings, plus an unplanned 1-in-4 test
+flake in a `GLog` capture found and fixed on source-level proof, not a probe; phase 2 CLOSED
+pending a gate now running — six new clauses in `StratCombatOutcomeParity.cpp`, suite 87 → 93,
+including the first-ever execution of the `adied=1` counter-kill arm. Two phases closed; phases
+3–5 not started. See "Log-backed combat outcome milestone" below. The prior entry (AI-opponent
+milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" further down.)_
 
 ## BUILT
 
@@ -163,11 +169,19 @@ _Last run 2026-08-13 (AI-opponent milestone, phase D CLOSED: piece (a), the `STR
   hardcodes UTF-16 to parse the report will read zero tests and may not say so** — the same
   failure shape as the bare-`Stratocracy.uproject` test command that exits in ~1s having run
   nothing. Recorded here so a phase-6 reader hits it before writing that parser.
-- **`.agents/ue-project-context.md:195` reads "51/51, hot-seat phase 3"** against a measured
-  66/66 as of phase 4, and its line-41 module-arrow row for `StratPlay` does not mention
-  `EnhancedInput`, added to that module's `Build.cs` this phase. That file is outside this
-  steward's lane (`.agents/` is not `Config/` or `Tools/architect/`) — recorded here as a
-  handoff rather than edited.
+- **CORRECTED, 2026-08-14 — this bullet's own claim had itself gone stale and was repeated
+  uncritically.** It previously asserted "`.agents/ue-project-context.md:195` reads '51/51,
+  hot-seat phase 3'", true only at phase 4. The line has been rewritten by later phases since; a
+  direct read on 2026-08-14, at the start of the combat-outcome milestone, found it instead reading
+  "Last observed here: 86/86, AI-opponent phase B, 2026-08-13" — not the phase-4 text this bullet
+  claimed — and that number was itself carried into a dispatch prompt before being checked, the
+  same class of error this bullet exists to warn against. The `EnhancedInput` module-arrow gap this
+  bullet also raised has not been independently re-checked and is left as an open question for
+  `.agents/`'s owner. That file remains outside this steward's lane
+  (`.agents/` is not `Config/` or `Tools/architect/`); the line-195 count is now current — see the
+  new milestone's header above and `.agents/ue-project-context.md:195` itself, which as of
+  2026-08-14 reads "93/93, combat-outcome phase 2, 2026-08-14" (updated by the user, not this
+  steward).
 - **Phase 6 risk, and the most consequential open item: the `STRAT-CMD` click-to-command gate
   is unclosed.** No `playtest_key` or `playtest_click` produced any `LogStratPlay` output.
   **Correction to this record, made in phase 6:** the original claim here — "total input
@@ -1716,3 +1730,158 @@ gate — see "Phase D — CLOSED" below for the full sequence.**
 
 **The AI-opponent milestone is now COMPLETE**, phases A–D closed. Out-of-scope list unchanged:
 production menu (§2.11.5), guided opening (§2.11.6), info panel, toasts, save-slot UI, move-undo.
+
+## Log-backed combat outcome milestone
+
+A combat outcome carried on a log line routed through `FStratBridge`, not computed in a widget.
+**The design constraint that shapes it:** `applyCommand`'s Attack case returns `okResult(1)` and
+nothing else (`Source/StratRules/Replay.good.cpp:413-470`) — the rules layer hands back no damage,
+death, counter, or fame. The outcome is instead assembled from `strat::uiForecast` captured
+**before** the submit plus the measured state delta **after**, both on one log line with an
+agreement flag. Two phases closed; phases 3–5 planned and not started.
+
+### Phase 1 — CLOSED (editor closed)
+
+- **Completed:** 2026-08-13/14.
+- **Exit criterion:** a `STRAT-COMBAT` log family exists, mounted where a future raw Attack that
+  applies is guaranteed to be observed, with zero cross-contamination against `STRAT-CMD`/`STRAT-AI`.
+  **Met**, gated three times (the phase itself, a comment-only correction pass, a capture-repair
+  pass), all `VERDICT: PASS`, zero findings.
+- New `Source/StratBridge/StratCombatLog.h` — `LogStratBridge` (`StratBridge`'s first `UE_LOG`
+  category; the module carried zero `UE_LOG` calls before this), the plain non-`USTRUCT`
+  `FStratCombatOutcome`, `EStratCombatDivergence` — plus `DEFINE_LOG_CATEGORY` and a
+  `StratCombatObservation` block in `StratBridge.cpp`.
+- **The emitter is on `FStratBridge::Submit`, not `SubmitAttack`** — recorded as the decision worth
+  preserving because it forecloses the alternative. `SubmitAttackAtHex → SubmitAttack →
+  SubmitStamped → Submit`, and `Submit` has exactly three non-declaration callers; two
+  (`Tests/StratBridgeParity.cpp:340`, `Tests/StratBridgeSaveRecording.cpp:466`) hand it a **raw
+  `strat::SaveCommand`** that bypasses both typed arms. Corrected framing, preserved over the
+  first one: both raw sites submit deliberately illegal commands that refuse, so **no attack in
+  the tree today applies without passing a typed arm** — `Submit` is the right mount because the
+  guarantee concerns a *future* raw Attack that does apply, and observing in both places would
+  double-count.
+- Three log phrases — `resolved` / `refused` / `divergence` — with `divergence` emitted **beside**
+  `resolved` so `grep -c "STRAT-COMBAT resolved"` stays a count of resolutions. Zero
+  cross-contamination with `STRAT-CMD`/`STRAT-AI` (the families diverge at character 7). `refused`
+  sits at `Log`, not `Warning`: the first suite run came back **85/0/0/2** because the automation
+  framework charges warnings to the provoking test, and two existing clauses deliberately submit
+  illegal attacks. `divergence` is deliberately at `Error` so a forecast disagreeing with its own
+  resolution fails any suite observing it.
+- **Two documented holes, both deliberate, both with their consequence recorded in the code:**
+  `ReplayLog` does not pass through `Submit`, so replayed attacks emit nothing (in-process round
+  trip is fine; **a log loaded from disk in a fresh process is a real gap**); an attack refused by
+  the `!bSeeded` guard emits **no line at all**, so **`resolved + refused` is not the count of
+  attacks submitted** — a trap left explicitly for the phase-3 pairing gate.
+
+### Unplanned: a 1-in-4 test flake, found and fixed
+
+`Stratocracy.StratPlay.T-UI-01.ClickedAttackIsAcceptedAndRecorded` failed **1 run in 4 on
+byte-identical code** (`02.28.50` 87/0, `02.47.30` **86/1**, `02.52.27` 87/0, `02.53.40` 87/0),
+passing in isolation: `Expected 'one accepted command emits exactly one line' to be 1, but it was
+4`.
+
+- **Cause:** `FOutputDeviceRedirector` queues lines it cannot broadcast on the primary-thread fast
+  path, and `FlushBufferedItems` drains that queue to whichever devices sit in
+  `BufferedOutputDevices` **at drain time** — a capture registering mid-stream inherits the
+  queue's tail, and `GLog->Flush()` inside the capture's own `Settle()` triggered the drain that
+  leaked into it. Verified in UE 5.8 source: `OutputDeviceRedirector.cpp:440-447` routes
+  `CanBeUsedOnMultipleThreads()` devices to `UnbufferedOutputDevices`, `:553`/`:560` drain the
+  buffered queue **only** to `BufferedOutputDevices`, `:905` is the synchronous in-call broadcast.
+  Engine precedent: `AutomationTest.h:1345`, `:1396`.
+- **Fix:** `virtual bool CanBeUsedOnMultipleThreads() const override { return true; }` plus an
+  `FCriticalSection`, on **all four** captures — `FStratCmdCapture`
+  (`StratHotSeatReplayParity.cpp`), both `FStratAiCapture`s (`StratAiMatchClauses.cpp`,
+  `StratAiTurnRunnerClauses.cpp`), `FStratWaitCapture` (`StratSelectionWaitClauses.cpp`). **None of
+  the four was sound**: the two AI captures bounded by *index* watermarks against a failure mode
+  that bounds by *time*, and the `STRAT-WAIT` silence clause's hard `== 0` was the most exposed — a
+  stray late line would have failed it with nothing wrong in the module. Those AI captures back the
+  `STRAT-AI` clauses phase D closed on; nothing there is known wrong, but the instrument under them
+  was less trustworthy than the record claimed. **The fix is strictly strengthening** — under the
+  buffered path an in-window line could be drained after `RemoveOutputDevice` and be *missed*.
+- **Evidence:** eight consecutive full-suite greens at 87/0/0/0 across distinct timestamps
+  (`03.18.51` through `03.28.30`), plus the source-level proof, which is the load-bearing part —
+  the flake was never made deterministic and the author said so plainly rather than dressing up a
+  probe that measured concurrency instead of leakage.
+- **Residual debt, non-gating:** the `FCriticalSection` covers the single mutation and **none of
+  the ~20 reads**, safe only because every `STRAT-*` emitter is on the game thread — a property of
+  the emitters that nothing pins. Two of the four files disclose this; two add the lock silently.
+  Also, two of four filters are case-insensitive and two explicitly `CaseSensitive`.
+
+### Phase 2 — CLOSED (gated 2026-08-14, `VERDICT: PASS`, zero findings)
+
+- **Completed:** 2026-08-14. Gated by `strat-integration-reviewer`, **`VERDICT: PASS`, zero
+  findings**, 2026-08-14. The withholding in the previous entry was correct while no verdict
+  existed; a verdict now exists and this heading records it landed, not pending.
+- **Exit criterion:** parity clauses proving the combat-outcome forecast agrees with the measured
+  state delta, including the previously-unexercised counter-kill arm. **Met** — six clauses, all in
+  new `Source/StratBridge/Tests/StratCombatOutcomeParity.cpp`. Suite **87 → 93**, three consecutive
+  runs at 93/0/0/0, 93 entries, none downgraded. The gate independently confirmed each of the six
+  clauses can go red.
+- Names and properties: `T-UI-01.CombatOutcomeAgreesWithForecast` (measured HP == forecast HP read
+  three ways, oracle `strat::uiResolveForGate`), `.CounterKillLeavesTheAttackerOffTheRoster` (**the
+  `adied=1` arm, which had never executed in this project's history**), `T-FAME-01.AttackerFameMovesOnAKill`
+  (against `strat::killAward`), `T-SAVE-06.RawAttackThroughSubmitIsObserved` (a raw Attack that
+  **applies**, which the pre-existing raw site could not prove since it refuses — **and the only
+  thing in the tree defending the emitter's placement on `Submit`; if this clause is ever deleted,
+  the emitter can migrate to a typed arm with the suite green**), `T-UI-01.RefusedAttackCarriesTheDistinctPhrase`,
+  `.UnseededAttackIsObservedByNothing` (both with positive controls before the absence read).
+- **The open item that matters most, and the gate's most transferable result: the
+  `divergence`/`agree=0` and `LegalityDisagrees` arms are genuinely unreachable — confirmed by the
+  gate against the vendored sources rather than accepted from the author.**
+  `FStratBridge::CombatUnitOf` (`StratBridge.cpp:655-672`) is field-for-field `strat::combatUnit`
+  (`Replay.good.cpp:43-51`); `uiForecast` and `applyCommand` call the same
+  `resolveDamage`/`defenderCanCounter` over identical stat blocks and the same terrain source; all
+  five `uiForecast` illegalities are also refused by `applyCommand`, which refuses on two further
+  counts besides, so it is strictly more refusing. A forecast-illegal attack that applies is not
+  constructible (74 Attacks measured, `illegalForecastApplied` = 0). **Writing no foil was ruled
+  correct — record this so a future reader does not mistake the missing clause for an oversight and
+  "fix" it with something unfalsifiable.** Proposed seam for the engineer, unchanged: promote
+  `StratLossAgrees` and `StratDivergenceMaskOf` out of the file-local `StratCombatObservation`
+  namespace into `StratCombatLog.h` as engine-typed free functions, so a clause can hand-build an
+  `FStratCombatOutcome` with a wrong measured HP and assert the mask directly. Separately,
+  `agree=-1` (all three of `CaptureAfter`'s early returns) is **dead code today** and judged not
+  worth a production seam.
+- **Three debts recorded by the gate, none gating, all owed to `strat-test-author`'s lane:**
+  - A case-insensitive comparison survives at `StratCombatOutcomeParity.cpp:1312` —
+    `TestEqual(..., Unobserved.Reason, FString(TEXT("no scenario is loaded")))`. `TestEqual` on
+    `FString` is ignore-case in UE 5.8 (the standing project-wide gotcha), so a guard re-spelled
+    `"No Scenario Is Loaded"` would slip through. Not that clause's teeth — the absence assertions
+    below it are all `ESearchCase::CaseSensitive` — but it is the one place in the file the standing
+    rule is unapplied.
+  - `hex=` is matched as a prefix at `:1039-1041` — `Contains("hex=3,4")` is also satisfied by
+    `hex=3,45`. Both coordinates come from the fixture so the risk is theoretical; a trailing-space
+    match closes it.
+  - The `fdmg`/`fcdmg` comparisons at `:508-511` are weaker than the prose suggests — both sides
+    originate in `uiForecast` over equivalent state, so they pin field *transposition* in the
+    emitter rather than the damage figure. The clause's real independence is at `:476-479`. The code
+    is right; the wording overstates it.
+
+### Not started
+
+- **Phase 3** (editor closed) — AI-vs-AI headless proof that every `STRAT-CMD accepted kind=Attack`
+  pairs 1:1 with a `STRAT-COMBAT resolved`, counts derived by a named command, **and it must
+  account for the `!bSeeded` silent path** (phase 1's second documented hole above:
+  `resolved + refused` is not the count of attacks submitted).
+- **Phase 4** (editor OPEN) — PIE run driven by `RunAiTurnsNow` so no simulated input is needed,
+  routing around the standing NeoStack injection blocker; evidence sliced by session markers,
+  never to EOF (the phase-D-era lesson under "AI-opponent milestone" applies unchanged).
+- **Phase 5** — the doc pass.
+
+- **`Combat.h::resolveDamage`/`defenderCanCounter` is the sole producer of `uiForecast`
+  (`Ui.h:345-350`), which is what makes "the forecast is what resolves" structural rather than
+  incidental; phase 1 is the first time that claim has been measured in-engine rather than
+  asserted — 483 resolutions, 49 kills, agreement on every one.
+- **Phase-3 seam, carried forward from phase 2:** promote `StratLossAgrees` /
+  `StratDivergenceMaskOf` to engine-typed free functions in `StratCombatLog.h` so a foil for the
+  `divergence` mask can be hand-built rather than left permanently unfalsifiable.
+- **Phase-3 pairing-gate trap, carried forward from phase 1:** an unseeded-refused attack emits no
+  `STRAT-COMBAT` line at all, so a 1:1 `STRAT-CMD accepted kind=Attack` ↔ `STRAT-COMBAT resolved`
+  pairing gate must account for that silent path or it will misreport a real gap as a miscount.
+- **Phase-1 hole carried forward:** `ReplayLog` does not route through `Submit`, so a combat log
+  loaded from disk in a fresh process emits nothing — in-process replay is unaffected.
+- **The `GLog`-capture requirement (`CanBeUsedOnMultipleThreads`) now lives in
+  `.agents/ue-project-context.md`**, not only in this file's "Unplanned" section above — the
+  coordinator added a paragraph there recording the measurement and the caveat that the lock
+  guards the append only, not the ~20 reads. Recorded here so the next test author authoring a
+  `GLog` capture finds the constraint where they would actually look, rather than only in a
+  milestone history entry.

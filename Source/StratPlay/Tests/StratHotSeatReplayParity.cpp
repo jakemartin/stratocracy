@@ -69,6 +69,7 @@
 #include "CoreGlobals.h"
 #include "Engine/DataTable.h"
 #include "Math/IntPoint.h"
+#include "HAL/CriticalSection.h"
 #include "Misc/OutputDevice.h"
 #include "Misc/OutputDeviceRedirector.h"
 #include "Misc/Paths.h"
@@ -288,6 +289,39 @@ namespace StratHotSeatReplayParity
 	 * The filter is the string a grep would use. Both the accepted and the refused shapes
 	 * begin with it, deliberately -- see below, where the two are told apart on the SECOND
 	 * token, which is exactly how a counting gate must do it.
+	 *
+	 * UNBUFFERED, AND THAT ONE OVERRIDE IS WHAT BOUNDS THE WINDOW. MEASURED, 2026-08-14:
+	 * without it this clause failed 1 run in 4 on byte-identical code -- "one accepted command
+	 * emits exactly one line" read 4, the extra three being `STRAT-CMD accepted kind=Move`
+	 * lines this test's OWN advance loop had emitted BEFORE the device was constructed. The
+	 * two preserved logs settle what happened: the T-UI-01 block is byte-for-byte identical in
+	 * the passing and the failing run, so nothing was emitted twice -- the three lines were
+	 * DELIVERED LATE.
+	 *
+	 * The route is `FOutputDeviceRedirector`. A log call that cannot take the primary-thread
+	 * fast path is pushed onto `BufferedItems` (OutputDeviceRedirector.cpp:937) and drained
+	 * later by `FlushBufferedItems`, which broadcasts to whichever devices sit in
+	 * `BufferedOutputDevices` AT DRAIN TIME (:553) -- not to the ones that were registered when
+	 * the line was emitted. A device that registers mid-stream therefore inherits the queue's
+	 * tail. Nothing in this file can influence that; it is a race with the redirector's own
+	 * thread, which is why the rate was 1-in-4 and why the clause passed in isolation.
+	 *
+	 * `CanBeUsedOnMultipleThreads() == true` moves the device into `UnbufferedOutputDevices`
+	 * (:440-447), which is fed ONLY by the synchronous broadcast at :905, inside the emitting
+	 * `UE_LOG` call itself. `FlushBufferedItems` never touches that list. So the set of lines
+	 * this device can see is exactly the set whose `UE_LOG` executed between `AddOutputDevice`
+	 * and `RemoveOutputDevice` -- the window is the object's lifetime, by construction rather
+	 * than by timing.
+	 *
+	 * THIS IS THE ENGINE'S OWN IDIOM FOR A WINDOWED CAPTURE, not an invention here:
+	 * `FAutomationTestOutputDevice` and `FAutomationTestMessageFilter` both override it, with
+	 * the comment "Make it unbuffered by returning true" (AutomationTest.h:1345, :1396). They
+	 * are registered and unregistered around a single test, exactly as this device is.
+	 *
+	 * The override advertises that the device needs no external locking, and the engine takes
+	 * that literally -- every thread's log lines now arrive here directly. `Lines` is therefore
+	 * mutated under `Mutex`. Reading `Lines` directly is game-thread-only and every call site
+	 * below is on the game thread.
 	 */
 	struct FStratCmdCapture final : public FOutputDevice
 	{
@@ -309,17 +343,26 @@ namespace StratHotSeatReplayParity
 			}
 		}
 
+		/** See the block above. Removing this line restores the 1-in-4 flake. */
+		virtual bool CanBeUsedOnMultipleThreads() const override { return true; }
+
 		virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type /*Verbosity*/,
 		                       const FName& /*Category*/) override
 		{
 			const FString Line(Message);
 			if (Line.StartsWith(TEXT("STRAT-CMD")))
 			{
+				FScopeLock Lock(&Mutex);
 				Lines.Add(Line);
 			}
 		}
 
-		/** The redirector may buffer; flush before counting. */
+		/**
+		 * Kept, and no longer load-bearing. An unbuffered device has already been handed every
+		 * line by the time the emitting `UE_LOG` returns, so there is nothing of ours left to
+		 * settle; this now only pushes the OTHER devices' buffers, which keeps a failure
+		 * message's surrounding log readable. The counts below do not depend on it.
+		 */
 		void Settle()
 		{
 			if (GLog != nullptr)
@@ -340,6 +383,9 @@ namespace StratHotSeatReplayParity
 			}
 			return Count;
 		}
+
+	private:
+		FCriticalSection Mutex;
 	};
 
 	/**

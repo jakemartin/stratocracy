@@ -48,6 +48,7 @@
 #include "Engine/DataTable.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "HAL/CriticalSection.h"
 #include "Misc/OutputDevice.h"
 #include "Misc/OutputDeviceRedirector.h"
 #include "Misc/Paths.h"
@@ -137,7 +138,14 @@ namespace StratAiMatchClauses
 	};
 
 	/** The same device `StratAiTurnRunnerClauses.cpp` uses, and it is never the load-bearing
-	 *  witness on its own -- see this file's header block on the control. */
+	 *  witness on its own -- see this file's header block on the control.
+	 *
+	 *  UNBUFFERED FOR THE REASON THAT FILE'S COPY RECORDS AT LENGTH: without the override the
+	 *  redirector can hand a device lines emitted BEFORE it was constructed, because its
+	 *  buffered queue is drained to whichever devices are registered at DRAIN time rather than
+	 *  at emission time (OutputDeviceRedirector.cpp:937 and :553). The `LinesBefore` watermarks
+	 *  below bound by index and do not close that. Measured as a 1-in-4 failure of
+	 *  `T-UI-01.ClickedAttackIsAcceptedAndRecorded` on byte-identical code, 2026-08-14. */
 	struct FStratAiCapture final : public FOutputDevice
 	{
 		TArray<FString> Lines;
@@ -158,16 +166,21 @@ namespace StratAiMatchClauses
 			}
 		}
 
+		/** See the block above. Removing this line reopens the late-delivery hole. */
+		virtual bool CanBeUsedOnMultipleThreads() const override { return true; }
+
 		virtual void Serialize(const TCHAR* Message, ELogVerbosity::Type /*Verbosity*/,
 		                       const FName& /*Category*/) override
 		{
 			const FString Line(Message);
 			if (Line.StartsWith(TEXT("STRAT-AI"), ESearchCase::CaseSensitive))
 			{
+				FScopeLock Lock(&Mutex);
 				Lines.Add(Line);
 			}
 		}
 
+		/** Kept, and no longer load-bearing -- an unbuffered device is already up to date. */
 		void Settle()
 		{
 			if (GLog != nullptr)
@@ -198,6 +211,9 @@ namespace StratAiMatchClauses
 			}
 			return Slice.Num() > 0 ? FString::Join(Slice, TEXT(" | ")) : FString(TEXT("<nothing>"));
 		}
+
+	private:
+		FCriticalSection Mutex;
 	};
 }
 

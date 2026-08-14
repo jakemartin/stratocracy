@@ -33,8 +33,12 @@
 //   - No accessor on `FStratBridge`. The bridge assembles one of these per attack and
 //     emits it; it does not retain the last one. A caller that needs to READ an outcome
 //     needs a delivery mechanism (an event list, a return channel) that is a separate
-//     ruling -- `StratBridge.h:35-45` already disclaims the event list and says landing
-//     the command log does not close it. This struct is the payload such a mechanism
+//     ruling -- `StratBridge.h`'s "NOT IN THIS ROUND" / "THE RECORDED LOG BELOW IS NOT
+//     THAT EVENT LIST" blocks already disclaim the event list and say landing the command
+//     log does not close `bridge_event_list`. (Cited by block name rather than by the
+//     `:35-45` this comment first carried, for the reason the `Forecast` citation two
+//     screens down records: a line range written during a diff is invalidated by that
+//     same diff.) This struct is the payload such a mechanism
 //     would carry, landed early because assembling it is the hard part.
 //   - No `strat::UiForecast` by value. The forecast's seven fields are flattened into
 //     engine scalars here precisely so this header stays free of the vendored headers.
@@ -165,9 +169,39 @@ namespace EStratCombatDivergence
 		/** The attacker's measured loss or death did not match `counterFires` /
 		 *  `counterDamage`. */
 		CounterLoss = 1 << 1,
-		/** The forecast said the attack was ILLEGAL and the rules applied it anyway, or the
-		 *  forecast query was refused for an attack that then applied. Either way the two
-		 *  halves of §2.6 disagree about whether the act was even available. */
+		/** The forecast said the attack was ILLEGAL and the rules applied it anyway: the two
+		 *  halves of §2.6 disagreeing about whether the act was even available.
+		 *
+		 *  ONE ARM, NOT TWO. `StratDivergenceMaskOf` sets this bit on `!bForecastLegal`
+		 *  alone; it makes no `bForecastQueried` test. An earlier spelling of this comment
+		 *  claimed a second arm -- "or the forecast query was refused for an attack that
+		 *  then applied" -- that no code implements and that no code CAN reach through the
+		 *  emitter: a refused query is precisely one of the three conditions on which
+		 *  `CaptureAfter` returns early, leaving `ForecastAgrees` at -1 without calling the
+		 *  mask function at all. That is the same fact `StratDivergenceMaskOf`'s stated
+		 *  PRECONDITION expresses from the other side.
+		 *
+		 *  UNREACHABLE THROUGH `Submit`, AND NOT BY ACCIDENT. `strat::uiForecast` has SIX
+		 *  refusal arms, and they do not all close for the same reason -- an earlier spelling
+		 *  of this comment listed five of them under the word "every", which is the kind of
+		 *  false universal a doc pass exists to remove. Counted off `uiForecast` itself, but
+		 *  DELIBERATELY REORDERED -- grouped by why each arm closes, which is not the order
+		 *  they appear in, so that the five that close together are read together:
+		 *    - "no such unit" (1st in source), "no unit on that hex" (3rd), "a unit cannot
+		 *      attack itself" (4th), "same side" (5th), "out of range" (6th) -- FIVE
+		 *      ILLEGALITIES OF THE ACT, each refused by `applyCommand` too, so a
+		 *      forecast-illegal attack never applies;
+		 *    - "no tables" (`w.unitDefs == nullptr || w.terrain == nullptr`) -- SECOND in
+		 *      source, listed last here because it is the odd one out: not an illegality of
+		 *      the act at all, but a malformed `UiWorld`, and it has no `applyCommand`
+		 *      counterpart to be mirrored by. It closes on a different and stronger fact:
+		 *      `FStratBridge::MakeUiWorld` assigns `W.unitDefs = &Units` and
+		 *      `W.terrain = &Terrain`, the addresses of two by-value members, which cannot
+		 *      be null. No bridge-side state produces this arm.
+		 *  So the bit never rises on a `STRAT-COMBAT resolved` line. It is reachable only by
+		 *  handing a hand-built `FStratCombatOutcome` to `StratDivergenceMaskOf` directly,
+		 *  which is exactly the seam the block below this enum exists to provide. Read this
+		 *  as the detector's own coverage, not as a fault the game is expected to produce. */
 		LegalityDisagrees = 1 << 2,
 	};
 }
@@ -182,6 +216,12 @@ namespace EStratCombatDivergence
 // forecast-illegal attack that nonetheless applies is not CONSTRUCTIBLE through the
 // bridge -- 74 Attacks driven, zero divergences, which is the right number and also
 // no evidence at all that the detector works. A clause that cannot fail pins nothing.
+//
+// THAT 74 IS A PROPERTY OF ONE CORPUS, NOT A CONSTANT. It is the Attack count in
+// `Data/parity_fixture.save` (169 commands, 74 of them Attacks), probed 2026-08-13 and
+// re-checked at run time by `Source/StratBridge/Tests/StratCombatOutcomeParity.cpp`
+// against the fixture's own entries. A re-emitted fixture moves it; the "zero
+// divergences" half is the load-bearing claim and does not depend on the count.
 //
 // The remedy is a seam, not a foil. Rather than inventing a fake rules module that
 // disagrees with itself -- which would pin the fake and not the rule -- the mask

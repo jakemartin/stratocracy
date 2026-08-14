@@ -634,10 +634,27 @@ public:
 	// silently-dropped entry would change §2.9's build MIX, which is data with no
 	// other witness in the tree.
 	//
-	// DUPLICATES ARE LEGAL AND ARE THE POINT. §2.9 describes "mostly Infantry, an
-	// occasional Tank" and gives no ratio, so `Ai.h:49-53` makes the list caller-
-	// supplied DATA; repetition is how a ratio is expressed in it. Deduplicating
-	// here would silently flatten every mix to 1:1.
+	// DUPLICATES ARE LEGAL AND ARE PRESERVED, AND THIS METHOD IS THE ONLY LAYER
+	// THAT CARES. §2.9 describes "mostly Infantry, an occasional Tank" and gives no
+	// ratio, so `Ai.h:49-53` makes the list caller-supplied DATA and this method
+	// stores it verbatim: no dedupe, order kept, repetition kept.
+	//
+	// BUT REPETITION DOES NOT EXPRESS A RATIO AT THE RULES LAYER, and an earlier
+	// spelling of this comment said it did. `strat::chooseBuild` (`Ai.good.cpp`)
+	// collects every AFFORDABLE entry and then returns the single
+	// `buildPriorityLess` winner among them -- so a list of {Infantry, Infantry,
+	// Tank} and a list of {Infantry, Tank} choose identically, every time, and with
+	// Infantry at 100 Fame and Tank at 300 the Tank entry is unreachable at any
+	// repetition count. §2.9's "an occasional Tank" is not an observable outcome of
+	// this setter. The property this method actually holds is that the bytes handed
+	// to `AiState::buildlist` are the caller's own; what consumes them is a
+	// vendored-behaviour question for `E:\MultiAgent\stratocracy-crew` and not a
+	// defect in this file.
+	//
+	// DEDUPLICATING HERE WOULD STILL BE WRONG, for a smaller reason than the one
+	// this comment used to give: it would make the stored list differ from the
+	// caller's, so `BuildlistDefIndexes()` would stop being a readback, and it
+	// would foreclose a future `chooseBuild` that DOES weight by repetition.
 	//
 	// AN EMPTY LIST IS ACCEPTED and configures an AI that never builds --
 	// `chooseBuild` returns -1 with nothing affordable to choose. It is an ordinary

@@ -19,10 +19,16 @@ re-gate — the live PIE path (`Saved/Logs/Stratocracy_2.log`, `--pre-sliced` mo
 gate for its first non-automation corpus), same gate PASS, 68/68 again, and all eleven
 `STRAT-AI turn-ended` hashes byte-identical to phase 3's headless run — the phase-D "avoid
 one-corpus proof" precedent is now PARTLY discharged: the HOST-independence half IS discharged,
-the CONTENT-independence half is NOT and is carried forward as its own future work. Four phases
-closed; phase 5 not started. See "Log-backed combat outcome milestone" below. The prior entry
-(AI-opponent milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone"
-further down.)_
+the CONTENT-independence half is NOT and is carried forward as its own future work; phase 5
+CLOSED (editor closed throughout), the doc pass, gated three times, all `VERDICT: PASS`, zero
+findings each — 9 files, 231 insertions/23 deletions vs `HEAD` `ae2f22a`, proven comment-only
+(254 changed lines, zero fail the comment-body shape test; `/*`/`*/` counts identical HEAD-vs-
+worktree in all nine files), suite unmoved at 103/103, and the standing finding that
+`strat::chooseBuild`'s cheapest-affordable selection makes a buildlist's repeated entries
+inert — a vendored-behaviour question for `stratocracy-crew`, not a defect here. **THE
+LOG-BACKED COMBAT OUTCOME MILESTONE IS NOW COMPLETE — five phases closed, no phase 6 was ever
+planned for it.** See "Log-backed combat outcome milestone" below. The prior entry (AI-opponent
+milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" further down.)_
 
 ## BUILT
 
@@ -82,9 +88,11 @@ further down.)_
   (`Ai.good.cpp:275-289`) always buys the cheapest *affordable* buildlist entry; with Infantry
   (100 Fame) and Tank (300 Fame) both in `BP_StratGameMode`'s authored `AiBuildlistUnitIds`, the
   Tank entry is unreachable at the rules layer regardless of how many times it repeats — §2.9's
-  "an occasional Tank" is not an observable outcome. `StratBridge.h:592-600`'s comment claims
-  duplicates in the buildlist express a ratio; that is true of what the bridge preserves and false
-  of what the rules layer does with it. This is a vendored-behaviour observation for
+  "an occasional Tank" is not an observable outcome. **Corrected in phase 5's doc pass:**
+  `SetBuildlistByIds`'s own doc block in `Source/StratBridge/StratBridge.h` (name it, not a line
+  number — the citation had already rotted once) now states this plainly rather than claiming
+  duplicates in the buildlist express a ratio; that older claim was true of what the bridge
+  preserves and false of what the rules layer does with it. This is a vendored-behaviour observation for
   `E:\MultiAgent\stratocracy-crew`, not a task for this repo. See "Phase C — CLOSED" below for the
   full account.
 - **`UStratMatchSubsystem::RunAiTurnsNow`'s return value is an untested production contract —
@@ -165,14 +173,19 @@ further down.)_
   itself and discloses in four places that it pins machine behaviour, not that any shipping path
   produces a lock. **When §2.11.6's producer lands it needs a clause of its own; this one will
   not cover it.** (Phase 4 deferral, carried forward.)
-- **The attack branch's "already acted" refusal
-  (`StratSelectionMachine.cpp:258-263`) is unreachable by any click sequence**, because
+- **The attack branch's "already acted" refusal — cite the branch, not a line number, this is
+  the fourth instance of line-number rot in this milestone** — is the `if (Selected->bHasActed)`
+  test inside the enemy-click arm of `FStratSelectionMachine::HandleEvent`
+  (`Source/StratPlay/StratSelectionMachine.cpp`), unreachable by any click sequence because
   `NotifyCommandApplied` marks an attacker DONE on the same event. Ruled an acceptable
   defensive guard, not dead code — it guards a disagreement between the model's `bHasActed`
   (rules-side) and the machine's `DoneUnits` (engine-side, per-session) that a loaded save, a
   replayed log, or phase 6's PIE can produce even though no scripted sequence in this suite can.
-  It carries no comment saying it is unexercised and why; that debt is currently owned quietly
-  in `strat-gameplay-engineer`'s lane, deferred here rather than built, per the scope fence.
+  **DISCHARGED in the combat-outcome milestone's phase 5:** the branch now carries a comment
+  block stating exactly this — why no click sequence reaches it, what it actually guards, and
+  that its cost is that no clause covers it — added by `strat-gameplay-engineer` and explicitly
+  ruled correct by the reviewer ("labelling it is what stops the next reader deleting it, which
+  is the failure mode the phase exists to prevent. Keep it.").
 - **`ReplayRecordedLogOnto` does no save round trip** — no serialize, no parse, no
   `FStratSaveIdentity`. `SerializeRecordedSave` + `T-SAVE-06.SaveRoundTripsToEqualHash` already
   cover that path; a second entry point there would be a second policy over the same bytes.
@@ -257,6 +270,34 @@ further down.)_
   most plausibly be checked against. Owed to a future doc pass. **No crew
   agent owns `.agents/ue-project-context.md`** — this is a flag, not a task
   the steward takes.
+- **Four items carried out of the log-backed combat outcome milestone's phase 5 (now CLOSED,
+  milestone COMPLETE) — none owned by this steward, none built in that doc pass by design:**
+  1. `Stratocracy.StratPlay.T-INT-05.AlreadyActedGuardFiresOnAForeignModel` — pin that
+     `FStratSelectionMachine` refuses an enemy click when the selected unit has
+     `bHasActed == true` while the machine's own `DoneUnits` is empty (a machine built against a
+     match already in progress). Proposed by `strat-gameplay-engineer`, correctly not written in
+     a doc pass. Owner: `strat-test-author`.
+  2. Tighten `Source/StratPlay/Tests/StratHotSeatReplayParity.cpp`'s shape `TestTrue`
+     (`Line.StartsWith(TEXT("STRAT-CMD accepted "))`) to `ESearchCase::CaseSensitive`. Residual:
+     a case-only change to the `STRAT-CMD accepted` emitter would slip past today — confirmed by
+     re-reading the assertion directly; it currently relies on a whole-tree case-variant census
+     (also re-confirmed this phase, exactly two lowercase hits, both illustrative, in the test
+     files themselves) rather than on its own shape. Deliberately not done in phase 5:
+     retightening an assertion is a code change, not a doc change. Owner: a code phase.
+  3. A line-number citation living inside a `TestEqual` message string in
+     `Source/StratPlay/Tests/StratSelectionWaitClauses.cpp`
+     (`StratSelectionMachine.cpp:156-160`). Currently accurate, but unreachable by a doc pass
+     because it sits inside an assertion string rather than a comment. Same owner class as item 2.
+  4. **`--pre-sliced` gate debt on `Tools/architect/strat_combat_pairing_gate.py`, confirmed
+     untouched by phase 5** (`git diff --stat ae2f22a -- Tools/architect/` empty). It returns
+     `PASS` and exit 0 on an empty or wrong pre-sliced corpus. Owed shape: `--expect-min-pairs N`
+     or an outright refusal on a zero-event pre-sliced corpus, plus a 14th self-test fixture
+     proving the new guard can itself fail. **This is this steward's own lane** — carry it, next
+     time the gate script is touched, not folded into an unrelated pass.
+  Also unchanged and still open, carried again: the content-independence half of the phase-D
+  "avoid one-corpus proof" precedent (a different scenario/buildlist/first side, genuinely
+  different game content) — the host-independence half was discharged in this milestone's
+  phase 4.
 
 ## Hot-seat milestone
 
@@ -1754,10 +1795,23 @@ A combat outcome carried on a log line routed through `FStratBridge`, not comput
 nothing else (`Source/StratRules/Replay.good.cpp:413-470`) — the rules layer hands back no damage,
 death, counter, or fame. The outcome is instead assembled from `strat::uiForecast` captured
 **before** the submit plus the measured state delta **after**, both on one log line with an
-agreement flag. Four phases CLOSED (phase 3 MET-AS-CORRECTED, gated three times — first two
-`VERDICT: BLOCK`, both fixed in place, third `VERDICT: PASS` with zero findings — see "Phase 3"
-below for the full history; phase 4 MET, gated once, `VERDICT: PASS`, zero findings, first gate —
-see "Phase 4" below); phase 5 planned and not started.
+agreement flag. **MILESTONE COMPLETE — all five planned phases CLOSED, no phase 6 was ever
+scoped for it.** Phase 3 MET-AS-CORRECTED, gated three times — first two `VERDICT: BLOCK`, both
+fixed in place, third `VERDICT: PASS` with zero findings — see "Phase 3" below for the full
+history; phase 4 MET, gated once, `VERDICT: PASS`, zero findings, first gate — see "Phase 4"
+below; phase 5 MET, the doc pass, gated three times (the phase itself, a narrow re-gate after
+round-two corrections, a micro re-gate after a final four-word correction), all `VERDICT: PASS`,
+zero findings — see "Phase 5" below. What the milestone delivered: the `STRAT-COMBAT` log
+family mounted on `FStratBridge::Submit`; parity clauses proving the forecast agrees with the
+measured delta, including the first-ever exercise of the `adied=1` counter-kill arm; an
+AI-vs-AI headless pairing gate (`strat_combat_pairing_gate.py`) proving `STRAT-AI applied
+kind=Attack` pairs 1:1 with `STRAT-COMBAT resolved` by ordered identity, with ten checked-in
+fixtures proving it can fail; the same gate re-run against a live PIE corpus with `--pre-sliced`,
+byte-identical to the headless run (host-independence discharged; content-independence carried
+to NEXT); and a doc pass that corrected four stale citations in this file and in
+`.agents/ue-project-context.md`, discharged the unexercised-guard comment debt, and recorded
+that `strat::chooseBuild` makes buildlist repetition inert at the rules layer — a vendored-rules
+observation for `stratocracy-crew`, not a defect here.
 
 ### Phase 1 — CLOSED (editor closed)
 
@@ -2223,7 +2277,16 @@ passing in isolation: `Expected 'one accepted command emits exactly one line' to
   a 14th self-test fixture proving the new guard can itself fail. Owner: this steward's own lane
   (`Tools/architect/`), next time the gate script is touched — not this phase.
 
-- **Phase 5** — the doc pass.
+### Phase 5 — CLOSED (editor closed throughout), MET
+
+- **Completed:** 2026-08-14. Editor closed for the whole phase; it is still closed.
+- **Exit criterion:** the doc pass — correct stale citations this file and `.agents/` carried
+  from earlier phases, discharge named comment debts, keep the diff comment-only. **Met.**
+- **Gated three times, all `VERDICT: PASS`, zero findings each: the phase itself, a narrow
+  re-gate after round-two corrections, and a micro re-gate after a final four-word correction.**
+
+**Context carried into the phase, for the record — this is what phase 5 was scoped against,
+not what it produced (the closure evidence follows below):**
 
 - **`Combat.h::resolveDamage`/`defenderCanCounter` is the sole producer of `uiForecast`
   (`Ui.h:345-350`), which is what makes "the forecast is what resolves" structural rather than
@@ -2250,3 +2313,128 @@ passing in isolation: `Expected 'one accepted command emits exactly one line' to
   guards the append only, not the ~20 reads. Recorded here so the next test author authoring a
   `GLog` capture finds the constraint where they would actually look, rather than only in a
   milestone history entry.
+
+**Closure evidence — re-derived independently by this steward, not taken from any dispatch
+prompt:**
+
+- **Diff, verified against `HEAD` `ae2f22a`:** `git diff --shortstat ae2f22a` →
+  `9 files changed, 231 insertions(+), 23 deletions(-)`; `git status --porcelain` shows all nine
+  as unstaged `M`, nothing staged, no untracked files; `git rev-parse HEAD` still `ae2f22a`.
+  Files: engineer's lane (`Source/` outside `Tests/`) — `StratBridge/StratBridge.h`,
+  `StratBridge/StratCombatLog.h`, `StratPlay/StratPlayerController.h`,
+  `StratPlay/StratSelectionMachine.cpp`, `StratUI/StratViewModel.h`; test-author's lane
+  (`Tests/` only) — `StratBridge/Tests/StratDivergenceRuleClauses.cpp`,
+  `StratPlay/Tests/StratAiMatchClauses.cpp`, `StratPlay/Tests/StratHotSeatReplayParity.cpp`,
+  `StratPlay/Tests/StratSelectionWaitClauses.cpp`.
+- **Provably comment-only, by two independent measurements, both re-run here:** per-file
+  `/*`/`*/` counts (`grep -o` on both markers) are identical HEAD-vs-worktree in all nine files
+  — no hunk opened or closed a block comment. Separately, every `+`/`-` line across all nine
+  files' diffs against `ae2f22a` (254 lines total, counted by `git diff | grep -cE
+  '^[+-][^+-]'` per file, summing to 254) was tested against a comment-body shape
+  (`^\s*(//|/\*|\*|$)` after stripping the diff marker): **zero** lines fail that test.
+- **Suite: 103 succeeded / 0 succeededWithWarnings / 0 failed / 0 notRun**, read directly from
+  `Saved/AutomationReport/index.json` as `utf-8-sig` (first bytes `EF BB BF`, per the standing
+  project note). `reportCreatedOn 2026.08.14-17.44.15`. Walking every leaf test entry gives 103
+  entries, all `state: "Success"` — the full census, not just the top-line count, so a state
+  flip under an unmoved total would have shown.
+  **The pre-phase baseline, corrected to MEASURED after an initial wrong refusal.** A first pass
+  of this record could not find `reportCreatedOn 2026.08.14-14.23.36` on any
+  `Saved/AutomationReport*/index.json` on disk and declined to repeat it — a reasonable
+  instinct, but wrong here, because `Saved/AutomationReport/index.json` is a single file each
+  headless run overwrites, not an archive; two later runs (`17.27.57`, then `17.44.15`) had
+  already overwritten the `14.23.36` report by the time of that search, so its absence from the
+  live path proves nothing about whether it was ever real. **The control that settles it, run
+  independently rather than taken on the coordinator's word: the rotated per-run log survives
+  overwriting even though the JSON report does not, and each run's own log carries its own
+  `LogAutomationController` lines.** `Saved/Logs/Stratocracy-backup-2026.08.14-14.23.36.log`
+  itself contains, at its own tail, `[2026.08.14-14.23.36:262]...LogAutomationController: Writing
+  reports to E:\MultiAgent\Stratocracy\Saved\AutomationReport...` followed immediately by
+  `Exported report to '...\Saved\AutomationReport' in 0.00 Seconds` — the run that wrote the
+  now-overwritten `14.23.36` report is the same run whose rotated log carries that filename,
+  confirmed by the log's own internal timestamp, not merely the filename. `grep -c
+  "Test Completed. Result={Success}"` against that same log returns **103**, and `grep -c
+  "Test Completed."` (any result) also returns **103** — no failure, no warning, no `notRun`,
+  independently re-deriving the exact figures the coordinator read from the JSON before it was
+  overwritten, from a different surviving artifact. The positive control the coordinator offered
+  (`Stratocracy-backup-2026.08.14-17.27.57.log` pairing with the test-author's mid-phase
+  `reportCreatedOn 17.27.57`) checks out the same way: that log's own tail carries
+  `[2026.08.14-17.27.57:428]...LogAutomationController: Writing reports to
+  ...\AutomationReport...` — the same mechanism, a second time. **So: pre-phase baseline is
+  `succeeded 103 / succeededWithWarnings 0 / failed 0 / notRun 0` at `reportCreatedOn
+  2026.08.14-14.23.36`, MEASURED — first read by the coordinator directly from the JSON at
+  session start (before any run in this phase, while the report still existed at that path), and
+  independently re-confirmed here from the surviving rotated log rather than taken on trust.**
+  **Why it will not be re-derivable from `Saved/AutomationReport/index.json` again:** that path
+  is overwritten by every subsequent headless run, so a reader repeating the original search
+  after any further test run will correctly find nothing there — that absence is not a defect
+  and should not reopen this question; check the matching `Saved/Logs/*-backup-<timestamp>.log`
+  instead, which is what settled it here.
+  **Method, worth recording because this project has paid for the shape once already:** the
+  first pass applied correct procedure — searched, found nothing, declined to assert — but did
+  so against an instrument already known to have been overwritten, so the absence it found
+  proved nothing. The fix was a control (the surviving rotated log, independently re-grep'd),
+  not a louder restatement of either side's claim. This is a second instance of this milestone's
+  own standing lesson, "an absence needs a control": an absence proves nothing until the
+  instrument is shown able to find the thing when it is present — here, until it is shown that
+  the *reporting* instrument (the JSON) is what got overwritten, while a *different* instrument
+  (the per-run log) survived and can still answer.
+- **The substantive finding, verified against the vendored (read-only) source, not merely
+  accepted:** `Source/StratRules/Ai.good.cpp`'s `chooseBuild` (`:275-289`) builds an
+  `affordable` list from `s.buildlist` and picks the single `buildPriorityLess`-least entry
+  (`:224-231`, ascending `costFame`); a buildlist `{Infantry, Infantry, Tank}` and `{Infantry,
+  Tank}` produce an `affordable` set differing only by a duplicate Infantry entry, and the
+  minimum-cost pick is identical either way — **Tank is never chosen while Infantry is
+  affordable, regardless of repetition.** `Source/StratBridge/StratBridge.h`'s
+  `SetBuildlistByIds` doc block, re-read directly at its current location, now states this
+  correctly (the "duplicates express a ratio" claim is gone). This is a vendored-behaviour
+  observation for `E:\MultiAgent\stratocracy-crew`; no rules change was requested or made.
+- **The two stale-citation corrections in this file's own prior entries, verified rather than
+  copied:** (1) `.agents/ue-project-context.md` — `grep -n "93/93\|103/103"
+  .agents/ue-project-context.md` returns exactly one hit, line 195, reading "103/103,
+  combat-outcome phase 3, 2026-08-14"; there is no `93/93` anywhere in the file, and `:198`'s
+  "Measured in phase 4" already reads "Measured in the hot-seat milestone's phase 4 (not the
+  combat-outcome milestone's...)" — both flags this file raised were already discharged before
+  this phase started. Both flags are corrected in place above (not deleted) so a reader sees they
+  were raised and then discharged, per the brief's instruction; **note that a prior
+  `strat-gameplay-engineer` report restated the "93/93" flag as though it had confirmed it by
+  reading the file — it had not; a restated flag is not a measurement**, and this steward's own
+  correction above is grounded in the `grep` shown, not in that report. (2) The
+  `StratSelectionMachine.cpp:258-263` and `StratBridge.h:592-600` citations are corrected above
+  to name the branch/function rather than a line number — the guard is now at a different line
+  (`if (Selected->bHasActed)` inside the enemy-click arm of `HandleEvent`, currently near `:315`,
+  read directly), the fourth instance of line-number rot in this milestone.
+- **The bHasActed-guard comment debt is discharged, verified by direct read of
+  `Source/StratPlay/StratSelectionMachine.cpp`:** the branch now carries a comment block stating
+  why no click sequence reaches it, what it actually guards (rules-side `bHasActed` vs.
+  engine-side `DoneUnits`), and that its cost is zero clause coverage — landed by
+  `strat-gameplay-engineer` this phase.
+- **The two gate-rationale corrections, both re-verified directly against
+  `Source/StratBridge/StratBridge.cpp`/`.h`:** `MakeUiSnapshot`'s guards are exactly
+  `bDefinitionsLoaded`, `bSeeded`, and a per-unit `defIndex` bounds scan (`StratBridge.cpp:758-776`)
+  — no null-table guard anywhere in it. `MakeUiWorld` (`:697-708`) sets `W.unitDefs = &Units` and
+  `W.terrain = &Terrain`, and `StratBridge.h:801-802` declares both as by-value
+  `std::vector` members — addresses of a by-value member cannot be null, which is the pin that
+  actually survives reordering the guards. Separately, `grep -rn` for lowercase
+  `strat-cmd`/`strat-combat`/`strat-ai`/`strat-wait` across `Source/` returns exactly two hits,
+  both inside the new comments in `StratHotSeatReplayParity.cpp` and
+  `StratSelectionWaitClauses.cpp` themselves — confirming the case-variant census the corrected
+  rationale rests on.
+- **`--pre-sliced` gate debt confirmed untouched this phase**, as scoped: `git diff --stat
+  ae2f22a -- Tools/architect/` is empty and `git status --porcelain Tools/architect/` is empty.
+  Still open; owed shape recorded under NEXT.
+
+**Milestone status: COMPLETE.** Five phases planned, five phases CLOSED; no phase 6 was ever
+scoped for this milestone (unlike the hot-seat and AI-opponent milestones, both of which ran to
+6/D respectively — this one's own header always said "five phases," never open-ended). What it
+delivered: a `STRAT-COMBAT` log family mounted on `FStratBridge::Submit`; parity clauses proving
+the pre-submit forecast agrees with the post-submit measured delta, including the first-ever
+exercise of the `adied=1` counter-kill arm; a headless AI-vs-AI pairing gate
+(`Tools/architect/strat_combat_pairing_gate.py`) proving `STRAT-AI applied kind=Attack` pairs
+1:1 with `STRAT-COMBAT resolved` by ordered identity, backed by ten checked-in fixtures proving
+it can fail; the same gate re-run against a live PIE corpus in `--pre-sliced` mode, with all
+eleven per-turn hashes byte-identical to the headless run (host-independence discharged;
+content-independence carried to NEXT as its own future work, unchanged by this phase); and a
+doc pass that corrected the two stale citations and one stale flag-pair this file and
+`.agents/ue-project-context.md` were carrying, discharged the unexercised-guard comment debt,
+and recorded — against the vendored source, not on argument — that `strat::chooseBuild` makes
+buildlist repetition inert at the rules layer.

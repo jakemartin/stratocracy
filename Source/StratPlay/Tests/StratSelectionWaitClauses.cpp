@@ -269,6 +269,41 @@ namespace StratSelectionWaitClauses
 	 * strictly sooner than before. The real wait's line is in `Lines` before `HandleEvent` has
 	 * returned, so `LinesAfterRealWait > LinesAfterNoOp` is if anything more reliable. Both
 	 * halves of the clause keep exactly the meaning they had.
+	 *
+	 * THE LOCK COVERS THE APPEND AND NOTHING ELSE, AND THAT RESIDUAL IS DELIBERATE RATHER
+	 * THAN OVERLOOKED. The override advertises to the redirector that this device needs no
+	 * external locking, and the engine takes it literally -- every thread's log lines now
+	 * arrive in `Serialize` directly, so the one mutation of `Lines` is made under `Mutex`.
+	 * Every READ is UNLOCKED: this device exposes no accessor at all, and the clauses below
+	 * read `Lines.Num()` straight off the public member to take their watermarks. That is
+	 * safe only because every `STRAT-WAIT` emitter runs on the game thread and every reader
+	 * here is on the game thread too, so no read is ever concurrent with the append.
+	 * NOTHING IN THE CODE PINS THAT PROPERTY: it is a fact about the current emitters, not
+	 * an invariant anyone enforces. Move `StratSelectionMachine.cpp`'s `STRAT-WAIT spent`
+	 * `UE_LOG` onto a worker thread and these reads become a data race that no clause here
+	 * would report -- it would surface as a flake, not as a red test. Widening the lock to
+	 * cover the reads is the fix if that day ever comes.
+	 *
+	 * THE FILTER IS CASE-INSENSITIVE, AND UNLIKE THE `STRAT-AI` CAPTURES IT IS LEFT THAT
+	 * WAY KNOWINGLY. `FString::StartsWith` defaults to `ESearchCase::IgnoreCase` in UE 5.8,
+	 * and this project has already shipped a clause that could not fail because of exactly
+	 * that default -- so the omission needs a reason rather than a shrug. The reason is that
+	 * this filter cannot be weakened by it in either direction. The prefixes that occur
+	 * anywhere in this tree -- `STRAT-WAIT`, `STRAT-CMD`, `STRAT-AI`, `STRAT-COMBAT`, and
+	 * `STRAT-PROBE` (a phase-6 debug probe named only inside a comment in
+	 * `StratPlayerController.cpp`, with no live emitter) -- differ from one another in
+	 * LETTERS, never in case, and every emitter spells its prefix upper case; so no line
+	 * that should be rejected here can be admitted by case-folding alone.
+	 *
+	 * AND UNLIKE THE `TestTrue` SHAPE ASSERTION IN `StratHotSeatReplayParity.cpp` -- see the
+	 * matching block there, which does NOT get this guarantee -- the direction of any
+	 * hypothetical error here is the safe one, for BOTH halves of the clause. An
+	 * over-permissive filter can only ADD lines. That pushes `LinesAfterNoOp` above zero and
+	 * turns the silence clause RED, and it cannot break the positive control either, since a
+	 * case-mangled line would still be counted and `LinesAfterRealWait > LinesAfterNoOp`
+	 * would still hold. There is no input, case-variant or otherwise, that makes this clause
+	 * pass when it should fail. If a lower-case `strat-wait` emitter is ever added the
+	 * filter should become `CaseSensitive` anyway, to keep the two captures consistent.
 	 */
 	struct FStratWaitCapture final : public FOutputDevice
 	{

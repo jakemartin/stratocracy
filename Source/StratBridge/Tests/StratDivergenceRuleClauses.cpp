@@ -9,8 +9,18 @@
 // `strat::applyCommand`'s Attack case reach the SAME `Combat.h::resolveDamage` and
 // `Combat.h::defenderCanCounter` over the same stat blocks inside one call, so a
 // forecast/resolution disagreement is not a state a caller can drive the module into.
-// 74 fixture Attacks, 483 resolutions in a full suite run, zero divergences. That is the
-// correct number, and it is also no evidence whatsoever that the detector works.
+// 74 fixture Attacks, and zero divergences over every resolution the suite has ever run.
+//
+// THE RESOLUTION COUNT IS RUN-SPECIFIC AND IS NOT A LIVE FIGURE. One measurement, kept
+// only because it is the one this file was written against: 483 `STRAT-COMBAT resolved`
+// lines in the combat-outcome milestone's PHASE 1 full-suite run. A later phase measured
+// 493 in its own session log. The two do not conflict -- the total grows with the suite,
+// so any number here describes the run it was taken from and nothing else. Do NOT read
+// it as a current count, and do NOT gate on it; the invariant this file rests on is the
+// ZERO, not the denominator. What the zero is worth is settled below.
+//
+// That zero is the correct reading, and it is also no evidence whatsoever that the
+// detector works.
 //
 // A DETECTOR NOBODY HAS EVER SEEN FIRE IS INDISTINGUISHABLE FROM A DETECTOR THAT CANNOT
 // FIRE. Every clause below exists because `DivergenceMask` is read by a gate -- a phase

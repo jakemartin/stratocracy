@@ -44,9 +44,13 @@
 // refuse the same include for the same reason.
 //
 // There is deliberately no TPimplPtr and no owning member anywhere below: nothing here
-// holds a bridge, so the `C4150` measured on `TUniquePtr<FStratBridge>`
-// (`StratScoreboardHUD.h:48-56`) has nothing to bite. The builder takes the bridge by
-// const reference for the duration of one call and keeps nothing.
+// holds a bridge, so the `C4150` measured on `TUniquePtr<FStratBridge>` -- recorded in
+// `StratScoreboardHUD.h`'s "WHY TPimplPtr AND NOT TUniquePtr" block -- has nothing to
+// bite. The builder takes the bridge by const reference for the duration of one call and
+// keeps nothing. (Cited by BLOCK NAME rather than line number on purpose: this comment
+// first said `StratScoreboardHUD.h:48-56`, which by the time it was read pointed at that
+// file's "AT MOST ONE IS EVER NON-NULL" ownership block instead -- a paragraph that
+// mentions neither `C4150` nor `TUniquePtr`.)
 //
 // NO ARITHMETIC, ANYWHERE, and one lookup that is not arithmetic. Every number below is
 // EQUAL TO ONE FIELD of `strat::UiSnapshot`, copied across with no transformation
@@ -54,6 +58,17 @@
 // one layer lower. The single addition is `TerrainId` / `DefId`: the definition row's
 // `id`, looked up by the index the snapshot carries. That is a table read, not a
 // derivation, and the reason it is here is recorded on the fields themselves.
+//
+// THE PRESENTATION BLOCK'S DEBT IS DISCHARGED -- read the paragraph below as the reason
+// the fields are shaped this way, not as an open item. `FStratSelectionMachine::Decorate-
+// ViewModel` (`Source/StratPlay/StratSelectionMachine.h`) landed as the producer, called
+// between `StratBuildViewModel` and `ApplyView`; it writes the two bits from the machine's
+// own `TSet`s and no actor holds either, which is what `T-INT-05.NoActorHoldsPresentation-
+// Bits` still pins. `StratBuildViewModel` itself is unchanged and still leaves both false
+// -- that part of the paragraph below is current. Two details the original text got ahead
+// of: the producer landed a phase later than "phase 3", and `bLockedThisTurn` has a writer
+// (`SetLockedThisTurn`) but no shipping caller, since §2.11.6's guidance layer does not
+// exist, so that bit is false in every running path.
 //
 // THE PRESENTATION BLOCK IS PRESENT AND NOTHING FILLS IT YET, recorded here rather than
 // discovered later. `Ui.h:186-225` defines the view model as snapshot PLUS presentation

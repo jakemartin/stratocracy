@@ -290,6 +290,49 @@ namespace StratHotSeatReplayParity
 	 * begin with it, deliberately -- see below, where the two are told apart on the SECOND
 	 * token, which is exactly how a counting gate must do it.
 	 *
+	 * THAT FILTER AND `CountStartingWith` ARE BOTH CASE-INSENSITIVE, AND UNLIKE THE
+	 * `STRAT-AI` CAPTURES THEY ARE LEFT THAT WAY KNOWINGLY. `FString::StartsWith` defaults
+	 * to `ESearchCase::IgnoreCase` in UE 5.8, and this project has already shipped a clause
+	 * that could not fail because of exactly that default -- so the omission needs a reason
+	 * rather than a shrug. It has one, but the reason is NOT uniform across the assertions
+	 * below, and the two halves are worth separating because only one of them is safe by
+	 * construction.
+	 *
+	 * FIRST, WHAT CASE CANNOT REACH AT ALL. The prefixes that occur anywhere in this tree --
+	 * `STRAT-CMD`, `STRAT-WAIT`, `STRAT-AI`, `STRAT-COMBAT`, and `STRAT-PROBE` (a phase-6
+	 * debug probe named only inside a comment in `StratPlayerController.cpp`, with no live
+	 * emitter) -- differ from one another in LETTERS, never in case. So does the second
+	 * token this clause turns on, `accepted` versus `refused`. No line belonging to another
+	 * prefix, and no refusal, can be admitted here by case-folding alone.
+	 *
+	 * SECOND, THE COUNTING ASSERTIONS ARE FAIL-SAFE BY CONSTRUCTION. `AcceptedLines` and
+	 * `RefusedLines` are compared with `TestEqual` against module-side numbers
+	 * (`AcceptedCommands.Num()`, `Refusals`), so an over-permissive prefix can only ADD a
+	 * line and drive an exact-count comparison RED. A looser filter cannot make those pass
+	 * when they should fail.
+	 *
+	 * THIRD, AND THIS IS THE PART A SCOPE CLAIM MUST NOT SWALLOW: NOT EVERY ASSERTION HERE
+	 * IS A COUNT. The shape clause ends with a `TestTrue` --
+	 * `Line.StartsWith(TEXT("STRAT-CMD accepted "))`, "the line a phase-6 grep looks for" --
+	 * and that one is NOT fail-safe by construction. Its subject reached it through this
+	 * same case-insensitive filter, so a hypothetical emitter spelling the prefix
+	 * `strat-cmd accepted` would be ADMITTED by the filter, counted as one line by the
+	 * `TestEqual(Capture.Lines.Num(), 1)` above it, and then ACCEPTED by the `TestTrue`.
+	 * Every count in this file would also still balance, because a case-mangled line is
+	 * still exactly one line. The preceding `TestEqual` therefore does not rescue it; it
+	 * gates on arity, and the hole is spelling.
+	 *
+	 * SO WHAT MAKES THAT ONE SAFE IS AN EXTERNAL MEASUREMENT, NOT THE ASSERTION'S SHAPE: a
+	 * case-variant census over all of `Source/` (combat-outcome phase 5) found NO lower-case
+	 * spelling of any log prefix anywhere in the tree -- the only lower-case occurrences that
+	 * exist are the illustrative ones inside this comment and its counterpart in
+	 * `StratSelectionWaitClauses.cpp`. The clause discriminates correctly over every input
+	 * the tree can actually produce. What it would not detect is a case-ONLY change to the
+	 * emitter -- which is exactly the phase-6 grep contract this `TestTrue` exists to pin.
+	 * Making it `ESearchCase::CaseSensitive` would close that, and it is deliberately NOT
+	 * done here: retightening an assertion is a code change, not a doc change. Recorded as
+	 * deferred rather than quietly owned.
+	 *
 	 * UNBUFFERED, AND THAT ONE OVERRIDE IS WHAT BOUNDS THE WINDOW. MEASURED, 2026-08-14:
 	 * without it this clause failed 1 run in 4 on byte-identical code -- "one accepted command
 	 * emits exactly one line" read 4, the extra three being `STRAT-CMD accepted kind=Move`

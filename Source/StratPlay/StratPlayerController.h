@@ -33,13 +33,21 @@
 // itself built. A trace that hits something that is not a board tile is "the cursor is not
 // on the board", which is an ordinary answer.
 //
-// THE MAPPING CONTEXT AND THE FOUR ACTIONS ARE NULL UNTIL PHASE 5, AND THAT IS SUPPORTED
-// RATHER THAN TOLERATED. They are `EditDefaultsOnly` `TObjectPtr` properties set on a
-// Blueprint default -- never a `/Game/` literal, which this project forbids in gameplay C++
+// THE MAPPING CONTEXT AND THE FOUR ACTIONS ARE NULL IN C++ AND SET ON A BLUEPRINT, AND THE
+// NULL CASE IS SUPPORTED RATHER THAN TOLERATED. They are `EditDefaultsOnly` `TObjectPtr`
+// properties -- never a `/Game/` literal, which this project forbids in gameplay C++
 // outright. With all five null this controller adds no context, binds no action, logs one
 // line saying so, and the match is still seeded, drawn and reconciled. A controller that
-// asserted on a null context would make phase 5's asset authoring a prerequisite for phase
-// 4's build being green.
+// asserted on a null context would have made asset authoring a prerequisite for this class's
+// build being green.
+//
+// THE ASSETS NOW EXIST -- an earlier spelling of this paragraph read "ARE NULL UNTIL PHASE
+// 5", which describes a world that ended when the hot-seat milestone's phase 5 authored
+// `IMC_Selection` and the four `IA_*` actions and set them on the `BP_` subclass a GameMode
+// Blueprint points at. What is still true, and is the load-bearing half, is that the C++
+// DEFAULTS are null and every use site below stays null-safe: this class must remain
+// constructible and drivable with no asset in existence, because that is what lets it be
+// built and reasoned about without the content pass.
 //
 // WHY THE VIEW MODEL IS REBUILT ON EVERY EVENT rather than read from
 // `UStratMatchSubsystem::GetViewModel()`. That accessor is documented as "A RECORD, NOT A
@@ -155,7 +163,7 @@ public:
 	const FStratSelectionMachine& GetSelectionMachine() const { return SelectionMachine; }
 
 protected:
-	// ---- Enhanced Input assets. All null until phase 5 authors them. ------------------
+	// ---- Enhanced Input assets. Null as C++ DEFAULTS; set on the `BP_` subclass. ------
 	// EVERY ONE IS AN `EditDefaultsOnly` `TObjectPtr` AND NOT A PATH. The project forbids a
 	// `/Game/` literal in gameplay C++, with two standing exceptions (automation fixtures
 	// and the import commandlet) that this file is neither of. A null asset is handled
@@ -166,8 +174,9 @@ protected:
 	 * The §2.11.1 mapping context, added on `BeginPlay` at `MappingPriority`.
 	 *
 	 * NULL IS SUPPORTED. `BeginPlay` skips the add and says so at Warning -- once, because a
-	 * missing input asset is a configuration gap that phase 5 closes and not a fault that
-	 * repeats.
+	 * missing input asset is a configuration gap in whatever Blueprint the map's GameMode
+	 * names, and not a fault that repeats. (The shipping `BP_` subclass does set it; this
+	 * arm is what keeps a map that forgot to from being a crash instead of a warning.)
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Input")
 	TObjectPtr<UInputMappingContext> SelectionMappingContext;

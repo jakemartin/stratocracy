@@ -291,6 +291,27 @@ FStratSelectionOutcome FStratSelectionMachine::HandleEvent(EStratSelectionEvent 
 		// Clicking an ENEMY: an attack, if the rules module lists that hex as a target.
 		if (Clicked != nullptr)
 		{
+			// UNREACHABLE BY ANY CLICK SEQUENCE, AND KEPT ANYWAY -- stated here because a
+			// guard nobody can drive is otherwise indistinguishable from dead code, and the
+			// next reader deletes it.
+			//
+			// WHY NO SEQUENCE REACHES IT. `NotifyCommandApplied`'s Attack arm adds the
+			// attacker to `DoneUnits` and clears `SelectedUnitId` on the same event, and the
+			// selection gates above refuse to re-select a unit in `DoneUnits`. So by the time
+			// the model's `bHasActed` is true, this machine has no selection naming that unit
+			// to bring back here.
+			//
+			// WHAT IT ACTUALLY GUARDS -- a disagreement between two different answers to
+			// "has this unit acted": `bHasActed` is the RULES side, read off the view model,
+			// and `DoneUnits` is the ENGINE side, per-session and rebuilt from nothing. A
+			// loaded save, a replayed log, or a machine constructed against a match already in
+			// progress produces the first without the second. Ruled a defensive guard rather
+			// than dead code on exactly that ground.
+			//
+			// THE COST OF IT BEING UNREACHABLE IS THAT NO CLAUSE COVERS IT. A test that
+			// appeared to would be driving the `DoneUnits` gate above instead and reporting
+			// green on the wrong arm. Pinning it needs a machine seeded against a model it did
+			// not watch accumulate -- which is `strat-test-author`'s call, not a defect here.
 			if (Selected->bHasActed)
 			{
 				Outcome.FailureReason = FString::Printf(

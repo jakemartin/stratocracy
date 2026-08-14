@@ -145,7 +145,25 @@ namespace StratAiMatchClauses
 	 *  buffered queue is drained to whichever devices are registered at DRAIN time rather than
 	 *  at emission time (OutputDeviceRedirector.cpp:937 and :553). The `LinesBefore` watermarks
 	 *  below bound by index and do not close that. Measured as a 1-in-4 failure of
-	 *  `T-UI-01.ClickedAttackIsAcceptedAndRecorded` on byte-identical code, 2026-08-14. */
+	 *  `T-UI-01.ClickedAttackIsAcceptedAndRecorded` on byte-identical code, 2026-08-14.
+	 *
+	 *  THE LOCK COVERS THE APPEND AND NOTHING ELSE, AND THAT RESIDUAL IS DELIBERATE RATHER
+	 *  THAN OVERLOOKED. The override advertises to the redirector that this device needs no
+	 *  external locking, and the engine takes it literally -- every thread's log lines now
+	 *  arrive in `Serialize` directly, so the one mutation of `Lines` is made under `Mutex`.
+	 *  Every READ below -- `CountFrom`, `TextFrom`, and each direct `Lines.Num()` /
+	 *  `Lines[I]` at a call site -- is UNLOCKED. That is safe only because every `STRAT-AI`
+	 *  emitter runs on the game thread and every reader here is on the game thread too, so
+	 *  no read is ever concurrent with the append. NOTHING IN THE CODE PINS THAT PROPERTY:
+	 *  it is a fact about the current emitters, not an invariant anyone enforces. Move a
+	 *  `STRAT-AI` `UE_LOG` onto a worker thread and these reads become a data race that no
+	 *  clause here would report -- it would surface as a flake, not as a red test. Widening
+	 *  the lock to cover the reads is the fix if that day ever comes.
+	 *
+	 *  THE FILTER IS `ESearchCase::CaseSensitive`, as is every string comparison in this
+	 *  file -- see the header block. `StartsWith` / `Contains` / `TestEqual` all default to
+	 *  IgnoreCase in UE 5.8, and a case-insensitive match on a fixed-field log line is a
+	 *  comparison that risks not being able to fail. */
 	struct FStratAiCapture final : public FOutputDevice
 	{
 		TArray<FString> Lines;

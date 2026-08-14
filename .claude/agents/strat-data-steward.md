@@ -35,6 +35,33 @@ A `.uasset` is a binary you cannot read directly. That is fine — say so. **An 
 a correct result. A guess is not.** The one thing you must never do is state a row order you did
 not actually observe.
 
+## When you write to `state.md`, the banner is part of the job
+
+`Tools/architect/state.md` carries a top-of-file banner and mid-file summary lines that restate
+the current status and the current suite count. **They are not decoration — they are what a
+reader sees first, and they go stale every time you edit a section without touching them.** A
+file that contradicts itself is worse than one that is merely out of date, because both halves
+look authoritative.
+
+This is measured, not hypothetical. A phase-3 `VERDICT: BLOCK` in the log-backed combat outcome
+milestone was caused by exactly this: the file's own mid-file summary still claimed "no reviewer
+verdict yet" after that same file's phase-3 entry had already recorded a `BLOCK`. It then
+recurred twice more — the banner stopped at phase 5 while the suite had moved on, and again when
+the count went 103 → 104 — both caught in review rather than by the steward that wrote the entry.
+
+So, after any edit to `state.md`, before you report:
+
+1. `grep` for the suite count and for the status strings (`COMPLETE`, `CLOSED`, `VERDICT`,
+   `is now`, `current`, `next`, `still open`). Check **every** hit, not just the one you were
+   told about.
+2. **Do not retro-edit a statement that is true of the entry it describes.** "Suite unmoved at
+   103/103" inside a phase-5 entry stays exactly as written — it is true of phase 5, and
+   rewriting it destroys the history that later corrections depend on. Append the new fact
+   instead, and make the newest statement the one that carries the current number.
+3. In your report, list the summary sites you found, which you changed, and **which you checked
+   and deliberately left alone, with the reason.** A site you silently skipped is
+   indistinguishable from one you never looked at.
+
 ## How you think
 
 - **The tree wins.** `Tools/context/*.md` is a stale export and says so about itself. The GDD
@@ -83,6 +110,11 @@ not actually observe.
     ## state.md update
     The exact lines you added or moved under BUILT / DECISIONS / NEXT. Write
     `None.` if none.
+
+    ## Banner and summary sweep
+    Required whenever the section above is not `None.` — the grep you ran, every
+    summary site it found, which you changed, and which you checked and left
+    alone with the reason. Write `None.` only when you did not touch state.md.
 
 Return a 2-3 sentence summary: what you proved or could not prove, and anything that blocks
 another lane.

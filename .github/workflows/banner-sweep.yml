@@ -1,0 +1,56 @@
+# Runs the architect record's self-consistency sweep on every push and pull request.
+#
+# WHY CI AND NOT JUST THE HOOK. `Tools/architect/hooks/pre-commit` catches this at the moment
+# of commit, but git hooks are not version-controlled and are installed per clone: a commit
+# from a machine that never ran `install.sh`, from a fresh worktree, or from the GitHub web
+# editor gets no check at all, and nothing announces the gap. This step is the backstop that
+# does not depend on anyone's local setup.
+#
+# WHAT IT CAN AND CANNOT SEE, stated because the difference decides what a green tick means.
+# `Saved/` is gitignored, so `Saved/AutomationReport/index.json` does NOT exist on a CI
+# checkout. The sweep says so in its own output and falls back to the independent
+# `IMPLEMENT_SIMPLE_AUTOMATION_TEST` macro census over `Source/`, which IS tracked. So CI
+# checks the record against the tests that exist in the tree -- not against a run of them.
+# Verified before this file was written, by cloning the repo to a scratch directory and
+# running the sweep there: it reported "no automation report ... suite figures checked against
+# each other only", counted 108 by census, and still FAILED a deliberately broken banner.
+#
+# It does not build the project and does not run the UE suite. Neither is possible on a hosted
+# runner without an engine install, and pretending otherwise would make a green tick mean less
+# than it does.
+
+name: banner sweep
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # THE TOOL IS CHECKED BEFORE ITS VERDICT IS TRUSTED. A sweep whose own fixtures have
+      # rotted can report SWEEP CLEAN for the wrong reason, and this project has already
+      # shipped one revision of it that was silently inert on the very banner it polices.
+      # `--self-test` runs 14 inline fixtures, each proving one check can FAIL.
+      - name: sweep self-test (prove the tool can fail)
+        run: python Tools/architect/strat_banner_sweep.py --self-test
+
+      - name: banner sweep
+        run: python Tools/architect/strat_banner_sweep.py
+
+      # Only on failure, and only then: the per-claim LIVE/STAMPED classification, so whoever
+      # reads the red run can see which figure was judged current and argue with the call
+      # instead of guessing at it.
+      - name: explain the classification (on failure only)
+        if: failure()
+        run: python Tools/architect/strat_banner_sweep.py --explain

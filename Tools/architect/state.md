@@ -637,6 +637,26 @@ further down.)_
       the bare `Build.bat` form. Both skill commands now use
       `"$(git rev-parse --show-toplevel)/..."` and both were run verbatim from a subdirectory
       before being written down.
+    - **CI BACKSTOP, `.github/workflows/banner-sweep.yml`, added 2026-08-19** — the repository's
+      first workflow. The hook is per-clone and the skill's startup step only helps a crew
+      session; a commit from a machine that never ran `install.sh`, from a fresh worktree, or
+      from the GitHub web editor was still unchecked. This runs on every push and pull request.
+      - **It runs `--self-test` BEFORE the sweep**, because a sweep whose own fixtures have
+        rotted can report `SWEEP CLEAN` for the wrong reason — and one revision of this very
+        tool was silently inert on the banner it polices. On failure it additionally runs
+        `--explain`, so a red run shows which figure was judged current.
+      - **What a green tick means, and what it does not.** `Saved/` is gitignored, so the
+        automation report does NOT exist on a CI checkout; the sweep says so and falls back to
+        the `IMPLEMENT_SIMPLE_AUTOMATION_TEST` macro census over the tracked `Source/`. **CI
+        therefore checks the record against the tests that EXIST in the tree, not against a run
+        of them.** It does not build and does not run the UE suite — neither is possible on a
+        hosted runner without an engine install.
+      - **Verified by simulating CI rather than by assuming it:** cloned the repo to a scratch
+        directory (no `Saved/`), ran both workflow steps verbatim — `no automation report ...
+        suite figures checked against each other only`, census 108, `SWEEP CLEAN`, exit 0 — then
+        broke that clone's banner to `107/107` and got `live suite claim(s) disagree with the
+        tree (108)`, `SWEEP FAILED`, exit 1. The fallback path detects the defect, which was the
+        open question worth answering before writing the workflow.
 
 ## Hot-seat milestone
 

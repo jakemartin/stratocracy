@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# Stratocracy pre-commit hook -- runs the banner sweep when, and only when, the record
+# it polices is part of the commit.
+#
+# WHY A HOOK AT ALL. `11fd9ae` made the banner sweep a rule an agent had to remember.
+# Five commits later the memory failed and `185e88f` shipped a banner contradicting its
+# own file 425 lines down; the reviewer's gate caught it as `VERDICT: BLOCK`. The sweep
+# became a command (`strat_banner_sweep.py`) so the check could be run; this makes it run
+# without anyone choosing to.
+#
+# IT CHECKS THE STAGED BYTES, NOT THE WORKING TREE, and that distinction is the whole
+# point of putting it here rather than in a wrapper script. `git commit` records the
+# INDEX. A sweep of the working copy would pass a commit whose staged `state.md` is a
+# different, contradictory document -- exactly the failure mode a partial `git add -p`
+# produces. The staged blob is extracted with `git show :<path>` and swept in isolation.
+#
+# THE TREE-SIDE FIGURES ARE READ FROM THE WORKING TREE ON PURPOSE. `Saved/AutomationReport/
+# index.json` and the `IMPLEMENT_SIMPLE_AUTOMATION_TEST` census are the TRUTH the document
+# is checked against, and they are not part of any commit. A suite count is right or wrong
+# against the tests that exist, not against whatever was staged alongside the prose.
+#
+# INSTALLED, NOT SYMLINKED, and never through `core.hooksPath`: this repository already
+# carries four Git LFS hooks in `.git/hooks/`, and pointing `core.hooksPath` elsewhere
+# would silently disable every one of them. See `install.sh` in this directory.
+#
+# TO BYPASS, deliberately: `git commit --no-verify`. That is a legitimate move -- a
+# work-in-progress commit on a branch is not a lie -- and the failure message says so.
+# A gate nobody can get past is a gate people delete.
+
+set -u
+
+STATE_REL="Tools/architect/state.md"
+SWEEP_REL="Tools/architect/strat_banner_sweep.py"
+
+# Nothing to do unless the record itself is going in. Keeps every other commit free.
+if ! git diff --cached --name-only --diff-filter=ACM | grep -qx "$STATE_REL"; then
+    exit 0
+fi
+
+REPO_ROOT=$(git rev-parse --show-toplevel) || exit 0
+SWEEP="$REPO_ROOT/$SWEEP_REL"
+
+if [ ! -f "$SWEEP" ]; then
+    echo "banner sweep: $SWEEP_REL is missing -- skipping (nothing to run, and refusing"
+    echo "              to fail a commit over a tool that is not there)"
+    exit 0
+fi
+
+# Find an interpreter. `python` first because that is what this project's own recorded
+# commands use; `py -3` last because it exists only on Windows.
+PY=""
+for candidate in python python3; do
+    if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
+done
+if [ -z "$PY" ] && command -v py >/dev/null 2>&1; then PY="py -3"; fi
+if [ -z "$PY" ]; then
+    echo "banner sweep: no python interpreter found -- skipping rather than blocking a commit"
+    exit 0
+fi
+
+STAGED=$(mktemp) || exit 0
+trap 'rm -f "$STAGED"' EXIT
+if ! git show ":$STATE_REL" > "$STAGED" 2>/dev/null; then
+    echo "banner sweep: could not read the staged $STATE_REL -- skipping"
+    exit 0
+fi
+
+OUTPUT=$($PY "$SWEEP" "$STAGED" 2>&1)
+STATUS=$?
+
+if [ $STATUS -eq 0 ]; then
+    echo "banner sweep: clean (staged $STATE_REL)"
+    exit 0
+fi
+
+echo ""
+echo "$OUTPUT"
+echo ""
+echo "--------------------------------------------------------------------------"
+echo "COMMIT REFUSED: the staged $STATE_REL contradicts itself or the tree."
+echo ""
+echo "This is the check that '11fd9ae' made a memory job and that 185e88f then got"
+echo "wrong -- a banner claiming one thing while the same file claims another."
+echo ""
+echo "  See every claim and how the sweep classified it:"
+echo "    $PY $SWEEP_REL --explain"
+echo ""
+echo "  Deliberate bypass (a WIP commit is not a lie):"
+echo "    git commit --no-verify"
+echo "--------------------------------------------------------------------------"
+exit 1

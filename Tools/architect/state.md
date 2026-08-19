@@ -597,10 +597,34 @@ further down.)_
     `_QUOTED_ACCOUNT`. Falsifiability re-measured AFTER that rule went in, because a
     suppression rule is exactly the kind that could blunt the check it protects: breaking the
     banner's live figure still fails, `EXIT=1`.
-  - **Not wired to anything yet.** No hook, no CI, no pre-commit. Running it is still a choice;
-    what changed is that the check now exists as one command instead of as a paragraph someone has
-    to re-read. Wiring it into a commit hook is the obvious next step and is deliberately not
-    taken here.
+  - **WIRED, 2026-08-19, same day** — `Tools/architect/hooks/pre-commit`, installed by
+    `sh Tools/architect/hooks/install.sh`. It runs the sweep only when `state.md` is staged, so
+    every other commit is untouched. The bullet this replaces said wiring was "deliberately not
+    taken here"; it was taken immediately afterwards, on request.
+    - **It checks the STAGED blob (`git show :<path>`), not the working tree, and that is the
+      whole reason it is a hook rather than a wrapper script.** `git commit` records the INDEX,
+      so a working-tree sweep would wave through a commit whose staged `state.md` is a different,
+      contradictory document — what a partial `git add -p` produces. **Measured, not argued:**
+      with a contradiction staged and the working tree repaired,
+      `python Tools/architect/strat_banner_sweep.py` prints `SWEEP CLEAN` while the hook prints
+      `COMMIT REFUSED` and `HEAD` does not move.
+    - **The tree-side figures are still read from the working tree, deliberately.** The report and
+      the macro census are the TRUTH the document is checked against and are in no commit.
+    - **`core.hooksPath` was rejected on measurement, not taste.** This repo already carries four
+      Git LFS hooks (`post-checkout`, `post-commit`, `post-merge`, `pre-push`); redirecting
+      `core.hooksPath` would silently disable every one of them. The installer copies into the
+      free `pre-commit` slot instead, refuses to clobber a different existing hook, refuses to run
+      at all if `core.hooksPath` is set, and is idempotent.
+    - **Five behaviours measured end to end, HEAD checked after each:** a commit not touching
+      `state.md` → hook silent, commit allowed; `state.md` staged and clean → `banner sweep: clean`,
+      allowed; a contradiction staged → `COMMIT REFUSED`, `HEAD` unmoved; staged-bad/worktree-good
+      → still refused (above); `git commit --no-verify` → allowed. All probe commits were reset and
+      the tree returned to `b502686`.
+    - **The bypass is documented in the failure message on purpose.** A WIP commit on a branch is
+      not a lie, and a gate nobody can get past is a gate people delete.
+    - **Hooks are not version-controlled**, so `install.sh` must be run once per clone. Nothing
+      installs it automatically and nothing checks that it is installed — a real gap, and the
+      honest limit of this wiring.
 
 ## Hot-seat milestone
 

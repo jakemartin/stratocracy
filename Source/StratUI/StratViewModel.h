@@ -172,8 +172,8 @@ struct FStratHexView
 	 * name. The first would bake a row order the project has explicitly declined to
 	 * pin into a `.uasset` -- the exact "asset surgery" trap `.agents/ue-project-context.md`
 	 * records for reflected class paths -- and it would fail silently, drawing Water as
-	 * Woods. The name is what seeding itself resolves by (`strat::openTurn`'s terrain-id
-	 * resolution loop), so
+	 * Woods. The name is what seeding itself resolves by (`strat::seedFromScenario`'s
+	 * terrain-id resolution loop), so
 	 * this field agrees with the rules module's own key.
 	 *
 	 * A LOOKUP, NOT A DERIVATION. It is read out of the definition table the bridge

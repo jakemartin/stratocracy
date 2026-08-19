@@ -42,14 +42,30 @@ SWEEP="$REPO_ROOT/$SWEEP_REL"
 # of at the moment of commit. The unit list is DERIVED from the vendored directory rather
 # than typed: the CI step's first version hardcoded an alternation, omitted `Replay` and
 # `Scenario`, and printed `clean` over twelve live citations until a reviewer gate caught it.
+#
+# IT READS THE STAGED BLOBS, NOT THE WORKING TREE, for the same reason the sweep below does.
+# The first version grepped the checkout, which is a different document from the commit: a
+# partially-staged change could be refused for a citation it is not committing, or -- the
+# direction that matters -- pass while the staged bytes carry one. This session lost a fix to
+# exactly that worktree-versus-index confusion (a `git checkout --` during a hook test
+# reverted a file to HEAD), so the inconsistency is not hypothetical.
 UNITS=$(ls "$REPO_ROOT"/Source/StratRules/*.h 2>/dev/null | xargs -n1 basename 2>/dev/null | sed 's/\.h$//' | paste -sd'|' -)
 if [ -n "$UNITS" ]; then
-    CITES=$(cd "$REPO_ROOT" && grep -rEn "($UNITS)\.(h|good\.cpp|buggy\.cpp):[0-9]" Source/ 2>/dev/null             | grep -v "^Source/StratRules/" || true)
+    CITES=""
+    for f in $(git diff --cached --name-only --diff-filter=ACM | grep '^Source/' | grep -v '^Source/StratRules/'); do
+        case "$f" in
+            *.h|*.cpp|*.inl) ;;
+            *) continue ;;
+        esac
+        found=$(git show ":$f" 2>/dev/null | grep -nE "($UNITS)\.(h|good\.cpp|buggy\.cpp):[0-9]" | sed "s|^|$f:|") || true
+        if [ -n "$found" ]; then CITES="$CITES$found
+"; fi
+    done
     if [ -n "$CITES" ]; then
         echo ""
-        echo "$CITES"
+        printf '%s' "$CITES"
         echo ""
-        echo "COMMIT REFUSED: line-number citations into vendored headers."
+        echo "COMMIT REFUSED: line-number citations into vendored headers, in the STAGED bytes."
         echo "Cite the SYMBOL, not the line -- a re-vendor moves every vendored line at once."
         echo "Bypass deliberately with: git commit --no-verify"
         exit 1

@@ -730,7 +730,34 @@ further down.)_
     It now overwrites a file carrying this project's own signature line and still refuses a hook
     it did not write — both branches tested.
   - **Re-verified after all of the above:** `Result: Succeeded`, suite **108/108**, zero
-    non-Success, `reportCreatedOn 2026.08.19-21.30.18`, and non-comment changed lines **0**.
+    non-Success, `reportCreatedOn 2026.08.19-21.41.27`, and non-comment changed lines **0** — the timestamp re-derived after the LAST edit in this pass rather than the first, on the reviewer's finding that it named a report predating the tree it claimed to describe.
+  - **BLOCKED A SECOND TIME, 2026-08-19, and the finding was the SAME SCAN BUG this entry
+    already documents — recorded because repeating a trap you have just written down is the
+    finding, not the citation.** Two of the twelve rewrites named `strat::openTurn` for the
+    terrain-id resolution loop at `Replay.good.cpp:299-308`. That loop is inside
+    **`strat::seedFromScenario`**: `openTurn` spans 240-277 and contains no terrain-id loop at
+    all. The enclosing-function scan reported `openTurn` because `seedFromScenario`'s signature
+    **wraps two lines and so does not end in `{`** — byte for byte the failure that produced the
+    `initSide`-for-`accrueIncome` near-miss earlier in the same pass, which this entry names two
+    bullets above. It was documented and then repeated within one batch. One of the two sites had
+    gone self-contradicting on its own line: "what SEEDING itself resolves by
+    (`strat::openTurn`'s …)". Both now read `strat::seedFromScenario`. The reviewer resolved the
+    other ten against the vendored source and confirmed them. **A scan that finds enclosing
+    functions by `^\w.*{$` is wrong for this codebase and should not be used again; read the
+    file around the line instead.**
+  - **The hook's citation check now reads the STAGED blobs, not the working tree.** The reviewer
+    found the two halves of the same hook disagreeing: the sweep did `git show ":<path>"` while
+    the citation grep scanned the checkout, so a partially-staged commit could be refused for a
+    citation it was not committing, or pass while the staged bytes carried one. Given this same
+    pass lost a fix to worktree-versus-HEAD confusion, that was not hypothetical. Fixed and
+    measured both ways: a citation present ONLY in the worktree no longer blocks (commit
+    created, then reset), and a STAGED citation is refused with `HEAD` unmoved.
+  - **Wrap-width debt, with an owner and a trigger rather than a shrug.** The sweep's standing
+    cost is **+10** over-100-column comment lines (10 before, 20 now — the reviewer's own
+    re-measurement; the earlier "11 sites" figure was wrong). Deliberately not re-wrapped here:
+    a cosmetic pass inside a correction commit buries the evidentiary diff. **Trigger: the next
+    commit that touches those blocks for a substantive reason re-wraps them.** Owner:
+    `strat-gameplay-engineer` for `Source/`, since that is its lane.
   - **The hook then caught the coordinator, on this very commit, and it was a real defect.**
     `git commit` was REFUSED: `StratBoardActor.h:23` still carried `Replay.good.cpp:299-308`.
     Cause — the hook test itself. Planting a citation, then restoring with

@@ -20,7 +20,7 @@
 // ruled not load-bearing on evidence in phase 0 and nothing pins it. An array of seven
 // meshes indexed by row position would draw Water as Woods after a table edit, silently
 // and with no diagnostic; a TMap keyed by name cannot, because the name is what seeding
-// itself resolves terrain by (`strat::openTurn`'s terrain-id resolution loop).
+// itself resolves terrain by (`strat::seedFromScenario`'s terrain-id resolution loop).
 //
 // AND THEREFORE THE SEVEN COMPONENTS ARE CREATED FROM DATA, NOT DECLARED IN C++. Ferrum
 // Crossing ships seven terrain kinds and this actor ends up with seven tile components,

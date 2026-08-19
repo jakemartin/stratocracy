@@ -60,15 +60,25 @@ jobs:
         run: python Tools/architect/strat_banner_sweep.py --explain
 
       # NO LINE-NUMBER CITATIONS INTO VENDORED HEADERS. A `Save.h:64` in a comment is correct
-      # the day it is written and wrong the day `Source/StratRules/` is re-vendored -- every
-      # one of them at once, silently, with nothing in this repository reading a vendored line
-      # number to notice. 46 had accumulated across 16 files by 2026-08-19 and were replaced
-      # with symbol references (`SaveCommand::unitId`); this keeps them from coming back.
-      # Citations INSIDE Source/StratRules/ are the vendored files' own and are not our
-      # business, so they are excluded.
+      # the day it is written and wrong the day `Source/StratRules/` is re-vendored -- every one
+      # of them at once, silently, with nothing in this repository reading a vendored line number
+      # to notice. 58 had accumulated across the tree by 2026-08-19 and were replaced with symbol
+      # references (`SaveCommand::unitId`); this keeps them from coming back.
+      #
+      # THE FILE LIST IS DERIVED FROM THE VENDORED DIRECTORY, NEVER TYPED, and that is the whole
+      # correction here. The first version of this step hardcoded an alternation and omitted
+      # `Replay` and `Scenario` -- two real vendored units -- so twelve citations of exactly the
+      # class it exists to forbid sat in `Source/` while the step printed `clean`. A reviewer
+      # gate found it (`VERDICT: BLOCK`, 2026-08-19). A guard that names its own subjects by hand
+      # is a guard that silently stops covering the next one added.
+      #
+      # Citations INSIDE Source/StratRules/ are the vendored files' own and are not our business.
       - name: no line-number citations into vendored headers
         run: |
-          hits=$(grep -rEn "(Save|Ai|Combat|Economy|Move|Turn|Ui|Data|Hex|Driver|Rules)\.(h|good\.cpp|buggy\.cpp):[0-9]" Source/                  | grep -v "^Source/StratRules/" || true)
+          units=$(ls Source/StratRules/*.h | xargs -n1 basename | sed 's/\.h$//' | paste -sd'|' -)
+          if [ -z "$units" ]; then echo "no vendored headers found -- refusing to pass vacuously"; exit 1; fi
+          echo "vendored units derived from Source/StratRules/: $units"
+          hits=$(grep -rEn "($units)\.(h|good\.cpp|buggy\.cpp):[0-9]" Source/                  | grep -v "^Source/StratRules/" || true)
           if [ -n "$hits" ]; then
             echo "$hits"
             echo ""

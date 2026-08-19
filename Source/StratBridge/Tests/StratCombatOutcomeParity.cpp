@@ -11,7 +11,8 @@
 // WHERE EVERY EXPECTATION IN THIS FILE COMES FROM, and the answer is never "computed
 // here":
 //
-//   - `strat::uiResolveForGate` (returning `strat::UiResolution`) is THE ORACLE. It
+//   - `strat::uiResolveForGate` (declared in `Ui.h`, defined in `Ui.good.cpp`, returning
+//     `strat::UiResolution`) is THE ORACLE. It
 //     calls `uiForecast` and applies its numbers, "adding no arithmetic of its own",
 //     and it has zero production callers in this tree BY CONSTRUCTION -- the phase
 //     that wrote the emitter deliberately did not call it, and
@@ -48,7 +49,8 @@
 // range) is refused by `applyCommand` too, so a forecast-illegal attack never applies.
 // `agree=-1` on a `resolved` line is likewise unreachable: it needs `!bForecastQueried`
 // (attacker not on the board -- `applyCommand` refuses), `DefenderId == INDEX_NONE`
-// (empty target hex -- `applyCommand` refuses, Replay.good.cpp:421), or a snapshot
+// (empty target hex -- `strat::applyCommand`'s `Attack` arm refuses when the defender
+// lookup finds nothing), or a snapshot
 // projection that fails after a successful apply. NO CLAUSE BELOW CLAIMS THOSE ARMS.
 // A clause that appeared to cover them would report green forever.
 
@@ -603,7 +605,7 @@ bool FStratCounterKillLeavesAttackerOffRosterTest::RunTest(const FString& /*Para
 			// THE MODULE'S OWN PREDICATE FOR "the counter kills the attacker", and it is
 			// `applyCommand`'s: the defender survives, the counter fires, and the
 			// counter's damage empties the attacker's pool
-			// (Replay.good.cpp:468 -- `if (atkHp - counter <= 0)`).
+			// (`strat::applyCommand`'s counter branch -- `if (atkHp - counter <= 0)`).
 			if (!F.defenderDies && F.counterFires && F.counterDamage >= A.unit.hp)
 			{
 				FCandidate C;

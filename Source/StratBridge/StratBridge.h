@@ -242,7 +242,7 @@ public:
 	//
 	// THEY EXIST TO STAMP `{turn, side}`, which is the whole content of the
 	// façade. §4.10 tags every log entry with them and `applyCommand` REFUSES an
-	// entry whose tag disagrees with the live turn (Replay.good.cpp:379-386), so
+	// entry whose tag disagrees with the live turn (`strat::applyCommand`'s turn-tag guard), so
 	// a caller assembling a raw SaveCommand has to know the turn number and the
 	// active side to get a command accepted at all -- two facts it would then be
 	// holding a copy of. These read them off the authoritative TurnState at the

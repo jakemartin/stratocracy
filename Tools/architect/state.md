@@ -694,6 +694,51 @@ further down.)_
     citations INTO this repo's own moving files (e.g. `StratBridge.cpp:448`) are a different
     debt the guard deliberately does not police — a line number into a file this repo controls
     rots on any edit, not only on a re-vendor, and wants its own decision.
+  - **CORRECTED 2026-08-19, same day, on a `VERDICT: BLOCK` — the guard was BLIND to two
+    vendored units and this entry repeated the overclaim.** The alternation was TYPED by hand
+    (`Save|Ai|Combat|Economy|Move|Turn|Ui|Data|Hex|Driver|Rules`) and omitted **`Replay` and
+    `Scenario`**, which are real vendored translation units. Consequence, verified by re-running
+    the extended pattern: **12 citations of exactly the forbidden class were live in `Source/`
+    while the step printed `clean`** — a FALSE GREEN, the worst failure a guard has — and five of
+    them sat in files the sweep itself had just edited. Among them
+    `Replay.good.cpp:486-487`, the citation the `DT_Units` row-order argument rests on. **The
+    headline figure was therefore wrong too: 46 was the count the broken pattern could see; the
+    true population was 58.** Both halves fixed: the 12 are rewritten by symbol
+    (`strat::applyCommand`'s `Attack`/`Build`/turn-tag arms, `strat::openTurn`,
+    `strat::scenarioHash`), and **the guard now DERIVES its unit list from
+    `ls Source/StratRules/*.h` rather than naming its own subjects** — a guard that types its
+    subjects stops covering the next one added. Re-measured after the fix: derived list reads
+    `Ai|Combat|Data|Driver|Economy|Hex|Move|Replay|Save|Scenario|Turn|Ui`, tree clean, and a
+    planted `Replay.good.cpp:299-308` is caught with `EXIT=1`.
+  - **Second finding from the same gate, also correct: one replacement named a NEIGHBOUR.**
+    `Ui.h:346` was rendered as ```UiForecast`'s `defenderCanCounter` note`` at two sites, but that
+    note is the doc comment for the FUNCTION `strat::uiForecast` (declared just below it); the
+    STRUCT `UiForecast` carries no comment at all. A reader grepping for `UiForecast` would land
+    on a struct that does not say what the sentence claims. Fixed to "the `defenderCanCounter`
+    note above `strat::uiForecast`". **This is the fourth instance in one day of a scan naming a
+    neighbour instead of a subject** — after `initSide`-for-`accrueIncome`, the `TurnState`
+    member-for-struct near-miss, and the `Economy.good.cpp:60` enclosing-function scan. The
+    reviewer resolved 31 distinct citations covering all 50 uses and found the other 30 correct.
+  - **Three non-gating observations from the same gate, all acted on:** the dropped
+    definition-site half of `Ui.good.cpp:290` is restored as "declared in `Ui.h`, defined in
+    `Ui.good.cpp`"; the circular `unitId` sentence in `StratViewModel.h` is unwound; and the
+    citation check now ALSO runs in the pre-commit hook, ahead of the `state.md` gate so it fires
+    on a source-only commit — verified by planting a citation in `StratBoardActor.h`, staging
+    only that file, and getting `COMMIT REFUSED` with `HEAD` unmoved.
+  - **`install.sh` gained an update path, which the same pass proved it needed.** Refreshing the
+    hook hit `REFUSING ... differs`, because the first version could only install, never update.
+    It now overwrites a file carrying this project's own signature line and still refuses a hook
+    it did not write — both branches tested.
+  - **Re-verified after all of the above:** `Result: Succeeded`, suite **108/108**, zero
+    non-Success, `reportCreatedOn 2026.08.19-21.30.18`, and non-comment changed lines **0**.
+  - **The hook then caught the coordinator, on this very commit, and it was a real defect.**
+    `git commit` was REFUSED: `StratBoardActor.h:23` still carried `Replay.good.cpp:299-308`.
+    Cause — the hook test itself. Planting a citation, then restoring with
+    `git checkout -- <file>`, reverts the file to **HEAD**, which silently discarded that file's
+    symbol fix along with the planted line. A `cp` from a backup would have been safe; the
+    `checkout` was not. **Testing a guard by damaging the tree can undo the very work being
+    guarded, and only the guard noticed.** Re-applied, re-verified: zero citations tree-wide,
+    build `Result: Succeeded` again.
 
 ## Hot-seat milestone
 

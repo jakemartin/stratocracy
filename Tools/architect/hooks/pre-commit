@@ -34,12 +34,34 @@ STATE_REL="Tools/architect/state.md"
 SWEEP_REL="Tools/architect/strat_banner_sweep.py"
 
 # Nothing to do unless the record itself is going in. Keeps every other commit free.
+REPO_ROOT=$(git rev-parse --show-toplevel) || exit 0
+SWEEP="$REPO_ROOT/$SWEEP_REL"
+
+# THE VENDORED-CITATION CHECK RUNS ON EVERY COMMIT, not only when state.md is staged --
+# it is cheap, and CI alone means an author learns minutes later from a red tick instead
+# of at the moment of commit. The unit list is DERIVED from the vendored directory rather
+# than typed: the CI step's first version hardcoded an alternation, omitted `Replay` and
+# `Scenario`, and printed `clean` over twelve live citations until a reviewer gate caught it.
+UNITS=$(ls "$REPO_ROOT"/Source/StratRules/*.h 2>/dev/null | xargs -n1 basename 2>/dev/null | sed 's/\.h$//' | paste -sd'|' -)
+if [ -n "$UNITS" ]; then
+    CITES=$(cd "$REPO_ROOT" && grep -rEn "($UNITS)\.(h|good\.cpp|buggy\.cpp):[0-9]" Source/ 2>/dev/null             | grep -v "^Source/StratRules/" || true)
+    if [ -n "$CITES" ]; then
+        echo ""
+        echo "$CITES"
+        echo ""
+        echo "COMMIT REFUSED: line-number citations into vendored headers."
+        echo "Cite the SYMBOL, not the line -- a re-vendor moves every vendored line at once."
+        echo "Bypass deliberately with: git commit --no-verify"
+        exit 1
+    fi
+fi
+
+# Everything below is the banner sweep, which is only owed when the record itself is
+# going in. Keeps every other commit free of it.
 if ! git diff --cached --name-only --diff-filter=ACM | grep -qx "$STATE_REL"; then
     exit 0
 fi
 
-REPO_ROOT=$(git rev-parse --show-toplevel) || exit 0
-SWEEP="$REPO_ROOT/$SWEEP_REL"
 
 if [ ! -f "$SWEEP" ]; then
     echo "banner sweep: $SWEEP_REL is missing -- skipping (nothing to run, and refusing"
@@ -65,6 +87,7 @@ if ! git show ":$STATE_REL" > "$STAGED" 2>/dev/null; then
     echo "banner sweep: could not read the staged $STATE_REL -- skipping"
     exit 0
 fi
+
 
 OUTPUT=$($PY "$SWEEP" "$STAGED" 2>&1)
 STATUS=$?

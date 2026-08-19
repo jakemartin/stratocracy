@@ -1053,7 +1053,8 @@ bool FStratAiRefusalsAreDistinguishableTest::RunTest(const FString& /*Parameters
 //
 // WHY THIS GATE AND NOT A T-AI ID. `AiState::buildlist` is a vector of defIndexes, and a
 // defIndex is the same raw, bounds-checked-only index a §4.10 Build command carries in
-// the field the format spells `unitId` (`Replay.good.cpp:486-487`). GATE-BRIDGE-DEFS
+// the field the format spells `unitId` (`strat::applyCommand`'s `Build` arm bounds-checks it
+// against the unit-definition table). GATE-BRIDGE-DEFS
 // already exists for exactly one sentence -- "a defIndex means what the loader says it
 // means" -- and `MappedDefsMatchLoaderOrder` pins the table. This is the second reader of
 // that same table, and its failure mode is phase 0's: a buildlist that resolved

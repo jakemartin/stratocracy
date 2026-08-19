@@ -253,7 +253,7 @@ int32 StratDivergenceMaskOf(const FStratCombatOutcome& Outcome)
 // project that compares §2.6's forecast against what §2.6 actually did.
 //
 // WHY IT HAS TO BE ASSEMBLED AT ALL. `applyCommand`'s Attack case returns
-// `okResult(1)` and nothing else (Replay.good.cpp:413-470). No damage, no death,
+// `okResult(1)` and nothing else (`strat::applyCommand`'s `Attack` arm). No damage, no death,
 // no counter, no fame comes back through the return channel, so an observer has
 // exactly two places to look: `strat::uiForecast` BEFORE the submit, and the
 // difference between two `strat::UiSnapshot`s taken either side of it. This block
@@ -467,7 +467,8 @@ namespace StratCombatObservation
 
 		if (O.ForecastAgrees == 0)
 		{
-			// The defect `UiForecast`'s `defenderCanCounter` note says the forecast's construction exists to catch, caught
+			// The defect the `defenderCanCounter` note above `strat::uiForecast` says the forecast's
+			// construction exists to catch, caught
 			// on a real submit rather than in a gate fixture. Error level because there is
 			// no benign reading of it: either the screen lied to the player or the rules
 			// module has two answers for one question.

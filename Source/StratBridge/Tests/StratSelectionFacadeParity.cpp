@@ -772,7 +772,7 @@ bool FStratBridgeTurnAndSideAreReadBeforeStampTest::RunTest(const FString& /*Par
 //
 // THE SEQUENCE CROSSES TWO TURN BOUNDARIES so both sides move, because a log that never
 // changed side would not exercise the stamp that `applyCommand` checks on replay
-// (Replay.good.cpp:379-386) and a one-move log proves nothing about ordering.
+// (`strat::applyCommand`'s turn-tag guard) and a one-move log proves nothing about ordering.
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratBridgeRecordedLogReplaysToEqualHashTest,
@@ -1143,7 +1143,8 @@ bool FStratBridgeSubmitAttackAtHexIsNotTransposedTest::RunTest(const FString& /*
 // ... DERIVED from the others", and `loadScenarioFile` only checks when the file declares
 // one. Nothing under `Data/` is touched, nothing is recomputed here, and the resulting
 // scenario differs from the shipped one in a field `strat::scenarioHash` demonstrably
-// hashes (`Scenario.good.cpp:287`, `id=`). The clause asserts the two hashes differ before
+// hashes (`strat::scenarioHash`, which feeds `id=` into the digest). The clause asserts the
+// two hashes differ before
 // it asserts the refusal, so a variant that failed to be a variant is a failure and not a
 // pass.
 // ---------------------------------------------------------------------------

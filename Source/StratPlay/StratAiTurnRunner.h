@@ -62,7 +62,7 @@
 //
 // NOT IN THIS ROUND, with reasons:
 // - CAPTURE. `Ai.h` omits it deliberately, and says so in the note above `strat::AiCommandKind`: `openTurn` runs `captureTick` from the
-//   EndTurn arm (`Replay.good.cpp:264-270`, `:529-535`), so the AI captures without ever
+//   EndTurn arm (`strat::openTurn`, called from `strat::applyCommand`'s `EndTurn` arm), so the AI captures without ever
 //   emitting Capture. A Capture arm here would be an engine-side command the AI cannot ask
 //   for. `EStratAiCommandKind` has four enumerators and this switch has four arms.
 // - WAIT. There is no such rules command (phase 1's correction) and the AI has no vocabulary

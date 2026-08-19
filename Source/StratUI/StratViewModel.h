@@ -172,7 +172,8 @@ struct FStratHexView
 	 * name. The first would bake a row order the project has explicitly declined to
 	 * pin into a `.uasset` -- the exact "asset surgery" trap `.agents/ue-project-context.md`
 	 * records for reflected class paths -- and it would fail silently, drawing Water as
-	 * Woods. The name is what seeding itself resolves by (`Replay.good.cpp:299-308`), so
+	 * Woods. The name is what seeding itself resolves by (`strat::openTurn`'s terrain-id
+	 * resolution loop), so
 	 * this field agrees with the rules module's own key.
 	 *
 	 * A LOOKUP, NOT A DERIVATION. It is read out of the definition table the bridge
@@ -220,10 +221,11 @@ struct FStratUnitView
 	/**
 	 * The §2.4 definition row this unit is. Mirrors `UiUnitView::unitId`.
 	 *
-	 * RENAMED ON PURPOSE. The vendored field is spelled `unitId`, and `SaveCommand::unitId` spells
+	 * RENAMED ON PURPOSE. `SaveCommand::unitId` spells
 	 * the same quantity `unitId` in a Build command, where `applyCommand` uses it as a
 	 * raw bounds-checked index into the definitions vector with no name lookup
-	 * (`Replay.good.cpp:486-487`). That spelling is the trap -- it reads like an instance
+	 * (`strat::applyCommand`'s `Build` arm bounds-checks it against the unit-definition
+	 * table). That spelling is the trap -- it reads like an instance
 	 * id and is a row index -- and `FStratBridge::SubmitBuild` already renames it to
 	 * `DefIndex` "for what the rules module does with it rather than for what the format
 	 * calls it". This field keeps that name so the two agree.

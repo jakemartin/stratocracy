@@ -158,7 +158,7 @@ public:
 	 * The world location of a hex's centre.
 	 *
 	 * THE ONLY AXIAL -> WORLD CONVERSION IN THE PROJECT. Pointy-top axial, X = q and
-	 * Y = r (`Hex.h:11-14`, mirrored by `FStratHexView::Hex`). Every actor that needs to
+	 * Y = r (`strat::Hex`, mirrored by `FStratHexView::Hex`). Every actor that needs to
 	 * stand on a hex asks this rather than repeating the formula, because two copies of a
 	 * layout constant is a board whose units are half a tile off after someone changes
 	 * `HexSize` in one of them.

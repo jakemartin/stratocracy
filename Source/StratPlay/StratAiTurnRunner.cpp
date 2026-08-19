@@ -21,7 +21,7 @@ namespace
 	 * deliberately not shared with it. That one maps `EStratSelectionCommand` (a UI concept
 	 * with a `None` and no `Build`); this one maps `EStratAiCommandKind` (four rules-module
 	 * kinds, no `None`). They agree on the four words they both spell BECAUSE both are
-	 * copying `Save.good.cpp:294-300`, which is the single source neither of them is. Fusing
+	 * copying `strat::saveCommandName`'s switch, which is the single source neither of them is. Fusing
 	 * them into one helper over a merged enum would create exactly the merged enum this
 	 * project does not have.
 	 *

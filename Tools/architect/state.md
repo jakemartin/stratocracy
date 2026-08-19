@@ -657,6 +657,43 @@ further down.)_
         broke that clone's banner to `107/107` and got `live suite claim(s) disagree with the
         tree (108)`, `SWEEP FAILED`, exit 1. The fallback path detects the defect, which was the
         open question worth answering before writing the workflow.
+- **DISCHARGED 2026-08-19 — the vendored line-citation sweep, and a CI guard so it cannot come
+  back.** 46 citations into vendored headers across 16 files (`Save.h:64`, `Ui.h:346`,
+  `Ai.h:49-53`, …) are now symbol references. These were the worst-aged citations in the tree:
+  correct the day each was written, and **wrong all at once, silently, the day
+  `Source/StratRules/` is re-vendored**, with nothing in this repository reading a vendored line
+  number to notice. Doing it before the capped `chooseBuild` lands was the point.
+  - **Every citation was resolved against the vendored source before being rewritten**, not
+    guessed from its surrounding sentence: 32 distinct citations, 50 uses, each read at its cited
+    line to learn its subject. None had rotted yet — vendored bytes have not moved since the
+    citations were written, which is exactly why they all read as fine while being one re-vendor
+    from worthless.
+  - **The blanket substitution broke sentences, and reading the diff caught it.** Sixteen sites
+    came out wrong: duplicates the map created (`` `strat::killAward` (`strat::killAward`) ``),
+    lowercase sentence starts where a citation had opened a sentence, and one WRONG SUBJECT —
+    `Turn.h:97-100` cited *where `TurnState` lives*, and the map turned it into
+    `TurnState::builtThisTurn`, naming the member instead of the struct. All sixteen repaired by
+    hand. **A mechanical rewrite of prose needs its diff read line by line; the count of
+    replacements is not the measure of success.**
+  - **`Economy.good.cpp:60` nearly went in as `strat::initSide` and is `strat::accrueIncome`.**
+    The enclosing-function scan matched the last single-line signature above it and missed the
+    real one, whose signature wraps across two lines. Caught by reading the code at the cited
+    line rather than trusting the scan — the third instance today of naming a neighbour instead
+    of the subject.
+  - **Verified:** `Result: Succeeded`; suite **108/108**, zero non-Success,
+    `reportCreatedOn 2026.08.19-20.59.53`; and the diff proven comment-only rather than asserted
+    — non-comment changed lines **0** across all 16 files.
+  - **CI GUARD, added to `.github/workflows/banner-sweep.yml`:** a step that fails the build on
+    any `X.h:NN` citation into a vendored header outside `Source/StratRules/` (the vendored files'
+    own citations are their business). **Run in both directions before being committed**, using
+    the step's own body extracted from the YAML rather than a retyped approximation: clean tree →
+    `clean: no vendored line-number citations outside Source/StratRules/`, exit 0; one citation
+    planted back into `StratViewModel.h` → the offending line printed with `Cite the SYMBOL, not
+    the line`, exit 1; reverted → exit 0.
+  - **Not covered:** `.agents/` and `Tools/` prose are outside the guard's `Source/` scope, and
+    citations INTO this repo's own moving files (e.g. `StratBridge.cpp:448`) are a different
+    debt the guard deliberately does not police — a line number into a file this repo controls
+    rots on any edit, not only on a re-vendor, and wants its own decision.
 
 ## Hot-seat milestone
 

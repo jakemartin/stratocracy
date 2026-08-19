@@ -207,7 +207,7 @@ namespace StratBridgeSaveRecording
 		case strat::SaveCommandKind::Attack:
 			return Bridge.SubmitAttack(C.unitId, C.hex);
 		case strat::SaveCommandKind::Build:
-			// Save.h:64 spells the §2.4 row index in a field called `unitId`. The bridge's
+			// `SaveCommand::unitId` spells the §2.4 row index in a field named for a unit. The bridge's
 			// parameter is named for what the rules module does with it; the format's
 			// spelling is the trap, and this line is the one place the two meet.
 			return Bridge.SubmitBuild(C.hex, C.unitId);

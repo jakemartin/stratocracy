@@ -999,7 +999,7 @@ bool FStratHotSeatReplayParityTest::RunTest(const FString& /*Parameters*/)
 //     function's linkage, and the difference matters because the earlier wording of this
 //     block said "file-local", which was false and told the next reader that no pin was
 //     possible anywhere. `strat::saveCommandName` is declared at
-//     `Source/StratRules/Save.h:135` and defined at `Save.good.cpp:292` at namespace scope
+//     `strat::saveCommandName` in `Source/StratRules/Save.h` and defined in `Save.good.cpp` at namespace scope
 //     with no `static`: it has EXTERNAL LINKAGE. What it lacks is an `_API` macro, and an
 //     editor target is a modular build, so THIS module cannot link a call to it (8 x
 //     LNK2019, `StratBridge.h`'s opening measurement) -- while `StratBridge/Tests/` can

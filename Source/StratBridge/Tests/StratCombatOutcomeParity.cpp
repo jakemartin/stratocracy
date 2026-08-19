@@ -11,7 +11,7 @@
 // WHERE EVERY EXPECTATION IN THIS FILE COMES FROM, and the answer is never "computed
 // here":
 //
-//   - `strat::uiResolveForGate` (Ui.h:355-361, Ui.good.cpp:290) is THE ORACLE. It
+//   - `strat::uiResolveForGate` (returning `strat::UiResolution`) is THE ORACLE. It
 //     calls `uiForecast` and applies its numbers, "adding no arithmetic of its own",
 //     and it has zero production callers in this tree BY CONSTRUCTION -- the phase
 //     that wrote the emitter deliberately did not call it, and
@@ -20,7 +20,7 @@
 //     production. A `uiResolveForGate` invoked by the bridge would make every
 //     comparison below a comparison of the bridge with itself.
 //
-//   - `strat::killAward` (Economy.h:108) supplies the fame figure. Not half a cost
+//   - `strat::killAward` supplies the fame figure. Not half a cost
 //     computed here; the module's own function, handed the victim's own `UnitDef`.
 //
 //   - `Data/parity_fixture.save` supplies every command, and the positions they are
@@ -741,7 +741,7 @@ bool FStratCounterKillLeavesAttackerOffRosterTest::RunTest(const FString& /*Para
 // ---------------------------------------------------------------------------
 // T-FAME-01 -- a kill moves the attacking side's fame, by the module's own award.
 //
-// §2.4 / Q5, through `Economy.h:108`: the award is half the victim's cost, or a flat
+// §2.4 / Q5, through `strat::killAward`: the award is half the victim's cost, or a flat
 // 500 for a flag, and it lands on `fameTotal` AND `fameCombat`. THE EXPECTED NUMBER IS
 // `strat::killAward`'s, handed the victim's own `UnitDef` off `FStratBridge::UnitDefs()`
 // and the victim's own `isFlag` off the pre-submit `UiWorld`. Nothing here halves a
@@ -751,7 +751,7 @@ bool FStratCounterKillLeavesAttackerOffRosterTest::RunTest(const FString& /*Para
 // is satisfied by fame not moving at all. That is asserted before the comparison.
 //
 // WHY AN ATTACK AND NOT AN EndTurn. Passive income also moves `fameTotal` -- and
-// deliberately never touches `fameCombat` (T-FAME-01, Economy.good.cpp:60). A single
+// deliberately never touches `fameCombat` (T-FAME-01, `strat::accrueIncome`). A single
 // Attack command runs no income tick, so the whole of the observed movement is the
 // award, and the `fameCombat` half is what tells the two sources apart.
 // ---------------------------------------------------------------------------

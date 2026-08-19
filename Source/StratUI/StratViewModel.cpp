@@ -267,7 +267,7 @@ bool StratBuildViewModel(
 		UnitView.bIsGuidedMarked = Source.isGuidedMarked;
 
 		// `bDone` and `bLockedThisTurn` are DELIBERATELY LEFT AT FALSE. They are the
-		// presentation block's (Ui.h:199-215), their owners are §2.11.1's selection
+		// presentation block's (`strat::UiPresentationUnit`), their owners are §2.11.1's selection
 		// machine and the guidance layer, and neither exists in this engine yet. Setting
 		// them from `hasMoved` / `hasActed` here would be inventing the DONE bit -- which
 		// Ui.h states is derivable from neither flag nor from any pair of them -- and it

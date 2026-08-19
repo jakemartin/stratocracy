@@ -617,7 +617,8 @@ bool FStratAiBoardAgreesWithRulesQueriesTest::RunTest(const FString& /*Parameter
 //
 // WHY THIS MEMBER AND NOT ANOTHER. §2.7's "one build per factory per turn" is turn-scoped
 // and the turn belongs to row 5, so the record moved out of the driver and onto
-// `TurnState` (Turn.h:97-100). `AiState` restates it as its own member (Ai.h:55-59), so
+// `strat::TurnState`, in its `builtThisTurn` member. `AiState` restates it as its own
+// member `AiState::builtThisTurn`, so
 // `MakeAiState` must assign BOTH -- and StratBridge.cpp:777-785 says so in as many words.
 // If it assigned only `turn`, and `Ai.good.cpp` reads the standalone member, then every
 // factory reads as unspent at every turn: the AI queues a second build at a factory it
@@ -1067,7 +1068,7 @@ bool FStratAiRefusalsAreDistinguishableTest::RunTest(const FString& /*Parameters
 // and the expectation is that same table read back.
 //
 // DUPLICATES ARE THE POINT, NOT AN EDGE CASE. §2.9 says "mostly Infantry, an occasional
-// Tank" and gives no ratio, so `Ai.h:49-53` makes the list caller-supplied DATA and
+// Tank" and gives no ratio, so `AiState::buildlist`'s own comment makes the list caller-supplied DATA and
 // repetition is how a mix is expressed in it. A `SetBuildlistByIds` that deduplicated
 // would flatten every mix to 1:1 -- data changed by a tidiness decision, silently. So the
 // list set below deliberately repeats the first id, and the clause asserts the repetition

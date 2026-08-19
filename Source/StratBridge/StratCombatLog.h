@@ -6,9 +6,9 @@
 // all was the `STRAT-CMD accepted ... hash=` line, which says a command landed and says
 // nothing about what it did. This header declares the record that carries what it did.
 //
-// TWO SOURCES, AND THE RECORD CARRIES BOTH ON PURPOSE. `strat::uiForecast` (`Ui.h:335-350`)
+// TWO SOURCES, AND THE RECORD CARRIES BOTH ON PURPOSE. `strat::uiForecast` (returning `strat::UiForecast`)
 // is what the rules PREDICT, captured before the submit; the HP / roster / fame movement
-// read off two `strat::UiSnapshot`s is what the rules DID. `Ui.h:346` states that the
+// read off two `strat::UiSnapshot`s is what the rules DID. `UiForecast`'s `defenderCanCounter` note states that the
 // forecast is produced by `Combat.h::resolveDamage` and `defenderCanCounter` and by
 // nothing else, "so 'the forecast is exactly what resolves' is structural rather than
 // asserted" -- and until this record existed nothing in the engine ever compared the two

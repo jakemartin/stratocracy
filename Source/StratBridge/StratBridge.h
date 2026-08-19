@@ -112,7 +112,7 @@ struct FStratResult
 // widget binds to an AI command -- the consumer is `StratPlay`'s C++, which can
 // name a plain struct perfectly well.
 //
-// FOUR ENUMERATORS, NOT FIVE. `Ai.h:67` declares `Build, Move, Attack, EndTurn` and
+// FOUR ENUMERATORS, NOT FIVE. `strat::AiCommandKind` declares `Build, Move, Attack, EndTurn` and
 // this mirrors it exactly. There is deliberately no `None`: a fifth value would be
 // a command the rules module cannot produce, and inventing one would let a caller
 // believe the AI said something it has no vocabulary for. Capture is likewise
@@ -235,7 +235,7 @@ public:
 	FStratResult Submit(const strat::SaveCommand& Command);
 
 	// ---- Typed commands (§4.9's five, and no others) ----------------------
-	// One method per `strat::SaveCommandKind`, checked against Save.h:54: Move,
+	// One method per `strat::SaveCommandKind`, checked against that enum: Move,
 	// Attack, Build, Capture, EndTurn. There is no Wait -- §2.11.1's "wait" is the
 	// selection machine spending a unit's turn and it reaches no rules module, so
 	// a sixth method here would be inventing a command the format cannot carry.
@@ -254,7 +254,7 @@ public:
 	// off the state afterwards would tag it N+1 and make the log unreplayable at
 	// the first turn boundary.
 	//
-	// `SubmitBuild` TAKES A defIndex AND SAYS SO. Save.h:64 carries it in a field
+	// `SubmitBuild` TAKES A defIndex AND SAYS SO. `SaveCommand::unitId` carries it in a field
 	// spelled `unitId`, and `applyCommand` uses it as a raw bounds-checked index
 	// into the definitions vector with no name lookup -- the reason `DT_Units`
 	// row order is load-bearing (phase 0, `Tools/architect/state.md`). The
@@ -309,7 +309,7 @@ public:
 	// retained scenario; `stateHash` is `strat::canonicalStateHash`; `seed` is 0
 	// because Save.h says it MUST be and no RNG ships; and `result` is read off a
 	// snapshot this bridge projected rather than compared here, so the
-	// InProgress-is-null mapping stays Ui.good.cpp:228's and the spelling stays
+	// InProgress-is-null mapping stays `strat::buildUiSnapshot`'s and the spelling stays
 	// `strat::tierName`'s. The bytes are `strat::serializeSave`'s.
 	//
 	// REFUSES ON AN UNSEEDED BRIDGE rather than emitting a save of an empty match,
@@ -636,7 +636,7 @@ public:
 	//
 	// DUPLICATES ARE LEGAL AND ARE PRESERVED, AND THIS METHOD IS THE ONLY LAYER
 	// THAT CARES. §2.9 describes "mostly Infantry, an occasional Tank" and gives no
-	// ratio, so `Ai.h:49-53` makes the list caller-supplied DATA and this method
+	// ratio, so `AiState::buildlist`'s own comment makes the list caller-supplied DATA and this method
 	// stores it verbatim: no dedupe, order kept, repetition kept.
 	//
 	// BUT REPETITION DOES NOT EXPRESS A RATIO AT THE RULES LAYER, and an earlier
@@ -766,7 +766,7 @@ private:
 	// §2.9's input, GATHERED and not decided -- `MakeUiWorld`'s sibling, and it
 	// exists for exactly `MakeUiWorld`'s reason. `strat::nextCommand` takes a
 	// `strat::AiState`, and the only other function in the tree that produces one is
-	// the headless driver's `aiStateOf(const Session&)` (`Driver.h:120`). A Session
+	// the headless driver's `strat::aiStateOf(const Session&)`. A Session
 	// is the driver's own type and this object does not have one, so before this
 	// method no engine-side caller could reach the AI at all. This mirrors
 	// `aiStateOf` member for member so the two compositions cannot disagree.
@@ -784,7 +784,7 @@ private:
 	// factory, the AI would queue a second build per factory per turn, and every one
 	// of them would be REFUSED by `markBuilt` downstream -- a green build, a running
 	// match, and an opponent that stalls on its own refused command. Nine members,
-	// against `Ai.h:40-60`.
+	// against `strat::AiState`.
 	//
 	// COPIES UNITS FAITHFULLY, INCLUDING A UNIT WHOSE `defIndex` IS OUT OF RANGE,
 	// where `MakeUiWorld` skips it. The two are answering different questions:

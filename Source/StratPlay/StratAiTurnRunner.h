@@ -61,7 +61,7 @@
 // about UHT -- but the discipline is the module's and this file keeps it.
 //
 // NOT IN THIS ROUND, with reasons:
-// - CAPTURE. `Ai.h:62-66` omits it deliberately: `openTurn` runs `captureTick` from the
+// - CAPTURE. `Ai.h` omits it deliberately, and says so in the note above `strat::AiCommandKind`: `openTurn` runs `captureTick` from the
 //   EndTurn arm (`Replay.good.cpp:264-270`, `:529-535`), so the AI captures without ever
 //   emitting Capture. A Capture arm here would be an engine-side command the AI cannot ask
 //   for. `EStratAiCommandKind` has four enumerators and this switch has four arms.

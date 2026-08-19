@@ -29,7 +29,7 @@
 //
 // THIS IS THE CLAUSE THAT FAILS IF SOMEBODY LATER "SIMPLIFIES" A WAIT INTO A SUBMITTED
 // COMMAND. `strat::SaveCommandKind` is `{Move, Attack, Build, Capture, EndTurn}`
-// (`Save.h:54`) and has no `Wait`; phase 1 recorded the orchestration brief as wrong to
+// (`strat::SaveCommandKind`) and has no `Wait`; phase 1 recorded the orchestration brief as wrong to
 // claim otherwise. A wait that emitted any command would move the state hash and would
 // change `Waited.Command` away from `None`, and both are asserted here.
 //

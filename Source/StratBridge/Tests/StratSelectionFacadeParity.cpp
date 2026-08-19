@@ -1462,7 +1462,7 @@ bool FStratBridgeReplayRecordedLogOntoRefusesTest::RunTest(const FString& /*Para
 // (8 x LNK2019, `StratBridge.h`'s opening measurement), and there is nothing for an
 // `FStratBridge` method to route because the switch is over `EStratSelectionCommand`, a
 // StratPlay enum the bridge has no reason to know. The function is NOT file-local, though
-// -- it is declared at `Source/StratRules/Save.h:135` and defined at `Save.good.cpp:292` at
+// -- it is declared as `strat::saveCommandName` in `Source/StratRules/Save.h` and defined in `Save.good.cpp` at
 // namespace scope with no `static`, so it has external linkage and THIS module can call it
 // directly. That is what this clause does.
 //

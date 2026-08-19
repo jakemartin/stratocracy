@@ -71,7 +71,7 @@
 // exist, so that bit is false in every running path.
 //
 // THE PRESENTATION BLOCK IS PRESENT AND NOTHING FILLS IT YET, recorded here rather than
-// discovered later. `Ui.h:186-225` defines the view model as snapshot PLUS presentation
+// discovered later. `Ui.h`'s presentation-block header defines the view model as snapshot PLUS presentation
 // and states why: the block "is in the view-model rather than inside a widget precisely
 // so that T-INT-05 can rebuild the screen from the view-model alone -- state in the
 // block satisfies that invariant, state in a widget does not". Its two members name
@@ -109,7 +109,7 @@ class FStratBridge;
  * §2.8's result tier, mirrored into a reflected enum.
  *
  * THE ORDER IS THE VENDORED ENUM'S AND IS NOT FREE. `strat::ResultTier`
- * (`Turn.h:30`) is `{ InProgress, Draw, Marginal, Decisive }` and these enumerators are
+ * (`strat::ResultTier`) is `{ InProgress, Draw, Marginal, Decisive }` and these enumerators are
  * pinned to it one for one. The mapping is written as an exhaustive switch in the .cpp
  * rather than as a cast, so that a tier added upstream is a compile failure in a file
  * that can be fixed instead of a silent renumber in a save-adjacent value.
@@ -132,7 +132,7 @@ enum class EStratResultTier : uint8
 /**
  * One board hex. Mirrors `strat::UiHexView`.
  *
- * HEXES ARE `FIntPoint`, X = q and Y = r, axial and pointy-top (§2.2, `Hex.h:11-14`).
+ * HEXES ARE `FIntPoint`, X = q and Y = r, axial and pointy-top (§2.2, `strat::Hex`).
  * The conversion to odd-r offset -- and, beyond it, to a world location -- is phase 3's
  * and is deliberately absent: a hex is a board coordinate here, and the moment this
  * struct carried an `FVector` the view model would be describing a camera as well as a
@@ -185,7 +185,7 @@ struct FStratHexView
 	 * Owning side of a capturable hex, or `INDEX_NONE` where nothing is capturable.
 	 * Mirrors `UiHexView::owner`.
 	 *
-	 * `strat::OWNER_NEUTRAL` is -1 (`Economy.h:19`) and `INDEX_NONE` is -1, so this
+	 * `strat::OWNER_NEUTRAL` is -1 and `INDEX_NONE` is -1, so this
 	 * mirror is exact and not a re-encoding. The .cpp asserts that rather than assuming
 	 * it, because the two constants are declared in different repositories.
 	 */
@@ -220,7 +220,7 @@ struct FStratUnitView
 	/**
 	 * The §2.4 definition row this unit is. Mirrors `UiUnitView::unitId`.
 	 *
-	 * RENAMED ON PURPOSE. The vendored field is spelled `unitId` and `Save.h:64` spells
+	 * RENAMED ON PURPOSE. The vendored field is spelled `unitId`, and `SaveCommand::unitId` spells
 	 * the same quantity `unitId` in a Build command, where `applyCommand` uses it as a
 	 * raw bounds-checked index into the definitions vector with no name lookup
 	 * (`Replay.good.cpp:486-487`). That spelling is the trap -- it reads like an instance
@@ -266,7 +266,7 @@ struct FStratUnitView
 
 	/**
 	 * TWO INDEPENDENT FLAGS, NOT ONE (T-TURN-01), and they are mirrored separately for
-	 * the reason `Ui.h:96-100` gives: "one field cannot express a unit that has spent
+	 * the reason `UiUnitView`'s two-independent-flags note gives: "one field cannot express a unit that has spent
 	 * exactly one of them, which is the drift this row's GDD half repaired". Neither is
 	 * §2.11.1's DONE bit -- that is `bDone` below and it is a different owner's.
 	 */
@@ -289,7 +289,7 @@ struct FStratUnitView
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	bool bIsGuidedMarked = false;
 
-	// ---- The presentation block (Ui.h:199-215). NOT the rules module's. ------
+	// ---- The presentation block (`strat::UiPresentationUnit`). NOT the rules module's. ------
 	// `StratBuildViewModel` leaves both at false; `strat::buildUiSnapshot` does not
 	// produce them and the bridge has nothing to project them from. See the header
 	// block: they are declared here so that phase 3's selection machine has somewhere to
@@ -449,7 +449,7 @@ struct FStratMatchView
  * changed, and nothing should.
  *
  * ORDERS ARE THE MODULE'S AND ARE LOAD-BEARING. `Hexes` and `Factories` are in
- * canonical hex order (ascending r, then ascending q -- `Hex.h:25-27`) and `Units` is by
+ * canonical hex order (ascending r, then ascending q -- `strat::hexLess`) and `Units` is by
  * ascending unit id, because `strat::buildUiSnapshot` emits them that way so that two
  * runs on the same state produce the same bytes. This builder appends in the order it
  * reads and sorts nothing; a consumer that reorders them is discarding a determinism

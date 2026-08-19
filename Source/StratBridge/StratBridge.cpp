@@ -266,7 +266,7 @@ int32 StratDivergenceMaskOf(const FStratCombatOutcome& Outcome)
 // its result reaches a log line and nothing else. No caller branches on it, no
 // state depends on it, and if it were deleted the game would play identically.
 // That is the line between a diagnostic and the rules answer §4.1 forbids this
-// module to compute, and it is why `strat::uiResolveForGate` (Ui.h:355-361) is
+// module to compute, and it is why `strat::uiResolveForGate` (returning `strat::UiResolution`) is
 // NOT called from here: that function is the gate's independent oracle, and a
 // production caller would make phase 2's clauses check the bridge against a value
 // the bridge itself had just asked for.
@@ -467,7 +467,7 @@ namespace StratCombatObservation
 
 		if (O.ForecastAgrees == 0)
 		{
-			// The defect Ui.h:346 says the forecast's construction exists to catch, caught
+			// The defect `UiForecast`'s `defenderCanCounter` note says the forecast's construction exists to catch, caught
 			// on a real submit rather than in a gate fixture. Error level because there is
 			// no benign reading of it: either the screen lied to the player or the rules
 			// module has two answers for one question.
@@ -606,7 +606,7 @@ FStratResult FStratBridge::SubmitBuild(const strat::Hex& FactoryHex, int32 DefIn
 	strat::SaveCommand C;
 	C.kind = strat::SaveCommandKind::Build;
 	// The format's `unitId` field, which for a Build is the §2.4 ROW INDEX and not
-	// a unit id. Save.h:64 names both meanings on one line; this is the second.
+	// a unit id. `SaveCommand::unitId` names both meanings on one line; this is the second.
 	C.unitId  = DefIndex;
 	C.hex     = FactoryHex;
 	C.hasUnit = true;
@@ -620,7 +620,7 @@ FStratResult FStratBridge::SubmitCapture(int32 UnitId)
 	C.kind    = strat::SaveCommandKind::Capture;
 	C.unitId  = UnitId;
 	C.hasUnit = true;
-	// No hex: Save.h:66 states Capture names none, and a hex set here would be a
+	// No hex: `SaveCommand::hasHex` states Capture names none, and a hex set here would be a
 	// field of another kind's command, which the parser REFUSES rather than
 	// ignores.
 	C.hasHex  = false;
@@ -631,7 +631,7 @@ FStratResult FStratBridge::SubmitEndTurn()
 {
 	strat::SaveCommand C;
 	C.kind = strat::SaveCommandKind::EndTurn;
-	// The one kind that names neither a unit nor a hex (Save.h:66-67).
+	// The one kind that names neither a unit nor a hex (`SaveCommand::hasHex` / `hasUnit`).
 	C.hasUnit = false;
 	C.hasHex  = false;
 	return SubmitStamped(C);
@@ -946,7 +946,7 @@ FStratResult FStratBridge::SerializeRecordedSave(const FStratSaveIdentity& Ident
 		return FStratResult::Fail(TEXT("no scenario is loaded"));
 	}
 
-	// `result` is read off a projection rather than compared here. Ui.good.cpp:228
+	// `result` is read off a projection rather than compared here. `strat::buildUiSnapshot`
 	// owns the InProgress-is-null mapping and `tierName` owns the spelling; a
 	// `tier != InProgress` written in this file would be a second copy of the first
 	// and a second spelling of the second, and the save would then be able to
@@ -966,7 +966,7 @@ FStratResult FStratBridge::SerializeRecordedSave(const FStratSaveIdentity& Ident
 	// caller's claim about which scenario this is.
 	S.scenarioId    = LoadedScenario.scenarioId;
 	S.scenarioHash  = strat::scenarioHash(LoadedScenario);
-	// Save.h:78: reserved, MUST be 0. No RNG ships, so there is nothing for a
+	// `Save::seed`: reserved, MUST be 0. No RNG ships, so there is nothing for a
 	// non-zero value to mean.
 	S.seed          = 0;
 	S.commandLog    = Recorded;
@@ -1127,8 +1127,8 @@ strat::AiState FStratBridge::MakeAiState() const
 {
 	strat::AiState A;
 
-	// Member for member with `aiStateOf` (Driver.good.cpp:409-427). Nine of them,
-	// against Ai.h:40-60; the order below is that declaration's order so a reader
+	// Member for member with the headless driver's `strat::aiStateOf`. Nine of them,
+	// against `strat::AiState`; the order below is that declaration's order so a reader
 	// can check completeness by walking the two side by side.
 	A.bounds      = GameState.bounds;
 	A.terrain     = GameState.terrain;
@@ -1139,7 +1139,7 @@ strat::AiState FStratBridge::MakeAiState() const
 	A.turn        = GameState.turn;
 	A.buildlist   = Buildlist;
 	// SET EXPLICITLY EVEN THOUGH `A.turn` ALREADY CARRIES IT. `TurnState` owns the
-	// per-factory record (Turn.h:100, "row 5 owns it now, not the driver") and
+	// per-factory record (`TurnState::builtThisTurn`, "row 5 owns it now, not the driver") and
 	// `AiState` restates it as its own member, so `aiStateOf` assigns both -- and so
 	// does this. Assigning only `turn` and trusting the AI to reach through it would
 	// leave `builtThisTurn` empty for whichever of the two `Ai.good.cpp` actually
@@ -1305,7 +1305,7 @@ FStratResult FStratBridge::SetBuildlistByIds(const TArray<FName>& UnitIds)
 		}
 
 		// Appended, never deduplicated: repetition is how §2.9's build MIX is
-		// expressed, and this list is data (Ai.h:49-53).
+		// expressed, and this list is data (`AiState::buildlist`'s own comment).
 		Next.push_back(Resolved);
 	}
 

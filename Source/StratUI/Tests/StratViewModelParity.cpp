@@ -461,7 +461,7 @@ bool FStratViewModelOrdersArePreservedTest::RunTest(const FString& /*Parameters*
 	}
 
 	// ---- What that order IS, asserted of the module and of the mirror alike ----
-	// Canonical hex order is ascending r, then ascending q (Hex.h:25-27). Units are by
+	// Canonical hex order is ascending r, then ascending q (`strat::hexLess`). Units are by
 	// ascending id. Stated here so a reader of a failure knows which property broke, and
 	// applied to both sequences so this file is not the author of either.
 	for (int32 Index = 1; Index < Model.Hexes.Num(); ++Index)
@@ -753,7 +753,7 @@ bool FStratViewModelRefusesOutOfRangeViewingSideTest::RunTest(const FString& /*P
 // The presentation block is declared and empty -- the builder does not invent the DONE
 // bit.
 //
-// Ui.h:186-197 rules that §2.11.1's DONE bit is derivable from NEITHER turn flag nor from
+// `Ui.h`'s presentation-block header rules that §2.11.1's DONE bit is derivable from NEITHER turn flag nor from
 // any pair of them, and names the two cases: Wait and RMB-in-MOVED both reach DONE
 // without spending the act flag. So a builder that set `bDone` from `hasMoved` /
 // `hasActed` would be wrong in exactly the two cases the bit was separated out for -- and

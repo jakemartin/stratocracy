@@ -107,7 +107,7 @@ enum class EStratSelectionEvent : uint8
 	 * §2.11.1's wait. Spends the selected unit's turn WITHOUT a rules command.
 	 *
 	 * THERE IS NO `Wait` COMMAND AND THERE CANNOT BE ONE. `strat::SaveCommandKind` is
-	 * `{Move, Attack, Build, Capture, EndTurn}` (`Save.h:54`) and phase 1 recorded the
+	 * `{Move, Attack, Build, Capture, EndTurn}` (`strat::SaveCommandKind`) and phase 1 recorded the
 	 * correction explicitly: "`Wait` is a UI-level concept the save format cannot carry."
 	 * So this event produces `EStratSelectionCommand::None` and sets `bDone`, which is the
 	 * clearest single demonstration of why `bDone` is this machine's and not the rules
@@ -404,7 +404,7 @@ private:
  * written as one `UE_LOG` with a fixed field order and no conditional fields. Notes on each
  * choice, because a later reader will otherwise "tidy" one of them:
  *   - `kind` is spelled `Move` / `Attack` / `EndTurn`, matching the SAVE FORMAT's own
- *     spelling (`Save.good.cpp:294-300`) rather than this module's enum names, so a gate
+ *     spelling (`strat::saveCommandName`'s switch) rather than this module's enum names, so a gate
  *     can compare a log line against a `commandLog` entry without a translation table.
  *   - `unit` and `hex` are ALWAYS NUMERIC, and carry `-1` (and `-1,-1`) where the command
  *     kind has no such field -- `EndTurn` names no unit and no hex. A word like `none`

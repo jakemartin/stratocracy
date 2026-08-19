@@ -1,0 +1,201 @@
+[2026.08.19-18.40.00:243][737]LogAutomationController: Display: Test Started. Name={BothSidesAiReachesAResultOnDifferentContent} Path={Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent}
+[2026.08.19-18.40.00:252][738]LogAutomationWorker: Received RunTests BothSidesAiReachesAResultOnDifferentContent from D969818B48E1724FD8F9BE861A384345
+[2026.08.19-18.40.00:252][738]LogChaosDD: Creating Chaos Debug Draw Scene for world Untitled
+[2026.08.19-18.40.00:253][738]LogWorld: Bringing World /Temp/Untitled_2.Untitled up for play (max tick rate 120) at 2026.08.19-14.40.00
+[2026.08.19-18.40.00:253][738]LogWorld: Bringing up level for play took: 0.000125
+[2026.08.19-18.40.00:254][738]LogStratPlay: Verbose: Board: no tile mesh for terrain Bridge, Factory, Mountains, Plains, Town, Water, Woods -- assign it in TerrainMeshes, or set FallbackTerrainMesh; the rest of the board was drawn
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Tank' (unit 1); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 2); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 3); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Artillery' (unit 4); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 5); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Tank' (unit 6); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 7); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 8); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Artillery' (unit 9); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 10); using the fallback.
+[2026.08.19-18.40.00:254][738]LogStratPlay: No AStratScoreboardHUD on the first local player; the match runs without a scoreboard.
+[2026.08.19-18.40.00:254][738]LogStratPlay: Match live: seeded from 'E:/MultiAgent/Stratocracy/Data/ferrum_crossing.json' (first side 0), drawn for side 0, 0 hexes and 10 units on screen.
+[2026.08.19-18.40.00:256][738]LogStratPlay: Verbose: Board: no tile mesh for terrain Bridge, Factory, Mountains, Plains, Town, Water, Woods -- assign it in TerrainMeshes, or set FallbackTerrainMesh; the rest of the board was drawn
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Tank' (unit 1); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 2); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 3); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Artillery' (unit 4); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 5); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Tank' (unit 6); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 7); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 8); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Artillery' (unit 9); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 10); using the fallback.
+[2026.08.19-18.40.00:256][738]LogStratPlay: No AStratScoreboardHUD on the first local player; the match runs without a scoreboard.
+[2026.08.19-18.40.00:256][738]LogStratPlay: Match live: seeded from 'E:/MultiAgent/Stratocracy/Data/ferrum_crossing.json' (first side 1), drawn for side 1, 0 hexes and 10 units on screen.
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=3 target=-1 turn=1 side=1 hash=9a2e9f53a234828d
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=8,1 def=-1 target=-1 turn=1 side=1 hash=e110ce3a4f630aa3
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=Move unit=7 hex=6,3 def=-1 target=-1 turn=1 side=1 hash=dfe5cbba28438f5a
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=Move unit=10 hex=4,4 def=-1 target=-1 turn=1 side=1 hash=35a8946d1ac6d3e1
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=Move unit=11 hex=2,5 def=-1 target=-1 turn=1 side=1 hash=d5cd83da15b6e9de
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=Move unit=6 hex=5,4 def=-1 target=-1 turn=1 side=1 hash=1e61ad122909cf04
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=Move unit=9 hex=6,4 def=-1 target=-1 turn=1 side=1 hash=49d208d6de6c22b0
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=1 side=1 hash=17bf041325d6ba6d
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI turn-ended side=1 turn=1 commands=8 hash=17bf041325d6ba6d
+[2026.08.19-18.40.00:256][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=-1,4 def=3 target=-1 turn=1 side=0 hash=cd9011bfb8eb2d08
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=4 hex=2,1 def=-1 target=-1 turn=1 side=0 hash=c1825e5f742b2b43
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=2 hex=3,1 def=-1 target=-1 turn=1 side=0 hash=c5b04eb7949466b7
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=1 hex=2,4 def=-1 target=-1 turn=1 side=0 hash=90607a51749a4449
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=12 hex=5,2 def=-1 target=-1 turn=1 side=0 hash=378cf1c16b78b9dd
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=1 defender=11 hex=2,5 turn=1 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=5 fdies=0 fcounter=1 fcdmg=1 ahpBefore=20 ahpAfter=19 ahpMax=20 adied=0 dhpBefore=12 dhpAfter=7 dhpMax=12 ddied=0 fameBefore=50 fameAfter=50 fameCombatBefore=0 fameCombatAfter=0 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=1 hex=2,5 def=-1 target=11 turn=1 side=0 hash=ff809f3ee5807d5a
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=5 hex=3,4 def=-1 target=-1 turn=1 side=0 hash=607059848bbae526
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=5 defender=11 hex=2,5 turn=1 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=2 fdies=0 fcounter=1 fcdmg=1 ahpBefore=12 ahpAfter=11 ahpMax=12 adied=0 dhpBefore=7 dhpAfter=5 dhpMax=12 ddied=0 fameBefore=50 fameAfter=50 fameCombatBefore=0 fameCombatAfter=0 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=5 hex=2,5 def=-1 target=11 turn=1 side=0 hash=0123286663aa5170
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=3 hex=-1,7 def=-1 target=-1 turn=1 side=0 hash=130dd052b998ca95
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=1 side=0 hash=51887ae30d2a0e00
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI turn-ended side=0 turn=1 commands=10 hash=51887ae30d2a0e00
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=3 target=-1 turn=2 side=1 hash=5ab6d2b3d45d1c74
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=6,0 def=-1 target=-1 turn=2 side=1 hash=b46bab4a4ae259f2
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=7 hex=5,3 def=-1 target=-1 turn=2 side=1 hash=3454e6ed6d9af43a
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=7 defender=12 hex=5,2 turn=2 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=2 ahpBefore=10 ahpAfter=8 ahpMax=10 adied=0 dhpBefore=12 dhpAfter=11 dhpMax=12 ddied=0 fameBefore=0 fameAfter=0 fameCombatBefore=0 fameCombatAfter=0 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=7 hex=5,2 def=-1 target=12 turn=2 side=1 hash=c082391d898d2a7d
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=10 defender=5 hex=3,4 turn=2 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=3 fdies=0 fcounter=1 fcdmg=1 ahpBefore=12 ahpAfter=11 ahpMax=12 adied=0 dhpBefore=11 dhpAfter=8 dhpMax=12 ddied=0 fameBefore=0 fameAfter=0 fameCombatBefore=0 fameCombatAfter=0 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=3,4 def=-1 target=5 turn=2 side=1 hash=20259ac77aa47911
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=6 hex=2,6 def=-1 target=-1 turn=2 side=1 hash=8b98ec2a8a328ad1
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=9 defender=5 hex=3,4 turn=2 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=3 fdmg=8 fdies=1 fcounter=0 fcdmg=0 ahpBefore=8 ahpAfter=8 ahpMax=8 adied=0 dhpBefore=8 dhpAfter=-1 dhpMax=12 ddied=1 fameBefore=0 fameAfter=75 fameCombatBefore=0 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=9 hex=3,4 def=-1 target=5 turn=2 side=1 hash=4b8f7149b5e524db
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=10 hex=2,3 def=-1 target=-1 turn=2 side=1 hash=e02556801734c48b
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=9 hex=5,4 def=-1 target=-1 turn=2 side=1 hash=75d40222dc648c19
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=13 hex=3,3 def=-1 target=-1 turn=2 side=1 hash=62f8a826a34db7d3
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=13 defender=1 hex=2,4 turn=2 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=4 ahpBefore=12 ahpAfter=8 ahpMax=12 adied=0 dhpBefore=19 dhpAfter=18 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=13 hex=2,4 def=-1 target=1 turn=2 side=1 hash=7933fec5fa5d8348
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=11 defender=1 hex=2,4 turn=2 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=4 ahpBefore=5 ahpAfter=1 ahpMax=12 adied=0 dhpBefore=18 dhpAfter=17 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=11 hex=2,4 def=-1 target=1 turn=2 side=1 hash=1ebae9fd80aaac22
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=2 side=1 hash=5c942b8ad6f842f5
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI turn-ended side=1 turn=2 commands=13 hash=5c942b8ad6f842f5
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=-1,4 def=3 target=-1 turn=2 side=0 hash=6b171f2a386d57b9
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=4 defender=13 hex=3,3 turn=2 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=3 fdmg=7 fdies=0 fcounter=0 fcdmg=0 ahpBefore=8 ahpAfter=8 ahpMax=8 adied=0 dhpBefore=8 dhpAfter=1 dhpMax=12 ddied=0 fameBefore=0 fameAfter=0 fameCombatBefore=0 fameCombatAfter=0 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=4 hex=3,3 def=-1 target=13 turn=2 side=0 hash=2efad55a14ebedd3
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=4 hex=1,4 def=-1 target=-1 turn=2 side=0 hash=d1c11773d00aefc8
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=2 hex=2,2 def=-1 target=-1 turn=2 side=0 hash=4a4974522c5b45dd
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=2 defender=10 hex=2,3 turn=2 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=2 ahpBefore=10 ahpAfter=8 ahpMax=10 adied=0 dhpBefore=11 dhpAfter=10 dhpMax=12 ddied=0 fameBefore=0 fameAfter=0 fameCombatBefore=0 fameCombatAfter=0 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=2 hex=2,3 def=-1 target=10 turn=2 side=0 hash=a52188f7f96b7c06
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=12 defender=7 hex=5,3 turn=2 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=2 fdies=0 fcounter=1 fcdmg=1 ahpBefore=11 ahpAfter=10 ahpMax=12 adied=0 dhpBefore=8 dhpAfter=6 dhpMax=10 ddied=0 fameBefore=0 fameAfter=0 fameCombatBefore=0 fameCombatAfter=0 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=12 hex=5,3 def=-1 target=7 turn=2 side=0 hash=064e7dc8857ecc12
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=12 hex=4,5 def=-1 target=-1 turn=2 side=0 hash=3194817a2fe425ef
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=14 hex=1,6 def=-1 target=-1 turn=2 side=0 hash=458114f5235a8479
+[2026.08.19-18.40.00:257][738]LogStratBridge: STRAT-COMBAT resolved attacker=1 defender=13 hex=3,3 turn=2 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=4 fdies=1 fcounter=0 fcdmg=0 ahpBefore=17 ahpAfter=17 ahpMax=20 adied=0 dhpBefore=1 dhpAfter=-1 dhpMax=12 ddied=1 fameBefore=0 fameAfter=75 fameCombatBefore=0 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Attack unit=1 hex=3,3 def=-1 target=13 turn=2 side=0 hash=5f6625d353e86701
+[2026.08.19-18.40.00:257][738]LogStratPlay: STRAT-AI applied kind=Move unit=1 hex=1,7 def=-1 target=-1 turn=2 side=0 hash=a449032070f42748
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=14 defender=6 hex=2,6 turn=2 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=2 ahpBefore=12 ahpAfter=10 ahpMax=12 adied=0 dhpBefore=20 dhpAfter=19 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=14 hex=2,6 def=-1 target=6 turn=2 side=0 hash=034362cc5a416923
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=3 hex=2,4 def=-1 target=-1 turn=2 side=0 hash=3c8522c66b022863
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=3 defender=10 hex=2,3 turn=2 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=2 ahpBefore=10 ahpAfter=8 ahpMax=10 adied=0 dhpBefore=10 dhpAfter=9 dhpMax=12 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=3 hex=2,3 def=-1 target=10 turn=2 side=0 hash=d90839e2437a5141
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=2 side=0 hash=525d5fa90835a41a
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI turn-ended side=0 turn=2 commands=14 hash=525d5fa90835a41a
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=3 target=-1 turn=3 side=1 hash=974ab4e70f9d8cd9
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=5,2 def=-1 target=-1 turn=3 side=1 hash=582e1b0eeeea61d9
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=10 defender=4 hex=1,4 turn=3 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=3 fdies=0 fcounter=0 fcdmg=0 ahpBefore=9 ahpAfter=9 ahpMax=12 adied=0 dhpBefore=8 dhpAfter=5 dhpMax=8 ddied=0 fameBefore=50 fameAfter=50 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=1,4 def=-1 target=4 turn=3 side=1 hash=2166e0255c860853
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=10 hex=0,7 def=-1 target=-1 turn=3 side=1 hash=0e193df5f408875c
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=7 hex=3,4 def=-1 target=-1 turn=3 side=1 hash=76722e911225703e
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=7 defender=3 hex=2,4 turn=3 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=6 ahpAfter=5 ahpMax=10 adied=0 dhpBefore=8 dhpAfter=7 dhpMax=10 ddied=0 fameBefore=50 fameAfter=50 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=7 hex=2,4 def=-1 target=3 turn=3 side=1 hash=00b0ce7e794511b5
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=9 defender=3 hex=2,4 turn=3 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=3 fdmg=8 fdies=1 fcounter=0 fcdmg=0 ahpBefore=8 ahpAfter=8 ahpMax=8 adied=0 dhpBefore=7 dhpAfter=-1 dhpMax=10 ddied=1 fameBefore=50 fameAfter=100 fameCombatBefore=75 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=9 hex=2,4 def=-1 target=3 turn=3 side=1 hash=1d291ae73c310805
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=9 hex=4,4 def=-1 target=-1 turn=3 side=1 hash=e02aeb0c6b869e75
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=15 hex=2,7 def=-1 target=-1 turn=3 side=1 hash=cf3ea112db1dede0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=11 hex=0,8 def=-1 target=-1 turn=3 side=1 hash=f1b7982159df7634
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=6 defender=1 hex=1,7 turn=3 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=3 fdies=0 fcounter=1 fcdmg=1 ahpBefore=19 ahpAfter=18 ahpMax=20 adied=0 dhpBefore=17 dhpAfter=14 dhpMax=20 ddied=0 fameBefore=100 fameAfter=100 fameCombatBefore=125 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=6 hex=1,7 def=-1 target=1 turn=3 side=1 hash=2228234c10934cfb
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=15 defender=1 hex=1,7 turn=3 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=12 ahpAfter=11 ahpMax=12 adied=0 dhpBefore=14 dhpAfter=13 dhpMax=20 ddied=0 fameBefore=100 fameAfter=100 fameCombatBefore=125 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=15 hex=1,7 def=-1 target=1 turn=3 side=1 hash=e2bb6958f30efb12
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=3 side=1 hash=33004923b224cd31
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI turn-ended side=1 turn=3 commands=13 hash=33004923b224cd31
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=-1,4 def=3 target=-1 turn=3 side=0 hash=51104e43c83c614a
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=2 hex=2,4 def=-1 target=-1 turn=3 side=0 hash=766f4488e287470b
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=16 hex=2,5 def=-1 target=-1 turn=3 side=0 hash=3dd233850a5a7ea9
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=4 defender=6 hex=2,6 turn=3 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=3 fdmg=1 fdies=0 fcounter=0 fcdmg=0 ahpBefore=5 ahpAfter=5 ahpMax=8 adied=0 dhpBefore=18 dhpAfter=17 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=4 hex=2,6 def=-1 target=6 turn=3 side=0 hash=39c285b217fe1487
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=2 defender=7 hex=3,4 turn=3 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=2 fdies=0 fcounter=1 fcdmg=1 ahpBefore=8 ahpAfter=7 ahpMax=10 adied=0 dhpBefore=5 dhpAfter=3 dhpMax=10 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=2 hex=3,4 def=-1 target=7 turn=3 side=0 hash=618f7133e8e1185d
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=16 defender=6 hex=2,6 turn=3 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=3 ahpBefore=12 ahpAfter=9 ahpMax=12 adied=0 dhpBefore=17 dhpAfter=16 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=16 hex=2,6 def=-1 target=6 turn=3 side=0 hash=8b2a54e3505c5101
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=12 defender=9 hex=4,4 turn=3 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=2 fdies=0 fcounter=0 fcdmg=0 ahpBefore=10 ahpAfter=10 ahpMax=12 adied=0 dhpBefore=8 dhpAfter=6 dhpMax=8 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=12 hex=4,4 def=-1 target=9 turn=3 side=0 hash=f8a56e940901fffe
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=12 hex=3,6 def=-1 target=-1 turn=3 side=0 hash=86d92f24562e599b
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=14 defender=6 hex=2,6 turn=3 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=10 ahpAfter=9 ahpMax=12 adied=0 dhpBefore=16 dhpAfter=15 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=14 hex=2,6 def=-1 target=6 turn=3 side=0 hash=34911c04749e436f
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=1 defender=6 hex=2,6 turn=3 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=13 ahpAfter=12 ahpMax=20 adied=0 dhpBefore=15 dhpAfter=14 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=1 hex=2,6 def=-1 target=6 turn=3 side=0 hash=77e24e62581c4ce4
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=3 side=0 hash=8b8bffba6b9aaaf7
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI turn-ended side=0 turn=3 commands=11 hash=8b8bffba6b9aaaf7
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=5,2 def=3 target=-1 turn=4 side=1 hash=b55604522e709413
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=17 hex=0,5 def=-1 target=-1 turn=4 side=1 hash=cce552062ea3a7bb
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=3,1 def=-1 target=-1 turn=4 side=1 hash=4be2550c64d4082f
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=7 defender=2 hex=2,4 turn=4 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=3 ahpAfter=2 ahpMax=10 adied=0 dhpBefore=7 dhpAfter=6 dhpMax=10 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=125 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=7 hex=2,4 def=-1 target=2 turn=4 side=1 hash=9c6b9694c222b440
+[2026.08.19-18.40.00:258][738]LogStratBridge: STRAT-COMBAT resolved attacker=9 defender=1 hex=1,7 turn=4 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=3 fdmg=3 fdies=0 fcounter=0 fcdmg=0 ahpBefore=6 ahpAfter=6 ahpMax=8 adied=0 dhpBefore=12 dhpAfter=9 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=125 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:258][738]LogStratPlay: STRAT-AI applied kind=Attack unit=9 hex=1,7 def=-1 target=1 turn=4 side=1 hash=7e1e6a0025b4297b
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=17 defender=4 hex=1,4 turn=4 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=4 fdies=0 fcounter=0 fcdmg=0 ahpBefore=12 ahpAfter=12 ahpMax=12 adied=0 dhpBefore=5 dhpAfter=1 dhpMax=8 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=125 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=17 hex=1,4 def=-1 target=4 turn=4 side=1 hash=8ea4844078df0056
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=6 defender=1 hex=1,7 turn=4 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=14 ahpAfter=13 ahpMax=20 adied=0 dhpBefore=9 dhpAfter=8 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=125 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=6 hex=1,7 def=-1 target=1 turn=4 side=1 hash=8afc65c8e4dd002d
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=10 defender=1 hex=1,7 turn=4 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=9 ahpAfter=8 ahpMax=12 adied=0 dhpBefore=8 dhpAfter=7 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=125 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=1,7 def=-1 target=1 turn=4 side=1 hash=5f43318458a63202
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=15 defender=1 hex=1,7 turn=4 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=11 ahpAfter=10 ahpMax=12 adied=0 dhpBefore=7 dhpAfter=6 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=125 fameCombatAfter=125 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=15 hex=1,7 def=-1 target=1 turn=4 side=1 hash=46412881d8a21f0f
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=4 side=1 hash=98f262ee65f93f31
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI turn-ended side=1 turn=4 commands=10 hash=98f262ee65f93f31
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=-1,4 def=3 target=-1 turn=4 side=0 hash=ba2995067ffef710
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Move unit=18 hex=1,5 def=-1 target=-1 turn=4 side=0 hash=26e0537a64ae172f
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=4 defender=6 hex=2,6 turn=4 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=3 fdmg=1 fdies=0 fcounter=0 fcdmg=0 ahpBefore=1 ahpAfter=1 ahpMax=8 adied=0 dhpBefore=13 dhpAfter=12 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=4 hex=2,6 def=-1 target=6 turn=4 side=0 hash=a729dc9e94dcb9c7
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=2 defender=7 hex=3,4 turn=4 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=6 ahpAfter=5 ahpMax=10 adied=0 dhpBefore=2 dhpAfter=1 dhpMax=10 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=2 hex=3,4 def=-1 target=7 turn=4 side=0 hash=c898cbeabf1f5ee8
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=18 defender=17 hex=0,5 turn=4 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=2 ahpBefore=12 ahpAfter=10 ahpMax=12 adied=0 dhpBefore=12 dhpAfter=11 dhpMax=12 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=18 hex=0,5 def=-1 target=17 turn=4 side=0 hash=3de7f77875e9e336
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=16 defender=6 hex=2,6 turn=4 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=9 ahpAfter=8 ahpMax=12 adied=0 dhpBefore=12 dhpAfter=11 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=16 hex=2,6 def=-1 target=6 turn=4 side=0 hash=e0c75f207b673841
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=14 defender=6 hex=2,6 turn=4 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=9 ahpAfter=8 ahpMax=12 adied=0 dhpBefore=11 dhpAfter=10 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=14 hex=2,6 def=-1 target=6 turn=4 side=0 hash=a4ad404b78e16730
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=12 defender=6 hex=2,6 turn=4 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=10 ahpAfter=9 ahpMax=12 adied=0 dhpBefore=10 dhpAfter=9 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=12 hex=2,6 def=-1 target=6 turn=4 side=0 hash=af0efb212569e423
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=1 defender=6 hex=2,6 turn=4 side=0 attackerSide=0 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=6 ahpAfter=5 ahpMax=20 adied=0 dhpBefore=9 dhpAfter=8 dhpMax=20 ddied=0 fameBefore=75 fameAfter=75 fameCombatBefore=75 fameCombatAfter=75 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=1 hex=2,6 def=-1 target=6 turn=4 side=0 hash=9b7cf3bd74abfb8e
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=4 side=0 hash=a5c9b573fdc2fdc7
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI turn-ended side=0 turn=4 commands=10 hash=a5c9b573fdc2fdc7
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=5,2 def=3 target=-1 turn=5 side=1 hash=65b7d0ba5cdce79c
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Build unit=-1 hex=7,4 def=3 target=-1 turn=5 side=1 hash=c6955dd0a22b253a
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Move unit=8 hex=1,3 def=-1 target=-1 turn=5 side=1 hash=6622654a899e8927
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Move unit=19 hex=3,7 def=-1 target=-1 turn=5 side=1 hash=f4a8b24c6a3bb329
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=8 defender=4 hex=1,4 turn=5 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=3 fdies=1 fcounter=0 fcdmg=0 ahpBefore=10 ahpAfter=10 ahpMax=10 adied=0 dhpBefore=1 dhpAfter=-1 dhpMax=8 ddied=1 fameBefore=0 fameAfter=100 fameCombatBefore=125 fameCombatAfter=225 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=8 hex=1,4 def=-1 target=4 turn=5 side=1 hash=952cfc428ad23765
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=9 defender=1 hex=1,7 turn=5 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=3 fdmg=3 fdies=0 fcounter=0 fcdmg=0 ahpBefore=6 ahpAfter=6 ahpMax=8 adied=0 dhpBefore=5 dhpAfter=2 dhpMax=20 ddied=0 fameBefore=100 fameAfter=100 fameCombatBefore=225 fameCombatAfter=225 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=9 hex=1,7 def=-1 target=1 turn=5 side=1 hash=44a3aed9854f16c1
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Move unit=20 hex=1,8 def=-1 target=-1 turn=5 side=1 hash=b05b059d81925284
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=17 defender=18 hex=1,5 turn=5 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=2 fdies=0 fcounter=1 fcdmg=1 ahpBefore=11 ahpAfter=10 ahpMax=12 adied=0 dhpBefore=10 dhpAfter=8 dhpMax=12 ddied=0 fameBefore=100 fameAfter=100 fameCombatBefore=225 fameCombatAfter=225 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=17 hex=1,5 def=-1 target=18 turn=5 side=1 hash=8352234f7974ad55
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Move unit=17 hex=0,6 def=-1 target=-1 turn=5 side=1 hash=fb9e497c34dbe23f
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=6 defender=1 hex=1,7 turn=5 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=0 fcounter=1 fcdmg=1 ahpBefore=8 ahpAfter=7 ahpMax=20 adied=0 dhpBefore=2 dhpAfter=1 dhpMax=20 ddied=0 fameBefore=100 fameAfter=100 fameCombatBefore=225 fameCombatAfter=225 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=6 hex=1,7 def=-1 target=1 turn=5 side=1 hash=f18b243a170abdc0
+[2026.08.19-18.40.00:259][738]LogStratBridge: STRAT-COMBAT resolved attacker=10 defender=1 hex=1,7 turn=5 side=1 attackerSide=1 fqueried=1 flegal=1 fdist=1 fdmg=1 fdies=1 fcounter=0 fcdmg=0 ahpBefore=8 ahpAfter=8 ahpMax=12 adied=0 dhpBefore=1 dhpAfter=-1 dhpMax=20 ddied=1 fameBefore=100 fameAfter=600 fameCombatBefore=225 fameCombatAfter=725 agree=1 diverge=0
+[2026.08.19-18.40.00:259][738]LogStratPlay: STRAT-AI applied kind=Attack unit=10 hex=1,7 def=-1 target=1 turn=5 side=1 hash=c9c0f92e97d5c9db
+[2026.08.19-18.40.00:259][738]LogStratPlay: Verbose: STRAT-AI refused phase=apply kind=EndTurn unit=-1 hex=0,0 def=-1 target=-1 turn=5 side=1 reason=[T-SAVE-05] no match is running
+[2026.08.19-18.40.00:259][738]LogStratPlay: Verbose: Board: no tile mesh for terrain Bridge, Factory, Mountains, Plains, Town, Water, Woods -- assign it in TerrainMeshes, or set FallbackTerrainMesh; the rest of the board was drawn
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 2); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Tank' (unit 6); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 7); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Infantry' (unit 8); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Artillery' (unit 9); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 10); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 11); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 12); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 14); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 15); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 16); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 17); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 18); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 19); using the fallback.
+[2026.08.19-18.40.00:259][738]LogStratPlay: No mesh assigned for unit definition 'Recon' (unit 20); using the fallback.
+[2026.08.19-18.40.00:265][738]LogWorld: UWorld::CleanupWorld for Untitled, bSessionEnded=true, bCleanupResources=true
+[2026.08.19-18.40.00:265][738]LogSlate: InvalidateAllWidgets triggered.  All widgets were invalidated
+[2026.08.19-18.40.00:271][739]LogAutomationController: Display: Test Completed. Result={Success} Name={BothSidesAiReachesAResultOnDifferentContent} Path={Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent}

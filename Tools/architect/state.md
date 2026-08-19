@@ -488,6 +488,52 @@ further down.)_
   count `economy.pending` alongside alive units, without which a multi-factory board overshoots by
   one per extra factory in a single turn. Interim posture is unchanged and still Option A: author an
   Infantry-only buildlist, because a list naming Tank still reads as if a Tank might be built.
+- **DISCHARGED 2026-08-19 -- the content-independence corpus, the last item carried out of the
+  log-backed combat outcome milestone.** Phase D asked that the pairing invariant not rest on one
+  corpus; phase 4 discharged the HOST half (same content, PIE instead of headless, byte-identical
+  hashes) and the CONTENT half has been carried untouched through every pass since. It is now
+  closed for two of the three axes the precedent named, and the third is stated as still open
+  rather than folded in.
+  - **What was built.** One clause,
+    `Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent`, appended to
+    `Source/StratPlay/Tests/StratAiMatchClauses.cpp` so it reuses that file's world scope, config
+    helper and `GLog` capture instead of duplicating them. Suite **107 -> 108** (macro census:
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` in that file 4 -> 5), `succeeded 108 /
+    succeededWithWarnings 0 / failed 0 / notRun 0`, 108 entries, zero non-Success,
+    `reportCreatedOn 2026.08.19-18.40.01`.
+  - **Both moved axes are derived, not typed.** First side comes from the projection's own side
+    list, taking the side phase 3 did not start (`1` vs `kFirstSide`'s `0`), and the clause
+    `TestNotEqual`s it so the axis cannot silently fail to move. The buildlist is the unit
+    table's LAST row by its own row order, handed in alone (`Recon`), with a size assertion
+    against the full table. No row name and no side number is written into the clause.
+  - **Why the buildlist had to shrink to one entry, and the first LIVE evidence for the
+    `chooseBuild` finding.** Cheapest-affordable means any multi-entry list fields the same army,
+    so nothing short of exclusion changes the board. Measured on the phase-3 corpus's own
+    checked-in slice: **22 builds, every one `def=0`** (Infantry). That request was filed upstream
+    at crew `85995b8` argued purely from source; this is the first corpus in the project that
+    shows it happening. Corroboration, not closure -- the cap is still unimplemented.
+  - **The result, and the control, in one session.** New corpus: 42 `applied kind=Attack` / 42
+    `STRAT-COMBAT resolved` / **0 pairing mismatches**, PASS, `EXIT=0`. Phase-3 corpus re-graded
+    minutes later in the same session: 68/68, 0 mismatches, PASS -- identical to the figures
+    phase 3 and phase 4 recorded on a different day, a determinism reading this pass got for
+    free. The two games differ by 26 attacks, 3 turns (11 vs 8), 12 builds and the whole army.
+  - **The gate can still FAIL on the new content, measured not assumed.** First two
+    `applied kind=Attack` lines swapped in a scratch copy, nothing else touched: same 42/42
+    totals, `pairing mismatches: 2`, both named, `FAIL`, `EXIT=1`. Ordered identity, not counts.
+    The scramble was deliberately NOT added to `08-combat-pairing-gate/fixtures/` -- 
+    `strat_fixture_verdict_binding.py` asserts that directory in both directions, so a 12th
+    `.log` would have failed the binding rather than extended it.
+  - **Evidence:** `Tools/architect/evidence/09-content-independence/` -- `blackboard.md`,
+    `different-content-slice.log` (201 lines, cut at the test's own `Test Started.`/`Test
+    Completed.` markers, both present as first and last line), `gate_output.txt` (all four runs
+    verbatim with exit codes).
+  - **STILL OPEN, and not closed by this: the SCENARIO axis.**
+    `Data/ferrum_crossing.json` is the only scenario in the tree and `Data/` is vendored
+    certified bytes, so a different map was not available without authoring one upstream. Two of
+    the precedent's three axes moved; the third did not. Also unchanged: two corpora are not
+    many, the `!bSeeded` silent path fired zero times here as in phase 3 (a measurement of these
+    runs, not a structural guarantee), and `ReplayLog` still does not route through `Submit`.
+  - **No reviewer verdict.** This is post-milestone work and has not been gated.
 
 ## Hot-seat milestone
 

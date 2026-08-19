@@ -1138,3 +1138,232 @@ bool FStratAiHandoverRefusalCarriesTheFixedFieldsTest::RunTest(const FString& /*
 
 	return true;
 }
+
+// ---------------------------------------------------------------------------
+// T-INT-05 -- THE SAME GAME ON DIFFERENT CONTENT. This is the half of the phase-D
+// "avoid one-corpus proof" precedent that was still open.
+//
+// WHAT THIS IS FOR, AND WHY IT IS NOT A DUPLICATE OF `BothSidesAiReachesAResultWithinTheBound`.
+// That clause produces the corpus `Tools/architect/strat_combat_pairing_gate.py` graded in the
+// combat-outcome milestone's phase 3, and phase 4 re-graded the SAME content through a
+// different HOST -- a live PIE session instead of the headless suite -- and got byte-identical
+// turn hashes. That discharged HOST-independence and left CONTENT-independence open in as many
+// words: the gate had only ever seen one game.
+//
+// A gate that has only ever graded one corpus cannot be told apart from a gate that has
+// memorised it. This clause plays a DIFFERENT game -- the other side moving first, a different
+// army on the board -- so the pairing invariant is exercised against a sequence of attacks with
+// no reason to resemble the first.
+//
+// THE TWO AXES ARE DERIVED FROM THE PROJECT'S OWN DATA, NEVER TYPED:
+//
+//   1. FIRST SIDE is taken from the projection's side list, choosing the side the phase-3
+//      corpus did NOT start with. `kFirstSide` is a constant in this file, so the clause
+//      ASSERTS the axis moved rather than trusting it. Re-number the scenario's sides and this
+//      moves with them.
+//
+//   2. THE BUILDLIST is the LAST id in the unit table's own row order, handed in alone. No row
+//      name is written here. Row order is load-bearing project-wide (`DT_Units` row order IS
+//      the defIndex space, phase 0), so "the last row" is a derived choice against a stable
+//      ordering rather than a name this file decides.
+//
+// WHY THE BUILDLIST HAS TO SHRINK TO ONE ENTRY TO CHANGE ANYTHING AT ALL, and this is the
+// live demonstration of a finding the project had otherwise only argued from source:
+// `strat::chooseBuild` returns the CHEAPEST AFFORDABLE entry, and no Fame level makes a dearer
+// unit affordable while a cheaper one is not. The phase-3 corpus handed it the WHOLE table and
+// got 22 builds, every one `def=0` -- measured off that corpus's own checked-in slice. So
+// handing this run a different multi-entry list would have produced the same army again. The
+// crew's own `T-AI-06` fixture removes Infantry for exactly this reason. Filed upstream as the
+// per-type population cap ruling; until that lands, exclusion is the only mechanism there is.
+//
+// WHAT IS ASSERTED HERE IS THAT THE GAME IS A VALID, DIFFERENT ONE -- NOT THAT THE PAIRING
+// HOLDS. The pairing is the Python gate's job, graded out of band against this clause's own log
+// slice, exactly as phase 3 graded the clause above. Re-deriving the pairing in C++ here would
+// be a second implementation of the gate and the two would drift. What this clause owes the
+// gate is a corpus that is genuinely different content AND a real finished game rather than one
+// that spun out to the bound.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratAiBothSidesAiReachesAResultOnDifferentContentTest,
+	"Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratAiBothSidesAiReachesAResultOnDifferentContentTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratAiMatchClauses;
+
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	// The same tripwire the phase-3 clause carries, for the same measured reason: a game that
+	// reaches a §2.8 result MID-TURN ends with the rules module refusing the winning side's
+	// closing EndTurn. `Occurrences = 0` means ONE OR MORE, so a future fix to that production
+	// behaviour fails this line and the clause is revisited deliberately.
+	AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FTestWorldScope Scope;
+	if (!TestNotNull(TEXT("a transient world was created"), Scope.World))
+	{
+		return false;
+	}
+
+	UStratMatchSubsystem* const Subsystem = Scope.World->GetSubsystem<UStratMatchSubsystem>();
+	if (!TestNotNull(TEXT("the world has a match subsystem"), Subsystem))
+	{
+		return false;
+	}
+
+	FStratMatchConfig Base;
+	FString           Error;
+	if (!TestTrue(TEXT("the match config assembles"), MakeConfig(Base, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// ---- Which sides exist, asked of the projection ----------------------------
+	TArray<int32> Sides;
+	{
+		FString StartReason;
+		Subsystem->StartMatch(Base, StartReason);
+		if (!TestTrue(TEXT("the scouting match is live"), Subsystem->IsMatchLive()))
+		{
+			AddError(StartReason);
+			return false;
+		}
+
+		FStratViewModel Model;
+		if (!TestTrue(TEXT("the view model builds"), Subsystem->BuildViewModel(Model, Error)))
+		{
+			AddError(Error);
+			return false;
+		}
+		for (const FStratUnitView& Unit : Model.Units)
+		{
+			Sides.AddUnique(Unit.Side);
+		}
+		Sides.Sort();
+	}
+
+	if (!TestTrue(
+			*FString::Printf(TEXT("the seeded scenario deploys units for more than one side (it deploys for %d)"),
+				Sides.Num()),
+			Sides.Num() >= 2))
+	{
+		return false;
+	}
+
+	// ---- AXIS 1: the other side moves first ------------------------------------
+	const int32 OtherFirstSide = Sides.Last();
+	if (!TestNotEqual(
+			TEXT("AXIS 1 MOVED: the first side differs from the side the phase-3 corpus started, so "
+			     "this is not the same game under a new name"),
+			OtherFirstSide, kFirstSide))
+	{
+		return false;
+	}
+
+	// ---- AXIS 2: one entry, the table's last row -------------------------------
+	const TArray<FName> AllIds = UnitIdsFrom(Base);
+	if (!TestTrue(TEXT("the unit table names rows to build from"), AllIds.Num() > 1))
+	{
+		return false;
+	}
+
+	const TArray<FName> OneEntryBuildlist = { AllIds.Last() };
+
+	if (!TestTrue(
+			*FString::Printf(TEXT("AXIS 2 MOVED: the buildlist is one entry ('%s'), not the whole "
+			                      "%d-row table the phase-3 corpus handed in"),
+				*AllIds.Last().ToString(), AllIds.Num()),
+			OneEntryBuildlist.Num() < AllIds.Num()))
+	{
+		return false;
+	}
+
+	// ---- Both sides AI, on the moved content -----------------------------------
+	FStratMatchConfig BothAi = Base;
+	BothAi.AiSides            = Sides;
+	BothAi.AiBuildlistUnitIds = OneEntryBuildlist;
+	BothAi.FirstSide          = OtherFirstSide;
+	BothAi.ViewingSide        = OtherFirstSide;
+
+	FStratAiCapture Capture;
+
+	FString StartReason;
+	Subsystem->StartMatch(BothAi, StartReason);
+	if (!TestTrue(TEXT("the AI-vs-AI match is live on the moved content"), Subsystem->IsMatchLive()))
+	{
+		AddError(StartReason);
+		return false;
+	}
+
+	for (const int32 Side : Sides)
+	{
+		TestTrue(*FString::Printf(TEXT("side %d is configured as AI"), Side),
+			Subsystem->IsSideAi(Side));
+	}
+
+	const int32 LinesBefore = Capture.Lines.Num();
+
+	FString    RunReason;
+	const bool bRan = Subsystem->RunAiTurnsNow(RunReason);
+	Capture.Settle();
+
+	// Recorded, not asserted -- the same standing production finding the phase-3 clause
+	// declares: a correctly finished game currently comes back false.
+	AddInfo(FString::Printf(TEXT("RunAiTurnsNow returned %s; reason: '%s'"),
+		bRan ? TEXT("true") : TEXT("false"), *RunReason));
+
+	FStratViewModel Model;
+	if (!TestTrue(TEXT("the view model builds after the game"),
+			Subsystem->BuildViewModel(Model, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	const int32 TurnsRun = Capture.CountFrom(LinesBefore, TEXT("STRAT-AI turn-ended"));
+	const int32 Applied  = Capture.CountFrom(LinesBefore, TEXT("STRAT-AI applied"));
+	const int32 Attacks  = Capture.CountFrom(LinesBefore, TEXT("STRAT-AI applied kind=Attack"));
+	const int32 Builds   = Capture.CountFrom(LinesBefore, TEXT("STRAT-AI applied kind=Build"));
+
+	// THE CORPUS FINGERPRINT, PRINTED ON PURPOSE. The pairing gate grades this run's log slice
+	// out of band, and a reader comparing this corpus against the phase-3 one needs both sets of
+	// numbers side by side without re-deriving either.
+	AddInfo(FString::Printf(
+		TEXT("CORPUS: first side %d, buildlist '%s'; %d AI turns, %d commands "
+		     "(%d attacks, %d builds), bound %d; result: %s"),
+		OtherFirstSide, *AllIds.Last().ToString(), TurnsRun, Applied, Attacks, Builds,
+		BothAi.AiMaxConsecutiveTurns, Model.Match.bHasResult ? TEXT("yes") : TEXT("no")));
+
+	// ---- The same three facts the phase-3 corpus had to satisfy ----------------
+	// The capture is required to have SEEN the game, so nothing below is a silence it could
+	// satisfy by being blind.
+	TestTrue(TEXT("the capture saw the AI's commands"), Applied > 0);
+	TestTrue(TEXT("the capture saw whole AI turns end"), TurnsRun > 0);
+
+	TestTrue(TEXT("§2.8: the AI-vs-AI game reached a result under its own steam"),
+		Model.Match.bHasResult);
+
+	TestTrue(
+		*FString::Printf(TEXT("it reached that result in %d AI turns, strictly inside the outer bound of %d"),
+			TurnsRun, BothAi.AiMaxConsecutiveTurns),
+		TurnsRun < BothAi.AiMaxConsecutiveTurns);
+
+	TestEqual(
+		*FString::Printf(TEXT("the handover guard never fired (STRAT-AI lines seen at the end: %s)"),
+			*Capture.TextFrom(FMath::Max(LinesBefore, Capture.Lines.Num() - 4))),
+		Capture.CountFrom(LinesBefore, TEXT("phase=handover")), 0);
+
+	TestFalse(TEXT("no AI turn is due once the match has a result"), Subsystem->IsAiTurnDue());
+
+	// ---- And the corpus is worth grading: it contains combat -------------------
+	// A game that reached a result with no attack in it would satisfy every fact above and hand
+	// the pairing gate nothing to pair. This is the one assertion here that exists for the
+	// gate's benefit rather than the game's.
+	TestTrue(TEXT("the corpus contains combat for the pairing gate to grade"), Attacks > 0);
+
+	return true;
+}

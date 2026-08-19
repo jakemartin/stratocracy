@@ -185,6 +185,11 @@ the checked-in slice is a faithful, self-contained copy of the corpus the gate a
 
 ## What this gate does not and cannot prove
 
+- **UPDATED 2026-08-19 -- the one-corpus limitation below is now PARTLY lifted.** This gate has
+  since graded a second, genuinely different game (other side first, one-entry buildlist, 42/42
+  instead of 68/68, 0 mismatches), and failed a deliberately scrambled copy of it. See
+  `../09-content-independence/blackboard.md`. The scenario axis did not move and is still open.
+
 - **`ReplayLog` does not route through `Submit`** (phase 1's hole, carried forward): a combat
   log loaded from disk in a fresh process emits no `STRAT-COMBAT` line at all. This gate reads
   a live-session log; it says nothing about a replayed one, and a reader pointing it at a

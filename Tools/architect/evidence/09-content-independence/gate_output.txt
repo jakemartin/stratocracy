@@ -1,0 +1,70 @@
+== 1. THE NEW CORPUS, graded inside the full session log (the gate slices it itself)
+$ python Tools/architect/strat_combat_pairing_gate.py Saved/Logs/Stratocracy.log --test-path Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
+STRAT-COMBAT pairing gate: Saved\Logs\Stratocracy.log
+  test:                       Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
+  slice (1-based lines):      4208..4408
+  STRAT-AI applied kind=Attack:  42
+  STRAT-COMBAT resolved:         42
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0
+
+== 2. THE SAME CORPUS as the standalone checked-in slice (proves the slice is faithful)
+$ python Tools/architect/strat_combat_pairing_gate.py Tools/architect/evidence/09-content-independence/different-content-slice.log --test-path Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
+STRAT-COMBAT pairing gate: Tools\architect\evidence\09-content-independence\different-content-slice.log
+  test:                       Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
+  slice (1-based lines):      1..201
+  STRAT-AI applied kind=Attack:  42
+  STRAT-COMBAT resolved:         42
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0
+
+== 3. THE CONTROL -- the phase-3 corpus, same session, same gate, unchanged figures
+$ python Tools/architect/strat_combat_pairing_gate.py Saved/Logs/Stratocracy.log --test-path Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultWithinTheBound
+STRAT-COMBAT pairing gate: Saved\Logs\Stratocracy.log
+  test:                       Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultWithinTheBound
+  slice (1-based lines):      4416..4711
+  STRAT-AI applied kind=Attack:  68
+  STRAT-COMBAT resolved:         68
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0
+
+== 4. FALSIFIABILITY ON THE NEW CONTENT -- first two attack lines swapped, nothing else.
+   Scrambled in a scratch copy, NOT in fixtures/: strat_fixture_verdict_binding.py asserts
+   that directory's contents exactly, and a 12th .log there would fail the binding.
+STRAT-COMBAT pairing gate: C:\Users\me\AppData\Local\Temp\claude\E--MultiAgent-Stratocracy-Tools-context\b5dad962-4568-478c-89ff-32d2881673c5\scratchpad\scrambled.log
+  test:                       Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
+  slice (1-based lines):      1..201
+  STRAT-AI applied kind=Attack:  42
+  STRAT-COMBAT resolved:         42
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            2
+    FAIL pair index 0: applied line 47, resolved line 46: identity mismatch: applied (unit=5, hex=2,5) != resolved (attacker=1, hex=2,5)
+    FAIL pair index 1: applied line 50, resolved line 49: identity mismatch: applied (unit=1, hex=2,5) != resolved (attacker=5, hex=2,5)
+FAIL
+EXIT=1

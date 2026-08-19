@@ -754,10 +754,38 @@ further down.)_
     created, then reset), and a STAGED citation is refused with `HEAD` unmoved.
   - **Wrap-width debt, with an owner and a trigger rather than a shrug.** The sweep's standing
     cost is **+10** over-100-column comment lines (10 before, 20 now — the reviewer's own
-    re-measurement; the earlier "11 sites" figure was wrong). Deliberately not re-wrapped here:
+    re-measurement. **The earlier "11 sites" was NOT wrong and this entry over-corrected it** —
+    it counted added long lines in one diff, a different quantity from standing long lines across
+    the files. Corrected on the reviewer's own objection to a correction of mine). Deliberately not re-wrapped here:
     a cosmetic pass inside a correction commit buries the evidentiary diff. **Trigger: the next
     commit that touches those blocks for a substantive reason re-wraps them.** Owner:
     `strat-gameplay-engineer` for `Source/`, since that is its lane.
+  - **BLOCKED A THIRD TIME, 2026-08-19 — the staged-blob hook silently skipped two classes of
+    file, both DEMONSTRATED by the reviewer in a throwaway repo rather than argued.** (1) A file
+    staged as a RENAME was never scanned: `--diff-filter=ACM` drops `R`, and a rename plus a
+    SMALL edit — exactly the shape a citation edit has — landed a citation in `HEAD` with the
+    hook printing nothing. (A rename with a large edit degrades to `D`+`A` and was already
+    caught, which is why the hole opened only for the small case.) (2) A path containing a space
+    was never scanned: the unquoted `for f in $(...)` split it, `git show` failed on the
+    fragment, and `2>/dev/null` turned the failure into silence — **a failure to READ a blob was
+    indistinguishable from a CLEAN blob**, which is precisely the vacuous pass the CI step
+    refuses at the list level and this loop was not refusing at the file level.
+    Fixed with `--diff-filter=ACMR`, NUL-delimited `-z` / `read -r -d ''` iteration, and an
+    explicit refusal when a staged blob cannot be read. Re-measured in a sandbox, four ways:
+    a true `R093` rename carrying a citation → REFUSED; `B space.h` carrying one → REFUSED;
+    a clean staged file → allowed; an UNSTAGED citation → allowed WITH a warning.
+  - **A defect in the hardening itself, found by running it rather than reading it.** The new
+    block sets a `trap` naming `$STAGED` before the sweep creates that variable, and `set -u`
+    turned it into `STAGED: unbound variable` on **every commit**. Caught on the first sandbox
+    run; `STAGED=""` is now declared up front. Worth recording because the same commit that
+    hardens a guard can break it, and only executing it shows that.
+  - **The tree-wide net is back, as a WARNING.** Moving to staged blobs was right for "what am I
+    committing" but gave up something real: the old worktree scan is what rescued `84eed05`,
+    where a fix had been reverted to `HEAD` by a stray `git checkout --` and so was not staged at
+    all. A staged-only check cannot see that. The hook now also scans the tree and prints a
+    non-blocking warning naming each stray, because an unstaged citation elsewhere is not this
+    commit's fault — and CI still holds the blocking tree-wide line on push. Raised by the
+    reviewer as a loss neither the hook's prose nor this record had disclosed.
   - **The hook then caught the coordinator, on this very commit, and it was a real defect.**
     `git commit` was REFUSED: `StratBoardActor.h:23` still carried `Replay.good.cpp:299-308`.
     Cause — the hook test itself. Planting a citation, then restoring with

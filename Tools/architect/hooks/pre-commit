@@ -30,6 +30,11 @@
 
 set -u
 
+# Declared before any trap references it: the citation block below runs BEFORE the sweep
+# creates its temp file, and `set -u` turns a trap naming an unset variable into a hard
+# error on every commit. Measured in a sandbox: "STAGED: unbound variable" on line 1.
+STAGED=""
+
 STATE_REL="Tools/architect/state.md"
 SWEEP_REL="Tools/architect/strat_banner_sweep.py"
 
@@ -51,24 +56,69 @@ SWEEP="$REPO_ROOT/$SWEEP_REL"
 # reverted a file to HEAD), so the inconsistency is not hypothetical.
 UNITS=$(ls "$REPO_ROOT"/Source/StratRules/*.h 2>/dev/null | xargs -n1 basename 2>/dev/null | sed 's/\.h$//' | paste -sd'|' -)
 if [ -n "$UNITS" ]; then
-    CITES=""
-    for f in $(git diff --cached --name-only --diff-filter=ACM | grep '^Source/' | grep -v '^Source/StratRules/'); do
+    HITS=$(mktemp) || exit 0
+    FAILED=$(mktemp) || exit 0
+    trap 'rm -f "$STAGED" "$HITS" "$FAILED"' EXIT
+
+    # -z / read -d '': a path with a space split under the old unquoted `for f in $(...)`,
+    # `git show` failed on the fragment, and 2>/dev/null turned the failure into silence --
+    # a commit carrying `Save.h:64` was ALLOWED with no output at all. Demonstrated in a
+    # throwaway repo by the reviewer, not theorised. -z also removes the core.quotePath
+    # hazard for non-ASCII paths.
+    #
+    # ACMR, not ACM: a file staged as a RENAME is reported `R` and the old filter dropped it
+    # entirely. A rename plus a small edit -- exactly the shape a citation edit has -- landed
+    # a citation in HEAD with the hook silent. (A rename with a large edit degrades to D+A
+    # and was already caught, which is why this hole only opened for small edits.)
+    git diff --cached -z --name-only --diff-filter=ACMR -- "$REPO_ROOT/Source/" |
+    while IFS= read -r -d '' f; do
         case "$f" in
+            Source/StratRules/*) continue ;;
             *.h|*.cpp|*.inl) ;;
             *) continue ;;
         esac
-        found=$(git show ":$f" 2>/dev/null | grep -nE "($UNITS)\.(h|good\.cpp|buggy\.cpp):[0-9]" | sed "s|^|$f:|") || true
-        if [ -n "$found" ]; then CITES="$CITES$found
-"; fi
+        # A FAILURE TO READ A BLOB IS NOT A CLEAN BLOB. The old form discarded git show's
+        # stderr and read the empty result as "no citations", which is the vacuous pass the
+        # CI step refuses at the list level and this loop was not refusing at the file level.
+        if ! blob=$(git show ":$f" 2>/dev/null); then
+            printf '%s\n' "$f" >> "$FAILED"
+            continue
+        fi
+        printf '%s' "$blob" | grep -nE "($UNITS)\.(h|good\.cpp|buggy\.cpp):[0-9]" |
+            sed "s|^|$f:|" >> "$HITS" || true
     done
-    if [ -n "$CITES" ]; then
+
+    if [ -s "$FAILED" ]; then
         echo ""
-        printf '%s' "$CITES"
+        echo "COMMIT REFUSED: could not read these staged blobs, so they were NOT checked:"
+        cat "$FAILED"
+        echo "An unread file is not a clean file. Bypass with: git commit --no-verify"
+        exit 1
+    fi
+    if [ -s "$HITS" ]; then
+        echo ""
+        cat "$HITS"
         echo ""
         echo "COMMIT REFUSED: line-number citations into vendored headers, in the STAGED bytes."
         echo "Cite the SYMBOL, not the line -- a re-vendor moves every vendored line at once."
         echo "Bypass deliberately with: git commit --no-verify"
         exit 1
+    fi
+
+    # THE TREE-WIDE NET, KEPT AS A WARNING RATHER THAN DROPPED. Moving to staged blobs was
+    # right for "what am I committing", but it gave up something real: the old worktree scan
+    # is what rescued `84eed05`, where a file's fix had been reverted to HEAD by a stray
+    # `git checkout --` and so was not staged at all. A staged-only check cannot see that.
+    # This warns and never refuses -- an unstaged citation elsewhere is not this commit's
+    # fault, and CI still holds the blocking tree-wide line on push.
+    STRAY=$(cd "$REPO_ROOT" && grep -rEn "($UNITS)\.(h|good\.cpp|buggy\.cpp):[0-9]" Source/ 2>/dev/null \
+            | grep -v "^Source/StratRules/" || true)
+    if [ -n "$STRAY" ]; then
+        echo ""
+        echo "banner sweep WARNING (not blocking this commit): vendored line citations exist in"
+        echo "the working tree, outside what you staged:"
+        printf '%s\n' "$STRAY"
+        echo "CI will refuse these on push."
     fi
 fi
 

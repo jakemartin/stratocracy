@@ -8,6 +8,46 @@ description: Drive the five-agent Stratocracy crew through the playable hot-seat
 This skill runs in the **main thread**, because subagents cannot launch subagents. You dispatch;
 the five agents do the work.
 
+## Startup — one command, before the invariant
+
+**Run this once at the start of every session, before dispatching anything:**
+
+```
+sh "$(git rev-parse --show-toplevel)/Tools/architect/hooks/install.sh"
+```
+
+**That command is cwd-independent on purpose, and the relative form is a trap this project has
+already paid for once.** `sh Tools/architect/hooks/install.sh` works only from the repo root, and
+a session's working directory is frequently *not* the repo root — the coordinator's own cwd has
+been `Tools/context` for whole sessions. Measured 2026-08-19: from `Tools/context` the relative
+form gives `sh: Tools/architect/hooks/install.sh: No such file or directory`, and when it is
+piped anywhere the real exit code is masked by the pipe, so it can fail while appearing to
+succeed. This is the same shape as the bare `Build.bat` form recorded below.
+
+It installs `Tools/architect/hooks/pre-commit`, which runs `strat_banner_sweep.py` against the
+**staged** `Tools/architect/state.md` and refuses a commit whose record contradicts itself or the
+tree. It is idempotent — on an already-installed clone it prints `already installed and identical`
+and changes nothing — so running it every session costs one line of output and nothing else.
+
+**Why this is a startup step and not a one-time chore.** Git hooks are not version-controlled.
+A fresh clone, a new worktree, or a machine that has never run it has **no** protection, and
+nothing anywhere announces that fact. The defect the sweep exists for (`185e88f`: a banner
+claiming the suite was 107/107 and an item open, while the same file said 108 and discharged, 425
+lines apart) reached a reviewer gate as `VERDICT: BLOCK`. That is the fourth instance of that
+shape in this project's record and the second to cost a BLOCK.
+
+**Report what it prints, and do not force past a refusal.** It refuses in two cases, both
+deliberate: `core.hooksPath` is set (this repo carries four Git LFS hooks in `.git/hooks/`, and
+redirecting hook lookup would silently disable all four), or a *different* `pre-commit` already
+exists. Both mean a human has to look. Surface the message to the user and carry on with the
+phase — a missing hook is a weaker session, not a blocked one.
+
+**When `strat-data-steward`'s commit of `state.md` is refused by that hook, the sweep is right
+until proven otherwise.** Re-dispatch the steward with the sweep's output verbatim, exactly as
+you would with a reviewer's `BLOCK`. Do not reach for `git commit --no-verify` on the steward's
+behalf, and do not edit `state.md` yourself to make it pass — both are the coordinator taking a
+lane that is not theirs.
+
 ## The invariant, before anything else
 
 **The editor is CLOSED for phases 0–4 and OPEN for phases 5–6.**
@@ -90,6 +130,12 @@ Headless test run:
 "C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe" "E:\MultiAgent\Stratocracy\Stratocracy.uproject" -ExecCmds="Automation RunTests Stratocracy;Quit" -unattended -nopause -nosplash -nullrhi -ReportExportPath="E:\MultiAgent\Stratocracy\Saved\AutomationReport"
 ```
 
+Banner sweep, when a record change needs checking without a commit:
+
+```
+python "$(git rev-parse --show-toplevel)/Tools/architect/strat_banner_sweep.py" --explain
+```
+
 Pass these into the agent prompt rather than letting an agent recall them.
 
 **`Build.bat` is not on `PATH`** — measured 2026-08-14, after this file had carried the bare
@@ -167,6 +213,8 @@ condition a plausible-but-wrong agent fails:
 ## What you do not do
 
 - Do not edit source, assets, config or tests yourself. Dispatch the owner.
+- Do not `--no-verify` past the banner-sweep hook, and do not edit `state.md` to satisfy it.
+  Re-dispatch `strat-data-steward` with the sweep's output, the same as any `BLOCK`.
 - Do not commit, stage, or push. That is the user's call, always.
 - Do not advance past a `BLOCK`.
 - Do not compress two phases into one because they look small.

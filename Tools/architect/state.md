@@ -622,9 +622,21 @@ further down.)_
       the tree returned to `b502686`.
     - **The bypass is documented in the failure message on purpose.** A WIP commit on a branch is
       not a lie, and a gate nobody can get past is a gate people delete.
-    - **Hooks are not version-controlled**, so `install.sh` must be run once per clone. Nothing
-      installs it automatically and nothing checks that it is installed — a real gap, and the
-      honest limit of this wiring.
+    - **Hooks are not version-controlled**, so `install.sh` must be run once per clone.
+      **CLOSED the same day:** `/strat-hotseat` now runs it as a startup step, before the
+      editor-mode invariant and before any dispatch, so every crew session installs or confirms
+      the hook. The skill also tells the coordinator not to `--no-verify` past a refusal on
+      `strat-data-steward`'s behalf, and not to edit `state.md` to satisfy it — both are the
+      coordinator taking a lane that is not theirs; re-dispatch the steward with the sweep output
+      the way a reviewer `BLOCK` is re-dispatched.
+    - **The skill's command is cwd-independent, and the relative form was a measured trap.**
+      `sh Tools/architect/hooks/install.sh` works only from the repo root, and a session's cwd is
+      often not the repo root — the coordinator's own has been `Tools/context` for whole sessions.
+      From there the relative form gives `No such file or directory`, and piped anywhere its real
+      exit code is masked by the pipe, so it fails while appearing to succeed — the same shape as
+      the bare `Build.bat` form. Both skill commands now use
+      `"$(git rev-parse --show-toplevel)/..."` and both were run verbatim from a subdirectory
+      before being written down.
 
 ## Hot-seat milestone
 

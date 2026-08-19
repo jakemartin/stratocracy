@@ -96,28 +96,52 @@ $ for f in fixtures/*.log; do python Tools/architect/strat_combat_pairing_gate.p
 [see gate_self_test_output.txt]
 ```
 
-## The gate can fail — 10 checked-in fixtures, each proving one specific failure mode
+## The gate can fail — 11 checked-in fixtures, each proving one specific failure mode
+
+**CORRECTED, 2026-08-14, post-milestone (not a phase) — this section originally said "ten"
+throughout, written before `fail_pre_sliced_zero_events.log` existed. `47ec9bf` added that
+eleventh fixture (the `--pre-sliced` zero-event guard debt discharge) but never updated this
+file, and `gate_self_test_output.txt` went stale the same way — `git ls-files 'fixtures/*.log'`
+returns 11, `grep -c "^== " gate_self_test_output.txt` returned 10 until this correction
+regenerated it. Caught by `strat-data-steward` closing the fixture-verdict binding debt recorded
+in `state.md`, not by a re-gate. Both artifacts have been regenerated from a real run and
+`Tools/architect/strat_fixture_verdict_binding.py` now binds every checked-in fixture to its
+expected verdict AND its expected invocation, re-runnably — see that module's own docstring.
+**CORRECTED AGAIN, 2026-08-14, later pass:** the derivation command below this note, and the one
+just used in this sentence, originally read `git ls-files fixtures/ | wc -l` (no `*.log` glob) —
+that counts tracked files in the directory, not `.log` fixtures, and returned 11 only because
+`fixtures/README.md` (added by the same pass that added the eleventh fixture) was still untracked
+at measurement time. The glob form reads 11 both now and after a hypothetical commit of the
+README — verified: `git ls-files --cached --others --exclude-standard 'fixtures/*.log'` (the
+post-commit-tracked proxy) still returns 11, while the same query without the `*.log` glob
+returns 12.**
 
 Per the phase-D precedent (`evidence/07-ai-opponent/gate_self_test_output.txt`) and the
 recorded lesson that the phase-D gate was itself blocked once for fixtures that could not
-fail it, `fixtures/` holds ten small `.log` files, each run through the real CLI (not a
-mocked function) with its own `Test Started.`/`Test Completed.` markers. Split derived from
-the directory, not counted by eye:
+fail it, `fixtures/` holds eleven small `.log` files, each run through the real CLI (not a
+mocked function). Ten carry their own `Test Started.`/`Test Completed.` markers under
+`Stratocracy.Fixture.FIX-01.FixtureTest`; the eleventh (`fail_pre_sliced_zero_events.log`) is
+run with `--pre-sliced` and no `--test-path` — `--pre-sliced` ignores `--test-path` entirely,
+and this file is empty on disk with no markers to slice on regardless, so it cannot be run the
+same way as the other ten. Split derived from the directory, not counted by eye:
 
 ```
+$ git ls-files 'fixtures/*.log' | wc -l
+11
 $ ls fixtures/ | grep -c '^fail_'
-7
+8
 $ ls fixtures/ | grep -c '^pass_'
 3
 ```
 
-— seven FAIL fixtures, three PASS controls, matching the seven `EXIT=1` / three `EXIT=0` blocks
-in `gate_self_test_output.txt` below. (This table itself was already correct; the miscount the
-reviewer found — "eight FAIL fixtures plus two PASS controls," naming a checked-in
-"unmatched resolved line" fixture that does not exist — was in `state.md` only. That scenario is
-case 4 of the in-script `check_self_test()` below, over an inline `tempfile` corpus, and is not
-one of these ten checked-in files; the two sets are kept distinct and are never totalled
-together.)
+— eight FAIL fixtures (seven run with `--test-path`, one — `fail_pre_sliced_zero_events.log` —
+with `--pre-sliced`), three PASS controls, matching the eight `EXIT=1` / three `EXIT=0` blocks in
+`gate_self_test_output.txt` below. (The reviewer's earlier miscount — "eight FAIL fixtures plus
+two PASS controls," naming a checked-in "unmatched resolved line" fixture that does not exist —
+was in `state.md` only, and predates the eleventh fixture entirely; it is unrelated to this
+correction. That "unmatched resolved line" scenario is case 4 of the in-script
+`check_self_test()` below, over an inline `tempfile` corpus, and is not one of these eleven
+checked-in files; the two sets are kept distinct and are never totalled together.)
 
 | Fixture | Proves |
 |---|---|
@@ -131,12 +155,20 @@ together.)
 | `fail_missing_markers.log` | No `Test Started.`/`Test Completed.` markers at all → hard failure, never a silent whole-file scan |
 | `fail_truncated_no_completed.log` | `Test Started.` with no matching `Test Completed.` → hard failure, not a fallback to EOF |
 | `pass_commentary_echo_ignored.log` | A `LogAutomationController:`-echoed `STRAT-COMBAT` payload is ignored entirely; the real `LogStratBridge:` pairing still passes clean |
+| `fail_pre_sliced_zero_events.log` | An empty file run with `--pre-sliced` (no `--test-path` — it is ignored in that mode) → the structural zero-event guard refuses it by default, `GUARD REFUSED`, FAIL; added `47ec9bf`, discharging the `--pre-sliced` zero-event gate debt |
 
-`gate_self_test_output.txt` is every fixture's real, unedited CLI output plus its exit code.
-`self_test_internal_fixtures_output.txt` is the script's own `--self-test` mode (the same
-eleven checks, run as Python assertions against temp files rather than checked-in fixtures) —
-both are included because the checked-in `.log` files are the artifact a future reader can
-open and rerun by hand, while `--self-test` is what CI would invoke.
+`gate_self_test_output.txt` is every fixture's real, unedited CLI output plus its exit code —
+**11 entries, one per checked-in `.log` file** (`grep -c "^== " gate_self_test_output.txt`).
+`self_test_internal_fixtures_output.txt` is the script's own `--self-test` mode — **14 checks**
+as of `47ec9bf` (`grep -c "^    record(" strat_combat_pairing_gate.py`, excluding the `def
+record(...)` definition itself), run as Python assertions against temp files rather than
+checked-in fixtures. **These are two different counts and are never totalled together** — the
+fixture-file count (11) and the in-script self-test case count (14) have drifted apart before
+and state.md names both independently for that reason. Both artifacts are included because the
+checked-in `.log` files are what a future reader can open and rerun by hand, while `--self-test`
+is what CI would invoke. `Tools/architect/strat_fixture_verdict_binding.py` (new, this pass)
+binds the 11 checked-in fixtures — filename, expected verdict, exact invocation — to a
+re-runnable assertion; it does not touch or duplicate the 14-case in-script self-test.
 
 ## The real run
 
@@ -168,3 +200,34 @@ the checked-in slice is a faithful, self-contained copy of the corpus the gate a
   neither on the gate, the fixtures, or this blackboard) — both fixed in place. Third
   `VERDICT: PASS`, zero findings — **phase 3 is CLOSED.** See `state.md`'s phase-3 entry for the
   full account of all three gates.
+
+## Fixture-verdict binding (post-milestone, this pass, `strat-data-steward`'s own lane)
+
+`Tools/architect/strat_fixture_verdict_binding.py` closes the debt this file's own earlier
+staleness demonstrated: `gate_self_test_output.txt` was a hand-recorded table with no
+re-runnable assertion tying each checked-in fixture to its expected verdict, and it went stale
+(missing `fail_pre_sliced_zero_events.log`) the moment `47ec9bf` added that fixture without
+updating the table. The new module declares, per fixture, both its expected verdict AND its
+exact CLI invocation (ten fixtures run with `--test-path Stratocracy.Fixture.FIX-01.FixtureTest`;
+`fail_pre_sliced_zero_events.log` runs with `--pre-sliced` and no `--test-path`, since
+`--pre-sliced` ignores that flag and the file has no markers to slice on), re-runs the real gate
+against the real file for each, and checks both the verdict AND the on-disk/declared set
+symmetric difference (an undeclared 12th fixture or a declaration for a deleted one is caught
+the same way a wrong verdict is).
+
+**Falsifiability measured, not asserted.** Two deliberate breaks, each reverted after
+observation:
+1. Mis-declared `pass_clean_pairing.log` as `expect_pass=False` → `[**MISMATCH**]
+   pass_clean_pairing.log ... expected FAIL, actual PASS, EXIT=0`, `AT LEAST ONE BINDING
+   FAILED`, exit 1.
+2. Dropped the `fail_missing_markers.log` declaration entirely (file left on disk) →
+   `**UNDECLARED FIXTURES ON DISK (no binding covers these): ['fail_missing_markers.log']`,
+   `AT LEAST ONE BINDING FAILED`, exit 1.
+Both reverted; `python Tools/architect/strat_fixture_verdict_binding.py` returns to `ALL
+BINDINGS HOLD`, exit 0, 11/11 fixtures `[OK]`.
+
+**Scope, stated plainly.** This binds the 11 checked-in `.log` fixtures only. It does not bind,
+duplicate, or re-derive the in-script `--self-test` case count (14, `check_self_test()`'s
+`record()` calls) — the two counts are named independently everywhere in this file and in
+`state.md` for exactly the reason state.md gives: they are different numbers that have drifted
+apart before, and conflating them would hide the next drift rather than catch it.

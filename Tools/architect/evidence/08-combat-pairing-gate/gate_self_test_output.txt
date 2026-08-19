@@ -75,6 +75,23 @@ STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtu
 FAIL
 EXIT=1
 
+== fail_pre_sliced_zero_events.log ==
+STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_pre_sliced_zero_events.log
+  test:                       (pre-sliced input, no automation markers)
+  slice (1-based lines):      1..0
+  STRAT-AI applied kind=Attack:  0
+  STRAT-COMBAT resolved:         0
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    0
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+    GUARD REFUSED: --pre-sliced corpus produced ZERO 'STRAT-AI applied kind=Attack' lines and ZERO 'STRAT-COMBAT resolved' lines -- nothing was actually checked. An empty or wrong file previously read as a trivially-satisfied pairing (0 == 0) and returned PASS; refused structurally instead, because --pre-sliced has no Test Started/Completed marker to fail on the way the marker-sliced path does. If this corpus is legitimately combat-free, say so explicitly with --expect-min-pairs 0, which overrides this default refusal.
+FAIL
+EXIT=1
+
 == fail_silent_path_gap.log ==
 STRAT-COMBAT pairing gate: Tools\architect\evidence\08-combat-pairing-gate\fixtures\fail_silent_path_gap.log
   test:                       Stratocracy.Fixture.FIX-01.FixtureTest

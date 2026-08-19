@@ -43,8 +43,48 @@ guard" below. **ALSO POST-MILESTONE, 2026-08-14, NOT A PHASE:** the `STRAT-CMD r
 grep-contract residual that the previous item opened is now DISCHARGED — two new clauses,
 `T-SAVE-05.StratCmdRefusedLineShape` and `T-SAVE-05.GrepContractRejectsARefusedCaseVariant`,
 close it the same way the `accepted` side was closed; suite is now **106/106** (was 104/104).
-See "STRAT-CMD refused grep-contract residual" below. The prior entry (AI-opponent milestone,
-phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" further down.)_
+See "STRAT-CMD refused grep-contract residual" below. **ALSO POST-MILESTONE, 2026-08-14, NOT A
+PHASE, this steward's own lane:** the fixture-verdict binding debt (open since phase 3, carried
+through the pre-sliced zero-event guard entry and the grep-contract residual entry above, both
+of which left it untouched) is now DISCHARGED. `Tools/architect/strat_fixture_verdict_binding.py`
+(new) re-runnably binds all 11 checked-in `.log` fixtures under `evidence/08-combat-pairing-gate/
+fixtures/` to their expected verdict AND their exact invocation, and is shown falsifiable by two
+deliberate breaks, both reverted. `fixtures/README.md` (new) documents the `--test-path` /
+`--pre-sliced` split in the fixtures directory itself, closing the second, smaller item. This
+pass also found and fixed staleness in two checked-in artifacts the debt predicted would go
+stale silently: `gate_self_test_output.txt` (10 entries, missing
+`fail_pre_sliced_zero_events.log` — confirmed by `grep -c "^== "` against `git ls-files`'s 11)
+and `self_test_internal_fixtures_output.txt` (11 entries against the in-script `--self-test`'s
+actual 14), both regenerated from a real run; no Python or C++ suite count changes (Python-and-
+doc-only work). See "Fixture-verdict binding" below. **ALSO POST-MILESTONE, 2026-08-14, NOT A
+PHASE, this steward's own lane — three corrections, all found by the wave-1 reviewer gate as
+non-gating observations:** (1) this header's own suite count was stale at 106/106; re-derived
+directly against `Saved/AutomationReport/index.json` (read `utf-8-sig`, `reportCreatedOn
+2026.08.14-21.47.35`, `succeeded 107 / succeededWithWarnings 0 / failed 0 / notRun 0`, 107
+entries, zero non-Success) and corroborated by an independent macro census
+(`IMPLEMENT_SIMPLE_AUTOMATION_TEST` sums to 107, `IMPLEMENT_COMPLEX_AUTOMATION_TEST`/`_CLASS`
+sums to 0) — suite is now **107/107** (was 106/106). (2) A correction bullet this steward wrote
+in the prior pass asserted `T-INT-05.AlreadyActedGuardFiresOnAForeignModel` was still open; it is
+not — `Source/StratPlay/Tests/StratSelectionForeignModelClauses.cpp` (untracked) ran green in the
+same report above, having landed mid-wave, after that pass. Corrections appended in place at all
+three prior mentions (the "Four items carried out of..." NEXT bullet, the "STRAT-CMD refused
+grep-contract residual" section, and the "Fixture-verdict binding" section) rather than rewritten
+— each was true when written. The other two items those same sentences named,
+`chooseBuild`'s buildlist-ratio question and the content-independence corpus, have moved
+differently and are kept distinct: `chooseBuild` is now investigated and written up at
+`Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md` (a request draft awaiting a
+Director ruling, **not discharged**); content-independence remains genuinely open. (3) The
+fixture-count derivation command recorded in this file and in
+`evidence/08-combat-pairing-gate/blackboard.md` — `git ls-files fixtures/ | wc -l` — measures
+tracked files in the directory, not `.log` fixtures; it read 11 only because this pass's own
+`fixtures/README.md` was still untracked, and would read 12 the moment that file is committed
+while the `.log` count stays 11. Both prose copies corrected to `git ls-files
+'.../fixtures/*.log' | wc -l`, which reads **11** both now and after a hypothetical commit of the
+README (verified: `git ls-files --cached --others --exclude-standard '.../fixtures/*.log'` — the
+proxy for post-commit tracked state — still returns 11, while the same query without the `*.log`
+glob returns 12). See "Fixture-verdict binding" below for the full account. The prior
+entry (AI-opponent milestone, phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone"
+further down.)_
 
 ## BUILT
 
@@ -293,6 +333,23 @@ phase D CLOSED, COMPLETE) is preserved under "AI-opponent milestone" further dow
      `bHasActed == true` while the machine's own `DoneUnits` is empty (a machine built against a
      match already in progress). Proposed by `strat-gameplay-engineer`, correctly not written in
      a doc pass. Owner: `strat-test-author`.
+     - **CORRECTION, 2026-08-14, this steward's own lane, later pass — DISCHARGED, landed mid-wave
+       after this entry was written.** This item was correctly open when written. It is not open
+       now: `Source/StratPlay/Tests/StratSelectionForeignModelClauses.cpp` is in the tree
+       (untracked at time of writing — `git status --porcelain` lists it `??`), and
+       `Stratocracy.StratPlay.T-INT-05.AlreadyActedGuardFiresOnAForeignModel` reads `state:
+       "Success"` in `Saved/AutomationReport/index.json` (read `utf-8-sig`, `reportCreatedOn
+       2026.08.14-21.47.35`). Suite is now **107/107** (`succeeded 107 / succeededWithWarnings 0 /
+       failed 0 / notRun 0`, 107 entries, zero non-Success — re-derived directly, not taken from a
+       report or a dispatch number), corroborated independently by
+       `grep -rc IMPLEMENT_SIMPLE_AUTOMATION_TEST Source --include=*.cpp` summing to **107** and
+       `IMPLEMENT_COMPLEX_AUTOMATION_TEST`/`_CLASS` summing to **0**. The other three items this
+       same numbered list names — the `chooseBuild` buildlist-ratio question and the
+       content-independence corpus — have NOT moved the same way: `chooseBuild` is now
+       investigated and written up at
+       `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md`, a request draft
+       awaiting a Director ruling, **not discharged**; content-independence remains genuinely open,
+       untouched. These three items are three different states, not one word.
   2. **DISCHARGED, `a2d370a`, 2026-08-14 — see "Grep-contract case-sensitivity tightening"
      below.** Tighten `Source/StratPlay/Tests/StratHotSeatReplayParity.cpp`'s shape `TestTrue`
      (`Line.StartsWith(TEXT("STRAT-CMD accepted "))`) to `ESearchCase::CaseSensitive`. Residual
@@ -2637,6 +2694,15 @@ buildlist repetition inert at the rules layer.
   and that `--test-path Stratocracy.Fixture.FIX-01.FixtureTest` is undocumented in the fixtures
   directory itself. Touched only insofar as the new fixture's own note above states its mode;
   the rest is unchanged and not this task.
+  - **CORRECTION, added later this pass, not a rewrite of the line above:** "the 10 checked-in
+    `.log` fixtures" was already inexact the moment this entry was written — this same commit
+    (the entry two bullets up) added the 11th fixture, `fail_pre_sliced_zero_events.log`, to the
+    same directory. The bullet above is left as written because it correctly names the debt's
+    *shape* (no binding exists) regardless of the count; the count itself is corrected where the
+    debt is actually discharged — see "Fixture-verdict binding" further down, which also caught
+    that this same undercount had propagated into `gate_self_test_output.txt` and
+    `self_test_internal_fixtures_output.txt` as real staleness, not just a `state.md` typo.
+    **DISCHARGED, this same pass** — see "Fixture-verdict binding" below.
 
 ## STRAT-CMD refused grep-contract residual (not a phase)
 
@@ -2653,6 +2719,26 @@ buildlist repetition inert at the rules layer.
   reading). Both dirty in `git status` at the time of this entry; `Source/StratSelectionMachine.cpp`
   (the emitter) is **not** among the dirty files — confirmed by `git status --porcelain`, which
   lists only these two paths as modified against `HEAD` `47ec9bf`.
+  - **CORRECTION, 2026-08-14, coordinator-flagged, this steward's own lane — the lane attribution
+    above was wrong when written, not merely stale.** "`.agents/ue-project-context.md`
+    (this steward's...)" contradicts this same file's own later flag, in the Phase 4 section of
+    "Log-backed combat outcome milestone": "**`.agents\ue-project-context.md` drift, unowned by
+    any crew agent, flag only** ... No crew agent owns `.agents/`; this is a flag, not a task this
+    steward takes." Verified directly by reading both passages side by side — the contradiction is
+    real, in the direction described. `.agents/` is neither `Config/` nor `Tools/architect/`, so it
+    was never in this steward's lane; the edit the bullet above records was an out-of-lane edit,
+    made before the lane rule was tightened to bind retroactively as precedent. Recorded plainly as
+    that, for a future reader relying on this as precedent: **an agent does not edit outside its
+    lane for any reason, including a temporary or well-intentioned edit — it stops and notifies the
+    coordinator instead.** The account of what that pass actually did (rewrote a stale suite count
+    to `106/106`) is left as written above, uncorrected, because it is true of the edit's *content*;
+    only its lane attribution was false. The figure itself is not current — `.agents/
+    ue-project-context.md` now reads `107/107`, per the current banner above, updated by the
+    coordinator (who has since been assigned ownership of that file), not by this steward and not
+    by the user. The "No crew agent owns `.agents/`" flag cited above is itself now superseded, not
+    still open: the user has assigned `.agents/ue-project-context.md` to the coordinator. That
+    flag's own passage is left as written, since it was true when written; this note is the
+    cross-reference recording its resolution.
 - **Suite 104 → 106.** `Saved/AutomationReport/index.json`, read as `utf-8-sig`:
   `reportCreatedOn 2026.08.14-20.28.52`, `succeeded 106 / succeededWithWarnings 0 / failed 0 /
   notRun 0`, 106 entries in `tests`, every one `state: "Success"` (re-derived directly with a
@@ -2723,3 +2809,122 @@ buildlist repetition inert at the rules layer.
   lane). Also still open: `T-INT-05.AlreadyActedGuardFiresOnAForeignModel` (`strat-test-author`'s
   lane), the `chooseBuild` buildlist-ratio question for `stratocracy-crew`, and the
   content-independence corpus.
+  - **CORRECTION, later pass, 2026-08-14: the fixture-verdict half of this bullet is DISCHARGED,
+    the rest is not.** This entry correctly described the state at the time it was written (this
+    steward's own lane, untouched by that pass). The fixture-binding and `--test-path`
+    documentation clauses are now closed — see "Fixture-verdict binding" below for the full
+    account. `T-INT-05.AlreadyActedGuardFiresOnAForeignModel`, the `chooseBuild` buildlist-ratio
+    question, and the content-independence corpus remain open and are untouched by this
+    correction.
+  - **CORRECTION, still later pass, 2026-08-14 — the `T-INT-05.AlreadyActedGuardFiresOnAForeignModel`
+    third is now ALSO DISCHARGED, the other two are not.** Both corrections above were true when
+    written. `Source/StratPlay/Tests/StratSelectionForeignModelClauses.cpp` landed mid-wave, after
+    this entry and the correction above it were both written, and is untracked in the tree today
+    (`git status --porcelain` → `??`); the clause runs `state: "Success"` in
+    `Saved/AutomationReport/index.json` (`reportCreatedOn 2026.08.14-21.47.35`), suite **107/107**.
+    The `chooseBuild` buildlist-ratio question and the content-independence corpus have moved
+    differently and are not flattened into this correction: `chooseBuild` is investigated and
+    written up at `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md` (a request
+    draft awaiting a Director ruling, **not discharged**); content-independence remains genuinely
+    open, untouched by any pass to date.
+
+## Fixture-verdict binding (not a phase, this steward's own lane)
+
+- **Landed:** 2026-08-14, uncommitted at the time of writing (this steward does not commit).
+  Discharges the debt opened at phase 3, carried untouched through both the pre-sliced
+  zero-event guard entry and the `STRAT-CMD refused` grep-contract residual entry above, and
+  restated as "still open" immediately above this section.
+- **The premise was measured before building on it, and the staleness was already real, not
+  hypothetical.** `git ls-files 'Tools/architect/evidence/08-combat-pairing-gate/fixtures/*.log'`
+  — 11. **CORRECTED, 2026-08-14, later pass — the command as originally recorded here was
+  `git ls-files Tools/architect/evidence/08-combat-pairing-gate/fixtures/` (no `*.log` glob),
+  which counts tracked files in the directory, not `.log` fixtures; it returned 11 at the time
+  only because `fixtures/README.md` (added later in this same pass) did not yet exist to be
+  counted or excluded. The glob form above reads 11 both now and after a hypothetical commit of
+  the README — verified directly: `git ls-files --cached --others --exclude-standard
+  'Tools/architect/evidence/08-combat-pairing-gate/fixtures/*.log'` (the proxy for post-commit
+  tracked state) still returns 11, while the same query without the `*.log` glob returns 12.**
+  `grep -c "^== " gate_self_test_output.txt` (before this pass) — 10. The missing entry was
+  `fail_pre_sliced_zero_events.log`, added by `47ec9bf` without updating that table. A second,
+  independently-drifted staleness was found the same way in `self_test_internal_fixtures_output.txt`:
+  it held 11 `[OK]` lines against the in-script `--self-test`'s actual **14** cases
+  (`grep -c "^    record(" strat_combat_pairing_gate.py` — 14, deliberately excluding the
+  `def record(...)` definition itself, which a bare `grep -c "record("` would have wrongly
+  counted in). Both files regenerated from a real run; both now match the tree.
+- **Two counts, named independently, never totalled together, per the brief's own warning:**
+  checked-in `.log` fixtures — **11**. In-script `--self-test` cases — **14**. These are
+  different artifacts checking different things (checked-in bytes a human can open and rerun,
+  vs. inline `tempfile` corpora `check_self_test()` builds itself) and have drifted apart
+  before; this pass's own regenerated `self_test_internal_fixtures_output.txt` is evidence of
+  that drift having already happened once.
+- **What "binding" means here, built exactly to the brief's falsifiability requirement.**
+  `Tools/architect/strat_fixture_verdict_binding.py` (new) declares, per checked-in fixture,
+  both its expected verdict (PASS/FAIL) AND its exact CLI invocation — not just the verdict,
+  because the invocation is not uniform: ten fixtures require
+  `--test-path Stratocracy.Fixture.FIX-01.FixtureTest`; the eleventh,
+  `fail_pre_sliced_zero_events.log`, requires `--pre-sliced` and must NOT be run with
+  `--test-path` (that flag is ignored entirely in `--pre-sliced` mode, and the file is empty on
+  disk with no markers to slice on regardless). It re-runs the real gate (`run_gate`, imported,
+  not reimplemented) against the real file for every declared spec, and separately checks
+  `set(disk .log files) == set(declared filenames)` in both directions, so an undeclared 12th
+  fixture or a declaration for a deleted one is caught the same way a wrong verdict is.
+- **Falsifiability, measured by deliberately breaking it, output pasted, then reverted:**
+  1. Mis-declared `pass_clean_pairing.log`'s `expect_pass` from `True` to `False`. Result:
+     `[**MISMATCH**] pass_clean_pairing.log -- invocation: `strat_combat_pairing_gate.py
+     pass_clean_pairing.log --test-path Stratocracy.Fixture.FIX-01.FixtureTest` -- expected
+     FAIL, actual PASS, EXIT=0` ... `AT LEAST ONE BINDING FAILED`, script exit 1.
+  2. Reverted (1), then dropped the `fail_missing_markers.log` `FixtureSpec` entirely from the
+     declaration tuple, leaving the file on disk untouched. Result:
+     `**UNDECLARED FIXTURES ON DISK (no binding covers these): ['fail_missing_markers.log']` ...
+     `AT LEAST ONE BINDING FAILED`, script exit 1.
+  3. Reverted (2). `python Tools/architect/strat_fixture_verdict_binding.py` returns to
+     `set(disk) == set(declared) -- every fixture on disk is bound, and vice versa.`, all 11
+     `[OK]`, `ALL BINDINGS HOLD`, exit 0.
+- **The second, smaller item — `--test-path` documentation.** `fixtures/README.md` (new) states
+  the ten-vs-one invocation split directly in the fixtures directory itself (previously it lived
+  only in `blackboard.md` and the gate's own module docstring, neither of which a reader opening
+  the directory would necessarily see first), with a table naming each fixture's required flags
+  and expected exit code, and points at `strat_fixture_verdict_binding.py` as the authority a
+  reader should actually run rather than trust the table by eye.
+- **Regression evidence, all re-run after the change, every number re-derived, not assumed:**
+  - `--self-test`: all 14 cases `[OK]`, `SELF-TEST: ALL FIXTURES CORRECT`, `EXIT=0`.
+  - All 11 checked-in fixtures, each through its correct invocation (ten via `--test-path
+    Stratocracy.Fixture.FIX-01.FixtureTest`, one via `--pre-sliced` alone): `pass_clean_pairing.log`
+    PASS/EXIT=0, `pass_commentary_echo_ignored.log` PASS/EXIT=0, `pass_terminal_refusal_ok.log`
+    PASS/EXIT=0, `fail_ordering_scramble.log` FAIL/EXIT=1, `fail_silent_path_gap.log` FAIL/EXIT=1,
+    `fail_format_drift.log` FAIL/EXIT=1, `fail_divergence_present.log` FAIL/EXIT=1,
+    `fail_blocking_ai_refusal.log` FAIL/EXIT=1, `fail_missing_markers.log` FAIL/EXIT=1,
+    `fail_truncated_no_completed.log` FAIL/EXIT=1, `fail_pre_sliced_zero_events.log` (via
+    `--pre-sliced`, `GUARD REFUSED`) FAIL/EXIT=1 — all 11 match `strat_fixture_verdict_binding.py`'s
+    own declarations, and the run captured verbatim into the regenerated `gate_self_test_output.txt`.
+  - **The control, re-run and unchanged:** the real phase-4 PIE corpus,
+    `evidence/08-combat-pairing-gate/pie-run/ai-vs-ai-pie-session-slice.log`, through
+    `--pre-sliced`: `STRAT-AI applied kind=Attack: 68`, `STRAT-COMBAT resolved: 68`,
+    `pairing mismatches: 0`, `PASS`, `EXIT=0` — identical to phase 3's and phase 4's own recorded
+    figures. Proves the guard (and this whole binding pass) admits a good corpus, not merely that
+    it rejects bad ones.
+- **Files changed, all `Tools/architect/`:** `strat_fixture_verdict_binding.py` (new — the
+  binding itself); `evidence/08-combat-pairing-gate/fixtures/README.md` (new — the `--test-path`
+  documentation gap); `evidence/08-combat-pairing-gate/gate_self_test_output.txt` (regenerated,
+  10 → 11 entries); `evidence/08-combat-pairing-gate/self_test_internal_fixtures_output.txt`
+  (regenerated, 11 → 14 entries); `evidence/08-combat-pairing-gate/blackboard.md` (corrected —
+  fixture count and self-test case count sections, plus a new "Fixture-verdict binding"
+  subsection); `state.md` (this entry, plus corrections in place at the three prior mentions of
+  this debt rather than rewrites of them). `strat_combat_pairing_gate.py` itself: **untouched** —
+  confirmed by re-reading it after all edits; this pass binds and documents the existing gate, it
+  does not modify its logic. Nothing staged, nothing committed.
+- **What this does not close.** The two counts (11 fixtures, 14 self-test cases) are bound and
+  documented separately on purpose; nothing here merges them, and nothing here touches the
+  content-independence corpus, `T-INT-05.AlreadyActedGuardFiresOnAForeignModel`, or the
+  `chooseBuild` buildlist-ratio question — all three remain open, unowned by this steward or
+  owned by a different lane, and are not restated as closed anywhere in this entry.
+  - **CORRECTION, later pass, 2026-08-14 — `T-INT-05.AlreadyActedGuardFiresOnAForeignModel` is now
+    DISCHARGED; the other two named here are not, and stay distinct from each other.** This bullet
+    was true when written — the clause landed mid-wave, after this entry. It is now green in the
+    tree: `Source/StratPlay/Tests/StratSelectionForeignModelClauses.cpp` (untracked, `??` in `git
+    status --porcelain`), `state: "Success"` in `Saved/AutomationReport/index.json`
+    (`reportCreatedOn 2026.08.14-21.47.35`), suite **107/107**. Not flattened into this correction:
+    the `chooseBuild` buildlist-ratio question is investigated and written up at
+    `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md`, a request draft awaiting a
+    Director ruling — **not discharged, distinct from "closed"**; the content-independence corpus
+    remains genuinely open, untouched.

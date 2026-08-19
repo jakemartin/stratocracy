@@ -38,10 +38,32 @@ Stratocracy ─┴──▶ StratBridge ──▶ StratUI ──▶ StratPlay
 | `Stratocracy` | Core, CoreUObject, Engine, InputCore, EnhancedInput, …, `StratRules` | Game module: UE template code + `StratData/` row structs and the import commandlet. |
 | `StratBridge` | Core, CoreUObject, Engine, **`Stratocracy`** | `FStratBridge` — the only code that knows both worlds. Owns the authoritative `strat::GameState`. |
 | `StratUI` | Core, CoreUObject, Engine, `StratBridge`; private UMG/Slate/SlateCore | The UMG surface and the reflected view model. |
-| `StratPlay` | …, `StratBridge`, `StratUI`, `EnhancedInput` | Gameplay actors, camera, input, the match subsystem. |
+| `StratPlay` | Core, CoreUObject, Engine, `StratUI` public; **`StratBridge`, `EnhancedInput` private** | Gameplay actors, camera, input, the match subsystem. |
 
 Each arrow is load-bearing and each has a recorded reason. Read the `.Build.cs` header block
 before you change one.
+
+**This table flattens dependency STRENGTH, and on `StratPlay` the strength is itself load-bearing** —
+verified against `StratPlay.Build.cs` on 2026-08-14, not restated from an earlier reading.
+`StratBridge` is `Private` there *deliberately*: it was moved Public → Private closing a phase-3
+gate finding, because nothing in this module's headers names `FStratBridge` beyond a forward
+declaration, so `Public` re-exported the arrow to every dependent for no caller's benefit. It is
+named at all — rather than arriving transitively through `StratUI`, which declares it `Public` —
+because of a measurement recorded in that file: **4 × `LNK2019`** on `UnrealEditor-StratPlay.dll`,
+naming `__imp_?LoadDefinitions@FStratBridge@@`, `__imp_?LoadScenarioFromFile@FStratBridge@@`, and
+the imported constructor and destructor. The transitive arrow carried the include paths; it did
+not carry `UnrealEditor-StratBridge.lib` onto the link line. **A module that CALLS a symbol
+declares the module that exports it.** Note which methods did *not* appear in that error —
+`IsSeeded()` and `GetBridge()` are inline in the header and linked fine, which is exactly how the
+omission would survive a smaller caller. `EnhancedInput` is likewise `Private`: `AStratPlayerController`
+is the only file including an Enhanced Input header, and the five asset properties are
+forward-declared `TObjectPtr`s.
+
+**`InputCore` is absent from `StratPlay` deliberately, and one `FKey` call brings it back.**
+`FKey::ToString` and `FKey::IsGamepadKey` are `INPUTCORE_API` rather than inline; omitting the
+module was measured as 2 × `LNK2019` then `LNK1120`. The declarations resolve fine —
+`InputCoreTypes.h` arrives transitively through `Engine` — so the failure is a *link* failure and
+reads as a missing function rather than a missing module.
 
 **`StratBridge → Stratocracy` is deliberate, not a mistake.** `FUnitRow` / `FTerrainRow` bake
 `/Script/Stratocracy.UnitRow` into `DT_Units` and `DT_Terrain`, so the row structs cannot move
@@ -164,6 +186,28 @@ property and both fail loudly rather than silently: **automation tests** loading
 rather than a consumer of it. The rule binds gameplay and widget code. There are zero
 `ConstructorHelpers` asset lookups in this tree; keep it that way.
 
+### The map → GameMode binding is a single unguarded line in `Config/`
+
+`GlobalDefaultGameMode` in `Config/DefaultEngine.ini` is the **only** thing binding
+`Lvl_FerrumCrossing` to `BP_StratGameMode_C`. The level carries no World Settings GameMode
+override of its own — unlike `Lvl_TopDown`, which does. So an edit to that one INI line silently
+repoints the whole game, and nothing in `Content/` contradicts it.
+
+Two consequences worth knowing before you touch it:
+
+- **`AWorldSettings` is unreachable through the NeoStack Lua API**, so the override cannot be
+  authored that way as a belt-and-braces second binding. Measured failures: `configure("actor",
+  "WorldSettings")`, `select_actor`, `get_actor_properties`, `open_asset` on the sub-object path,
+  and `invoke({actor_label="WorldSettings"})` all fail; `configure` accepts only `actor|landscape`.
+  The workaround used previously was reading the two levels' binary `.umap` bytes directly.
+- **A long-lived editor serves the config it started with.** A `Config/` edit made while the
+  editor is open does not take effect, and the symptom reads as a content bug rather than a stale
+  read. Restart the editor after changing this file.
+
+This was flagged as unrecorded across two milestones — "not recorded in
+`.agents/ue-project-context.md`, which is where a future config edit would most plausibly be
+checked against." Recorded here on 2026-08-14, verified against `Config/DefaultEngine.ini`.
+
 ---
 
 ## Read-only territory
@@ -192,8 +236,9 @@ reference shape.
 
 The count moves every phase and goes stale the moment it is restated — read it from
 `Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
-number here. Last observed here: 106/106, 2026-08-14, after the two `STRAT-CMD refused`
-grep-contract clauses (103 at combat-outcome phase 3 → 104 at the `accepted` tightening → 106).
+number here. Last observed here: 107/107, 2026-08-14, after
+`T-INT-05.AlreadyActedGuardFiresOnAForeignModel` (103 at combat-outcome phase 3 → 104 at the
+`accepted` tightening → 106 at the two `STRAT-CMD refused` clauses → 107).
 
 **That report is UTF-8 with a BOM** — first bytes `EF BB BF`. Measured in the hot-seat milestone's
 phase 4 (not the combat-outcome milestone's, which is the AI-vs-AI PIE run), after two

@@ -1,6 +1,11 @@
 # Architect state
 
-_Last run 2026-08-14 (log-backed combat outcome milestone: phase 1 CLOSED — the `STRAT-COMBAT`
+_Last run 2026-08-19 (post-milestone work: the `chooseBuild` cap RULED and FILED upstream at
+crew `85995b8`; ten rotted line-number citations replaced by function-and-branch citations; the
+content-independence corpus DISCHARGED on two of three axes at `185e88f`, gated `VERDICT: BLOCK`
+then `VERDICT: PASS` after this banner itself was found contradicting the entry below it — the
+defect that produced `strat_banner_sweep.py`. Suite 107 -> 108. The milestone narrative that
+follows is unchanged and still describes 2026-08-14: log-backed combat outcome milestone: phase 1 CLOSED — the `STRAT-COMBAT`
 emitter on `FStratBridge::Submit`, gated three times, zero findings, plus an unplanned 1-in-4 test
 flake in a `GLog` capture found and fixed on source-level proof, not a probe; phase 2 CLOSED,
 `VERDICT: PASS`, zero findings — six new clauses in `StratCombatOutcomeParity.cpp`, suite 87 → 93,
@@ -541,6 +546,61 @@ further down.)_
     many, the `!bSeeded` silent path fired zero times here as in phase 3 (a measurement of these
     runs, not a structural guarantee), and `ReplayLog` still does not route through `Submit`.
   - **No reviewer verdict.** This is post-milestone work and has not been gated.
+- **BUILT 2026-08-19 -- `Tools/architect/strat_banner_sweep.py`, because a rule an agent must
+  REMEMBER is a rule that fails silently.** `11fd9ae` made the banner sweep a memory job; five
+  commits later the memory failed and `185e88f` shipped a banner saying the content half was open
+  and the suite 107/107 while this same file said discharged and 108. The reviewer's gate caught
+  it (`VERDICT: BLOCK`) -- the fourth instance of that shape the record names. This is the same
+  rule as a COMMAND, in `strat_fixture_verdict_binding.py`'s idiom: a declaration the maintainer
+  edits deliberately, checked mechanically, exit 1 when the document disagrees with itself or the
+  tree.
+
+  ```
+  python Tools/architect/strat_banner_sweep.py              # sweep, exit 0/1
+  python Tools/architect/strat_banner_sweep.py --explain    # + its LIVE/STAMPED call on every claim
+  python Tools/architect/strat_banner_sweep.py --self-test  # 14 fixtures proving it can FAIL
+  ```
+
+  - **Three checks:** SUITE COUNT AGREEMENT (live claims must agree with each other AND with
+    `Saved/AutomationReport/index.json` and an independent macro census), ITEM STATE AGREEMENT
+    (a declared item cannot be called open in one live place and closed in another), BANNER DATE
+    FRESHNESS (`_Last run` not older than the document's own newest entry).
+  - **It found a real defect on its first real run and it was not the one it was written for:**
+    the banner still read `_Last run 2026-08-14` after two days of 2026-08-19 entries — the same
+    drift the re-gate had flagged as an observation. Fixed; the banner now leads with this
+    session's work and hands off to the unchanged milestone narrative.
+  - **FOUR OF ITS OWN RULES EXIST BECAUSE THE VERSION BEFORE THEM GOT A REAL CASE WRONG, and
+    every one has a fixture.** (1) A `**87/87**` inside a closed milestone section is correct for
+    that phase — section awareness. (2) One bullet saying "discharged on two axes, the third
+    still open" is coherent, not contradictory — a contradiction is disagreement BETWEEN sites.
+    (3) A corrected banner says "was **107/107** ... is now **108/108**" in ONE sentence, and no
+    window can tell which verb owns which figure — tense binds to what it precedes, and an
+    explicit stamp outranks tense. (4) Matching only bolded `N/N` made the check blind to the
+    banner's live figure (the bold wraps the phrase); widening it then swallowed the pairing
+    gate's `42/42` and `68/68`, so a claim must now say it is counting a suite. Rule 4's first
+    half is the sharpest: **the check that exists to police the banner was, for one revision,
+    silently inert on the banner** — it reported "17 claims, 0 live" against a file whose banner
+    carried a live figure.
+  - **Falsifiability measured against the REAL file, not only fixtures.** Editing the banner's
+    LAST suite figure to `107/107` — the exact 2026-08-19 shape — fails with
+    `live suite claim(s) disagree with the tree (108): line 75: 107/107`, `EXIT=1`; reverted,
+    `SWEEP CLEAN`, `EXIT=0`.
+  - **Its stated limit, measured rather than supposed:** under banner supersession a stale figure
+    sitting MID-banner passes — verified by planting one and getting `SWEEP CLEAN`. It polices the
+    CURRENT claim, not every sentence of the narrative behind it, and the docstring says so.
+  - **A FIFTH rule, found by this very entry.** Writing an honest account of the 2026-08-19
+    defect means writing the wrong number down, and the first version of the sweep failed on
+    its own record of itself — three hits inside the bullet you are reading. A sweep that
+    punishes an honest account of a past miscount is a sweep a maintainer stops running, so a
+    figure preceded by a reporting verb (`said`, `reading`, `editing`, `defect`, `stale`) or
+    sitting in a code span is read as QUOTED evidence, not a live claim. Fixture:
+    `_QUOTED_ACCOUNT`. Falsifiability re-measured AFTER that rule went in, because a
+    suppression rule is exactly the kind that could blunt the check it protects: breaking the
+    banner's live figure still fails, `EXIT=1`.
+  - **Not wired to anything yet.** No hook, no CI, no pre-commit. Running it is still a choice;
+    what changed is that the check now exists as one command instead of as a paragraph someone has
+    to re-read. Wiring it into a commit hook is the obvious next step and is deliberately not
+    taken here.
 
 ## Hot-seat milestone
 

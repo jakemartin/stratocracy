@@ -4,6 +4,11 @@
 **Subject** `strat::chooseBuild` / `strat::buildPriorityLess` in `cpp_reference/Ai.good.cpp`, and
 `AiState::buildlist` in `cpp_reference/Ai.h`.
 **Status** Investigation only. Nothing was edited in either repo. No stage, no commit.
+**UPDATED 2026-08-19 — the Director has ruled; see §6.** §§1–5 were written while the question was
+open and are unchanged. The ruling is a per-type population cap, which is none of §4's Options A–D;
+§4's "ask the Director to rule" recommendation is therefore DISCHARGED, while its interim advice
+(author an Infantry-only buildlist until the mechanism lands) still stands. Still investigation only:
+nothing is implemented, and the mechanism lives in vendored bytes this repo may not edit.
 
 ---
 
@@ -326,3 +331,157 @@ Stated in its own terms, so nothing below is quietly folded into the claims abov
 - **I did not read the whole GDD.** I sliced §2.9 around the "default buildlist" phrase (two
   occurrences, both quoted or cited above). There may be balance language elsewhere in the document
   that bears on the mix and that I never saw.
+
+---
+
+## 6. THE DIRECTOR HAS RULED — a per-type population cap (2026-08-19)
+
+§4's recommendation was "ask the Director to rule". **That has now happened, and this section
+records the ruling.** §§1–5 above are left exactly as written; they were true when written and the
+measurements in them are unaffected. What changes is only that the open question at the end of §4 is
+no longer open.
+
+### 6.1 The ruling, in the Director's own terms
+
+> A good deterministic methodology would be to instruct the AI to not have more than x number of
+> units on the map at one time. Let's say for this example there are a maximum of 3 infantry units
+> on the board. When that threshold is met, the AI will save its Fame points until it can buy a
+> Tank.
+
+This is **not** any of Options A–D. It is a fifth shape, and a better one than the Option C this
+document recommended: it needs no cursor, no tally, and no new persisted state, because the quantity
+it keys on — how many of a type are on the board — is already in `AiState` and already survives save
+and replay by virtue of being the board.
+
+### 6.2 Why it fits the module's stated constraints — read off the source, not run
+
+Four checks, each against the vendored source:
+
+1. **The cap is computable from state the AI already holds.** `AiState::units` is a
+   `std::vector<AiUnit>`, and `AiUnit` carries `side` and `defIndex` (`Ai.h`). `UnitDef` carries
+   `type` and `costFame` (`Data.h`). So "how many Infantry does this side have alive" is a loop over
+   existing members. **Nothing new needs to reach the AI**, which matters because `Ai.h`'s own
+   contract is "It also sees only real state (§4.7 Stub 6: 'the AI cheats at nothing'). There is no
+   hidden field on `AiState` that a player could not read off the board." A unit count is the most
+   player-visible fact there is — you can see it by looking at the map.
+2. **Determinism survives intact.** The cap introduces no RNG, no clock, no I/O, and no state
+   carried between calls. Same state in, same command out. This is the invariant that killed
+   Option B, and the cap does not touch it. `T-AI-06`'s same-state-same-command clause and the
+   replay/parity fixtures are unaffected.
+3. **"Save its Fame" needs no new code — it is already the behaviour of the existing path.**
+   `nextCommand`'s economy block reads, at the decision point:
+   ```cpp
+   const int defIndex = chooseBuild(s, side);
+   if (defIndex < 0) continue;
+   ```
+   When the affordable-and-eligible set is empty, `chooseBuild` returns `-1`, no `Build` command is
+   formed, and the side spends nothing that turn. Fame accrues by doing nothing. **Hoarding is
+   emergent from the cap, not a second mechanism to build**, and it ends by itself the moment Fame
+   reaches the dearer unit's cost or a casualty frees a slot.
+4. **Q9 is untouched.** The cap filters *eligibility*; `buildPriorityLess` still orders whatever
+   survives the filter. The ruled Infantry > Recon > Artillery > Tank priority is not reversed, not
+   reinterpreted, and not in tension with this — which is what separates this ruling from Option D.
+
+### 6.3 Two encodings for the cap number, and which to prefer
+
+The cap values themselves are the only genuinely new data. There are two places to put them.
+
+**Encoding 1 — buildlist multiplicity finally means something.** `AiState::buildlist` is already a
+`std::vector<int>` that carries duplicates, and §1's second consequence is the finding that those
+duplicates currently express *nothing*. Under the cap reading they express the cap directly:
+`{Infantry, Infantry, Infantry, Tank}` means "at most 3 Infantry alive, at most 1 Tank alive". The
+Director's example maps onto it exactly. `FStratBridge::SetBuildlistByIds` already passes an ordered
+list with duplicates straight through, so **the bridge needs no change at all**, and the authored
+Blueprint default becomes the balance knob.
+
+- Cost: `chooseBuild` changes; `AiState`'s shape does not; the bridge's shape does not.
+- Risk, and it is real: it silently caps every type at its multiplicity, so a single `Tank` entry
+  means "at most 1 Tank alive" whether or not anyone intended a Tank cap. A list that today reads
+  as a menu becomes a quota table, and every existing authored list changes meaning on the day the
+  rules module is re-vendored. That is a migration, not a no-op.
+
+**Encoding 2 — an explicit parallel cap vector.** A new `AiState` member, e.g.
+`std::vector<int> buildCaps` indexed the way `unitDefs` is, with a sentinel for "uncapped".
+Caller-supplied data, in the same idiom `buildlist` and `builtThisTurn` already use.
+
+- Cost: an `AiState` member, a bridge-side field and setter, a re-vendor. More work than Encoding 1.
+- Benefit: it says what it means, an uncapped type is expressible, and no existing authored list
+  changes meaning behind anyone's back.
+
+**Recommendation to the Director: Encoding 2.** Encoding 1 is more elegant and cheaper, and it is
+tempting precisely because it redeems the dead multiplicity this document opened by complaining
+about — but "every existing buildlist silently acquires caps equal to how many times someone happened
+to type each entry" is the kind of change that reads as a bug for a year. Encoding 1 is worth putting
+to upstream as the cheaper alternative and letting them weigh it; it is not worth choosing here.
+
+### 6.4 The trap that would ship as a bug: pending builds must count toward the cap
+
+**A cap that counts only `s.units` is wrong, and wrong in a way that only shows up on a board with
+more than one factory.** `nextCommand`'s economy block loops over every held factory hex in canonical
+order and calls `chooseBuild` afresh for each one, and a queued build does not become a unit
+immediately — it sits in `s.economy.pending` as a `PendingBuild`, which carries `side` and
+`defIndex` (`Economy.h`), holding the factory's slot until it spawns. So with 2 Infantry alive, a cap
+of 3, and three held factories, a units-only count sees `2 < 3` three times in a row and queues three
+more, landing at 5 alive against a cap of 3.
+
+The population the cap tests against must therefore be **alive units of that side and type PLUS
+pending builds of that side and type**. Both sources are already in `AiState`; this is a correctness
+requirement on the implementation, not another design decision. It should be stated in the change
+request and it should carry its own clause upstream, because it is exactly the kind of
+off-by-a-factory that a single-factory test fixture passes.
+
+### 6.5 One tension to put in front of the Director, not to resolve here
+
+§2.9 says the AI "spends Fame and replaces losses instead of hoarding". **A cap makes it hoard** —
+bounded, purposeful hoarding aimed at a specific dearer unit, which is plainly what the ruling
+intends, but hoarding against the letter of a GDD sentence all the same. Option D was rejected in §4
+partly for contradicting that same sentence, so consistency demands the tension be named rather than
+waved through because this version is more palatable.
+
+The honest framing for upstream: the ruling does not contradict §2.9 so much as **supply the missing
+half of it**. §2.9 gives "mostly Infantry, an occasional Tank" with no mechanism, and the
+anti-hoarding clause exists to stop the AI sitting on Fame indefinitely. A cap produces saving that is
+bounded (it ends at the dearer unit's cost, or at the first casualty) and directed (it exists to reach
+the Tank §2.9 asks for). But that is an interpretation, and §2.9 is GDD text, so it wants the
+Director's explicit sign-off in the same breath as the cap itself — not an inference drawn by whoever
+implements it.
+
+### 6.6 What this ruling does NOT do
+
+- **It does not make anything true in this repository.** The mechanism lives in `strat::chooseBuild`,
+  which is vendored certified bytes under `Source/StratRules/`. Nothing here can be implemented on
+  the UE side. This document remains a request to `E:\MultiAgent\stratocracy-crew`, now with a ruling
+  attached instead of a question.
+- **It does not change the interim advice in §4.** Until the mechanism is built and re-vendored, a
+  buildlist containing Tank is still misleading, because a Tank still cannot be built. Option A
+  (author Infantry-only) remains the correct interim posture, and it costs nothing to reverse.
+- **It is not measured.** Every claim in §6.2 is read off the source text of `Ai.h`, `Data.h`,
+  `Economy.h` and `nextCommand`'s economy block. Nothing was compiled and nothing was run. In
+  particular the claim in §6.2 item 3 — that `defIndex < 0` results in no spend — is read off two
+  lines of control flow, not observed in a game.
+- **It does not check the shipped authored buildlist.** §5's gap stands unchanged: `Content/`
+  `.uasset` Blueprint defaults were never inspected, so whether any shipped list actually contains
+  both Infantry and Tank is still unconfirmed.
+- **It does not set the cap numbers.** "3 Infantry" is the Director's worked example, not a balance
+  decision this document records as final. The mechanism is ruled; the values are data and can move
+  without touching it.
+
+### 6.7 The change request, ready to file upstream
+
+For `spec/ai_spec.md`'s existing "Change requests for the Director" section, in the idiom of the two
+already there:
+
+> **Build variety — a per-type population cap.** §2.9's "mostly Infantry, an occasional Tank" has no
+> representation in the rules layer: `chooseBuild` returns the cheapest affordable buildlist entry,
+> so with Infantry in the list the Tank entry is unreachable at every Fame level. **Ruled by the
+> Director (2026-08-19): cap the number of units of a type a side may have on the board at once.**
+> When a type is at its cap it is ineligible; `buildPriorityLess` orders whatever remains eligible
+> and affordable; when nothing is eligible and affordable, `chooseBuild` returns -1 as it does today
+> and the side accrues Fame until the cap frees or the dearer unit becomes affordable. No RNG, no
+> cursor, no new persisted state — the population is board state the AI already holds and that save
+> and replay already carry. Two open items for upstream: (a) where the cap numbers live — buildlist
+> multiplicity (free, but silently re-reads every existing authored list as a quota table) or an
+> explicit parallel cap vector (recommended); and (b) confirmation that the cap counts
+> `economy.pending` alongside alive units, without which a multi-factory board overshoots the cap by
+> one per extra factory in a single turn. Also wants an explicit note on §2.9's "instead of
+> hoarding", which a cap bounds rather than obeys.

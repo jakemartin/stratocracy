@@ -386,6 +386,27 @@ further down.)_
   `ESearchCase::CaseSensitive` predicate, and two new clauses — see the new section for the full
   account, including the falsifiability measurement's stated limit (it exercised the predicate,
   not an edited emitter, so the closure is a sound inference rather than a directly observed one).
+- **RULED, 2026-08-19 — the `chooseBuild` buildlist question is answered, and the answer is a
+  per-type population cap.** Every sentence above and below that calls this question "awaiting a
+  Director ruling" or "not discharged" was true when written; none is rewritten. The ruling: a side
+  may not have more than N units of a type on the board at once; at the cap that type is ineligible,
+  `buildPriorityLess` orders whatever remains, and when nothing eligible is affordable `chooseBuild`
+  returns -1 exactly as it does today, so the side accrues Fame until the cap frees or the dearer
+  unit becomes affordable. **Saving is emergent, not a second mechanism** — `nextCommand`'s economy
+  block already reads `if (defIndex < 0) continue;`. Determinism is untouched (no RNG, no cursor, no
+  new persisted state — population is board state `AiState::units` already carries), and Q9's ruled
+  priority is untouched (the cap filters eligibility, the comparator still orders). Written up as
+  §6 of `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md`, including a change
+  request drafted in `spec/ai_spec.md`'s own idiom, ready to file. **Three things this does NOT
+  close.** (1) Nothing is implemented — the mechanism is in vendored bytes under
+  `Source/StratRules/`; this repo may not edit them and no UE-side work discharges it. (2) The
+  request has not been FILED upstream; filing is an edit to another repository and the user's call.
+  (3) Two sub-questions go up with it rather than being decided here: where the cap numbers live
+  (buildlist multiplicity — free, but silently re-reads every existing authored list as a quota
+  table — versus an explicit parallel cap vector, recommended), and the requirement that the cap
+  count `economy.pending` alongside alive units, without which a multi-factory board overshoots by
+  one per extra factory in a single turn. Interim posture is unchanged and still Option A: author an
+  Infantry-only buildlist, because a list naming Tank still reads as if a Tank might be built.
 
 ## Hot-seat milestone
 

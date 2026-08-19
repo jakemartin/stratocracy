@@ -236,9 +236,10 @@ reference shape.
 
 The count moves every phase and goes stale the moment it is restated — read it from
 `Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
-number here. Last observed here: 107/107, 2026-08-14, after
-`T-INT-05.AlreadyActedGuardFiresOnAForeignModel` (103 at combat-outcome phase 3 → 104 at the
-`accepted` tightening → 106 at the two `STRAT-CMD refused` clauses → 107).
+number here. Last observed here: 108/108, 2026-08-19, after
+`T-INT-05.BothSidesAiReachesAResultOnDifferentContent`, the content-independence corpus (103 at
+combat-outcome phase 3 → 104 at the `accepted` tightening → 106 at the two `STRAT-CMD refused`
+clauses → 107 at the foreign-model guard → 108).
 
 **That report is UTF-8 with a BOM** — first bytes `EF BB BF`. Measured in the hot-seat milestone's
 phase 4 (not the combat-outcome milestone's, which is the AI-vs-AI PIE run), after two

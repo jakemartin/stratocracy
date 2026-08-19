@@ -1329,9 +1329,13 @@ bool FStratAiBothSidesAiReachesAResultOnDifferentContentTest::RunTest(const FStr
 	const int32 Attacks  = Capture.CountFrom(LinesBefore, TEXT("STRAT-AI applied kind=Attack"));
 	const int32 Builds   = Capture.CountFrom(LinesBefore, TEXT("STRAT-AI applied kind=Build"));
 
-	// THE CORPUS FINGERPRINT, PRINTED ON PURPOSE. The pairing gate grades this run's log slice
-	// out of band, and a reader comparing this corpus against the phase-3 one needs both sets of
-	// numbers side by side without re-deriving either.
+	// THE CORPUS FINGERPRINT, PRINTED ON PURPOSE -- AND IT LANDS IN THE AUTOMATION REPORT, NOT
+	// IN THE LOG SLICE. `AddInfo` writes to `Saved/AutomationReport/index.json`, so a reader
+	// holding only `evidence/09-content-independence/different-content-slice.log` will NOT find
+	// this line there and must re-derive the figures from the slice's own `STRAT-AI` lines
+	// (`grep -c`), which is where the evidence blackboard's table gets them from anyway. Said
+	// exactly this way because the first draft of this comment implied the line travelled with
+	// the slice, and a reader who believed it would go looking for something that is not there.
 	AddInfo(FString::Printf(
 		TEXT("CORPUS: first side %d, buildlist '%s'; %d AI turns, %d commands "
 		     "(%d attacks, %d builds), bound %d; result: %s"),

@@ -99,6 +99,27 @@ the binding rather than extended it.
 and last lines. Bounded by content, never by EOF or by a line range, per the standing rule in
 `state.md`'s NEXT. Named for what it is.
 
+## Post-gate additions, 2026-08-19
+
+The reviewer's gate on `185e88f` returned `VERDICT: BLOCK` on a `state.md` banner contradiction
+(fixed there, not here) plus two non-gating observations against this directory, both acted on:
+
+- **The falsifiability run is now reproducible from the repository alone.** `gate_output.txt`
+  run 4 originally printed only its output, against a session scratchpad path that no longer
+  exists — so the one run proving the gate can still fail was the one a reader could not repeat.
+  It now carries the scramble as a RECIPE (a one-line `python -c` over the checked-in slice, then
+  the gate invocation). The recipe was run verbatim afterwards and reproduces the same two named
+  mismatches on the same lines, `FAIL`, `EXIT=1`.
+- **A third reading, taken while re-running after the fix: this corpus is deterministic across
+  sessions too.** Re-graded from a completely fresh headless session
+  (`reportCreatedOn 2026.08.19-19.01.29`): 42 applied / 42 resolved / 0 mismatches, PASS —
+  identical to the figures above from `18.40.01`. The control corpus already had that property
+  across days; the new one now has it as well, which was not claimed when this document was
+  first written. **Recorded verbatim as run 5 of `gate_output.txt`** — the re-gate observed that
+  this reading rested on prose while run 4's had just been given a reproducible artifact, which
+  is the same evidentiary gap one bullet apart; the run, its exit code, and both session
+  identities are now in the file.
+
 ## What this does NOT prove
 
 - **The scenario did not move.** `Data/ferrum_crossing.json` is the only scenario in the tree and

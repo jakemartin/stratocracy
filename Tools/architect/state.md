@@ -19,7 +19,11 @@ re-gate — the live PIE path (`Saved/Logs/Stratocracy_2.log`, `--pre-sliced` mo
 gate for its first non-automation corpus), same gate PASS, 68/68 again, and all eleven
 `STRAT-AI turn-ended` hashes byte-identical to phase 3's headless run — the phase-D "avoid
 one-corpus proof" precedent is now PARTLY discharged: the HOST-independence half IS discharged,
-the CONTENT-independence half is NOT and is carried forward as its own future work; phase 5
+the CONTENT-independence half is NOT and is carried forward as its own future work **[BANNER
+CORRECTED 2026-08-19: the content half is now discharged on two of its three axes at `185e88f` —
+first side and buildlist moved, a second corpus graded 42/42 with zero mismatches; the SCENARIO
+axis alone remains open. This clause described the state at phase 4 and is corrected here rather
+than deleted]**; phase 5
 CLOSED (editor closed throughout), the doc pass, gated three times, all `VERDICT: PASS`, zero
 findings each — 9 files, 231 insertions/23 deletions vs `HEAD` `ae2f22a`, proven comment-only
 (254 changed lines, zero fail the comment-body shape test; `/*`/`*/` counts identical HEAD-vs-
@@ -63,7 +67,10 @@ directly against `Saved/AutomationReport/index.json` (read `utf-8-sig`, `reportC
 2026.08.14-21.47.35`, `succeeded 107 / succeededWithWarnings 0 / failed 0 / notRun 0`, 107
 entries, zero non-Success) and corroborated by an independent macro census
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` sums to 107, `IMPLEMENT_COMPLEX_AUTOMATION_TEST`/`_CLASS`
-sums to 0) — suite is now **107/107** (was 106/106). (2) A correction bullet this steward wrote
+sums to 0) — suite was **107/107** at that pass (was 106/106) and **is now 108/108** as of
+`185e88f`, the content-independence clause — re-derived both ways, `succeeded 108 / failed 0 /
+notRun 0` in `Saved/AutomationReport/index.json` and an independent macro census summing to 108
+with COMPLEX at 0. (2) A correction bullet this steward wrote
 in the prior pass asserted `T-INT-05.AlreadyActedGuardFiresOnAForeignModel` was still open; it is
 not — `Source/StratPlay/Tests/StratSelectionForeignModelClauses.cpp` (untracked) ran green in the
 same report above, having landed mid-wave, after that pass. Corrections appended in place at all
@@ -73,7 +80,7 @@ grep-contract residual" section, and the "Fixture-verdict binding" section) rath
 `chooseBuild`'s buildlist-ratio question and the content-independence corpus, have moved
 differently and are kept distinct: `chooseBuild` is now investigated and written up at
 `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md` (a request draft awaiting a
-Director ruling, **not discharged**); content-independence remains genuinely open. (3) The
+Director ruling, **not discharged**); content-independence remains genuinely open. **[STAMPED 2026-08-19 — BOTH halves of this sentence have since moved, and it is stamped rather than rewritten because it was true when written: `chooseBuild` is RULED (per-type population cap) and FILED upstream at crew `85995b8`; content-independence is DISCHARGED on two of its three axes at `185e88f`, the scenario axis alone still open. See the two NEXT bullets dated 2026-08-19.]** (3) The
 fixture-count derivation command recorded in this file and in
 `evidence/08-combat-pairing-gate/blackboard.md` — `git ls-files fixtures/ | wc -l` — measures
 tracked files in the directory, not `.log` fixtures; it read 11 only because this pass's own
@@ -349,7 +356,7 @@ further down.)_
        investigated and written up at
        `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md`, a request draft
        awaiting a Director ruling, **not discharged**; content-independence remains genuinely open,
-       untouched. These three items are three different states, not one word.
+       untouched. These three items are three different states, not one word. **[STAMPED 2026-08-19 — BOTH halves of this sentence have since moved, and it is stamped rather than rewritten because it was true when written: `chooseBuild` is RULED (per-type population cap) and FILED upstream at crew `85995b8`; content-independence is DISCHARGED on two of its three axes at `185e88f`, the scenario axis alone still open. See the two NEXT bullets dated 2026-08-19.]**
   2. **DISCHARGED, `a2d370a`, 2026-08-14 — see "Grep-contract case-sensitivity tightening"
      below.** Tighten `Source/StratPlay/Tests/StratHotSeatReplayParity.cpp`'s shape `TestTrue`
      (`Line.StartsWith(TEXT("STRAT-CMD accepted "))`) to `ESearchCase::CaseSensitive`. Residual
@@ -454,7 +461,7 @@ further down.)_
   Also unchanged and still open, carried again: the content-independence half of the phase-D
   "avoid one-corpus proof" precedent (a different scenario/buildlist/first side, genuinely
   different game content) — the host-independence half was discharged in this milestone's
-  phase 4.
+  phase 4. **[STAMPED 2026-08-19 — DISCHARGED on two of three axes at `185e88f` (first side and buildlist moved; the scenario axis is still open because `Data/` is vendored and holds one scenario). True when written; see the NEXT bullet dated 2026-08-19.]**
 - **DISCHARGED, this pass, 2026-08-14 — see "STRAT-CMD refused grep-contract residual" below.**
   The residual as originally opened by `a2d370a`: a case-only change to the `STRAT-CMD refused`
   shape was caught by nothing. Cannot be closed with an expected-message gate — verified against
@@ -2490,7 +2497,9 @@ passing in isolation: `Expected 'one accepted command emits exactly one line' to
   milestone's phase 4 and now collides in name with this combat-outcome milestone's own phase 4 —
   worth qualifying by milestone name whenever that file is next touched. No crew agent owns
   `.agents/`; this is a flag, not a task this steward takes.
-- **Deferred, out of phase 4's scope, its own future work:** a content-independent corpus — a
+- **Deferred, out of phase 4's scope, its own future work — DISCHARGED 2026-08-19 at `185e88f`
+  on two of three axes (first side and buildlist moved, scenario axis still open); this bullet is
+  stamped rather than rewritten because it was true for phase 4:** a content-independent corpus — a
   different scenario, buildlist, or first side — to discharge the content-independence half of
   the phase-D "avoid one-corpus proof" precedent (the host-independence half is now discharged —
   see the hash-diff bullet above). This phase's identical-hash result shows that remaining half
@@ -2881,7 +2890,10 @@ buildlist repetition inert at the rules layer.
     coordinator instead.** The account of what that pass actually did (rewrote a stale suite count
     to `106/106`) is left as written above, uncorrected, because it is true of the edit's *content*;
     only its lane attribution was false. The figure itself is not current — `.agents/
-    ue-project-context.md` now reads `107/107`, per the current banner above, updated by the
+    ue-project-context.md` now reads `107/107`, per the banner as it stood on 2026-08-14 — **[the
+    "per the current banner" wording went stale on 2026-08-19 in the act of correcting that banner
+    to 108/108, and is fixed here rather than left: this sentence's own claim about `.agents/` was
+    and is true, only its pointer at the banner had moved]** — updated by the
     coordinator (who has since been assigned ownership of that file), not by this steward and not
     by the user. The "No crew agent owns `.agents/`" flag cited above is itself now superseded, not
     still open: the user has assigned `.agents/ue-project-context.md` to the coordinator. That
@@ -2963,7 +2975,11 @@ buildlist repetition inert at the rules layer.
     documentation clauses are now closed — see "Fixture-verdict binding" below for the full
     account. `T-INT-05.AlreadyActedGuardFiresOnAForeignModel`, the `chooseBuild` buildlist-ratio
     question, and the content-independence corpus remain open and are untouched by this
-    correction.
+    correction. **[STAMPED 2026-08-19 — all three named here have since closed, on three different
+    days and by three different mechanisms, and the sentence is stamped rather than rewritten
+    because it was true when written: the foreign-model clause landed mid-wave 2026-08-14;
+    `chooseBuild` was RULED and FILED upstream at crew `85995b8`; content-independence is
+    DISCHARGED on two of three axes at `185e88f`, scenario axis still open.]**
   - **CORRECTION, still later pass, 2026-08-14 — the `T-INT-05.AlreadyActedGuardFiresOnAForeignModel`
     third is now ALSO DISCHARGED, the other two are not.** Both corrections above were true when
     written. `Source/StratPlay/Tests/StratSelectionForeignModelClauses.cpp` landed mid-wave, after
@@ -2974,7 +2990,7 @@ buildlist repetition inert at the rules layer.
     differently and are not flattened into this correction: `chooseBuild` is investigated and
     written up at `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md` (a request
     draft awaiting a Director ruling, **not discharged**); content-independence remains genuinely
-    open, untouched by any pass to date.
+    open, untouched by any pass to date. **[STAMPED 2026-08-19 — BOTH halves of this sentence have since moved, and it is stamped rather than rewritten because it was true when written: `chooseBuild` is RULED (per-type population cap) and FILED upstream at crew `85995b8`; content-independence is DISCHARGED on two of its three axes at `185e88f`, the scenario axis alone still open. See the two NEXT bullets dated 2026-08-19.]**
 
 ## Fixture-verdict binding (not a phase, this steward's own lane)
 
@@ -3065,7 +3081,11 @@ buildlist repetition inert at the rules layer.
   documented separately on purpose; nothing here merges them, and nothing here touches the
   content-independence corpus, `T-INT-05.AlreadyActedGuardFiresOnAForeignModel`, or the
   `chooseBuild` buildlist-ratio question — all three remain open, unowned by this steward or
-  owned by a different lane, and are not restated as closed anywhere in this entry.
+  owned by a different lane, and are not restated as closed anywhere in this entry. **[STAMPED
+  2026-08-19 — all three have since closed and none of them by this entry's own pass, which is why
+  this sentence is stamped and not rewritten: the foreign-model clause 2026-08-14, `chooseBuild`
+  RULED and FILED at crew `85995b8`, content-independence DISCHARGED at `185e88f` on two of three
+  axes with the scenario axis still open.]**
   - **CORRECTION, later pass, 2026-08-14 — `T-INT-05.AlreadyActedGuardFiresOnAForeignModel` is now
     DISCHARGED; the other two named here are not, and stay distinct from each other.** This bullet
     was true when written — the clause landed mid-wave, after this entry. It is now green in the
@@ -3075,4 +3095,4 @@ buildlist repetition inert at the rules layer.
     the `chooseBuild` buildlist-ratio question is investigated and written up at
     `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md`, a request draft awaiting a
     Director ruling — **not discharged, distinct from "closed"**; the content-independence corpus
-    remains genuinely open, untouched.
+    remains genuinely open, untouched. **[STAMPED 2026-08-19 — BOTH halves of this sentence have since moved, and it is stamped rather than rewritten because it was true when written: `chooseBuild` is RULED (per-type population cap) and FILED upstream at crew `85995b8`; content-independence is DISCHARGED on two of its three axes at `185e88f`, the scenario axis alone still open. See the two NEXT bullets dated 2026-08-19.]**

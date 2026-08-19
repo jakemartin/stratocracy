@@ -52,6 +52,12 @@ EXIT=0
 == 4. FALSIFIABILITY ON THE NEW CONTENT -- first two attack lines swapped, nothing else.
    Scrambled in a scratch copy, NOT in fixtures/: strat_fixture_verdict_binding.py asserts
    that directory's contents exactly, and a 12th .log there would fail the binding.
+
+   THE SCRATCH PATH BELOW IS EPHEMERAL AND IS GONE. Recorded as a RECIPE so this run is
+   reproducible from the repository alone, which the raw output was not:
+
+   $ python -c "import io,sys; src='Tools/architect/evidence/09-content-independence/different-content-slice.log'; dst=sys.argv[1]; L=io.open(src,encoding='utf-8',errors='replace').read().splitlines(True); i=[n for n,l in enumerate(L) if 'STRAT-AI applied kind=Attack' in l]; L[i[0]],L[i[1]]=L[i[1]],L[i[0]]; io.open(dst,'w',encoding='utf-8',newline='').write(''.join(L))" /tmp/scrambled.log
+   $ python Tools/architect/strat_combat_pairing_gate.py /tmp/scrambled.log --test-path Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
 STRAT-COMBAT pairing gate: C:\Users\me\AppData\Local\Temp\claude\E--MultiAgent-Stratocracy-Tools-context\b5dad962-4568-478c-89ff-32d2881673c5\scratchpad\scrambled.log
   test:                       Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
   slice (1-based lines):      1..201
@@ -68,3 +74,26 @@ STRAT-COMBAT pairing gate: C:\Users\me\AppData\Local\Temp\claude\E--MultiAgent-S
     FAIL pair index 1: applied line 50, resolved line 49: identity mismatch: applied (unit=1, hex=2,5) != resolved (attacker=5, hex=2,5)
 FAIL
 EXIT=1
+
+== 5. CROSS-SESSION DETERMINISM OF THE NEW CORPUS -- a different session entirely, added after
+   the re-gate observed that this reading rested on prose while run 4's did not.
+$ python Tools/architect/strat_combat_pairing_gate.py Saved/Logs/Stratocracy.log --test-path Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
+STRAT-COMBAT pairing gate: Saved\Logs\Stratocracy.log
+  test:                       Stratocracy.StratPlay.T-INT-05.BothSidesAiReachesAResultOnDifferentContent
+  slice (1-based lines):      4208..4408
+  STRAT-AI applied kind=Attack:  42
+  STRAT-COMBAT resolved:         42
+  STRAT-COMBAT refused:          0
+  STRAT-COMBAT divergence:       0
+  STRAT-AI terminal refusals:    1
+  STRAT-AI blocking refusals:    0
+  STRAT-COMBAT parse failures:   0
+  STRAT-AI parse failures:       0
+  pairing mismatches:            0
+PASS
+EXIT=0
+
+   The session: Saved/Logs/Stratocracy.log opens
+﻿Log file open, 08/19/26 15:00:14
+   The 18.40.01 session that produced runs 1-3 was rotated to
+Stratocracy-backup-2026.08.19-18.40.01.log

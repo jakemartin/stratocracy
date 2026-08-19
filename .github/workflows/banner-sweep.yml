@@ -32,9 +32,13 @@ jobs:
   sweep:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Pinned at the major versions that run on a supported Node. Run #1 (2026-08-19) went
+      # green on checkout@v4 / setup-python@v5 but warned that both target Node.js 20 and were
+      # being forced onto Node 24 -- a deprecation that eventually becomes a hard failure, and
+      # one this file introduced rather than inherited.
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 

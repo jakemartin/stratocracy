@@ -1248,7 +1248,8 @@ bool FStratCmdLineShapeTest::RunTest(const FString& /*Parameters*/)
 //
 // WHAT IS ACTUALLY ASSERTED, once contact exists:
 //   - the machine turns a click on an enemy-occupied hex into an ATTACK naming that unit
-//     and that hex (`StratSelectionMachine.cpp:255-287`);
+//     and that hex (the enemy-click arm of `HandleEvent`'s `HexPrimary` case, the one ending
+//     in the `Command = Attack` write);
 //   - the rules module ACCEPTS it -- which is what makes this more than the stub-driven
 //     branch clause in `StratSelectionMachineParity.cpp`, and which a transposed
 //     `FIntPoint -> strat::Hex` conversion would fail
@@ -1433,7 +1434,7 @@ bool FStratHotSeatClickedAttackTest::RunTest(const FString& /*Parameters*/)
 					if (!TestEqual(
 							*FString::Printf(
 								TEXT("T-UI-01: clicking the enemy at %s with unit %d selected is an "
-								     "ATTACK -- the branch at StratSelectionMachine.cpp:255-287"),
+								     "ATTACK -- the enemy-click arm of HandleEvent's HexPrimary case"),
 								*Describe(Target), UnitId),
 							static_cast<int32>(Outcome.Command),
 							static_cast<int32>(EStratSelectionCommand::Attack)))
@@ -1471,7 +1472,8 @@ bool FStratHotSeatClickedAttackTest::RunTest(const FString& /*Parameters*/)
 					TestNotEqual(TEXT("T-UI-01: and it moved the state, so 'accepted' is not a no-op"),
 						HashAfter, HashBefore);
 
-					// §2.11.1 -- an attack ends the unit's turn. StratSelectionMachine.cpp:350-356.
+					// §2.11.1 -- an attack ends the unit's turn: `NotifyCommandApplied`'s `Attack`
+					// arm is what adds the attacker to `DoneUnits`.
 					Machine.NotifyCommandApplied(Outcome);
 					TestTrue(
 						TEXT("T-UI-01: §2.11.1 -- an accepted attack marks the attacker DONE"),

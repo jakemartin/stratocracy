@@ -10,8 +10,8 @@
 // playtest could not witness a wait: a wait submits nothing, so no `STRAT-CMD` line is
 // printed, and the only trace left behind was that re-clicking the unit said "unit N has
 // finished this turn" -- which an accepted ATTACK also produces, because
-// `NotifyCommandApplied` adds the attacker to `DoneUnits` too
-// (`StratSelectionMachine.cpp:390`). Two different events, one indistinguishable trace.
+// `NotifyCommandApplied` adds the attacker to `DoneUnits` too (the `Attack` arm of its
+// `switch`). Two different events, one indistinguishable trace.
 //
 // A CLAUSE THAT DROVE `HandleEvent(Wait)` AND THEN ASSERTED THAT A `STRAT-WAIT spent` LINE
 // APPEARED WOULD BE PINNING `UE_LOG` AGAINST ITSELF -- subject and witness in one, which is
@@ -50,7 +50,8 @@
 //
 // THE ONE PLACE A LOG LINE IS OBSERVED, AND WHY IT IS NOT THE SELF-WITNESSING SHAPE.
 // `WaitWithNothingSelectedIsANoOp` captures `STRAT-WAIT` off `GLog` to assert the line is
-// ABSENT on the no-op path -- the guard at `StratSelectionMachine.cpp:156-160` breaks out
+// ABSENT on the no-op path -- the `SelectedUnitId == INDEX_NONE` guard opening
+// `HandleEvent`'s `Wait` arm breaks out
 // before the line, so a no-op wait cannot report a success -- and the same clause then
 // drives a REAL wait through the same live capture and requires exactly one line. The
 // capture is therefore proven able to see a line before its silence is read as meaning
@@ -390,9 +391,9 @@ namespace StratSelectionWaitClauses
 //
 // THE AMBIGUITY THIS CLAUSE IS ABOUT IS REAL AND WAS OBSERVED. Both events end with
 // `bDone == true` on the decorated model, and both make a re-click say "unit N has finished
-// this turn" -- an accepted Attack adds to `DoneUnits` in `NotifyCommandApplied`
-// (`StratSelectionMachine.cpp:390`) exactly as a Wait does in `HandleEvent`
-// (`:168`). In phase 6's captured session that was the whole of the trace, which is why the
+// this turn" -- an accepted Attack adds to `DoneUnits` in `NotifyCommandApplied`'s `Attack`
+// arm exactly as a Wait does in `HandleEvent`'s `Wait` arm, past the guard. In phase 6's
+// captured session that was the whole of the trace, which is why the
 // playtest could not witness a wait at all.
 //
 // WHAT IS ASSERTED IS THE PROPERTY THE LOG LINE WAS ADDED TO BUY, NOT THE LINE. The wait's
@@ -788,8 +789,8 @@ bool FStratWaitIsDistinguishableFromAttackTest::RunTest(const FString& /*Paramet
 // T-INT-05 -- A WAIT WITH NOTHING SELECTED IS A NO-OP, AND THE GUARD IS WHAT MAKES THE
 // `STRAT-WAIT spent` LINE'S PLACEMENT HONEST.
 //
-// THE ARM UNDER TEST is `StratSelectionMachine.cpp:156-160`: with `SelectedUnitId ==
-// INDEX_NONE` the Wait case sets a failure reason and BREAKS OUT -- before `DoneUnits.Add`,
+// THE ARM UNDER TEST is the guard opening `FStratSelectionMachine::HandleEvent`'s `Wait`
+// case: with `SelectedUnitId == INDEX_NONE` it sets a failure reason and BREAKS OUT -- before `DoneUnits.Add`,
 // and before the log line. So nothing is spent, nothing is marked, and a no-op wait cannot
 // report a success. A guard that fell through would add `INDEX_NONE` to the done set and
 // print a line claiming a unit had spent its turn.
@@ -810,7 +811,7 @@ bool FStratWaitIsDistinguishableFromAttackTest::RunTest(const FString& /*Paramet
 // ON THE REFUSAL TEXT, SAID PLAINLY BECAUSE IT WAS ASKED. There is NO module-side accessor
 // for it: it is a `TEXT(...)` literal built inline in `HandleEvent`, `FStratSelectionOutcome`
 // exposes nothing but the composed `FailureReason`, and nothing in `FStratSelectionMachine`
-// hands the string out. `StratSelectionMachine.cpp:158` reads
+// hands the string out. The guard's own assignment reads
 //
 //     Outcome.FailureReason = TEXT("nothing is selected");
 //
@@ -877,7 +878,8 @@ bool FStratWaitWithNothingSelectedIsANoOpTest::RunTest(const FString& /*Paramete
 		NoOp.SelectedUnitId, static_cast<int32>(INDEX_NONE));
 	TestFalse(
 		TEXT("T-INT-05: the machine REFUSES in its own words -- see this clause's header block "
-		     "for why the sentence itself is not pinned (StratSelectionMachine.cpp:158)"),
+		     "for why the sentence itself is not pinned (the inline literal in HandleEvent's "
+		     "Wait guard)"),
 		NoOp.FailureReason.IsEmpty());
 	AddInfo(FString::Printf(TEXT("the machine's refusal: %s"), *NoOp.FailureReason));
 
@@ -946,7 +948,7 @@ bool FStratWaitWithNothingSelectedIsANoOpTest::RunTest(const FString& /*Paramete
 		LinesAfterRealWait > LinesAfterNoOp);
 	TestEqual(
 		TEXT("T-INT-05: the no-op wait emitted NO STRAT-WAIT line -- the nothing-is-selected arm "
-		     "breaks out before it (StratSelectionMachine.cpp:156-160), so a no-op cannot report a "
+		     "breaks out before it, so a no-op cannot report a "
 		     "success"),
 		LinesAfterNoOp, 0);
 	for (const FString& Line : Capture.Lines)

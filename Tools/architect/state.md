@@ -364,6 +364,54 @@ further down.)_
      `Source/StratPlay/Tests/StratSelectionWaitClauses.cpp`
      (`StratSelectionMachine.cpp:156-160`). Currently accurate, but unreachable by a doc pass
      because it sits inside an assertion string rather than a comment. Same owner class as item 2.
+     - **DISCHARGED 2026-08-19 — and the file held SEVEN citations, not one, one of which had
+       already rotted.** The item named the two in-string ones; a grep for
+       `StratSelectionMachine.cpp:` in that file returned seven sites (two inside assertion
+       message strings, five in comments), all replaced with function-and-branch citations.
+       **`:390`, cited twice as `NotifyCommandApplied`'s `DoneUnits.Add`, was already wrong when
+       this pass opened it** — that add is at `411`, and `390` now lands on a `break;` in
+       `HandleEvent`'s Move arm, a different function. Re-derived, not assumed:
+       `grep -n "DoneUnits.Add(Outcome.UnitId)"` → 411; `sed -n '390p'` → `break;`. The other
+       five (`:156-160`, `:158`, `:168`) were still accurate and were replaced anyway, which is
+       the point — accuracy today is not the property, unreachability by the next diff is.
+       Rebuilt (`Result: Succeeded`, one TU recompiled) and re-run headless: suite **107/107**,
+       `succeeded 107 / succeededWithWarnings 0 / failed 0 / notRun 0`, 107 entries, zero
+       non-Success, `reportCreatedOn 2026.08.19-17.49.48`; both wait clauses `Success`. Count
+       unmoved, as expected for a comment-and-message-string change.
+     - **NOT closed by this, and measured rather than guessed: four more line-number citations
+       survive in two other files**, outside the file this item named. `StratBridge.cpp:448`
+       cites `StratSelectionMachine.cpp:571-575` — checked, still accurate (the submit `switch`).
+       `StratHotSeatReplayParity.cpp` carries three, and **two of them have already rotted**:
+       `:255-287` (cited twice, once INSIDE an assertion message string at its ATTACK clause)
+       lands on the selection arm, not the attack branch — the real enemy-click arm runs from
+       roughly the `bHasActed` guard to the `Command = Attack` write; and `:350-356`, cited for
+       "an attack ends the unit's turn", lands on the Move arm's "already moved this turn"
+       refusal -- that one is `NotifyCommandApplied`'s `Attack` arm, the same add the wait file
+       cites. A fifth, `StratSelectionMachine.cpp:519`'s `Save.good.cpp:294-300`, cites a
+       VENDORED file by line and is a different problem again.
+     - **The three `StratHotSeatReplayParity.cpp` citations were then fixed too, on the user's
+       instruction, in the same pass** -- both rotted ones and the one in-string site among them,
+       all replaced with the branch names above. `grep -rn "StratSelectionMachine.cpp:"
+       Source/StratPlay/Tests/` now returns nothing: the Tests lane carries no line-number
+       citation into the machine at all. Rebuilt and re-run: `Result: Succeeded`, suite
+       **107/107**, `succeeded 107 / succeededWithWarnings 0 / failed 0 / notRun 0`, 107 entries,
+       zero non-Success, `reportCreatedOn 2026.08.19-18.05.58`; `T-UI-01.ClickedAttackIsAccepted
+       AndRecorded` -- the clause whose assertion message was edited -- `Success`, as are
+       `T-SAVE-05.HotSeatReplayParity` and `T-INT-02.ReplayParityWithHeadless`.
+     - **A build trap worth the record: the editor blocks the build, and the first build of this
+       pass slipped through anyway.** The second build failed `Result: Failed
+       (OtherCompilationError)` on `Unable to build while Live Coding is active` with the editor
+       running (PID 51424, started 13:54, i.e. ALREADY RUNNING during the first build, which
+       succeeded). So "the editor was open" does not predict the failure on its own -- Live
+       Coding has to have engaged -- and an agent that treats a green build as proof the editor
+       was closed has it backwards. Verification here waited for the user to close it rather than
+       committing on the strength of the edit being "the same class" as one already proven, which
+       is not a measurement.
+     - **Still not fixed, and still measured: two citations outside the Tests lane.**
+       `StratBridge.cpp:448`'s `StratSelectionMachine.cpp:571-575` (accurate today; production
+       code, `strat-gameplay-engineer`'s lane) and `StratSelectionMachine.cpp:519`'s
+       `Save.good.cpp:294-300` (a line citation into VENDORED bytes, which rot on the next
+       re-vendor with nothing in this repo to catch it).
   4. **DISCHARGED, 2026-08-14 — see "Pre-sliced zero-event guard" below.** `--pre-sliced` gate
      debt on `Tools/architect/strat_combat_pairing_gate.py`, confirmed untouched by phase 5
      (`git diff --stat ae2f22a -- Tools/architect/` empty at the time). It returned `PASS` and

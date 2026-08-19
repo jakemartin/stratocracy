@@ -407,11 +407,43 @@ further down.)_
        was closed has it backwards. Verification here waited for the user to close it rather than
        committing on the strength of the edit being "the same class" as one already proven, which
        is not a measurement.
-     - **Still not fixed, and still measured: two citations outside the Tests lane.**
-       `StratBridge.cpp:448`'s `StratSelectionMachine.cpp:571-575` (accurate today; production
-       code, `strat-gameplay-engineer`'s lane) and `StratSelectionMachine.cpp:519`'s
-       `Save.good.cpp:294-300` (a line citation into VENDORED bytes, which rot on the next
-       re-vendor with nothing in this repo to catch it).
+     - **The vendored citation is now fixed too, on the user's instruction -- and measuring it
+       turned up 48 more.** `StratSelectionMachine.cpp`'s `CommandKindName` doc block carried
+       three line citations, all three now by symbol: `Save.good.cpp:294-300` ->
+       `strat::saveCommandName`'s switch; `Save.h:135` / `Save.good.cpp:292` -> declared in
+       `Save.h`, defined in `Save.good.cpp`; and `.agents/ue-project-context.md:189-191` -> that
+       file's read-only-territory heading. The block now says WHY in as many words: vendored
+       bytes move on a re-vendor and nothing in this repository would catch a stale number.
+       **`.agents/…:189-191` had already rotted, and this steward rotted it** -- the map ->
+       GameMode section committed at `0b70a18` was inserted above it, so the citation now lands
+       on that new prose rather than the sharper-clause text it names. Same class as the §2
+       staleness this steward's own filing caused in the `chooseBuild` document, on the same day.
+       Verified: `Result: Succeeded`; suite **107/107**, zero non-Success, `reportCreatedOn
+       2026.08.19-18.28.07`; and the diff proven comment-only, not asserted to be -- every added
+       and removed line matches a comment-body shape, non-comment changed lines **0**.
+     - **THE REAL SIZE OF THIS, measured rather than estimated: 46 line citations into vendored
+       headers survive across 16 files** -- 48 before this pass, less the two the block above
+       just fixed. **Both numbers are stated because the command below returns the SECOND one,
+       and a note whose figure its own command contradicts is the exact defect this file keeps
+       paying for.** Caught by running it after writing the number, not before. Kept on ONE
+       line, unwrapped, because a wrapped command is a command nobody can run:
+
+       ```
+       grep -rEn "(Save|Ai|Combat|Economy|Move|Turn|Ui|Data|Hex|Driver|Rules)\.(h|good\.cpp|buggy\.cpp):[0-9]" Source/StratPlay Source/StratBridge Source/StratUI Source/Stratocracy | wc -l
+       ```
+
+       Run over the four non-vendored `Source/` modules. Concentrated in
+       `StratBridge.cpp` (11), `StratUI/StratViewModel.h` (8), `StratBridge.h` (7),
+       `StratCombatOutcomeParity.cpp` (4). These are the WORST class of the whole family: a
+       re-vendor moves them all at once, silently, and no clause in this repository reads a
+       vendored line number to notice. Spot-checked while here: `Save.h:54`'s
+       `SaveCommandKind` enum is still accurate. The other 47 were NOT checked one by one and
+       are not claimed either way. Unowned -- `StratBridge` and `StratUI` are
+       `strat-gameplay-engineer`'s lane, not this steward's, and this is a phase-sized sweep
+       rather than a fix to slip into another pass.
+     - **Still not fixed, and still measured: one citation outside the Tests lane.**
+       `StratBridge.cpp:448`'s `StratSelectionMachine.cpp:571-575` -- accurate today (it names
+       the submit `switch`); production code, `strat-gameplay-engineer`'s lane.
   4. **DISCHARGED, 2026-08-14 — see "Pre-sliced zero-event guard" below.** `--pre-sliced` gate
      debt on `Tools/architect/strat_combat_pairing_gate.py`, confirmed untouched by phase 5
      (`git diff --stat ae2f22a -- Tools/architect/` empty at the time). It returned `PASS` and

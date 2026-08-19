@@ -516,14 +516,16 @@ namespace
 	/**
 	 * The SAVE FORMAT's spelling of a command kind, not this module's enum names.
 	 *
-	 * `Save.good.cpp:294-300` spells them `Move` / `Attack` / `Build` / `Capture` /
-	 * `EndTurn`, and `kindFromName` parses those same words back. Matching it means a phase
+	 * `strat::saveCommandName`'s switch (in the vendored `Save.good.cpp`) spells them
+	 * `Move` / `Attack` / `Build` / `Capture` / `EndTurn`, and `kindFromName` parses those
+	 * same words back. Cited by SYMBOL, not by line: those are vendored bytes, so a
+	 * re-vendor moves the lines and nothing in this repository would catch a stale number. Matching it means a phase
 	 * 6 gate can compare a `STRAT-CMD accepted` line against a `commandLog` entry without a
 	 * translation table between them.
 	 *
 	 * THE FIVE LITERALS ARE UNAVOIDABLE *HERE*, and the reason is the module boundary and
-	 * not the function's linkage. `strat::saveCommandName` is declared at
-	 * `Source/StratRules/Save.h:135` and defined at `Save.good.cpp:292` at namespace scope
+	 * not the function's linkage. `strat::saveCommandName` is declared in
+	 * `Source/StratRules/Save.h` and defined in `Save.good.cpp` at namespace scope
 	 * with no `static` -- it has external linkage. What it does not carry is an `_API`
 	 * macro, and an editor target is a modular build, so `StratPlay` cannot link a call to
 	 * it (8 x LNK2019, `StratBridge.h`'s opening measurement). A routing fix would mean an
@@ -533,7 +535,8 @@ namespace
 	 * SO IT IS A DELIBERATE SECOND SPELLING, and it is pinnable -- just not from this
 	 * module. `Source/StratBridge/Tests/` CAN call `strat::saveCommandName` directly and
 	 * assert these five words against the format's own spelling; that is the sharper clause
-	 * `.agents/ue-project-context.md:189-191` asks for, and nothing in the tree forbids it.
+	 * `.agents/ue-project-context.md` asks for under its read-only-territory heading, and
+	 * nothing in the tree forbids it.
 	 */
 	const TCHAR* CommandKindName(EStratSelectionCommand Command)
 	{

@@ -399,8 +399,9 @@ further down.)_
   §6 of `Tools/architect/evidence/upstream-chooseBuild-buildlist-ratio.md`, including a change
   request drafted in `spec/ai_spec.md`'s own idiom, ready to file. **Three things this does NOT
   close.** (1) Nothing is implemented — the mechanism is in vendored bytes under
-  `Source/StratRules/`; this repo may not edit them and no UE-side work discharges it. (2) The
-  request has not been FILED upstream; filing is an edit to another repository and the user's call.
+  `Source/StratRules/`; this repo may not edit them and no UE-side work discharges it. (2) **CORRECTED
+  same day — the request IS now filed**, at crew `85995b8`, as change request 3 in
+  `spec/ai_spec.md`; this clause was true for about an hour and is left rather than rewritten.
   (3) Two sub-questions go up with it rather than being decided here: where the cap numbers live
   (buildlist multiplicity — free, but silently re-reads every existing authored list as a quota
   table — versus an explicit parallel cap vector, recommended), and the requirement that the cap

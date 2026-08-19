@@ -7,8 +7,11 @@
 **UPDATED 2026-08-19 — the Director has ruled; see §6.** §§1–5 were written while the question was
 open and are unchanged. The ruling is a per-type population cap, which is none of §4's Options A–D;
 §4's "ask the Director to rule" recommendation is therefore DISCHARGED, while its interim advice
-(author an Infantry-only buildlist until the mechanism lands) still stands. Still investigation only:
-nothing is implemented, and the mechanism lives in vendored bytes this repo may not edit.
+(author an Infantry-only buildlist until the mechanism lands) still stands. **FILED UPSTREAM 2026-08-19** at crew `85995b8` as change request 3 in `spec/ai_spec.md`,
+alongside the two already there; the same commit corrects that section's "Both are
+pre-existing consequences" preamble (untrue at three items) and points stated reading 1 at
+the ruling. Still not implemented: the mechanism lives in vendored bytes this repo may not
+edit, and no source file was touched upstream either.
 
 ---
 
@@ -122,6 +125,16 @@ Ai.h
 
 Confirmed independently by git log: **no commit touches the AI between the vendored point and crew
 HEAD.**
+
+> **CORRECTED 2026-08-19, and by this document's own doing.** The first command below lists
+> `spec/ai_spec.md` among its paths, and filing this request (crew `85995b8`) edited exactly that
+> file — so re-running it as printed now returns `85995b8` rather than `(empty)`, and the claim
+> above is false as stated for the spec path. **The half that matters is intact and was re-measured,
+> not assumed:** restricted to the source paths,
+> `git log --oneline cb8e12b3..HEAD -- cpp_reference/Ai.good.cpp cpp_reference/Ai.h` is still empty,
+> so `Ai.good.cpp` and `Ai.h` remain byte-identical to the vendored copy and the hash table below
+> still holds. The output is left as printed rather than re-run in place, because what it recorded
+> was true at the time and the reason it stopped being true is worth seeing.
 
 ```
 $ git log --oneline cb8e12b3..HEAD -- cpp_reference/Ai.good.cpp cpp_reference/Ai.h spec/ai_spec.md

@@ -1,4 +1,10 @@
-#!/bin/sh
+#!/bin/bash
+#
+# BASH, NOT `sh`, AND THE SHEBANG USED TO OVERSTATE. This script uses `read -r -d ''` to walk
+# NUL-delimited paths, which is a bashism: under `dash` it fails with "read: Illegal option -d",
+# the staged check degrades to nothing, and the commit proceeds. Measured by a reviewer gate.
+# On this machine `/bin/sh` IS bash 5.2 (Git for Windows) so the old form happened to work, but
+# a shebang is where a reader checks portability and that one promised POSIX it did not meet.
 #
 # Stratocracy pre-commit hook -- runs the banner sweep when, and only when, the record
 # it polices is part of the commit.
@@ -56,8 +62,13 @@ SWEEP="$REPO_ROOT/$SWEEP_REL"
 # reverted a file to HEAD), so the inconsistency is not hypothetical.
 UNITS=$(ls "$REPO_ROOT"/Source/StratRules/*.h 2>/dev/null | xargs -n1 basename 2>/dev/null | sed 's/\.h$//' | paste -sd'|' -)
 if [ -n "$UNITS" ]; then
-    HITS=$(mktemp) || exit 0
-    FAILED=$(mktemp) || exit 0
+    # A FAILURE TO SET UP THE CHECK IS NOT A CHECK THAT PASSED. These were `|| exit 0`,
+    # which meant a broken TMPDIR skipped the entire citation scan and created the commit
+    # with no output but mktemp's own stderr -- demonstrated by a reviewer gate, which
+    # landed `Save.h:64` in HEAD that way. It is precisely the substitution this hook's own
+    # commit message condemns ("an unread file is not a clean file"), one level up.
+    HITS=$(mktemp) || { echo "COMMIT REFUSED: mktemp failed, so the citation check did not run."; exit 1; }
+    FAILED=$(mktemp) || { rm -f "$HITS"; echo "COMMIT REFUSED: mktemp failed, so the citation check did not run."; exit 1; }
     trap 'rm -f "$STAGED" "$HITS" "$FAILED"' EXIT
 
     # -z / read -d '': a path with a space split under the old unquoted `for f in $(...)`,
@@ -148,7 +159,10 @@ if [ -z "$PY" ]; then
 fi
 
 STAGED=$(mktemp) || exit 0
-trap 'rm -f "$STAGED"' EXIT
+# NAMES ALL THREE, because a second `trap ... EXIT` REPLACES the handler rather than adding
+# to it -- the earlier form dropped $HITS and $FAILED and leaked two files per record commit
+# (measured). They are all in scope by here, and `STAGED=""` up top keeps the first trap safe.
+trap 'rm -f "$STAGED" "$HITS" "$FAILED"' EXIT
 if ! git show ":$STATE_REL" > "$STAGED" 2>/dev/null; then
     echo "banner sweep: could not read the staged $STATE_REL -- skipping"
     exit 0

@@ -756,7 +756,7 @@ further down.)_
     cost is **+10** over-100-column comment lines (10 before, 20 now — the reviewer's own
     re-measurement. **The earlier "11 sites" was NOT wrong and this entry over-corrected it** —
     it counted added long lines in one diff, a different quantity from standing long lines across
-    the files. Corrected on the reviewer's own objection to a correction of mine). Deliberately not re-wrapped here:
+    the files. Corrected on the reviewer's own objection to a correction of mine.) Deliberately not re-wrapped here:
     a cosmetic pass inside a correction commit buries the evidentiary diff. **Trigger: the next
     commit that touches those blocks for a substantive reason re-wraps them.** Owner:
     `strat-gameplay-engineer` for `Source/`, since that is its lane.
@@ -786,6 +786,40 @@ further down.)_
     non-blocking warning naming each stray, because an unstaged citation elsewhere is not this
     commit's fault — and CI still holds the blocking tree-wide line on push. Raised by the
     reviewer as a loss neither the hook's prose nor this record had disclosed.
+  - **BLOCKED A FOURTH TIME, 2026-08-19 — and the first finding was THIS HOOK'S OWN TITLE
+    DEFECT, one level up.** `HITS=$(mktemp) || exit 0` meant a scratch-file failure skipped the
+    ENTIRE citation check and created the commit, with no output but `mktemp`'s own stderr —
+    which names neither this hook nor the fact that a check was skipped. Demonstrated, not
+    argued: with `TMPDIR` pointed at a non-existent directory and `Save.h:64` staged, the
+    reviewer landed that citation in `HEAD`. **A failure to SET UP the check is not a check that
+    passed** — the same substitution the previous commit condemned at the file level, reproduced
+    at the setup level by the very commit that condemned it. Both `mktemp` calls now refuse with
+    a message naming the hook. Re-measured: broken `TMPDIR` + staged citation → `COMMIT REFUSED:
+    mktemp failed, so the citation check did not run.`, `HEAD` unmoved.
+  - **Second finding: two temp files leaked per record commit.** A second `trap ... EXIT`
+    REPLACES the handler rather than adding to it, so the sweep's `trap 'rm -f "$STAGED"'`
+    silently dropped `$HITS` and `$FAILED`. Measured by the reviewer (8 → 10 `/tmp/tmp.*` across
+    one commit) and re-measured here after the fix: **leaked 0**. The later trap now names all
+    three.
+  - **`#!/bin/sh` overstated and is now `#!/bin/bash`.** `read -r -d ''` is a bashism; under
+    `dash` it fails with `read: Illegal option -d`, the staged check degrades to nothing and the
+    commit proceeds. It happened to work because `/bin/sh` on this machine IS bash 5.2 (Git for
+    Windows). A shebang is where a reader checks portability, and that one promised POSIX it did
+    not meet. **The restored tree-wide warning is what kept that failure soft** — under `dash`
+    the guard became advisory rather than blind, which is an argument for the warning that was
+    not anticipated when it was added.
+  - **Four attack surfaces came back CLEAN, recorded because a negative result is a result.**
+    The absolute pathspec emits repo-relative paths (so the `Source/StratRules/*` filter still
+    matches, verified by staging a citation INTO a vendored file — correctly allowed); committing
+    from a subdirectory still refuses (git chdirs to the top level before running hooks); a clean
+    100%-similarity rename does NOT produce a false "could not read" refusal, because
+    `--name-only -z` emits only the destination for an `R` entry; and the tree-wide warning grep
+    costs `real 0m0.052s`. Worktrees remain untested, and the "unread blob" refusal has **no live
+    trigger** — the reviewer could not reach it and said so rather than letting it read as
+    verified.
+  - **Regression-tested after the fixes, all six behaviours:** space-path citation REFUSED, true
+    rename citation REFUSED, clean staged file ALLOWED, unstaged stray WARNED and allowed,
+    broken `TMPDIR` REFUSED, temp files leaked 0.
   - **The hook then caught the coordinator, on this very commit, and it was a real defect.**
     `git commit` was REFUSED: `StratBoardActor.h:23` still carried `Replay.good.cpp:299-308`.
     Cause — the hook test itself. Planting a citation, then restoring with

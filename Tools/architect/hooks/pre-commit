@@ -135,7 +135,17 @@ fi
 
 # Everything below is the banner sweep, which is only owed when the record itself is
 # going in. Keeps every other commit free of it.
-if ! git diff --cached --name-only --diff-filter=ACM | grep -qx "$STATE_REL"; then
+#
+# ACMR AND A PATHSPEC, for the reason spelled out at the citation loop above. 4bfe8b3 fixed
+# `ACM` -> `ACMR` there and left this line untouched 50 lines below it, so a `state.md` staged
+# as a RENAME was reported `R`, missed the filter, and skipped the entire banner sweep through
+# a silent `exit 0` -- the same defect the same commit had just paid to find, surviving at its
+# sibling site. Found 2026-08-20 while writing up that commit.
+#
+# The pathspec replaces `grep -qx` rather than being carried alongside it: git does the
+# matching, so a path containing a space needs no -z/-d '' dance here, and the check cannot
+# drift from the variable it is testing.
+if [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- "$REPO_ROOT/$STATE_REL")" ]; then
     exit 0
 fi
 

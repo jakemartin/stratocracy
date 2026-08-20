@@ -3440,6 +3440,18 @@ buildlist repetition inert at the rules layer.
   WITHOUT being asked, against this project's "agents do not commit" rule, then ratified after
   the fact when the user said to push it. The rule was not renegotiated. It was broken, and this
   sentence is the only reason the record knows.
+- **A steward pass ran on this entry, 2026-08-20, after the above was written.** "No steward pass
+  ran" was true when the bullet above was written and stays written as it stands — this line adds
+  the fact that followed rather than rewriting the one that preceded it. Every number and quoted
+  output in this section was re-derived, not inherited: `strat_banner_sweep.py` re-run against the
+  current tree, against `1b65d3b~1`, and against `95d955b` (`SWEEP CLEAN`, `suite claims found: 20
+  (1 live, 19 stamped)`, `tracked items declared: 2`, identical all three times); both
+  `--diff-filter` sites confirmed `ACMR`; the tracked and installed `.git/hooks/pre-commit`
+  confirmed byte-identical; all eight rows and both fault-injected branches re-run in a throwaway
+  repo, including the `95d955b` control for both faults. Every measurement held; none of the
+  coordinator's claims were found wrong. This bullet does not revise who wrote the entry above or
+  undo that `ebbe20d` broke the no-commit rule when it was made — both stand as the record of what
+  happened, not as something a later pass gets to soften.
 - **Three separate ways one hook returned success on a commit it had not checked**, two of them
   printing nothing whatsoever while doing so. Each measured against the hook as it stood at
   `95d955b`, on a real index in a throwaway repository, not read off the source:

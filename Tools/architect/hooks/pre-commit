@@ -145,6 +145,44 @@ fi
 # The pathspec replaces `grep -qx` rather than being carried alongside it: git does the
 # matching, so a path containing a space needs no -z/-d '' dance here, and the check cannot
 # drift from the variable it is testing.
+# THE RECORD LEAVING $STATE_REL IS THE EVENT THAT MAKES THIS HOOK INERT, and it has to be
+# caught BEFORE the trigger below, because in that case the trigger does not fire -- which is
+# the whole failure. `STATE_REL` is a TYPED path, so once the record lives somewhere else this
+# hook looks for a file that is not there and passes every commit in silence, exactly the
+# guard-goes-inert shape the citation loop was already fixed for twice.
+#
+# The test is deliberately about the PATH and not about renames: in HEAD, not in the index,
+# for any reason -- renamed, moved, deleted -- is the same event and wants the same answer.
+# Parsing `--name-status -z` rename records would be a second thing to get wrong.
+#
+# It fires only when a commit actually removes the record from its configured path, so an
+# ordinary commit, a partially-staged state.md, and a repository that never had one are all
+# untouched. There is no HEAD on the first commit, `cat-file` fails, and the check stays quiet.
+if git cat-file -e "HEAD:$STATE_REL" 2>/dev/null && ! git cat-file -e ":$STATE_REL" 2>/dev/null
+then
+    echo "COMMIT REFUSED: $STATE_REL is in HEAD but not in this commit's index, so this commit"
+    echo "moves or deletes the record. This hook would then keep looking for $STATE_REL, find"
+    echo "nothing, and pass every future commit without sweeping anything. What is staged:"
+    git diff --cached --name-status -- "$REPO_ROOT/$STATE_REL" | sed 's/^/    /'
+    echo ""
+    echo "  Point the hook at the new path and reinstall:"
+    echo "    STATE_REL= in Tools/architect/hooks/pre-commit"
+    echo "    sh Tools/architect/hooks/install.sh"
+    echo "  Or --no-verify if the record is meant to be gone."
+    exit 1
+fi
+
+# ALREADY INERT, rather than about to become so: the configured path is in neither HEAD nor
+# the index. Reachable through --no-verify or a clone whose record was removed earlier. This
+# warns and never blocks -- a repository that legitimately has no record must not be wedged --
+# but it does not stay quiet, because a guard that has silently stopped running is the thing
+# this whole block exists to prevent. One line, and only in that state.
+if ! git cat-file -e "HEAD:$STATE_REL" 2>/dev/null && ! git cat-file -e ":$STATE_REL" 2>/dev/null
+then
+    echo "banner sweep WARNING: no $STATE_REL in HEAD or the index -- this hook is configured"
+    echo "                      for a path that does not exist, so it is checking nothing."
+fi
+
 if [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- "$REPO_ROOT/$STATE_REL")" ]; then
     exit 0
 fi
@@ -168,14 +206,24 @@ if [ -z "$PY" ]; then
     exit 0
 fi
 
-STAGED=$(mktemp) || exit 0
+# `|| exit 0` here, while the two mktemps at the citation loop above already refused -- the
+# same defect at its sibling site for the third time in this file. A temp file we could not
+# create is a sweep that did not run.
+STAGED=$(mktemp) || { echo "COMMIT REFUSED: mktemp failed, so the banner sweep did not run."; exit 1; }
 # NAMES ALL THREE, because a second `trap ... EXIT` REPLACES the handler rather than adding
 # to it -- the earlier form dropped $HITS and $FAILED and leaked two files per record commit
 # (measured). They are all in scope by here, and `STAGED=""` up top keeps the first trap safe.
 trap 'rm -f "$STAGED" "$HITS" "$FAILED"' EXIT
+# AN UNREAD RECORD IS NOT A CLEAN RECORD, which is 4bfe8b3's own title, and this line was
+# still doing the opposite of it: `git show` failing printed "skipping" and returned 0, so the
+# record went into HEAD unswept and the hook reported nothing wrong. Reaching here means the
+# trigger above already saw the path staged, so a read failure is a real anomaly and not a
+# routine absence -- there is no benign reading of it left to protect.
 if ! git show ":$STATE_REL" > "$STAGED" 2>/dev/null; then
-    echo "banner sweep: could not read the staged $STATE_REL -- skipping"
-    exit 0
+    echo "COMMIT REFUSED: could not read the staged $STATE_REL, so it was NOT swept."
+    echo "The trigger above saw it staged, so this is an index anomaly rather than a"
+    echo "missing file. Re-stage it and try again."
+    exit 1
 fi
 
 

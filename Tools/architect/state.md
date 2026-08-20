@@ -1,7 +1,9 @@
 # Architect state
 
 _Last run 2026-08-19 (post-milestone work: the `chooseBuild` cap RULED and FILED upstream at
-crew `85995b8`; ten rotted line-number citations replaced by function-and-branch citations; the
+crew `85995b8`; the content-independence SCENARIO axis FILED upstream against the same crew HEAD
+as a change request in `spec/scenario_spec.md` — filing is not closing, and that axis is STILL
+OPEN; ten rotted line-number citations replaced by function-and-branch citations; the
 content-independence corpus DISCHARGED on two of three axes at `185e88f`, gated `VERDICT: BLOCK`
 then `VERDICT: PASS` after this banner itself was found contradicting the entry below it — the
 defect that produced `strat_banner_sweep.py`. Suite 107 -> 108. The milestone narrative that
@@ -546,6 +548,42 @@ further down.)_
     many, the `!bSeeded` silent path fired zero times here as in phase 3 (a measurement of these
     runs, not a structural guarantee), and `ReplayLog` still does not route through `Submit`.
   - **No reviewer verdict.** This is post-milestone work and has not been gated.
+- **FILED UPSTREAM 2026-08-19 — the SCENARIO axis, which is STILL OPEN and is not closed by
+  filing.** The axis above cannot move in this repo at all: `Data/` is vendored certified bytes
+  and holds one scenario, and the crew repo holds one too — measured by git blob id rather than a
+  worktree diff (CRLF vs LF), `ferrum_crossing.json` `64e3e3a8` on both sides, with
+  `git diff --stat c2f5860 HEAD -- data/` empty upstream, so this is missing content and not a
+  stale vendor. Filed against crew HEAD `85995b8` and landed there at crew `3b5ef9d`, as a new
+  "Change requests for the Director" section in `spec/scenario_spec.md`, placed before Acceptance
+  where `ai_spec.md` keeps its own. Spec-only upstream: no scenario authored, no source file
+  touched, `sync_stratdata.py` unchanged, no acceptance ID moved.
+  Investigation: `Tools/architect/evidence/upstream-second-scenario.md`.
+  - **It is a ruling that is being asked for, not a task.** `spec/scenario_spec.md`'s own scope
+    ruling forbids authoring *Longwater March* (§2.13.5) and *The Causeway* (§2.13.6) "not even as
+    test fixtures" — decided on row 7's costs, before a downstream consumer wanting a second board
+    for an unrelated reason existed. §2.13.7's four-clause stretch condition is quoted rather than
+    argued around; whether week 4 is consumed by balance is not a fact this repo holds.
+  - **The consumer side needs no code, and that is measured.**
+    `UStratMatchSubsystem::ScenarioFile` is already a configured project-relative path and every
+    clause that opens a scenario sets that string. What is missing is the datum.
+    `ferrum_crossing_variant.json`, written under `Saved/` by `StratSelectionFacadeParity` arm 6,
+    is the shipped board with the id relabelled and the hash line dropped — it is named in the
+    filing precisely so it is not later mistaken for the axis having moved.
+  - **§2.13.5 transcribes but for ONE value, checked by script and not by eye.** 13 × 8 = 104;
+    glyph census (Plains 86 · Woods 4 · Mountains 4 · Towns 4 · Factories 6, no Water, no Bridge)
+    identical to the section's own prose; every named coordinate on the right glyph; ρ-symmetric
+    at all 104 hexes under ρ(c,r) = (12−c, 7−r), not only at the nine listed pairs; ten starting
+    positions all on Plains, distinct, ρ-imaged, home factory hexes free; no terrain kind absent
+    from `terrain.csv`. The missing value is **`turnCap`** — §2.13.5 gives an estimated match
+    length and §2.8 makes the cap per-scenario data, so under the spec's own "author nothing" rule
+    it is the Director's to state.
+  - **Three costs are stated in the filing rather than folded in:** T-SCN-09's asserting branch,
+    dropped by the scope ruling, would run for the first time (`rot180` on an even row count); row
+    7's `*pending*` ledger posture would need restating rather than inheriting; and
+    `sync_stratdata.py`'s `SCENARIOS` list is declared rather than globbed, so vendoring is an
+    upstream edit plus a manifest entry under `GATE-DATA-VENDOR`.
+  - **What was NOT done:** no scenario was authored, no loader was run, no path cost was priced,
+    no ownership list was transcribed, and nothing was staged or committed in either repo.
 - **BUILT 2026-08-19 -- `Tools/architect/strat_banner_sweep.py`, because a rule an agent must
   REMEMBER is a rule that fails silently.** `11fd9ae` made the banner sweep a memory job; five
   commits later the memory failed and `185e88f` shipped a banner saying the content half was open

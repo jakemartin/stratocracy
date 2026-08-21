@@ -669,3 +669,42 @@
     quoting one without saying which is. For "what will this commit contain", `-uall` is the
     question being asked. The reviewer re-derived it rather than inheriting it, which is the
     behaviour the brief asks for and the reason the error cost nothing.
+- **FIXED, 2026-08-21 -- `strat_banner_sweep.py` compared the suite COUNT against
+  `Saved/AutomationReport/index.json` but never checked WHICH RUN produced that artifact.** On
+  2026-08-21 the banner said 140/140, the report said 140/140, and the sweep printed SWEEP
+  CLEAN, but the report was written from a pre-merge tree -- it was right only because the merge
+  did not happen to move the count. A count match cannot tell a report that still describes the
+  tree from one that no longer does; only a timestamp can. Added a fourth check, REPORT IDENTITY:
+  before the report is trusted as ground truth it must (a) carry a readable `reportCreatedOn` and
+  (b) not predate any test-defining `.cpp` file on disk (measured by this script's own
+  `os.path.getmtime`, not by the report's claims about itself). Either gap is a hard FAIL, never a
+  warning -- an unidentifiable run has not been verified. `read_macro_census` now also returns the
+  newest mtime among files it found a test macro in, and `run_sweep` / the CLI gained
+  `--report-json` / `--source-dir` overrides so the check is provable against a scratch copy
+  without touching `Saved/` or `Source/`, neither of which is this steward's lane.
+  - **Falsifiable against the REAL artifact, not only a fixture.** Run live, unpiped, against
+    this tree: `Tools/architect/strat_banner_sweep.py --explain` printed `[**REPORT IDENTITY**]
+    …/Saved/AutomationReport/index.json (reportCreatedOn 2026.08.21-15.17.35, written
+    2026-08-21 11:17:35) predates a test-defining source file modified 2026-08-21 13:43:07 --
+    this report is evidence about a PAST tree, not the current one, whatever its count happens to
+    say.` and `SWEEP FAILED`, `echo EXIT=$?` on the immediately following line printed `EXIT=1`.
+    This is genuine, unplanted drift -- `strat-test-author` is concurrently editing
+    `Source/StratPlay/Tests/` in this same tree this session, and the checked-in report predates
+    that edit. (The same run also found the report's `140` disagreeing with a `141` macro
+    census, an independent, pre-existing drift this steward does not own and did not fix here.)
+  - **Healthy path stays quiet, proven on a controlled pair, not asserted.** Four new
+    `--self-test` fixtures (in `check_identity_self_test`, called from `check_self_test`): a
+    report written AFTER its source PASSES; a report written BEFORE a later source edit --the
+    real shape above-- FAILS; a report missing `reportCreatedOn` FAILS; a report with no
+    test-defining source found to compare against FAILS. `python
+    Tools/architect/strat_banner_sweep.py --self-test` -> `SELF-TEST: ALL FIXTURES CORRECT`,
+    `echo EXIT=$?` on the next line -> `EXIT=0`, all 27 fixtures (23 prior + 4 new) reported
+    `[OK]`, none silently skipped.
+  - **Exit code measured on the failing run, not inferred.** Both the live-tree FAIL above and a
+    piped-nothing check were done with the exit code captured on the line immediately after the
+    command, never through a pipeline that would launder it -- the crew-gate false-0 this record
+    already names elsewhere is exactly the failure mode a piped exit code would have hidden here.
+  - **Nothing outside this steward's lane was touched to prove any of this.** No file under
+    `Saved/` or `Source/` was edited, doctored, or reverted; the real-artifact proof reads the
+    tree as it already stood, and the self-test proof runs entirely inside `tempfile` scratch
+    directories via the new `--report-json` / `--source-dir` overrides.

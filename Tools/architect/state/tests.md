@@ -64,8 +64,48 @@
     `FNamedSlotScope`. `Saved/SaveGames/` was empty before the run and empty after it —
     `StratocracyMatch.sav` absent, both automation slots gone.
 
+- **THE OWED CLAUSE IS WRITTEN. `Stratocracy.StratPlay.T-UI-03.TheShippedGameModeOptsIn` now
+  exists, in its own file: `Source/StratPlay/Tests/StratShippedGameModeOptIn.cpp`.** Its
+  prerequisite landed — `Content/StratPlay/BP_StratGameMode.uasset` now carries a `MatchConfig`
+  override setting `bRecordCompletionOnMatchEnd` true (blob f1b65f3 -> e45d38a, uncommitted at
+  the time of writing), so the debt recorded in the entry below is discharged.
+  - **NOT COMPILED AND NOT RUN BY THIS LANE.** The editor was open on the integration tree when
+    the clause was written, which locks `UnrealEditor-Strat*.dll` against a build. The clause
+    was verified by reading only. Its first execution is somebody else's, and until then its
+    status is unmeasured rather than green.
+  - **It reads a CDO, not `.uasset` bytes, and that is the whole design.** `StaticLoadClass` on
+    `/Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C`, then
+    `Cdo->MatchConfig.bRecordCompletionOnMatchEnd` required TRUE. The read is EFFECTIVE: an
+    asset with no override hands back the C++ default, which is FALSE, which is the defect, so
+    it fails. The trap the entry below warned about — "not found, therefore unchanged, therefore
+    fine" — is structurally unreachable in this shape.
+  - **Every resolution failure is RED, deliberately.** Package does not load, generated class
+    unresolved, CDO null, class not an `AStratGameMode` — each fails and returns. A clause about
+    a shipped default that cannot find the shipped default has observed nothing, and the state
+    it would be hiding is the defect itself. Nothing in it degrades to a skip.
+  - **Its own PREMISE is checked first and is fatal:** `FStratMatchConfig()`'s
+    `bRecordCompletionOnMatchEnd` must be FALSE. If the member initialiser ever flips, this
+    clause would go green on an asset that overrode nothing while still wearing the name. It
+    shares a subject with `T-SAVE-06.TheOptInDefaultsOffInCpp` and the duplication is intended:
+    that clause reports the flip, this one reports that the flip made this clause blind.
+  - **What it does NOT pin.** (a) `BP_StratGameMode_AiVsAi`, which deliberately stays FALSE and
+    was byte-identical through this pass — pinning that asymmetry needs a SECOND clause
+    requiring FALSE there, never a widening of this one. (b) `SaveSlotName` and
+    `AiMaxCommandsPerTurn` on that asset: both measured INHERITED, not overridden, so a clause
+    reading them there would silently be a clause about `StratMatchSubsystem.h`. (c) That any
+    map's World Settings or `Config/DefaultEngine.ini` actually SELECT this GameMode — it says
+    only that IF this GameMode runs the match, the match is recorded. (d) The writer, which is
+    `StratMatchCompletionRecording.cpp`'s.
+  - **It touches no save slot.** No config is handed to a subsystem, no match is started, no
+    §2.8 result is reachable, `UGameplayStatics` is not included. The standing slot-hygiene rule
+    for this suite does not apply because there is no path to a writer.
+  - **It carries a `/Game/` literal, under the standing automation-fixture exception**, and it
+    has to: the asset path is not incidental to the clause, it is the subject. No property or
+    bridge call can name "the Blueprint the shipped game points at".
+
 - **OWED CLAUSE — `Stratocracy.StratPlay.T-UI-03.TheShippedGameModeOptsIn`. NOT WRITTEN IN THIS
-  PASS, DELIBERATELY, AND IT MUST NOT EVAPORATE.** The engineer named it and it is his stated
+  PASS, DELIBERATELY, AND IT MUST NOT EVAPORATE.** *(Discharged 2026-08-21 — see the entry
+  above. **[STAMPED 2026-08-21]**)* The engineer named it and it is his stated
   debt. It would read `bRecordCompletionOnMatchEnd` off `AStratGameMode`'s CDO — through
   `BP_StratGameMode`'s `MatchConfig` default — and require it TRUE.
   - **It would be RED today and correctly so. This is a real shipping defect right now:** the

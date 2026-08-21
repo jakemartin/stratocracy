@@ -11,6 +11,46 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-21 (THE SHIPPED OPT-IN LANDED AND THE CLAUSE THAT PINS IT IS NO LONGER
+OWED. `BP_StratGameMode`'s `MatchConfig` now carries `bRecordCompletionOnMatchEnd` TRUE, so the
+packaged game records a completed match and §2.11.6's guided opening retires instead of
+re-arming for every player forever. The suite **is now 141/141**, 140 -> 141 by set-difference
+on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +1, none removed -- zero
+non-Success, `notRun` 0. Build `Result: Succeeded`, `REAL_EXIT=0`, and the new translation unit
+is named in the build log as `[3/7] Compile StratShippedGameModeOptIn.cpp` rather than assumed
+from a green.
+THE ASSET DEFAULT WAS READ BEFORE IT WAS WRITTEN, because the trap here inverts the obvious
+reading: a property ABSENT from a `.uasset` proves it equals the C++ default, which is FALSE,
+WHICH IS THE DEFECT -- so "not found, therefore unchanged, therefore fine" would have reported
+the broken state as healthy. Two instruments agreed, each with its own control. The CDO export
+carried `AiMaxCommandsPerTurn=256` and `SaveSlotName="StratocracyMatch"` while the asset's name
+table carried NEITHER, which is what proves the asset holds only OVERRIDES and the export holds
+the EFFECTIVE value; on both readings the flag was unset, hence false. After the write the same
+name-table scan shows the flag present and those two still absent, so the whole-struct write did
+not materialise inherited fields as overrides -- the instrument that would have shown that harm
+is the one that shows its absence.
+`BP_StratGameMode_AiVsAi` was deliberately LEFT FALSE and is byte-identical across the pass. An
+AI-vs-AI run reaching a result would write the human player's slot, which is the exact failure
+the opt-in predicate exists to prevent. The asymmetry is intentional and is not pinned by a
+clause yet; a clause requiring FALSE there is a SECOND clause, never a widening of this one.
+THE STANDING CHECK PASSED WITH ITS CONTROL: `Saved/SaveGames/` holds ZERO files after the run
+and the directory mtime MOVED, 11:17:34 -> 13:56:49, so the absence was measured on this pass
+rather than borrowed from a neighbouring one.
+THE LANE WAS CROSSED KNOWINGLY AND THE USER RULED ON IT FIRST. `Content/` is
+`strat-editor-builder`'s, but the builder had no route to the editor: the `NeoStack_Connect`
+proxy exposed exactly two tools all session, and the builder has no Bash with which to reach
+the editor's own MCP endpoint. THE STARTUP-ORDER EXPLANATION FOR THAT LATCH IS FALSE, measured
+here -- this session STARTED with the editor already up, ~85 minutes old and heartbeating, and
+still got the two-tool surface. The latch is in the proxy alone; the editor's own server was
+live and complete throughout and served the read, the write, the compile and the save. So the
+coordinator made the asset edit, on the user's explicit ruling, and it is recorded here rather
+than in `content.md` because no lane owns it.
+The banner sweep now PINS THE ARTIFACT IT READS and would have caught the pre-merge report this
+entry replaces -- see `data.md`. Its first quiet pass on a real tree with a fresh report is this
+one; before the run it failed on both the count and the identity, and both findings cleared.
+NOT YET GATED AT THIS WRITING -- no `VERDICT` has been sought for this pass, and this entry
+asserts none.)
+
 _Last run 2026-08-21 (THE WRITER WAS GATED `VERDICT: BLOCK` AND THE BLOCK WAS RIGHT. The hook
 guarded on `ResolveSaveSlotName(FString()).IsEmpty()` while `FStratMatchConfig::SaveSlotName`
 defaults to `TEXT("StratocracyMatch")` -- THE PLAYER'S SLOT, never empty -- so the guard
@@ -30,7 +70,7 @@ for -- and defaults FALSE in C++, so fixtures NOBODY HAS WRITTEN YET inherit sil
 named a slot has already chosen, and that partition is what keeps the direct-writer clauses
 green as controls for an absence. `TOptional<FString>` was rejected on a measured constraint --
 not reflectable as a `UPROPERTY`, and this struct reaches a designer through a details panel.
-The suite **is now 140/140**, 133 -> 140 by set-difference on
+The suite **was 140/140** at that pass, 133 -> 140 by set-difference on
 `IMPLEMENT_SIMPLE_AUTOMATION_TEST`, +7 and none removed, re-derived independently, zero
 non-Success. Build `Result: Succeeded`. THE CHECK THAT ACTUALLY PINS THIS is stronger than any
 clause and is run by hand: after a full suite run `Saved/SaveGames/` holds ZERO files where the

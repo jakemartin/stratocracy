@@ -47,6 +47,16 @@ WHAT IT CHECKS, and each is falsifiable by `--self-test`:
      in the set carries. The re-gate flagged this as live drift:
      the banner said 2026-08-14 while entries were dated 2026-08-19.
 
+  4. REPORT IDENTITY. Before `Saved/AutomationReport/index.json`'s count is trusted as ground
+     truth for check 1, the sweep must know WHICH RUN produced it -- not merely that the count
+     happens to agree. On 2026-08-21 the banner said 140/140, the report said 140/140, and the
+     sweep printed SWEEP CLEAN, but the report was written from a PRE-MERGE tree; it was right
+     only because the merge did not happen to move the count. A count comparison alone cannot
+     tell a report that still describes the tree from one that no longer does -- only a
+     timestamp can. So the report must carry a readable `reportCreatedOn` AND must not predate
+     any test-defining `.cpp` file on disk; either failure is a hard FAIL, never a warning,
+     because a sweep that cannot identify its evidence has not verified anything.
+
 THE LIVE-VERSUS-STAMPED DISTINCTION IS THIS SCRIPT'S ONE PIECE OF JUDGEMENT, AND IT IS A
 HEURISTIC -- SAID PLAINLY BECAUSE A READER WHO THINKS IT IS EXACT WILL TRUST A PASS TOO FAR.
 `state.md`'s convention is that an older claim STAYS, stamped with its own item, and only the
@@ -86,6 +96,7 @@ USAGE
 from __future__ import annotations
 
 import argparse
+import datetime
 import io
 import json
 import os
@@ -268,6 +279,14 @@ class SweepResult:
     suite_claims: list[SuiteClaim] = field(default_factory=list)
     report_count: int | None = None
     macro_count: int | None = None
+    # REPORT IDENTITY, added for the "which run" fix: the report artifact's own write time,
+    # its self-declared `reportCreatedOn` (parsed; None if missing/unparseable), and the
+    # newest mtime among test-defining source files -- the instrument that catches a report
+    # that describes a tree the source has since moved past.
+    report_mtime: float | None = None
+    report_created_on: "datetime.datetime | None" = None
+    report_created_on_raw: str | None = None
+    newest_test_mtime: float | None = None
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -342,28 +361,89 @@ def read_report_count(path: str = REPORT_JSON) -> tuple[int | None, str]:
     return len(tests), f"automation report: {len(tests)} entries, all Success ({data.get('reportCreatedOn')})"
 
 
-def read_macro_census(source_dir: str = SOURCE_DIR) -> tuple[int | None, str]:
-    """Count clauses BY MACRO, never by acceptance-ID name -- an ID grep once undercounted 8 as 5."""
+def read_macro_census(source_dir: str = SOURCE_DIR) -> tuple[int | None, str, float | None]:
+    """Count clauses BY MACRO, never by acceptance-ID name -- an ID grep once undercounted 8 as 5.
+
+    Also returns the NEWEST mtime among files that actually define a test macro -- this is the
+    "which run" instrument: a report older than this timestamp describes a tree the test source
+    has since moved past, independent of whether its count happens to still match.
+    """
     if not os.path.isdir(source_dir):
-        return None, f"no Source/ at {source_dir} -- macro census skipped"
+        return None, f"no Source/ at {source_dir} -- macro census skipped", None
     simple = 0
     complex_ = 0
+    newest_mtime: float | None = None
     for root, _dirs, files in os.walk(source_dir):
         for name in files:
             if not name.endswith(".cpp"):
                 continue
+            path = os.path.join(root, name)
             try:
-                with io.open(os.path.join(root, name), encoding="utf-8", errors="replace") as fh:
+                with io.open(path, encoding="utf-8", errors="replace") as fh:
                     body = fh.read()
             except OSError:                                   # pragma: no cover
                 continue
-            simple += len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", body))
-            complex_ += len(re.findall(r"IMPLEMENT_COMPLEX_AUTOMATION_TEST(?:_CLASS)?", body))
+            s = len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", body))
+            c = len(re.findall(r"IMPLEMENT_COMPLEX_AUTOMATION_TEST(?:_CLASS)?", body))
+            if s or c:
+                try:
+                    mtime = os.path.getmtime(path)
+                    if newest_mtime is None or mtime > newest_mtime:
+                        newest_mtime = mtime
+                except OSError:                               # pragma: no cover
+                    pass
+            simple += s
+            complex_ += c
     note = f"macro census: IMPLEMENT_SIMPLE_AUTOMATION_TEST={simple}, COMPLEX/_CLASS={complex_}"
     if complex_:
         note += " -- COMPLEX macros exist, so the SIMPLE sum alone is not the suite size"
-        return None, note
-    return simple, note
+        return None, note, newest_mtime
+    return simple, note, newest_mtime
+
+
+_REPORT_CREATED_ON_RE = re.compile(r"^(\d{4})\.(\d{2})\.(\d{2})-(\d{2})\.(\d{2})\.(\d{2})$")
+
+
+def parse_report_created_on(raw: "str | None") -> "datetime.datetime | None":
+    """UE's `reportCreatedOn` shape: `2026.08.21-15.17.35`. None if missing or unparseable."""
+    if not raw:
+        return None
+    m = _REPORT_CREATED_ON_RE.match(raw.strip())
+    if not m:
+        return None
+    y, mo, d, h, mi, s = (int(g) for g in m.groups())
+    try:
+        return datetime.datetime(y, mo, d, h, mi, s)
+    except ValueError:
+        return None
+
+
+def read_report_timestamps(report_path: str = REPORT_JSON) -> tuple[float | None, "datetime.datetime | None", str | None, str]:
+    """The report's OWN write time (filesystem mtime) and its self-declared `reportCreatedOn`.
+
+    Deliberately two separate reads: the mtime is measured off the artifact by this script and
+    cannot be faked by the report's own content; `reportCreatedOn` is what the report claims
+    about itself. Comparing the mtime against the newest test-source mtime is what proves
+    staleness; `reportCreatedOn` is the human-readable identity quoted in the finding.
+    Returns (mtime, parsed reportCreatedOn, raw reportCreatedOn string, note).
+    """
+    if not os.path.exists(report_path):
+        return None, None, None, f"no automation report at {report_path} -- identity not established"
+    try:
+        mtime = os.path.getmtime(report_path)
+    except OSError as exc:                                   # pragma: no cover
+        return None, None, None, f"cannot stat {report_path} ({exc}) -- identity not established"
+    try:
+        with io.open(report_path, encoding="utf-8-sig") as fh:
+            data = json.load(fh)
+    except Exception as exc:                                  # pragma: no cover
+        return mtime, None, None, f"{report_path} unreadable ({exc}) -- reportCreatedOn not read"
+    raw = data.get("reportCreatedOn")
+    created = parse_report_created_on(raw)
+    note = f"report identity: mtime={mtime:.0f}, reportCreatedOn={raw!r}"
+    if created is None:
+        note += " -- UNPARSEABLE, cannot confirm identity from the field"
+    return mtime, created, raw, note
 
 
 # ---------------------------------------------------------------------------
@@ -554,6 +634,61 @@ def check_item_states(docs: list[tuple[str, str]], result: SweepResult) -> None:
             ))
 
 
+def check_report_identity(result: SweepResult) -> None:
+    """Pin `Saved/AutomationReport/index.json` to a point in time before trusting its count.
+
+    2026-08-21: the banner said 140/140, the report said 140/140, and the sweep printed SWEEP
+    CLEAN -- but the report was written from a PRE-MERGE tree, and the count agreed only because
+    the merge did not happen to move it. Comparing counts alone cannot tell a report that still
+    describes the tree from one that no longer does; only a timestamp can. So before the report
+    is trusted as ground truth (`result.report_count is not None`), this requires:
+
+      (a) a readable `reportCreatedOn` -- proof the sweep can even NAME which run it read, and
+      (b) the report's own mtime not predating any test-defining `.cpp` file on disk.
+
+    Either gap is a hard FAIL, never a warning: an unidentifiable run is not verified evidence,
+    whatever the numbers say. Both are measured off the filesystem by this script, not read from
+    the report's own claims about itself -- a report cannot vouch for its own freshness.
+    """
+    if result.report_count is None:
+        return  # the report was never trusted as ground truth; nothing to pin
+    if result.report_created_on is None:
+        result.findings.append(Finding(
+            "REPORT IDENTITY",
+            f"{REPORT_JSON} has no readable `reportCreatedOn` "
+            f"({'raw value ' + repr(result.report_created_on_raw) if result.report_created_on_raw else 'field missing'}) "
+            f"-- the sweep was about to trust its {result.report_count}/{result.report_count} as "
+            f"ground truth without being able to name which run produced it, so it refuses "
+            f"instead of trusting an unidentified report",
+        ))
+        return
+    if result.report_mtime is None:
+        result.findings.append(Finding(
+            "REPORT IDENTITY",
+            f"{REPORT_JSON} could not be stat'd for its own write time -- staleness cannot be "
+            f"measured, so the report is refused rather than assumed current",
+        ))
+        return
+    if result.newest_test_mtime is None:
+        result.findings.append(Finding(
+            "REPORT IDENTITY",
+            f"no test-defining .cpp file was found under {SOURCE_DIR} to compare the report's "
+            f"write time against -- staleness cannot be measured, so the report is refused "
+            f"rather than assumed current",
+        ))
+        return
+    if result.newest_test_mtime > result.report_mtime:
+        report_str = datetime.datetime.fromtimestamp(result.report_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        source_str = datetime.datetime.fromtimestamp(result.newest_test_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        result.findings.append(Finding(
+            "REPORT IDENTITY",
+            f"{REPORT_JSON} (reportCreatedOn {result.report_created_on_raw}, written {report_str}) "
+            f"predates a test-defining source file modified {source_str} -- this report is "
+            f"evidence about a PAST tree, not the current one, whatever its count happens to "
+            f"say. Re-run the suite before trusting it as ground truth for a live claim.",
+        ))
+
+
 def check_banner_date(docs: list[tuple[str, str]], result: SweepResult) -> None:
     """The banner's `_Last run` must not be older than the newest date ANYWHERE in the set.
 
@@ -605,12 +740,17 @@ def check_banner_date(docs: list[tuple[str, str]], result: SweepResult) -> None:
 
 
 # ---------------------------------------------------------------------------
-def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True) -> SweepResult:
+def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True,
+              report_path: str = REPORT_JSON, source_dir: str = SOURCE_DIR) -> SweepResult:
     """Sweep the record. `paths` defaults to whatever `state/` contains, DERIVED not typed.
 
     A single path is still accepted -- the `--self-test` fixtures and any ad-hoc check of one
     file rely on it -- and is labelled `global.md` so that a lone fixture is treated as the
     file that owns the banner and the suite count.
+
+    `report_path` / `source_dir` default to the real tree's artifacts, and are overridable so
+    the REPORT IDENTITY check can be proven against a doctored copy in a scratch directory
+    without touching `Saved/` or `Source/` in this repo -- neither is this steward's lane.
     """
     result = SweepResult()
 
@@ -639,9 +779,12 @@ def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True
     result.docs = [d[0] for d in docs]
 
     if check_tree:
-        result.report_count, note = read_report_count()
+        result.report_count, note = read_report_count(report_path)
         result.notes.append(note)
-        result.macro_count, note = read_macro_census()
+        result.macro_count, note, result.newest_test_mtime = read_macro_census(source_dir)
+        result.notes.append(note)
+        result.report_mtime, result.report_created_on, result.report_created_on_raw, note = \
+            read_report_timestamps(report_path)
         result.notes.append(note)
         if (result.report_count is not None and result.macro_count is not None
                 and result.report_count != result.macro_count):
@@ -657,6 +800,8 @@ def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True
     check_record_ownership(result)
     check_item_states(docs, result)
     check_banner_date(docs, result)
+    if check_tree:
+        check_report_identity(result)
     return result
 
 
@@ -978,6 +1123,77 @@ _Last run 2026-08-19 (nothing to report.)_
 }
 
 
+def _write_fixture_report(path: str, count: int, created_on: str, mtime: float) -> None:
+    tests = [{"testDisplayName": f"T{i}", "state": "Success"} for i in range(count)]
+    data = {"reportCreatedOn": created_on, "succeeded": count, "succeededWithWarnings": 0,
+            "failed": 0, "notRun": 0, "tests": tests}
+    with io.open(path, "w", encoding="utf-8") as fh:
+        json.dump(data, fh)
+    os.utime(path, (mtime, mtime))
+
+
+def _write_fixture_source(path: str, count: int, mtime: float) -> None:
+    body = "\n".join(f'IMPLEMENT_SIMPLE_AUTOMATION_TEST(T{i}, "x", 0)' for i in range(count))
+    with io.open(path, "w", encoding="utf-8") as fh:
+        fh.write(body)
+    os.utime(path, (mtime, mtime))
+
+
+def check_identity_self_test() -> tuple[bool, list[str]]:
+    """REPORT IDENTITY fixtures. Built on a doctored SCRATCH report/source pair, never on the
+    real `Saved/` or `Source/` -- those are outside this steward's lane -- so `--report-json` /
+    `--source-dir` exist specifically to make this provable without touching them.
+    """
+    import tempfile
+    import time
+
+    lines: list[str] = []
+    ok = True
+    base = time.time() - 100000   # comfortably in the past, clear of "now" jitter
+
+    def run_case(name: str, report_kwargs: "dict | None", source_kwargs: "dict | None",
+                 claim_count: int, want_pass: bool) -> None:
+        nonlocal ok
+        with tempfile.TemporaryDirectory() as d:
+            report_path = os.path.join(d, "index.json")
+            source_dir = os.path.join(d, "Source")
+            os.makedirs(source_dir)
+            state_dir = os.path.join(d, "state")
+            os.makedirs(state_dir)
+            if report_kwargs is not None:
+                _write_fixture_report(report_path, claim_count, **report_kwargs)
+            if source_kwargs is not None:
+                _write_fixture_source(os.path.join(source_dir, "T.cpp"), claim_count, **source_kwargs)
+            gpath = os.path.join(state_dir, "global.md")
+            with io.open(gpath, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(f"# global\n\n_Last run 2026-08-21 "
+                         f"(suite is now **{claim_count}/{claim_count}**.)_\n\n"
+                         f"## NEXT\n\n- **Nothing else.**\n")
+            res = run_sweep(gpath, check_tree=True, report_path=report_path, source_dir=source_dir)
+        got_pass = res.passed
+        good = got_pass == want_pass
+        ok = ok and good
+        detail = "" if res.passed else " -- " + "; ".join(f.check for f in res.findings)
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] {name}: "
+                     f"expected {'PASS' if want_pass else 'FAIL'}, "
+                     f"got {'PASS' if got_pass else 'FAIL'}{detail}")
+
+    run_case("report written AFTER the source PASSES -- identity confirmed, evidence current",
+              dict(created_on="2026.08.21-15.00.00", mtime=base + 200),
+              dict(mtime=base + 100), 5, True)
+    run_case("report written BEFORE a later source edit FAILS -- the real 2026-08-21 shape "
+              "(count matched by luck; the report was pre-merge)",
+              dict(created_on="2026.08.21-11.00.00", mtime=base + 100),
+              dict(mtime=base + 200), 5, False)
+    run_case("report with no reportCreatedOn FAILS -- the sweep cannot NAME the run it read",
+              dict(created_on="", mtime=base + 200),
+              dict(mtime=base + 100), 5, False)
+    run_case("no test-defining source found FAILS -- staleness cannot be measured at all",
+              dict(created_on="2026.08.21-15.00.00", mtime=base + 200),
+              None, 5, False)
+    return ok, lines
+
+
 def check_self_test() -> tuple[bool, str]:
     import tempfile
 
@@ -1064,6 +1280,11 @@ def check_self_test() -> tuple[bool, str]:
         lines.append(f"    [{'OK' if good else '**WRONG**'}] a MISSING or EMPTY record directory "
                      f"is reported, not silently swept as clean")
 
+    identity_ok, identity_lines = check_identity_self_test()
+    ok = ok and identity_ok
+    lines.append("    -- REPORT IDENTITY (pins the artifact to a point in time) --")
+    lines.extend(identity_lines)
+
     return ok, "\n".join(lines)
 
 
@@ -1083,6 +1304,12 @@ def main(argv: list[str] | None = None) -> int:
                         help="Print every suite claim with this script's LIVE/STAMPED call on it.")
     parser.add_argument("--no-tree", action="store_true",
                         help="Check the document against itself only; skip the report and macro census.")
+    parser.add_argument("--report-json", default=REPORT_JSON,
+                        help="Override the automation report path (for testing REPORT IDENTITY "
+                             "against a scratch copy without touching Saved/).")
+    parser.add_argument("--source-dir", default=SOURCE_DIR,
+                        help="Override the Source/ tree used for the macro census and the "
+                             "REPORT IDENTITY staleness check.")
     parser.add_argument("--self-test", action="store_true",
                         help="Run the inline fixtures proving this sweep can FAIL, and exit.")
     args = parser.parse_args(argv)
@@ -1102,7 +1329,8 @@ def main(argv: list[str] | None = None) -> int:
         print("SELF-TEST: ALL FIXTURES CORRECT" if ok else "SELF-TEST: AT LEAST ONE FIXTURE WRONG")
         return 0 if ok else 1
 
-    result = run_sweep(args.state_path or None, check_tree=not args.no_tree)
+    result = run_sweep(args.state_path or None, check_tree=not args.no_tree,
+                       report_path=args.report_json, source_dir=args.source_dir)
     print(render(result, explain=args.explain))
     return 0 if result.passed else 1
 

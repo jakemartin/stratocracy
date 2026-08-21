@@ -49,6 +49,20 @@ latches, because it has no Bash with which to drive the editor's own endpoint --
 that carried this pass is not available to that agent. Lane A stays blocked until `uiBuildOptions`
 is a real header change rather than a spec entry. And both filings now wait on a Director.)
 
+_[STAMPED 2026-08-21, later session — "both filings now wait on a Director" was true when
+written and is now HALF false, which is the direction that wastes a reader: the Q27 filing (crew
+`3510bc2`) HAS BEEN RULED. The Director minted the ID, and it is `T-UI-06`. The ruling is written
+into crew `spec/ui_spec.md` and committed there at `745dfd8` on the user's instruction, which
+takes the crew gap over the vendored `rulesCommit` `cb8e12b` to EIGHTEEN commits, re-derived after
+the commit rather than incremented from the seventeen recorded above. And
+the number was re-enumerated across the GDD, `data/`, `cpp_reference/` and downstream `Source/`
+before it was taken, because its only prior occurrence anywhere was the request's own "e.g." and a
+grep that stopped there would have called the number taken. TWO HALVES STAY OPEN and are named
+rather than assumed done: the shipped GDD still defines only `T-UI-01`—`T-UI-05`, so it does not
+yet know the ID; and downstream's clauses still sit under `T-UI-02` as a recorded partial fit,
+because re-pointing them is a test-lane edit needing its own build and suite run. The OTHER filing,
+crew `a8c8cdb`, is unchanged and still waits on a Director.]_
+
 _Last run 2026-08-21 (THE SHIPPED OPT-IN LANDED AND THE CLAUSE THAT PINS IT IS NO LONGER
 OWED. `BP_StratGameMode`'s `MatchConfig` now carries `bRecordCompletionOnMatchEnd` TRUE, so the
 packaged game records a completed match and §2.11.6's guided opening retires instead of

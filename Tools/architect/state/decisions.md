@@ -207,3 +207,21 @@
   - **Lane A is still BLOCKED.** Filing is not landing, and landing is not vendoring. The
     production menu (GDD SS2.11.5) stays the last feature on SS4.5's hard MVP line until the
     ruling is implemented upstream and re-vendored here.
+
+- **LANDED UPSTREAM 2026-08-20 -- the `uiBuildOptions` filing is committed at crew `4d36a16`.**
+  The entry above says the filing "exists, **uncommitted**, against crew `HEAD 1d5a42f`". That
+  was true when written and is superseded here rather than edited, which is this file's
+  convention. It is now a commit: *"The buildlist gets a query, and T-UI-04's flag clause cannot
+  fail"*, one file, `spec/ui_spec.md`, 123 insertions and no deletions, against that same parent.
+  - **Spec-only, verified rather than asserted:** `git diff-tree --no-commit-id --name-only -r`
+    on that commit lists `spec/ui_spec.md` and nothing else. No header is touched, no source file
+    is written, and no acceptance ID moves -- the same shape as the two precedents it was
+    modelled on, `85995b8` and `3b5ef9d`.
+  - **THIS REPOSITORY IS UNCHANGED BY IT.** `Source/StratRules/` is byte-identical and
+    `StratRules.manifest.json`'s `rulesCommit` still reads `cb8e12b`. A filing that has landed
+    upstream has not been implemented, and an implementation has not been vendored. Those are
+    three separate events and only the first has happened.
+  - **Lane A remains BLOCKED.** The production menu is still the last feature on the GDD's hard
+    MVP line, and it stays blocked until someone writes the query into `cpp_reference/Ui.h`
+    upstream and this repository re-vendors the result. Filing is not landing; landing is not
+    building; building is not vendoring.

@@ -225,3 +225,65 @@
     MVP line, and it stays blocked until someone writes the query into `cpp_reference/Ui.h`
     upstream and this repository re-vendors the result. Filing is not landing; landing is not
     building; building is not vendoring.
+
+- **RULED, 2026-08-21, by the user — beat 2 of the guided opening retires ONLY on a capture pip
+  at `guidedOpening.objective`.** GDD §2.11.6 stays AMBIGUOUS on this point; nothing in the
+  document itself settles it, and this entry records that the code follows a ruling, not a
+  reading. §2.11.6-B's own turn/beat table (`Turn 2 | beat 2 (rule 1) — retires on the pip`) and
+  the "giving up the line is not retiring" prose (the ring and the marked Infantry are the same
+  instruction in spatial form) are consistent with the ruling but do not, on their own, choose it
+  over some other trigger — that is why it took a ruling and not a re-read.
+  - **Why this is load-bearing rather than cosmetic.**
+    `Stratocracy.StratPlay.T-SCN-07.GuidedOpeningHexesMatchesTheScenarioFile` is now the clause
+    that would go red if beat 2's implementation ever regressed to a nearest-factory heuristic
+    instead of reading `guidedOpening.objective` off the scenario file: a nearest-factory guess
+    would retire the beat on the WRONG TILE, silently, with a green build everywhere else — no
+    other clause in the suite pins the objective hex to the authored field rather than to "some
+    plausible factory". The suite count and phase verdict for the pass that landed this are
+    recorded once, in `state/global.md`'s banner (2026-08-21, LANE B LANDED); this entry does not
+    restate them.
+  - **Two acceptance-ID reassignments, both CONFIRMED by the coordinator on 2026-08-21, neither
+    minting a new ID.**
+    1. **The guided-opening lookup moves from `T-SCN-02` to `T-SCN-07`.** `T-SCN-02` is §4.7's
+       structural-validity gate — every hex reference in bounds, no two placements sharing a hex
+       — a property of the *file*, not of the two authored `guidedOpening` fields. `T-SCN-07` is
+       GDD 4.7's "opening-capture naming", whose subject is exactly `guidedOpening.infantry` and
+       `guidedOpening.objective`. **Re-verified here, not inherited:**
+       `grep -n 'T-SCN-0[27]' Source/StratRules/Scenario.good.cpp` shows every `guidedOpening`
+       refusal (the entry count per side, the infantry/objective hex existence and ownership
+       checks, the shared-objective check) carrying `"T-SCN-07"` — lines 769–805 of that file —
+       and `T-SCN-02` appearing only in the unrelated structural block above it (lines 584–620:
+       bounds, terrain Id, ownership hex, placement hex, unit Id, duplicate-hex checks). No
+       `guidedOpening` refusal carries `T-SCN-02`.
+    2. **The Q27 input gates (End Turn inert during beat 1a until the marked Infantry has moved;
+       Wait/`Space` inert on the same footing; Attack closed because the SELECTED → attack
+       transition never lights) are filed under `T-UI-02`.** This is the precedent this tree
+       already set at `870c611`: `T-UI-02.ControllerTicksSoInputDispatches` and
+       `T-UI-02.BoardHexRoundTrip` both pre-date this ruling and neither is about the reachable-
+       hex set either — `T-UI-02` is in practice this tree's ID for the StratPlay input surface.
+       **RECORDED AS A PARTIAL FIT, because it is one.** `T-UI-02`'s written invariant, GDD 4.11
+       (`§4.11` queries/invariants block): *"the reachable-hex highlight displays exactly the
+       T-MOVE-01 set — the UI queries the module and never recomputes movement (§2.5)"* —
+       verified verbatim at `Stratocracy_Prototype_GDD.md:2505`. That sentence is not about input
+       gating at all. **The GDD ships no acceptance ID for §2.11.6-B's one input-gating
+       constraint.** GDD 4.7 states it in prose only, at the beat-1a directive row: *"adopted
+       under **Q27** (§4.7), ruled — it was registered rather than assumed because it gates an
+       input"* — no `T-` id accompanies that sentence. The full family list was enumerated over
+       the GDD, not recalled: `grep -oE 'T-(AI|CAP|COMBAT|DATA|FAME|HEX|INT|MOVE|REPAIR|SAVE|SCN|
+       TURN|UI)-01'` returns exactly those thirteen families and no onboarding family exists among
+       them. Because a test may not mint an ID, the gates are filed under the nearest precedent
+       (`T-UI-02`) and the gap itself is FILED UPSTREAM — see
+       `Tools/architect/evidence/upstream-onboarding-input-gating-acceptance-id.md`. Filing is not
+       landing, and this reassignment does not become a clean fit until the GDD ships its own ID.
+
+- **FILED UPSTREAM 2026-08-21 — GDD 4.11 has no acceptance ID for §2.11.6-B's Q27 input-gating
+  constraint (End Turn / Wait / Attack during beat 1a).** Filed against
+  `E:\MultiAgent\stratocracy-crew` at HEAD `4d36a16` (measured 15 commits ahead of this repo's
+  vendored `rulesCommit cb8e12b`, not the 14 this task's brief stated — `git log --oneline
+  cb8e12b..4d36a16 | wc -l` — the tree outranks the brief). Investigation and the drafted change
+  request are at
+  `Tools/architect/evidence/upstream-onboarding-input-gating-acceptance-id.md`. **This is a
+  filing, not a landing** — no file in either repo was touched by this pass, nothing was staged,
+  nothing was committed. Distinct from, and NOT to be conflated with, the still-open
+  `uiBuildOptions` item above (Lane A / GDD §2.11.5) — that one is a header change awaiting
+  implementation and a re-vendor; this one is a spec-only acceptance-ID gap.

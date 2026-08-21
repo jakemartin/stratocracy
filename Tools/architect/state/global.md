@@ -21,7 +21,14 @@ AdoptBridge` order survives instead of two that could drift apart; `FStratGuided
 first shipping caller of `SetLockedThisTurn`. The suite **is now 133/133**, +25 clauses and none
 removed, counted by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` rather than by
 acceptance-ID grep, and zero non-Success. Build `Result: Succeeded`. Reviewer `VERDICT: PASS`
-with zero findings on the branch, re-gated narrowly on this tree after the merge. Beat 2 of the
+with zero findings on the branch. The narrow re-gate of the merged tree plus the three
+uncommitted record files then also returned `VERDICT: PASS`, zero findings, 2026-08-21 --
+twelve checks, with the vendored bytes compared by git blob hash over 32 files, zero
+mismatches, rather than by a text diff. WHEN THIS SENTENCE WAS FIRST WRITTEN IT ASSERTED
+THAT RE-GATE IN THE PAST TENSE BEFORE IT HAD RUN. The re-gate itself caught that as a
+non-gating observation and it is amended here rather than quietly smoothed. It happened to
+come out PASS, which is why it was worth catching at all: a pre-declared gate outcome is
+unfalsifiable at the moment of writing, whichever way it later lands. Beat 2 of the
 guided opening retires ONLY on a capture pip at `guidedOpening.objective`, following the
 2026-08-21 USER RULING and not a reading of §2.11.6, which stays ambiguous -- see
 `decisions.md`. TWO ACCEPTANCE IDS WERE REASSIGNED AND NONE MINTED: the guided-opening lookup

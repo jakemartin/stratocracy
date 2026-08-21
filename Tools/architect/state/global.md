@@ -11,6 +11,84 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-21 (2.11.6'S FIRST THREE SURFACES ARE BUILT AND THE FIRST GATE ON THEM RETURNED
+`VERDICT: BLOCK` -- ON THIS VERY RECORD'S ABSENCE, WHICH IS WHY THIS ENTRY EXISTS. `Content/UI/`
+gained `WBP_DirectiveStrip`, `WBP_PreMatchBriefing` and `WBP_OneShotTip`, authored by the
+coordinator over the editor's own HTTP MCP endpoint because `strat-editor-builder` still cannot
+reach it and has no Bash with which to bypass the proxy. The user ruled on that crossing BEFORE any
+asset was touched. Recorded here and NOT in `content.md` on the precedent this file already set for
+the `BP_StratGameMode` edit: no lane owns a coordinator-authored asset, and `content.md` has a
+different sole writer. The reviewer proposed writing both; it named the right facts and the wrong
+file, and the lane rule outranks a gate's filing suggestion.
+THE GATE PASSED EVERY BYTE-LEVEL AND STRUCTURAL CHECK AND BLOCKED ON PROSE ALONE. Vendored
+`Source/StratRules/` and `Data/` compared BY BLOB across all 32 tracked files, zero mismatches;
+zero `Source/`, `Config/` and `.uproject` delta; module arrows RE-DERIVED from every
+`Source/*/*.Build.cs` and matching; no widget-side arithmetic; nothing staged. Its single finding
+was that all three widget names grepped, AT GATE TIME, to ZERO hits across `Tools/`, `.agents/`
+and `CLAUDE.md` -- a grep that THIS ENTRY deliberately falsifies, which is the point of it,
+so three real debts lived only in conversation. That is the stale-status-line failure in its
+worst direction: committing these files would have made the tree assert a guided-opening UI exists
+with nothing saying it is inert.
+THE THIRD EXPLANATION FOR THE PROXY LATCH IS NOW ALSO DEAD, disproved rather than argued. The
+suspect was `NEOSTACK_PROJECT_DIR` pinning at a stale tree. `runtimes.json` holds EXACTLY ONE
+runtime -- `editorPid` 49156, `projectPath` `E:/MultiAgent/Stratocracy/` -- so there is no wrong
+tree to be pinned to. Better: `list_unreal_projects` READ THAT SAME FILE SUCCESSFULLY and named
+Stratocracy in the same round in which `unreal_status` claimed the file contained no active editors.
+That is a contradiction INSIDE the proxy between two of its own tools. Three explanations are now
+measured false: missing capability, startup order, project pinning.
+THE ABSENCE WAS MEASURED WITH A CONTROL, because an absent tool name proves nothing alone. The
+`execute_script` lookup failed twice; the SAME keyword search returned `unreal_status` and
+`list_unreal_projects`, which is what shows the instrument could speak. Independently the editor's
+own endpoint served `serverInfo: unreal-editor 1.0.0-r4254`, exactly one tool, and round-tripped Lua
+against that same pid.
+`WBP_DirectiveStrip` CARRIES NO AUTHORED DIRECTIVE STRING. It holds one member, `Guidance`, of type
+`FStratGuidanceView`, and drives four properties from four PURE functions that break it --
+`DirectiveText.Text`, `WindowEndTag.Text`, and the two visibilities off `bActive` and
+`bShowsWindowEndTag` through `To Visibility (Boolean)`. §2.11.6-B's four directives stay where
+`FStratGuidedOpening::DirectiveTextFor` already puts them.
+THAT THE STRUCT WAS THE RIGHT ONE WAS PROVED THREE WAYS, never assumed from an `[OK]`. A
+deliberately bogus type (`FStratNoSuchStructXyzzy`) returned `[FAIL] unknown type` where the real
+name returned `true`, so the type oracle can fail. Reflection then offered `Break Strat Guidance
+View` and `Switch on EStratGuidanceBeat` from inside that Blueprint. And the Break node's pins are
+exactly the struct's TEN fields.
+`pure=true` IS LOAD-BEARING AND THE COMPILER SAID SO: the first binding attempt failed with
+"needs to be bound to a pure function, 'Get Directive Text' is not pure." Quoted rather than
+paraphrased, because it is the entire reason those functions are declared as they are.
+A CLEAN COMPILE WAS CAUGHT LYING ABOUT WIRING. `WBP_OneShotTip`'s first build reported `0 errors,
+0 warnings` while its text getter was connected to NOTHING: a member variable named `TipText`
+collided with the widget also named `TipText`, so the getter lookup resolved to the wrong node.
+Variables were renamed and every `connect` is now asserted against `true` rather than inferred from
+a green compile. EXIT CODE IS NOT A VERDICT, again, this time wearing a compiler's colours.
+VERIFICATION WAS READ BACK INDEPENDENTLY AND ITS INSTRUMENT WAS CONTROLLED. All six binding
+functions report their `Return Value` pin `linked=true`; a throwaway function with nothing connected
+reports `linked=nil`. The six `true`s mean something only because the check can also say nil.
+THE THREE WIDGETS ARE INERT AND THAT IS A C++ GAP, NOT AN EDITOR ONE. There is NO Blueprint-reachable
+route to `FStratViewModel::Guidance`: `UStratMatchSubsystem::GetViewModel()` is explicitly not a
+`UFUNCTION` (the header says so, and says why -- UHT rejects a reference return), `AppliedModel` is
+`UPROPERTY(Transient)` with no `BlueprintReadOnly`, and the subsystem is a bare `UCLASS()`. No amount
+of editor access would have closed this. It is `strat-gameplay-engineer`'s and it is not discharged
+here.
+THE TWO SEAMS ARE NOT EQUALLY SOUND, and the gate found the asymmetry that this session's own write-up
+had folded flat. Measured on the bytes afterwards rather than taken on report: `WBP_DirectiveStrip`
+carries `/Script/StratUI` once and `StratGuidanceView` THIRTY-THREE times, so its member really is the
+reflected struct and reparenting to a future C++ base preserves the bindings. `WBP_OneShotTip` carries
+`/Script/StratUI` ZERO times -- its `CurrentTip`, `TipIsShowing` and `TipId` are invented
+Blueprint-only names with no counterpart anywhere in `Source/` (grep: zero hits). When the engineer
+defines the real tip view struct, nothing constrains its field names, so those two bindings will most
+likely NOT survive reparenting. The tip widget is a layout and a placeholder seam; the strip is a
+wired one.
+A CONTENT DEBT, RULED NON-BLOCKING BY THE GATE: §2.11.6-A's three callout strings are typed into
+`WBP_PreMatchBriefing`, because `StratGuidedOpening.h` deliberately declares no C++ home for them.
+Its stated reason was that "declaring content for a surface that does not exist is how a string
+drifts from the GDD unnoticed" -- the surface now EXISTS, which inverts that reasoning. Note the
+asymmetry the gate named: §2.11.6-**B**'s directive strings ARE in C++ and are therefore testable,
+while A's three now sit in a binary that no grep or clause can compare against the GDD.
+NO SUITE RAN THIS PASS AND NONE IS CLAIMED: no C++ changed, so there was nothing to compile and
+nothing to re-measure. `Saved/SaveGames/` was likewise not re-controlled this pass, for the same
+reason -- the borrowed 13:56:49 stamp from the previous session's run is still borrowed and must be
+re-stamped either side of the next real run.)
+
+
 _Last run 2026-08-21 (THE PASS BELOW WAS GATED AND PASSED, AND BOTH UPSTREAM REQUESTS WERE
 FILED. `strat-integration-reviewer` returned `VERDICT: PASS` with ZERO findings over the shipped
 opt-in, the new clause, the hardened banner sweep and the coordinator's `Content/` edit. Twelve

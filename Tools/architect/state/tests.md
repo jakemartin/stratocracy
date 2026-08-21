@@ -179,6 +179,9 @@
   - **Pass C — run-history claims.** `is green|is red|fail before and pass after|was shown to|
     demonstrated|N/N`. A comment must never assert a suite colour.
   - **Pass D — the named claims, confirmed absent as live text**, with `| grep -v 'RETRACTED> '`.
+    That filter was UNANCHORED, and is now known to hide live lines that merely mention the
+    token — see the 2026-08-21 entry below. The pass as run is recorded here as it was run.
+    **[STAMPED 2026-08-21]**
   **What Pass A and B found that the gate had not named:** three more stale claims, listed below.
 - **A comment must never assert a suite colour, and one of mine did.** The retraction I wrote
   said the converse clause "is at the bottom of this file **and it is green**" — a claim about a
@@ -305,9 +308,11 @@
 - **The `RETRACTED> ` marker convention, and a later sweep may rely on it.** Introduced in
   `Source/StratPlay/Tests/StratSelectionMachineParity.cpp` on 2026-08-21, now also in use in
   `StratGuidanceInputGates.cpp` and `StratBoardPicking.cpp`. Every comment line that QUOTES a
-  claim the file no longer makes begins, after `//`, with the exact token `RETRACTED> `; no line
-  carrying it asserts anything. A stale-phrase sweep therefore subtracts withdrawn quotations
-  mechanically with `grep -n '<phrase>' <file> | grep -v 'RETRACTED> '`. **Why it was needed:**
+  claim the file no longer makes begins, after its comment leader (`//` or `*`), with the exact
+  token `RETRACTED> `; no line carrying it IN THAT POSITION asserts anything. A stale-phrase
+  sweep therefore subtracts withdrawn quotations mechanically with an ANCHORED filter,
+  `grep -n '<phrase>' <file> | grep -vE '^[0-9]+:[[:space:]]*(//|\*)[[:space:]]*RETRACTED> '`.
+  **Why it was needed:**
   six header retractions in this tree quote their own old wording, so a grep for the phrase
   returns mostly correct withdrawals — which is exactly how one LIVE false assertion survived the
   header sweep and had to be caught by the reviewer. It is **per-line, not per-paragraph**,
@@ -317,6 +322,83 @@
   beside the replacement. **Its second, softer hole:** prose that PARAPHRASES a retracted claim
   is not a quotation but greps like one, so such prose either carries the marker too or is
   written to avoid the claim's distinctive words.
+- **The convention's THIRD hole: the published filter was unanchored.** Found and fixed
+  2026-08-21 on `feat/retracted-anchor`. The recipe the convention published,
+  `grep -n '<phrase>' <file> | grep -v 'RETRACTED> '`, is a SUBSTRING match: it drops every line
+  containing the token anywhere, including the prose that DECLARES the convention. Measured at
+  `682d17f`, before the fix: **2** live lines hidden in `StratSelectionMachineParity.cpp`
+  (the sentence defining the token, and the recipe line itself), **2** in
+  `StratGuidanceInputGates.cpp`, **1** in `StratGuidedOpeningClauses.cpp` — **5 across
+  `Tests/`**, plus 7 in this file. The task brief that sent me said "five in
+  `StratSelectionMachineParity.cpp`"; the tree said two, and the tree wins — five is the
+  `Tests/`-wide figure.
+  - **The anchored replacement, and the `[0-9]+:` that is easy to drop.** The filter runs
+    downstream of `grep -n`, whose output starts with a line number, so an anchor written
+    `^[[:space:]]*(//|\*)…` matches NOTHING in the pipeline — measured: 11 of 11 lines survived
+    it. In a pipe the anchor is `^[0-9]+:[[:space:]]*(//|\*)[[:space:]]*RETRACTED> `; run
+    directly over a file it is the same without the `[0-9]+:`.
+  - **The `*` branch is load-bearing, not defensive.** 22 of the 65 marker lines in `Source/`
+    sat in block comments behind a `*` leader. **[STAMPED 2026-08-21 — measured at `682d17f`,
+    before `f7b934a` added markers to `StratGuidanceInputGates.cpp`.]** Re-derived on
+    `feat/retracted-anchor` in slot-1, with that branch's own retractions applied: of the
+    **108** lines under `Source/` (`*.cpp`, `*.h`) that mention the token at all, **101** are
+    properly marked — **59** behind a `//` leader and **42** behind a `*` leader. Dropping
+    `\*` from the alternation moves whole-tree survivors from **7** to **49**, so the `*`
+    branch carries 42 lines. The single-phrase control still reads exactly as first recorded:
+    on the header `Source/StratPlay/StratBoardActor.h` the phrase `reach overlay` has 3 raw
+    hits, **2** survivors under the anchored filter and **3** with `\*` dropped. That phrase
+    was not named when this was first written; naming it is what makes the control
+    reproducible, and re-running it is how I confirmed the 2-back-to-3 figure rather than
+    taking it on trust.
+  - **Two rules the declaration now carries that it lacked.** (a) A quotation must occupy WHOLE
+    LINES — a line-oriented filter can only subtract a whole line, so a mid-line marker either
+    swallows the live half of the line or leaves the quotation live. Measured both ways: with
+    the marker mid-line the anchored filter correctly surfaces the line, while the old
+    unanchored one silently swallowed it. (b) Sweep phrases must be SUBJECT-BEARING — grep for
+    how a claim is PHRASED, not what it is ABOUT; lift the words off the withdrawn lines
+    themselves.
+  - **What this pass did NOT do.** No automation clause was added, and none should be: the
+    subject is a shell recipe published in comment prose, and there is no module-side value for
+    a `TestEqual` to read. An assertion here would be a claim about grep, not about the game.
+    The evidence for the fix is greps and diffs, run in a drafting worktree that has never been
+    built — no suite was run for it, and none is implied. Suite figures live in `global.md`.
+  - **The healthy path was run too, because the last guard in this project was tested only for
+    its failures.** Over the unmodified tree the anchored filter subtracted 65 of 65 properly
+    marked lines, false positives 0. **[STAMPED 2026-08-21 — measured at `682d17f`.]**
+    Re-derived in slot-1 on `feat/retracted-anchor`: it subtracts **101 of 101** properly
+    marked lines, false positives **0**, and the **7** lines it leaves standing are exactly the
+    prose that DECLARES the convention — three in `StratGuidanceInputGates.cpp`, four in
+    `StratSelectionMachineParity.cpp`. Every one of those seven asserts something, which is the
+    whole reason the filter is anchored; the unanchored form would have swallowed all seven.
+- **A comment can argue its own necessity and be WRONG about it — `kControlSlotName`'s did.**
+  Found and withdrawn 2026-08-21 on `feat/retracted-anchor` in slot-1.
+  `StratGuidanceInputGates.cpp` gives its AI-vs-AI control a save slot of its own, and two
+  blocks — the doc comment on `kControlSlotName`, and the block immediately above
+  `BothAi.SaveSlotName = kControlSlotName;` in `FindABoardPositionWithALegalAttack` — justified
+  that at length: a match reaching a result "now WRITES §2.11.6's completion flag through
+  `ApplyView`'s hook", so sharing `kAbsentSlotName` would disarm the guided opening for every
+  other clause in the file. **That stopped being true when the opt-in landed.**
+  `NoteMatchResultIfEnded` returns early unless `FStratMatchConfig::bRecordCompletionOnMatchEnd`
+  is true; the field is declared `= false` in `StratMatchSubsystem.h`, and `MakeConfig` in
+  `StratGuidanceInputGates.cpp` never sets it, so `Base` and its `BothAi` copy both inherit
+  false and the hook writes NOTHING on that control whatever the slot name is. Measured by
+  grepping every occurrence of the identifier under `Source/`: the only assignments of `true`
+  are in `StratMatchCompletionRecording.cpp`. Both blocks are now withdrawn under `RETRACTED> `
+  rather than smoothed away — they argued in their own voice, so a reader who remembers them has
+  to see them retracted rather than find them quietly absent. `kControlSlotName` and
+  `FControlSlotScope` STAY: still correct, still cheap, and defence in depth against a future
+  fixture in that file that DOES opt in.
+  - **What this changes in the inventory:** no clause in `StratGuidanceInputGates.cpp` is
+    evidence that the completion hook respects slot separation. It cannot be — the hook never
+    fires there. `StratMatchCompletionRecording.cpp` is the only file that opts in and the only
+    one that pins it.
+  - **The general shape.** A comment explaining why a guard is NECESSARY is a claim about the
+    production code, and it goes stale the moment that code gains a gate — silently, because the
+    guard it defends keeps working either way and no clause reddens. A claim-shape sweep for
+    this one's own wording (`onto whatever`, `hook writes`, `silently disarm`,
+    `reaches a result now`, `resolves to`) across all of `Source/` found no other copies; the
+    only near-miss, "silently disarm every AI mid-milestone" in `StratAiBridgeParity.cpp`, has a
+    different subject and is still true.
 - **What the §2.11.6 clause set pins, and what it does NOT.** Written 2026-08-21.
   - The three schedule-table clauses (`CommonCase` / `Wandered` / `FastLane`
     `ReproducesTheScheduleTable`) assert the **rule as well as the beat**, via

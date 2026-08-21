@@ -46,9 +46,12 @@
 //
 // THIS FILE USES THE `RETRACTED> ` MARKER CONVENTION declared in
 // `Source/StratPlay/Tests/StratSelectionMachineParity.cpp`. Every comment line that QUOTES a
-// claim this file no longer makes begins, after `//`, with that exact token; no line carrying
-// it asserts anything, so a stale-phrase sweep subtracts the withdrawn quotations with
-// `grep -n '<phrase>' <file> | grep -v 'RETRACTED> '`. TWO passages in this file said the
+// claim this file no longer makes begins, after its comment leader, with that exact token; no
+// line carrying it IN THAT POSITION asserts anything, so a stale-phrase sweep subtracts the
+// withdrawn quotations with an ANCHORED filter -- `grep -n '<phrase>' <file> | grep -vE
+// '^[0-9]+:[[:space:]]*(//|\*)[[:space:]]*RETRACTED> '`. The anchor is not decoration: an
+// unanchored `grep -v 'RETRACTED> '` would also drop this very paragraph, which mentions the
+// token and asserts. TWO passages in this file said the
 // target overlay was unobservable -- the list below and `AttackIsClosedForTheMarkedInfantry`'s
 // own block -- and both are marked. That there were two is the point: the previous sweep of
 // exactly this kind, on `StratSelectionMachineParity.cpp`, found three passages and one of
@@ -532,10 +535,28 @@ namespace StratGuidanceInputGates
 	/**
 	 * The control's own save slot, kept away from `kAbsentSlotName`.
 	 *
-	 * The control plays a real AI-vs-AI match, and a match that reaches a result now WRITES
-	 * §2.11.6's completion flag through `ApplyView`'s hook. Written to `kAbsentSlotName` that
-	 * would disarm the guided opening for every other clause in this file, on the next run and
-	 * every run after -- a whole file going vacuous because of a control.
+	 * WHY IT IS SEPARATE -- WITHDRAWN 2026-08-21. This block used to argue its own necessity,
+	 * in this file's own voice:
+	 *
+	 * RETRACTED> "The control plays a real AI-vs-AI match, and a match that reaches a result
+	 * RETRACTED>  now WRITES §2.11.6's completion flag through `ApplyView`'s hook. Written to
+	 * RETRACTED>  `kAbsentSlotName` that would disarm the guided opening for every other
+	 * RETRACTED>  clause in this file, on the next run and every run after -- a whole file
+	 * RETRACTED>  going vacuous because of a control."
+	 *
+	 * THE HOOK IS OPT-IN AND THIS FILE DOES NOT OPT IN. `NoteMatchResultIfEnded` returns
+	 * early unless `FStratMatchConfig::bRecordCompletionOnMatchEnd` is true; that field is
+	 * declared false in `StratMatchSubsystem.h` and `MakeConfig` above never sets it, so
+	 * `Base` and the `BothAi` copy below both inherit false. The hook therefore writes
+	 * NOTHING on the control's match, whatever `SaveSlotName` holds. Measured by grepping
+	 * every occurrence of that identifier in `Source/`: the only assignments of `true` are
+	 * in `StratMatchCompletionRecording.cpp`, which owns a slot of its own.
+	 *
+	 * THE SEPARATION STAYS ANYWAY, as defence in depth rather than as a live guard. A future
+	 * fixture in this file that opts in would reintroduce exactly the failure quoted above,
+	 * and the separate name plus `FControlSlotScope` costs nothing. What it is NOT, today, is
+	 * load-bearing -- so no clause in this file is evidence that the hook respects slot
+	 * separation. `StratMatchCompletionRecording.cpp` is what pins that.
 	 */
 	static const TCHAR* kControlSlotName = TEXT("StratocracyAutomation_AttackControl_InputGates");
 	static const int32  kControlUserIndex = 0;
@@ -616,12 +637,20 @@ namespace StratGuidanceInputGates
 		BothAi.AiSides            = Sides;
 		BothAi.AiMaxConsecutiveTurns = kControlTurnsPerBatch;
 
-		// ITS OWN SLOT, AND THIS IS NOT TIDINESS. If the control's game ever DOES reach a
-		// result, `ApplyView`'s §2.11.6 hook writes `bHasCompletedAMatch` onto whatever
-		// `SaveSlotName` resolves to -- and `MakeConfig` above resolves to
-		// `kAbsentSlotName`, the name every OTHER clause in this file depends on NOT existing
-		// so the guided opening arms. Sharing it would let this control silently disarm the
-		// whole file. The scope below deletes this one on both ends.
+		// ITS OWN SLOT -- WITHDRAWN 2026-08-21. This block used to read, in its own voice:
+		//
+		// RETRACTED> "ITS OWN SLOT, AND THIS IS NOT TIDINESS. If the control's game ever
+		// RETRACTED>  DOES reach a result, `ApplyView`'s §2.11.6 hook writes
+		// RETRACTED>  `bHasCompletedAMatch` onto whatever `SaveSlotName` resolves to -- and
+		// RETRACTED>  `MakeConfig` above resolves to `kAbsentSlotName`, the name every OTHER
+		// RETRACTED>  clause in this file depends on NOT existing so the guided opening arms.
+		// RETRACTED>  Sharing it would let this control silently disarm the whole file."
+		//
+		// The hook is gated on `bRecordCompletionOnMatchEnd`, declared false and never set by
+		// `MakeConfig`, so it writes nothing here whatever the slot name is -- see
+		// `kControlSlotName`'s own block for that measurement. The assignment stays, and the
+		// scope that deletes the slot on both ends with it, as defence in depth against a
+		// future fixture in this file that opts in.
 		BothAi.SaveSlotName = kControlSlotName;
 
 		if (BothAi.UnitTable != nullptr)

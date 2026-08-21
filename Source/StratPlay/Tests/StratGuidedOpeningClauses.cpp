@@ -211,8 +211,10 @@ namespace StratGuidedOpeningClauses
 		 * both-readings hedge, which the gate did not name and which is stale for the same
 		 * reason. They are quoted under the marker
 		 * convention this lane declared in `StratSelectionMachineParity.cpp` -- a reader who
-		 * remembers them needs to see them retracted, not silently absent -- and nothing on a
-		 * `RETRACTED> ` line asserts anything.
+		 * remembers them needs to see them retracted, not silently absent -- and nothing that
+		 * carries the marker AT THE HEAD OF ITS COMMENT, as this block's `*` lines below do,
+		 * asserts anything. A line that merely mentions the token -- this sentence, say -- is
+		 * live prose, which is why the convention's sweep filter is anchored.
 		 *
 		 * RETRACTED> "the unqualified one -- a pip anywhere retires beat 2, which is what
 		 * RETRACTED>  `FStratGuidedOpening::HasCapturePipLanded` implements today and says so on

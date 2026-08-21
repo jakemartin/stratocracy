@@ -62,14 +62,46 @@
 // leaves a sweep guessing where the paragraph ends:
 //
 //   Every comment line that QUOTES a claim this file no longer makes begins, after its
-//   leading whitespace and the `//`, with the exact token `RETRACTED> `. No line carrying
-//   that token asserts anything, and nothing else in this file uses the token.
+//   leading whitespace and its comment leader -- `//` on a line comment, `*` on a block
+//   comment, and both forms carry markers in this tree -- with the exact token
+//   `RETRACTED> `. No line carrying that token IN THAT POSITION asserts anything.
 //
-// So a sweep subtracts the withdrawn quotations mechanically:
+//   THE TOKEN IS NOT RESERVED, AND A SWEEP MUST NOT TREAT IT AS THOUGH IT WERE. This
+//   paragraph names the token, and so does the recipe below; both are live prose. An
+//   earlier revision of this declaration claimed "nothing else in this file uses the
+//   token", and that sentence was false on the line it was written. The marker's meaning
+//   comes from its POSITION, never from its mere presence -- which is why the filter below
+//   is anchored.
 //
-//   grep -n '<stale phrase>' <file> | grep -v 'RETRACTED> '
+//   A QUOTATION MUST OCCUPY WHOLE LINES. The marker sits at the head of a comment line, and
+//   a line-oriented filter can only subtract a whole line; so a quotation that opens or
+//   closes mid-line cannot be withdrawn -- marking its line would subtract the live half
+//   with it, and not marking it leaves the quotation live. Break the sentence so the quoted
+//   words start their own line, or do not quote them. A partial-line quotation is not
+//   retractable and must not be written.
+//
+// So a sweep subtracts the withdrawn quotations mechanically, AND THE FILTER MUST BE
+// ANCHORED. An unanchored `grep -v 'RETRACTED> '` drops every line that merely MENTIONS the
+// token -- the paragraphs above, this one, and the recipe itself -- so it hides live prose
+// as if it were withdrawn. Anchor it to the head of the comment, where the convention says
+// the marker must sit. Note the `[0-9]+:` : the filter runs downstream of `grep -n`, whose
+// output begins with a line number, so an anchor written `^[[:space:]]*` matches nothing:
+//
+//   grep -n '<stale phrase>' <file> \
+//     | grep -vE '^[0-9]+:[[:space:]]*(//|\*)[[:space:]]*RETRACTED> '
+//
+// Run directly over a file rather than through a pipe, the same anchor drops the `[0-9]+:`:
+//
+//   grep -vE '^[[:space:]]*(//|\*)[[:space:]]*RETRACTED> ' <file>
 //
 // Anything that survives that filter is a live assertion and is the sweep's business.
+//
+// AND THE PHRASE HANDED TO THE FIRST GREP MUST BE SUBJECT-BEARING. Grep for how a claim is
+// PHRASED, not for what it is ABOUT. A phrase list assembled from memory of what the file
+// discusses misses whatever nobody thought to list; a distinctive run of words lifted from
+// the claim's own wording finds the copies of it that no one remembered writing. Take the
+// phrases off the withdrawn lines themselves, since those are the wording that demonstrably
+// appeared in this tree.
 // A quotation that must appear inside EXECUTABLE code -- an `AddInfo` string, say -- is not
 // covered by this convention and must simply be deleted or rewritten, which is what
 // happened to the one that existed below.

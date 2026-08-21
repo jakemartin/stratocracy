@@ -317,6 +317,88 @@ public:
 	// "nothing is loaded" for "a match in which nothing has happened".
 	FStratResult SerializeRecordedSave(const FStratSaveIdentity& Identity, FString& OutText) const;
 
+	// The inverse of `SerializeRecordedSave`: §4.10 text back into this bridge's
+	// state. It is the load half the save milestone shipped without, and it is
+	// here rather than in the caller because `strat::loadSave` and
+	// `strat::replayLog` are `strat::` free functions -- measured 8 x LNK2019 the
+	// first time a call to one crossed a module boundary -- and `ReplayLog` takes
+	// a `TArray<strat::SaveCommand>` no engine module may spell. Engine-typed in,
+	// engine-typed out, exactly the shape `SubmitMoveToHex` and `ReachableHexes`
+	// took for the same reason.
+	//
+	// IT RESTORES ONTO AN ALREADY-SEEDED BRIDGE, and that is not a convenience.
+	// A §4.10 file carries COMMANDS AND NOT A BOARD, so there is nothing here to
+	// seed FROM; and `LoadDefinitions` / `LoadScenarioFromFile` both CLEAR the
+	// recorded log, so a method that reseeded internally would have to reach past
+	// its own inputs to do it. The caller runs `StartMatch`'s ordered sequence --
+	// LoadDefinitions, then LoadScenarioFromFile -- and then calls this.
+	//
+	// THE EXPECTATION IS ASSEMBLED, NOT TAKEN WHOLE, and each field's source is
+	// the one `SerializeRecordedSave` writes from:
+	//   - `expectedVersion` is `strat::kFormatVersion`, the version this build
+	//     writes and accepts.
+	//   - `rulesCommit` and `dataHash` come off `Identity`, because
+	//     `FStratSaveIdentity`'s own block says every field of it is SUPPLIED and
+	//     never recomputed here -- a bridge that read a manifest to fill these in
+	//     would be comparing a file against the file's own source of truth.
+	//   - `scenarioHash` is `strat::scenarioHash` over the scenario THIS BRIDGE
+	//     ACTUALLY LOADED, and is deliberately not a caller argument. Taking it
+	//     from the caller would let a load succeed against a scenario this object
+	//     is not seeded from -- the mirror of the reason `scenarioHash` is absent
+	//     from `FStratSaveIdentity` on the write side.
+	//   - `scenarioId` is NOT compared, and that is `strat::checkHeader`'s ruling
+	//     rather than an omission here: Save.h's reading 2 states the refusal set
+	//     is exactly §4.10's four Version-policy fields and `scenarioId` is not
+	//     one of them. The hash is the bytes; the id is a label.
+	//
+	// THE FILE'S `stateHash` IS VERIFIED AND NOT TRUSTED. After the log replays,
+	// `strat::canonicalStateHash` over the resulting state is compared against the
+	// `stateHash` the file carried, and a disagreement REFUSES. That is the same
+	// fixed point `T-SAVE-06` pins for save -> load -> save, and the load path is
+	// the last place it should be assumed: a file whose log and whose hash disagree
+	// describes two different matches, and silently preferring the log would put a
+	// board on screen that no save ever recorded.
+	//
+	// ALL-OR-NOTHING ON THIS OBJECT'S OWN STATE, achieved by replaying onto a COPY
+	// of `GameState` and assigning only after the hash agrees. That DEPARTS from
+	// `Submit`, which applies directly on purpose so that T-INT-03's "no partial
+	// application" clause measures the rules module rather than this file -- and
+	// the departure is deliberate, because here the last guard is the hash check
+	// and `replayLog`'s own rollback cannot see it. `replayLog` still owns
+	// all-or-nothing WITHIN the log; the copy exists solely so a hash refusal
+	// leaves the seeded board untouched. `Recorded` is assigned in the same step,
+	// so "applied" and "recorded" stay the same set the way `ReplayLog` keeps them.
+	//
+	// REFUSES A BRIDGE THAT HAS ALREADY APPLIED COMMANDS, on
+	// `ReplayRecordedLogOnto`'s arm 4 exactly: replaying a loaded log onto a played
+	// match produces a state whose hash means nothing while looking like it means
+	// something. An EMPTY `commandLog` is NOT refused, and that is where this
+	// method departs from `ReplayRecordedLogOnto`'s arm 5 -- a save taken before
+	// anything was submitted is an ordinary file, and its hash check still has
+	// content because it pins the seed.
+	//
+	// A GAP, RECORDED AND NOT FIXED: §4.10 CARRIES NO `firstSide`. The header is
+	// `{formatVersion, rulesCommit, dataHash, scenarioId, scenarioHash, seed,
+	// commandLog, stateHash, result}` and none of those is the side that moved
+	// first -- yet `LoadScenarioFromFile` takes one and it changes the seeded
+	// state. A caller that re-seeds with the WRONG side therefore reaches the hash
+	// check and is REFUSED, which is safe (no wrong board reaches the screen) but
+	// is NOT RECOVERABLE: this method cannot tell "wrong first side" from
+	// "corrupted log", because the file gives it nothing to tell them apart with.
+	// The fix is not to change the format -- Source/StratRules/ and Data/ are
+	// vendored certified bytes, hash-gated by T-INT-01. The fix is engine-side and
+	// lives in `UStratSaveGame` (StratPlay), whose payload carries the scenario
+	// file and the `FirstSide` the match was seeded with alongside this text, so a
+	// slot load re-seeds with the side it saved with. This method deliberately does
+	// not know about that payload; it takes the text.
+	//
+	// `OutCommandCount` IS THE LOG LENGTH APPLIED, so a caller can log it and a
+	// clause can pin it against `RecordedCommandCount()` without spelling
+	// `strat::SaveCommand`. Written only on success; zeroed first either way.
+	FStratResult RestoreFromSaveText(const FString&            SaveText,
+	                                 const FStratSaveIdentity& Identity,
+	                                 int32&                    OutCommandCount);
+
 	// ---- Queries ---------------------------------------------------------
 	// §4.10's canonical state hash, computed by the rules module.
 	FString StateHash() const;
@@ -334,6 +416,45 @@ public:
 	// IsSeeded(); a bridge that never seeded, or whose definitions were reloaded
 	// underneath it, holds a default-constructed one.
 	const strat::Scenario& ScenarioData() const { return LoadedScenario; }
+
+	// §2.11.6's two authored hexes for one seat: the deployment hex of that seat's marked
+	// Infantry, and the neutral Factory hex it walks to. `strat::ScenarioGuided`'s two
+	// members, in `FIntPoint` with X = q and Y = r.
+	//
+	// A LOOKUP AND NOT A MEASUREMENT, and that is the whole reason it is safe to expose.
+	// §2.11.6 states it in as many words: "Nothing is measured at runtime and no 'nearest
+	// objective' heuristic is used -- the lane is authored, machine-validated, and recorded
+	// as a number by `validate_scenario`". This method reads `guidedOpening.objective` off
+	// the retained scenario and returns it. It ranks nothing, searches nothing, and would
+	// be the wrong place to start if it did.
+	//
+	// IT EXISTS BECAUSE THE SNAPSHOT CARRIES THE UNIT AND NOT THE FACTORY. `UiUnitView::
+	// isGuidedMarked` projects `guidedOpening.infantry` per unit, so beat 1a's marked unit
+	// reaches the view model already. `guidedOpening.objective` is projected NOWHERE --
+	// `UiSnapshot` has no field for it and `UiHexView` / `UiFactoryView` carry no guided
+	// flag -- so the ring §2.11.6-B requires "from turn 1" has no source at all without
+	// this. The alternative was for the guidance layer to find the objective itself, by
+	// distance or by "the nearest neutral factory": that is precisely the derived duplicate
+	// of an authored answer this project's T-UI-02 exists to catch, and §2.11.6 forbids the
+	// heuristic by name.
+	//
+	// ENGINE-TYPED BECAUSE THE CALLER IS StratPlay, which may not spell `strat::Hex` or
+	// call `strat::` anything -- measured 8 x LNK2019. Same shape as `ReachableHexes`.
+	//
+	// REFUSES WHEN THE SCENARIO NAMES NO GUIDED OPENING FOR THAT SIDE, rather than handing
+	// back (0,0). Ui.h says a scenario with no `guided` entries "marks nobody rather than
+	// being an error", and that stays true of `isGuidedMarked`; but a caller asking WHERE
+	// the objective is has asked a question with no answer, and (0,0) is a real hex on this
+	// board. A refusal is how the guidance layer learns to run no guided opening at all.
+	//
+	// THE INFANTRY HEX IS THE DEPLOYMENT HEX AND NOT THE UNIT'S CURRENT HEX. `ScenarioGuided`
+	// stores a placement reference, which is exactly why `isGuidedMarked` is derived from
+	// `placement` and never from `hex` -- so that beat 1a's own move cannot unmark the unit
+	// the beat is about. A caller that used this to locate the marked unit AFTER it moved
+	// would be reintroducing that bug; use `FStratUnitView::bIsGuidedMarked` for the unit.
+	FStratResult GuidedOpeningHexes(int32       Side,
+	                                FIntPoint&  OutInfantryDeployHex,
+	                                FIntPoint&  OutObjectiveHex) const;
 
 	// ---- View model ------------------------------------------------------
 	// §4.7 Stub 8's projection input, GATHERED and not decided -- the same three

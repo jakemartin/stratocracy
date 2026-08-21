@@ -980,6 +980,115 @@ FStratResult FStratBridge::SerializeRecordedSave(const FStratSaveIdentity& Ident
 	return FStratResult::Ok();
 }
 
+FStratResult FStratBridge::GuidedOpeningHexes(int32      Side,
+                                              FIntPoint& OutInfantryDeployHex,
+                                              FIntPoint& OutObjectiveHex) const
+{
+	OutInfantryDeployHex = FIntPoint::ZeroValue;
+	OutObjectiveHex      = FIntPoint::ZeroValue;
+
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	for (const strat::ScenarioGuided& G : LoadedScenario.guided)
+	{
+		if (G.side == Side)
+		{
+			// X = q, Y = r, the same axial convention every engine-typed hex in this
+			// façade uses. No conversion and no odd-r round trip: the scenario parser
+			// already converted at parse time (Scenario.h's T-SCN-05 posture).
+			OutInfantryDeployHex = FIntPoint(G.infantry.q, G.infantry.r);
+			OutObjectiveHex      = FIntPoint(G.objective.q, G.objective.r);
+			return FStratResult::Ok();
+		}
+	}
+
+	return FStratResult::Fail(FString::Printf(
+		TEXT("scenario '%s' names no guidedOpening for side %d"),
+		*FromStd(LoadedScenario.scenarioId), Side));
+}
+
+FStratResult FStratBridge::RestoreFromSaveText(const FString&            SaveText,
+                                               const FStratSaveIdentity& Identity,
+                                               int32&                    OutCommandCount)
+{
+	OutCommandCount = 0;
+
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+	if (!Recorded.empty())
+	{
+		// `ReplayRecordedLogOnto`'s arm 4, on this object rather than on a target.
+		return FStratResult::Fail(FString::Printf(
+			TEXT("this bridge is not fresh: it has already applied %d command(s)"),
+			static_cast<int32>(Recorded.size())));
+	}
+
+	// Every field of the expectation has exactly one source, and the two this
+	// object owns are read off this object -- see the declaration.
+	strat::SaveHeaderExpectation Expect;
+	Expect.expectedVersion = strat::kFormatVersion;
+	Expect.rulesCommit     = ToStd(Identity.RulesCommit);
+	Expect.dataHash        = ToStd(Identity.DataHash);
+	Expect.scenarioHash    = strat::scenarioHash(LoadedScenario);
+
+	// `loadSave` keeps GATE-SAVE-PARSE and T-SAVE-04 distinct and leaves `Parsed`
+	// untouched on either, so the verdict is forwarded with the module's own id
+	// rather than collapsed into one "bad save".
+	strat::Save Parsed;
+	const strat::SaveLoadResult Load =
+		strat::loadSave(ToStd(SaveText), std::string("save slot"), Expect, Parsed);
+	if (!Load.ok)
+	{
+		return FStratResult::Fail(FromStd(Load.reason), FromStd(Load.failedId));
+	}
+
+	// ONTO A COPY. `replayLog` is all-or-nothing within the log, but the hash check
+	// below is downstream of it and `replayLog` cannot roll back for a reason it
+	// never sees. Assigning only after both guards pass is what makes this method
+	// all-or-nothing on THIS object.
+	strat::GameState Candidate = GameState;
+	const strat::ReplayResult R = strat::replayLog(Candidate, Parsed.commandLog, Tables());
+	if (!R.ok)
+	{
+		return FStratResult::Fail(
+			FString::Printf(TEXT("%s (at index %d)"), *FromStd(R.reason), R.failedIndex),
+			FromStd(R.failedId));
+	}
+
+	// §4.10's fixed point, verified rather than assumed. The reason names both
+	// hashes because the failure a caller will actually hit -- re-seeding with the
+	// wrong `firstSide`, which the format cannot carry -- is indistinguishable from
+	// a corrupted log here, and saying so is cheaper than a caller guessing.
+	const std::string Reached = strat::canonicalStateHash(Candidate);
+	if (Reached != Parsed.stateHash)
+	{
+		return FStratResult::Fail(
+			FString::Printf(
+				TEXT("replayed state hash disagrees with the save's (file %s, replayed %s); ")
+				TEXT("the log, the definitions or the seeding side is not the one this save was written from"),
+				*FromStd(Parsed.stateHash), *FromStd(Reached)),
+			TEXT("T-SAVE-06"));
+	}
+
+	// One assignment step. "Applied" and "recorded" become the same set here for
+	// `ReplayLog`'s reason: a bridge with state but no log serializes a save whose
+	// `commandLog` cannot reproduce its own `stateHash`.
+	GameState       = MoveTemp(Candidate);
+	Recorded        = Parsed.commandLog;
+	OutCommandCount = static_cast<int32>(Recorded.size());
+
+	return FStratResult::Ok();
+}
+
 // ---------------------------------------------------------------------------
 // The engine-typed façade. See the header block on these: they exist so that
 // `StratPlay` can ask a rules question without naming a `strat::` type, and they

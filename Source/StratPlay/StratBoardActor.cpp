@@ -323,6 +323,12 @@ void AStratBoardActor::ClearTargets()
 	FillOverlay(TargetOverlay, TArray<FIntPoint>());
 }
 
+int32 AStratBoardActor::GetTargetOverlayCount() const
+{
+	// Off the component and never off a cached count -- see the declaration.
+	return TargetOverlay != nullptr ? TargetOverlay->GetInstanceCount() : 0;
+}
+
 int32 AStratBoardActor::GetDrawnHexCount() const
 {
 	int32 Total = 0;

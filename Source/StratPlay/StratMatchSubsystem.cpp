@@ -27,6 +27,7 @@
 #include "StratAiTurnRunner.h"
 #include "StratBoardActor.h"
 #include "StratPlay.h"
+#include "StratSaveGame.h"
 #include "StratUnitActor.h"
 
 #include "StratScoreboardHUD.h"
@@ -37,6 +38,7 @@
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "Misc/Paths.h"
 #include "TimerManager.h"
 
@@ -153,7 +155,16 @@ bool UStratMatchSubsystem::IsMatchLive() const
 	return Live != nullptr && Live->IsSeeded();
 }
 
+// The public entry is one line, and the whole content of the split is that there is
+// still exactly ONE ordered sequence. See `StartMatchInternal`'s declaration.
 bool UStratMatchSubsystem::StartMatch(const FStratMatchConfig& Config, FString& OutFailureReason)
+{
+	return StartMatchInternal(Config, nullptr, OutFailureReason);
+}
+
+bool UStratMatchSubsystem::StartMatchInternal(const FStratMatchConfig& Config,
+                                              const UStratSaveGame*    Restore,
+                                              FString&                 OutFailureReason)
 {
 	OutFailureReason.Reset();
 
@@ -187,6 +198,12 @@ bool UStratMatchSubsystem::StartMatch(const FStratMatchConfig& Config, FString& 
 	// `ViewingSide` IS checked, and by the builder rather than here -- `StratBuildViewModel`
 	// range-checks it against the snapshot's own side count, which sits nearer the data it
 	// indexes than any constant this file could name.
+
+	// ---- Whatever the last match left, before anything replaces it ---------
+	// A NO-OP THE FIRST TIME and the reason a load does not end up with two boards. See
+	// the declaration: this is deliberately unconditional rather than guarded on "is this
+	// a restart", because a guard is a second thing that can be wrong about which it is.
+	TearDownPresentation();
 
 	ActiveConfig = Config;
 	ViewingSide = Config.ViewingSide;
@@ -231,6 +248,41 @@ bool UStratMatchSubsystem::StartMatch(const FStratMatchConfig& Config, FString& 
 
 		UE_LOG(LogStratPlay, Error, TEXT("No match this session: %s"), *OutFailureReason);
 		return false;
+	}
+
+	// ---- STEP TWO AND A HALF: the recorded log, when this is a load ---------
+	// BETWEEN SEEDING AND THE HAND-OVER, and that window is the only legal one:
+	// `RestoreFromSaveText` refuses an unseeded bridge and `AdoptBridge` refuses one too.
+	//
+	// ITS FAILURE JOINS THE TWO ABOVE IT AND NOT THE COMPLAINTS BELOW. A save that will not
+	// replay is a rules-side refusal -- a bad header, a log the definitions no longer
+	// resolve, or a `stateHash` that disagrees with what replaying produced -- and leaving
+	// the bridge alive after one would hand out a correctly seeded match wearing a loaded
+	// match's name. The bridge's own reason is forwarded verbatim, including the
+	// `T-SAVE-04` / `GATE-SAVE-PARSE` / `T-SAVE-06` tag it carries, because those three
+	// have three different fixes.
+	if (Restore != nullptr)
+	{
+		FStratSaveIdentity Identity;
+		Identity.RulesCommit = Restore->RulesCommit;
+		Identity.DataHash    = Restore->DataHash;
+
+		int32 RestoredCommands = 0;
+		const FStratResult Restored =
+			Fresh->RestoreFromSaveText(Restore->SaveText, Identity, RestoredCommands);
+		if (!Restored.bOk)
+		{
+			OutFailureReason = DescribeRefusal(TEXT("RestoreFromSaveText"), Restored);
+
+			Bridge.Reset();
+
+			UE_LOG(LogStratPlay, Error, TEXT("No match this session: %s"), *OutFailureReason);
+			return false;
+		}
+
+		UE_LOG(LogStratPlay, Log,
+			TEXT("Restored %d recorded command(s) from a save into the seeded match."),
+			RestoredCommands);
 	}
 
 	// FROM HERE THE MATCH IS LIVE AND NOTHING BELOW MAY UNDO THAT. Every remaining step is
@@ -744,6 +796,263 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 	}
 
 	return true;
+}
+
+// ---------------------------------------------------------------------------
+// §4.10 save slots. See the declarations for why the disk is in this file and
+// nowhere else.
+// ---------------------------------------------------------------------------
+
+FString UStratMatchSubsystem::ResolveSaveSlotName(const FString& Requested) const
+{
+	// EMPTY MEANS CONFIGURED, and there is no third case. A slot name that fell back to a
+	// literal in this file would be a second author of the same string, and the designer's
+	// property would then be advisory.
+	return Requested.IsEmpty() ? ActiveConfig.SaveSlotName : Requested;
+}
+
+bool UStratMatchSubsystem::DoesSaveSlotExist(const FString& SlotName) const
+{
+	return UGameplayStatics::DoesSaveGameExist(ResolveSaveSlotName(SlotName), 0);
+}
+
+bool UStratMatchSubsystem::HasCompletedAMatchOnSave(const FString& SlotName) const
+{
+	const FString Slot = ResolveSaveSlotName(SlotName);
+	if (Slot.IsEmpty() || !UGameplayStatics::DoesSaveGameExist(Slot, 0))
+	{
+		return false;
+	}
+
+	const UStratSaveGame* const Payload =
+		Cast<UStratSaveGame>(UGameplayStatics::LoadGameFromSlot(Slot, 0));
+
+	// NO VERSION GATE HERE, UNLIKE `LoadMatchFromSlot`, and the asymmetry is deliberate. A
+	// version mismatch there means the §4.10 text cannot be trusted to restore a match, which
+	// is a refusal. Here the question is one bool about the player's history, and refusing to
+	// answer it would show a veteran the guided opening -- harmless, but for a reason that has
+	// nothing to do with them. If the field ever moves or changes meaning, this is where an
+	// arm goes and `SavedDataVersion` is what it reads.
+	return Payload != nullptr && Payload->bHasCompletedAMatch;
+}
+
+bool UStratMatchSubsystem::SaveMatchToSlot(const FString& SlotName, FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	FStratBridge* const Live = Bridge.Get();
+	if (Live == nullptr || !Live->IsSeeded())
+	{
+		OutFailureReason = TEXT("there is no live match to save");
+		UE_LOG(LogStratPlay, Warning, TEXT("Save refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	const FString Slot = ResolveSaveSlotName(SlotName);
+	if (Slot.IsEmpty())
+	{
+		OutFailureReason = TEXT("no slot name was given and SaveSlotName is empty on the GameMode's defaults");
+		UE_LOG(LogStratPlay, Warning, TEXT("Save refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	// THE BYTES ARE THE BRIDGE'S. Nothing here composes §4.10; `SerializeRecordedSave` owns
+	// every field and its source, including the two this file supplies through
+	// `FStratSaveIdentity` and the three it must NOT supply.
+	FStratSaveIdentity Identity;
+	Identity.RulesCommit = ActiveConfig.RulesCommit;
+	Identity.DataHash    = ActiveConfig.DataHash;
+
+	FString Text;
+	const FStratResult Serialized = Live->SerializeRecordedSave(Identity, Text);
+	if (!Serialized.bOk)
+	{
+		OutFailureReason = DescribeRefusal(TEXT("SerializeRecordedSave"), Serialized);
+		UE_LOG(LogStratPlay, Warning, TEXT("Save refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	// READ THE EXISTING SLOT FIRST, so §2.11.6's onboarding state survives being saved over.
+	// A fresh `UStratSaveGame` every time would silently reset `bHasCompletedAMatch` and
+	// re-arm every one-shot tip on the first mid-match save -- a guidance bug with a
+	// save-system cause. That is already load-bearing rather than anticipatory:
+	// `HasCompletedAMatchOnSave` reads the bool today and `FStratGuidedOpening` suppresses
+	// the guided opening on it, so a payload rebuilt from scratch here would un-suppress
+	// guidance for a player who had finished a match.
+	UStratSaveGame* Payload = nullptr;
+	if (UGameplayStatics::DoesSaveGameExist(Slot, 0))
+	{
+		Payload = Cast<UStratSaveGame>(UGameplayStatics::LoadGameFromSlot(Slot, 0));
+	}
+	if (Payload == nullptr)
+	{
+		Payload = Cast<UStratSaveGame>(
+			UGameplayStatics::CreateSaveGameObject(UStratSaveGame::StaticClass()));
+	}
+	if (Payload == nullptr)
+	{
+		OutFailureReason = TEXT("CreateSaveGameObject returned null for UStratSaveGame");
+		UE_LOG(LogStratPlay, Error, TEXT("Save refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	// EVERY FIELD OVERWRITTEN EXCEPT THE ONBOARDING PAIR, which is carried forward by not
+	// being written. `SavedDataVersion` is stamped to the CURRENT value because the shape
+	// being written is the current shape, whatever the slot held before.
+	Payload->SavedDataVersion = UStratSaveGame::kCurrentSavedDataVersion;
+	Payload->SaveText         = Text;
+	Payload->RulesCommit      = Identity.RulesCommit;
+	Payload->DataHash         = Identity.DataHash;
+	Payload->ScenarioFile     = ActiveConfig.ScenarioFile;
+	Payload->FirstSide        = ActiveConfig.FirstSide;
+	Payload->ViewingSide      = ViewingSide;
+
+	if (!UGameplayStatics::SaveGameToSlot(Payload, Slot, 0))
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("SaveGameToSlot failed writing slot '%s'"), *Slot);
+		UE_LOG(LogStratPlay, Error, TEXT("Save refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	UE_LOG(LogStratPlay, Log,
+		TEXT("Match saved to slot '%s': %d recorded command(s), scenario '%s' (first side %d), drawn for side %d."),
+		*Slot, Live->RecordedCommandCount(), *ActiveConfig.ScenarioFile,
+		ActiveConfig.FirstSide, ViewingSide);
+	return true;
+}
+
+bool UStratMatchSubsystem::LoadMatchFromSlot(const FString& SlotName, FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	if (bAiTurnRunning)
+	{
+		// The AI loop submits into the bridge this call is about to free.
+		OutFailureReason = TEXT("an AI turn is running; a load would free the bridge under it");
+		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	// A CONFIGURED SUBSYSTEM IS THE PRECONDITION, and it is checked on the tables rather
+	// than on a "has StartMatch run" bool -- for the reason this class refuses a `bSeeded`
+	// mirror: a bool beside the thing can disagree with the thing. The tables ARE what a
+	// reseed needs, so their absence is the honest question.
+	if (ActiveConfig.UnitTable == nullptr || ActiveConfig.TerrainTable == nullptr)
+	{
+		OutFailureReason = TEXT(
+			"this subsystem has never been configured: StartMatch must run once (the GameMode does it) "
+			"before a slot can be loaded, because a slot carries no definition tables");
+		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	const FString Slot = ResolveSaveSlotName(SlotName);
+	if (!UGameplayStatics::DoesSaveGameExist(Slot, 0))
+	{
+		OutFailureReason = FString::Printf(TEXT("no save exists in slot '%s'"), *Slot);
+		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	UStratSaveGame* const Payload =
+		Cast<UStratSaveGame>(UGameplayStatics::LoadGameFromSlot(Slot, 0));
+	if (Payload == nullptr)
+	{
+		// `LoadGameFromSlot` returns a `USaveGame*` and the cast is the class check. A slot
+		// written by a different game, or by a build in which this class was renamed, lands
+		// here rather than as a crash on the first field read.
+		OutFailureReason = FString::Printf(
+			TEXT("slot '%s' does not hold a UStratSaveGame"), *Slot);
+		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	// THE VERSION GATE, AND IT REFUSES RATHER THAN GUESSES. `UStratSaveGame`'s header states
+	// the contract: a change to the MEANING of a field bumps the version and grows an arm
+	// here. There is one version today, so there is one arm and it is equality -- written
+	// out anyway, because the failure a version exists to prevent is the one where a newer
+	// slot loads into an older build and every new field reads as its default with nothing
+	// said.
+	if (Payload->SavedDataVersion != UStratSaveGame::kCurrentSavedDataVersion)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("slot '%s' was written at SavedDataVersion %d and this build reads %d"),
+			*Slot, Payload->SavedDataVersion, UStratSaveGame::kCurrentSavedDataVersion);
+		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	if (Payload->SaveText.IsEmpty())
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("slot '%s' carries no §4.10 text"), *Slot);
+		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	// THREE FIELDS OVERRIDDEN AND NO MORE -- the three §4.10 cannot carry. Everything else,
+	// including both definition tables and both actor classes, stays whatever the GameMode
+	// configured, because a slot that pinned an asset would break on a rename.
+	FStratMatchConfig Config = ActiveConfig;
+	Config.ScenarioFile = Payload->ScenarioFile;
+	Config.FirstSide    = Payload->FirstSide;
+	Config.ViewingSide  = Payload->ViewingSide;
+
+	// THE ONE SEQUENCE. Nothing about reconciliation, adoption or ordering is repeated here.
+	const bool bStarted = StartMatchInternal(Config, Payload, OutFailureReason);
+
+	if (bStarted)
+	{
+		UE_LOG(LogStratPlay, Log, TEXT("Match loaded from slot '%s'."), *Slot);
+	}
+	else
+	{
+		// `StartMatchInternal` returns false for a presentation gap on a LIVE match as well
+		// as for a rules-side teardown, exactly as `StartMatch` does; `IsMatchLive()` is
+		// what tells those apart, and this line does not re-decide it.
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("Load of slot '%s' reported: %s (match live: %s)"),
+			*Slot, *OutFailureReason, IsMatchLive() ? TEXT("yes") : TEXT("no"));
+	}
+
+	return bStarted;
+}
+
+void UStratMatchSubsystem::TearDownPresentation()
+{
+	// THE TIMER FIRST AND BEFORE ANYTHING IS FREED, for `Deinitialize`'s reason exactly:
+	// `OnAiTurnTimer` submits through a bridge a reseed is about to replace.
+	if (UWorld* const World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(AiTurnTimer);
+	}
+
+	for (const TPair<int32, TObjectPtr<AStratUnitActor>>& Entry : UnitActors)
+	{
+		if (Entry.Value != nullptr)
+		{
+			Entry.Value->Destroy();
+		}
+	}
+	UnitActors.Reset();
+
+	if (Board != nullptr)
+	{
+		Board->Destroy();
+		Board = nullptr;
+	}
+
+	// THE APPLIED MODEL GOES WITH THE ACTORS. `ApplyView` reconciles against `UnitActors`
+	// and `GetViewModel` claims to describe what is on screen; leaving last match's model
+	// behind an emptied map would make that claim false for exactly as long as it took
+	// someone to read it.
+	AppliedModel = FStratViewModel();
+
+	// THE BRIDGE IS NOT TOUCHED HERE, and the asymmetry with `Deinitialize` is the point.
+	// `StartMatchInternal` replaces it a few lines later with a `MakePimpl` whose assignment
+	// frees the old one; resetting it here as well would be a second free path for the one
+	// pointer this project frees in one place.
 }
 
 AStratScoreboardHUD* UStratMatchSubsystem::FindScoreboardHUD() const

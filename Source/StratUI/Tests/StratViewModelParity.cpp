@@ -55,6 +55,7 @@
 #include "Containers/UnrealString.h"
 #include "Engine/DataTable.h"
 #include "Misc/Paths.h"
+#include "UObject/Class.h"
 #include "UObject/UObjectGlobals.h"
 
 #include "StratViewModel.h"
@@ -895,6 +896,115 @@ bool FStratViewModelPresentationBitsAreDefaultedTest::RunTest(const FString& /*P
 	}
 
 	TestTrue(TEXT("the moved unit is still in the model"), bSawTheMovedUnit);
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// T-UI-03 -- the builder leaves §2.11.6's guidance block default-constructed.
+//
+// THE SAME CLAUSE SHAPE `PresentationBitsAreDefaulted` ALREADY HOLDS FOR `bDone` AND
+// `bLockedThisTurn`, one level up. `StratViewModel.h` states the property of the new block
+// in as many words: "`StratBuildViewModel` leaves it default-constructed -- inactive, no
+// beat -- exactly as it leaves the two unit bits false", and names the producer:
+// `FStratGuidedOpening::DecorateViewModel`, on the seam between the build and `ApplyView`.
+//
+// WHY IT IS WORTH A CLAUSE. `FStratGuidanceView` is the first PRESENTATION BLOCK on the model
+// that is not a per-unit bit, and it is the one a future pass is most likely to try to fill
+// in here -- `StratBuildViewModel` holds a seeded bridge, `FStratBridge::GuidedOpeningHexes`
+// is right there, and populating `ObjectiveHex` from it would look like helpfulness. It would
+// give the block two producers, which is the drift `StratViewModel.h` opens by refusing, and
+// it would put a ring on screen for a match whose guidance was suppressed or skipped.
+//
+// THE EXPECTATION IS A DEFAULT-CONSTRUCTED `FStratGuidanceView`, COMPARED THROUGH THE
+// REFLECTION SYSTEM. `UScriptStruct::CompareScriptStruct` walks every `UPROPERTY` on the
+// struct, so a field ADDED to `FStratGuidanceView` tomorrow is covered the day it lands
+// without an edit here -- which is the same reason `SelectionMachineWritesDoneOntoModel`
+// compares whole models rather than named fields. The named assertions below it are for the
+// failure message, not for the coverage.
+//
+// AND THE MODEL IS OTHERWISE FULL. The clause asserts the build actually produced a board
+// first, so "the guidance block is empty" is not being read off a model that is empty
+// everywhere.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratViewModelGuidanceIsDefaultedTest,
+	"Stratocracy.StratUI.T-UI-03.BuildViewModelLeavesGuidanceDefaulted",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratViewModelGuidanceIsDefaultedTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratViewModelParity;
+
+	FStratBridge Bridge;
+	strat::UiSnapshot Snapshot;
+	FStratViewModel Model;
+	FString Error;
+	if (!TestTrue(TEXT("bridge seeds, projects and builds"),
+			Project(Bridge, kViewingSide, Snapshot, Model, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// The board is really there, so the emptiness below is the guidance block's and not the
+	// model's.
+	if (!TestTrue(TEXT("the built model carries the scenario's hexes"), Model.Hexes.Num() > 0))
+	{
+		return false;
+	}
+	if (!TestTrue(TEXT("and its units"), Model.Units.Num() > 0))
+	{
+		return false;
+	}
+
+	// This scenario DOES name a guided opening, which is what makes the clause meaningful:
+	// the data for a strip exists and the builder still does not project it.
+	FIntPoint AuthoredInfantry = FIntPoint::ZeroValue;
+	FIntPoint AuthoredObjective = FIntPoint::ZeroValue;
+	const FStratResult Guided =
+		Bridge.GuidedOpeningHexes(kViewingSide, AuthoredInfantry, AuthoredObjective);
+	if (!TestTrue(
+			TEXT("the shipped scenario DOES author a guided opening for the viewing seat -- so "
+			     "the empty block below is a decision and not an absence of data"),
+			Guided.bOk))
+	{
+		AddError(Guided.Reason);
+		return false;
+	}
+
+	// ---- the whole block, through the reflection system ----------------------
+	const FStratGuidanceView Default;
+	const UScriptStruct* const Struct = FStratGuidanceView::StaticStruct();
+	if (!TestNotNull(TEXT("FStratGuidanceView has a reflected struct"), Struct))
+	{
+		return false;
+	}
+	TestTrue(
+		TEXT("T-UI-03: StratBuildViewModel leaves FStratGuidanceView default-constructed, field "
+		     "for field, including fields this clause never names. Its producer is "
+		     "FStratGuidedOpening::DecorateViewModel and there must be exactly one "
+		     "(StratViewModel.h)"),
+		Struct->CompareScriptStruct(&Model.Guidance, &Default, PPF_None));
+
+	// ---- and the four that a reader will look for first ----------------------
+	TestFalse(TEXT("T-UI-03: no strip"), Model.Guidance.bActive);
+	TestEqual(TEXT("T-UI-03: no beat holds the line"),
+		static_cast<int32>(Model.Guidance.Beat),
+		static_cast<int32>(EStratGuidanceBeat::None));
+	TestFalse(
+		TEXT("T-UI-03: no objective ring -- the builder does not reach for "
+		     "FStratBridge::GuidedOpeningHexes even though it holds a bridge that would answer"),
+		Model.Guidance.bHasObjectiveRing);
+	TestTrue(
+		*FString::Printf(
+			TEXT("T-UI-03: and the objective hex is zero rather than the authored (%d,%d)"),
+			AuthoredObjective.X, AuthoredObjective.Y),
+		Model.Guidance.ObjectiveHex == FIntPoint::ZeroValue);
+	TestTrue(TEXT("T-UI-03: the directive line is empty"),
+		Model.Guidance.DirectiveText.IsEmpty());
+	TestFalse(TEXT("T-UI-03: and the Q27 End Turn gate is not asserted by the builder"),
+		Model.Guidance.bEndTurnGated);
 
 	return true;
 }

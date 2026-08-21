@@ -39,16 +39,66 @@
 // edits -- and in both cases the edited value is the INPUT and the machine's output is
 // what is asserted. Neither clause computes the thing it then checks.
 //
-// ON `SetLockedThisTurn`, STATED IN ADVANCE BECAUSE IT WOULD OTHERWISE BE A HALF-PINNED
-// CLAUSE. §2.11.6's guided opening is out of this milestone, so NOTHING IN A SHIPPING PATH
-// CALLS THAT WRITER: `LockedUnits` is empty in every running game and `bLockedThisTurn` is
-// false on every unit, exactly as it was before this phase. `LockedUnitIsWrittenAndNotSelectable`
-// below therefore calls the writer ITSELF. What that clause pins is real and is worth
-// having -- that the machine writes the bit onto the model, that a locked unit cannot be
-// selected, and that an EndTurn clears `bDone` while deliberately NOT clearing the lock --
-// but it pins a property of `FStratSelectionMachine` and NOT a property of the game as
-// played. No clause in this tree can observe a lock arising, because nothing produces one.
-// When §2.11.6 lands, its producer needs a clause of its own; this one will not cover it.
+// ---------------------------------------------------------------------------
+// THE RETRACTION MARKER CONVENTION, DECLARED SO A LATER SWEEP CAN RELY ON IT.
+//
+// This file's header block and one clause below both used to ASSERT that nothing in a
+// running build ever called `FStratSelectionMachine::SetLockedThisTurn`. Wave B2 made that
+// false and the sentences are withdrawn in place rather than deleted, because a reader who
+// remembers the claim needs to see it retracted and not silently absent.
+//
+// NOTE THAT THIS VERY PARAGRAPH IS WHY THE CONVENTION BELOW IS PER-LINE AND MECHANICAL: it
+// is prose ABOUT the retracted claim, and it deliberately does not reproduce the claim's
+// wording, precisely so that a sweep grepping for that wording does not have to decide
+// whether a sentence is an assertion or a description of one.
+//
+// THE PROBLEM THAT CREATES, and the reason a convention is needed at all: six header
+// retractions elsewhere in this tree quote their own old wording, so a `grep` for a stale
+// phrase now returns mostly CORRECT withdrawals with the occasional live assertion hiding
+// among them. That is exactly how the live assertion in this file survived the header
+// sweep.
+//
+// THE CONVENTION, and it is per-LINE and not per-paragraph, because a paragraph marker
+// leaves a sweep guessing where the paragraph ends:
+//
+//   Every comment line that QUOTES a claim this file no longer makes begins, after its
+//   leading whitespace and the `//`, with the exact token `RETRACTED> `. No line carrying
+//   that token asserts anything, and nothing else in this file uses the token.
+//
+// So a sweep subtracts the withdrawn quotations mechanically:
+//
+//   grep -n '<stale phrase>' <file> | grep -v 'RETRACTED> '
+//
+// Anything that survives that filter is a live assertion and is the sweep's business.
+// A quotation that must appear inside EXECUTABLE code -- an `AddInfo` string, say -- is not
+// covered by this convention and must simply be deleted or rewritten, which is what
+// happened to the one that existed below.
+// ---------------------------------------------------------------------------
+//
+// ON `SetLockedThisTurn` -- WITHDRAWN 2026-08-20, WAVE B2. This block used to read, in this
+// file's own voice:
+//
+// RETRACTED> "ON `SetLockedThisTurn`, STATED IN ADVANCE BECAUSE IT WOULD OTHERWISE BE A
+// RETRACTED>  HALF-PINNED CLAUSE. §2.11.6's guided opening is out of this milestone, so
+// RETRACTED>  NOTHING IN A SHIPPING PATH CALLS THAT WRITER: `LockedUnits` is empty in every
+// RETRACTED>  running game and `bLockedThisTurn` is false on every unit, exactly as it was
+// RETRACTED>  before this phase. ... No clause in this tree can observe a lock arising,
+// RETRACTED>  because nothing produces one. When §2.11.6 lands, its producer needs a clause
+// RETRACTED>  of its own; this one will not cover it."
+//
+// §2.11.6 HAS LANDED AND THE WRITER HAS A SHIPPING CALLER. `FStratGuidedOpening::PublishLocks`
+// (`Source/StratPlay/StratGuidedOpening.cpp`) calls `FStratSelectionMachine::SetLockedThisTurn`
+// once per friendly unit on every `Observe`, and `AStratPlayerController::RefreshFromMachine`
+// and `::HandleSelectionEvent` both call `Observe` on the live path. So `LockedUnits` is
+// non-empty in a running game while beat 1a is outstanding, and `bLockedThisTurn` is true on
+// screen for the first time.
+//
+// WHAT THAT PARAGRAPH GOT RIGHT AND KEEPS. `LockedUnitIsWrittenAndNotSelectable` below still
+// drives the writer itself and still pins a property of `FStratSelectionMachine` rather than
+// of the game as played -- that is not a defect in it, it is its subject. What it could not
+// do was witness a lock ARISING, and that sentence's own prediction has been honoured:
+// `LockArisesFromTheGuidanceLayer` below is the producer's clause, and it drives
+// `FStratGuidedOpening` and never touches `SetLockedThisTurn`.
 
 #include "Misc/AutomationTest.h"
 
@@ -60,6 +110,7 @@
 #include "UObject/Class.h"
 #include "UObject/UObjectGlobals.h"
 
+#include "StratGuidedOpening.h"
 #include "StratSelectionMachine.h"
 #include "StratViewModel.h"
 
@@ -480,17 +531,27 @@ bool FStratSelectionDoneIsNotDerivedTest::RunTest(const FString& /*Parameters*/)
 // T-INT-05 -- the §2.11.6 lock: written onto the model, enforced in selection, and NOT
 // cleared by a turn boundary.
 //
-// READ THE HEADER BLOCK BEFORE READING THIS CLAUSE. Nothing in a shipping path calls
-// `SetLockedThisTurn`; §2.11.6's guided opening is out of this milestone. This clause
-// calls the writer itself, so what it pins is a property of `FStratSelectionMachine` and
-// NOT a property of the game as played: in every running build today `LockedUnits` is
-// empty and `bLockedThisTurn` is false everywhere, identical to before this phase.
+// READ THE HEADER BLOCK BEFORE READING THIS CLAUSE, and read its retraction convention
+// first. This paragraph used to read:
 //
-// IT IS WRITTEN ANYWAY, for the reason the machine's header gives for the writer existing
-// at all: a guidance layer that had to add the enforcement later would be adding a rule to
-// a state machine it does not own, and it would find the rule already there -- with a gate
-// saying what the rule is. What no clause in this tree can do is witness a lock ARISING,
-// and that is the honest limit of this one.
+// RETRACTED> "Nothing in a shipping path calls `SetLockedThisTurn`; §2.11.6's guided
+// RETRACTED>  opening is out of this milestone. ... in every running build today
+// RETRACTED>  `LockedUnits` is empty and `bLockedThisTurn` is false everywhere, identical
+// RETRACTED>  to before this phase. ... What no clause in this tree can do is witness a
+// RETRACTED>  lock ARISING, and that is the honest limit of this one."
+//
+// BOTH HALVES ARE WITHDRAWN. `FStratGuidedOpening::PublishLocks` is the shipping caller, so
+// `LockedUnits` is non-empty in a running game while beat 1a is outstanding; and
+// `LockArisesFromTheGuidanceLayer` below witnesses a lock arising from that producer.
+//
+// THIS CLAUSE'S SUBJECT IS UNCHANGED BY THAT. It still drives the writer itself, and what
+// it pins is still a property of `FStratSelectionMachine` and not of the game as played --
+// deliberately, for the reason the machine's header gives for the writer existing at all: a
+// guidance layer that had to add the enforcement later would be adding a rule to a state
+// machine it does not own, and it would find the rule already there, with a gate saying
+// what the rule is. The two clauses are complements, not duplicates: this one pins the
+// enforcement in isolation from any beat, and its neighbour pins the beat's production of
+// the lock without touching the setter.
 //
 // THE THIRD ASSERTION IS THE ONE WORTH THE MOST. `StratViewModel.h` states that the lock's
 // lifecycle is NOT `bDone`'s -- it clears when beat 1a retires, INSIDE turn 1, and not at
@@ -548,9 +609,23 @@ bool FStratSelectionLockedUnitTest::RunTest(const FString& /*Parameters*/)
 	FStratSelectionMachine Machine;
 	FStratBridgeRulesQuery Query(&Bridge);
 
-	AddInfo(TEXT("NOTE: SetLockedThisTurn has no caller in any shipping path -- §2.11.6 is out of "
-	             "this milestone -- so this clause drives it directly and pins the machine's "
-	             "behaviour, not the game's."));
+	// THE `AddInfo` THAT USED TO STAND HERE IS DELETED RATHER THAN MARKED, and its text is
+	// quoted under the marker so the deletion is still legible as a withdrawal:
+	//
+	// RETRACTED> AddInfo(TEXT("NOTE: SetLockedThisTurn has no caller in any shipping path --
+	// RETRACTED>              §2.11.6 is out of this milestone -- so this clause drives it
+	// RETRACTED>              directly and pins the machine's behaviour, not the game's."));
+	//
+	// It printed that into the automation log on every run, and wave B2 made the first clause
+	// of it false. An EXECUTABLE string is outside the reach of a comment convention -- there
+	// is nowhere inside a `TEXT(...)` literal to withdraw a claim in place -- so the only
+	// honest options were deletion or rewriting, and the quotation above is where the marker
+	// convention picks the loss up. The replacement says what is true and names the clause
+	// that covers the rest.
+	AddInfo(TEXT("NOTE: this clause drives SetLockedThisTurn directly and pins the machine's "
+	             "behaviour, not the game's. The shipping caller is "
+	             "FStratGuidedOpening::PublishLocks, and T-INT-05.LockArisesFromTheGuidanceLayer "
+	             "is the clause that witnesses a lock arising from it."));
 	Machine.SetLockedThisTurn(LockedId, true);
 	TestTrue(TEXT("the machine reports the unit locked"), Machine.IsLockedThisTurn(LockedId));
 
@@ -973,6 +1048,162 @@ bool FStratSelectionRefusedCommandIsConsistentTest::RunTest(const FString& /*Par
 		TestFalse(
 			*FString::Printf(TEXT("unit %d is not marked DONE by a refused Move"), U.UnitId),
 			U.bDone);
+	}
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// T-INT-05 -- a lock ARISING from the guidance layer, which is the gap this file's header
+// block predicted and, until wave B2, could not close.
+//
+// THE SUBJECT IS `FStratGuidedOpening`, NOT `FStratSelectionMachine`. This clause never
+// calls `SetLockedThisTurn`. It arms the guided opening against a seeded bridge, hands it a
+// model, and then asks the SELECTION MACHINE what it holds -- so the only thing that can
+// have produced a lock is `FStratGuidedOpening::PublishLocks`. Its sibling above drives the
+// setter directly and pins the enforcement; this one pins the production.
+//
+// WHERE THE EXPECTATION COMES FROM. Nothing here decides which unit is exempt. The marked
+// unit is read off `FStratUnitView::bIsGuidedMarked`, which `strat::buildUiSnapshot` derives
+// from the scenario's `guidedOpening.infantry` PLACEMENT -- so the partition of the guided
+// side's units into "the one marked unit" and "everyone else" is the rules module's answer
+// and this file merely reads it. The lock set is then compared against that partition
+// element for element, including the requirement that the marked unit is NOT locked.
+//
+// THE ENEMY SIDE IS ASSERTED UNTOUCHED, and that is not padding: `PublishLocks` skips units
+// whose `Side` is not the guided seat, and a writer that lost that filter would lock the
+// board's other half without any clause here noticing.
+//
+// THE FALSE HALF IS THE HALF THAT CATCHES A REGRESSION. A `PublishLocks` that only ever set
+// -- never cleared -- would pass every assertion up to the retirement of beat 1a. So the
+// marked unit's move is applied to the MODEL as fixture input, `Observe` is called again in
+// the SAME turn, and every lock must be gone. That is `StratViewModel.h`'s "un-locked and
+// not-done in the same turn" observed at the machine.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratSelectionLockArisesFromGuidanceTest,
+	"Stratocracy.StratPlay.T-INT-05.LockArisesFromTheGuidanceLayer",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratSelectionLockArisesFromGuidanceTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratSelectionMachineParity;
+
+	FStratBridge Bridge;
+	FStratViewModel Model;
+	FString Error;
+	if (!TestTrue(TEXT("the bridge seeds and the model builds"), SeedAndBuild(Bridge, Model, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	const int32 GuidedSide = Model.ViewingSide;
+
+	// The rules module's own answer for who beat 1a is about. Read, never derived: a hex
+	// comparison against `guidedOpening.infantry` would stop being true the instant the
+	// marked unit moved, which is the case the second half of this clause exercises.
+	int32 MarkedId = INDEX_NONE;
+	for (const FStratUnitView& U : Model.Units)
+	{
+		if (U.Side == GuidedSide && U.bIsGuidedMarked)
+		{
+			MarkedId = U.UnitId;
+			break;
+		}
+	}
+	if (!TestTrue(TEXT("the shipped scenario marks an Infantry for the viewing seat"),
+			MarkedId != INDEX_NONE))
+	{
+		return false;
+	}
+
+	FStratSelectionMachine Machine;
+	FStratGuidedOpening    Guidance;
+
+	// Nothing is locked before the guidance layer runs, so what follows is attributable.
+	for (const FStratUnitView& U : Model.Units)
+	{
+		if (!TestFalse(
+				*FString::Printf(TEXT("unit %d starts unlocked, so the lock below is the "
+				                      "guidance layer's doing"), U.UnitId),
+				Machine.IsLockedThisTurn(U.UnitId)))
+		{
+			return false;
+		}
+	}
+
+	Guidance.Begin(Bridge, GuidedSide, /*bSuppressed*/ false);
+	if (!TestTrue(TEXT("the shipped scenario arms a guided opening for the viewing seat"),
+			Guidance.IsActive()))
+	{
+		return false;
+	}
+
+	Model.Match.Turn = FStratGuidedOpening::kFirstGuidedTurn;
+	Guidance.Observe(Model, Machine);
+
+	if (!TestTrue(TEXT("beat 1a is outstanding on turn 1, which is the lock's condition"),
+			Guidance.IsBeatOutstanding(EStratGuidanceBeat::Beat1a)))
+	{
+		return false;
+	}
+
+	// ---- the lock arose, on exactly the module's partition -------------------
+	int32 LockedCount = 0;
+	for (const FStratUnitView& U : Model.Units)
+	{
+		const bool bIsGuidedSeat = (U.Side == GuidedSide);
+		const bool bExpected     = bIsGuidedSeat && (U.UnitId != MarkedId);
+
+		TestEqual(
+			*FString::Printf(
+				TEXT("T-INT-05: unit %d (side %d, marked=%d) is locked exactly when it is a "
+				     "non-marked unit of the guided seat"),
+				U.UnitId, U.Side, U.bIsGuidedMarked ? 1 : 0),
+			Machine.IsLockedThisTurn(U.UnitId), bExpected);
+
+		LockedCount += Machine.IsLockedThisTurn(U.UnitId) ? 1 : 0;
+	}
+
+	// The clause would be vacuous on a scenario that deploys one unit per side; assert it is
+	// not, rather than assuming the shipped board.
+	TestTrue(
+		TEXT("T-INT-05: at least one lock actually arose, so the comparison above had content"),
+		LockedCount > 0);
+	TestFalse(TEXT("T-INT-05: and the marked unit is never the one locked"),
+		Machine.IsLockedThisTurn(MarkedId));
+
+	// ---- and it clears INSIDE turn 1, when beat 1a retires -------------------
+	// FIXTURE CONSTRUCTION, declared where it happens: `bHasMoved` is the INPUT and the lock
+	// set is the output being asserted. The turn is deliberately not advanced -- the whole
+	// point is that the lock's lifecycle is not the turn boundary's.
+	for (FStratUnitView& U : Model.Units)
+	{
+		if (U.UnitId == MarkedId)
+		{
+			U.bHasMoved = true;
+		}
+	}
+	Guidance.Observe(Model, Machine);
+
+	TestFalse(TEXT("beat 1a retired on the marked Infantry's move"),
+		Guidance.IsBeatOutstanding(EStratGuidanceBeat::Beat1a));
+	TestEqual(TEXT("T-INT-05: the turn did not advance, so this is a mid-turn clear"),
+		Model.Match.Turn, FStratGuidedOpening::kFirstGuidedTurn);
+
+	for (const FStratUnitView& U : Model.Units)
+	{
+		TestFalse(
+			*FString::Printf(
+				TEXT("T-INT-05: unit %d is un-locked in the same turn beat 1a retired "
+				     "(StratViewModel.h: \"un-locked and not-done in the same turn\")"),
+				U.UnitId),
+			Machine.IsLockedThisTurn(U.UnitId));
+		TestFalse(
+			*FString::Printf(TEXT("and unit %d is still NOT done -- the two lifecycles differ"),
+				U.UnitId),
+			Machine.IsDone(U.UnitId));
 	}
 
 	return true;

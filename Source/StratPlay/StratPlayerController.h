@@ -73,13 +73,21 @@
 //   that no phase of this milestone owns.
 // - CAPTURE and BUILD. See `FStratSelectionMachine`'s own deferral list; neither is on the
 //   phase list and neither has an answered affordance question.
-// - SAVE / LOAD. `SerializeRecordedSave` still has no engine-side caller and the save-slot
-//   UI is out of the milestone.
+// - SAVE / LOAD, AND THIS BULLET IS RETRACTED IN PLACE. It used to read:
+//   RETRACTED> "`SerializeRecordedSave` still has no engine-side caller and the save-slot
+//   RETRACTED>  UI is out of the milestone."
+//   Wave B1 gave it one, and the caller is NOT this class:
+//   `UStratMatchSubsystem::SaveMatchToSlot` / `LoadMatchFromSlot` own the slot, because a
+//   PlayerController is per-player and client-local while there is exactly one match to
+//   save. What is still not here is a KEY BINDING for either, and that is deliberate --
+//   binding save to a key without a confirmation surface is how a player overwrites a slot
+//   by leaning on the keyboard. The condition that discharges it: a save-slot UI to bind to.
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 
+#include "StratGuidedOpening.h"
 #include "StratSelectionMachine.h"
 
 #include "StratPlayerController.generated.h"
@@ -157,10 +165,54 @@ public:
 	 */
 	bool HexUnderCursor(FIntPoint& OutHex);
 
-	/** The machine, so a hand-over or a gate can read what is selected. Non-const because
-	 *  §2.11.6's guidance layer will need `SetLockedThisTurn` when it exists. */
+	/**
+	 * The machine, so a hand-over or a gate can read what is selected.
+	 *
+	 * NON-CONST BECAUSE THE GUIDANCE LAYER WRITES THE LOCKS, and that clause used to read:
+	 * RETRACTED> "because §2.11.6's guidance layer will need `SetLockedThisTurn` when it
+	 * RETRACTED>  exists."
+	 * It exists: `FStratGuidedOpening::Observe` takes this reference and calls
+	 * `SetLockedThisTurn` on it once per refresh. Retracted in place rather than deleted,
+	 * because the forward-looking version is the one a reader will remember.
+	 */
 	FStratSelectionMachine& GetSelectionMachine() { return SelectionMachine; }
 	const FStratSelectionMachine& GetSelectionMachine() const { return SelectionMachine; }
+
+	// ---- §2.11.6's guided opening -----------------------------------------
+	// THIS CLASS DRIVES IT AND DOES NOT IMPLEMENT IT, exactly as it drives the selection
+	// machine. `FStratGuidedOpening` owns every beat decision; what lives here is the three
+	// input gates, because §2.11.6-B calls beat 1a's End Turn constraint "the only
+	// guided-opening constraint that gates a player INPUT rather than a selection, adopted
+	// under Q27 (§4.7), ruled" — and input is this class's subject.
+	//
+	// THE GATES REFUSE BY NOT ASKING, AND NEVER BY ASKING FOR A REFUSAL. No gate calls
+	// `FStratBridge`; a gated event returns before `FStratSelectionMachine::HandleEvent`
+	// (so no machine state moves) or before `StratSubmitSelectionCommand` (so no command is
+	// submitted). Nothing in this path can make the rules module refuse a command it would
+	// otherwise accept, which is the same footing §2.11.1's machine-narrower-than-the-rule
+	// note puts the SELECTED → attack restriction on.
+
+	/** The layer, so a clause can drive it and a hand-over can read it. */
+	FStratGuidedOpening& GetGuidedOpening() { return GuidedOpening; }
+	const FStratGuidedOpening& GetGuidedOpening() const { return GuidedOpening; }
+
+	/**
+	 * §2.11.6's `Skip guidance` control, for the button that will eventually call it.
+	 *
+	 * A `UFUNCTION` WHERE `GetGuidedOpening` IS NOT, because this is the one member of the
+	 * surface a widget needs and `FStratGuidedOpening` is not a reflected type. Exposing the
+	 * object to Blueprint would mean making it one; exposing the single verb costs nothing.
+	 *
+	 * IT REFRESHES. §2.11.6 requires the ring, the marker and the strip to clear "in the
+	 * same frame as the strip", and the model is only rewritten by a refresh — so the skip
+	 * that did not refresh would be a skip the player sees next click.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Guidance")
+	void SkipGuidance();
+
+	/** Whether the strip is on screen. False after a skip, a suppression, or the window closing. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Guidance")
+	bool IsGuidanceActive() const;
 
 protected:
 	// ---- Enhanced Input assets. Null as C++ DEFAULTS; set on the `BP_` subclass. ------
@@ -220,6 +272,22 @@ protected:
 	virtual void BeginPlay() override;
 
 	/**
+	 * Arms §2.11.6's guided opening once, the first time a seeded match is reachable.
+	 *
+	 * ONCE, AND LAZILY. `BeginPlay` ordering between a PlayerController and a GameMode's
+	 * `StartMatch` is not something this file may assume — so rather than asserting an
+	 * order, this is called from the refresh path and returns immediately once armed. The
+	 * cost is one bool test per refresh; the alternative is a guided opening that silently
+	 * does not run because two `BeginPlay`s landed the other way round on someone's machine.
+	 *
+	 * THE SUPPRESSION BOOL COMES FROM THE SAVE SLOT, through
+	 * `UStratMatchSubsystem::HasCompletedAMatchOnSave`. §2.11.6: "Any completed match on the
+	 * save skips all guidance automatically." Read here rather than inside
+	 * `FStratGuidedOpening`, which owns no disk and must stay drivable with no slot present.
+	 */
+	void TryArmGuidedOpening();
+
+	/**
 	 * Binds the four actions on the Enhanced Input component.
 	 *
 	 * IT REFUSES QUIETLY AND COMPLETELY IF THE COMPONENT IS NOT AN ENHANCED ONE, which
@@ -252,6 +320,28 @@ private:
 	 * member cannot become one because `FStratSelectionMachine` is not a reflected type.
 	 */
 	FStratSelectionMachine SelectionMachine;
+
+	/**
+	 * §2.11.6's guided opening. BY VALUE AND BESIDE THE MACHINE, for the machine's reasons.
+	 *
+	 * ARMED IN `BeginPlay` AND NOT IN THE CONSTRUCTOR, because arming needs a seeded bridge
+	 * (for `GuidedOpeningHexes`) and the save slot (for the suppression bool), and neither
+	 * exists when a controller is constructed. A controller whose `BeginPlay` runs before
+	 * `StartMatch` finds no bridge and leaves guidance inactive, which is the same
+	 * inactive state a scenario with no `guidedOpening` produces — see `TryArmGuidedOpening`.
+	 */
+	FStratGuidedOpening GuidedOpening;
+
+	/**
+	 * Whether `TryArmGuidedOpening` has succeeded, so it is not retried every refresh.
+	 *
+	 * IT IS NOT A MIRROR OF `GuidedOpening.IsActive()` and the two differ in the case that
+	 * matters: an armed-then-skipped layer is armed and inactive, and re-arming it would
+	 * undo the skip §2.11.6 calls permanent. This records a fact about THIS OBJECT'S OWN
+	 * call history, which is the same justification `bAiTurnRunning` carries on the
+	 * subsystem.
+	 */
+	bool bGuidanceArmed = false;
 
 	/** Whether the "no input assets" warning has been said. Said once, not per click. */
 	bool bReportedMissingInputAssets = false;

@@ -66,9 +66,22 @@
 // own `TSet`s and no actor holds either, which is what `T-INT-05.NoActorHoldsPresentation-
 // Bits` still pins. `StratBuildViewModel` itself is unchanged and still leaves both false
 // -- that part of the paragraph below is current. Two details the original text got ahead
-// of: the producer landed a phase later than "phase 3", and `bLockedThisTurn` has a writer
-// (`SetLockedThisTurn`) but no shipping caller, since §2.11.6's guidance layer does not
-// exist, so that bit is false in every running path.
+// of: the producer landed a phase later than "phase 3", and this, which the file used to
+// assert in the present tense:
+// RETRACTED> "`bLockedThisTurn` has a writer (`SetLockedThisTurn`) but no shipping caller,
+// RETRACTED>  since §2.11.6's guidance layer does not exist, so that bit is false in every
+// RETRACTED>  running path."
+//
+// THAT SECOND DETAIL IS NOW WITHDRAWN, and it is withdrawn in place rather than deleted
+// so a reader who remembers it sees it retracted. Wave B2 landed the guidance layer:
+// `FStratGuidedOpening` (`Source/StratPlay/StratGuidedOpening.h`) calls
+// `SetLockedThisTurn` while beat 1a is outstanding and clears every lock the instant it
+// retires, so `bLockedThisTurn` is true in a running path for the first time. What has
+// NOT changed is the ownership: the bit is still written between `StratBuildViewModel`
+// and `ApplyView`, still by a producer that is not an actor and not a widget, and
+// `StratBuildViewModel` still leaves it false. `FStratGuidanceView` below is the same
+// arrangement one level up -- the strip's own state, on the model, so T-INT-05 keeps
+// meaning what it says.
 //
 // THE PRESENTATION BLOCK IS PRESENT AND NOTHING FILLS IT YET, recorded here rather than
 // discovered later. `Ui.h`'s presentation-block header defines the view model as snapshot PLUS presentation
@@ -127,6 +140,31 @@ enum class EStratResultTier : uint8
 	Draw       UMETA(DisplayName = "Draw"),
 	Marginal   UMETA(DisplayName = "Marginal"),
 	Decisive   UMETA(DisplayName = "Decisive")
+};
+
+/**
+ * §2.11.6-B's four beats, plus the value for "no beat holds the line".
+ *
+ * FIVE ENUMERATORS FOR FOUR BEATS, and `None` is load-bearing rather than defensive: the
+ * strip is GONE, not blank, once every beat has retired or the window closes, and a widget
+ * needs a value that means that. §2.11.6 is explicit -- "there is no live-but-blank strip
+ * in this system", so `None` always coincides with `FStratGuidanceView::bActive` being
+ * false and never appears beside an active strip.
+ *
+ * `Beat1a` AND `Beat1b` RATHER THAN `One` AND `Two`, because the GDD numbers the beats
+ * 1a and 1b and a renumbering here would make the beat table unreadable against the
+ * code. They
+ * are ordered so that the underlying value IS the beat's order index for rules 1-2, which
+ * is what lets those rules be a scan in declaration order instead of a table.
+ */
+UENUM(BlueprintType)
+enum class EStratGuidanceBeat : uint8
+{
+	None    UMETA(DisplayName = "None"),
+	Beat1a  UMETA(DisplayName = "1a - Select and move the marked Infantry"),
+	Beat1b  UMETA(DisplayName = "1b - End turn"),
+	Beat2   UMETA(DisplayName = "2 - Capture the ringed Factory"),
+	Beat3   UMETA(DisplayName = "3 - Spend Fame at your Factory")
 };
 
 /**
@@ -442,6 +480,117 @@ struct FStratMatchView
 };
 
 /**
+ * §2.11.6-B's directive strip and the two input gates behind it, as one value.
+ *
+ * WHAT THIS IS NOT: it is not the beat machine. `FStratGuidedOpening`
+ * (`Source/StratPlay/StratGuidedOpening.h`) owns which beat is outstanding, which has held
+ * the line, and when each retires; this struct is the projection of that machine for one
+ * frame, the way `FStratMatchView` is a projection of the rules module's turn state. A
+ * widget branching on this can draw the strip; it cannot advance a beat, and there is
+ * deliberately nothing here for it to advance one with.
+ *
+ * EVERY FIELD IS SOMETHING A WIDGET DRAWS OR DIMS, and nothing here is a fact a widget
+ * would have to combine with another to use -- the same no-widget-side-arithmetic line
+ * `T-UI-03` draws over the scoreboard. `bShowsWindowEndTag` in particular is a field
+ * rather than `Turn == 4` computed in Blueprint, because §2.11.6 states the tag "states a
+ * fact about the WINDOW, not about rule 2", and a widget recomputing it would be a second
+ * author of the window's length.
+ *
+ * NO LOCALIZATION. `DirectiveText`, `WindowEndTagText` and the two hover strings are
+ * `FText`
+ * built from the GDD's literal ASCII with `FText::FromString`, NOT `LOCTEXT`. That is a
+ * deliberate stop rather than a half-build: this project ships one language, a `LOCTEXT`
+ * namespace here would create string-table entries nothing translates, and the strings are
+ * quoted verbatim from §2.11.6-B so a translator's first job is to find them in the GDD
+ * rather than in a `.po`. `FText` and not `FString` so that the day localization is real,
+ * the widget bindings do not change shape.
+ */
+USTRUCT(BlueprintType)
+struct FStratGuidanceView
+{
+	GENERATED_BODY()
+
+	/**
+	 * Whether the strip is on screen at all.
+	 *
+	 * FALSE HAS THREE CAUSES AND THE STRIP CANNOT TELL THEM APART, deliberately: guidance
+	 * was suppressed (a completed match on the save), the player pressed `Skip guidance`,
+	 * or every beat retired / the window closed at the end of turn 4. All three are "gone
+	 * for good" by §2.11.6, none is recoverable, and a widget that branched on which would
+	 * be drawing a distinction the player is never shown.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	bool bActive = false;
+
+	/** Which beat holds the line. `None` exactly when `bActive` is false. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	EStratGuidanceBeat Beat = EStratGuidanceBeat::None;
+
+	/** That beat's one line, verbatim from §2.11.6-B's Directive column. Empty when inactive. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	FText DirectiveText;
+
+	/**
+	 * The dim right-hand tag on a turn-4 line: `guidance ends this turn`.
+	 *
+	 * A SEPARATE FIELD FROM `DirectiveText` AND NOT APPENDED TO IT, because §2.11.6's own
+	 * mock-up renders it right-aligned on its own row in a dim style. Concatenating would
+	 * make the strip a single string and hand the widget a formatting decision the GDD
+	 * already made.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	bool bShowsWindowEndTag = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	FText WindowEndTagText;
+
+	/**
+	 * The ringed neutral Factory (`guidedOpening.objective`), from turn 1 until the strip
+	 * disappears. `bHasObjectiveRing` false means there is nothing to ring.
+	 *
+	 * IT IS NOT ON `FStratHexView` OR `FStratFactoryView`, and that is a decision worth its
+	 * line. A `bIsGuidedObjective` flag on 99 hexes -- or on four factories -- would be the
+	 * shape `FStratFactoryView`'s own block rejects for the build fields, and it would
+	 * survive the strip's disappearance unless something remembered to clear it on 99
+	 * elements. One hex in the guidance block clears when the block does.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	bool bHasObjectiveRing = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	FIntPoint ObjectiveHex = FIntPoint::ZeroValue;
+
+	// ---- The two input gates (Q27, §4.7 -- ruled) --------------------------
+	// §2.11.6-B calls beat 1a's End Turn gate "the only guided-opening constraint that
+	// gates a player INPUT rather than a selection, adopted under Q27, ruled". These two
+	// fields are that gate's screen half. THE GATE ITSELF IS IN
+	// `AStratPlayerController::HandleSelectionEvent`, and it is a UI restriction and
+	// nothing more: no line behind these asks `FStratBridge` to refuse a command the rules
+	// module would accept, which is the same footing §2.11.1's machine-narrower-than-the-
+	// rule note already puts the SELECTED -> attack case on.
+
+	/** End Turn is inert. Draw it dimmed with `EndTurnGateHover` on hover. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	bool bEndTurnGated = false;
+
+	/** `Move the marked Infantry first.` -- §2.11.6-B, beat 1a. Empty when not gated. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	FText EndTurnGateHover;
+
+	/**
+	 * `Locked this turn.` -- §2.11.6-B, beat 1a. The hover for any unit whose
+	 * `FStratUnitView::bLockedThisTurn` is true.
+	 *
+	 * ONE STRING HERE RATHER THAN A COPY PER UNIT. The lock itself is per-unit and lives on
+	 * `FStratUnitView` where it belongs; the sentence is the same for every locked unit, and
+	 * putting it on each would be the 99-hexes shape again. Non-empty whenever any unit is
+	 * locked, so a widget need not know whether guidance is running to render a hover.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Guidance")
+	FText LockedUnitHover;
+};
+
+/**
  * The whole view model: everything that should be on screen, in engine types.
  *
  * A VALUE, REBUILT, NEVER PATCHED. Phase 3's `ApplyView` reconciles actors against this
@@ -515,6 +664,25 @@ struct FStratViewModel
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	int32 ViewingSide = 0;
+
+	/**
+	 * §2.11.6's guided opening, as the strip and the ring need to see it.
+	 *
+	 * PART OF THE MODEL AND NOT OF THE CONTROLLER, for `bLockedThisTurn`'s reason exactly
+	 * and stated here because the temptation is stronger: the directive strip is a widget
+	 * with one line of text, and hanging that text off a `BlueprintPure` on
+	 * `AStratPlayerController` would work on the first day and would make T-INT-05 false --
+	 * "rebuild the screen from the view model alone" stops holding the moment one visible
+	 * element reads from somewhere else. `Ui.h`'s presentation-block note is the precedent
+	 * and it is quoted in this header's block above.
+	 *
+	 * WRITTEN BY `FStratGuidedOpening::DecorateViewModel`, between `StratBuildViewModel`
+	 * and `ApplyView`, on the same seam `FStratSelectionMachine::DecorateViewModel` uses.
+	 * `StratBuildViewModel` leaves it default-constructed -- inactive, no beat -- exactly as
+	 * it leaves the two unit bits false.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	FStratGuidanceView Guidance;
 };
 
 /**

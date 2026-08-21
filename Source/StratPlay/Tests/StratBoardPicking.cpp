@@ -729,30 +729,73 @@ bool FStratBoardReachOverlayIsNotComputedHereTest::RunTest(const FString& /*Para
 
 	// ---- The target overlay is a second component --------------------------
 	// §2.11.1 shows both at once, so filling one must not disturb the other.
+	//
+	// THE COUNT IS NOW READ BY NAME AND NOT BY ELIMINATION -- converted 2026-08-21, when
+	// `AStratBoardActor::GetTargetOverlayCount()` landed. What stood here used to read:
+	//
+	// RETRACTED>   UHierarchicalInstancedStaticMeshComponent* TargetOverlay = nullptr;
+	// RETRACTED>   for (...) { if (Index == ReachComponentIndex || ...) continue;
+	// RETRACTED>                if (Components[Index]->GetInstanceCount() != Before[Index])
+	// RETRACTED>                { TargetOverlay = Components[Index]; break; } }
+	// RETRACTED>   TestNotNull(TEXT("ShowTargets filled a component that is not the reach
+	// RETRACTED>                     overlay"), TargetOverlay);
+	//
+	// RETRACTED> -- in words: "the first component that is not the reach overlay and whose
+	// RETRACTED>    count moved".
+	//
+	// That was identification BY ELIMINATION, and it had two defects the accessor removes. It
+	// took the FIRST match and never asserted there was only one, so the day a third component
+	// lands and `ShowTargets` touches it, this would start silently measuring whichever came
+	// first in `GetComponents` order. And it named the subject by what it is NOT, so a rename
+	// or a reordering could not break it loudly.
+	//
+	// WHAT WAS VERIFIED BEFORE CONVERTING, rather than assumed:
+	//   1. `GetTargetOverlayCount()` returns `TargetOverlay->GetInstanceCount()`, and 0 on a
+	//      null component -- the same quantity, off the same object, that the loop above
+	//      reached indirectly. It caches nothing; the component is the truth.
+	//   2. The STRUCTURAL claim the elimination was standing in for -- that targets and reach
+	//      are two components and not one -- is NOT lost, and is now asserted POSITIVELY
+	//      below: exactly one component's count moves under `ShowTargets`, and it is not the
+	//      reach overlay. That is strictly stronger than what the loop checked, which was
+	//      only that at least one non-reach component moved.
+	//   3. The two sets are deliberately different sizes (3 reach, 1 target), so a board that
+	//      had collapsed them into one component could not satisfy both counts.
+	TArray<int32> BeforeTargets;
+	BeforeTargets.Reserve(Components.Num());
+	for (UHierarchicalInstancedStaticMeshComponent* const Component : Components)
+	{
+		BeforeTargets.Add(Component != nullptr ? Component->GetInstanceCount() : 0);
+	}
+
 	TArray<FIntPoint> Targets;
 	Targets.Add(Model.Hexes[1].Hex);
+	TestNotEqual(
+		TEXT("the target set is a different size from the reach set, so one shared component "
+		     "could not satisfy both counts"),
+		Targets.Num(), Reach.Num());
 
 	Board->ShowTargets(Targets);
 
-	UHierarchicalInstancedStaticMeshComponent* TargetOverlay = nullptr;
+	// THE MEASUREMENT, by name.
+	TestEqual(TEXT("the target overlay draws exactly the hexes it was handed"),
+		Board->GetTargetOverlayCount(), Targets.Num());
+
+	// THE STRUCTURAL CLAIM, positively: exactly one component moved, and not the reach one.
+	int32 TargetChangedCount = 0;
+	int32 TargetChangedIndex = INDEX_NONE;
 	for (int32 Index = 0; Index < Components.Num(); ++Index)
 	{
-		if (Index == ReachComponentIndex || Components[Index] == nullptr)
+		const int32 Now = Components[Index] != nullptr ? Components[Index]->GetInstanceCount() : 0;
+		if (Now != BeforeTargets[Index])
 		{
-			continue;
-		}
-		if (Components[Index]->GetInstanceCount() != Before[Index])
-		{
-			TargetOverlay = Components[Index];
-			break;
+			++TargetChangedCount;
+			TargetChangedIndex = Index;
 		}
 	}
-
-	if (TestNotNull(TEXT("ShowTargets filled a component that is not the reach overlay"), TargetOverlay))
-	{
-		TestEqual(TEXT("the target overlay draws exactly the hexes it was handed"),
-			TargetOverlay->GetInstanceCount(), Targets.Num());
-	}
+	TestEqual(TEXT("ShowTargets filled exactly one component"), TargetChangedCount, 1);
+	TestNotEqual(
+		TEXT("and it is a SECOND component, not the reach overlay -- §2.11.1 shows both at once"),
+		TargetChangedIndex, ReachComponentIndex);
 
 	TestEqual(TEXT("showing targets did not disturb the reach overlay"),
 		ReachOverlay->GetInstanceCount(), Reach.Num());

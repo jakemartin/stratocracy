@@ -334,6 +334,44 @@ bool AStratPlayerController::HandleSelectionEvent(EStratSelectionEvent Event,
 	// borrowed pointer and a pair of forwards.
 	const FStratBridgeRulesQuery Query(Bridge);
 
+	// ---- §2.11.6's guided opening, before the machine sees the event --------
+	// ARMED HERE RATHER THAN IN `BeginPlay`, and observed BEFORE the gates below so that a
+	// gate never answers from a stale beat — see `TryArmGuidedOpening`'s declaration.
+	TryArmGuidedOpening();
+	GuidedOpening.Observe(Model, SelectionMachine);
+
+	// ---- The Q27 input gates (§4.7, ruled) ----------------------------------
+	// §2.11.6-B beat 1a: "End Turn is inert until that Infantry has moved … and **Space** is
+	// inert for it on the same footing as End Turn and for the same reason."
+	//
+	// THEY RETURN BEFORE `HandleEvent`, WHICH IS THE WHOLE MECHANISM. `Wait` is the event
+	// that sets `bDone` without a rules command, so intercepting it AFTER the machine had
+	// seen it would leave the unit retired with beat 1a still outstanding — End Turn inert
+	// and no move left to satisfy it, which is exactly the deadlock §2.11.6 says these two
+	// closures exist to make unreachable. Nothing here touches `FStratBridge`: an inert
+	// input is an input that was never asked about, not a command the rules module refused.
+	{
+		const bool bEndTurnBlocked = (Event == EStratSelectionEvent::EndTurn)
+			&& GuidedOpening.IsEndTurnGated();
+
+		const bool bWaitBlocked = (Event == EStratSelectionEvent::Wait)
+			&& GuidedOpening.IsUnitInputGated(SelectionMachine.GetSelectedUnitId());
+
+		if (bEndTurnBlocked || bWaitBlocked)
+		{
+			// The player-facing sentence is the GDD's hover string, so the log line, the
+			// hover and the strip cannot say three different things.
+			OutFailureReason = FStratGuidedOpening::EndTurnGateHoverText().ToString();
+
+			// REFRESHED ANYWAY, on the same reasoning the machine's own refusal path gives:
+			// nothing moved, but the strip and the dimming must be current for the player to
+			// see WHY nothing moved.
+			FString RefreshReason;
+			RefreshFromMachine(RefreshReason);
+			return false;
+		}
+	}
+
 	const FStratSelectionOutcome Outcome = SelectionMachine.HandleEvent(Event, Hex, Model, Query);
 
 	// SUBMIT FIRST, NOTIFY SECOND, AND ONLY ON ACCEPTANCE. `NotifyCommandApplied` is
@@ -341,6 +379,27 @@ bool AStratPlayerController::HandleSelectionEvent(EStratSelectionEvent Event,
 	// advance the machine past a command the rules module refused. `StratSubmitSelectionCommand`
 	// is also where `STRAT-CMD accepted` is emitted, and it emits it for the same reason --
 	// the word `accepted` is a claim about the rules module and not about the click.
+	// §2.11.6-B beat 1a's other closed route: "its attack targets are not lit, so the
+	// SELECTED → attack transition (§2.11.1) is closed to it".
+	//
+	// CHECKED AFTER `HandleEvent` AND BEFORE THE SUBMIT, which is the only place it can be:
+	// a primary click on an enemy hex is `HexPrimary` and nothing before the machine has run
+	// can tell it apart from a move. `NotifyCommandApplied` is not reached, so the machine's
+	// DONE set does not move either — the attack is inert in exactly the way Space is.
+	//
+	// NOT LIT AND NOT LEGAL ARE BOTH COVERED. `RefreshFromMachine` clears the target overlay
+	// for this unit, so the click is one the UI never invited; this arm is what makes the
+	// invitation's absence binding rather than cosmetic.
+	if (Outcome.Command == EStratSelectionCommand::Attack
+		&& GuidedOpening.IsUnitInputGated(Outcome.UnitId))
+	{
+		OutFailureReason = FStratGuidedOpening::EndTurnGateHoverText().ToString();
+
+		FString GatedRefreshReason;
+		RefreshFromMachine(GatedRefreshReason);
+		return false;
+	}
+
 	if (Outcome.Command != EStratSelectionCommand::None)
 	{
 		FString SubmitReason;
@@ -437,7 +496,17 @@ bool AStratPlayerController::RefreshFromMachine(FString& OutFailureReason)
 	// `UStratMatchSubsystem.h` split `BuildViewModel` from `ApplyView` to leave room for
 	// exactly this line: "the phase-4 path is build -> decorate -> `ApplyView`, with the
 	// decorated model being the one and only description of the screen."
+	// §2.11.6's guided opening, on the same seam and BEFORE the machine decorates. The
+	// order matters in one direction only: `Observe` writes the lock set that
+	// `SelectionMachine.DecorateViewModel` then publishes as `bLockedThisTurn`, so an
+	// `Observe` after it would publish last frame's locks. `FStratGuidedOpening::
+	// DecorateViewModel` writes the guidance block and touches no unit bit, which is why it
+	// can sit on either side of the machine's call and sits after it for readability.
+	TryArmGuidedOpening();
+	GuidedOpening.Observe(Model, SelectionMachine);
+
 	SelectionMachine.DecorateViewModel(Model);
+	GuidedOpening.DecorateViewModel(Model);
 
 	Match->ApplyView(Model);
 
@@ -451,6 +520,20 @@ bool AStratPlayerController::RefreshFromMachine(FString& OutFailureReason)
 		FString           OverlayReason;
 		SelectionMachine.BuildOverlays(Model, FStratBridgeRulesQuery(Bridge),
 			ReachHexes, TargetHexes, OverlayReason);
+
+		// §2.11.6-B beat 1a: "its attack targets are not lit". The REACH overlay is left
+		// alone deliberately — beat 1a's own directive is "Lit hexes are its true reach", so
+		// suppressing that would put out the light the beat is teaching by.
+		//
+		// CLEARED HERE RATHER THAN NOT COMPUTED. `BuildOverlays` is the selection machine's
+		// and asking it to know about beats would put a guidance rule inside a state machine
+		// that does not own one — `FStratSelectionMachine`'s own block warns against exactly
+		// that. The set is discarded one line after it is produced, at the cost of one
+		// `AttackTargetHexes` call the player will not see the answer to.
+		if (GuidedOpening.IsUnitInputGated(SelectionMachine.GetSelectedUnitId()))
+		{
+			TargetHexes.Reset();
+		}
 
 		Board->ShowReach(ReachHexes);
 		Board->ShowTargets(TargetHexes);
@@ -481,4 +564,67 @@ bool AStratPlayerController::RefreshFromMachine(FString& OutFailureReason)
 	}
 
 	return true;
+}
+
+// ---------------------------------------------------------------------------
+// §2.11.6's guided opening — arming, and the one control a widget calls.
+// ---------------------------------------------------------------------------
+
+void AStratPlayerController::TryArmGuidedOpening()
+{
+	if (bGuidanceArmed)
+	{
+		return;
+	}
+
+	UStratMatchSubsystem* const Match = GetMatch();
+	if (Match == nullptr)
+	{
+		return;
+	}
+
+	const FStratBridge* const Bridge = Match->GetBridge();
+	if (Bridge == nullptr || !Bridge->IsSeeded())
+	{
+		// Not yet. `StartMatch` has not finished, so there is no scenario to read
+		// `guidedOpening` off and no board for beat 1a to be about. Silent: this is the
+		// ordinary state for however many refreshes precede the first seeded one, and a log
+		// line here would fire once per refresh for a condition that is not a fault.
+		return;
+	}
+
+	// §2.11.6: "Any completed match on the save skips all guidance automatically."
+	// An empty slot name means the configured default; a slot that does not exist answers
+	// false, which is correct — a save with no history has no completed match on it.
+	const bool bSuppressed = Match->HasCompletedAMatchOnSave(FString());
+
+	// THE GUIDED SEAT IS THE VIEWING SIDE AT ARMING TIME AND IS FIXED FROM THEN ON. §2.11.6
+	// is a first-session onboarding against §2.9's Easy AI, so the human holds one seat for
+	// the match; `FStratGuidedOpening::Begin` takes the side by argument precisely so a
+	// hot-seat hand-over — which MOVES the viewing side — cannot move the guided seat under
+	// the beats. A both-human hot-seat match therefore guides the seat that was on screen
+	// when the match started, which is the seat §2.11.6 means by "the player".
+	GuidedOpening.Begin(*Bridge, Match->GetViewingSide(), bSuppressed);
+	bGuidanceArmed = true;
+}
+
+void AStratPlayerController::SkipGuidance()
+{
+	GuidedOpening.SkipGuidance();
+
+	// IN THE SAME FRAME. §2.11.6 requires the ring and the turn-1a marker to "clear in the
+	// same frame as the strip", and the model is only rewritten by a refresh — so the refresh
+	// is part of the control and not a courtesy. `Observe` inside it is also what clears the
+	// locks, which `SkipGuidance` deliberately does not do for itself.
+	FString RefreshReason;
+	if (!RefreshFromMachine(RefreshReason))
+	{
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("Guidance was skipped but the refresh refused: %s"), *RefreshReason);
+	}
+}
+
+bool AStratPlayerController::IsGuidanceActive() const
+{
+	return GuidedOpening.IsActive();
 }

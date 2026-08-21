@@ -340,20 +340,34 @@ struct STRATPLAY_API FStratSelectionMachine
 	bool IsDone(int32 UnitId) const { return DoneUnits.Contains(UnitId); }
 
 	/**
-	 * §2.11.6's per-turn lock. THE GUIDANCE LAYER'S WRITER, AND THERE IS NO GUIDANCE LAYER
-	 * YET.
+	 * §2.11.6's per-turn lock. THE GUIDANCE LAYER'S WRITER, AND THE GUIDANCE LAYER NOW
+	 * EXISTS. This line used to end:
+	 * RETRACTED> "AND THERE IS NO GUIDANCE LAYER YET."
+	 * Wave B2 landed `FStratGuidedOpening` (`StratGuidedOpening.h`), which calls this once
+	 * per
+	 * refresh from `Observe`. Retracted in place: the old sentence is the one a reader
+	 * will remember.
 	 *
 	 * HERE RATHER THAN NOWHERE, deliberately. `bLockedThisTurn` had no producer at all
 	 * before this file, and the failure mode phase 2 recorded is that its owner puts it in
-	 * an actor for want of anywhere else. This is somewhere else. Nothing in the hot-seat
-	 * milestone calls it -- §2.11.6's guided opening is explicitly out of scope -- so the
-	 * set is empty in every shipping path today and `DecorateViewModel` writes false for
-	 * every unit, exactly as `StratBuildViewModel` does now.
+	 * an actor for want of anywhere else. This is somewhere else.
+	 *
+	 * THE NEXT CLAIM IS RETRACTED, and it read:
+	 * RETRACTED> "Nothing in the hot-seat milestone calls it -- §2.11.6's guided opening is
+	 * RETRACTED>  explicitly out of scope -- so the set is empty in every shipping path today
+	 * RETRACTED>  and `DecorateViewModel` writes false for every unit."
+	 * True then, false now.
+	 * `FStratGuidedOpening::Observe` locks every friendly unit that is not the marked
+	 * Infantry while beat 1a is outstanding and clears them all the instant it retires.
+	 * `StratBuildViewModel` does still write false for every unit, and that part is
+	 * unchanged and correct -- the bit is produced between that call and `ApplyView`,
+	 * never inside it.
 	 *
 	 * A LOCKED UNIT CANNOT BE SELECTED, which is what "locked" means and is enforced in
-	 * `HandleEvent`. With the set empty that enforcement is unobservable; it is written now
-	 * because a guidance layer that had to add it later would be adding a rule to a state
-	 * machine it does not own.
+	 * `HandleEvent`. That enforcement was unobservable for want of a caller; it is
+	 * observable now, and the foresight paid off exactly as recorded -- the guidance layer
+	 * added no rule to this state machine, it only filled a set this machine already knew
+	 * how to honour.
 	 *
 	 * ITS LIFECYCLE IS NOT `bDone`'s and this struct does not manage it: `StratViewModel.h`
 	 * records that a lock clears when beat 1a RETIRES, inside turn 1, and not at the turn
@@ -383,7 +397,9 @@ private:
 	/** §2.11.1's DONE units this turn. Cleared by an accepted `EndTurn` and by nothing else. */
 	TSet<int32> DoneUnits;
 
-	/** §2.11.6's locked units. Written only by `SetLockedThisTurn`; empty today. */
+	/** §2.11.6's locked units. Written only by `SetLockedThisTurn`, whose one shipping
+	 *  caller is `FStratGuidedOpening::Observe` (wave B2). Non-empty while beat 1a is
+	 *  outstanding; empty at every other moment of a match. */
 	TSet<int32> LockedUnits;
 };
 

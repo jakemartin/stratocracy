@@ -11,7 +11,30 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
-_Last run 2026-08-20 (TOOLING ONLY -- no C++, no editor, and no suite run: three pass-on-failure
+_Last run 2026-08-21 (LANE B LANDED -- save-slot I/O and the §2.11.6 guided opening, built in
+the `slot-1` worktree on `feat/save-and-guidance` off `870c611` and merged to `master`.
+`FStratBridge::RestoreFromSaveText` replays a save onto a COPY and verifies `canonicalStateHash`
+before adopting, refusing a mutated hash rather than restoring it; `UStratSaveGame` carries the
+slot; `SaveMatchToSlot` and `LoadMatchFromSlot` both route through an extracted
+`StartMatchInternal`, so exactly one `LoadDefinitions -> LoadScenarioFromFile -> restore ->
+AdoptBridge` order survives instead of two that could drift apart; `FStratGuidedOpening` is the
+first shipping caller of `SetLockedThisTurn`. The suite **is now 133/133**, +25 clauses and none
+removed, counted by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` rather than by
+acceptance-ID grep, and zero non-Success. Build `Result: Succeeded`. Reviewer `VERDICT: PASS`
+with zero findings on the branch, re-gated narrowly on this tree after the merge. Beat 2 of the
+guided opening retires ONLY on a capture pip at `guidedOpening.objective`, following the
+2026-08-21 USER RULING and not a reading of §2.11.6, which stays ambiguous -- see
+`decisions.md`. TWO ACCEPTANCE IDS WERE REASSIGNED AND NONE MINTED: the guided-opening lookup
+moves from `T-SCN-02` to `T-SCN-07`, because its subject is the two authored `guidedOpening`
+fields and every guided-opening refusal in `Source/StratRules/Scenario.good.cpp` carries
+`T-SCN-07` and no other id; and the Q27 input gates are filed under `T-UI-02`, on the precedent
+`T-UI-02.ControllerTicksSoInputDispatches` and `T-UI-02.BoardHexRoundTrip` already set in this
+tree for the StratPlay input surface. THE SECOND ONE IS A PARTIAL FIT AND IS RECORDED AS ONE:
+`T-UI-02`'s written invariant is the reachable-hex highlight, and the GDD ships no acceptance id
+at all for §2.11.6-B's one input-gating constraint -- there is no onboarding family among
+T-AI/CAP/COMBAT/DATA/FAME/HEX/INT/MOVE/REPAIR/SAVE/SCN/TURN/UI, enumerated over the GDD rather
+than recalled. The missing id is FILED UPSTREAM, not minted here. The 2026-08-20 entry that
+follows is preserved verbatim: TOOLING ONLY -- no C++, no editor, and no suite run: three pass-on-failure
 sites in this project's own pre-commit hook, committed at `95d955b` and `ebbe20d`. Nothing in that
 pass re-measures the suite, so every suite figure in this banner still describes `185e88f` and is
 unchanged. See "Pre-commit hook" at the end of this file. The 2026-08-19 entry that follows is
@@ -68,7 +91,7 @@ AUTOMATION_TEST` clause, so the 104/104 C++ suite count is unmoved. See "Pre-sli
 guard" below. **ALSO POST-MILESTONE, 2026-08-14, NOT A PHASE:** the `STRAT-CMD refused`
 grep-contract residual that the previous item opened is now DISCHARGED — two new clauses,
 `T-SAVE-05.StratCmdRefusedLineShape` and `T-SAVE-05.GrepContractRejectsARefusedCaseVariant`,
-close it the same way the `accepted` side was closed; suite is now **106/106** (was 104/104).
+close it the same way the `accepted` side was closed; suite **was 106/106** at that pass (**was 104/104**).
 See "STRAT-CMD refused grep-contract residual" below. **ALSO POST-MILESTONE, 2026-08-14, NOT A
 PHASE, this steward's own lane:** the fixture-verdict binding debt (open since phase 3, carried
 through the pre-sliced zero-event guard entry and the grep-contract residual entry above, both
@@ -89,8 +112,9 @@ directly against `Saved/AutomationReport/index.json` (read `utf-8-sig`, `reportC
 2026.08.14-21.47.35`, `succeeded 107 / succeededWithWarnings 0 / failed 0 / notRun 0`, 107
 entries, zero non-Success) and corroborated by an independent macro census
 (`IMPLEMENT_SIMPLE_AUTOMATION_TEST` sums to 107, `IMPLEMENT_COMPLEX_AUTOMATION_TEST`/`_CLASS`
-sums to 0) — suite was **107/107** at that pass (was 106/106) and **is now 108/108** as of
-`185e88f`, the content-independence clause — re-derived both ways, `succeeded 108 / failed 0 /
+sums to 0) — suite **was 107/107** at that pass (**was 106/106**) and **was 108/108** as of
+`185e88f`, the content-independence clause, SUPERSEDED 2026-08-21 by Lane B and stamped
+rather than deleted, per this file's own convention — re-derived both ways, `succeeded 108 / failed 0 /
 notRun 0` in `Saved/AutomationReport/index.json` and an independent macro census summing to 108
 with COMPLEX at 0. (2) A correction bullet this steward wrote
 in the prior pass asserted `T-INT-05.AlreadyActedGuardFiresOnAForeignModel` was still open; it is

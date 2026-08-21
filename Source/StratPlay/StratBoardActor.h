@@ -216,6 +216,55 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Board")
 	int32 GetDrawnHexCount() const;
 
+	/**
+	 * How many hexes the §2.6 ATTACK-TARGET overlay is currently lighting.
+	 *
+	 * NOT `GetDrawnHexCount`, WHICH IS THE TILE COUNT. The two are easy to conflate because
+	 * both are "hexes on this board", and conflating them is the reason this exists: the
+	 * tile count is 99 on Ferrum Crossing whatever the overlays are doing, so it can neither
+	 * confirm nor deny that a target set was cleared.
+	 *
+	 * IT EXISTS FOR A CLAUSE AND THE CLAUSE IS NAMED, because an accessor with no stated
+	 * caller is the shape that rots. `T-UI-02.AttackIsClosedForTheMarkedInfantry` pins
+	 * §2.11.6-B beat 1a's "its attack targets are not lit", and before this it could assert
+	 * only the SUBMISSION half -- that no command reached the bridge. `TargetOverlay` is
+	 * `protected`, so the not-lit half was unobservable and the clause pinned a restriction
+	 * that is TWO restrictions while looking complete.
+	 *
+	 * TWO READERS TODAY, NOT ONE. `Source/StratPlay/Tests/StratGuidanceInputGates.cpp` is
+	 * the clause above; `Source/StratPlay/Tests/StratBoardPicking.cpp` is
+	 * `T-UI-02.ReachOverlayIsNotComputedHere`, which measures the target overlay beside the
+	 * reach one. Both call this by name. That count is stated because the sentence it
+	 * replaces was already wrong by the time the second reader landed. It said:
+	 * RETRACTED> "The one existing reader, `StratBoardPicking.cpp` …"
+	 *
+	 * THE HAZARD THIS WAS BUILT AGAINST IS DISCHARGED, and saying so is the point of the
+	 * paragraph. `StratBoardPicking.cpp` used to reach the count by scanning `GetComponents`
+	 * for the component that is NOT the reach overlay -- identification by elimination, which
+	 * would have started measuring the wrong component the day a third overlay landed. That
+	 * is why this accessor exists. `strat-test-author` then converted that clause to read by
+	 * name and withdrew the scan, so the liability is gone from the tree rather than
+	 * standing in it. This block previously described it as live:
+	 * RETRACTED> "The one existing reader, `StratBoardPicking.cpp`, got at the count by scanning
+	 * RETRACTED>  `GetComponents` for the component that is not the reach overlay -- a workaround
+	 * RETRACTED>  that identifies the subject by elimination and would silently start measuring
+	 * RETRACTED>  the wrong component the day a third overlay lands."
+	 * A reader sent to that file looking for the scan would not have found one.
+	 *
+	 * READ-ONLY AND OFF THE COMPONENT, not off a cached number. There is deliberately no
+	 * `SetTargetCount` and no member behind this: `ShowTargets` is the only writer, the
+	 * component is the truth, and a cached count is a second answer that can disagree with
+	 * what is on screen -- the same reason `UStratMatchSubsystem` refuses a `bSeeded` mirror
+	 * beside its bridge pointer.
+	 *
+	 * ZERO WHEN THE COMPONENT DOES NOT EXIST, which is indistinguishable here from "exists
+	 * and lights nothing". That collapse is safe for this accessor's one purpose -- both
+	 * mean nothing is lit -- and `GetDrawnHexCount` already carries the built-versus-empty
+	 * distinction for anyone who needs it about the board itself.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Board")
+	int32 GetTargetOverlayCount() const;
+
 protected:
 	/** Nothing but a transform. The tile components are runtime-created and attach here;
 	 *  the two overlays are constructor subobjects and attach here too. */

@@ -74,8 +74,14 @@
 //   below does exactly that and nothing more -- it submits no EndTurn, because whose screen
 //   this is and whose turn it is are different questions (`StratScoreboardHUD.h` on the same
 //   pair).
-// - Save and load. `SerializeRecordedSave` is on the bridge and has no engine-side caller;
-//   where a save LIVES is the save-slot UI's question and that is out of this milestone.
+// - NOT ANY MORE: SAVE AND LOAD. This bullet used to read:
+//   RETRACTED> "`SerializeRecordedSave` is on the bridge and has no engine-side caller;
+//   RETRACTED>  where a save LIVES is the save-slot UI's question."
+//   Wave B1 gave it one. `SaveMatchToSlot` and `LoadMatchFromSlot` below are
+//   that caller, `UStratSaveGame` is the slot payload, and `FStratBridge::
+//   RestoreFromSaveText` is the load half the bridge did not have. The bullet is
+//   RETRACTED IN PLACE rather than deleted, because a reader who remembers the old claim
+//   needs to see it withdrawn and not silently absent.
 // - Any `/Game/` path. The tables, the scenario file and the two actor classes arrive in
 //   `FStratMatchConfig` from a Blueprint default on the GameMode.
 #pragma once
@@ -98,6 +104,7 @@ class AStratBoardActor;
 class AStratScoreboardHUD;
 class AStratUnitActor;
 class UDataTable;
+class UStratSaveGame;
 
 /**
  * Everything `StartMatch` needs and nothing it can derive.
@@ -260,6 +267,45 @@ struct FStratMatchConfig
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
 	float AiTurnDelaySeconds = 0.0f;
+
+	// ---- §4.10 save identity ---------------------------------------------
+	// The two header fields `FStratSaveIdentity` says are SUPPLIED and never recomputed --
+	// "a bridge that went and read a manifest to fill these in would be asserting agreement
+	// it is in no position to assert". They arrive here for exactly that reason: they are
+	// build provenance, the GameMode's Blueprint default is the one place this project puts
+	// build provenance a designer can see, and neither is a rules value.
+	//
+	// EMPTY IS A LEGAL AND SELF-CONSISTENT DEFAULT, and it is worth saying why rather than
+	// leaving it to be discovered. A save written with both empty carries both empty, and a
+	// load of that slot builds the same expectation from the slot's own copy, so
+	// `strat::checkHeader` agrees. What is lost is only the cross-BUILD refusal: two builds
+	// that both leave these empty cannot tell each other's slots apart on these two fields.
+	// `scenarioHash` and `formatVersion` still refuse, and the replayed-`stateHash` check in
+	// `FStratBridge::RestoreFromSaveText` refuses anything the definitions moved under.
+
+	/** The crew commit the vendored `strat::` sources were taken at. See above on empty. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Save")
+	FString RulesCommit;
+
+	/** The digest over the §4.8 data set. See above on empty. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Save")
+	FString DataHash;
+
+	/**
+	 * The slot `SaveMatchToSlot` / `LoadMatchFromSlot` use when passed an empty name.
+	 *
+	 * A SLOT NAME IS NOT AN ASSET PATH, which is why this is a defaulted string and not an
+	 * `EditDefaultsOnly TObjectPtr`. `UGameplayStatics::SaveGameToSlot` writes
+	 * `Saved/SaveGames/<name>.sav`; nothing in `Content/` is named, nothing is cooked, and a
+	 * rename breaks no reference. The `/Game/` rule binds asset references and this is not
+	 * one.
+	 *
+	 * ONE SLOT, BECAUSE THE GDD SCOPES ONE -- §4.4's IN list reads "minimal single-slot
+	 * save/load". The methods still TAKE a name so a clause can use its own slot without
+	 * clobbering a designer's, and empty means this.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Save")
+	FString SaveSlotName = TEXT("StratocracyMatch");
 };
 
 /**
@@ -427,6 +473,131 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
 	int32 GetViewingSide() const { return ViewingSide; }
 
+	// ---- §4.10 save slots ---------------------------------------------------
+	// THIS CLASS OWNS WHERE A SAVE LIVES, and it is the only thing in the tree that does.
+	// `FStratBridge::SerializeRecordedSave` says of itself "SERIALIZES, AND DOES NOT WRITE
+	// ... where a save lives is the save-slot UI's question", and `Save.h` keeps save part
+	// (a)'s dependency set empty by having "no I/O beyond reading the one file". The disk
+	// is here, and it is here rather than in the HUD for the reason the header block gives
+	// for the bridge itself: a HUD is client-local and per-player, and there is exactly one
+	// match to save.
+	//
+	// `UGameplayStatics` AND NOT `FFileHelper`, deliberately. A raw text file beside the
+	// project would be the shorter path and would give up the two things a slot needs: the
+	// platform's own save location (`Saved/SaveGames/`, redirected per platform) and a
+	// versioned payload object. `UStratSaveGame` carries six engine-side facts §4.10 has no
+	// field for -- see that header -- and a bare text file could carry none of them.
+	//
+	// USER INDEX 0, HARDCODED, AND THAT IS A RULING RATHER THAN A SHORTCUT. §2.11 is
+	// hot-seat: two players, one machine, one logged-in user. A per-side user index would
+	// model two platform accounts this game has no notion of, and would silently split one
+	// hot-seat match's saves across two directories at the hand-over. If split-screen or
+	// online profiles ever arrive, this constant is where they land and it is one place.
+
+	/**
+	 * Writes the live match to a slot. `SlotName` empty means `FStratMatchConfig::SaveSlotName`.
+	 *
+	 * REFUSES RATHER THAN WRITING A DEGENERATE SLOT. No live match, an unseeded bridge, or a
+	 * serializer refusal all return false with the bridge's own reason -- a slot that loads
+	 * back into an empty board is worse than no slot, because it looks like a save.
+	 *
+	 * IT DOES NOT SET `bHasCompletedAMatch`, AND NOTHING ELSE DOES EITHER. Whether the match
+	 * is over is `strat::buildUiSnapshot`'s answer and reaches the §4.10 text through
+	 * `result`; §2.11.6's onboarding bool is a different fact -- the SLOT'S HISTORY -- and this
+	 * method deliberately does not infer one from the other, because a save taken on the
+	 * final turn of a match the player then abandons is not a completed match.
+	 *
+	 * THE CONDITION THAT DISCHARGES THAT, rather than the wave that was once expected to:
+	 * a caller that sets the field when a match reaches a result. This clause used to read:
+	 * RETRACTED> "wave B2 owns writing it"
+	 * B2 landed §2.11.6's guided opening and did not, so the
+	 * sentence is replaced by the condition -- a wave label stops being checkable the moment
+	 * the wave closes. `UStratMatchSubsystem::HasCompletedAMatchOnSave` is the reader and
+	 * carries the same statement.
+	 *
+	 * IT CARRIES FORWARD whatever an existing slot already held for both onboarding fields,
+	 * so a save over a slot does not erase guidance state -- which is what keeps the debt
+	 * above a missing writer rather than a lossy one.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Save")
+	bool SaveMatchToSlot(const FString& SlotName, FString& OutFailureReason);
+
+	/**
+	 * Restores a slot into this subsystem: re-seeds, replays, and reconciles the screen.
+	 *
+	 * IT RUNS `StartMatch`'s SEQUENCE AND NOT A SECOND ONE. Both go through the private
+	 * `StartMatchInternal`, which is that function's body with one extra step: after
+	 * `LoadScenarioFromFile` and before the hand-over, an optional
+	 * `FStratBridge::RestoreFromSaveText`. There is exactly one ordering of LoadDefinitions
+	 * -> LoadScenarioFromFile -> (restore) -> AdoptBridge in this file, which is what the
+	 * header block means by calling that ordering a contract rather than a habit. A second
+	 * sequence beside it is the shape that produces two `strat::GameState`s for one map.
+	 *
+	 * PRESENTATION IS RECONCILED THROUGH THE ONE REFRESH PATH. `StartMatchInternal` ends in
+	 * `BuildViewModel` -> `ApplyView` and then `HandBridgeToScoreboard`, exactly as a fresh
+	 * match does; nothing here draws anything of its own. T-INT-05's "rebuild the screen
+	 * from the view model alone" therefore covers a loaded match for free, which it would
+	 * not if a load had its own drawing path.
+	 *
+	 * THE TABLES AND ACTOR CLASSES COME FROM `ActiveConfig`, NOT FROM THE SLOT, and the slot
+	 * overrides exactly three fields: `ScenarioFile`, `FirstSide` and `ViewingSide` -- the
+	 * three §4.10 cannot carry (`UStratSaveGame`'s header block, items 1 and 2, plus the
+	 * hot-seat viewing side). A slot that pinned `DT_Units` would break the first time that
+	 * asset was renamed, and the definitions are already checked, harder, by the
+	 * replayed-`stateHash` comparison inside `RestoreFromSaveText`.
+	 *
+	 * SO IT REQUIRES A CONFIGURED SUBSYSTEM. `StartMatch` must have run at least once --
+	 * which `AStratGameMode::BeginPlay` does -- or there are no tables to seed from, and
+	 * this refuses by name rather than seeding from a default-constructed config.
+	 *
+	 * REFUSES DURING AN AI TURN. `RunAiTurnsNow` submits into the bridge this call frees.
+	 *
+	 * ON A REFUSAL THE PREVIOUS MATCH IS GONE, and that is a limitation stated rather than a
+	 * property designed. The sequence tears down and rebuilds, so a slot that fails its
+	 * header or its hash check leaves NO match rather than the one that was on screen.
+	 * Validating first would need the load checked against a bridge that does not exist yet
+	 * -- a second seeded bridge, which is the thing this class exists to make impossible.
+	 * `IsMatchLive()` is false afterwards and the caller must start a new match. The
+	 * condition that discharges this: a `FStratBridge` that can be constructed, seeded and
+	 * restored detached and then SWAPPED IN whole. `ReplayRecordedLogOnto` is already that
+	 * shape on the write side, so the seam exists; nothing needs it yet.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Save")
+	bool LoadMatchFromSlot(const FString& SlotName, FString& OutFailureReason);
+
+	/** Whether a slot exists. `SlotName` empty means `FStratMatchConfig::SaveSlotName`. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Save")
+	bool DoesSaveSlotExist(const FString& SlotName) const;
+
+	/** The slot a name of `""` resolves to. Exposed so a menu can label the button. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Save")
+	FString ResolveSaveSlotName(const FString& Requested) const;
+
+	/**
+	 * §2.11.6: "any completed match on the save skips all guidance automatically."
+	 *
+	 * READ FROM THE SLOT AND NOT FROM THIS SESSION. The question is about the SAVE's
+	 * history, not about the match on screen -- a player who finished a match last week and
+	 * started a new one today is not a first-session player, and a session-local bool would
+	 * say they were on every launch. `UStratSaveGame::bHasCompletedAMatch` is the field, and
+	 * wave B1 declared it in the payload for this call.
+	 *
+	 * A MISSING SLOT ANSWERS FALSE, and that is the correct answer rather than a fallback: a
+	 * save with no history has no completed match on it, so guidance runs. Same for a slot
+	 * this build cannot read -- an unreadable slot proves nothing about what the player has
+	 * finished, and the cost of a wrong answer is asymmetric. Guidance shown to a veteran is
+	 * a strip they dismiss with `Skip guidance`; guidance withheld from a first-time player
+	 * is §2.11.6's whole purpose silently not happening.
+	 *
+	 * NOTHING WRITES THE FIELD YET, and that is a debt rather than an oversight -- see
+	 * `SaveMatchToSlot`, which carries the value forward and does not set it. Until a caller
+	 * sets it on a match ending, this answers false for every slot and guidance runs every
+	 * match. That is the safe direction, and it is written here so the first reader of a
+	 * "why does the strip keep coming back" report finds the answer in one hop.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Guidance")
+	bool HasCompletedAMatchOnSave(const FString& SlotName) const;
+
 	/** The board actor, or null when none was spawned. Phase 4's selection machine drives
 	 *  the two overlays through it. */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
@@ -509,6 +680,38 @@ private:
 	 * seeded, and that means this function was called out of order.
 	 */
 	bool HandBridgeToScoreboard(FString& OutFailureReason);
+
+	/**
+	 * `StartMatch`'s body, and `LoadMatchFromSlot`'s. THE ONE ORDERED SEQUENCE.
+	 *
+	 * `Restore` null is a fresh match; non-null replays that payload's §4.10 text onto the
+	 * bridge after `LoadScenarioFromFile` and before `HandBridgeToScoreboard`. The step sits
+	 * exactly there because `FStratBridge::RestoreFromSaveText` refuses an unseeded bridge
+	 * and `AStratScoreboardHUD::AdoptBridge` refuses one too -- so the only legal window is
+	 * between them, and putting it anywhere else is an ordering error that presents as a
+	 * refusal from whichever end it fell off.
+	 *
+	 * A RESTORE FAILURE IS A RULES-SIDE FAILURE and tears the bridge down, joining
+	 * `LoadDefinitions` and `LoadScenarioFromFile` above it rather than the presentation
+	 * complaints below it. A half-restored match is exactly the "seeded and empty" a caller
+	 * must not be able to mistake for a match -- `FStratBridge::MakeUiSnapshot`'s line.
+	 */
+	bool StartMatchInternal(const FStratMatchConfig& Config,
+	                        const UStratSaveGame*    Restore,
+	                        FString&                 OutFailureReason);
+
+	/**
+	 * Destroys the board and the unit actors and clears the pacing timer.
+	 *
+	 * A NO-OP ON A FIRST `StartMatch`, which is why it can sit unconditionally at the top of
+	 * `StartMatchInternal`: nothing is spawned, the map is empty and the handle is invalid.
+	 * It has content only on a RESTART -- a load, or a second `StartMatch` -- where without
+	 * it the world would carry two boards and the timer would fire into a freed bridge.
+	 * `Deinitialize` does the same three things plus the bridge; the duplication is
+	 * deliberate, because teardown-at-world-death and teardown-before-reseed are different
+	 * events, and collapsing them would make the shutdown path reseed-aware.
+	 */
+	void TearDownPresentation();
 
 	/** The scoreboard HUD of the first local player, or null. */
 	AStratScoreboardHUD* FindScoreboardHUD() const;

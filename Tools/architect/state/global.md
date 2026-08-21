@@ -11,14 +11,66 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
-_Last run 2026-08-21 (LANE B LANDED -- save-slot I/O and the §2.11.6 guided opening, built in
+_Last run 2026-08-21 (THE WRITER WAS GATED `VERDICT: BLOCK` AND THE BLOCK WAS RIGHT. The hook
+guarded on `ResolveSaveSlotName(FString()).IsEmpty()` while `FStratMatchConfig::SaveSlotName`
+defaults to `TEXT("StratocracyMatch")` -- THE PLAYER'S SLOT, never empty -- so the guard
+protected nothing in the one case its own comment named. `StratAiMatchClauses.cpp` sets no slot
+and plays an AI match to an asserted result, so EVERY SUITE RUN WROTE THE PLAYER'S SLOT, and
+the change inverted its own purpose: it landed to stop the guided opening re-arming, and as
+written it PERMANENTLY SUPPRESSED the guided opening after one suite run, the flag persisting
+in the slot across runs with no diff to blame. IT HAD ALREADY HAPPENED, and an accidental
+two-directional control proved it rather than an argument: the integration tree ran the suite
+WITHOUT the writer and its `Saved/SaveGames/` held zero files; slot-1 ran it WITH the writer and
+held `StratocracyMatch.sav` at 2096 bytes. Nobody designed that experiment.
+THE FIX WAS THE PREDICATE, NOT THE FIXTURE: emptiness cannot distinguish UNSET from CHOSEN, so
+a slot name answers WHERE and can never answer WHETHER. `FStratMatchConfig::
+bRecordCompletionOnMatchEnd` now gates `NoteMatchResultIfEnded` -- the one writer nobody asked
+for -- and defaults FALSE in C++, so fixtures NOBODY HAS WRITTEN YET inherit silence.
+`RecordMatchCompletionOnSave` and `SaveMatchToSlot` stay ungated, deliberately: a caller that
+named a slot has already chosen, and that partition is what keeps the direct-writer clauses
+green as controls for an absence. `TOptional<FString>` was rejected on a measured constraint --
+not reflectable as a `UPROPERTY`, and this struct reaches a designer through a details panel.
+The suite **is now 140/140**, 133 -> 140 by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST`, +7 and none removed, re-derived independently, zero
+non-Success. Build `Result: Succeeded`. THE CHECK THAT ACTUALLY PINS THIS is stronger than any
+clause and is run by hand: after a full suite run `Saved/SaveGames/` holds ZERO files where the
+blocked pass left the player's slot. `TheCompletionHookIsSilentWithoutTheOptIn` now carries
+that property into the suite, with its positive control INSIDE THE SAME CLAUSE rather than
+borrowed from a neighbour -- a borrowed control is an assumption about another clause's health.
+A DEBT SHIPS WITH THIS AND IT IS A LIVE DEFECT, NOT A HYPOTHETICAL: the packaged game now
+records nothing unless `BP_StratGameMode`'s `MatchConfig` carries the new flag, which no C++
+asserts and no clause yet reads. The failure mode moved from CORRUPTING the player's slot to
+FORGETTING the player's history, which §2.11.6 prefers, but forgetting is still wrong.
+`T-UI-03.TheShippedGameModeOptsIn` is OWED, recorded in `tests.md`, and deliberately unwritten
+because it would be red until an editor pass that cannot happen before this C++ merges.
+Not yet merged and not yet re-gated at this writing. The entry that follows is preserved
+verbatim: THE §2.11.6 MATCH-COMPLETION WRITER LANDED, and the clauses that can see
+it. `UStratMatchSubsystem::RecordMatchCompletionOnSave` is called from a private
+`NoteMatchResultIfEnded` at the tail of `ApplyView`, gated on `FStratMatchView::bHasResult`,
+with a `bMatchResultRecorded` latch cleared in `StartMatchInternal`. It closes a defect where
+`bHasCompletedAMatch` had a READER AND NO WRITER, so the guided opening re-armed on every match
+instead of only the first -- measured four times independently before it was fixed. The hook
+hangs off `ApplyView` rather than the submit path because §2.9's AI ends a match through
+`RunAiTurnsNow` -> `RefreshPresentation`, which a submit-path hook would miss. The suite
+**was 138/138** at that pass, +5 clauses and none removed, counted by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` and re-derived independently by the coordinator, with zero
+non-Success. Build `Result: Succeeded`. Four of the five clauses pin the WRITER without ever
+planting the field, driving a real AI-vs-AI result; the fifth turns the marked Infantry's
+attack unreachability from prose inference into a MEASUREMENT, carrying its own control that
+shows `AttackTargetHexes` returning non-empty for a unit in contact -- an empty answer proves
+nothing until the instrument is shown able to speak. A HAZARD THIS WRITER CREATES IS RECORDED
+RATHER THAN LEFT TO BE DISCOVERED: now that a completed match writes to the slot its config
+names, ANY fixture that plays to a result is a writer, and a fixture that reached a result on
+the slot the guided-opening clauses need ABSENT would have disarmed that whole file silently
+and greenly, on that run and every run after. Not yet merged, not yet re-gated at this
+writing. The Lane B entry that follows is preserved verbatim: LANE B LANDED -- save-slot I/O and the §2.11.6 guided opening, built in
 the `slot-1` worktree on `feat/save-and-guidance` off `870c611` and merged to `master`.
 `FStratBridge::RestoreFromSaveText` replays a save onto a COPY and verifies `canonicalStateHash`
 before adopting, refusing a mutated hash rather than restoring it; `UStratSaveGame` carries the
 slot; `SaveMatchToSlot` and `LoadMatchFromSlot` both route through an extracted
 `StartMatchInternal`, so exactly one `LoadDefinitions -> LoadScenarioFromFile -> restore ->
 AdoptBridge` order survives instead of two that could drift apart; `FStratGuidedOpening` is the
-first shipping caller of `SetLockedThisTurn`. The suite **is now 133/133**, +25 clauses and none
+first shipping caller of `SetLockedThisTurn`. The suite **was 133/133** at that pass, +25 clauses and none
 removed, counted by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` rather than by
 acceptance-ID grep, and zero non-Success. Build `Result: Succeeded`. Reviewer `VERDICT: PASS`
 with zero findings on the branch. The narrow re-gate of the merged tree plus the three

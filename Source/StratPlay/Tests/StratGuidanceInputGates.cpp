@@ -62,7 +62,11 @@
 //     actor flag that silently disables the whole pipeline, and nothing pins the bindings
 //     themselves. Unchanged by this file.
 //   - THE ATTACK ARM AT THE CONTROLLER. See `AttackIsClosedForTheMarkedInfantry` below, which
-//     states exactly why it stops where it does and what would let it go further.
+//     states exactly why it stops where it does and what would let it go further. Its item 1 is
+//     no longer an inference: `T-UI-02.TheMarkedInfantryHasNoAttackTargetAtDeployment` measures
+//     the marked Infantry's empty target set through `FStratBridge::AttackTargetHexes`, with a
+//     control, and the arm stays unreachable for a reason the rules module states rather than a
+//     reason this file read off the map.
 //   - THE TARGET OVERLAY -- WITHDRAWN 2026-08-21. This list used to carry, in this file's own
 //     voice:
 //
@@ -84,6 +88,7 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "HAL/CriticalSection.h"
+#include "Kismet/GameplayStatics.h"
 #include "Math/IntPoint.h"
 #include "Misc/OutputDevice.h"
 #include "Misc/Paths.h"
@@ -486,6 +491,204 @@ namespace StratGuidanceInputGates
 		// and there is nothing to declare. A fixture that DID possess the controller would add
 		// the declaration then, and would be right to.
 	}
+
+	// -----------------------------------------------------------------------
+	// The control for `AttackTargetHexes`' empty answer, and the reason it is this elaborate.
+	//
+	// AN EMPTY RESULT PROVES NOTHING ON ITS OWN. `FStratBridge::AttackTargetHexes` returning
+	// no hexes for the marked Infantry is a fact about the BOARD only if the same method can
+	// be shown returning hexes for some unit somewhere. A method that returned empty for
+	// everything -- a broken enumeration, a `Forecast` asked about the wrong side, an
+	// `AttackerId` never resolved -- answers the marked Infantry in exactly the same way.
+	//
+	// THE SHIPPED SCENARIO HAS NO CONTACT AT DEPLOYMENT, so the control cannot be taken on the
+	// opening position: `Data/ferrum_crossing.json` puts the two sides at opposite ends of the
+	// map, which is the same authored fact §2.11.6 prices the guided lane against. Contact has
+	// to be PLAYED INTO EXISTENCE, and the only mover this suite has is the rules module's own
+	// AI.
+	//
+	// SO: A SECOND, PRIVATE MATCH WITH BOTH SIDES AI, ADVANCED IN SMALL BATCHES AND SCANNED
+	// AFTER EACH. `AiMaxConsecutiveTurns` is set low so `RunAiTurnsNow` hands control back
+	// often enough for a scan to land while two units are still in contact -- one unbounded
+	// call plays the whole game and returns at the finished position, where nothing is legal
+	// any more.
+	//
+	// IT RUNS IN ITS OWN WORLD. The measurement is taken on the guidance fixture's board and
+	// nothing in here touches it; a control that mutated its own subject would not be one.
+	//
+	// EVERY BATCH THAT ENDS ON THE BOUND LOGS `STRAT-AI refused phase=handover`, so a clause
+	// using this MUST declare that warning expected. That is a measured consequence of the
+	// small bound rather than a defect: `RunAiTurnsNow` reports reaching its outer bound
+	// instead of stopping silently, which is exactly what it should do.
+	// -----------------------------------------------------------------------
+
+	/** Two AI turns per call, so a scan lands between turns rather than after the game. */
+	static const int32 kControlTurnsPerBatch = 2;
+
+	/** Batches before the search gives up. `T-INT-05.BothSidesAiReachesAResultWithinTheBound`
+	 *  measures a whole AI-vs-AI game as fitting inside 64 turns; this is that with room. */
+	static const int32 kControlMaxBatches = 40;
+
+	/**
+	 * The control's own save slot, kept away from `kAbsentSlotName`.
+	 *
+	 * The control plays a real AI-vs-AI match, and a match that reaches a result now WRITES
+	 * §2.11.6's completion flag through `ApplyView`'s hook. Written to `kAbsentSlotName` that
+	 * would disarm the guided opening for every other clause in this file, on the next run and
+	 * every run after -- a whole file going vacuous because of a control.
+	 */
+	static const TCHAR* kControlSlotName = TEXT("StratocracyAutomation_AttackControl_InputGates");
+	static const int32  kControlUserIndex = 0;
+
+	/** Deletes the control's slot on both ends. `StratSaveSlotClauses.cpp` owns the reasoning
+	 *  for doing it twice rather than once. */
+	struct FControlSlotScope
+	{
+		FControlSlotScope()  { Clear(); }
+		~FControlSlotScope() { Clear(); }
+
+		static void Clear()
+		{
+			if (UGameplayStatics::DoesSaveGameExist(kControlSlotName, kControlUserIndex))
+			{
+				UGameplayStatics::DeleteGameInSlot(kControlSlotName, kControlUserIndex);
+			}
+		}
+
+		FControlSlotScope(const FControlSlotScope&) = delete;
+		FControlSlotScope& operator=(const FControlSlotScope&) = delete;
+	};
+
+	static bool FindABoardPositionWithALegalAttack(FString& OutDescription, FString& OutError)
+	{
+		FControlSlotScope SlotScope;
+		FTestWorldScope   Scope;
+		if (Scope.World == nullptr)
+		{
+			OutError = TEXT("the control's transient world was not created");
+			return false;
+		}
+
+		UStratMatchSubsystem* const Subsystem = Scope.World->GetSubsystem<UStratMatchSubsystem>();
+		if (Subsystem == nullptr)
+		{
+			OutError = TEXT("the control's world has no UStratMatchSubsystem");
+			return false;
+		}
+
+		FStratMatchConfig Base;
+		if (!MakeConfig(Base, OutError))
+		{
+			return false;
+		}
+
+		// Which sides exist is the PROJECTION's answer, exactly as `StratAiMatchClauses.cpp`
+		// asks it. A literal two here would be this file deciding the scenario's side count.
+		TArray<int32> Sides;
+		{
+			FString ScoutReason;
+			Subsystem->StartMatch(Base, ScoutReason);
+			if (!Subsystem->IsMatchLive())
+			{
+				OutError = ScoutReason;
+				return false;
+			}
+			FStratViewModel Scout;
+			if (!Subsystem->BuildViewModel(Scout, OutError))
+			{
+				return false;
+			}
+			for (const FStratUnitView& U : Scout.Units)
+			{
+				Sides.AddUnique(U.Side);
+			}
+			Sides.Sort();
+		}
+		if (Sides.Num() < 2)
+		{
+			OutError = FString::Printf(
+				TEXT("the seeded scenario deploys units for %d side(s); the control needs two"),
+				Sides.Num());
+			return false;
+		}
+
+		FStratMatchConfig BothAi  = Base;
+		BothAi.AiSides            = Sides;
+		BothAi.AiMaxConsecutiveTurns = kControlTurnsPerBatch;
+
+		// ITS OWN SLOT, AND THIS IS NOT TIDINESS. If the control's game ever DOES reach a
+		// result, `ApplyView`'s §2.11.6 hook writes `bHasCompletedAMatch` onto whatever
+		// `SaveSlotName` resolves to -- and `MakeConfig` above resolves to
+		// `kAbsentSlotName`, the name every OTHER clause in this file depends on NOT existing
+		// so the guided opening arms. Sharing it would let this control silently disarm the
+		// whole file. The scope below deletes this one on both ends.
+		BothAi.SaveSlotName = kControlSlotName;
+
+		if (BothAi.UnitTable != nullptr)
+		{
+			// §4.8's ids are `DT_Units`' own row names -- the row NAME is the id.
+			BothAi.AiBuildlistUnitIds = BothAi.UnitTable->GetRowNames();
+		}
+
+		FString StartReason;
+		Subsystem->StartMatch(BothAi, StartReason);
+		if (!Subsystem->IsMatchLive())
+		{
+			OutError = StartReason;
+			return false;
+		}
+
+		FStratBridge* const Bridge = Subsystem->GetBridge();
+		if (Bridge == nullptr)
+		{
+			OutError = TEXT("the control's live match has no bridge");
+			return false;
+		}
+
+		for (int32 Batch = 0; Batch < kControlMaxBatches; ++Batch)
+		{
+			FString RunReason;
+			Subsystem->RunAiTurnsNow(RunReason);
+
+			FStratViewModel Model;
+			FString         ModelReason;
+			if (!Subsystem->BuildViewModel(Model, ModelReason))
+			{
+				OutError = ModelReason;
+				return false;
+			}
+
+			for (const FStratUnitView& U : Model.Units)
+			{
+				TArray<FIntPoint>  Targets;
+				const FStratResult Asked = Bridge->AttackTargetHexes(U.UnitId, Targets);
+				if (Asked.bOk && Targets.Num() > 0)
+				{
+					OutDescription = FString::Printf(
+						TEXT("unit %d of side %d at %s has %d legal attack target(s), the first "
+						     "at %s, after %d AI batch(es) of %d turn(s)"),
+						U.UnitId, U.Side, *U.Hex.ToString(), Targets.Num(),
+						*Targets[0].ToString(), Batch + 1, kControlTurnsPerBatch);
+					return true;
+				}
+			}
+
+			if (Model.Match.bHasResult)
+			{
+				OutError = FString::Printf(
+					TEXT("the control's AI-vs-AI game reached a result after %d batch(es) without "
+					     "any scan finding a unit with a legal attack target"),
+					Batch + 1);
+				return false;
+			}
+		}
+
+		OutError = FString::Printf(
+			TEXT("%d AI batches of %d turns produced no board position in which any unit had a "
+			     "legal attack target"),
+			kControlMaxBatches, kControlTurnsPerBatch);
+		return false;
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -718,15 +921,26 @@ bool FStratGateWaitInertTest::RunTest(const FString& /*Parameters*/)
 // does not reach, both stated with what would let it:
 //
 //   1. THE CONTROLLER'S ATTACK ARM ITSELF IS UNREACHABLE ON THE SHIPPED SCENARIO, and that is
-//      a property of the arm rather than a gap in this fixture. The arm fires only when
+//      now a MEASUREMENT rather than a reading of the map. The arm fires only when
 //      `HandleEvent` returns `EStratSelectionCommand::Attack` for the marked unit WHILE beat 1a
 //      is outstanding -- and beat 1a retires on that unit's own move. So the arm is reachable
 //      only from a position where the marked Infantry has a legal attack target AT ITS
-//      DEPLOYMENT HEX, before it has moved. On `Data/ferrum_crossing.json` it does not: the
-//      guided lane is a five-movement-point walk to a neutral Factory. WHAT WOULD UNBLOCK IT:
-//      a scenario fixture whose `guidedOpening.infantry` deploys adjacent to an enemy. That is
-//      a `Data/` addition -- vendored, hash-gated, and not writable from this lane or the
-//      engineer's.
+//      DEPLOYMENT HEX, before it has moved. `T-UI-02.TheMarkedInfantryHasNoAttackTargetAt-
+//      Deployment` below asks the rules module: `FStratBridge::AttackTargetHexes` ANSWERS for
+//      the marked Infantry (`bOk` true, not a refusal) and returns ZERO hexes, and the same
+//      run reports 0 of 10 answered units with a target anywhere on the deployment position.
+//      The reason for it is unchanged and still authored: the guided lane is a walk to a
+//      neutral Factory and the two sides deploy at opposite ends of the map. The sentence this
+//      item used to end on was:
+//
+// RETRACTED>     "On `Data/ferrum_crossing.json` it does not: the guided lane is a
+// RETRACTED>      five-movement-point walk to a neutral Factory."
+//
+//      -- withdrawn only because it argued from the lane's length rather than from the
+//      module's answer, not because it was wrong. WHAT WOULD UNBLOCK THE ARM ITSELF is
+//      unchanged: a scenario fixture whose `guidedOpening.infantry` deploys adjacent to an
+//      enemy. That is a `Data/` addition -- vendored, hash-gated, and not writable from this
+//      lane or the engineer's.
 //
 //   2. THE TARGET OVERLAY -- WITHDRAWN 2026-08-21. This item used to read:
 //
@@ -744,15 +958,24 @@ bool FStratGateWaitInertTest::RunTest(const FString& /*Parameters*/)
 //      would be the right OBSERVABLE -- nothing is lit -- without being evidence that the gate
 //      is what emptied it.
 //
-//      THAT BELIEF IS AN INFERENCE AND IS MARKED AS ONE. Its basis is §2.13.1's authored
-//      opening-capture lane, which §2.11.6 prices at five movement points of Plains from the
-//      guided deployment hex to a NEUTRAL factory -- a lane that is nowhere near an enemy. It
-//      was NOT measured: nothing in this file calls `FStratBridge::AttackTargetHexes` for the
-//      marked unit, so no run has ever asked the rules module the question. WHAT WOULD SETTLE
-//      IT: one call to that method on the seeded board, asserted empty -- which would also
-//      turn item 1's unreachability from an inference into a measurement. It is not made in
-//      this pass, which is comment-only. Item 1 above is the same root cause and unblocking it
-//      unblocks this.
+//      THAT BELIEF WAS AN INFERENCE AND IS NOW A MEASUREMENT -- 2026-08-21. This item used to
+//      read, in this file's own voice:
+//
+// RETRACTED>     "THAT BELIEF IS AN INFERENCE AND IS MARKED AS ONE ... It was NOT measured:
+// RETRACTED>      nothing in this file calls `FStratBridge::AttackTargetHexes` for the marked
+// RETRACTED>      unit, so no run has ever asked the rules module the question. WHAT WOULD
+// RETRACTED>      SETTLE IT: one call to that method on the seeded board, asserted empty."
+//
+//      That call is made, in `T-UI-02.TheMarkedInfantryHasNoAttackTargetAtDeployment` below,
+//      WITH the control an empty result needs: the same method is shown returning a non-empty
+//      set for a unit in contact on a privately-played AI-vs-AI board, so the zero here is a
+//      fact about the deployment position and not about the method. What that does and does
+//      NOT change for THIS clause: the marked Infantry's empty target set is now known rather
+//      than believed, so `BuildOverlays` would hand back an empty target set with or without
+//      the gate -- which means the zero below is still not evidence that the gate is what
+//      emptied it. The attribution gap is unchanged; only the belief underneath it has been
+//      settled, and it settled in the direction that KEEPS the gap. Item 1 above is the same
+//      root cause and unblocking it unblocks this.
 //      WHAT THE CLAUSE DOES GET FROM THE ACCESSOR, and it is not nothing: a non-zero overlay
 //      is PLANTED first and required to survive being read, then required to be back to zero
 //      after the gated refresh -- so the refresh demonstrably CLEARS the overlay rather than
@@ -1060,6 +1283,139 @@ bool FStratGatesNeverReachRulesTest::RunTest(const FString& /*Parameters*/)
 		Accepted > 0);
 	TestTrue(TEXT("CONTROL: and the recorded command count moved with it"),
 		H.Bridge->RecordedCommandCount() > CountBefore);
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// T-UI-02 -- the marked Infantry has NO legal attack target at its deployment hex, MEASURED.
+//
+// WHAT THIS REPLACES. `AttackIsClosedForTheMarkedInfantry` above states, in its own block, that
+// the marked Infantry is BELIEVED to have no attack target at deployment, marks the belief as an
+// inference, and names what would settle it: "one call to `FStratBridge::AttackTargetHexes` on
+// the seeded board, asserted empty". This clause is that call. It changes nothing about what the
+// overlay clause asserts; it removes the word BELIEVED from the reasoning that clause's zero
+// rests on, and it is the same measurement item 1 of that block needs -- the controller's attack
+// arm is unreachable on the shipped scenario because THE RULES MODULE SAYS the marked unit has
+// nothing to attack from where it stands, not because this file thinks the lane looks long.
+//
+// AN EMPTY RESULT PROVES NOTHING ON ITS OWN, so the control is in this clause and is not
+// optional. `FindABoardPositionWithALegalAttack` plays a private AI-vs-AI match until the same
+// method, on the same build, returns a NON-EMPTY set for some unit -- see its block for why the
+// control cannot be taken on the opening position. Only then is the empty answer for the marked
+// Infantry a fact about the board rather than a fact about the method.
+//
+// THE ORDER IS MEASUREMENT FIRST, CONTROL SECOND, AND THAT IS DELIBERATE. The control plays a
+// game; the measurement must be taken on an untouched deployment. They are in different worlds
+// besides, so neither could disturb the other, but the order says which is the subject.
+//
+// `bOk` IS ASSERTED SEPARATELY FROM EMPTINESS, and the distinction is the whole hazard here.
+// `AttackTargetHexes` REFUSES for an unknown unit or an unseeded bridge, and an out-param left
+// untouched by a refusal is also empty. A clause that read only `Targets.Num() == 0` would call
+// "the bridge does not know this unit" a measurement of the board. `StratBridge.h`: "AN EMPTY
+// RESULT IS AN ANSWER HERE, unlike `ReachableHexes`" -- so an empty set with `bOk` TRUE is the
+// module saying there is nothing to attack, and that is the only reading this clause accepts.
+//
+// WHAT IS NOT ASSERTED, said plainly: that no OTHER unit has a target at deployment. Every unit
+// is scanned and the scan is reported with `AddInfo`, because a scenario re-authored into
+// contact should show up in a report rather than redden a clause about the marked Infantry.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratMarkedInfantryHasNoAttackTargetTest,
+	"Stratocracy.StratPlay.T-UI-02.TheMarkedInfantryHasNoAttackTargetAtDeployment",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratMarkedInfantryHasNoAttackTargetTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceInputGates;
+
+	DeclareFixtureWarnings(*this);
+
+	// The control's bounded batches each end on `AiMaxConsecutiveTurns` and say so. See
+	// `FindABoardPositionWithALegalAttack`'s block; `Occurrences = 0` means at least once, and
+	// at least one batch always runs.
+	AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FGateHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a live match, a controller and a marked Infantry"), H.Build(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// ---- THE MEASUREMENT, on the untouched deployment -------------------------
+	TArray<FIntPoint>  Targets;
+	const FStratResult Asked = H.Bridge->AttackTargetHexes(H.MarkedId, Targets);
+
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("the rules module ANSWERS the question for the marked Infantry rather than "
+				     "refusing it -- a refusal leaves the out-param empty too, and would be read "
+				     "as 'no targets' by a clause that only counted. It said: '%s'"),
+				*Asked.Reason),
+			Asked.bOk))
+	{
+		return false;
+	}
+
+	FString Listed;
+	for (const FIntPoint& Hex : Targets)
+	{
+		Listed += (Listed.IsEmpty() ? TEXT("") : TEXT(", ")) + Hex.ToString();
+	}
+
+	TestEqual(
+		*FString::Printf(
+			TEXT("§2.11.6-B / T-UI-02: the marked Infantry has NO legal attack target at its "
+			     "deployment hex %s -- measured through FStratBridge::AttackTargetHexes, which "
+			     "asks strat::uiForecast per enemy and compares no distances. Targets returned: "
+			     "[%s]"),
+			*H.MarkedHex.ToString(), *Listed),
+		Targets.Num(), 0);
+
+	// ---- what every other unit says, reported and not asserted ----------------
+	FStratViewModel Model;
+	if (TestTrue(TEXT("the view model builds"), H.Match->BuildViewModel(Model, Error)))
+	{
+		int32 UnitsWithTargets = 0;
+		int32 UnitsAsked       = 0;
+		for (const FStratUnitView& U : Model.Units)
+		{
+			TArray<FIntPoint>  Theirs;
+			const FStratResult TheirAnswer = H.Bridge->AttackTargetHexes(U.UnitId, Theirs);
+			if (TheirAnswer.bOk)
+			{
+				++UnitsAsked;
+				if (Theirs.Num() > 0)
+				{
+					++UnitsWithTargets;
+				}
+			}
+		}
+		AddInfo(FString::Printf(
+			TEXT("At deployment: %d of %d answered units have a legal attack target "
+			     "(%d unit(s) in the model)"),
+			UnitsWithTargets, UnitsAsked, Model.Units.Num()));
+	}
+
+	// ---- THE CONTROL: the same method, on this build, can return non-empty ----
+	FString Where;
+	FString ControlError;
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("CONTROL: FStratBridge::AttackTargetHexes returns a NON-EMPTY set for some "
+				     "unit at some board position -- without this half the zero above is a fact "
+				     "about the method rather than about the board. %s"),
+				*ControlError),
+			FindABoardPositionWithALegalAttack(Where, ControlError)))
+	{
+		AddError(ControlError);
+		return false;
+	}
+
+	AddInfo(FString::Printf(TEXT("CONTROL: %s"), *Where));
 
 	return true;
 }

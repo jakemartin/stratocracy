@@ -306,6 +306,48 @@ struct FStratMatchConfig
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Save")
 	FString SaveSlotName = TEXT("StratocracyMatch");
+
+	/**
+	 * Whether the UNPROMPTED §2.11.6 writer may touch the disk -- `NoteMatchResultIfEnded`,
+	 * and nothing else in this class.
+	 *
+	 * WHAT GAP THIS CLOSES, AND IT IS A DEFECT THAT ALREADY DID ITS DAMAGE ONCE.
+	 * `NoteMatchResultIfEnded` used to gate on `ResolveSaveSlotName(FString()).IsEmpty()`, and
+	 * its own comment said that arm existed for "an automation test that never configured a
+	 * slot". `SaveSlotName` above defaults to `StratocracyMatch` -- THE PLAYER'S SLOT -- so a
+	 * caller that never configured a slot resolved to the shipped one, and the guard was empty
+	 * in exactly the case it was written for. Measured: the suite run in this worktree at
+	 * 14:04 UTC on 2026-08-21 left `Saved/SaveGames/StratocracyMatch.sav`, 2096 bytes, written
+	 * by an AI-vs-AI clause that never names a slot; the same suite in the integration tree at
+	 * 13:38 UTC, without the writer, left that directory with zero files. A slot recording a
+	 * completed match nobody played suppresses the guided opening PERMANENTLY -- the exact
+	 * inverse of what the writer landed to fix.
+	 *
+	 * EMPTINESS IS THE WRONG PREDICATE FOR "NOBODY CHOSE THIS", and that is why this is a new
+	 * field rather than a better-worded check. A slot name answers WHERE; it can never answer
+	 * WHETHER, because a non-empty default cannot distinguish `unset` from `chosen`. Two
+	 * questions, two fields.
+	 *
+	 * OFF IN C++, ON ONLY BY DEFAULT-OBJECT AUTHORSHIP. `AStratGameMode::MatchConfig` is an
+	 * `EditDefaultsOnly` property whose Blueprint default is where shipping turns this true;
+	 * every caller that builds an `FStratMatchConfig` in C++ -- which is every automation
+	 * fixture, present and FUTURE -- inherits false and cannot reach a player's disk by
+	 * forgetting something. The default points the safe way rather than the convenient way, so
+	 * a fixture nobody has written yet is already covered. That is the property the
+	 * empty-string guard never had: it protected only callers that remembered to opt OUT.
+	 *
+	 * A `TOptional<FString>` SLOT NAME WAS THE OTHER SHAPE AND IT CANNOT BE BUILT HERE.
+	 * `TOptional` is not a reflectable `UPROPERTY` type, and this struct is `BlueprintType` and
+	 * reaches a designer through a details panel -- so moving the unset/set distinction onto
+	 * the string itself would cost the group its editability, which is the one thing this
+	 * struct's own header block says it exists for.
+	 *
+	 * IT GATES ONLY THE UNPROMPTED WRITE. `RecordMatchCompletionOnSave` and `SaveMatchToSlot`
+	 * remain unconditional, because a caller that named a slot has already chosen. This field
+	 * answers a question only the hook has to ask: may I write somewhere nobody asked me to.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Save")
+	bool bRecordCompletionOnMatchEnd = false;
 };
 
 /**
@@ -501,19 +543,25 @@ public:
 	 * serializer refusal all return false with the bridge's own reason -- a slot that loads
 	 * back into an empty board is worse than no slot, because it looks like a save.
 	 *
-	 * IT DOES NOT SET `bHasCompletedAMatch`, AND NOTHING ELSE DOES EITHER. Whether the match
-	 * is over is `strat::buildUiSnapshot`'s answer and reaches the §4.10 text through
-	 * `result`; §2.11.6's onboarding bool is a different fact -- the SLOT'S HISTORY -- and this
-	 * method deliberately does not infer one from the other, because a save taken on the
-	 * final turn of a match the player then abandons is not a completed match.
+	 * IT STILL DOES NOT SET `bHasCompletedAMatch`, AND THAT IS NOW A DIVISION OF LABOUR
+	 * RATHER THAN A GAP. Whether the match is over is `strat::buildUiSnapshot`'s answer and
+	 * reaches the §4.10 text through `result`; §2.11.6's onboarding bool is a different fact
+	 * -- the SLOT'S HISTORY -- and this method deliberately does not infer one from the
+	 * other, because a save taken on the final turn of a match the player then abandons is
+	 * not a completed match. Two paragraphs of this block used to read:
+	 * RETRACTED> "IT DOES NOT SET `bHasCompletedAMatch`, AND NOTHING ELSE DOES EITHER."
+	 * RETRACTED> "THE CONDITION THAT DISCHARGES THAT ... a caller that sets the field when a
+	 * RETRACTED>  match reaches a result."
+	 * That condition is met: `RecordMatchCompletionOnSave` is the writer and
+	 * `ApplyView` is the caller, on the model's own `FStratMatchView::bHasResult`.
+	 * The half of the sentence that survives is the half about THIS method -- the inference
+	 * is still refused here, and the write still happens at the moment the match reaches a
+	 * result rather than at the moment a save is taken.
 	 *
-	 * THE CONDITION THAT DISCHARGES THAT, rather than the wave that was once expected to:
-	 * a caller that sets the field when a match reaches a result. This clause used to read:
-	 * RETRACTED> "wave B2 owns writing it"
-	 * B2 landed §2.11.6's guided opening and did not, so the
-	 * sentence is replaced by the condition -- a wave label stops being checkable the moment
-	 * the wave closes. `UStratMatchSubsystem::HasCompletedAMatchOnSave` is the reader and
-	 * carries the same statement.
+	 * SO THE TWO WRITERS OF ONE SLOT DO NOT COLLIDE. This method writes every field EXCEPT
+	 * the onboarding pair; `RecordMatchCompletionOnSave` writes ONE onboarding field and no
+	 * other. Each read-modify-writes the existing payload, so whichever runs second keeps
+	 * what the first put there.
 	 *
 	 * IT CARRIES FORWARD whatever an existing slot already held for both onboarding fields,
 	 * so a save over a slot does not erase guidance state -- which is what keeps the debt
@@ -589,14 +637,76 @@ public:
 	 * a strip they dismiss with `Skip guidance`; guidance withheld from a first-time player
 	 * is §2.11.6's whole purpose silently not happening.
 	 *
-	 * NOTHING WRITES THE FIELD YET, and that is a debt rather than an oversight -- see
-	 * `SaveMatchToSlot`, which carries the value forward and does not set it. Until a caller
-	 * sets it on a match ending, this answers false for every slot and guidance runs every
-	 * match. That is the safe direction, and it is written here so the first reader of a
-	 * "why does the strip keep coming back" report finds the answer in one hop.
+	 * WHAT WRITES THE FIELD. This paragraph used to read:
+	 * RETRACTED> "NOTHING WRITES THE FIELD YET, and that is a debt rather than an oversight
+	 * RETRACTED>  ... Until a caller sets it on a match ending, this answers false for every
+	 * RETRACTED>  slot and guidance runs every match."
+	 * `RecordMatchCompletionOnSave` writes it, and `ApplyView` calls that whenever the model
+	 * it is reconciling against carries `FStratMatchView::bHasResult`. So the first reader of
+	 * a "why does the strip keep coming back" report is pointed at THREE things that can make
+	 * this answer false on a veteran's machine, in the order worth checking.
+	 *
+	 * FIRST, `FStratMatchConfig::bRecordCompletionOnMatchEnd` is false, in which case nothing
+	 * was ever written. This is the one to check first because it is the one a build can get
+	 * wrong silently: it is false in C++ and true only on the GameMode Blueprint's default, so
+	 * a GameMode that lost that default plays correctly and remembers nothing.
+	 * RETRACTED> This paragraph used to name "the slot name is empty
+	 * RETRACTED>  (`FStratMatchConfig::SaveSlotName` unset on the GameMode's defaults, in which
+	 * RETRACTED>  case nothing was ever written)" as the first thing to check. That branch is
+	 * RETRACTED>  unreachable without a deliberate clear -- `SaveSlotName` is declared
+	 * RETRACTED>  `= TEXT("StratocracyMatch")` and is never unset -- so it sent the first
+	 * RETRACTED>  reader of that report down a path that cannot occur.
+	 *
+	 * SECOND, the match never reached a result on screen: `ApplyView` observes the model, so a
+	 * match abandoned before its result is correctly not a completed one. THIRD, the write
+	 * itself was refused, which `RecordMatchCompletionOnSave` logs as a warning and never
+	 * swallows.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Guidance")
 	bool HasCompletedAMatchOnSave(const FString& SlotName) const;
+
+	/**
+	 * §2.11.6's WRITER: records on the slot that a match reached a result. `SlotName` empty
+	 * means `FStratMatchConfig::SaveSlotName`, exactly as everywhere else in this section.
+	 *
+	 * WHAT GAP THIS CLOSES. `UStratSaveGame::bHasCompletedAMatch` had a reader
+	 * (`HasCompletedAMatchOnSave`, consumed by `AStratPlayerController::TryArmGuidedOpening`'s
+	 * `bSuppressed` argument) and no writer, so §2.11.6's "any completed match on the save
+	 * skips all guidance automatically" was structurally unreachable: the guided opening
+	 * re-armed on every match and the onboarding never stopped teaching. This is the writer.
+	 *
+	 * IT WRITES ONE FIELD AND READS THE SLOT FIRST. A fresh `UStratSaveGame` here would
+	 * destroy the §4.10 text of a match in progress -- turning a guidance bug into a
+	 * save-erasing one -- so the existing payload is loaded and modified, which is the same
+	 * posture `SaveMatchToSlot` takes from the other side. Between them, one method owns
+	 * every field but the onboarding pair and this one owns exactly one of that pair.
+	 *
+	 * IT CREATES A SLOT THAT DOES NOT EXIST, and that is the load-bearing call in here. The
+	 * alternative -- write only into an existing slot -- would mean a first-time player who
+	 * finished a match WITHOUT EVER SAVING is still a first-time player forever, which is the
+	 * most likely path through a first session and therefore the path the defect would have
+	 * survived on. §2.11.6's condition is about the player's history, and a history that only
+	 * accrues when someone presses Save is not the history the GDD names. The payload this
+	 * creates carries no `SaveText`, which `LoadMatchFromSlot` already refuses BY NAME
+	 * ("carries no §4.10 text") rather than restoring an empty board.
+	 *
+	 * IT IS IDEMPOTENT AND SAYS SO BY RETURNING TRUE. A slot that already holds the bit is
+	 * not rewritten -- there is no second thing to record, `ApplyView` may observe a finished
+	 * match on every refresh until the player leaves it, and a disk write per frame for a
+	 * value that cannot change is the shape that turns an end-of-match screen into a stutter.
+	 *
+	 * IT REFUSES AN EMPTY SLOT NAME rather than inventing one, matching `SaveMatchToSlot`:
+	 * a literal here would be a second author of a string the designer's property owns.
+	 *
+	 * IT IS NOT A MATCH-ENDED EVENT AND MUST NOT BECOME ONE. It records a fact that is
+	 * already true of a model; it ends nothing, awards nothing and tells no widget. If an
+	 * end-of-match screen ever needs to fire once, it hangs off the same observation in
+	 * `ApplyView` and not off this method's return, because this method returns true for
+	 * "already recorded" and an event that fired on that would fire on every load of a
+	 * finished slot.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Guidance")
+	bool RecordMatchCompletionOnSave(const FString& SlotName, FString& OutFailureReason);
 
 	/** The board actor, or null when none was spawned. Phase 4's selection machine drives
 	 *  the two overlays through it. */
@@ -717,6 +827,39 @@ private:
 	AStratScoreboardHUD* FindScoreboardHUD() const;
 
 	/**
+	 * §2.11.6's match-ended hook. Called from `ApplyView` with the model being applied; if
+	 * that model says the match has a result, records it on the slot.
+	 *
+	 * IT HANGS OFF `ApplyView` AND NOT OFF A COMMAND RESULT, because `ApplyView` is the one
+	 * place EVERY model reaches the screen through -- `RefreshPresentation` calls it,
+	 * `AStratPlayerController::RefreshFromMachine` calls it after decorating, and
+	 * `StartMatchInternal` calls it on a load. A hook on the submit path would miss the AI's
+	 * winning command, which is precisely how §2.9's Easy AI ends a first-session match.
+	 *
+	 * THE MODEL IS THE SOURCE AND THE BRIDGE IS NOT ASKED. `FStratMatchView::bHasResult` is
+	 * `strat::UiSnapshot::match.hasResult` copied by `StratBuildViewModel` and is the view
+	 * model's own answer to "is this match over" -- so this hook decides nothing, which is
+	 * the rule this class is built on. Asking the bridge again here would be a second
+	 * authority that can disagree with the screen.
+	 *
+	 * VOID, AND ITS REFUSALS ARE LOGGED RATHER THAN PROPAGATED, for `ApplyView`'s stated
+	 * reason: reconciliation is not a request that can be declined, and a caller can do
+	 * nothing useful with "the onboarding bool did not persist" except what the log line
+	 * does.
+	 *
+	 * IT IS THE ONLY WRITER IN THIS CLASS NOBODY ASKED FOR, and that is why it is the only one
+	 * `FStratMatchConfig::bRecordCompletionOnMatchEnd` gates. `SaveMatchToSlot` and
+	 * `RecordMatchCompletionOnSave` run because a caller named a slot; this runs because a
+	 * model happened to say a match ended, on a refresh nobody requested a write during. Read
+	 * that field's block for the measurement that made the distinction load-bearing.
+	 * RETRACTED> This method used to gate on `ResolveSaveSlotName(FString()).IsEmpty()` and to
+	 * RETRACTED>  say the arm was for "an automation test that never configured a slot". It was
+	 * RETRACTED>  not: `SaveSlotName` defaults to the PLAYER'S slot, so a caller that
+	 * RETRACTED>  configured nothing resolved to it and wrote there.
+	 */
+	void NoteMatchResultIfEnded(const FStratViewModel& Model);
+
+	/**
 	 * THE AUTHORITATIVE `strat::GameState`, one level of indirection down.
 	 *
 	 * NOT A UPROPERTY -- `FStratBridge` is not a reflected type and must not become one.
@@ -770,6 +913,21 @@ private:
 	 * commands into one log.
 	 */
 	bool bAiTurnRunning = false;
+
+	/**
+	 * Whether THIS OBJECT has already recorded a completion for the match it is running.
+	 *
+	 * IT IS NOT A MIRROR OF THE SLOT AND NOT A MIRROR OF RULES STATE, which is what keeps it
+	 * acceptable in a class that refuses a `bSeeded` bool. It is a "have I already done the
+	 * disk write" latch and nothing reads it as an answer to any question about the match:
+	 * `HasCompletedAMatchOnSave` still reads the SLOT, and `RecordMatchCompletionOnSave` is
+	 * idempotent on its own without this. Dropping it would cost a `LoadGameFromSlot` per
+	 * refresh on a finished match and change no outcome.
+	 *
+	 * CLEARED IN `StartMatchInternal`, beside `ActiveConfig`, so a second match in the same
+	 * session records its own completion rather than inheriting the first one's latch.
+	 */
+	bool bMatchResultRecorded = false;
 
 	// THERE IS NO `bSeeded` MIRROR HERE, deliberately. `IsMatchLive()` asks
 	// `Bridge->IsSeeded()` from the .cpp, where the definition is available. A bool beside

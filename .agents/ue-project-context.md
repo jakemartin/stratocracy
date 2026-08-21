@@ -242,7 +242,7 @@ reference shape.
 
 The count moves every phase and goes stale the moment it is restated — read it from
 `Saved/AutomationReport/index.json` (`succeeded` / `failed` / `notRun`) rather than trusting a
-number here. Last observed here: 133/133, 2026-08-21, after
+number here. Last observed here: 140/140, 2026-08-21, after
 `T-INT-05.BothSidesAiReachesAResultOnDifferentContent`, the content-independence corpus (103 at
 combat-outcome phase 3 → 104 at the `accepted` tightening → 106 at the two `STRAT-CMD refused`
 clauses → 107 at the foreign-model guard → 108 → 133 at Lane B's save-slot I/O and the

@@ -33,7 +33,10 @@
 //      four-field comparison still refuses a slot written by a DIFFERENT BUILD -- the
 //      values travel with the slot, not with the running binary.
 //
-// ONBOARDING STATE, DECLARED HERE AND NOT YET WRITTEN BY ANYTHING. §2.11.6 puts the
+// ONBOARDING STATE, ONE FIELD OF IT NOW WRITTEN AND ONE STILL NOT. This heading previously
+// read:
+// RETRACTED> "ONBOARDING STATE, DECLARED HERE AND NOT YET WRITTEN BY ANYTHING."
+// See the per-field state below. §2.11.6 puts the
 // one-shot tip flags "in the save slot (§4.1)" verbatim, and states that "any completed
 // match on the save skips all guidance automatically". Both are properties of a SLOT and of
 // nothing else -- there is no rules-module field for either, and there must not be:
@@ -49,13 +52,19 @@
 // without discharging it -- a wave label goes stale the moment the wave closes, the same
 // way a line citation goes stale the moment the diff lands, so it is replaced here by what
 // is actually true and by what would change it. TODAY:
-//   - `bHasCompletedAMatch` has a READER and no WRITER.
-//     `UStratMatchSubsystem::HasCompletedAMatchOnSave` reads it and
-//     `FStratGuidedOpening` suppresses guidance on it, so the wiring is complete in one
-//     direction; nothing sets it true. DISCHARGED BY: a caller that sets it when a match
-//     reaches a result -- `FStratMatchView::bHasResult` is the fact, and the missing piece
-//     is a match-ended hook, not a field. Until then every match is a first match and
-//     guidance runs every time, which is the safe direction of the error.
+//   - `bHasCompletedAMatch` is WRITTEN AND READ. This entry previously read:
+//     RETRACTED> "`bHasCompletedAMatch` has a READER and no WRITER ... DISCHARGED BY: a
+//     RETRACTED>  caller that sets it when a match reaches a result."
+//     That is done. `UStratMatchSubsystem::RecordMatchCompletionOnSave` is the writer and
+//     `UStratMatchSubsystem::ApplyView` is its caller, on `FStratMatchView::bHasResult` --
+//     the view model's own answer to "is this match over", observed at the one place every
+//     model reaches the screen. `HasCompletedAMatchOnSave` remains the reader and
+//     `FStratGuidedOpening` remains the consumer, so the loop is closed in both directions.
+//     ONE CONSEQUENCE, WRITTEN DOWN RATHER THAN DISCOVERED: the writer CREATES a slot that
+//     does not exist, so a player who finishes a match without ever saving now has a slot
+//     carrying an empty `SaveText`. `LoadMatchFromSlot` refuses that by name; anything that
+//     offers a "Continue" affordance must gate on a LOADABLE slot and not on
+//     `DoesSaveSlotExist`, which now answers true for a slot with no match in it.
 //   - `FiredOneShotTipIds` has NEITHER. §2.11.6's teacher 3 -- nine one-shot strings plus
 //     the two cap-approach banners -- is not built. DISCHARGED BY: that tip layer, which
 //     is a different clock from the guided opening's four-turn window and was kept out of
@@ -149,10 +158,14 @@ public:
 	int32 ViewingSide = 0;
 
 	// ---- §2.11.6 onboarding state ------------------------------------------
-	// DECLARED, READ IN ONE DIRECTION, AND NOT YET WRITTEN. This line previously read:
+	// ONE FIELD IS NOW WRITTEN AND READ; THE OTHER IS STILL NEITHER. These lines previously
+	// read:
 	// RETRACTED> "Declared now, consumed in wave B2. See the header block."
-	// That wave has landed and did not consume them. The header
-	// block carries the current state and, for each field, the condition that discharges it.
+	// RETRACTED> "DECLARED, READ IN ONE DIRECTION, AND NOT YET WRITTEN."
+	// `bHasCompletedAMatch` has both ends wired --
+	// `UStratMatchSubsystem::RecordMatchCompletionOnSave` writes it from `ApplyView` and
+	// `HasCompletedAMatchOnSave` reads it. `FiredOneShotTipIds` still has neither. The header
+	// block carries the current state and, for each field, what would change it.
 
 	/**
 	 * §2.11.6: "any completed match on the save skips all guidance automatically".

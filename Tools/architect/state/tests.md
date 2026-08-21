@@ -10,6 +10,156 @@
 > in any other file is a finding, enforced by `strat_banner_sweep.py`'s RECORD OWNERSHIP check.
 > Everything under `## NEXT
 
+- **The completion hook now has an OPT-IN, the fixtures declare it in writing, and the trap that
+  made it necessary is gated rather than remembered.** The reviewer blocked the previous pass on
+  a measured defect: `FStratMatchConfig::SaveSlotName` defaults to `TEXT("StratocracyMatch")` —
+  the player's slot — and is never empty, so `NoteMatchResultIfEnded`'s empty-name guard
+  protected nothing, and any clause that played a match to a §2.8 result wrote a 2096-byte
+  `StratocracyMatch.sav` into a developer's `Saved/SaveGames/` and suppressed §2.11.6's
+  onboarding on that machine forever. `StratAiMatchClauses.cpp` did it, and it is not a
+  save-system file. The engineer fixed the PREDICATE, not the fixture:
+  `FStratMatchConfig::bRecordCompletionOnMatchEnd`, false in C++, gating
+  `NoteMatchResultIfEnded` alone — `RecordMatchCompletionOnSave` and `SaveMatchToSlot` stay
+  ungated, because a caller that named a slot has already chosen.
+  - **What this lane changed.** `StratMatchCompletionRecording.cpp`'s namespace-local
+    `MakeConfig` now sets `Out.bRecordCompletionOnMatchEnd = true` beside its slot name, with
+    the reason written where a future fixture author will read it: a slot name answers WHERE
+    and cannot answer WHETHER, so naming a slot is not consent to be written to.
+  - **A clause of this file's own was OVER-DETERMINED and the opt-in line is what fixed it.**
+    `T-UI-03.AMatchWithNoResultRecordsNothingOnTheSlot` is the negative arm of the writer gate,
+    and between the engineer's fix and this pass it passed for TWO reasons — no result AND no
+    opt-in — so it isolated nothing. Confirmed restored rather than assumed: the clause builds
+    its config through `MakeConfig` (opt-in now ON) and hands it to `StartMatch`, which copies
+    it into `ActiveConfig`; of `NoteMatchResultIfEnded`'s three early returns, the opt-in arm is
+    demonstrably not taken and the empty-slot arm is ruled out in-clause by `SlotNameResolves`,
+    leaving `!Model.Match.bHasResult` as the single remaining cause of the silence.
+  - **`T-UI-03.TheCompletionHookIsSilentWithoutTheOptIn` is the clause that makes the trap
+    non-re-armable, and it is about fixtures nobody has written yet.** Until it existed, the
+    only thing keeping the defect fixed was a human running `ls Saved/SaveGames/`; no gate
+    re-ran that. It plays an AI-vs-AI game to a §2.8 result with the opt-in set to
+    `FStratMatchConfig().bRecordCompletionOnMatchEnd` — **read off the module, never written
+    down** — and requires that NO slot is created. A later "convenience" flip of the default
+    therefore does not leave the clause quietly testing `false`; it turns it red.
+  - **Its absence carries its control IN THE SAME CLAUSE, and that placement is the point.**
+    "No slot was created" is satisfied for free by a fixture that never reached a result, by a
+    scenario that failed to load, by an AI that refused its first turn. Phase A rules out the
+    first by requiring `FStratMatchView::bHasResult` — the module's own answer — before it
+    interprets anything. Phase B then plays a SECOND AI game on the same subsystem, the same
+    slot and the same scenario with the opt-in ON, and requires the slot to appear. The opt-in
+    clause at the top of the file is *not* a sufficient control for it: different world,
+    different slot, different moment in the process. An absence and its control belong in one
+    clause or the control is an assumption about another clause's health. Two AI games in one
+    clause is the cost, paid deliberately.
+  - **`T-SAVE-06.TheOptInDefaultsOffInCpp` is one line and it is the one that names the value.**
+    `FStratMatchConfig().bRecordCompletionOnMatchEnd` is false. Not a duplicate of the clause
+    above: that one goes red on a flipped default saying "a slot appeared", which reads as a
+    hook defect; this one says what actually changed. **No module-side value exists to compare
+    against — the default IS the subject** — so the literal is the reviewer's ruling, recorded
+    here as its provenance.
+  - The clause count in `StratMatchCompletionRecording.cpp` is now six; the entry below saying
+    "four new clauses" was true at its own pass. **[STAMPED 2026-08-21]**
+  - Slot hygiene, now a standing rule for this whole suite and not just this file: **any fixture
+    that reaches a §2.8 result is a potential writer.** The new clause uses
+    `StratocracyAutomation_OptInGate`, its own and shared with nothing, deleted on both ends via
+    `FNamedSlotScope`. `Saved/SaveGames/` was empty before the run and empty after it —
+    `StratocracyMatch.sav` absent, both automation slots gone.
+
+- **OWED CLAUSE — `Stratocracy.StratPlay.T-UI-03.TheShippedGameModeOptsIn`. NOT WRITTEN IN THIS
+  PASS, DELIBERATELY, AND IT MUST NOT EVAPORATE.** The engineer named it and it is his stated
+  debt. It would read `bRecordCompletionOnMatchEnd` off `AStratGameMode`'s CDO — through
+  `BP_StratGameMode`'s `MatchConfig` default — and require it TRUE.
+  - **It would be RED today and correctly so. This is a real shipping defect right now:** the
+    shipped game does NOT opt in, because `BP_StratGameMode`'s `MatchConfig` has no such
+    checkbox yet, so in the packaged game nothing is ever recorded and §2.11.6's guided opening
+    **re-arms for every player, every match, forever**. The C++ default is right; the shipped
+    Blueprint default is missing.
+  - **UNBLOCKED BY:** the `Content/` default landing — `BP_StratGameMode`'s `MatchConfig`
+    carrying `bRecordCompletionOnMatchEnd = true`. That is `strat-editor-builder`'s lane, needs
+    the live editor on the integration tree, and cannot happen until this C++ merges. Writing
+    the clause now would block its own prerequisite.
+  - **THE `.uasset` TRAP, FOR WHOEVER WRITES IT.** A property **absent** from the asset proves
+    it equals the C++ default — i.e. **false**, i.e. the defect. So a clause that extracts the
+    asset and looks for the property must treat "not found" as a FAILURE and never as
+    "unchanged, therefore fine". Reading it off the CDO rather than off the file avoids this
+    entirely and is the preferred shape; if anyone reads the `.uasset` bytes instead, note the
+    4-character extraction trap recorded in the crew's memory on Blueprint default absence.
+
+- **§2.11.6's WRITER is now falsifiable, and the two clauses that touched the field before this
+  pass were not gates on it.** `Stratocracy.StratPlay.T-UI-03.GuidanceIsSuppressedByACompleted-
+  MatchOnTheSave` and `.T-SAVE-06.SaveOverASlotPreservesOnboardingState` both PLANT
+  `UStratSaveGame::bHasCompletedAMatch` by hand, so both pass identically whether
+  `UStratMatchSubsystem::RecordMatchCompletionOnSave` exists, is deleted, or no-ops. Planted
+  input is the right shape for a *reader* clause and it is not a gate on a *writer*. Four new
+  clauses in `Source/StratPlay/Tests/StratMatchCompletionRecording.cpp`, and **nothing in that
+  file plants the field**:
+  - `T-UI-03.AMatchReachingAResultRecordsCompletionOnTheSlot` — the rules module's own AI plays
+    both sides to a §2.8 result (`RunAiTurnsNow`, exactly as
+    `T-INT-05.BothSidesAiReachesAResultWithinTheBound` does), and the slot afterwards reports a
+    completed match. The clause never calls the writer. It goes red on the hook being deleted
+    from `ApplyView`, on the hook moving to a path this clause does not take, and on the writer
+    no-opping.
+  - `T-UI-03.AMatchWithNoResultRecordsNothingOnTheSlot` — THE CONTROL, and without it the clause
+    above proves only that *something* wrote a true. A hook with its `bHasResult` arm dropped
+    would pass the first clause exactly and would suppress onboarding on the first frame of every
+    player's first match, which is a worse defect than the missing writer was.
+  - `T-SAVE-06.RecordingCompletionPreservesTheSavedMatchText` — the read-modify-write property
+    from the writer's side: a `SaveMatchToSlot` text captured off the slot before the game must
+    come back byte-identical after the completion write. Red the moment the writer
+    default-constructs its payload, which would turn a guidance bug into a save-erasing one.
+  - `T-SAVE-06.ASaveOverPreservesACompletionTheWriterRecorded` — the same carry-forward the
+    existing save-over clause pins, but on a value the *subsystem* produced rather than one the
+    test planted.
+- **The anti-vacuity check that makes those four clauses mean anything is about a STRING, and it
+  runs first.** `NoteMatchResultIfEnded` returns early **and silently** when
+  `ResolveSaveSlotName(FString())` is empty — deliberately, and its own comment gives the reason.
+  A clause that forgot to configure `FStratMatchConfig::SaveSlotName` would assert an effect
+  against a subsystem that never attempted the write, and would report the writer's absence as
+  the writer's silence. So every clause asks the subsystem what an empty name resolves to,
+  requires it non-empty **and** requires it to be the test's own slot, as its own check, before
+  any effect is asked about. `SlotNameResolves()` in that file is the one copy.
+- **What those clauses do NOT pin, said plainly.** (a) That a *human* hot-seat match reaching a
+  result records it — the path is the same `ApplyView` and the same model field, but the game
+  that reaches a result is played by the AI because that is the only way this suite reaches a
+  §2.8 result inside one test; the hook observes a MODEL, not a mover. (b) They were **not** run
+  against a build with the hook deleted. What was run, and it is a real two-directional
+  measurement inside one clause: `HasCompletedAMatchOnSave` is asserted FALSE after `ApplyView`
+  has already run twice with `bHasResult` false, and TRUE after the game reaches a result — same
+  subsystem, same slot, same process. "Red before, green after" is **not** claimed for the hook.
+- **A control that plays a real match can silently disarm a whole file, now that the writer
+  exists.** `StratGuidanceInputGates.cpp` depends on `kAbsentSlotName` NOT existing so the guided
+  opening arms; the new AttackTargetHexes control plays an AI-vs-AI match in that file's own
+  `MakeConfig`, and a game that reached a result would have had the §2.11.6 hook write
+  `bHasCompletedAMatch` into exactly that slot — disarming every clause in the file, on that run
+  and every run after. The control now uses `kControlSlotName` and deletes it on both ends.
+  **The general rule this is an instance of: any fixture that plays a match to a result is now a
+  WRITER to whatever slot its config names.** Every test config in the tree wants checking
+  against that.
+- **The controller attack arm's unreachability is a MEASUREMENT as of 2026-08-21, and it settled
+  in the direction that keeps the attribution gap.**
+  `Stratocracy.StratPlay.T-UI-02.TheMarkedInfantryHasNoAttackTargetAtDeployment` calls
+  `FStratBridge::AttackTargetHexes` for the marked Infantry on the seeded board: `bOk` **true**
+  (asserted separately from emptiness — a refusal also leaves the out-param empty, and reading
+  only `Num() == 0` would call "the bridge does not know this unit" a fact about the board) and
+  **zero** hexes. The same run reports 0 of 10 answered units with any target at deployment.
+  What this does NOT buy: it does not make the overlay clause's zero attributable to the gate —
+  knowing the target set is empty anyway means `BuildOverlays` would return empty with or without
+  the gate. The prose in `StratGuidanceInputGates.cpp` was rewritten to say exactly that, with
+  the withdrawn "THAT BELIEF IS AN INFERENCE" passage kept under `RETRACTED> `.
+- **The control for that empty answer could not be taken on the opening position, and how it was
+  taken instead is worth reusing.** `Data/ferrum_crossing.json` deploys the two sides at opposite
+  ends of the map, so no unit anywhere has a target at deployment and there is no in-fixture
+  control. `FindABoardPositionWithALegalAttack` therefore plays a PRIVATE both-sides-AI match in
+  its own world with `AiMaxConsecutiveTurns` set to 2, and scans every unit after each batch —
+  a single unbounded `RunAiTurnsNow` returns only at the finished position, where nothing is
+  legal any more and the control would be mute. Measured on the pass that introduced it: the
+  first batch already produced one (`unit 5 of side 0 at 3,4`, one legal target at `4,4`). Every
+  batch that ends on the bound logs `STRAT-AI refused phase=handover`, so a clause using this
+  helper MUST declare that warning expected — that is the bound reporting itself, not a defect.
+- **`FAutomationTestBase::TestEqualSensitive` already exists; do not write a local one.** A
+  file-local `TestEqualSensitive(Test, What, A, B)` is *shadowed* by the member inside `RunTest`
+  and fails to compile (`C2661: no overloaded function takes 4 arguments`) — which is the lucky
+  outcome. Use the engine's three-argument member.
+
 - **A doc block goes stale in vocabulary the sweep does not know, so sweep by CLAIM SHAPE and by
   DIFF, never by topic.** The 2026-08-21 gate caught three live false claims in
   `StratGuidedOpeningClauses.cpp`'s `CapturePipHasLanded` block that my own retraction sweep had

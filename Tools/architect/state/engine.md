@@ -141,6 +141,53 @@ does not restate either.
   purpose. The REACH overlay is left lit, because beat 1a's own directive is "Lit hexes are its
   true reach".
 
+#### The completion writer's opt-in, 2026-08-21
+
+- **`FStratMatchConfig::bRecordCompletionOnMatchEnd` gates the unprompted §2.11.6 write, and it
+  exists because the guard it replaced protected nothing in the case it was written for.**
+  `UStratMatchSubsystem::NoteMatchResultIfEnded` gated on
+  `ResolveSaveSlotName(FString()).IsEmpty()` and its comment said that arm was for "an automation
+  test that never configured a slot". `FStratMatchConfig::SaveSlotName` is declared
+  `= TEXT("StratocracyMatch")` — the player's slot — so a caller that configured nothing resolved
+  to the shipped slot, never to empty. Measured with a two-directional control: the integration
+  tree ran the suite without the writer and `Saved/SaveGames/` ended with zero files; this
+  worktree ran the same suite with the writer and produced `StratocracyMatch.sav`, 2096 bytes.
+  The AI-vs-AI clauses in `Source/StratPlay/Tests/StratAiMatchClauses.cpp` name no slot and assert
+  a result, so every suite run recorded a completed match on the player's slot and suppressed the
+  guided opening permanently — the inverse of the change's purpose.
+- **The root cause was a predicate, not a fixture.** Emptiness cannot distinguish `unset` from
+  `chosen` when the default is non-empty, so patching one fixture would leave the trap armed for
+  the next. `StratMatchLifecycle` and `StratMatchReconcile` were named latent by the gate, safe
+  only because they never reach a result. The new field is a separate axis: a slot name answers
+  WHERE, the flag answers WHETHER.
+- **The alternative was a `TOptional<FString>` slot name and it cannot be built here.** `TOptional`
+  is not a reflectable `UPROPERTY` type and `FStratMatchConfig` is `USTRUCT(BlueprintType)` reaching
+  a designer through a details panel, so the unset/set distinction on the string itself would cost
+  the group its editability — the one thing the struct's header block says it exists for.
+- **The flag gates `NoteMatchResultIfEnded` ONLY.** `RecordMatchCompletionOnSave` and
+  `SaveMatchToSlot` stay unconditional, because a caller that named a slot has already chosen.
+  That partition is what keeps the two completion clauses that call the writer directly green
+  while the two that reach it through the hook go red until they opt in.
+- **The empty-slot early return survives, re-worded.** It is now reachable only by a deliberate
+  clear — opted in with `SaveSlotName` emptied — and stays silent and unlatched for its original
+  reason: `ApplyView` runs per refresh and a warning there is a warning per frame.
+- **Misleading prose retracted in place** in `UStratMatchSubsystem::HasCompletedAMatchOnSave`'s
+  block, which named "the slot name is empty" as the first thing to check in a "why does the strip
+  keep coming back" report. That branch is unreachable without a deliberate clear. The first thing
+  to check is now `bRecordCompletionOnMatchEnd` being false, which is the one a build can get wrong
+  silently: false in C++, true only on the GameMode Blueprint's default.
+
+#### Debts taken on 2026-08-21 (continued)
+
+- **Shipping now depends on a Blueprint default that no C++ asserts.** `BP_StratGameMode`'s
+  `MatchConfig.bRecordCompletionOnMatchEnd` must be true or §2.11.6's guided opening re-arms on
+  every match in the shipped game — the original defect, reintroduced by an unset checkbox, with a
+  green build and a green suite. This is the deliberate cost of defaulting to the safe direction:
+  the failure mode moved from "corrupts the player's slot" to "forgets the player's history", and
+  the second is the one §2.11.6 says to prefer. **Discharged by** a `Content/` default carrying the
+  flag plus a clause that reads it off the GameMode's CDO rather than off a C++-built config — both
+  outside this lane, and both filed in the handoffs for this change.
+
 #### Debts taken on 2026-08-21
 
 - **`UStratSaveGame::bHasCompletedAMatch` has a READER and NO WRITER, so the guided opening runs
@@ -159,7 +206,28 @@ does not restate either.
   veteran is a strip they dismiss and guidance withheld from a first-timer is §2.11.6 silently not
   happening. The earlier note in `StratMatchSubsystem.h` that said wave B2 would write it is
   retracted in place: B2 landed the guided opening and did not, and a wave label stops being
-  checkable the moment the wave closes.
+  checkable the moment the wave closes. — **DISCHARGED 2026-08-21 on `feat/match-ended-hook`, in the
+  working tree at the time of writing (the user commits, so no hash is cited here rather than a wrong
+  one):** `UStratMatchSubsystem::RecordMatchCompletionOnSave` is the writer and
+  `UStratMatchSubsystem::ApplyView` is the caller, through the private `NoteMatchResultIfEnded`, on
+  `FStratMatchView::bHasResult`. The hook hangs off `ApplyView` and not off a command result because
+  `ApplyView` is the one place every model reaches the screen through — `RefreshPresentation`,
+  `AStratPlayerController::RefreshFromMachine` after decorating, and `StartMatchInternal` on a load
+  all end there — and a hook on the submit path would miss §2.9's AI making the winning move, which
+  is exactly how a first-session match ends. `SaveMatchToSlot` is unchanged and still carries the
+  onboarding pair forward by not writing it; the new writer touches that one field and no other, so
+  whichever of the two runs second keeps what the first left. The inference this debt forbade is
+  still forbidden: nothing in `SaveMatchToSlot` derives the flag from match state.
+- **The completion writer CREATES a slot that does not exist, so `DoesSaveSlotExist` can now answer
+  true for a slot with no match in it.** Taken on deliberately: writing only into an existing slot
+  would leave a first-time player who finished a match without ever pressing Save a first-time player
+  forever, which is the likeliest path through a first session and therefore the path the defect
+  would have survived on. The payload created that way carries an empty `SaveText`, which
+  `LoadMatchFromSlot` already refuses by name ("carries no §4.10 text") rather than restoring an
+  empty board — so the failure is a refusal and not a corrupt match. **Discharged by** a "Continue"
+  affordance gating on a LOADABLE slot rather than on `DoesSaveSlotExist`; there is no such
+  affordance in the tree today, and `DoesSaveSlotExist` has no shipping caller (its only caller is a
+  test), which is why this is recorded as a hazard for the next reader rather than a live bug.
 - **`LoadMatchFromSlot` tears down before it validates, so a refused load leaves NO match.** The
   sequence rebuilds; a slot that fails its header or its hash check leaves `IsMatchLive()` false
   and the caller must start a new one. Validating first would need the load checked against a

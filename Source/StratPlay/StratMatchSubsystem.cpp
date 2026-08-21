@@ -208,6 +208,11 @@ bool UStratMatchSubsystem::StartMatchInternal(const FStratMatchConfig& Config,
 	ActiveConfig = Config;
 	ViewingSide = Config.ViewingSide;
 
+	// A NEW MATCH HAS NOT BEEN RECORDED AS COMPLETED, whatever the last one did. Cleared
+	// here rather than in `Deinitialize` because the event it is about is a MATCH, and two
+	// matches can share one world; see the member's declaration.
+	bMatchResultRecorded = false;
+
 	// ---- The bridge. STEP ONE OF THE ORDERED SEQUENCE ----------------------
 	// Constructed here rather than in the constructor: a bridge that exists before its
 	// inputs have been checked is a bridge `GetBridge()` could hand out unseeded, and this
@@ -524,6 +529,13 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// CACHED AFTER THE FACT AND NEVER READ BACK. See `GetViewModel`: this is a record of
 	// what was applied, not an input to anything above.
 	AppliedModel = Model;
+
+	// §2.11.6's MATCH-ENDED HOOK, LAST AND OFF THE SAME VALUE THE SCREEN WAS DRAWN FROM.
+	// After the reconciliation rather than before it, so that the frame in which the player
+	// SEES the result is the frame in which it is recorded -- and so that a failure to
+	// persist can never leave the board undrawn. It reads `Model` and asks the bridge
+	// nothing; see the declaration of `NoteMatchResultIfEnded`.
+	NoteMatchResultIfEnded(Model);
 }
 
 bool UStratMatchSubsystem::RefreshPresentation(FString& OutFailureReason)
@@ -834,6 +846,120 @@ bool UStratMatchSubsystem::HasCompletedAMatchOnSave(const FString& SlotName) con
 	// nothing to do with them. If the field ever moves or changes meaning, this is where an
 	// arm goes and `SavedDataVersion` is what it reads.
 	return Payload != nullptr && Payload->bHasCompletedAMatch;
+}
+
+bool UStratMatchSubsystem::RecordMatchCompletionOnSave(const FString& SlotName,
+                                                      FString&       OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	const FString Slot = ResolveSaveSlotName(SlotName);
+	if (Slot.IsEmpty())
+	{
+		OutFailureReason = TEXT("no slot name was given and SaveSlotName is empty on the GameMode's defaults");
+		return false;
+	}
+
+	// READ FIRST, ALWAYS. Two reasons, and only the second is about this method: an existing
+	// slot holds a match's §4.10 text that must survive this write, and a slot that already
+	// carries the bit has nothing left to record.
+	UStratSaveGame* Payload = nullptr;
+	if (UGameplayStatics::DoesSaveGameExist(Slot, 0))
+	{
+		Payload = Cast<UStratSaveGame>(UGameplayStatics::LoadGameFromSlot(Slot, 0));
+
+		if (Payload != nullptr && Payload->bHasCompletedAMatch)
+		{
+			// ALREADY TRUE IS SUCCESS. See the declaration: `ApplyView` can observe a
+			// finished match on every refresh, and this is what keeps that from being a
+			// disk write per frame.
+			return true;
+		}
+	}
+
+	// NO VERSION GATE, MATCHING `HasCompletedAMatchOnSave` AND NOT `LoadMatchFromSlot`. The
+	// reader's block gives the reason and it is symmetric here: this touches one bool about
+	// the player's history and does not interpret `SaveText`, so a slot from another shape of
+	// this struct is not a reason to refuse to remember that a match ended. If the field ever
+	// moves, an arm goes in both places and `SavedDataVersion` is what it reads.
+
+	if (Payload == nullptr)
+	{
+		// EITHER THERE IS NO SLOT, OR THERE IS ONE THIS BUILD CANNOT CAST. Both land on a
+		// fresh payload, and the second case overwrites something -- which is the honest
+		// trade, because a slot that does not hold a `UStratSaveGame` is a slot
+		// `LoadMatchFromSlot` already refuses by name and there is nothing of ours in it.
+		Payload = Cast<UStratSaveGame>(
+			UGameplayStatics::CreateSaveGameObject(UStratSaveGame::StaticClass()));
+	}
+
+	if (Payload == nullptr)
+	{
+		OutFailureReason = TEXT("CreateSaveGameObject returned null for UStratSaveGame");
+		return false;
+	}
+
+	// ONE FIELD. `SavedDataVersion` is stamped because the shape being written is this
+	// build's shape; everything else on the payload is left exactly as it was read, which is
+	// what makes this safe to run in the middle of a match whose text is already in the slot.
+	// A payload created above therefore goes to disk with an EMPTY `SaveText`, and that is
+	// intended: `LoadMatchFromSlot` refuses it by name rather than restoring an empty board.
+	Payload->SavedDataVersion    = UStratSaveGame::kCurrentSavedDataVersion;
+	Payload->bHasCompletedAMatch = true;
+
+	if (!UGameplayStatics::SaveGameToSlot(Payload, Slot, 0))
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("SaveGameToSlot failed writing slot '%s'"), *Slot);
+		return false;
+	}
+
+	UE_LOG(LogStratPlay, Log,
+		TEXT("Slot '%s' now records a completed match; §2.11.6 guidance is suppressed from here on."),
+		*Slot);
+	return true;
+}
+
+void UStratMatchSubsystem::NoteMatchResultIfEnded(const FStratViewModel& Model)
+{
+	if (bMatchResultRecorded || !Model.Match.bHasResult)
+	{
+		return;
+	}
+
+	// NOBODY ASKED FOR THIS WRITE, SO SOMEBODY HAS TO HAVE SAID YES. The shipped GameMode
+	// Blueprint's default says yes; a `FStratMatchConfig` built in C++ says no, because the
+	// field is declared false. Read that field's block: the check this replaced was
+	// `ResolveSaveSlotName(FString()).IsEmpty()`, which could not distinguish "no slot was
+	// chosen" from "the shipped slot was inherited", and so wrote a completed match onto the
+	// player's slot from an AI-vs-AI automation clause.
+	if (!ActiveConfig.bRecordCompletionOnMatchEnd)
+	{
+		return;
+	}
+
+	// AN EMPTY SLOT NAME IS SILENT AND DOES NOT LATCH. Reachable now only by a deliberate
+	// clear -- opted in, and `SaveSlotName` emptied on the defaults -- which is a
+	// misconfiguration rather than a fault, and `ApplyView` runs on every refresh, so a
+	// warning here would be a warning per frame and that is how a real refusal gets buried.
+	// Not latching means a slot name configured later still takes effect.
+	if (ResolveSaveSlotName(FString()).IsEmpty())
+	{
+		return;
+	}
+
+	FString Reason;
+	if (!RecordMatchCompletionOnSave(FString(), Reason))
+	{
+		// NOT LATCHED ON A FAILURE, so a transient write failure is retried on the next
+		// refresh rather than losing the fact for the rest of the match.
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("The match reached a result but §2.11.6's completion flag was not persisted: %s"),
+			*Reason);
+		return;
+	}
+
+	bMatchResultRecorded = true;
 }
 
 bool UStratMatchSubsystem::SaveMatchToSlot(const FString& SlotName, FString& OutFailureReason)

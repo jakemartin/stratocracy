@@ -621,6 +621,15 @@
     the reasoning that the docs are where the shape came back and so are the failure a red run
     should name first.
 
+- **DRAFTED 2026-08-21 — a scenario-adjacency upstream request, for §2.11.6's attack-arm
+  reachability and overlay-zero attribution.** `upstream-second-scenario.md` was checked and does
+  NOT cover this: its subject is the content-independence SCENARIO axis and its only
+  `guidedOpening` claim is that both infantry/objective hexes are Plains/Factory, never adjacency
+  to an enemy. Verified against GDD §2.13.5 directly that *Longwater March* as specified would
+  not have satisfied it either (guided infantry 10 columns from the nearest enemy unit). Full
+  request, the git-blob-hash pin check, and the explicit `FILED IS NOT LANDED` status (drafted
+  only, not filed) are at `Tools/architect/evidence/upstream-guided-opening-adjacency.md`.
+
 - **OPEN DEBT, filed 2026-08-20, both raised by the reviewer as non-gating on the pass that
   returned `VERDICT: PASS`.** Neither was fixed. They are written down here so the next pass
   inherits them instead of rediscovering them, which is the whole reason this file exists.

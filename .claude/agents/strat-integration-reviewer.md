@@ -50,12 +50,20 @@ Measured: `C4150`, deletion of pointer to incomplete type, emitted from the gene
 
 **5. Module arrows unchanged and correct.**
 ```
-StratRules → (nothing)
-Stratocracy → StratRules
+StratRules  → Core
+Stratocracy → Core, CoreUObject, Engine, InputCore, EnhancedInput, …, StratRules
 StratBridge → Core, CoreUObject, Engine, Stratocracy
-StratUI → StratBridge   (+ private UMG, Slate, SlateCore)
-StratPlay → StratUI     (when it exists)
+StratUI     → Core, CoreUObject, Engine, StratBridge  (+ private UMG, Slate, SlateCore)
+StratPlay   → Core, CoreUObject, Engine, StratUI      (+ private StratBridge, EnhancedInput)
 ```
+**DERIVE THIS LIST; DO NOT TRUST IT.** It is a typed subject list, and a guard that types its
+own subjects stops covering them silently — which is exactly what happened here. Two rows above
+were wrong for a whole milestone: `StratRules → (nothing)` where `StratRules.Build.cs` says
+`{ "Core" }`, and `StratPlay → StratUI (when it exists)` long after it existed. Reviewers
+reported the first as drift in `.agents/ue-project-context.md` — which was correct all along —
+and the false finding was carried forward across gates before anyone parsed the tree. Corrected
+2026-08-21 by parsing every `Source/*/*.Build.cs` with comments stripped. Do the same each gate
+and compare, rather than reading the arrows off this block.
 **`StratBridge → Stratocracy` is deliberate and correct** — the row structs bake
 `/Script/Stratocracy.UnitRow` into `DT_Units`. Do not report it as a layering violation; a
 report that does has bad ground truth, and the fix is this file and the context file, not the

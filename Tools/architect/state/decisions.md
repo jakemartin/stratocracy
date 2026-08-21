@@ -226,6 +226,28 @@
     upstream and this repository re-vendors the result. Filing is not landing; landing is not
     building; building is not vendoring.
 
+- **RE-MEASURED 2026-08-21 — Lane A's §2.11.5 production-menu blocker still stands, re-derived
+  fresh rather than inherited from the entries above and below it.**
+  - `git -C E:/MultiAgent/stratocracy-crew status --porcelain` -> empty; `git -C
+    E:/MultiAgent/stratocracy-crew rev-parse HEAD` -> `4d36a160ff18f203a19918e5c30274c4a160412d`,
+    clean.
+  - `git -C E:/MultiAgent/stratocracy-crew grep -n "uiBuildOptions"` -> two hits, both in
+    `spec/ui_spec.md` (lines 268, 298); `git -C E:/MultiAgent/stratocracy-crew grep -n
+    "uiBuildOptions" -- cpp_reference/` -> zero hits, non-zero exit. The spec entry has landed;
+    the header change has not.
+  - `git -C E:/MultiAgent/stratocracy-crew log -1 --format='%s%n%n%b'` on `4d36a16` confirms its
+    own text verbatim: *"Spec-only. No header is touched, no source file is written, no
+    acceptance ID moves."*
+  - `Source/StratRules/StratRules.manifest.json` pins `"rulesCommit":
+    "cb8e12b3a897c7329497ced4d1c6207630f37101"`. `git -C E:/MultiAgent/stratocracy-crew
+    rev-list --count cb8e12b..HEAD` -> **15**, agreeing with the entry below rather than the 14
+    this task's own dispatch prompt stated -- the tree wins, and this exact figure was already
+    corrected once, at the `FILED UPSTREAM 2026-08-21` entry below.
+  - **Nothing here is new.** Every figure matches what the entries above and below it already
+    record; this entry exists because it was independently re-derived, not copied, and none of
+    the re-derivations disagreed.
+  - **Lane A remains BLOCKED**, unchanged. Filing is not landing, and landing is not vendoring.
+
 - **RULED, 2026-08-21, by the user — beat 2 of the guided opening retires ONLY on a capture pip
   at `guidedOpening.objective`.** GDD §2.11.6 stays AMBIGUOUS on this point; nothing in the
   document itself settles it, and this entry records that the code follows a ruling, not a

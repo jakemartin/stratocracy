@@ -1,14 +1,23 @@
 # Upstream request — a scenario whose guided-opening Infantry deploys adjacent to an enemy
 
-**Filed against** `E:\MultiAgent\stratocracy-crew`, crew `main` HEAD `4d36a16` — DRAFTED HERE, NOT
-FILED. See §4, `FILED IS NOT LANDED`.
+**Filed against** `E:\MultiAgent\stratocracy-crew`, crew `main` HEAD `4d36a16` — the commit this
+request was DRAFTED against, distinct from the commit filing it produced. **LANDED at crew
+`a8c8cdb`** — see §8. The two are kept apart deliberately: `4d36a16` is what this draft read;
+`a8c8cdb` is the commit filing it actually produced, one day later. See also §4,
+`FILED IS NOT LANDED` — landing is not a Director ruling.
 
 **Subject** `data/*.json` (there is exactly one scenario, `ferrum_crossing.json`), and by
 extension any future authored scenario file's `guidedOpening.infantry` placement relative to the
 opposing side's starting units.
 
-**Status** Drafted in this repository only. No file in either repo was touched, nothing was
-staged, nothing was committed, upstream or here.
+**Status** **FILED UPSTREAM 2026-08-21, at crew `a8c8cdb`**, on the user's explicit instruction, as
+item 2 of the existing "Change requests for the Director" section in `spec/scenario_spec.md`,
+placed immediately before `## Acceptance` — the same placement and shape item 1 (the
+second-scenario request) already uses. Spec-only: `data/` and `cpp_reference/` are untouched, no
+manifest or hash moved, `sync_stratdata.py` is unchanged, and no acceptance ID moved. Verified by
+`git -C E:\MultiAgent\stratocracy-crew show --stat a8c8cdb` (one file, `spec/scenario_spec.md`, 61
+insertions, 0 deletions) rather than taken on report. Filing is not landing: no Director has
+ruled, no scenario has been authored, and nothing is vendored — see §8 and §4.
 
 ---
 
@@ -108,14 +117,31 @@ implementation and test work outside this lane.
 
 ## 4. `FILED IS NOT LANDED.`
 
-This document is **drafted in this repository only.** It has not been filed against
-`stratocracy-crew`. No file in `E:\MultiAgent\stratocracy-crew` has been touched, no branch
-created, nothing staged, nothing committed. The crew commit named at the top (`4d36a16`) is the
-HEAD this draft is written against, not a commit it was filed at — there is no crew commit to
-cite as "filed at" because filing has not happened. If and when this is filed, record the crew
-commit it lands at here, in the shape `upstream-second-scenario.md` §8 and
-`upstream-onboarding-input-gating-acceptance-id.md` use, and update `state/decisions.md`
-accordingly. Until then this is a draft, not a request in flight.
+**SUPERSEDED 2026-08-21 — this request WAS FILED, at crew `a8c8cdb`. See §8 and the Status line
+above.** The paragraph immediately below described this document's state before filing and is
+kept, quoted rather than deleted, because a stale "not filed" run in reverse is its own hazard: a
+reader would re-file a request already in flight. It is no longer true and must not be read as
+current.
+
+> This document is **drafted in this repository only.** It has not been filed against
+> `stratocracy-crew`. No file in `E:\MultiAgent\stratocracy-crew` has been touched, no branch
+> created, nothing staged, nothing committed. The crew commit named at the top (`4d36a16`) is the
+> HEAD this draft is written against, not a commit it was filed at — there is no crew commit to
+> cite as "filed at" because filing has not happened. If and when this is filed, record the crew
+> commit it lands at here, in the shape `upstream-second-scenario.md` §8 and
+> `upstream-onboarding-input-gating-acceptance-id.md` use, and update `state/decisions.md`
+> accordingly. Until then this is a draft, not a request in flight.
+
+**What "filed" does NOT mean, stated so a reader does not read it as "granted".** Filing put 61
+lines of request text into `spec/scenario_spec.md` in the crew repo; it did not rule on them. No
+Director has decided the two-part question in §1. No scenario — not *Longwater March*, not *The
+Causeway*, not any other map — has been authored with the adjacency property. `Data/` in this repo
+is unchanged: `Data/StratData.manifest.json`'s `dataCommit` still pins `c2f5860`, nothing was
+re-vendored, and no acceptance ID moved. The overlay-zero attribution question in §3 is exactly as
+open as it was before filing — filing supplied a place for a ruling to land, not the ruling
+itself. `FILED IS NOT LANDED` remains true in its proper sense even though this particular filing
+now HAS landed in the sense §8 describes (a commit exists carrying the request text): landing the
+*request* is not landing the *content* it asks for.
 
 ## 5. What already exists and must not be mistaken for this
 
@@ -126,6 +152,69 @@ scenario refusal and moves **no content axis at all**, adjacency or otherwise: i
 board, so its `guidedOpening.infantry` hex is exactly as non-adjacent as *Ferrum Crossing*'s.
 Named here, as `upstream-second-scenario.md` §2 already named it for the SCENARIO axis, so nobody
 reads it as this request being satisfied.
+
+## 8. The change request, as filed
+
+**FILED UPSTREAM 2026-08-21** at crew `a8c8cdb`, on the user's explicit instruction, as item 2 of
+the existing "Change requests for the Director" section in `spec/scenario_spec.md`, immediately
+before `## Acceptance` — the same placement and shape item 1 (the second-scenario request) uses.
+Spec-only: `git -C E:\MultiAgent\stratocracy-crew show --stat a8c8cdb` shows exactly one file
+touched, `spec/scenario_spec.md`, 61 insertions and 0 deletions; `data/` and `cpp_reference/` are
+untouched, no manifest or hash moved, `sync_stratdata.py` is unchanged, and no acceptance ID
+moved. Its substance (`spec/scenario_spec.md` item 2, verified against the landed diff rather than
+the drafted text above):
+
+> **A scenario whose `guidedOpening.infantry` starts adjacent to an enemy unit. FILED
+> 2026-08-21; not decided here.** This is a **separate request from 1**, not an amendment to it,
+> and the difference is the whole point: a second scenario and a scenario-with-deployment-contact
+> are different asks, and the drafts named in 1 satisfy the first while failing the second.
+>
+> **The ask is a ruling.** Does an authored scenario's `guidedOpening.infantry` hex ever start
+> adjacent to an enemy starting unit? If not for the shipped map nor for either stretch draft, may
+> one be drafted — or a not-yet-authored stretch draft's starting layout revised — specifically to
+> carry that property, ahead of and separate from §2.13.7's stretch schedule? As in 1, §2.13.7's
+> four-clause condition is quoted rather than argued around.
+>
+> **Neither existing stretch draft would carry the property, checked against the GDD directly
+> rather than against request 1's word.** *Longwater March* (§2.13.5) places
+> `guidedOpening.infantry` at (1,2) West / (11,5) East on a 13-column board whose homes the
+> section itself states are "10 hexes apart"; the nearest West unit to any East unit is column 1
+> against column 11, and no starting pair across the two sides is adjacent by any measure. *The
+> Causeway* (§2.13.6) places it at (1,2) West / (7,5) East on a 9-column board with homes "6 hexes
+> apart" — also not adjacent. `data/ferrum_crossing.json`, the only scenario that exists, does not
+> have it either: its opening Infantry hex sits well inside its own half, symmetric with the
+> enemy's. **So this cannot be satisfied by pointing request 1 at either map.**
+>
+> **What it unblocks, stated exactly.** With no starting hex adjacent to an enemy unit, `strat::`
+> attack-target enumeration for the marked Infantry at its deployment hex has nothing to return, so
+> the downstream attack arm cannot be exercised at that beat under any board that exists. This
+> request is a *necessary* condition for reaching that arm at all.
+>
+> **What it does NOT settle, kept separate deliberately.** Downstream has an open question whether
+> an empty target overlay at deployment is caused by the **input gate** (beat-1a's Attack
+> transition never lighting, the Q27 ruling filed separately) or by the **board** (no legal target
+> exists regardless of gating). A scenario with a genuinely adjacent enemy only *removes the board
+> as an explanation*. The experiment still has to be run in both branches — with the gate as
+> implemented, and with it bypassed at the rules-module level — and that second half is downstream
+> implementation and test work, not something this filing supplies. Granting this request does not
+> close that question.
+>
+> **Two things must not be mistaken for it having been satisfied.** (a) The downstream fixture
+> `ferrum_crossing_variant.json` is the shipped board hex for hex, with `scenarioHash` dropped and
+> `scenarioId` relabelled, written to prove a seeded-from-a-different-scenario refusal. It moves no
+> content axis and its opening Infantry hex is exactly as non-adjacent as *Ferrum Crossing*'s. (b)
+> A downstream clause already asserts the **absence** this request exists to give a board to work
+> around: it asks for the marked Infantry's attack targets directly, gets an answered-not-refused
+> result with **zero** hexes, and separately walks the whole ten-unit deployment finding **0 of
+> 10** answered units with a legal attack anywhere. That clause carries its own positive control —
+> it plays a private AI-vs-AI match until the same method returns non-empty for *some* unit — so
+> the zero is established as a fact about **this board** rather than a limitation of the method.
+> That control is why this filing states the board as the cause rather than guessing at it.
+>
+> Full investigation, including the git-blob measurement that the vendored scenario equals the
+> current crew bytes: `Stratocracy/Tools/architect/evidence/upstream-guided-opening-adjacency.md`.
+
+Update `state/decisions.md` accordingly — done, in the same pass that added this section.
 
 Also not this: the existing `T-UI-02.TheMarkedInfantryHasNoAttackTargetAtDeployment` clause in
 `Source/StratPlay/Tests/StratGuidanceInputGates.cpp`. That test *proves the absence this request

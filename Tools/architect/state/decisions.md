@@ -309,3 +309,86 @@
   nothing was committed. Distinct from, and NOT to be conflated with, the still-open
   `uiBuildOptions` item above (Lane A / GDD §2.11.5) — that one is a header change awaiting
   implementation and a re-vendor; this one is a spec-only acceptance-ID gap.
+
+- **FILED UPSTREAM 2026-08-21, on the user's explicit instruction — a scenario whose
+  `guidedOpening.infantry` starts adjacent to an enemy unit.** Drafted against crew `main` HEAD
+  `4d36a16` and landed the same day at crew **`a8c8cdb`**, as item 2 of the existing "Change
+  requests for the Director" section in `spec/scenario_spec.md`, placed immediately before
+  `## Acceptance` — the same placement and shape item 1 (the second-scenario request, `3b5ef9d`)
+  already uses. **Independently re-verified against the crew repo, not taken on the dispatch
+  prompt's word:** `git -C E:\MultiAgent\stratocracy-crew log --oneline -3 main` shows `a8c8cdb`
+  on `main` with `4d36a16` as its immediate parent and the stated subject line; `git -C
+  E:\MultiAgent\stratocracy-crew show --stat a8c8cdb` shows exactly one file touched,
+  `spec/scenario_spec.md`, 61 insertions and 0 deletions — spec-only, `data/` and `cpp_reference/`
+  untouched, no manifest or hash moved, `sync_stratdata.py` unchanged, no acceptance ID moved, all
+  as claimed. Investigation and the filed change-request text (quoted from the landed diff, not
+  the pre-filing draft) are at
+  `Tools/architect/evidence/upstream-guided-opening-adjacency.md`, §4 and §8.
+  - **This is a filing, not a landing, in the sense that matters for content.** A commit now
+    exists carrying the request text (`a8c8cdb`), which is what distinguishes this from the still-
+    drafted-only Q27 entry above. But no Director has ruled on either half of the question in §1,
+    no scenario has been authored with the adjacency property (`data/ferrum_crossing.json` remains
+    the only scenario, and neither *Longwater March* nor *The Causeway* has been drafted with it),
+    and nothing in this repo's vendored `Data/` moved — `Data/StratData.manifest.json`'s
+    `dataCommit` is unchanged. The evidence file's own §4 was stale in the OPPOSITE direction
+    before this pass (it said "not filed" after filing had happened); that is corrected there, not
+    here — this entry does not restate a suite count or a phase verdict, both of which stay in
+    `state/global.md` only.
+  - **Distinct from, and NOT to be conflated with,** the still-open SCENARIO axis entry above
+    (2026-08-19, landed `3b5ef9d`) and the still-drafted-only Q27 acceptance-ID gap immediately
+    above this entry. All three are separate crew-repo filings at different commits, on different
+    subjects, in different states of landing.
+
+- **FILED UPSTREAM 2026-08-21, on the user's explicit instruction — the Q27 acceptance-ID gap
+  named two entries above is no longer draft-only; it is now filed at crew `3510bc2`.** The entry
+  above it ("FILED UPSTREAM 2026-08-21 — GDD 4.11 has no acceptance ID...") described a filing
+  that was, at the time it was written, drafted but not yet committed anywhere. That was true when
+  written and is superseded here rather than edited, per this file's own convention. Drafted
+  against crew `main` HEAD `4d36a16` and landed the same day at crew **`3510bc2`**, as item 2 of
+  the existing "Change requests for the Director" section in `spec/ui_spec.md`, placed immediately
+  before `## Acceptance` — the same placement item 1 (the `uiBuildOptions` ruling, `4d36a16`)
+  already uses. **Independently re-verified against the crew repo, not taken on the dispatch
+  prompt's word:** `git -C E:\MultiAgent\stratocracy-crew log --oneline -3 main` shows `3510bc2`
+  on `main`, one commit ahead of `a8c8cdb` (the adjacency filing); `git -C
+  E:\MultiAgent\stratocracy-crew show --stat 3510bc2` shows exactly one file touched,
+  `spec/ui_spec.md`, **64 insertions, 4 deletions** — spec-only, `data/` and `cpp_reference/`
+  untouched, no manifest or hash moved, `sync_stratdata.py` unchanged, no acceptance ID minted.
+  Investigation and the filed change-request text (quoted from the landed diff, not the
+  pre-filing draft) are at
+  `Tools/architect/evidence/upstream-onboarding-input-gating-acceptance-id.md`, §7-§9.
+  - **The 4 deletions are an intro rewrite, not a retraction, and it is exactly the failure this
+    record keeps paying for if left unqualified.** `spec/ui_spec.md`'s "Change requests for the
+    Director" section previously opened "There is one, and it is not a question" — true while
+    the `uiBuildOptions` ruling was the section's only entry. Item 2 (this filing) falsifies that
+    count, so the same commit rewrites the intro to "There are two, and they are different in
+    kind" and states which is a ruling awaiting implementation and which is a naming question
+    awaiting a ruling.
+  - **One substantive correction the filing made to its own draft, carried into the record here
+    because a Director asked to name "the Q27 constraint" needs to know which sentence ruled
+    what.** The draft's §1 (in the evidence file) describes "the three player-input gates
+    §2.11.6-B beat 1a specifies" in a way that reads as though Q27 ruled all three. Verified
+    directly against `Stratocracy_Prototype_GDD.md` (grepped, never `cat`, 446 KB / ~100 KB
+    lines): Q27's own ruling text (the `| **Q27** |` row) names **End Turn** only. The
+    §2.11.6-B beat-1a row is what separately extends the constraint to **Space** ("inert for it
+    on the same footing as End Turn and for the same reason") and closes the **Attack**
+    transition (§2.11.1) to that unit. The filed request states this split explicitly; the
+    evidence file's §1 does not, and is left as-is per this file's "never rewritten" convention —
+    the correction is recorded in the evidence file's own §7 instead of retroactively edited into
+    §1.
+  - **"Filed" is not "granted", and this entry states it plainly rather than leaving it
+    implied.** No Director has ruled on either branch of the request (mint an ID, e.g. `T-UI-06`,
+    or rule that Q27 stays unassigned by design). `T-UI-06` does not exist in `cpp_reference/` or
+    `spec/ui_spec.md` — it appears only as an example inside the quoted request text. The
+    downstream clauses named in the evidence file's §1 stay filed under `T-UI-02` as a recorded
+    partial fit, unchanged by this filing.
+  - **Distinct from, and NOT to be conflated with, the two neighbouring filings this same day.**
+    The `uiBuildOptions` item (Lane A / GDD §2.11.5) is a header change awaiting implementation
+    and a re-vendor. The adjacency request (crew `a8c8cdb`, `spec/scenario_spec.md` item 1) is a
+    board-content ruling. This one is an ID-assignment request, and both possible answers —
+    minting an ID or ruling Q27 stays unassigned by design — are legitimate outcomes; the filing
+    presumes neither.
+  - **The commit gap re-derived fresh, not inherited.** `git -C E:/MultiAgent/stratocracy-crew
+    rev-list --count cb8e12b..HEAD` against crew HEAD `3510bc2` on 2026-08-21 returns **17** —
+    two more than the 15 recorded at the `RE-MEASURED 2026-08-21` entry above, reflecting the
+    crew's two moves since then (`a8c8cdb`, then `3510bc2`). This entry does not restate a suite
+    count or a phase verdict; both stay in `state/global.md` only.

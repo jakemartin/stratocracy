@@ -45,10 +45,19 @@ jobs:
       # THE TOOL IS CHECKED BEFORE ITS VERDICT IS TRUSTED. A sweep whose own fixtures have
       # rotted can report SWEEP CLEAN for the wrong reason, and this project has already
       # shipped one revision of it that was silently inert on the very banner it polices.
-      # `--self-test` runs 14 inline fixtures, each proving one check can FAIL.
+      # `--self-test` runs 23 inline fixtures, each proving one check can FAIL. The count is
+      # written here only as orientation -- the step runs whatever the script declares, and the
+      # script fails the step if any fixture is wrong, so a stale number here cannot make the
+      # gate weaker. Six of the 23 were added with the 2026-08-20 `state/` split: the
+      # sentence-final regex blind spot, four cross-file contradiction shapes, and a check that
+      # a NEW `.md` dropped into the record directory is swept without editing the script.
       - name: sweep self-test (prove the tool can fail)
         run: python Tools/architect/strat_banner_sweep.py --self-test
 
+      # NO PATH ARGUMENT, DELIBERATELY. The sweep derives its file list from
+      # `Tools/architect/state/`, so a record file added in the same PR is covered by this step
+      # without anyone remembering to add it here. Naming files here would reintroduce exactly
+      # the hand-typed subject list the vendored-citation step below was fixed for.
       - name: banner sweep
         run: python Tools/architect/strat_banner_sweep.py
 
@@ -58,6 +67,21 @@ jobs:
       - name: explain the classification (on failure only)
         if: failure()
         run: python Tools/architect/strat_banner_sweep.py --explain
+
+      # THE SAME BAN, IN THE PROSE. The step below scans `Source/` and nothing else, and on
+      # 2026-08-20 a reviewer gate found the banned shape had simply moved to where neither
+      # guard looks: a record entry citing `Ui.h:326`, plus six more live citations in
+      # documentation. `Source/` was clean the whole time. A guard that works exactly where it
+      # looks is not the same as a guard that covers its subject.
+      #
+      # It runs BEFORE the Source/ step deliberately: the docs are where the shape came back,
+      # so that is the failure a red run should name first. `--self-test` proves it can fail,
+      # and carries an explicit fixture for the hole its historical-account exemption leaves.
+      - name: doc citation gate self-test (prove the tool can fail)
+        run: python Tools/architect/strat_doc_citation_gate.py --self-test
+
+      - name: no line-number citations into vendored headers, in the prose
+        run: python Tools/architect/strat_doc_citation_gate.py --explain
 
       # NO LINE-NUMBER CITATIONS INTO VENDORED HEADERS. A `Save.h:64` in a comment is correct
       # the day it is written and wrong the day `Source/StratRules/` is re-vendored -- every one

@@ -16,7 +16,10 @@ You do not own tests. You do not own assets. You do not own git.
 
 1. **`.agents/ue-project-context.md`** — the module arrows, the linker rules, the build commands.
    This is ground truth. If the working tree disagrees with it, the tree wins and you say so.
-2. **`Tools/architect/state.md`** — what is already built and what the current milestone is.
+2. **`Tools/architect/state/global.md`** — what is already built and what the current milestone
+   is; **`state/engine.md`** is your own lane's record and the one file under `state/` you write.
+   (`Tools/architect/state.md` is FROZEN history as of 2026-08-20 — read it for the reasoning
+   behind a closed phase, never edit it.)
 3. **The `.Build.cs` and header prose block of every module you are about to touch.** These files
    explain *why* they are shaped the way they are. Reading the code without reading the block is
    how the same link error gets made a ninth time.

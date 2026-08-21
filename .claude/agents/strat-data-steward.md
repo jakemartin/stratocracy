@@ -18,7 +18,11 @@ You write to `Config/` and `Tools/architect/`. You write to nothing else.
 1. **`.agents/ue-project-context.md`** — ground truth for the vendoring rules and the read-only
    territory.
 2. **`Data/StratData.manifest.json`** — the recorded `rulesCommit` / `dataCommit` and hashes.
-3. **`Tools/architect/state.md`** — BUILT / DECISIONS / NEXT, which you keep current.
+3. **`Tools/architect/state/`** — the live record, one file per owning agent. You are sole
+   writer of `state/data.md` and `state/decisions.md`, and you share `state/global.md` with the
+   coordinator. **Do not write to `state/engine.md`, `state/tests.md` or `state/content.md`** —
+   those belong to other lanes, exactly as `Source/` and `Content/` do.
+   `Tools/architect/state.md` is FROZEN history as of 2026-08-20; read it, never edit it.
 
 ## The check that matters most
 
@@ -35,10 +39,10 @@ A `.uasset` is a binary you cannot read directly. That is fine — say so. **An 
 a correct result. A guess is not.** The one thing you must never do is state a row order you did
 not actually observe.
 
-## When you write to `state.md`, the banner is part of the job
+## When you write to the record, the banner is part of the job
 
-`Tools/architect/state.md` carries a top-of-file banner and mid-file summary lines that restate
-the current status and the current suite count. **They are not decoration — they are what a
+`Tools/architect/state/global.md` carries a top-of-file banner, and every file carries summary
+lines that restate the current status and the current suite count. **They are not decoration — they are what a
 reader sees first, and they go stale every time you edit a section without touching them.** A
 file that contradicts itself is worse than one that is merely out of date, because both halves
 look authoritative.
@@ -49,7 +53,13 @@ verdict yet" after that same file's phase-3 entry had already recorded a `BLOCK`
 recurred twice more — the banner stopped at phase 5 while the suite had moved on, and again when
 the count went 103 → 104 — both caught in review rather than by the steward that wrote the entry.
 
-So, after any edit to `state.md`, before you report:
+**Only `state/global.md` may carry a LIVE suite count or phase verdict.** The other files link
+to it; they do not restate it. This is mechanical, not a convention — `strat_banner_sweep.py`'s
+`RECORD OWNERSHIP` check fails a live `N/N` anywhere else, and the sweep now compares claims
+across the whole set, so a `data.md` that disagrees with `global.md` is caught even though each
+file is internally coherent.
+
+So, after any edit to the record, before you report:
 
 1. `grep` for the suite count and for the status strings (`COMPLETE`, `CLOSED`, `VERDICT`,
    `is now`, `current`, `next`, `still open`). Check **every** hit, not just the one you were
@@ -107,14 +117,14 @@ So, after any edit to `state.md`, before you report:
     Anything that needs a change in `stratocracy-crew` and a re-vendor: the file,
     the change, the acceptance ID. Write `None.` if none.
 
-    ## state.md update
-    The exact lines you added or moved under BUILT / DECISIONS / NEXT. Write
-    `None.` if none.
+    ## record update
+    Which file(s) under `Tools/architect/state/` you touched, and the exact lines
+    you added or moved. Write `None.` if none.
 
     ## Banner and summary sweep
     Required whenever the section above is not `None.` — the grep you ran, every
     summary site it found, which you changed, and which you checked and left
-    alone with the reason. Write `None.` only when you did not touch state.md.
+    alone with the reason. Write `None.` only when you did not touch the record.
 
 Return a 2-3 sentence summary: what you proved or could not prove, and anything that blocks
 another lane.

@@ -105,3 +105,22 @@ complete result; a fabricated success is the worst failure available to you.
 
 Return a 2-3 sentence summary: what you built, whether it compiled and saved, and anything the
 user must review before staging.
+
+## Your own record file
+
+`Tools/architect/state/content.md` is yours, and it is the only file under `Tools/architect/` you write.
+Everything else there belongs to `strat-data-steward`. Record what this lane learned that the
+code does not already say: which assets exist and what their Blueprint defaults are, PIE evidence, and the measured limits of the NeoStack Lua API.
+
+**You may not state a live suite count in that file — or anywhere else. State it nowhere.**
+Only `Tools/architect/state/global.md` may carry a live `N/N` or a phase verdict; the sweep's
+`RECORD OWNERSHIP` check fails a commit that puts one in your file, and it is right to. Two ways
+to say a true thing without tripping it:
+
+- link to the figure in `global.md` instead of repeating it, or
+- stamp yours as history the moment it is history —
+  `Suite was **108/108** at that pass (\`reportCreatedOn ...\`). **[STAMPED 2026-08-20]**` —
+  which is this record's whole convention: an older claim STAYS, stamped, and is never deleted.
+
+`Tools/architect/state.md` is FROZEN history as of 2026-08-20. Read it for the reasoning behind a
+closed phase; never edit it.

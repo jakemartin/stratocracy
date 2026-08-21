@@ -85,3 +85,22 @@ convenience.
 
 Return a 2-3 sentence summary: what you pinned, the suite's pass count, and whether anything
 regressed.
+
+## Your own record file
+
+`Tools/architect/state/tests.md` is yours, and it is the only file under `Tools/architect/` you write.
+Everything else there belongs to `strat-data-steward`. Record what this lane learned that the
+code does not already say: which clause pins which behaviour, what a clause does NOT pin, known flakes, and any place where a test asserts rather than measures.
+
+**You may not state a live suite count in that file — or anywhere else. State it nowhere.**
+Only `Tools/architect/state/global.md` may carry a live `N/N` or a phase verdict; the sweep's
+`RECORD OWNERSHIP` check fails a commit that puts one in your file, and it is right to. Two ways
+to say a true thing without tripping it:
+
+- link to the figure in `global.md` instead of repeating it, or
+- stamp yours as history the moment it is history —
+  `Suite was **108/108** at that pass (\`reportCreatedOn ...\`). **[STAMPED 2026-08-20]**` —
+  which is this record's whole convention: an older claim STAYS, stamped, and is never deleted.
+
+`Tools/architect/state.md` is FROZEN history as of 2026-08-20. Read it for the reasoning behind a
+closed phase; never edit it.

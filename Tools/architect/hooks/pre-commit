@@ -40,13 +40,59 @@ set -u
 # creates its temp file, and `set -u` turns a trap naming an unset variable into a hard
 # error on every commit. Measured in a sandbox: "STAGED: unbound variable" on line 1.
 STAGED=""
+STAGEDIR=""
+# HITS AND FAILED ARE INITIALISED HERE FOR THE SAME REASON STAGED IS, AND OMITTING THEM WAS A
+# REAL LEAK RATHER THAN A TIDINESS POINT. They are assigned inside `if [ -n "$UNITS" ]` below,
+# so on a tree with no `Source/StratRules/*.h` they never get set -- and the EXIT trap names
+# them. Under `set -u` the trap then aborts on `$HITS` PART-WAY THROUGH, before reaching
+# `rm -rf "$STAGEDIR"`, so the sweep's temp directory leaked once per record commit while the
+# hook still exited 0 and looked clean. Reproduced with a control 2026-08-20 in a throwaway
+# repo:
+#     UNITS empty      -> "line 1: HITS: unbound variable", TMPDIR left holding tmp.yzQq8BDLYa
+#     UNITS non-empty  -> no message, TMPDIR empty
+# This is the FOURTH time in this file that a fix has been applied at one site and missed its
+# sibling; see the ACMR note and the mktemp note below. Caught by a reviewer gate, not here.
+HITS=""
+FAILED=""
+# DOCDIR is initialised here for the same reason, before anything can name it in a trap. The
+# doc-citation gate below runs on every commit, ahead of the sweep's temp directory.
+DOCDIR=""
 
-STATE_REL="Tools/architect/state.md"
+# THE RECORD IS A DIRECTORY, AND ITS FILE LIST IS DERIVED FROM THE INDEX, NOT TYPED HERE.
+# `state.md` was split into `state/` by owning agent on 2026-08-20. The previous version of
+# this hook carried `STATE_REL="Tools/architect/state.md"` -- a TYPED path, which the file's
+# own comments already flagged as the thing that makes a guard go quiet. Left that way after
+# the split it would have looked for a file that is not there and passed every record commit
+# in silence. Only the DIRECTORY is named now; which files are in it is git's answer.
+STATE_DIR_REL="Tools/architect/state"
 SWEEP_REL="Tools/architect/strat_banner_sweep.py"
 
 # Nothing to do unless the record itself is going in. Keeps every other commit free.
+#
+# THIS `|| exit 0` IS THE SHAPE THIS FILE CONDEMNS TWICE ELSEWHERE, and it is left deliberately.
+# A reviewer gate flagged it as a candidate for the same "a failure to set up read as a check
+# that passed" defect, then failed to construct a reachable case: a `pre-commit` hook runs only
+# from a work tree, and `--show-toplevel` cannot fail there. **Recorded as unreachable-as-measured
+# rather than safe** -- failing to construct the case is not proving there is none. If a route is
+# ever found, this line wants the same `exit 1` the mktemp sites got.
 REPO_ROOT=$(git rev-parse --show-toplevel) || exit 0
 SWEEP="$REPO_ROOT/$SWEEP_REL"
+DOCGATE="$REPO_ROOT/Tools/architect/strat_doc_citation_gate.py"
+
+# Find an interpreter ONCE, up here, because two checks now need it: the doc-citation gate
+# that runs on every commit, and the banner sweep that runs only when the record is staged.
+# It was found inside the sweep section until 2026-08-20; leaving it there would have meant a
+# second copy, and a second copy is how the ACMR filter and the mktemp guards each ended up
+# fixed at one site and broken at their sibling -- three times in this file.
+#
+# `python` first because that is what this project's own recorded commands use; `py -3` last
+# because it exists only on Windows. A missing interpreter SKIPS rather than blocks: refusing
+# every commit on a machine without python is not a trade a documentation check gets to make.
+PY=""
+for candidate in python python3; do
+    if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
+done
+if [ -z "$PY" ] && command -v py >/dev/null 2>&1; then PY="py -3"; fi
 
 # THE VENDORED-CITATION CHECK RUNS ON EVERY COMMIT, not only when state.md is staged --
 # it is cheap, and CI alone means an author learns minutes later from a red tick instead
@@ -69,7 +115,7 @@ if [ -n "$UNITS" ]; then
     # commit message condemns ("an unread file is not a clean file"), one level up.
     HITS=$(mktemp) || { echo "COMMIT REFUSED: mktemp failed, so the citation check did not run."; exit 1; }
     FAILED=$(mktemp) || { rm -f "$HITS"; echo "COMMIT REFUSED: mktemp failed, so the citation check did not run."; exit 1; }
-    trap 'rm -f "$STAGED" "$HITS" "$FAILED"' EXIT
+    trap 'rm -f "$STAGED" "$HITS" "$FAILED"; rm -rf "$DOCDIR"' EXIT
 
     # -z / read -d '': a path with a space split under the old unquoted `for f in $(...)`,
     # `git show` failed on the fragment, and 2>/dev/null turned the failure into silence --
@@ -133,60 +179,123 @@ if [ -n "$UNITS" ]; then
     fi
 fi
 
+
+# ---------------------------------------------------------------------------------------
+# THE DOC-SIDE CITATION GATE. The block above bans vendored line citations in `Source/`. It
+# does not look anywhere else, and neither does the CI step -- so on 2026-08-20 a reviewer
+# gate found `Ui.h:326` in a record entry, and sweeping with the guards' own pattern found six
+# more live citations in documentation (five in `.agents/ue-project-context.md`, one in
+# `Tools/architect/state/tests.md`). `Source/` was clean throughout. The guard worked exactly
+# where it looked; the citations moved to where it did not.
+#
+# IT READS THE STAGED BLOBS, like everything else in this hook, because `git commit` records
+# the index. The whole document set is materialised from the index into a temp tree -- not just
+# the changed files -- so the gate sees the documents as the commit will leave them.
+# `--vendored-dir` still points at the real checkout: the unit list is derived from vendored
+# headers, which are not part of the commit being checked.
+#
+# A doc cannot be banned outright the way `Source/` is: this record's convention is that an old
+# claim stays, so its honest accounts of removed citations necessarily write those citations
+# down. The gate exempts a citation whose surrounding text is TALKING ABOUT a citation. Its
+# `--self-test` proves it still refuses a live one, and carries a fixture for the hole that
+# exemption leaves.
+if [ -n "$PY" ] && [ -f "$DOCGATE" ]; then
+    DOC_INDEX=$(git ls-files --cached -- \
+                    "$REPO_ROOT/Tools/architect/state" \
+                    "$REPO_ROOT/.agents" \
+                    "$REPO_ROOT/.claude" \
+                    "$REPO_ROOT/CLAUDE.md" | grep -E '\.md$' || true)
+    if [ -n "$DOC_INDEX" ]; then
+        DOCDIR=$(mktemp -d) || { echo "COMMIT REFUSED: mktemp -d failed, so the doc-citation gate did not run."; exit 1; }
+        DOC_READ_FAILED=""
+        while IFS= read -r f; do
+            [ -n "$f" ] || continue
+            mkdir -p "$DOCDIR/$(dirname "$f")"
+            if ! git show ":$f" > "$DOCDIR/$f" 2>/dev/null; then
+                DOC_READ_FAILED="$DOC_READ_FAILED$f\n"
+            fi
+        done <<< "$DOC_INDEX"
+        if [ -n "$DOC_READ_FAILED" ]; then
+            echo "COMMIT REFUSED: could not read these staged documents, so they were NOT checked:"
+            printf "$DOC_READ_FAILED"
+            echo "An unread file is not a clean file."
+            exit 1
+        fi
+        DOC_OUT=$($PY "$DOCGATE" --repo "$DOCDIR" --vendored-dir "$REPO_ROOT/Source/StratRules" 2>&1)
+        DOC_STATUS=$?
+        rm -rf "$DOCDIR"; DOCDIR=""
+        if [ $DOC_STATUS -ne 0 ]; then
+            echo ""
+            echo "$DOC_OUT"
+            echo ""
+            echo "COMMIT REFUSED: the doc-citation gate refused this commit -- its own output is"
+            echo "above and says why. The usual reason is a live vendored line-number citation in"
+            echo "the STAGED prose; a non-zero exit for any OTHER reason (the gate crashed, or"
+            echo "found nothing to scan) is also a refusal, because a check that did not run is"
+            echo "not a check that passed. The first version of this message asserted a citation"
+            echo "unconditionally and said so during a crash that had found none."
+            echo "Cite the SYMBOL -- the enclosing function, struct or comment block -- because a"
+            echo "re-vendor moves every vendored line at once and nothing reads one to notice."
+            echo "If it is an account of a PAST citation, say so in words near it."
+            echo "Bypass deliberately with: git commit --no-verify"
+            exit 1
+        fi
+    fi
+fi
+
 # Everything below is the banner sweep, which is only owed when the record itself is
 # going in. Keeps every other commit free of it.
 #
 # ACMR AND A PATHSPEC, for the reason spelled out at the citation loop above. 4bfe8b3 fixed
-# `ACM` -> `ACMR` there and left this line untouched 50 lines below it, so a `state.md` staged
-# as a RENAME was reported `R`, missed the filter, and skipped the entire banner sweep through
-# a silent `exit 0` -- the same defect the same commit had just paid to find, surviving at its
-# sibling site. Found 2026-08-20 while writing up that commit.
-#
-# The pathspec replaces `grep -qx` rather than being carried alongside it: git does the
-# matching, so a path containing a space needs no -z/-d '' dance here, and the check cannot
-# drift from the variable it is testing.
-# THE RECORD LEAVING $STATE_REL IS THE EVENT THAT MAKES THIS HOOK INERT, and it has to be
+# `ACM` -> `ACMR` there and left the equivalent line down here untouched, so a record file staged
+# as a RENAME was reported `R`, missed the filter, and skipped the entire banner sweep through a
+# silent `exit 0` -- the same defect the same commit had just paid to find, surviving at its
+# sibling site. Found 2026-08-20 while writing up that commit; the pathspec now covers a
+# directory, so the same mistake is not available to make one file at a time.
+
+# WHAT THE COMMIT WILL RECORD IS THE INDEX, so the file list comes from the index and not from
+# the working tree. That is also why no HEAD-versus-staged merge is needed: `git ls-files
+# --cached` already IS the post-commit tree for this directory -- a file added shows up, a file
+# deleted does not, and a file left alone carries its HEAD bytes.
+INDEX_FILES=$(git ls-files --cached -- "$REPO_ROOT/$STATE_DIR_REL" | grep -E '\.md$' || true)
+HEAD_FILES=$(git ls-tree -r --name-only HEAD -- "$STATE_DIR_REL" 2>/dev/null | grep -E '\.md$' || true)
+
+# THE RECORD LEAVING $STATE_DIR_REL IS THE EVENT THAT MAKES THIS HOOK INERT, and it has to be
 # caught BEFORE the trigger below, because in that case the trigger does not fire -- which is
-# the whole failure. `STATE_REL` is a TYPED path, so once the record lives somewhere else this
-# hook looks for a file that is not there and passes every commit in silence, exactly the
-# guard-goes-inert shape the citation loop was already fixed for twice.
-#
-# The test is deliberately about the PATH and not about renames: in HEAD, not in the index,
-# for any reason -- renamed, moved, deleted -- is the same event and wants the same answer.
-# Parsing `--name-status -z` rename records would be a second thing to get wrong.
-#
-# It fires only when a commit actually removes the record from its configured path, so an
-# ordinary commit, a partially-staged state.md, and a repository that never had one are all
-# untouched. There is no HEAD on the first commit, `cat-file` fails, and the check stays quiet.
-if git cat-file -e "HEAD:$STATE_REL" 2>/dev/null && ! git cat-file -e ":$STATE_REL" 2>/dev/null
-then
-    echo "COMMIT REFUSED: $STATE_REL is in HEAD but not in this commit's index, so this commit"
-    echo "moves or deletes the record. This hook would then keep looking for $STATE_REL, find"
-    echo "nothing, and pass every future commit without sweeping anything. What is staged:"
-    git diff --cached --name-status -- "$REPO_ROOT/$STATE_REL" | sed 's/^/    /'
+# the whole failure. The test is about the DIRECTORY being emptied of markdown, not about any
+# one path: renamed, moved, deleted are the same event and want the same answer.
+if [ -n "$HEAD_FILES" ] && [ -z "$INDEX_FILES" ]; then
+    echo "COMMIT REFUSED: $STATE_DIR_REL holds the record in HEAD but this commit's index has no"
+    echo ".md file there, so this commit moves or deletes the record. This hook would then keep"
+    echo "looking in $STATE_DIR_REL, find nothing, and pass every future commit without sweeping"
+    echo "anything. What is staged:"
+    git diff --cached --name-status -- "$REPO_ROOT/$STATE_DIR_REL" | sed 's/^/    /'
     echo ""
-    echo "  Point the hook at the new path and reinstall:"
-    echo "    STATE_REL= in Tools/architect/hooks/pre-commit"
+    echo "  Point the hook at the new directory and reinstall:"
+    echo "    STATE_DIR_REL= in Tools/architect/hooks/pre-commit"
     echo "    sh Tools/architect/hooks/install.sh"
     echo "  Or --no-verify if the record is meant to be gone."
     exit 1
 fi
 
-# ALREADY INERT, rather than about to become so: the configured path is in neither HEAD nor
-# the index. Reachable through --no-verify or a clone whose record was removed earlier. This
-# warns and never blocks -- a repository that legitimately has no record must not be wedged --
-# but it does not stay quiet, because a guard that has silently stopped running is the thing
-# this whole block exists to prevent. One line, and only in that state.
-if ! git cat-file -e "HEAD:$STATE_REL" 2>/dev/null && ! git cat-file -e ":$STATE_REL" 2>/dev/null
-then
-    echo "banner sweep WARNING: no $STATE_REL in HEAD or the index -- this hook is configured"
-    echo "                      for a path that does not exist, so it is checking nothing."
+# ALREADY INERT, rather than about to become so. Reachable through --no-verify or a clone whose
+# record was removed earlier. Warns and never blocks -- a repository that legitimately has no
+# record must not be wedged -- but it does not stay quiet, because a guard that has silently
+# stopped running is the thing this whole block exists to prevent.
+if [ -z "$HEAD_FILES" ] && [ -z "$INDEX_FILES" ]; then
+    echo "banner sweep WARNING: no .md file in $STATE_DIR_REL in HEAD or the index -- this hook"
+    echo "                      is configured for a directory that holds no record, so it is"
+    echo "                      checking nothing."
 fi
 
-if [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- "$REPO_ROOT/$STATE_REL")" ]; then
+if [ -z "$(git diff --cached --name-only --diff-filter=ACMR -- "$REPO_ROOT/$STATE_DIR_REL")" ]; then
     exit 0
 fi
 
+if [ -z "$PY" ]; then
+    echo "banner sweep: no python interpreter found -- skipping rather than blocking a commit"
+    exit 0
+fi
 
 if [ ! -f "$SWEEP" ]; then
     echo "banner sweep: $SWEEP_REL is missing -- skipping (nothing to run, and refusing"
@@ -194,44 +303,66 @@ if [ ! -f "$SWEEP" ]; then
     exit 0
 fi
 
-# Find an interpreter. `python` first because that is what this project's own recorded
-# commands use; `py -3` last because it exists only on Windows.
-PY=""
-for candidate in python python3; do
-    if command -v "$candidate" >/dev/null 2>&1; then PY="$candidate"; break; fi
-done
-if [ -z "$PY" ] && command -v py >/dev/null 2>&1; then PY="py -3"; fi
-if [ -z "$PY" ]; then
-    echo "banner sweep: no python interpreter found -- skipping rather than blocking a commit"
-    exit 0
-fi
+# `|| exit 1` here, while an earlier version of this file used `|| exit 0` at one of its three
+# temp sites -- the same defect at a sibling site for the third time. A temp directory we could
+# not create is a sweep that did not run, and that is a refusal.
+STAGEDIR=$(mktemp -d) || { echo "COMMIT REFUSED: mktemp -d failed, so the banner sweep did not run."; exit 1; }
+# NAMES ALL FOUR, because a second `trap ... EXIT` REPLACES the handler rather than adding to
+# it -- an earlier form dropped $HITS and $FAILED and leaked two files per record commit
+# (measured). The empty initialisers up top are what make this safe: $HITS and $FAILED are
+# assigned only when $UNITS is non-empty, so "they are all in scope by here" -- which this
+# comment asserted until 2026-08-20 -- was FALSE, and the trap aborted mid-list on a tree with
+# no vendored headers. See the initialiser block for the measurement.
+trap 'rm -f "$STAGED" "$HITS" "$FAILED"; rm -rf "$STAGEDIR" "$DOCDIR"' EXIT
 
-# `|| exit 0` here, while the two mktemps at the citation loop above already refused -- the
-# same defect at its sibling site for the third time in this file. A temp file we could not
-# create is a sweep that did not run.
-STAGED=$(mktemp) || { echo "COMMIT REFUSED: mktemp failed, so the banner sweep did not run."; exit 1; }
-# NAMES ALL THREE, because a second `trap ... EXIT` REPLACES the handler rather than adding
-# to it -- the earlier form dropped $HITS and $FAILED and leaked two files per record commit
-# (measured). They are all in scope by here, and `STAGED=""` up top keeps the first trap safe.
-trap 'rm -f "$STAGED" "$HITS" "$FAILED"' EXIT
-# AN UNREAD RECORD IS NOT A CLEAN RECORD, which is 4bfe8b3's own title, and this line was
-# still doing the opposite of it: `git show` failing printed "skipping" and returned 0, so the
-# record went into HEAD unswept and the hook reported nothing wrong. Reaching here means the
-# trigger above already saw the path staged, so a read failure is a real anomaly and not a
-# routine absence -- there is no benign reading of it left to protect.
-if ! git show ":$STATE_REL" > "$STAGED" 2>/dev/null; then
-    echo "COMMIT REFUSED: could not read the staged $STATE_REL, so it was NOT swept."
-    echo "The trigger above saw it staged, so this is an index anomaly rather than a"
-    echo "missing file. Re-stage it and try again."
+# AN UNREAD RECORD IS NOT A CLEAN RECORD, which is 4bfe8b3's own title. A `git show` failure
+# here is an index anomaly, not a routine absence -- the file list came from the index one
+# moment ago -- so there is no benign reading of it left to protect. Extracting every file,
+# not only the staged ones, is the point: the sweep compares claims ACROSS the set, so a
+# `global.md` swept without the `tests.md` that contradicts it would print clean.
+SWEEP_ARGS=()
+while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    # BASENAME IS SAFE ONLY WHILE THE RECORD DIRECTORY IS FLAT, and it is flat today. If
+    # `state/` ever nests -- a `state/ui/global.md` alongside `state/global.md` -- two entries
+    # would collapse onto one temp path and the second would silently overwrite the first,
+    # sweeping a set that is missing a file while reporting the full count. Refuse instead of
+    # discovering it later.
+    #
+    # THIS CANNOT FIRE ON A CONFLICTED RECORD MERGE, BUT NOT BECAUSE THIS LOOP IS CLEVER.
+    # `git ls-files --cached` returns one entry PER STAGE while the index is unmerged, so a
+    # conflicted `state/global.md` appears three times and would trip this check with a message
+    # that misdescribes the situation entirely. It never gets here: the ACMR trigger above
+    # returns empty on an unmerged index and the hook exits 0 first (measured on a re-gate;
+    # `git commit` refuses earlier still). That protection is INCIDENTAL. If the trigger is ever
+    # changed, teach this loop about merge stages in the same edit.
+    dst="$STAGEDIR/$(basename "$f")"
+    if [ -e "$dst" ]; then
+        echo "COMMIT REFUSED: two record files share the basename $(basename "$f"), so the"
+        echo "sweep would see only one of them. The sweep addresses files by basename; keep"
+        echo "$STATE_DIR_REL flat, or teach both this hook and the sweep about subdirectories."
+        exit 1
+    fi
+    if ! git show ":$f" > "$dst" 2>/dev/null; then
+        echo "COMMIT REFUSED: could not read the staged $f, so the record was NOT swept."
+        echo "The file list came from this commit's own index, so this is an index anomaly"
+        echo "rather than a missing file. Re-stage and try again."
+        exit 1
+    fi
+    SWEEP_ARGS+=("$dst")
+done <<< "$INDEX_FILES"
+
+if [ ${#SWEEP_ARGS[@]} -eq 0 ]; then
+    echo "COMMIT REFUSED: the trigger fired but no record file was extracted, so nothing was"
+    echo "swept. This is a bug in this hook, not a clean record."
     exit 1
 fi
 
-
-OUTPUT=$($PY "$SWEEP" "$STAGED" 2>&1)
+OUTPUT=$($PY "$SWEEP" "${SWEEP_ARGS[@]}" 2>&1)
 STATUS=$?
 
 if [ $STATUS -eq 0 ]; then
-    echo "banner sweep: clean (staged $STATE_REL)"
+    echo "banner sweep: clean (${#SWEEP_ARGS[@]} staged file(s) under $STATE_DIR_REL)"
     exit 0
 fi
 
@@ -239,10 +370,12 @@ echo ""
 echo "$OUTPUT"
 echo ""
 echo "--------------------------------------------------------------------------"
-echo "COMMIT REFUSED: the staged $STATE_REL contradicts itself or the tree."
+echo "COMMIT REFUSED: the staged record under $STATE_DIR_REL contradicts itself or the tree."
 echo ""
 echo "This is the check that '11fd9ae' made a memory job and that 185e88f then got"
-echo "wrong -- a banner claiming one thing while the same file claims another."
+echo "wrong -- a banner claiming one thing while the record claims another. Since the"
+echo "2026-08-20 split the two halves can be in DIFFERENT files, which is why every"
+echo "file in the set is swept together rather than one at a time."
 echo ""
 echo "  See every claim and how the sweep classified it:"
 echo "    $PY $SWEEP_REL --explain"

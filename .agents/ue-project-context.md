@@ -145,7 +145,8 @@ and the rules from drifting.
 
 **Units.** A §4.10 Build command carries a `defIndex` in its `unitId` field, and `applyCommand`
 uses it as a **raw, bounds-checked-only index** into the definitions vector — no name lookup
-(`Replay.good.cpp:486-487`). So `DT_Units` in a different order than the headless loader's
+(`strat::applyCommand`'s `SaveCommandKind::Build` arm, which bounds-checks `c.unitId` against
+`t.units->size()` and indexes with it). So `DT_Units` in a different order than the headless loader's
 resolves the same replay log to a **different unit type, silently**. Row order is taken from the
 table and then *asserted* equal to `strat::loadUnits` over the same vendored CSV by
 `GATE-BRIDGE-DEFS` — never assumed.
@@ -157,16 +158,21 @@ directly instead of surfacing as an opaque hash mismatch three hundred commands 
 test; fix the rationale. (`StratBridgeParity.cpp:158-162`.)
 
 **Terrain.** Ruled not load-bearing, on evidence, phase 0 / 2026-08-12. No `SaveCommand` field
-carries a terrain index (`Save.h:59-68`); seeding resolves every hex's terrain **by name**
-(`Replay.good.cpp:299-308`); and `canonicalStateBytes` — what `FStratBridge::StateHash()` actually
+carries a terrain index (the `SaveCommand` struct in `Save.h` — its fields are
+`{turn, side, kind, unitId, hex, hasHex, hasUnit}` and no terrain among them); seeding resolves
+every hex's terrain **by name** (`strat::seedFromScenario`'s terrain-id resolution loop, which
+matches `sc.terrainId[i]` against each loaded row's `id`); and `canonicalStateBytes` — what `FStratBridge::StateHash()` actually
 hashes via `strat::canonicalStateHash` — emits no terrain field at all, not even the
 `terrainIndex` an `Objective` carries. Terrain indices are live *within* a build and never
 externalized, so any order is self-consistent. `T-DATA-05.TerrainTableMatchesCsv`'s name-keyed
 field parity is sufficient and no positional terrain test is needed.
 
 **Do not reach for `stateHash` in `Driver.h` to reason about this.** That is the debug driver's
-own digest over `Session`, it *does* fold raw terrain indices (`Driver.good.cpp:494`), and it is
-a different function over a different type — `Save.h:12-16` disclaims the conflation explicitly.
+own digest over `Session`, it *does* fold raw terrain indices (`strat::stateHash`'s accumulator
+appends `s.terrain` element by element), and it is a different function over a different type —
+`Save.h`'s file-header note *"THE CANONICAL STATE HASH IS NOT DEFINED HERE"* disclaims the
+conflation explicitly, naming `Driver.h`'s `stateHash` as "the debug driver's own digest
+(GATE-DRV-06) and a different thing".
 Mistaking the two makes terrain order look transitively proven when it is not proven at all; it
 simply does not need to be.
 
@@ -310,7 +316,8 @@ time.
 |---|---|---|
 | The GDD | `E:\MultiAgent\stratocracy-content\Stratocracy_Prototype_GDD.md` | **446 KB with ~100 KB lines. Grep it or slice it — never `cat` it.** |
 | GDD snapshot | `Tools/architect/gdd_snapshot/` | A copy with a `MANIFEST.md` sha256. Explicitly *not* hash-gated; can go stale silently. |
-| Current build state | `Tools/architect/state.md` | BUILT / DECISIONS / NEXT. |
+| Current build state | `Tools/architect/state/` | The live record, one file per owning agent: `global.md` (banner, milestone status, and the only file that may state a suite count), `decisions.md`, `engine.md`, `tests.md`, `content.md`, `data.md`. |
+| Closed-phase history | `Tools/architect/state.md` | FROZEN 2026-08-20. The recorded reasoning behind fourteen closed phases. Not swept, not edited. |
 | Evidence | `Tools/architect/evidence/NN-slug/` | Each with a `blackboard.md`. |
 | Session notes | `Tools/context/*.md` | Gitignored export of the desktop memory store. Flagged stale in places. |
 | Headless rules source | `E:\MultiAgent\stratocracy-crew` | Canonical `cpp_reference/`, `spec/`, and the re-vendor scripts. |

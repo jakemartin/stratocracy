@@ -25,13 +25,28 @@ piped anywhere the real exit code is masked by the pipe, so it can fail while ap
 succeed. This is the same shape as the bare `Build.bat` form recorded below.
 
 It installs `Tools/architect/hooks/pre-commit`, which runs `strat_banner_sweep.py` against the
-**staged** `Tools/architect/state.md` and refuses a commit whose record contradicts itself or the
-tree. It is idempotent — on an already-installed clone it prints `already installed and identical`
+**staged** files under `Tools/architect/state/` and refuses a commit whose record contradicts
+itself or the tree. (Before 2026-08-20 the record was a single `Tools/architect/state.md`; that
+file is now frozen history and is not swept. The hook derives its file list from the directory
+and sweeps the whole set at once, because since the split the two halves of a contradiction can
+sit in different files.) It is idempotent — on an already-installed clone it prints `already installed and identical`
 and changes nothing — so running it every session costs one line of output and nothing else.
 
 **Why this is a startup step and not a one-time chore.** Git hooks are not version-controlled.
-A fresh clone, a new worktree, or a machine that has never run it has **no** protection, and
-nothing anywhere announces that fact. The defect the sweep exists for (`185e88f`: a banner
+A fresh clone, or a machine that has never run it, has **no** protection, and nothing anywhere
+announces that fact.
+
+**CORRECTION, 2026-08-20 — a linked worktree IS protected, and this file said the opposite.**
+Hook lookup in a worktree created by `git worktree add` resolves through the **common**
+directory, so the copy installed once in the main clone runs in every worktree of it. Measured:
+`git rev-parse --git-path hooks` in a probe worktree returned
+`E:/MultiAgent/Stratocracy/.git/hooks`, and the hook fired there — it refused the same staged
+bytes the integration tree refused. Running `install.sh` from a worktree is a no-op that reports
+`already installed and identical`. It is once per **clone**, not once per worktree. (Until
+2026-08-20 running it from a worktree instead died with
+`mkdir: cannot create directory '.../.git': Not a directory` and exit 1, because `.git` is a
+*file* there; `install.sh` now resolves the hooks directory with
+`git rev-parse --path-format=absolute --git-common-dir`.) The defect the sweep exists for (`185e88f`: a banner
 claiming the suite was 107/107 and an item open, while the same file said 108 and discharged, 425
 lines apart) reached a reviewer gate as `VERDICT: BLOCK`. That is the fourth instance of that
 shape in this project's record and the second to cost a BLOCK.
@@ -42,10 +57,10 @@ redirecting hook lookup would silently disable all four), or a *different* `pre-
 exists. Both mean a human has to look. Surface the message to the user and carry on with the
 phase — a missing hook is a weaker session, not a blocked one.
 
-**When `strat-data-steward`'s commit of `state.md` is refused by that hook, the sweep is right
+**When `strat-data-steward`'s commit of the record is refused by that hook, the sweep is right
 until proven otherwise.** Re-dispatch the steward with the sweep's output verbatim, exactly as
 you would with a reviewer's `BLOCK`. Do not reach for `git commit --no-verify` on the steward's
-behalf, and do not edit `state.md` yourself to make it pass — both are the coordinator taking a
+behalf, and do not edit the record yourself to make it pass — both are the coordinator taking a
 lane that is not theirs.
 
 ## The invariant, before anything else
@@ -118,6 +133,14 @@ both sides.
 
 ## Commands — verbatim, never reconstructed
 
+> **THESE PATHS ARE THE INTEGRATION TREE'S, AND THEY ARE ONLY SAFE THERE.** Every command below
+> hardcodes `E:\MultiAgent\Stratocracy\…`. Since 2026-08-20 this project also builds in linked
+> worktrees under `E:\MultiAgent\Strat-wt\`, and an agent working in one of those that runs the
+> lines below **builds and tests the integration tree and reports green for code it never
+> compiled** — a false pass with nothing in the output to reveal it. For any tree that is not
+> `E:\MultiAgent\Stratocracy`, use `.claude/skills/strat-parallel/SKILL.md`, whose templates
+> derive every path from that tree's own `git rev-parse --show-toplevel`.
+
 Build:
 
 ```
@@ -153,11 +176,11 @@ it as a pass.
 the scenario, click-to-select → move → attack with the deterministic forecast, wait, end turn
 advances sides, the existing scoreboard follows the active side.
 
-Explicitly **out**, and to be recorded as `NEXT` in `Tools/architect/state.md` by
+Explicitly **out**, and to be recorded as `NEXT` in the owning file under `Tools/architect/state/` by
 `strat-data-steward` rather than built: the production menu (§2.11.5), the guided opening
 (§2.11.6), the info panel, toasts, save-slot UI, an AI opponent, and move-undo.
 
-Anything discovered mid-phase that is not on the list goes to `state.md`. It does not enter this
+Anything discovered mid-phase that is not on the list goes to the owning file under `state/`. It does not enter this
 milestone, however small it looks.
 
 ## Architectural decisions the crew inherits
@@ -191,11 +214,18 @@ These are settled. Pass them into agent prompts; do not re-litigate them.
 
 ## State — resuming in a fresh session
 
-Read the `## Hot-seat milestone` section of `Tools/architect/state.md` to learn which phase is
-current. After every gate returns `PASS`, dispatch `strat-data-steward` to update it: the phase
-completed, the exit criterion met, and anything newly deferred.
+Read **`Tools/architect/state/global.md`** to learn which phase is current. After every gate
+returns `PASS`, dispatch `strat-data-steward` to update it: the phase completed, the exit
+criterion met, and anything newly deferred.
 
-If that section does not exist yet, phase 0 has not run.
+**CORRECTED 2026-08-20 — this section used to send a fresh session to
+`Tools/architect/state.md`, and after the record split that is the wrong file in both
+directions.** It is frozen history, so it cannot tell you what is current; and it must not be
+edited, which `.claude/agents/strat-data-steward.md` now forbids in as many words — so the
+instruction to "dispatch the steward to update it" ordered the steward to break its own brief.
+Read `state.md` only for the recorded reasoning behind a phase that is already closed.
+
+If `state/global.md` records no phase for this milestone, phase 0 has not run.
 
 ## Crew smoke test
 
@@ -213,7 +243,7 @@ condition a plausible-but-wrong agent fails:
 ## What you do not do
 
 - Do not edit source, assets, config or tests yourself. Dispatch the owner.
-- Do not `--no-verify` past the banner-sweep hook, and do not edit `state.md` to satisfy it.
+- Do not `--no-verify` past the banner-sweep hook, and do not edit the record to satisfy it.
   Re-dispatch `strat-data-steward` with the sweep's output, the same as any `BLOCK`.
 - Do not commit, stage, or push. That is the user's call, always.
 - Do not advance past a `BLOCK`.

@@ -1,5 +1,21 @@
 #!/usr/bin/env python3
-"""Banner sweep for `Tools/architect/state.md` -- makes a self-contradicting record FAIL LOUDLY.
+"""Banner sweep for `Tools/architect/state/` -- makes a self-contradicting record FAIL LOUDLY.
+
+WHAT IT SWEEPS, AND WHY THAT IS DERIVED RATHER THAN TYPED. Until 2026-08-20 the record was one
+3,524-line `state.md` and this script named it in a constant. It is now `Tools/architect/state/`,
+one file per owning agent, and the file list is READ FROM THE DIRECTORY. Had the constant simply
+been repointed, adding `state/ux.md` would have swept nothing and printed clean over it -- the
+"a checker that types its own subject list stops covering it silently" shape this project has
+already paid for twice in the pre-commit hook. A missing or empty directory is a hard finding
+(`NOTHING SWEPT`), never a quiet exit 0. `state.md` itself is now FROZEN history and is not
+swept; its own header says so.
+
+THE COMPARISON IS ACROSS THE SET, NOT FILE BY FILE. Splitting the record moved contradictions
+between files; it did not remove them. Six per-file runs would each print clean on a set whose
+`global.md` and `tests.md` disagree. So claims are collected per file and compared globally,
+and `check_record_ownership` enforces the split's third condition: exactly one file --
+`global.md` -- may carry a LIVE suite count. Quoting a stamped older figure stays legal
+everywhere, because this record's convention is that an old claim is stamped, not deleted.
 
 WHY THIS EXISTS, AND WHAT IT IS REPLACING. `11fd9ae` ("The banner check becomes the steward's
 job instead of the coordinator's memory") made the banner sweep a RULE an agent has to remember
@@ -26,8 +42,9 @@ WHAT IT CHECKS, and each is falsifiable by `--self-test`:
      open and an unstamped sentence calling it closed cannot both stand. This is the
      content-independence half of the same failure.
 
-  3. BANNER DATE FRESHNESS. The banner's own `_Last run YYYY-MM-DD` must not be older than the
-     newest date the document's entries carry. The re-gate flagged this as live drift:
+  3. BANNER DATE FRESHNESS. The banner in `global.md` -- the file that OWNS it; a `_Last run`
+     quoted as evidence elsewhere is prose -- must not be older than the newest date any file
+     in the set carries. The re-gate flagged this as live drift:
      the banner said 2026-08-14 while entries were dated 2026-08-19.
 
 THE LIVE-VERSUS-STAMPED DISTINCTION IS THIS SCRIPT'S ONE PIECE OF JUDGEMENT, AND IT IS A
@@ -38,7 +55,10 @@ the version before it got a real case wrong, and each carrying its own `--self-t
 
   * SECTION. Only the banner, `## NEXT`, `## BUILT` and `## DECISIONS` hold live claims;
     milestone sections are the record of a closed phase and their figures are correct FOR
-    that phase (`_LIVE_SECTIONS`).
+    that phase (`_LIVE_SECTIONS`). After the split every `state/` file is banner-or-`## NEXT`,
+    so in practice everything unstamped is live -- the closed-phase narrative that this rule
+    was written for now lives in the frozen `state.md`.
+  * OWNERSHIP. A live suite count outside `global.md` is a finding whatever its tense.
   * EXPLICIT STAMP. A `[STAMPED ...]`, a `CORRECTION,`, or the entry's own `reportCreatedOn`
     outranks everything -- present tense inside a stamped entry is still history.
   * TENSE. Failing that, the words immediately before a figure decide: "is now" is live,
@@ -57,7 +77,8 @@ shapes near a declared item's name, and `--explain` prints its call on every cla
 so a human can overrule it.
 
 USAGE
-    python Tools/architect/strat_banner_sweep.py                  # sweep, exit 0/1
+    python Tools/architect/strat_banner_sweep.py                  # sweep state/, exit 0/1
+    python Tools/architect/strat_banner_sweep.py state/tests.md   # one file (labelled global.md)
     python Tools/architect/strat_banner_sweep.py --explain        # + per-claim classification
     python Tools/architect/strat_banner_sweep.py --self-test      # prove the sweep can FAIL
 """
@@ -79,9 +100,35 @@ from dataclasses import dataclass, field
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _REPO = os.path.abspath(os.path.join(_HERE, os.pardir, os.pardir))
 
-STATE_MD = os.path.join(_HERE, "state.md")
+# THE RECORD IS A DIRECTORY, AND THE FILE LIST IS DERIVED FROM IT RATHER THAN TYPED.
+# `state.md` was split into `state/` by owning agent on 2026-08-20, and the version of this
+# script that preceded the split hardcoded `STATE_MD = .../state.md`. Left that way, creating
+# `state/ux.md` would have swept nothing, warned about nothing, and printed clean over it --
+# the recorded "a checker that types its own subject list stops covering it silently" shape,
+# which this project has already paid for twice in the pre-commit hook's citation loop. So the
+# set is whatever `state/` contains, and an EMPTY or MISSING directory is a hard refusal rather
+# than a quiet pass: a sweep with nothing to sweep is the inert-guard failure, not a clean run.
+STATE_DIR = os.path.join(_HERE, "state")
+
+# The one file allowed to carry a live suite count or phase verdict. Condition 3 of the split:
+# if two files may both say "the suite is 108/108" they will drift, so exactly one owns it and
+# the others link. Enforced by `check_record_ownership`, not by convention.
+GLOBAL_DOC = "global.md"
+
+STATE_MD = os.path.join(_HERE, "state.md")   # frozen history; NOT swept. See its own header.
 REPORT_JSON = os.path.join(_REPO, "Saved", "AutomationReport", "index.json")
 SOURCE_DIR = os.path.join(_REPO, "Source")
+
+
+def discover_state_files(state_dir: str = STATE_DIR) -> tuple[list[str], str]:
+    """Every `*.md` in the record directory, sorted. Derived, never enumerated by hand."""
+    if not os.path.isdir(state_dir):
+        return [], f"NO RECORD DIRECTORY at {state_dir}"
+    names = sorted(n for n in os.listdir(state_dir)
+                   if n.endswith(".md") and os.path.isfile(os.path.join(state_dir, n)))
+    if not names:
+        return [], f"RECORD DIRECTORY {state_dir} CONTAINS NO .md FILES"
+    return [os.path.join(state_dir, n) for n in names], ""
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +215,18 @@ _STAMP_WINDOW = 220
 # asterisks wrapping the PHRASE rather than the number, so a `\*\*N/N\*\*` pattern did
 # not see the current figure at all and the sweep reported the banner's SECOND-newest
 # number as its live one. Match the figure; let the markup fall where it likes.
-_SUITE_CLAIM_RE = re.compile(r"(?<![\d/.-])(\d{1,4})/(\d{1,4})(?![\d/.-])")
+# A FULL STOP IS PUNCTUATION, NOT PART OF THE FIGURE, and the trailing lookahead used to
+# treat it as part of the figure: `(?![\d/.-])` excluded `.` outright, so
+# `The suite is now 999/999.` did not match while `The suite is now 999/999 green` did.
+# Measured both ways 2026-08-20 against the live file and against a staged commit in two
+# separate trees: with the full stop the hook printed `banner sweep: clean` and exited 0;
+# without it, `SWEEP FAILED` and `COMMIT REFUSED`. All 20 real claims in `state.md` happened
+# to be followed by `*`, a space or a comma, so the blind spot never fired -- the guard had
+# never once been tested against the most natural way to end the sentence.
+# The lookahead now rejects only what would make this a DIFFERENT number: another digit, a
+# second slash, a hyphen, or a decimal point WITH A DIGIT BEHIND IT (`1.2/3.4`). A `.` that
+# ends a sentence no longer hides the claim.
+_SUITE_CLAIM_RE = re.compile(r"(?<![\d/.-])(\d{1,4})/(\d{1,4})(?![\d/-])(?!\.\d)")
 # What makes an `N/N` a SUITE claim rather than any other pair of equal numbers.
 # How close a verdict word must sit to an item's own name to count as a claim ABOUT it.
 # Reporting verbs that mark a nearby figure as QUOTED evidence rather than a live claim.
@@ -195,6 +253,7 @@ class Finding:
 
 @dataclass
 class SuiteClaim:
+    doc: str
     line_no: int
     numerator: int
     denominator: int
@@ -204,6 +263,7 @@ class SuiteClaim:
 
 @dataclass
 class SweepResult:
+    docs: list[str] = field(default_factory=list)
     findings: list[Finding] = field(default_factory=list)
     suite_claims: list[SuiteClaim] = field(default_factory=list)
     report_count: int | None = None
@@ -309,7 +369,8 @@ def read_macro_census(source_dir: str = SOURCE_DIR) -> tuple[int | None, str]:
 # ---------------------------------------------------------------------------
 # The three checks
 # ---------------------------------------------------------------------------
-def check_suite_counts(text: str, result: SweepResult) -> None:
+def _collect_suite_claims(label: str, text: str, result: SweepResult) -> None:
+    """Every suite claim in ONE file, with this script's live/stamped call on each."""
     for start, para in paragraphs_with_lines(text):
         for m in _SUITE_CLAIM_RE.finditer(para):
             # STAMPEDNESS IS JUDGED ON THE CLAIM'S OWN SENTENCE, NOT ITS WHOLE PARAGRAPH.
@@ -360,7 +421,7 @@ def check_suite_counts(text: str, result: SweepResult) -> None:
             line_no = start + para[:m.start()].count("\n")
             snippet = " ".join(para[max(0, m.start() - 70):m.end() + 40].split())
             live = (not stamped) and in_live_section(text, line_no)
-            result.suite_claims.append(SuiteClaim(line_no, n, d, live, snippet))
+            result.suite_claims.append(SuiteClaim(label, line_no, n, d, live, snippet))
 
     # THE BANNER IS A CHRONOLOGICAL NARRATIVE, NOT ONE SENTENCE. It accretes
     # "ALSO POST-MILESTONE ..." segments in order, each of which said "suite is now N/N"
@@ -370,20 +431,39 @@ def check_suite_counts(text: str, result: SweepResult) -> None:
     # outside the banner keeps every live claim, so a stale NEXT bullet is still caught --
     # and a banner whose LAST figure disagrees with NEXT or with the tree, which is
     # exactly 2026-08-19's defect, still fails.
-    banner_live = [c for c in result.suite_claims if c.live and section_of(text, c.line_no) == "BANNER"]
+    # SUPERSESSION IS SCOPED TO THE FILE THAT OWNS THE BANNER. Before the split there was one
+    # document and "the banner" was unambiguous; now `global.md` carries it and the other five
+    # files have no banner at all. Comparing against `result.suite_claims` globally here would
+    # let a claim in `tests.md` be superseded by `global.md`'s banner -- silently laundering the
+    # exact cross-file drift the ownership check below exists to catch.
+    banner_live = [c for c in result.suite_claims
+                   if c.doc == label and c.live and section_of(text, c.line_no) == "BANNER"]
     superseded = {id(c) for c in banner_live[:-1]}
     for c in result.suite_claims:
         if id(c) in superseded:
             c.live = False
     if superseded:
         result.notes.append(
-            f"banner narrative: {len(superseded)} earlier 'is now' figure(s) superseded by the "
-            f"banner's own last one -- only the newest banner claim is treated as current")
+            f"{label}: banner narrative: {len(superseded)} earlier 'is now' figure(s) superseded "
+            f"by the banner's own last one -- only the newest banner claim is treated as current")
+
+
+def check_suite_counts(docs: list[tuple[str, str]], result: SweepResult) -> None:
+    """Collect per file, then compare LIVE claims ACROSS the set.
+
+    CONTRADICTIONS CHANGED ADDRESS WHEN THE RECORD WAS SPLIT; THEY DID NOT DISAPPEAR. The whole
+    job of this check before 2026-08-20 was catching a banner that contradicted a claim 425 lines
+    below it IN THE SAME FILE. Split into six files and that same contradiction sits BETWEEN two
+    files, where a per-file sweep run six times cannot see it -- each file is internally coherent
+    and every run prints clean. So the collection is per file and the comparison is global.
+    """
+    for label, text in docs:
+        _collect_suite_claims(label, text, result)
 
     live = [c for c in result.suite_claims if c.live]
     distinct = sorted({c.numerator for c in live})
     if len(distinct) > 1:
-        where = "; ".join(f"line {c.line_no}: {c.numerator}/{c.denominator}" for c in live)
+        where = "; ".join(f"{c.doc}:{c.line_no}: {c.numerator}/{c.denominator}" for c in live)
         result.findings.append(Finding(
             "SUITE COUNT AGREEMENT",
             f"live suite claims disagree with each other: {distinct} -- {where}",
@@ -393,18 +473,41 @@ def check_suite_counts(text: str, result: SweepResult) -> None:
     if truth is not None and live:
         wrong = [c for c in live if c.numerator != truth]
         if wrong:
-            where = "; ".join(f"line {c.line_no}: {c.numerator}/{c.denominator}" for c in wrong)
+            where = "; ".join(f"{c.doc}:{c.line_no}: {c.numerator}/{c.denominator}" for c in wrong)
             result.findings.append(Finding(
                 "SUITE COUNT AGREEMENT",
                 f"live suite claim(s) disagree with the tree ({truth}): {where}",
             ))
 
 
-def check_item_states(text: str, result: SweepResult) -> None:
+def check_record_ownership(result: SweepResult) -> None:
+    """Condition 3 of the split: exactly ONE file may carry a live suite count.
+
+    If `global.md` and `tests.md` may both say "the suite is 108/108" then one day they will
+    say different numbers, and the sweep's own agreement check would report a contradiction
+    without saying which file is allowed to be right. Making ownership mechanical rather than
+    a convention is the difference between a rule and a habit. STAMPED figures are untouched:
+    every file is free to quote history, and this record's whole convention is that an older
+    claim stays, stamped, rather than being deleted.
+    """
+    trespass = [c for c in result.suite_claims if c.live and c.doc != GLOBAL_DOC]
+    if trespass:
+        where = "; ".join(f"{c.doc}:{c.line_no}: {c.numerator}/{c.denominator}" for c in trespass)
+        result.findings.append(Finding(
+            "RECORD OWNERSHIP",
+            f"only {GLOBAL_DOC} may carry a LIVE suite count, but one appears in: {where} -- "
+            f"link to the figure in {GLOBAL_DOC} instead of restating it, or stamp it as history",
+        ))
+
+
+def check_item_states(docs: list[tuple[str, str]], result: SweepResult) -> None:
+    """Item verdicts, compared across the SET for the reason `check_suite_counts` explains."""
     for item in TRACKED_ITEMS:
-        open_hits: list[tuple[int, str]] = []
-        closed_hits: list[tuple[int, str]] = []
-        for start, para in paragraphs_with_lines(text):
+        open_hits: list[tuple[str, str, tuple[str, int]]] = []
+        closed_hits: list[tuple[str, str, tuple[str, int]]] = []
+        paras = [(label, start, para)
+                 for label, text in docs for start, para in paragraphs_with_lines(text)]
+        for label, start, para in paras:
             if is_stamped(para) or not re.search(item.slug_re, para, re.I):
                 continue
             # THE SHAPE MUST BE ABOUT THIS ITEM, NOT MERELY NEAR IT. Paragraph proximity is
@@ -429,13 +532,16 @@ def check_item_states(text: str, result: SweepResult) -> None:
                 if hit:
                     line_no = start + para[:hit.start()].count(chr(10))
                     snippet = " ".join(para[max(0, hit.start() - 60):hit.end() + 60].split())
-                    bucket.append((line_no, snippet, start))
+                    bucket.append((f"{label}:{line_no}", snippet, (label, start)))
         # A CONTRADICTION IS DISAGREEMENT BETWEEN SITES, NOT NUANCE WITHIN ONE.
         # A single bullet saying "discharged on two of three axes, the third still
         # open" is COHERENT and must not be flagged; two separate unstamped bullets,
         # one calling the item open and the other closed, is the actual defect this
         # sweep exists for. Learned by running the first version against the real
         # file, where it flagged the content-independence bullet for being precise.
+        # A "place" is now (file, paragraph), so the nuance exemption still protects a single
+        # bullet that is precise about two axes, while a disagreement BETWEEN two files -- the
+        # shape the split newly makes possible -- is a contradiction like any other.
         open_paras = {h[2] for h in open_hits}
         closed_paras = {h[2] for h in closed_hits}
         if open_paras - closed_paras and closed_paras - open_paras:
@@ -443,35 +549,94 @@ def check_item_states(text: str, result: SweepResult) -> None:
             c = sorted(h[0] for h in closed_hits if h[2] not in open_paras)
             result.findings.append(Finding(
                 "ITEM STATE AGREEMENT",
-                f"'{item.name}' is called open at line(s) {o} and closed at line(s) {c} "
+                f"'{item.name}' is called open at {o} and closed at {c} "
                 f"by unstamped text in DIFFERENT places -- one of them is wrong",
             ))
 
 
-def check_banner_date(text: str, result: SweepResult) -> None:
-    m = _BANNER_DATE_RE.search(text)
-    if not m:
-        result.notes.append("no `_Last run YYYY-MM-DD` banner date found -- freshness check skipped")
+def check_banner_date(docs: list[tuple[str, str]], result: SweepResult) -> None:
+    """The banner's `_Last run` must not be older than the newest date ANYWHERE in the set.
+
+    THE FAILURE THIS NOW CATCHES IS THE ONE THE SPLIT CREATED. One banner, in `global.md`,
+    dates the whole record; the five owner files carry entries but no banner. A lane that
+    writes a 2026-08-25 entry into `engine.md` while `global.md` still says `_Last run
+    2026-08-20` has made the banner stale from another file, which is invisible to any
+    per-file check. So the banner is found wherever it lives and compared against every
+    date in every file.
+    """
+    # THE BANNER IS THE ONE IN `global.md`, NOT THE FIRST `_Last run` IN THE SET, and taking
+    # the first cost a false finding the moment the split landed: `data.md`'s entry about
+    # building this very sweep QUOTES a `_Last run 2026-08-14` line as evidence, `content.md`
+    # sorts after it, and the check reported the record stale against a string that was never
+    # a banner. Ownership decides -- the same rule `check_record_ownership` enforces for
+    # suite counts -- so a quoted banner anywhere else is just prose.
+    banner = None
+    banner_doc = ""
+    by_label = dict(docs)
+    if GLOBAL_DOC in by_label:
+        m = _BANNER_DATE_RE.search(by_label[GLOBAL_DOC])
+        if m:
+            banner = tuple(int(g) for g in m.groups())
+            banner_doc = GLOBAL_DOC
+    if banner is None:
+        # NOT A QUIET SKIP. Before the split this could only mean a hand-written fixture; now
+        # it can also mean the banner was moved out of `global.md`, which would leave the whole
+        # set undated and this check permanently inert -- so it is a note the render prints.
+        result.findings.append(Finding(
+            "BANNER DATE FRESHNESS",
+            f"no `_Last run YYYY-MM-DD` banner in {GLOBAL_DOC} -- nothing dates this record, "
+            f"so its freshness cannot be checked at all. A skipped check reads as a passed "
+            f"one, which is how a guard goes quiet; this refuses instead.",
+        ))
         return
-    banner = tuple(int(g) for g in m.groups())
     newest = banner
-    for d in _ANY_DATE_RE.finditer(text):
-        cand = tuple(int(g) for g in d.groups())
-        if cand > newest:
-            newest = cand
+    newest_doc = banner_doc
+    for label, text in docs:
+        for d in _ANY_DATE_RE.finditer(text):
+            cand = tuple(int(g) for g in d.groups())
+            if cand > newest:
+                newest, newest_doc = cand, label
     if newest > banner:
         result.findings.append(Finding(
             "BANNER DATE FRESHNESS",
-            "banner says _Last run %04d-%02d-%02d but the document carries entries dated "
-            "%04d-%02d-%02d" % (banner + newest),
+            "%s says _Last run %04d-%02d-%02d but %s carries entries dated %04d-%02d-%02d"
+            % ((banner_doc,) + banner + (newest_doc,) + newest),
         ))
 
 
 # ---------------------------------------------------------------------------
-def run_sweep(state_path: str = STATE_MD, *, check_tree: bool = True) -> SweepResult:
+def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True) -> SweepResult:
+    """Sweep the record. `paths` defaults to whatever `state/` contains, DERIVED not typed.
+
+    A single path is still accepted -- the `--self-test` fixtures and any ad-hoc check of one
+    file rely on it -- and is labelled `global.md` so that a lone fixture is treated as the
+    file that owns the banner and the suite count.
+    """
     result = SweepResult()
-    with io.open(state_path, encoding="utf-8") as fh:
-        text = fh.read()
+
+    if paths is None:
+        paths, why = discover_state_files()
+        if not paths:
+            # AN EMPTY SET IS THE INERT-GUARD FAILURE, NOT A CLEAN RUN. The predecessor of this
+            # function took one hardcoded path; if the record ever moved, it read a file that
+            # was not there. Refusing loudly is the only answer that cannot be mistaken for a pass.
+            result.findings.append(Finding(
+                "NOTHING SWEPT",
+                f"{why} -- this sweep checked nothing at all. That is a broken guard, not a "
+                f"clean record. Point STATE_DIR at the record or restore the directory.",
+            ))
+            return result
+    elif isinstance(paths, str):
+        paths = [paths]
+
+    docs: list[tuple[str, str]] = []
+    for p in paths:
+        label = os.path.basename(p)
+        if len(paths) == 1:
+            label = GLOBAL_DOC
+        with io.open(p, encoding="utf-8") as fh:
+            docs.append((label, fh.read()))
+    result.docs = [d[0] for d in docs]
 
     if check_tree:
         result.report_count, note = read_report_count()
@@ -488,14 +653,15 @@ def run_sweep(state_path: str = STATE_MD, *, check_tree: bool = True) -> SweepRe
     else:
         result.notes.append("--no-tree: document checked against itself only")
 
-    check_suite_counts(text, result)
-    check_item_states(text, result)
-    check_banner_date(text, result)
+    check_suite_counts(docs, result)
+    check_record_ownership(result)
+    check_item_states(docs, result)
+    check_banner_date(docs, result)
     return result
 
 
 def render(result: SweepResult, explain: bool = False) -> str:
-    out: list[str] = ["Banner sweep: state.md"]
+    out: list[str] = ["Banner sweep: " + (", ".join(result.docs) if result.docs else "NOTHING")]
     for n in result.notes:
         out.append(f"  {n}")
     live = [c for c in result.suite_claims if c.live]
@@ -506,8 +672,8 @@ def render(result: SweepResult, explain: bool = False) -> str:
         out.append("")
         out.append("  --explain: every suite claim and this script's LIVE/STAMPED call on it.")
         out.append("  The call is a shape heuristic; check it rather than trusting it.")
-        for c in sorted(result.suite_claims, key=lambda c: c.line_no):
-            out.append(f"    line {c.line_no:>5}  {'LIVE  ' if c.live else 'stamped'}  "
+        for c in sorted(result.suite_claims, key=lambda c: (c.doc, c.line_no)):
+            out.append(f"    {c.doc:>12}:{c.line_no:<5} {'LIVE  ' if c.live else 'stamped'}  "
                        f"{c.numerator}/{c.denominator}  ...{c.text}...")
     if result.findings:
         out.append("")
@@ -692,6 +858,126 @@ _Last run 2026-08-19 (suite is now **108/108**.)_
 """
 
 
+# A SUITE CLAIM THAT ENDS A SENTENCE. The trailing lookahead used to exclude `.`, so BOTH
+# figures below were invisible and this document passed while contradicting itself. The blind
+# spot survived from the sweep's first commit to 2026-08-20 because all 20 real claims in
+# `state.md` happened to be followed by `*`, a space, or a comma -- the guard had never been
+# tested against the most natural way to end the sentence. Both figures are bare and
+# sentence-final on purpose: with the old regex this case PASSED.
+_SENTENCE_FINAL = """# Architect state
+
+_Last run 2026-08-19 (the suite is now 108/108.)_
+
+## NEXT
+
+- **A later bullet.** The suite is now 107/107.
+"""
+
+# THE SPLIT'S OWN NEW FAILURE MODE: two files, each internally coherent, contradicting each
+# other. A per-file sweep run six times prints clean six times.
+_SPLIT_DISAGREE = {
+    "global.md": """# global
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **Nothing else here.**
+""",
+    "tests.md": """# tests
+
+## NEXT
+
+- **A clause bullet.** The suite is now 107/107.
+""",
+}
+
+# CONDITION 3. `tests.md` restating a figure `global.md` owns is a finding even when the two
+# AGREE -- because agreeing today is exactly how two copies come to disagree tomorrow.
+_SPLIT_TRESPASS = {
+    "global.md": """# global
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **Nothing else here.**
+""",
+    "tests.md": """# tests
+
+## NEXT
+
+- **A clause bullet.** The suite is now 108/108.
+""",
+}
+
+# ... while QUOTING history in an owner file stays legal, because that is this record's whole
+# convention: an older claim stays, stamped, rather than being deleted.
+_SPLIT_STAMPED_OK = {
+    "global.md": """# global
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **Nothing else here.**
+""",
+    "tests.md": """# tests
+
+## NEXT
+
+- **A clause bullet.** Suite was **107/107** at that pass
+  (`reportCreatedOn 2026.08.14-21.47.35`). **[STAMPED 2026-08-19 -- superseded.]**
+""",
+}
+
+# An item called open in one file and closed in another. Same defect as before the split,
+# at its new address.
+#
+# WORDED "still open" AND NOT "not discharged", AND THE DIFFERENCE MATTERS TO THIS FIXTURE.
+# "not discharged" contains the word this item's CLOSED shape matches, so a paragraph saying
+# it hits both shapes and is exempted as in-bullet nuance. That exemption is correct -- a
+# single bullet being precise about two axes is not a contradiction -- but a fixture written
+# that way proves nothing about the cross-file comparison it exists to test, and passed
+# silently while doing so. Measured twice while writing this. The same trap applies to any
+# prose added INSIDE these fixture strings: an explanation mentioning the closed word puts it
+# back in the paragraph, so explanations live out here in the comment.
+_SPLIT_ITEM_CLASH = {
+    "global.md": """# global
+
+_Last run 2026-08-19 (nothing to report.)_
+
+## NEXT
+
+- **DISCHARGED 2026-08-19 -- the content-independence corpus.** Done.
+""",
+    "data.md": """# data
+
+## NEXT
+
+- **The content-independence corpus is still open** and is carried forward.
+""",
+}
+
+# A banner made stale from ANOTHER file -- invisible to any per-file check.
+_SPLIT_STALE_BANNER = {
+    "global.md": """# global
+
+_Last run 2026-08-19 (nothing to report.)_
+
+## NEXT
+
+- **Nothing else here.**
+""",
+    "engine.md": """# engine
+
+## NEXT
+
+- **A bullet written on 2026-08-25.** Landed then.
+""",
+}
+
+
 def check_self_test() -> tuple[bool, str]:
     import tempfile
 
@@ -712,14 +998,33 @@ def check_self_test() -> tuple[bool, str]:
         ("item called open and closed FAILS", _BAD_ITEM, False),
         ("banner older than its entries FAILS", _BAD_DATE, False),
         ("chooseBuild ruled and awaiting a ruling FAILS", _BAD_CHOOSEBUILD, False),
+        # 2026-08-20, the split. The first proves the sentence-final regex fix; the rest prove
+        # the sweep compares across the SET rather than file by file.
+        ("a suite claim ending a SENTENCE is seen, and still FAILS when wrong",
+         _SENTENCE_FINAL, False),
+        ("two files disagreeing about the suite FAILS", _SPLIT_DISAGREE, False),
+        ("an owner file restating a figure global.md owns FAILS", _SPLIT_TRESPASS, False),
+        ("an owner file QUOTING a stamped older figure PASSES", _SPLIT_STAMPED_OK, True),
+        ("an item called open in one file and closed in another FAILS", _SPLIT_ITEM_CLASH, False),
+        ("a banner made stale by an entry in ANOTHER file FAILS", _SPLIT_STALE_BANNER, False),
     ]
     lines: list[str] = []
     ok = True
     for name, body, want_pass in cases:
         with tempfile.TemporaryDirectory() as d:
-            p = os.path.join(d, "state.md")
-            with io.open(p, "w", encoding="utf-8", newline="\n") as fh:
-                fh.write(body)
+            # A fixture is either ONE document (labelled global.md, so a lone file is treated
+            # as the one that owns the banner and the count) or a whole SET keyed by filename.
+            if isinstance(body, dict):
+                p = []
+                for fname, text in sorted(body.items()):
+                    fp = os.path.join(d, fname)
+                    with io.open(fp, "w", encoding="utf-8", newline="\n") as fh:
+                        fh.write(text)
+                    p.append(fp)
+            else:
+                p = os.path.join(d, "state.md")
+                with io.open(p, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write(body)
             # check_tree=False: these fixtures are about the DOCUMENT's internal
             # consistency, and pointing them at the real Source/ would make the
             # self-test's verdict depend on today's suite size.
@@ -731,6 +1036,34 @@ def check_self_test() -> tuple[bool, str]:
         lines.append(f"    [{'OK' if good else '**WRONG**'}] {name}: "
                      f"expected {'PASS' if want_pass else 'FAIL'}, "
                      f"got {'PASS' if got_pass else 'FAIL'}{detail}")
+
+    # THE FILE LIST IS DERIVED, AND THAT IS ITSELF WORTH A FIXTURE. `discover_state_files` is
+    # the thing standing between this sweep and the "checker types its own subject list" shape,
+    # so it is checked here rather than assumed: a NEW file dropped into the directory must be
+    # picked up without anyone editing this script, and an EMPTY directory must refuse.
+    with tempfile.TemporaryDirectory() as d:
+        for fname in ("global.md", "tests.md", "ux.md"):
+            with io.open(os.path.join(d, fname), "w", encoding="utf-8", newline="\n") as fh:
+                fh.write("# x\n\n## NEXT\n\n- **Nothing.**\n")
+        with io.open(os.path.join(d, "notes.txt"), "w", encoding="utf-8", newline="\n") as fh:
+            fh.write("not markdown, not swept\n")
+        found, why = discover_state_files(d)
+        got = sorted(os.path.basename(f) for f in found)
+        want = ["global.md", "tests.md", "ux.md"]
+        good = (got == want)
+        ok = ok and good
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] a NEW .md in the directory is swept "
+                     f"without editing this script: expected {want}, got {got}")
+
+    with tempfile.TemporaryDirectory() as d:
+        found, why = discover_state_files(os.path.join(d, "does-not-exist"))
+        res = run_sweep([], check_tree=False) if found else None
+        empty_found, _ = discover_state_files(d)
+        good = (found == [] and empty_found == [] and why.startswith("NO RECORD DIRECTORY"))
+        ok = ok and good
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] a MISSING or EMPTY record directory "
+                     f"is reported, not silently swept as clean")
+
     return ok, "\n".join(lines)
 
 
@@ -743,8 +1076,9 @@ def main(argv: list[str] | None = None) -> int:
             "date is older than its own entries. Mechanises the rule 11fd9ae made a memory job."
         )
     )
-    parser.add_argument("state_path", nargs="?", default=STATE_MD,
-                        help=f"Path to state.md (default: {STATE_MD}).")
+    parser.add_argument("state_path", nargs="*", default=None,
+                        help=f"Record file(s) to sweep. Default: every *.md in {STATE_DIR}, "
+                             f"DERIVED from the directory rather than named here.")
     parser.add_argument("--explain", action="store_true",
                         help="Print every suite claim with this script's LIVE/STAMPED call on it.")
     parser.add_argument("--no-tree", action="store_true",
@@ -768,7 +1102,7 @@ def main(argv: list[str] | None = None) -> int:
         print("SELF-TEST: ALL FIXTURES CORRECT" if ok else "SELF-TEST: AT LEAST ONE FIXTURE WRONG")
         return 0 if ok else 1
 
-    result = run_sweep(args.state_path, check_tree=not args.no_tree)
+    result = run_sweep(args.state_path or None, check_tree=not args.no_tree)
     print(render(result, explain=args.explain))
     return 0 if result.passed else 1
 

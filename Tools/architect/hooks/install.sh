@@ -12,14 +12,46 @@
 # a future clone may not be, and overwriting somebody's hook to install a documentation
 # check is not a trade this script gets to make on their behalf.
 #
-# Hooks are not version-controlled, so this has to be run once per clone:
+# Hooks are not version-controlled, so this has to be run once per clone -- ONCE PER CLONE,
+# not once per worktree: every linked worktree of a clone shares this one directory.
 #     sh Tools/architect/hooks/install.sh
 
 set -eu
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 SRC="$REPO_ROOT/Tools/architect/hooks/pre-commit"
-HOOK_DIR="$REPO_ROOT/.git/hooks"
+
+# `$REPO_ROOT/.git/hooks` IS WRONG IN A LINKED WORKTREE, AND IT FAILED LOUDLY THERE. In a
+# worktree created by `git worktree add`, `.git` is a 55-byte FILE pointing at the common
+# directory, not a directory -- so `mkdir -p "$REPO_ROOT/.git/hooks"` died with
+# `mkdir: cannot create directory '.../probe/.git': Not a directory` and `set -eu` exited 1.
+# Measured on a probe worktree 2026-08-20.
+#
+# THE SAME MEASUREMENT SHOWED THE INSTALL IS USUALLY NOT NEEDED THERE AT ALL: hook lookup in a
+# linked worktree resolves through the COMMON directory, so the copy already installed in the
+# main tree DOES run in every worktree. `git rev-parse --git-path hooks` in the probe returned
+# `E:/MultiAgent/Stratocracy/.git/hooks` and the hook fired. Running this script from a
+# worktree is therefore a no-op that reports "already installed and identical" -- which is the
+# honest answer, and better than the exit-1 it used to give.
+#
+# `--path-format=absolute` IS LOAD-BEARING AND WAS MEASURED, NOT ASSUMED. Bare
+# `--git-common-dir` answers `.git` -- RELATIVE -- from the main tree, while a worktree gets an
+# absolute path. A relative answer resolves against the caller's cwd, which is not necessarily
+# the repo root, so the bare form swaps one wrong path for another. Measured on git 2.53.0:
+#     main tree: `--git-common-dir` -> `.git`   `--path-format=absolute ...` -> `E:/.../.git`
+#     worktree : `--git-common-dir` -> `E:/.../.git` (both forms agree)
+# The fallback covers a git older than 2.31, where `--path-format` does not exist; it is
+# written rather than measured, and is marked as such.
+GIT_COMMON=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+if [ -z "$GIT_COMMON" ]; then
+    # UNVERIFIED on this machine: no git older than 2.31 was available to run it against.
+    GIT_COMMON=$(git rev-parse --git-common-dir)
+    case "$GIT_COMMON" in
+        /*|?:[\/]*) ;;
+        *) GIT_COMMON="$REPO_ROOT/$GIT_COMMON" ;;
+    esac
+fi
+HOOK_DIR="$GIT_COMMON/hooks"
 DST="$HOOK_DIR/pre-commit"
 
 if [ -n "$(git config --get core.hooksPath || true)" ]; then
@@ -58,4 +90,4 @@ mkdir -p "$HOOK_DIR"
 cp "$SRC" "$DST"
 chmod +x "$DST" 2>/dev/null || true
 echo "installed: $DST"
-echo "it runs only when Tools/architect/state.md is staged; bypass with --no-verify"
+echo "it runs only when a file under Tools/architect/state/ is staged; bypass with --no-verify"

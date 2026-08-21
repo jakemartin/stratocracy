@@ -11,6 +11,44 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-21 (THE PASS BELOW WAS GATED AND PASSED, AND BOTH UPSTREAM REQUESTS WERE
+FILED. `strat-integration-reviewer` returned `VERDICT: PASS` with ZERO findings over the shipped
+opt-in, the new clause, the hardened banner sweep and the coordinator's `Content/` edit. Twelve
+checks; vendored `Source/StratRules/` and `Data/` compared by blob rather than by worktree diff.
+It confirmed at its source that the fabricated `StratRules -> (nothing)` finding is dead: it
+DERIVED the module arrows from every `Source/*/*.Build.cs` and then read
+`.agents/ue-project-context.md` before assigning blame -- reading BOTH artifacts, which is the
+step that never happened the four times that finding was reported. The note matched the tree
+exactly, and the coordinator's independent derivation agreed. THE FIRST GATE SINCE 314ad99 FIXED
+THE CHECKLIST, AND IT CAME BACK CLEAN.
+ITS ONE NON-GATING CATCH WAS THE COORDINATOR'S OWN LITTER: `build.log` and `suite.log`, which the
+documented build and suite templates write to every tree's root on every pass, were untracked AND
+un-ignored, so `git add -A` would have committed them. Closed at `6bc9e00`.
+BOTH UPSTREAM REQUESTS ARE FILED, ON THE USER'S EXPLICIT INSTRUCTION, AND NEITHER IS GRANTED. The
+guided-opening adjacency request landed at crew `a8c8cdb`; the Q27 acceptance-ID request at crew
+`3510bc2`. Both spec-only -- `data/` and `cpp_reference/` untouched in each, no manifest or hash
+moved, no scenario authored, no acceptance ID minted. Recorded at `b17c359` with the inverse
+hazard named for the first time: this tree has long kept FILED IS NOT LANDED, and the REVERSE
+costs as much -- a document still reading "not filed" after its request is committed upstream
+sends the next reader to file a duplicate. Both evidence files said exactly that, both were true
+when written, and neither is now; the superseded text is stamped and quoted, never deleted.
+A CORRECTION WENT UPSTREAM WITH THE Q27 FILING RATHER THAN BEING SMOOTHED OVER. Its draft read as
+though Q27 ruled all three beat-1a input gates. Read out of the GDD directly: Q27's own row names
+END TURN. The beat-1a row is what extends the gate to SPACE, on the stated footing that those are
+the machine's only routes from SELECTED to DONE not passing through MOVED, and separately closes
+the ATTACK transition. The filed text states the split and the evidence file quotes the request AS
+LANDED, because the landed wording and the drafted wording differ for exactly that reason.
+THE VENDORED PIN GAP GREW BY THIS SESSION'S OWN WORK and was re-derived rather than left to
+stand: `git rev-list --count cb8e12b..HEAD` in the crew repo, measured independently twice, is
+now seventeen commits, up from the fifteen the Q27 draft recorded. Both filings are spec-only so
+neither creates re-vendor pressure of its own, but Lane A's eventual re-vendor carries all of
+them.
+WHAT REMAINS NEEDS SOMEBODY THIS SESSION COULD NOT SUPPLY. 2.11.6's unbuilt widgets need an
+editor `strat-editor-builder` can actually reach, and it cannot while the `NeoStack_Connect` proxy
+latches, because it has no Bash with which to drive the editor's own endpoint -- the workaround
+that carried this pass is not available to that agent. Lane A stays blocked until `uiBuildOptions`
+is a real header change rather than a spec entry. And both filings now wait on a Director.)
+
 _Last run 2026-08-21 (THE SHIPPED OPT-IN LANDED AND THE CLAUSE THAT PINS IT IS NO LONGER
 OWED. `BP_StratGameMode`'s `MatchConfig` now carries `bRecordCompletionOnMatchEnd` TRUE, so the
 packaged game records a completed match and §2.11.6's guided opening retires instead of
@@ -49,7 +87,9 @@ The banner sweep now PINS THE ARTIFACT IT READS and would have caught the pre-me
 entry replaces -- see `data.md`. Its first quiet pass on a real tree with a fresh report is this
 one; before the run it failed on both the count and the identity, and both findings cleared.
 NOT YET GATED AT THIS WRITING -- no `VERDICT` has been sought for this pass, and this entry
-asserts none.)
+asserts none. **[STAMPED 2026-08-21: it was gated afterwards and PASSED with zero findings; the
+entry above this one carries the verdict. That sentence was true when written and is kept as
+written.]**)
 
 _Last run 2026-08-21 (THE WRITER WAS GATED `VERDICT: BLOCK` AND THE BLOCK WAS RIGHT. The hook
 guarded on `ResolveSaveSlotName(FString()).IsEmpty()` while `FStratMatchConfig::SaveSlotName`

@@ -83,3 +83,18 @@ DerivedDataCache/*
 # `git add -A` cannot sweep them into a commit, which is exactly how they first
 # reached one.
 /Tools/context/
+
+# Build and headless-suite transcripts.
+#
+# The documented command templates (.claude/skills/strat-parallel/SKILL.md) redirect
+# both streams to "$TOP/build.log" and "$TOP/suite.log" -- the root of whichever tree
+# is being built. Untracked and unignored, they were one `git add -A` away from a
+# commit on any pass that had run a build or a suite.
+#
+# Anchored, because that is exactly where the templates write. `$TOP` is
+# `git rev-parse --show-toplevel`, which in a linked worktree is that worktree's own
+# root -- and the anchor resolves against the directory holding this .gitignore, which
+# is that same root. One rule covers the main tree and every worktree under
+# E:\MultiAgent\Strat-wt\ alike.
+/build.log
+/suite.log

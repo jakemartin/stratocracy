@@ -1193,6 +1193,29 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `production_widget` — Production menu widget (§2.11.5) (blocked on buildlist_query)
 - `bridge_event_list` — Bridge ordered event list (§4.9 'command in / events out') (actionable)
 - `buildlist_query` — Buildlist query on the Ui.h contract (actionable, excluded: shape unstated in the GDD by explicit decision, and the file is vendored certified bytes in another repo -- T-INT-01 hash-matches it)
+
+  **[CORRECTED 2026-08-22, coordinator — the exclusion reason above has gone stale by
+  UNDER-claiming, which is the direction that sends the next reader to re-open a settled
+  question.** "Shape unstated in the GDD by explicit decision" was true when the candidate was
+  scored and is FALSE now: the Director **RULED the shape on 2026-08-20** — it is a QUERY, a
+  third `ui*` function beside `uiReachable` and `uiForecast`, `uiBuildOptions(w, side,
+  factoryHex)` returning `std::vector<UiBuildOption>`. Recorded in `decisions.md` and filed
+  upstream in crew `spec/ui_spec.md` at `4d36a16`. **The half of the reason that still holds is
+  the second half**, and it is now the whole blocker: the ruling is SPEC-ONLY. Verified against
+  both trees on 2026-08-22 — crew HEAD's `cpp_reference/Ui.h` still carries the refusal
+  verbatim at its Queries comment, and no `uiBuildOptions` or `UiBuildOption` symbol exists
+  anywhere in `cpp_reference/`. So `buildlist_query` is NOT excluded and NOT actionable here; it
+  is **blocked on an upstream header change**, after which this side re-vendors, `rulesCommit`
+  moves off `cb8e12b`, and `T-INT-01` hash-matches. `production_widget` above inherits that
+  blocker unchanged and stays the last feature on §4.5's hard MVP line. The crew gap over the
+  vendored commit is **18 commits**, re-derived with `git rev-list --count` rather than
+  incremented from the seventeen and eighteen recorded in older banners; none of the 24 vendored
+  files moved in that span, so there is no re-vendor pressure yet and `Source/StratRules/` here
+  is current. **Three residual decisions the ruling deliberately did not settle are already
+  filed upstream** — affordable-only vs all four rows with a module-computed `affordable`
+  (upstream recommends all four), what factory state does to the answer (Q31), and whether the
+  per-type population cap binds the player — and they await a Director ruling, not another
+  filing.]
 - **Hot-seat milestone is COMPLETE (phase 6 closed 2026-08-13); see "Hot-seat milestone —
   COMPLETE" below.** The AI-opponent milestone is now current (phase C closed 2026-08-13; phase D
   — PIE playtest and a machine-repeatable AI-vs-AI gate — is next; see "## AI-opponent milestone"

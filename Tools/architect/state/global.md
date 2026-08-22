@@ -22,7 +22,22 @@ load-bearing: the two mechanisms that kept it blank are closed in C++ and held b
 screen still shows no directive.
 **Sec 2.11.6-B IS NOT CLOSED AND IS NOT CLAIMED HERE.** What closes it is a human-driven playtest; the
 coordinator PIE session it also named was RUN on 2026-08-22 and returned NO, so it is discharged
-rather than owed -- the newest `## NEXT` entry carries its console measurements.
+rather than owed -- the 08:01-local `## NEXT` entry carries its console measurements.
+**[AMENDED 2026-08-22 11:30 local / 15:30 UTC, coordinator, after a SECOND coordinator PIE session.
+Sec 2.11.6-B IS STILL NOT CLOSED and this amendment does not close it.** What changed is one rung
+below the section: the design-time sentinel experiment the entry above assigned to
+`strat-editor-builder` HAS NOW BEEN RUN -- by the coordinator over the editor's own MCP endpoint,
+because the proxy served the two-tool surface again and the builder has no Bash. It answers the
+fork rather than the section: the binding IS delivering and the bound function supplies a value
+that paints zero-width, with the sentinel confirmed present on the live PIE instance as the
+positive control, and the widget asset restored to its gated bytes afterwards. **Do not re-dispatch
+that experiment** -- the topmost `## NEXT` entry carries it and names the one question left.
+Pointer fixed while here: this sentence used to say "the newest `## NEXT` entry", which silently
+re-aimed at whatever was inserted next. **And the `12:01 local` stamp in the headline above is
+really 12:01 UTC** -- its own capture, `ScreenShot00059.png`, has mtime `08:01:04 -0400` against a
+log line reading `12.01.00`, so that session ran FOUR HOURS EARLIER than its stamp reads and this
+11:30-local amendment is after it, not before it. Recorded rather than silently rewritten, because
+the same mislabel is what makes two entries look out of order.]
 THE SUITE **IS NOW 160/160**, 151 -> 160 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
 walked over `Source/` -- +9, none removed, column-0 anchored, re-derived independently by the gate
 and again in the merged tree -- zero non-Success, `notRun` 0, 160 entries, all `Success`. The run is
@@ -614,6 +629,73 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-22, COORDINATOR, THE DESIGN-TIME SENTINEL EXPERIMENT WAS RUN AND IT ANSWERS THE FORK
+  THE ENTRY BELOW LEFT OPEN: THE BINDING IS DELIVERING, AND THE BOUND FUNCTION SUPPLIES A VALUE
+  THAT PAINTS ZERO-WIDTH. Sec 2.11.6-B STILL DOES NOT CLOSE, and nothing here claims it does --
+  what closes that section is a human-driven playtest, unchanged, and the strip still paints no
+  directive.** The entry below assigned this experiment to `strat-editor-builder` and it was run by
+  the coordinator instead, for the reason that entry already recorded: `ToolSearch` for
+  `execute_script` returned nothing while the same keyword search returned `unreal_status` and
+  `list_unreal_projects`, so the builder -- NeoStack tools plus Read/Grep/Glob/Skill and no Bash --
+  had no route to the editor. Driven over the editor's own MCP endpoint with `Tools/neostack/ns.py`.
+  - **THE EDITOR WAS NEVER THE PROBLEM, AND A RESTART WAS PROPOSED AND REFUSED ON MEASUREMENT.**
+    `unreal_status` reported *"No active NeoStackAI editors were found"* while `UnrealEditor.exe`
+    was alive, `LISTENING` on 9315 by `netstat`, carrying a heartbeat in `runtimes.json` that
+    matched the file mtime to the second, and answering `initialize` with
+    `serverInfo: unreal-editor`. Its `tools/list` served `execute_script`. The proxy's "Reason"
+    string describes a read it never performed. Restarting the editor would have cost the session
+    and fixed nothing.
+  - **THE MUTATION, AND IT IS FULLY REVERTED.** `DirectiveText`'s design-time `Text` was set to
+    `SENTINEL9137SENTINEL9137` via `configure_widget`, compiled and saved with PIE stopped, then
+    restored to `NSLOCTEXT("UMG", "TextBlockDefaultValue", "Text Block")` the same way. Saving
+    moved the package bytes even though the value round-tripped, so the gated bytes were put back
+    with `git restore`: `git hash-object` on `Content/UI/WBP_DirectiveStrip.uasset` reads
+    `c4eb264740ffaa0daeab8843caf7a9a38690dada`, identical to `git rev-parse HEAD:<path>`. The
+    editor reports zero dirty content packages and zero dirty map packages afterwards.
+  - **THE NEGATIVE OBSERVATION: THE SENTINEL DID NOT PAINT, TO THE PIXEL.** PIE from the game's own
+    startup path on `Lvl_FerrumCrossing`, guidance populated on the live widget exactly as in the
+    entry below -- `bActive=True, Beat=Beat1a`, the same 76-character directive,
+    `bHasObjectiveRing=True, ObjectiveHex=(X=2,Y=7), bEndTurnGated=True`. `Shot showui` at
+    2544x1320 gives the strip rectangle at x 750-805, y 157-194, w=56, h=38, 2128 px, centre 777.5
+    -- byte-for-byte the recorded baseline, and identical to the earlier capture retained as
+    `ScreenShot00059.png`. Width 56 is still the border's own 28+28 padding, so the painted content
+    is STILL ZERO-WIDTH with a 24-character sentinel sitting in the property.
+  - **THE POSITIVE CONTROL IS THE WHOLE VALUE OF THIS ENTRY, because a blank screen is also what a
+    broken experiment looks like.** A sentinel that never reached the running widget would paint
+    nothing for reasons having nothing to do with the binding. It reached it: `GetAll TextBlock
+    Text` on the live PIE instance returned
+    `GameInstance_3.WBP_DirectiveStrip_C_0.WidgetTree_0.DirectiveText.Text =
+    NSLOCTEXT("", "78DBFAF7426A5FBCC04C17B9C4577B9A", "SENTINEL9137SENTINEL9137")`. The same
+    command returned real `LOCGEN_FORMAT` values for the scoreboard's live TextBlocks in the same
+    output, so the reader was shown able to speak on populated live state rather than assumed to
+    be. This works because a UMG binding drives the Slate attribute WITHOUT writing the UPROPERTY
+    back, so `GetAll` on a bound property reports the design value -- the property read and the
+    painted read are two different measurements, which is exactly what this experiment needed.
+  - **THE INFERENCE, AND ITS LIMIT STATED RATHER THAN ROUNDED OFF.** A TextBlock with no active
+    binding paints its UPROPERTY. This one holds a 24-character sentinel, is `Visible` on the live
+    instance, and paints zero-width. So a binding IS active and IS supplying the painted value, and
+    that value is not the sentinel and not the 76-character directive. **What was measured is
+    zero-width painted content, NOT literally `FText::IsEmpty()`** -- an empty `FText` is the
+    natural reading and the only survivor of the exclusion list below, but the measurement is the
+    width. `DirectiveText`'s own `Visibility` is unbound, so the `Visible` read is true runtime
+    state and a collapsed-text-block branch is dead too.
+  - **WHAT IS NOW EXCLUDED, added to the list the entry below built rather than replacing it.** Not
+    the input wiring, not variable shadowing, not an unregistered binding, not a dead widget tree,
+    not the value on the instance, not the purity of the four graphs -- and now **not a binding
+    that fails to run**. The binding runs, wins over the UPROPERTY, and returns something that
+    renders to nothing.
+  - **THE ONE QUESTION LEFT, and it is narrower than anything this section has carried before.** Why
+    does a pure graph wired `Get Guidance` to `Break Strat Guidance View` to the `DirectiveText`
+    member to the Return node yield a zero-width value on the very instance whose `Guidance`
+    reads a populated 76-character `DirectiveText` in the same PIE session, seconds apart, from the
+    same console? Both halves of that sentence are measured on `WBP_DirectiveStrip_C_0`. Next lane
+    should read what the binding function actually RETURNS rather than whether it runs -- `ke`
+    confirms execution but prints no return value, which is the gap that kept this open.
+  - **INSTRUMENT NOTE.** All asset work was done with PIE stopped, per the hazard the entry below
+    records; the editor survived both PIE teardowns and no widget was opened while PIE was live.
+    The captures live under `Saved/Screenshots/WindowsEditor/`, which is not tracked, so quote the
+    geometry above rather than relying on those files surviving.
 
 - **2026-08-22, COORDINATOR, LIVE PIE ON THE INTEGRATION TREE, NO SOURCE AND NO ASSET CHANGE --
   THE DELIVERY FIX IS CONFIRMED ON A LIVE WIDGET, AND THE STRIP STILL PAINTS NO DIRECTIVE.

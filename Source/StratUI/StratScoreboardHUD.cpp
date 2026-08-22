@@ -522,21 +522,51 @@ bool AStratScoreboardHUD::CreateGuidanceWidget(FString& OutFailureReason)
 	// strip" never disagree.
 	GuidanceStrip = Created;
 
-	// DELIBERATELY NOT PUSHED TO HERE, and the reason differs from the scoreboard's. The
-	// scoreboard could be refreshed at this point and is not, so that two failures stay
-	// distinguishable. This one CANNOT be: the value it wants is a field of a view model
-	// that only exists once `UStratMatchSubsystem` has seeded a match and built one, and
-	// this HUD has no way to ask for that without becoming a second thing that runs
-	// matches. The strip draws its own defaults until the first `ApplyView`.
+	// DELIBERATELY NOT REFRESHED FROM A SOURCE HERE, and the reason differs from the
+	// scoreboard's. The scoreboard could be refreshed at this point and is not, so that two
+	// failures stay distinguishable. This one CANNOT be: the value it wants is a field of a
+	// view model that only exists once `UStratMatchSubsystem` has seeded a match and built
+	// one, and this HUD has no way to ask for that without becoming a second thing that runs
+	// matches. All of that is unchanged.
+	//
+	// WHAT IS CHANGED IS THE SENTENCE THAT USED TO FOLLOW IT, retracted in place:
+	// RETRACTED> "The strip draws its own defaults until the first `ApplyView`."
+	// It assumed a LATER `ApplyView`, and there is not one. Measured in five fresh PIE
+	// sessions on 2026-08-21: `AStratPlayerController::BeginPlay` reached `ApplyView` with the
+	// session's only decorated model before this function had run, every time, and nothing
+	// reconciles again without player input -- so the strip drew its own defaults for the
+	// whole session and Sec 2.11.6's opening was never seen.
+	//
+	// SO THE NEW STRIP IS BROUGHT UP TO THE LAST VALUE THIS HUD WAS HANDED, if it has been
+	// handed one. That is the same act `UStratMatchSubsystem::ApplyView` performs for a unit
+	// actor it has just spawned: a surface appearing mid-flight is reconciled to the latest
+	// model rather than left blank until something else happens to move. It assumes NO
+	// ordering -- a push arriving after this point takes the ordinary route through
+	// `PushGuidance`, one that arrived before it is delivered here, and a session with no push
+	// at all delivers nothing and leaves the strip on its defaults.
+	DeliverLatestGuidance();
+
 	return true;
 }
 
 void AStratScoreboardHUD::PushGuidance(const FStratGuidanceView& InGuidance)
 {
-	// THE ENTIRE BODY IS A NULL CHECK AND A FORWARD, and the header records why that is
-	// the design: no strip is a configuration, not a refusal, so there is nothing to
-	// report and nothing to log. A log line here would fire once per reconcile for the
-	// whole of a session that was configured exactly as intended.
+	// RECORDED FIRST, UNCONDITIONALLY, AND WITHOUT COMPARING. The strip may not exist yet --
+	// at match start it does not, which is the whole of the first delivery defect -- so the
+	// value is kept before the forward rather than only when the forward can happen. Storing
+	// it on both branches is what makes `DeliverLatestGuidance` able to say the same thing
+	// later that this call would have said now.
+	//
+	// NO EQUALITY TEST AGAINST THE STORED VALUE, and no early-out on "unchanged". That would
+	// be the delta-shaped thinking `UStratMatchSubsystem::ApplyView` refuses at the other end
+	// of this same call, arrived at from the widget's side.
+	LastPushedGuidance  = InGuidance;
+	bGuidanceEverPushed = true;
+
+	// THE REST IS A NULL CHECK AND A FORWARD, and the header records why that is the design:
+	// no strip is a configuration, not a refusal, so there is nothing to report and nothing
+	// to log. A log line here would fire once per reconcile for the whole of a session that
+	// was configured exactly as intended.
 	//
 	// NO BRANCH ON THE VALUE. This function does not read `InGuidance.bActive`, does not
 	// show or hide the widget, and does not decide anything about the strip's appearance.
@@ -547,6 +577,25 @@ void AStratScoreboardHUD::PushGuidance(const FStratGuidanceView& InGuidance)
 	{
 		GuidanceStrip->PushGuidance(InGuidance);
 	}
+}
+
+bool AStratScoreboardHUD::DeliverLatestGuidance()
+{
+	// TWO CONDITIONS, AND THEY ARE DIFFERENT QUESTIONS. `GuidanceStrip` answers "is there
+	// anywhere to deliver to"; `bGuidanceEverPushed` answers "is there anything to deliver".
+	// The second cannot be read off `LastPushedGuidance` itself -- a default-constructed
+	// `FStratGuidanceView` is a real state and not an absence, see the member's declaration --
+	// and delivering one anyway would fire `OnGuidanceRefreshed` at a Widget Blueprint to
+	// announce a reconcile that never happened.
+	if (GuidanceStrip == nullptr || !bGuidanceEverPushed)
+	{
+		return false;
+	}
+
+	// THE FLAG IS NOT CLEARED. This is a replay of the current value, not the consumption of
+	// a queued event; see the declaration on why idempotence is the property wanted here.
+	GuidanceStrip->PushGuidance(LastPushedGuidance);
+	return true;
 }
 
 bool AStratScoreboardHUD::RefreshScoreboard(FString& OutFailureReason)

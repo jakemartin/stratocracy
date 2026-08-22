@@ -10,6 +10,77 @@
 > in any other file is a finding, enforced by `strat_banner_sweep.py`'s RECORD OWNERSHIP check.
 > Everything under `## NEXT
 
+- **The two guided-opening delivery defects now have clauses; they shipped green because nothing
+  asked either question.** Nine clauses added to
+  `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp`, all under `T-INT-05` — see "Why not
+  T-UI-03" below. The live count is in `Tools/architect/state/global.md` and nowhere else.
+  - **DEFECT 1 — the strip did not exist when the only decorated push arrived.**
+    `StripCreatedAfterAPushStillCarriesIt` drives the production ordering rather than a
+    synthesised push: recorder registered, then `StartMatch`, whose own reconcile pushes at a HUD
+    with **no** strip; the strip is installed afterwards and `DeliverLatestGuidance()` is called
+    by the clause, because `StratTestInstallGuidanceStripDouble` assigns `GuidanceStrip`
+    directly and never runs `CreateGuidanceWidget`. Supported by
+    `DeliverLatestGuidanceIsSilentBeforeAnyPush` (both falses — no strip, and nothing pushed),
+    `DeliverLatestGuidanceIsIdempotent` (a replay, not a consumable latch: the strip is
+    overwritten through the widget's own push and the third delivery restores the cache), and
+    `DeliverLatestGuidanceReplaysOnlyTheLatestPush` (latest, never a backlog).
+  - **DEFECT 2 — every subsystem-side reconcile cleared the strip.**
+    `SetViewingSideDoesNotClearAnActiveDirective` is the measured reproduction and the clause
+    whose absence let it ship. `RefreshPresentationDecoratesBeforeApplying`,
+    `StartMatchAppliesADecoratedModel`, `UndecoratedBuildStaysUndecorated` and
+    `RefreshFromMachineDecoratesWithNoRegistration` pin the `FStratViewDecorator` seam from both
+    ends.
+  - **Where every expectation comes from, without exception: `FStratGuidedOpening`.** A test-only
+    `FRecordingDecorator` (namespace `StratGuidanceRoute`) runs the real module-side author as
+    the registered decorator, records the block it wrote onto the model, and each clause compares
+    the STRIP against that recording through `SameGuidance` — `CompareScriptStruct` over the
+    struct's own reflection data, which is case-SENSITIVE where `TestEqual` on an `FString` in
+    this project is not. **Not one guidance field is typed out in the new section.** The recorder
+    arms LAZILY, mirroring `AStratPlayerController::TryArmGuidedOpening`, because one clause must
+    register before `StartMatch` and there is no seeded bridge to call `Begin` with until then.
+  - **What these clauses do NOT pin, and it is a real gap rather than a hedge.**
+    `AStratPlayerController::BeginPlay`'s `SetViewDecorator` call is **not covered**: a transient
+    world built with `InitializeActorsForPlay` does not begin play, so no spawned controller runs
+    `BeginPlay` and no clause here observes that line. What IS pinned is the seam it registers
+    with. The registration line itself rests solely on the PIE session of 2026-08-21. Likewise
+    `EndPlay`'s `ClearViewDecorator` is unpinned, and its own comment records that it clears by
+    POSITION and not by identity — a second controller in one world would drop the wrong binding.
+  - **Falsifiability was MEASURED, not argued, and by three mutations inside `Tests/` only.**
+    Production source is not this lane's to touch even temporarily, so the pre-fix code paths
+    were simulated in the clauses themselves: M1 removed the `DeliverLatestGuidance()` call; M2
+    and M3 replaced `SetViewingSide` / `RefreshPresentation` with `BuildViewModel` +
+    `ApplyView`, which is exactly what those two did before the fix. Result: **exactly the three
+    targeted clauses reddened and no others**, and the headline one reproduced the PIE symptom
+    verbatim — `strip: bActive=0 beat=0 directive=''` against
+    `decorator: bActive=1 beat=1 directive='Select the marked Infantry. …'`. Bytes restored and
+    proved: `git hash-object` `310f9262af8831160b018fe7452d5d29c0859fd9` before and after.
+    **[STAMPED 2026-08-22]**
+  - **Why `T-INT-05` and not the `T-UI-03` the engineer proposed.** `T-UI-03` is the no-widget-side-
+    arithmetic clause; nothing here is about arithmetic. `T-INT-05` is "rebuild the screen from
+    the view model alone", which is precisely what a HUD-side CACHE threatens — and
+    `StratGuidanceRouteClauses.cpp`'s header already files every clause about
+    `AStratScoreboardHUD::PushGuidance` under that ID. All nine live in `StratPlay` for the
+    module-boundary reason that file records: `StratPlay` is the only module that can see both
+    `UStratMatchSubsystem` and (through the `STRATUI_API` probe) the strip. Put in `StratUI`,
+    the decorator clauses would be `LNK2019`, not tests.
+  - **Two fixture limitations, measured the hard way on the first run, and worth reusing.**
+    (1) `AddExpectedMessagePlain(..., Occurrences 0)` means **at least one**, not "any number":
+    the one new clause that starts no match failed with *"Expected suppressed ('Warning') level
+    log message or higher matching 'no tile mesh for terrain' did not occur"* purely for
+    declaring the fixture warning it could never emit. (2) **`RefreshPresentation`,
+    `SetViewingSide` and `RefreshFromMachine` all return FALSE in this fixture** — the harness
+    deliberately does not dispatch the HUD's `BeginPlay`, so it holds no scoreboard widget and
+    `RefreshScoreboard` refuses as the LAST step, long after `ApplyView` has already run and
+    already pushed. Their returns are reported into the failure messages, never asserted;
+    asserting them would be asserting the presence of a scoreboard asset, which is the editor
+    lane's subject. `RefreshAndReport` in `StratGuidanceRoute` carries the reasoning.
+  - **`FRouteHarness::Arm` was split into `SpawnWorldAndActors` / `StartTheMatch` /
+    `InstallStrip`** rather than a second fixture being written, because the ORDER of those three
+    is the subject of two clauses — a strip installed before the match start receives its push
+    and one installed after does not. `Arm(bWithStrip, …)` is unchanged in effect, so the seven
+    clauses written against it drive the fixture they always drove. It gained a
+    `bStratController` switch for the one clause that needs `AStratPlayerController`.
+
 - **A helper inside my own lane had gone inert, and the fix is now itself falsifiable by
   measurement rather than by claim.** `AlterOneField` in
   `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp` (namespace `StratGuidanceRoute`) took

@@ -246,3 +246,62 @@ does not restate either.
   guided-opening lookup moved from `T-SCN-02` to `T-SCN-07` because its subject is the two authored
   `guidedOpening` fields, which `Scenario.good.cpp` refuses violations of under `T-SCN-07` and under
   no other id.)
+- **Two guided-opening DELIVERY defects, both closed on `feat/guidance-delivery` in the working tree
+  at the time of writing (the user commits, so no hash is cited here rather than a wrong one).** The
+  strip reached the screen and had never been seen to draw a directive; neither defect was in the
+  beat machine or in the projection, and no clause covered either, which is how both survived a green
+  suite. Cited by function and branch, never by line.
+  - **Defect 1 — the session's only decorated push was dropped because the strip did not exist.**
+    Measured across five fresh PIE sessions on 2026-08-21: `AStratPlayerController::BeginPlay`
+    reached `UStratMatchSubsystem::ApplyView` with a decorated model before
+    `AStratScoreboardHUD::BeginPlay` had run `CreateGuidanceWidget`, every time, so
+    `AStratScoreboardHUD::PushGuidance`'s null check discarded it and nothing reconciles again
+    without player input. **Closed by** `AStratScoreboardHUD::PushGuidance` recording every value it
+    is handed in `LastPushedGuidance` / `bGuidanceEverPushed`, and `CreateGuidanceWidget` calling the
+    new `AStratScoreboardHUD::DeliverLatestGuidance` after the strip is on screen. It asserts no
+    `BeginPlay` order in either direction: a push before the strip is replayed, a push after it takes
+    the ordinary route, and a session with no push leaves the strip on its defaults.
+  - **Defect 2 — every subsystem-side reconcile cleared the strip.** Driven and watched on
+    2026-08-21: a decorated refresh put a live directive on the widget, and `SetViewingSide` →
+    `RefreshPresentation` → undecorated `ApplyView` → `PushGuidance` left it reading
+    `bActive=False, Beat=None, DirectiveText=""` one second later. The same clearing on the first AI
+    turn (`RunAiTurnsNow` → `RefreshPresentation`) is a **strong inference and not an observation** —
+    taking a turn needs input, so it was never driven. **Closed at the build and not at the push**:
+    `ApplyView`'s "UNCONDITIONAL, WITH NO BRANCH ON `bActive`" ruling is intact and untouched, and
+    the fix is that models missing their guidance section no longer reach it.
+    `UStratMatchSubsystem::BuildViewModelForPresentation` runs a registered `FStratViewDecorator`
+    over every model this subsystem builds to draw from, and `AStratPlayerController::BeginPlay`
+    registers `AStratPlayerController::DecorateForPresentation` as that decorator.
+- **The undecorated `BuildViewModel` is still public and still has two callers that must not
+  decorate.** `UStratMatchSubsystem::IsAiTurnDue` and `RunAiTurnsNow`'s loop read `sideToMove` and
+  `bHasResult` off a model nobody draws; decorating there would run
+  `FStratGuidedOpening::Observe` — "THE ONLY THING THAT ADVANCES A BEAT" — for a question with no
+  screen behind it. The invariant to hold when editing that class is narrower than "always
+  decorate": *no model this class builds reaches `ApplyView` without passing through
+  `BuildViewModelForPresentation`.*
+- **`AStratPlayerController::RefreshFromMachine` calls `DecorateForPresentation` DIRECTLY rather than
+  going through `BuildViewModelForPresentation`, and the asymmetry is deliberate.** The registration
+  is taken in `BeginPlay`, so a controller driven before or without `BeginPlay` — which is every
+  fixture that spawns one into a world it built itself — would silently stop decorating, and this
+  path's whole purpose would come to rest on an actor lifecycle step. It cannot double-decorate:
+  `BuildViewModel` never runs the delegate and this path never calls the presentation build.
+- **`FStratViewDecorator` is single, weak, and cleared BY POSITION rather than by identity.**
+  `AStratPlayerController::EndPlay` calls `ClearViewDecorator()` unconditionally, so in a world where
+  a SECOND controller had since registered it would drop that controller's binding. No such world
+  exists this milestone — §2.11's hot seat is one controller holding two seats, and
+  `FStratGuidedOpening::Begin` takes the guided side by argument for exactly that reason.
+  **Discharged by** the day a second controller can exist: the seam grows an owner argument, or the
+  delegate an identity check, and the `EndPlay` call passes `this`.
+- **`AStratScoreboardHUD` now holds seven guidance members, not four, and one of them is a cache it
+  had explicitly declined to hold.** `DeliverLatestGuidance`, `LastPushedGuidance` and
+  `bGuidanceEverPushed` joined `GuidanceWidgetClass`, `GuidanceStrip`, `CreateGuidanceWidget` and
+  `PushGuidance`. The header's discharge condition is unchanged and the count in it is restated
+  rather than left to be recounted: when a §2.11 UI-layer owner exists, all seven move there
+  unchanged. The cache does not make this class a second thing that runs matches — it never asks for
+  guidance, touches no bridge and no view model, has one writer, and every later push overwrites it,
+  so it changes WHEN a value is delivered and never WHICH.
+- **`StratScoreboardHUD.h` now includes `StratViewModel.h`, where it forward declared
+  `FStratGuidanceView`.** `LastPushedGuidance` is held by value, so the size is needed by UHT.
+  Nothing about the constraint that governs that header is loosened: `StratBridge.h` remains
+  forbidden there, forever, and `StratViewModel.h` is this module's own reflected header with nothing
+  vendored behind it.

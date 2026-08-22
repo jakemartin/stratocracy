@@ -56,6 +56,7 @@
 #include "Tests/StratGuidanceRouteProbe.h"
 #include "StratGuidedOpening.h"
 #include "StratMatchSubsystem.h"
+#include "StratPlayerController.h"
 #include "StratScoreboardHUD.h"
 #include "StratSelectionMachine.h"
 #include "StratUnitActor.h"
@@ -195,9 +196,28 @@ namespace StratGuidanceRoute
 		UStratMatchSubsystem* Subsystem  = nullptr;
 		AStratScoreboardHUD*  Hud        = nullptr;
 		APlayerController*    Controller = nullptr;
+
+		/** Non-null only when `SpawnWorldAndActors` was asked for the game's own controller. */
+		AStratPlayerController* StratController = nullptr;
 		bool                  bHasStrip  = false;
 
-		bool Arm(bool bWithStrip, FString& OutError)
+		/**
+		 * The world, the controller and the HUD -- everything that makes a match findable, and
+		 * nothing that starts one.
+		 *
+		 * SPLIT OUT OF `Arm` RATHER THAN COPIED. The delivery clauses added at the end of this
+		 * file need the three steps in orders `Arm` does not offer, and a second fixture would
+		 * have been a second thing to keep true. THE ORDER IS ITSELF THE SUBJECT of two of them:
+		 * a strip installed BEFORE the match starts receives `StartMatchInternal`'s push, and one
+		 * installed after it does not -- which is the first delivery defect exactly.
+		 *
+		 * @param bStratController spawns `AStratPlayerController` rather than the plain engine
+		 *        one. Its `BeginPlay` still does NOT run in this world -- `InitializeActorsForPlay`
+		 *        initialises actors without beginning play -- so spawning it registers no view
+		 *        decorator, and `RefreshFromMachineDecoratesWithNoRegistration` asserts that
+		 *        through `HasViewDecorator()` rather than assuming it.
+		 */
+		bool SpawnWorldAndActors(bool bStratController, FString& OutError)
 		{
 			if (Scope.World == nullptr)
 			{
@@ -205,7 +225,15 @@ namespace StratGuidanceRoute
 				return false;
 			}
 
-			Controller = Scope.World->SpawnActor<APlayerController>();
+			if (bStratController)
+			{
+				StratController = Scope.World->SpawnActor<AStratPlayerController>();
+				Controller      = StratController;
+			}
+			else
+			{
+				Controller = Scope.World->SpawnActor<APlayerController>();
+			}
 			if (Controller == nullptr)
 			{
 				OutError = TEXT("no player controller spawned");
@@ -235,6 +263,18 @@ namespace StratGuidanceRoute
 				return false;
 			}
 
+			return true;
+		}
+
+		/** Starts the shipped scenario on the subsystem `SpawnWorldAndActors` found. */
+		bool StartTheMatch(FString& OutError)
+		{
+			if (Subsystem == nullptr)
+			{
+				OutError = TEXT("SpawnWorldAndActors has not run, so there is no subsystem to start");
+				return false;
+			}
+
 			FStratMatchConfig Config;
 			if (!MakeConfig(Config, OutError))
 			{
@@ -249,17 +289,32 @@ namespace StratGuidanceRoute
 				return false;
 			}
 
-			if (bWithStrip)
-			{
-				if (!StratTestInstallGuidanceStripDouble(Hud))
-				{
-					OutError = TEXT("the test-only concrete guidance widget did not install");
-					return false;
-				}
-				bHasStrip = true;
-			}
-
 			return true;
+		}
+
+		/** Puts the test-only concrete strip on the member `CreateGuidanceWidget` assigns. */
+		bool InstallStrip(FString& OutError)
+		{
+			if (!StratTestInstallGuidanceStripDouble(Hud))
+			{
+				OutError = TEXT("the test-only concrete guidance widget did not install");
+				return false;
+			}
+			bHasStrip = true;
+			return true;
+		}
+
+		/**
+		 * Spawn, start, then install -- the original sequence, kept identical in effect so the
+		 * seven clauses written against it are driving the fixture they always drove.
+		 */
+		bool Arm(bool bWithStrip, FString& OutError)
+		{
+			if (!SpawnWorldAndActors(/*bStratController*/ false, OutError) || !StartTheMatch(OutError))
+			{
+				return false;
+			}
+			return !bWithStrip || InstallStrip(OutError);
 		}
 
 		/**
@@ -418,6 +473,109 @@ namespace StratGuidanceRoute
 	{
 		Test.AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
 			EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+	}
+
+	// -----------------------------------------------------------------------
+	// The view-decorator seam. Everything below serves the clauses added at the
+	// end of this file, and nothing above it uses any of it.
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Sec 2.11.6's REAL author, registered as the subsystem's view decorator, recording what
+	 * it produced.
+	 *
+	 * WHERE THE EXPECTATIONS COME FROM, which is the only thing that makes the decorator
+	 * clauses worth their runtime. Not one guidance field is typed out below: this runs
+	 * `FStratGuidedOpening` -- the module-side author of every guidance field, and the same
+	 * object `AStratPlayerController` holds by value -- and records the block it wrote. A
+	 * clause then compares the STRIP against that recording through `SameGuidance`. Neither
+	 * side of that comparison is computed by the test.
+	 *
+	 * ARMED LAZILY, MIRRORING `AStratPlayerController::TryArmGuidedOpening`, and for the same
+	 * reason: one clause registers this BEFORE `StartMatch`, and until the match exists there
+	 * is no seeded bridge to call `Begin` with. Arming at registration time would have made
+	 * that clause impossible to write, and it is the clause about the ordering the second
+	 * defect lived in.
+	 *
+	 * IT IS NOT A DOUBLE AND RECORDS NOTHING THE PRODUCTION PATH DOES NOT DO. `Decorate` runs
+	 * `Observe` then `DecorateViewModel`, in that order, which is `AStratPlayerController::
+	 * DecorateForPresentation` minus the selection machine's own two bits -- those are pinned
+	 * by `T-INT-05.LockArisesFromTheGuidanceLayer` and are not this file's subject.
+	 */
+	struct FRecordingDecorator
+	{
+		UStratMatchSubsystem*  Subsystem = nullptr;
+		FStratGuidedOpening    Opening;
+		FStratSelectionMachine Machine;
+
+		/** How many times the subsystem has run this. The instrument for "did it decorate". */
+		int32 Calls = 0;
+
+		/** Whether `Begin` has taken. False forever in a world whose match never started. */
+		bool bArmed = false;
+
+		/** The guidance block this decorator LEFT ON the last model it was handed. */
+		FStratGuidanceView LastProduced;
+
+		void Decorate(FStratViewModel& Model)
+		{
+			++Calls;
+
+			if (!bArmed && Subsystem != nullptr)
+			{
+				const FStratBridge* const Bridge = Subsystem->GetBridge();
+				if (Bridge != nullptr && Bridge->IsSeeded())
+				{
+					Opening.Begin(*Bridge, Subsystem->GetViewingSide(), /*bSuppressed*/ false);
+					bArmed = true;
+				}
+			}
+
+			if (bArmed)
+			{
+				Opening.Observe(Model, Machine);
+				Opening.DecorateViewModel(Model);
+			}
+
+			// READ BACK OFF THE MODEL AFTER THE WRITE, so this is what the decorator PRODUCED
+			// and not what it was handed. When nothing armed, it is whatever the build left --
+			// which is the honest record of a decorator that had nothing to say.
+			LastProduced = Model.Guidance;
+		}
+	};
+
+	/**
+	 * Registers a fresh recorder on the harness's subsystem and hands it back.
+	 *
+	 * HELD ALIVE BY THE DELEGATE ITSELF, through a `TSharedRef` the lambda captures by value.
+	 * Production binds with `CreateUObject`, which a plain struct cannot use; capturing the
+	 * shared reference gives the same property that matters here -- the subsystem cannot call
+	 * into a recorder that has gone away -- without the recorder having to be a `UObject`.
+	 */
+	static TSharedRef<FRecordingDecorator> RegisterRecorder(FRouteHarness& H)
+	{
+		TSharedRef<FRecordingDecorator> Recorder = MakeShared<FRecordingDecorator>();
+		Recorder->Subsystem = H.Subsystem;
+		H.Subsystem->SetViewDecorator(FStratViewDecorator::CreateLambda(
+			[Recorder](FStratViewModel& Model) { Recorder->Decorate(Model); }));
+		return Recorder;
+	}
+
+	/**
+	 * `RefreshPresentation`, with its return value handed back rather than asserted on.
+	 *
+	 * IT RETURNS FALSE IN THIS FIXTURE AND THAT IS NOT A DEFECT. `FRouteHarness` deliberately
+	 * does not dispatch the HUD's `BeginPlay`, so the HUD holds no scoreboard widget and
+	 * `RefreshScoreboard` refuses -- and that refusal is the LAST step of
+	 * `RefreshPresentation`, reached after `ApplyView` has already run and already pushed. A
+	 * clause that asserted the return true would be asserting the presence of a scoreboard
+	 * asset, which is the editor lane's subject and not this file's. The reason is carried
+	 * into every failure message instead, so a refusal arriving from an EARLIER step -- a
+	 * build that did not build -- is not mistaken for this known one.
+	 */
+	static bool RefreshAndReport(FRouteHarness& H, FString& OutReason)
+	{
+		return H.Subsystem->RefreshPresentation(OutReason);
 	}
 }
 
@@ -1043,5 +1201,720 @@ bool FStratGuidanceHudForwardsEveryShapeTest::RunTest(const FString& /*Parameter
 	}
 
 	TestTrue(TEXT("a shape was offered for every field the struct declares"), ShapesOffered > 0);
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// THE TWO DELIVERY DEFECTS, measured in PIE on 2026-08-21 and fixed in the pass these clauses
+// were written for. Neither had a clause, which is why both shipped green.
+//
+// DEFECT 1 -- THE STRIP DID NOT EXIST YET. `AStratPlayerController::BeginPlay` reached
+// `ApplyView` with the session's only decorated model before `AStratScoreboardHUD::BeginPlay`
+// had created a strip; `PushGuidance`'s null check discarded it and nothing reconciled again.
+// Pinned by `StripCreatedAfterAPushStillCarriesIt` and the three clauses after it.
+//
+// DEFECT 2 -- EVERY SUBSYSTEM-SIDE RECONCILE CLEARED THE STRIP. `SetViewingSide` ->
+// `RefreshPresentation` -> undecorated `ApplyView` -> `PushGuidance(default)`. Pinned by
+// `SetViewingSideDoesNotClearAnActiveDirective` and the four clauses around it.
+//
+// WHERE THE EXPECTATIONS COME FROM, without exception below: `FStratGuidedOpening`, run as
+// the registered decorator by `FRecordingDecorator` and read back off the model it wrote. Not
+// one guidance field is typed out in this section, and every comparison is `SameGuidance` --
+// `CompareScriptStruct` over the struct's own reflection data, which is case-SENSITIVE where
+// `TestEqual` on an `FString` in this project is not.
+//
+// WHAT THIS SECTION DOES NOT PIN. It does not pin `AStratPlayerController::BeginPlay`'s
+// registration itself: `BeginPlay` is not dispatched in a transient world built this way, so
+// no clause here observes the line that calls `SetViewDecorator`. What is pinned is the seam
+// it registers with, from both ends -- that `BuildViewModelForPresentation` runs a registered
+// decorator and `BuildViewModel` does not, and that `RefreshFromMachine` decorates whether or
+// not any registration happened. The registration line itself is covered only by the PIE
+// session it was measured in, and that is stated rather than left to be assumed.
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// DEFECT 1. The production ordering: the match starts, pushes its only decorated model at a
+// HUD with no strip, and the strip appears afterwards.
+//
+// THE PUSH IS NOT SYNTHESISED. `StartTheMatch` performs it, through `StartMatchInternal` ->
+// `BuildViewModelForPresentation` -> `ApplyView` -> `PushGuidance`, with the recorder
+// registered beforehand -- the same registration order production has when a controller's
+// `BeginPlay` precedes the GameMode's. The expectation is the recorder's own output.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceStripCreatedAfterAPushTest,
+	"Stratocracy.StratPlay.T-INT-05.StripCreatedAfterAPushStillCarriesIt",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceStripCreatedAfterAPushTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+	ExpectTheUnmeshedFixtureWarning(*this);
+
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a world with a findable HUD and NO strip on it"),
+			H.SpawnWorldAndActors(/*bStratController*/ false, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	TSharedRef<FRecordingDecorator> Recorder = RegisterRecorder(H);
+
+	if (!TestTrue(TEXT("the match starts, and its own reconcile pushes at a HUD with no strip"),
+			H.StartTheMatch(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// THE SUBJECT HAS TO BE ARMED OR THE CLAUSE IS ABOUT NOTHING. If the start reconcile did
+	// not carry a live directive there is nothing for a later strip to have missed.
+	if (!TestTrue(TEXT("the start reconcile went through the registered decorator"),
+			Recorder->Calls > 0) ||
+		!TestTrue(TEXT("and that decorator produced an ACTIVE directive to be lost"),
+			Recorder->LastProduced.bActive))
+	{
+		return false;
+	}
+
+	const FStratGuidanceView Dropped = Recorder->LastProduced;
+
+	if (!TestTrue(TEXT("a strip is installed after the push"), H.InstallStrip(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// THE CONTROL, MEASURED AND NOT ARGUED. A freshly installed strip must NOT already hold
+	// the directive, or the assertion below would pass on a value that was never delivered.
+	FStratGuidanceView Held;
+	if (!TestTrue(TEXT("the new strip is readable"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+	if (!TestFalse(*FString::Printf(
+				TEXT("a strip that appeared after the push does not already carry it (strip: %s)"),
+				*Describe(Held)),
+			SameGuidance(Held, Dropped)))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("delivery reports that it had both a strip and something to deliver"),
+		H.Hud->DeliverLatestGuidance());
+
+	if (!TestTrue(TEXT("the strip is readable after delivery"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+
+	TestTrue(*FString::Printf(
+			TEXT("the strip carries the directive the match start pushed, in every field ")
+			TEXT("(pushed: %s; strip: %s)"),
+			*Describe(Dropped), *Describe(Held)),
+		SameGuidance(Held, Dropped));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// The other half of that member pair, and the reason `bGuidanceEverPushed` is a separate
+// bool: a default-constructed `FStratGuidanceView` is a REAL state, so "the cache equals the
+// default" cannot mean "nothing has been cached". This project has already paid once for
+// treating a real default as an unset marker, in `FStratMatchConfig::SaveSlotName`.
+//
+// NO MATCH IS STARTED HERE, deliberately -- starting one is what performs a push.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceDeliverIsSilentBeforeAnyPushTest,
+	"Stratocracy.StratPlay.T-INT-05.DeliverLatestGuidanceIsSilentBeforeAnyPush",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceDeliverIsSilentBeforeAnyPushTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+
+	// NO `ExpectTheUnmeshedFixtureWarning` HERE, AND THAT IS MEASURED RATHER THAN TIDIED.
+	// `AddExpectedMessagePlain` with `Occurrences 0` means AT LEAST ONE, not "any number":
+	// this clause starts no match, so no board is spawned, no terrain is meshed and the
+	// warning never fires -- and declaring it expected failed the clause with "Expected
+	// suppressed ('Warning') level log message or higher matching 'no tile mesh for terrain'
+	// did not occur." Every other clause in this file starts a match and does declare it.
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a world with a HUD that no match has ever pushed at"),
+			H.SpawnWorldAndActors(/*bStratController*/ false, Error)) ||
+		!TestTrue(TEXT("and a strip on it"), H.InstallStrip(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	FStratGuidanceView Before;
+	if (!TestTrue(TEXT("the strip is readable"), H.ReadStrip(Before)))
+	{
+		return false;
+	}
+
+	TestFalse(TEXT("delivery on a HUD nothing has pushed at reports nothing delivered"),
+		H.Hud->DeliverLatestGuidance());
+
+	FStratGuidanceView After;
+	if (!TestTrue(TEXT("the strip is still readable"), H.ReadStrip(After)))
+	{
+		return false;
+	}
+
+	// UNCHANGED, not "equal to the default". The two are the same value here and are not the
+	// same claim, and it is the first that this function owes its caller.
+	TestTrue(*FString::Printf(
+			TEXT("and it left the strip untouched in every field (before: %s; after: %s)"),
+			*Describe(Before), *Describe(After)),
+		SameGuidance(Before, After));
+
+	// THE OTHER FALSE, a different question with the same answer: no strip at all. A HUD
+	// outside the harness, so nothing has reached it either.
+	AStratScoreboardHUD* const Bare = H.Scope.World->SpawnActor<AStratScoreboardHUD>();
+	if (!TestNotNull(TEXT("a second HUD, with neither a strip nor a push"), Bare))
+	{
+		return false;
+	}
+	TestFalse(TEXT("delivery on a HUD with no strip reports nothing delivered"),
+		Bare->DeliverLatestGuidance());
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// A REPLAY, NOT A CONSUMABLE QUEUE. A one-shot latch was the rejected alternative, and this is
+// the difference it would have made observable: a second call returning false, and a strip
+// that was overwritten in between never coming back.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceDeliverIsIdempotentTest,
+	"Stratocracy.StratPlay.T-INT-05.DeliverLatestGuidanceIsIdempotent",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceDeliverIsIdempotentTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+	ExpectTheUnmeshedFixtureWarning(*this);
+
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a world with a findable HUD and no strip yet"),
+			H.SpawnWorldAndActors(/*bStratController*/ false, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	TSharedRef<FRecordingDecorator> Recorder = RegisterRecorder(H);
+	if (!TestTrue(TEXT("the match starts and pushes"), H.StartTheMatch(Error)) ||
+		!TestTrue(TEXT("the decorator produced an active directive"),
+			Recorder->LastProduced.bActive) ||
+		!TestTrue(TEXT("a strip is installed afterwards"), H.InstallStrip(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	const FStratGuidanceView Expected = Recorder->LastProduced;
+
+	FStratGuidanceView Held;
+	TestTrue(TEXT("the first delivery reports a delivery"), H.Hud->DeliverLatestGuidance());
+	TestTrue(TEXT("the second reports one too -- nothing was consumed"),
+		H.Hud->DeliverLatestGuidance());
+	if (!TestTrue(TEXT("the strip is readable"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+	TestTrue(*FString::Printf(
+			TEXT("and twice delivered is the same value as once (expected: %s; strip: %s)"),
+			*Describe(Expected), *Describe(Held)),
+		SameGuidance(Held, Expected));
+
+	// THE STRIP IS MOVED OUT FROM UNDER IT, through the widget's own push and not the HUD's,
+	// so the HUD's cache is not updated. A latch would have nothing left to restore.
+	if (!TestTrue(TEXT("something else writes the strip directly"),
+			StratTestPushAtGuidanceStripDirectly(H.Hud, FStratGuidanceView())))
+	{
+		return false;
+	}
+	if (!TestTrue(TEXT("the strip is readable"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+	if (!TestFalse(TEXT("the strip really did move off the delivered value"),
+			SameGuidance(Held, Expected)))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("a third delivery still reports a delivery"), H.Hud->DeliverLatestGuidance());
+	if (!TestTrue(TEXT("the strip is readable"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+	TestTrue(*FString::Printf(
+			TEXT("and it replays the cached value onto the strip again (expected: %s; strip: %s)"),
+			*Describe(Expected), *Describe(Held)),
+		SameGuidance(Held, Expected));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// THE LATEST, AND NEVER A BACKLOG. The cache changes WHEN a value is delivered, never WHICH
+// value -- so the strip stays a function of the last model applied and not of the sequence of
+// models applied, which is the property `ApplyView`'s unconditional push holds one level up.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceDeliverReplaysOnlyTheLatestTest,
+	"Stratocracy.StratPlay.T-INT-05.DeliverLatestGuidanceReplaysOnlyTheLatestPush",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceDeliverReplaysOnlyTheLatestTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+	ExpectTheUnmeshedFixtureWarning(*this);
+
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a live match with a findable HUD and NO strip on it"),
+			H.Arm(/*bWithStrip*/ false, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// Two genuinely different views, both authored by the module: the guided opening's own
+	// directive, and the block an undecorated rebuild leaves behind.
+	FStratViewModel Decorated;
+	FStratViewModel Rebuilt;
+	if (!TestTrue(TEXT("the decorator produces an active directive"),
+			H.BuildDecorated(Decorated, Error)) ||
+		!TestTrue(TEXT("and the subsystem rebuilds an undecorated one"),
+			H.BuildUndecorated(Rebuilt, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	if (!TestFalse(TEXT("the two views this clause turns on are distinguishable"),
+			SameGuidance(Decorated.Guidance, Rebuilt.Guidance)))
+	{
+		return false;
+	}
+
+	// Both dropped: there is no strip to receive either.
+	H.Hud->PushGuidance(Decorated.Guidance);
+	H.Hud->PushGuidance(Rebuilt.Guidance);
+
+	if (!TestTrue(TEXT("a strip is installed after both"), H.InstallStrip(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	TestTrue(TEXT("delivery reports a delivery"), H.Hud->DeliverLatestGuidance());
+
+	FStratGuidanceView Held;
+	if (!TestTrue(TEXT("the strip is readable"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+	TestTrue(*FString::Printf(
+			TEXT("the strip carries the LAST push in every field (last: %s; strip: %s)"),
+			*Describe(Rebuilt.Guidance), *Describe(Held)),
+		SameGuidance(Held, Rebuilt.Guidance));
+	TestFalse(*FString::Printf(
+			TEXT("and not the earlier one -- this is not a queue being drained (earlier: %s)"),
+			*Describe(Decorated.Guidance)),
+		SameGuidance(Held, Decorated.Guidance));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// DEFECT 2, THE SEAM ITSELF. `BuildViewModelForPresentation` runs a registered decorator and
+// `BuildViewModel` does not -- a deliberate carve-out rather than an oversight: `IsAiTurnDue`
+// and `RunAiTurnsNow`'s loop read models nobody draws, and decorating there would run
+// `FStratGuidedOpening::Observe` -- the only thing that advances a beat -- for a question with
+// no screen behind it.
+//
+// BOTH DIRECTIONS IN ONE CLAUSE ON PURPOSE. Split apart, each half is satisfiable by a
+// decorator that never runs at all, and the pair is what makes either meaningful.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceUndecoratedBuildStaysUndecoratedTest,
+	"Stratocracy.StratPlay.T-INT-05.UndecoratedBuildStaysUndecorated",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceUndecoratedBuildStaysUndecoratedTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+	ExpectTheUnmeshedFixtureWarning(*this);
+
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a live match with a findable HUD and a strip on it"),
+			H.Arm(/*bWithStrip*/ true, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	TSharedRef<FRecordingDecorator> Recorder = RegisterRecorder(H);
+	TestTrue(TEXT("the subsystem reports a decorator registered"),
+		H.Subsystem->HasViewDecorator());
+
+	const int32 CallsAtRegistration = Recorder->Calls;
+
+	FStratViewModel Plain;
+	if (!TestTrue(TEXT("BuildViewModel builds"), H.Subsystem->BuildViewModel(Plain, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	TestEqual(TEXT("BuildViewModel does NOT run the registered decorator"),
+		Recorder->Calls, CallsAtRegistration);
+	TestFalse(TEXT("so the model it produced carries no active directive"),
+		Plain.Guidance.bActive);
+
+	FStratViewModel Presented;
+	if (!TestTrue(TEXT("BuildViewModelForPresentation builds"),
+			H.Subsystem->BuildViewModelForPresentation(Presented, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	TestEqual(TEXT("BuildViewModelForPresentation runs it exactly once"),
+		Recorder->Calls, CallsAtRegistration + 1);
+	TestTrue(TEXT("and the model it produced carries the decorator's active directive"),
+		Presented.Guidance.bActive);
+	TestTrue(*FString::Printf(
+			TEXT("in every field the decorator wrote (decorator: %s; model: %s)"),
+			*Describe(Recorder->LastProduced), *Describe(Presented.Guidance)),
+		SameGuidance(Presented.Guidance, Recorder->LastProduced));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// `RefreshPresentation` decorates, and does it BEFORE applying -- which is what the strip
+// holding the DECORATED block, rather than the built one, is evidence of. A decoration run
+// after `ApplyView` would leave the strip carrying the undecorated model and this clause red.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceRefreshPresentationDecoratesTest,
+	"Stratocracy.StratPlay.T-INT-05.RefreshPresentationDecoratesBeforeApplying",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceRefreshPresentationDecoratesTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+	ExpectTheUnmeshedFixtureWarning(*this);
+
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a live match with a findable HUD and a strip on it"),
+			H.Arm(/*bWithStrip*/ true, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// CLEARED FIRST, so "the strip is active" afterwards cannot be satisfied by a value the
+	// start reconcile happened to leave there.
+	H.Hud->PushGuidance(FStratGuidanceView());
+
+	TSharedRef<FRecordingDecorator> Recorder = RegisterRecorder(H);
+	const int32 CallsAtRegistration = Recorder->Calls;
+
+	FString RefreshReason;
+	const bool bRefreshed = RefreshAndReport(H, RefreshReason);
+
+	TestEqual(*FString::Printf(
+			TEXT("RefreshPresentation ran the registered decorator once (it returned %s: '%s')"),
+			bRefreshed ? TEXT("true") : TEXT("false"), *RefreshReason),
+		Recorder->Calls, CallsAtRegistration + 1);
+
+	if (!TestTrue(TEXT("and the decorator had an active directive to contribute"),
+			Recorder->LastProduced.bActive))
+	{
+		return false;
+	}
+
+	FStratGuidanceView Held;
+	if (!TestTrue(TEXT("the strip is readable"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+	TestTrue(*FString::Printf(
+			TEXT("the strip carries the DECORATED block, so the decoration preceded the apply ")
+			TEXT("(decorator: %s; strip: %s)"),
+			*Describe(Recorder->LastProduced), *Describe(Held)),
+		SameGuidance(Held, Recorder->LastProduced));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// THE MEASURED REPRODUCTION, and the clause whose absence let the defect ship. Driven and
+// watched in PIE on 2026-08-21: a decorated refresh put a live directive on Sec 2.11.6's
+// strip, and the very next `SetViewingSide` left the widget reading `bActive=False,
+// Beat=None, DirectiveText=""` one second later.
+//
+// THE HAND-OVER IS TO THE SAME SIDE FIRST, and that is not a weakening. `SetViewingSide` calls
+// `RefreshPresentation` unconditionally, so a same-side call exercises the exact path the
+// defect lived on while holding the MODEL still -- which lets the assertion be "the directive
+// is STILL ACTIVE and still equals what the decorator produced" rather than the weaker
+// "whatever it produced arrived". The other seat is then driven too, without the activity
+// assertion, because whether the guided seat's beats survive the viewing side moving is a
+// Sec 2.11.6 question this clause has no business answering.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceSetViewingSideKeepsDirectiveTest,
+	"Stratocracy.StratPlay.T-INT-05.SetViewingSideDoesNotClearAnActiveDirective",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceSetViewingSideKeepsDirectiveTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+	ExpectTheUnmeshedFixtureWarning(*this);
+
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a live match with a findable HUD and a strip on it"),
+			H.Arm(/*bWithStrip*/ true, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	TSharedRef<FRecordingDecorator> Recorder = RegisterRecorder(H);
+
+	// The live directive is put on the strip the way the player would see it arrive.
+	FString RefreshReason;
+	const bool bRefreshed = RefreshAndReport(H, RefreshReason);
+
+	FStratGuidanceView Held;
+	if (!TestTrue(*FString::Printf(
+				TEXT("the decorator put an active directive on the model first (refresh ")
+				TEXT("returned %s: '%s')"),
+				bRefreshed ? TEXT("true") : TEXT("false"), *RefreshReason),
+			Recorder->LastProduced.bActive) ||
+		!TestTrue(TEXT("the strip is readable"), H.ReadStrip(Held)) ||
+		!TestTrue(*FString::Printf(
+				TEXT("and it reached the strip before it is asked to survive (strip: %s)"),
+				*Describe(Held)),
+			SameGuidance(Held, Recorder->LastProduced)))
+	{
+		return false;
+	}
+
+	// ---- The hand-over that used to wipe it -------------------------------
+	const int32 CallsBefore = Recorder->Calls;
+	const int32 CurrentSide = H.Subsystem->GetViewingSide();
+
+	FString    SideReason;
+	const bool bSameSide = H.Subsystem->SetViewingSide(CurrentSide, SideReason);
+
+	TestTrue(*FString::Printf(
+			TEXT("the hand-over's own reconcile went through the decorator (SetViewingSide ")
+			TEXT("returned %s: '%s')"),
+			bSameSide ? TEXT("true") : TEXT("false"), *SideReason),
+		Recorder->Calls > CallsBefore);
+
+	TestTrue(TEXT("the directive the decorator produces is still an active one"),
+		Recorder->LastProduced.bActive);
+
+	if (!TestTrue(TEXT("the strip is readable after the hand-over"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+
+	TestTrue(TEXT("and the strip is STILL ACTIVE -- the reconcile did not clear it"),
+		Held.bActive);
+	TestTrue(*FString::Printf(
+			TEXT("carrying the decorator's block in every field (decorator: %s; strip: %s)"),
+			*Describe(Recorder->LastProduced), *Describe(Held)),
+		SameGuidance(Held, Recorder->LastProduced));
+
+	// ---- And the real hot-seat move, to the other seat --------------------
+	const int32 CallsBeforeSwap = Recorder->Calls;
+	FString     SwapReason;
+	const bool  bSwapped = H.Subsystem->SetViewingSide(1 - CurrentSide, SwapReason);
+
+	TestTrue(*FString::Printf(
+			TEXT("a hand-over to the other seat also reconciles through the decorator ")
+			TEXT("(SetViewingSide returned %s: '%s')"),
+			bSwapped ? TEXT("true") : TEXT("false"), *SwapReason),
+		Recorder->Calls > CallsBeforeSwap);
+
+	if (!TestTrue(TEXT("the strip is readable after the swap"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+	TestTrue(*FString::Printf(
+			TEXT("and the strip agrees with what the decorator produced for THAT model, ")
+			TEXT("whatever it says (decorator: %s; strip: %s)"),
+			*Describe(Recorder->LastProduced), *Describe(Held)),
+		SameGuidance(Held, Recorder->LastProduced));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// `StartMatchInternal`'s own first reconciliation, the other subsystem-side build that used to
+// apply an undecorated model. The strip is installed BEFORE the match starts here, so the push
+// lands directly and nothing about `DeliverLatestGuidance` is involved -- this clause is about
+// the MODEL, and `StripCreatedAfterAPushStillCarriesIt` is about the DELIVERY.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceStartMatchAppliesDecoratedTest,
+	"Stratocracy.StratPlay.T-INT-05.StartMatchAppliesADecoratedModel",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceStartMatchAppliesDecoratedTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+	ExpectTheUnmeshedFixtureWarning(*this);
+
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a world with a findable HUD"),
+			H.SpawnWorldAndActors(/*bStratController*/ false, Error)) ||
+		!TestTrue(TEXT("and a strip on it BEFORE any match exists"), H.InstallStrip(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	TSharedRef<FRecordingDecorator> Recorder = RegisterRecorder(H);
+
+	// The control: a strip that has been handed nothing is not already showing a directive.
+	FStratGuidanceView Held;
+	if (!TestTrue(TEXT("the strip is readable before the match"), H.ReadStrip(Held)) ||
+		!TestFalse(TEXT("and holds no active directive yet"), Held.bActive))
+	{
+		return false;
+	}
+
+	if (!TestTrue(TEXT("the match starts"), H.StartTheMatch(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	TestTrue(TEXT("StartMatch's own reconcile went through the registered decorator"),
+		Recorder->Calls > 0);
+	if (!TestTrue(TEXT("and that decorator had an active directive to contribute"),
+			Recorder->LastProduced.bActive))
+	{
+		return false;
+	}
+
+	if (!TestTrue(TEXT("the strip is readable after the match starts"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+	TestTrue(TEXT("the strip is active straight out of StartMatch"), Held.bActive);
+	TestTrue(*FString::Printf(
+			TEXT("carrying the decorator's block in every field (decorator: %s; strip: %s)"),
+			*Describe(Recorder->LastProduced), *Describe(Held)),
+		SameGuidance(Held, Recorder->LastProduced));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// THE DELIBERATE ASYMMETRY, flagged by the engineer as the thing a future "simplification"
+// would remove. `AStratPlayerController::RefreshFromMachine` calls `DecorateForPresentation`
+// DIRECTLY rather than going through `BuildViewModelForPresentation`, so it decorates because
+// it is that controller and not because a registration happened to be in place. Routed the
+// tidier-looking way, a controller driven before or without `BeginPlay` -- which is every
+// fixture that spawns one into a world it built itself, including this one -- would silently
+// stop decorating.
+//
+// THE PREMISE IS MEASURED AND NOT ASSUMED: `HasViewDecorator()` is asserted false first, so a
+// day when spawning a controller DOES register one turns this clause red rather than letting
+// it quietly start proving the opposite thing.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceRefreshFromMachineNeedsNoRegistrationTest,
+	"Stratocracy.StratPlay.T-INT-05.RefreshFromMachineDecoratesWithNoRegistration",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceRefreshFromMachineNeedsNoRegistrationTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+	ExpectTheUnmeshedFixtureWarning(*this);
+
+	FRouteHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("a world holding the game's own controller"),
+			H.SpawnWorldAndActors(/*bStratController*/ true, Error)) ||
+		!TestTrue(TEXT("a live match"), H.StartTheMatch(Error)) ||
+		!TestTrue(TEXT("and a strip to observe"), H.InstallStrip(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	if (!TestNotNull(TEXT("the controller spawned"), H.StratController))
+	{
+		return false;
+	}
+
+	// THE PREMISE. `BeginPlay` is not dispatched in this world, so its registration line never
+	// ran and there is nothing bound.
+	if (!TestFalse(TEXT("nothing is registered as the subsystem's view decorator"),
+			H.Subsystem->HasViewDecorator()))
+	{
+		return false;
+	}
+
+	// Cleared first, so an active strip afterwards cannot be the start reconcile's leftovers.
+	H.Hud->PushGuidance(FStratGuidanceView());
+
+	// THE RETURN IS REPORTED AND NOT ASSERTED, for the reason `RefreshAndReport` records at
+	// length: this fixture's HUD holds no scoreboard widget, so the LAST step of a refresh
+	// refuses -- measured, "scoreboard refresh refused: there is no scoreboard widget to
+	// refresh" -- long after `ApplyView` has already run and already pushed. Asserting the
+	// return would be asserting the presence of a scoreboard asset, which belongs to another
+	// lane. The reason travels into the message below so a refusal from an EARLIER step is
+	// not mistaken for this known one.
+	FString    RefreshReason;
+	const bool bRefreshed = H.StratController->RefreshFromMachine(RefreshReason);
+
+	FStratGuidanceView Held;
+	if (!TestTrue(TEXT("the strip is readable"), H.ReadStrip(Held)))
+	{
+		return false;
+	}
+
+	TestTrue(*FString::Printf(
+			TEXT("the controller's own refresh decorated with nobody registered (it returned ")
+			TEXT("%s: '%s')"),
+			bRefreshed ? TEXT("true") : TEXT("false"), *RefreshReason),
+		Held.bActive);
+
+	// The expectation is a SECOND run of the module-side author over the same board, built the
+	// way `FRouteHarness::BuildDecorated` builds it. Nothing here types a field.
+	FStratViewModel Expected;
+	if (!TestTrue(TEXT("the module authors a directive for this board independently"),
+			H.BuildDecorated(Expected, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	TestTrue(*FString::Printf(
+			TEXT("and the block the controller wrote matches the module's own, field for field ")
+			TEXT("(module: %s; strip: %s)"),
+			*Describe(Expected.Guidance), *Describe(Held)),
+		SameGuidance(Held, Expected.Guidance));
+
 	return true;
 }

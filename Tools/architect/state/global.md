@@ -11,9 +11,48 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-22 (BOTH DELIVERY DEFECTS ARE FIXED AND PINNED, AND THE STRIP HAS STILL NOT BEEN
+SEEN TO DRAW A DIRECTIVE. Both halves are load-bearing: the two mechanisms that kept it blank are
+closed in C++ and held by clauses, and NOBODY HAS WATCHED A DIRECTIVE APPEAR ON SCREEN since.
+**Sec 2.11.6-B IS NOT CLOSED AND IS NOT CLAIMED HERE.** What closes it is a human-driven playtest,
+or the next coordinator PIE session repeating the console measurements with the fix in the tree.
+THE SUITE **IS NOW 160/160**, 151 -> 160 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
+walked over `Source/` -- +9, none removed, column-0 anchored, re-derived independently by the gate
+and again in the merged tree -- zero non-Success, `notRun` 0, 160 entries, all `Success`. The run is
+THIS tree's own: build `Result: Succeeded`, `REAL_EXIT=0` with the editor closed, report
+`reportCreatedOn 2026.08.22-04.54.16`, and all nine new clauses present in it by name.
+`Saved/SaveGames/` held ZERO files either side and the directory mtime MOVED, 22:46:55 -> 00:54:16,
+so the control is discharged on this tree again rather than borrowed.
+WHAT THE TWO FIXES ARE. Defect 2 is fixed AT THE BUILD, NOT AT THE PUSH: `ApplyView`'s
+unconditional-push ruling is untouched and `BuildViewModelForPresentation` -- `BuildViewModel` plus
+one `ExecuteIfBound` on a new plain, single-cast, weak, unreflected `FStratViewDecorator` -- now
+completes every model the subsystem builds for the screen, so a model missing its guidance section
+no longer exists rather than being tolerated at the last moment. `BuildViewModel` stays undecorated
+on purpose, because the AI loop reads models nobody draws and decorating there would advance a beat
+for a question with no screen behind it. Defect 1 is fixed WITHOUT ASSERTING ANY `BeginPlay` ORDER:
+the HUD records every value it is handed and replays it from `CreateGuidanceWidget` once the strip
+is in the viewport.
+A RECORDED RULING WAS INTERPRETED RATHER THAN FOLLOWED, DELIBERATELY AND IN THE OPEN.
+`CreateGuidanceWidget` said the strip CANNOT be pushed to at creation because the HUD "has no way to
+ask for that without becoming a second thing that runs matches". That forbids a PULL, and a cache of
+what you were handed is not one -- it never asks, has one writer, and every later push overwrites
+it, so it changes WHEN a value is delivered and never WHICH. The argument is written into the header
+rather than assumed, the sentence that was actually wrong is retracted in place, and the gate judged
+the reading correct rather than a weakening. If a later Director disagrees, the alternative is a
+HUD-readiness delegate with a check-then-subscribe idiom, and it is strictly more machinery.
+GATES: `VERDICT: PASS` with zero findings on the branch in slot-1 -- twelve standing checks plus
+eight directed ones, including that no `.Build.cs` is in the diff at all, so `StratPlay` gained no
+`UMG`/`Slate`/`SlateCore` -- and a re-gate on this merged tree afterwards.
+WHAT THE EVIDENCE STILL DOES NOT REACH, stated because the last four entries were each corrected for
+reaching too far: the controller's `BeginPlay` registration and `EndPlay` release are NOT pinned by
+any clause, because a transient world never begins play, so that one line still rests on the PIE
+session of 2026-08-21; and the first-AI-turn clearing was never observed, only inferred from the
+call graph. Both are recorded in `tests.md` and `engine.md` by their own authors.)
+
 _Last run 2026-08-21 (THREE CLAUSES LANDED AND THE STRIP WAS SEEN TO DRAW BLANK. Two separate
 things in one merge, and neither is the other's evidence.
-THE SUITE **IS NOW 151/151**, 148 -> 151 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
+THE SUITE **WAS 151/151** at that pass, 148 -> 151 by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST`
 walked over `Source/` -- +3, none removed, column-0 anchored, re-derived independently by the gate
 in the merged tree (SIMPLE 151, COMPLEX/_CLASS 0) and never incremented from a brief -- zero
 non-Success, `notRun` 0, 151 entries, `Counter({'Success': 151})`. Build `Result: Succeeded`,
@@ -568,6 +607,37 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-22, COORDINATOR, MEASURED WHILE WRITING THIS PASS'S BANNER -- `strat_banner_sweep.py`
+  CAN BE MADE TO SKIP THE BANNER'S LIVE COUNT ENTIRELY BY AN ORDINARY ENGLISH WORD, AND IT PASSES
+  CLEAN WHEN IT DOES. Steward's lane; this is a guard going inert on its own subject.** The first
+  draft of the banner above ended a sentence with "repeating the console reads with the fix in the
+  tree" immediately before `THE SUITE **IS NOW 160/160**`. The sweep then reported
+  `suite claims found: 18 (0 live, 18 stamped)` and `SWEEP CLEAN`, exit 0 -- with a banner asserting
+  a suite count that no check had compared to anything.
+  - **The mechanism, read out of the script rather than guessed.** `_QUOTED_FIGURE_RE` matches
+    `said|says|saying|read |reads |reading|claim|shape|editing|planting|planted|wrongly|stale|
+    defect|would have|reported` anywhere in the **120 characters before** a figure, and a match
+    makes the loop `continue` -- the claim is not merely called stamped, it is never collected. The
+    exclusion exists for a good reason (an honest account of a past miscount must be able to write
+    the wrong number down) but it is far broader than that purpose: `reads`, `claim`, `shape` and
+    `defect` are words this record uses constantly, and any of them within 120 characters upstream
+    silences the live figure.
+  - **The compounding half, and the reason this is worth a phase rather than a note: ZERO LIVE
+    CLAIMS IS NOT AN ERROR TO THIS SCRIPT.** `global.md` is the only file permitted a live suite
+    count, and a run in which it has none means either the banner is missing its figure or the
+    figure was swallowed. Either way nothing was checked, and the script says `SWEEP CLEAN`.
+  - **Rewording proved it, both directions.** With "reads" in that sentence: 18 claims, 0 live,
+    exit 0. With the single word changed to "measurements" and nothing else touched: 19 claims,
+    1 live, `global.md:19 LIVE 160/160`, exit 0. The banner in this commit is the second version.
+  - **Two repairs, and the second is the one that matters.** (1) Do not let the quoted-figure
+    exclusion outrank an explicit live tense -- `is now` immediately before the figure is a
+    deliberate assertion and should beat a stray `reads` 100 characters upstream. (2) **Refuse a
+    sweep of `global.md` that finds no live suite claim at all**, the same way the pre-sliced
+    corpus guard was made to refuse a zero-event corpus rather than pass it. A guard that cannot
+    find its subject must say so, not report clean.
+  - Owner: `strat-data-steward` (`Tools/architect/` is its lane). Found by the coordinator while
+    writing a banner, not by the guard's own self-tests.
 
 - **2026-08-21, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE THREE t+0 BRANCHES ARE
   SEPARATED, AND TWO OF THEM ARE REAL.** Branch 1 is eliminated by an artifact already in the log,

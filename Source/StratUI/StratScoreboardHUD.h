@@ -136,9 +136,9 @@
 // A DEBT TAKEN ON KNOWINGLY: THIS CLASS NOW HOSTS A SURFACE ITS NAME DOES NOT COVER.
 //
 // It also creates and owns GDD Sec 2.11.6's guided-opening strip -- `GuidanceWidgetClass`,
-// `GuidanceStrip`, `CreateGuidanceWidget` and `PushGuidance` below. That is a second
-// surface on a class called `AStratScoreboardHUD`, and the name is now narrower than the
-// job.
+// `GuidanceStrip`, `CreateGuidanceWidget`, `PushGuidance`, `DeliverLatestGuidance`,
+// `LastPushedGuidance` and `bGuidanceEverPushed` below. That is a second surface on a class
+// called `AStratScoreboardHUD`, and the name is now narrower than the job.
 //
 // WHY IT IS HERE ANYWAY, and the alternative that was measured against.
 // The only other candidate owner was `UStratMatchSubsystem`, which is where the push
@@ -157,13 +157,41 @@
 //
 // THE CONDITION THAT DISCHARGES IT, stated so it is a debt and not a design: when a
 // Sec 2.11 UI-layer owner exists -- an `AStratHudBase` that both panels hang off, or a UI
-// subsystem that owns viewport widgets -- the four guidance members move there UNCHANGED
-// and this class goes back to being about the scoreboard. `PushGuidance` was given a
-// signature that survives that move: it takes a reflected struct by const reference and
-// touches no member of this class other than the widget pointer, so relocating it is a
-// cut and paste plus one call-site edit in `UStratMatchSubsystem::ApplyView`. This is the
-// same shape as the bridge-ownership debt recorded above, and it is written down here for
-// the same reason: a debt nobody wrote down is indistinguishable from a decision.
+// subsystem that owns viewport widgets -- the SEVEN guidance members move there UNCHANGED
+// and this class goes back to being about the scoreboard. (Four when that sentence was
+// written; `DeliverLatestGuidance`, `LastPushedGuidance` and `bGuidanceEverPushed` joined
+// them, and the count is restated rather than left to be recounted by whoever performs the
+// move.) `PushGuidance` was given a signature that survives that move: it takes a reflected
+// struct by const reference and touches no member of this class other than the guidance
+// ones, so relocating it is a cut and paste plus one call-site edit in
+// `UStratMatchSubsystem::ApplyView`. This is the same shape as the bridge-ownership debt
+// recorded above, and it is written down here for the same reason: a debt nobody wrote down
+// is indistinguishable from a decision.
+//
+// AND ONE OF THOSE SEVEN IS A CACHE, WHICH THIS CLASS HAD DECLINED TO HOLD. Recorded here
+// because the refusal was explicit and the reversal must be too. `CreateGuidanceWidget` used
+// to end:
+// RETRACTED> "The strip draws its own defaults until the first `ApplyView`."
+// That sentence assumed a LATER `ApplyView`, and in five fresh PIE sessions on 2026-08-21
+// there was not one: `AStratPlayerController::BeginPlay` reached `ApplyView` with the only
+// decorated model of the session before this class's `BeginPlay` had created a strip to
+// receive it, every time, and nothing reconciles again without player input. So
+// `PushGuidance`'s null check dropped the session's only directive and the strip was never
+// seen to draw.
+//
+// WHAT IS CACHED AND WHAT IS STILL REFUSED. `LastPushedGuidance` holds the last value this
+// class WAS HANDED, and `DeliverLatestGuidance` gives it to a strip that appeared after it
+// arrived. That is not the refusal the header block above states: this class still never
+// ASKS for guidance, still touches no bridge and no view model, and still cannot become a
+// second thing that runs matches -- the cache has exactly one writer, `PushGuidance`, and
+// its content is decided entirely elsewhere. It is the same act `ApplyView` performs for a
+// unit actor it has just spawned: a surface that appears mid-flight is brought up to the
+// latest model rather than left blank until something else happens to move.
+//
+// IT IS NOT A SECOND SOURCE OF TRUTH AND CANNOT DRIFT INTO ONE. Every subsequent push
+// overwrites it, so the strip's contents remain a function of the LAST model applied, which
+// is the property `UStratMatchSubsystem::ApplyView`'s unconditional push exists to hold. The
+// cache changes WHEN a value is delivered, never WHICH value.
 //
 // WHAT THE TWO SURFACES DO NOT SHARE, deliberately. The scoreboard builds its own model
 // FROM THE BRIDGE; the strip is HANDED a value that came from the view model. They have
@@ -176,6 +204,13 @@
 #include "Templates/SubclassOf.h"
 #include "Templates/PimplPtr.h"
 
+// A REAL INCLUDE, WHERE A FORWARD DECLARATION USED TO DO. `LastPushedGuidance` is held BY
+// VALUE, so this file now needs `FStratGuidanceView`'s size and UHT needs it too. Nothing
+// about the constraint that governs this header is loosened by it: `StratViewModel.h` is
+// this module's own reflected header and includes nothing vendored, which is exactly what
+// `StratBridge.h` -- still forbidden here, and forever -- is not.
+#include "StratViewModel.h"
+
 #include "StratScoreboardHUD.generated.h"
 
 // Forward declarations only. See the header block above for why the first of these may
@@ -185,10 +220,14 @@ class UDataTable;
 class UStratGuidanceWidget;
 class UStratScoreboardWidget;
 
-// A reflected struct, forward declared because it appears only in a NON-reflected
-// signature (`PushGuidance`). UHT never has to size it here, and this file stays free of
-// an include it would otherwise carry only to pass a value straight through.
-struct FStratGuidanceView;
+// `FStratGuidanceView` used to be forward declared here, and the reason is retracted in
+// place rather than deleted because it was correct for as long as it held:
+// RETRACTED> "A reflected struct, forward declared because it appears only in a
+// RETRACTED>  NON-reflected signature (`PushGuidance`). UHT never has to size it here, and
+// RETRACTED>  this file stays free of an include it would otherwise carry only to pass a
+// RETRACTED>  value straight through."
+// It no longer passes straight through: `LastPushedGuidance` holds one. See the include
+// above.
 
 /**
  * Owns a live `FStratBridge`, seeds it from the shipped scenario, and puts §2.11.4's
@@ -399,11 +438,72 @@ public:
 	 */
 	void PushGuidance(const FStratGuidanceView& InGuidance);
 
+	/**
+	 * Brings the strip up to the last value `PushGuidance` was handed.
+	 *
+	 * WHAT GAP THIS CLOSES, AND IT IS THE HALF OF THE GUIDANCE PATH THE PUSH COULD NOT REACH.
+	 * `PushGuidance` drops a value when there is no strip, and at match start there is not
+	 * one yet: measured in five fresh PIE sessions on 2026-08-21, `AStratPlayerController::
+	 * BeginPlay` reached `UStratMatchSubsystem::ApplyView` with the session's only decorated
+	 * model BEFORE this HUD's `BeginPlay` had run at all, every time. Nothing reconciles again
+	 * until the player gives input, so the first directive was never seen. This function is
+	 * how a strip created after a push still ends up carrying it.
+	 *
+	 * NOT A CATCH-UP QUEUE. It replays the LATEST value and never a backlog, which is what
+	 * keeps the strip a function of the last model applied rather than of the sequence of
+	 * models applied -- the same property `UStratMatchSubsystem::ApplyView`'s unconditional
+	 * push holds one level up.
+	 *
+	 * IDEMPOTENT, AND THAT IS WHY IT CLEARS NO FLAG. Calling it twice delivers the same value
+	 * twice, and `UStratGuidanceWidget::PushGuidance` assigns unconditionally, so the second
+	 * call changes nothing on screen. A one-shot latch was the alternative and was rejected:
+	 * it would make this an event that can be consumed, and "has the pending push been taken"
+	 * is exactly the history-shaped question this project keeps out of its presentation path.
+	 *
+	 * @return true when a value was delivered -- there is a strip AND something has been
+	 *         pushed. False distinguishes "no strip" and "nothing pushed yet" from "delivered
+	 *         an inactive view", which a caller cannot tell apart from the strip's contents
+	 *         because a default-constructed `FStratGuidanceView` is a real, meaningful state.
+	 */
+	bool DeliverLatestGuidance();
+
 	/** The guided-opening strip, or null when none was configured or setup refused.
 	 *  Read-only for the same reason `Scoreboard` is: this HUD creates and owns it, and a
 	 *  second creator is a second lifetime to reason about. */
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Guidance")
 	TObjectPtr<UStratGuidanceWidget> GuidanceStrip;
+
+	/**
+	 * The last value `PushGuidance` was handed, whether or not a strip existed to receive it.
+	 *
+	 * ONE WRITER, `PushGuidance`, AND ONE READER, `DeliverLatestGuidance`. Nothing else in
+	 * this class consults it and nothing branches on it -- in particular `PushGuidance` does
+	 * NOT compare against it to skip a forward, which would reintroduce the delta-shaped
+	 * thinking `UStratMatchSubsystem::ApplyView` refuses at the other end of the same call.
+	 *
+	 * NOT A `UPROPERTY`, and deliberately not `BlueprintReadOnly`. `FStratGuidanceView` holds
+	 * no object references, so there is nothing here for the garbage collector to keep alive;
+	 * and publishing it would give a Widget Blueprint a SECOND place to read guidance from,
+	 * one whose freshness depends on when it asked. `UStratGuidanceWidget::Guidance` is the
+	 * one a WBP binds to and this is not a rival for it.
+	 */
+	FStratGuidanceView LastPushedGuidance;
+
+	/**
+	 * Whether `PushGuidance` has ever run. NOT whether guidance is active.
+	 *
+	 * A SEPARATE BOOL BECAUSE THE VALUE CANNOT SIGNAL ITS OWN ABSENCE. A default-constructed
+	 * `FStratGuidanceView` is a REAL state -- `FStratGuidanceView`'s own block records three
+	 * distinct causes of `bActive` false that the strip is not allowed to tell apart -- so
+	 * "the cache equals the default" cannot mean "nothing has been cached". Without this,
+	 * `DeliverLatestGuidance` on a fresh HUD would fire `OnGuidanceRefreshed` at a Blueprint
+	 * to announce a refresh that never happened. This project has already paid once for
+	 * treating a real default as an unset marker, in `FStratMatchConfig::SaveSlotName`.
+	 *
+	 * IT NEVER GOES BACK TO FALSE. There is no un-push, and clearing it on delivery would
+	 * turn the cache into a queue -- see `DeliverLatestGuidance` on why it is not one.
+	 */
+	bool bGuidanceEverPushed = false;
 
 	/**
 	 * Why there is no scoreboard, when there is none. Empty on success.

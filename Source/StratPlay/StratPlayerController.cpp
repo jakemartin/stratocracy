@@ -100,6 +100,30 @@ void AStratPlayerController::BeginPlay()
 			*GetName());
 	}
 
+	// THE VIEW-DECORATOR SEAM, TAKEN BEFORE THE FIRST REFRESH BELOW. From here on, every
+	// model this world draws from -- this controller's refreshes, the subsystem's own
+	// `RefreshPresentation`, and `StartMatchInternal`'s first reconciliation -- passes
+	// through `DecorateForPresentation` on its way to `ApplyView`. See `FStratViewDecorator`
+	// for the defect this closes and for why the binding is single, weak and unreflected.
+	//
+	// NO ORDER IS ASSUMED. The subsystem exists with the world, so this binding lands whether
+	// or not the GameMode has started the match; if the match started first, its
+	// reconciliation ran undecorated and the refresh below immediately applies a decorated
+	// model over it.
+	if (UStratMatchSubsystem* const Match = GetMatch())
+	{
+		Match->SetViewDecorator(
+			FStratViewDecorator::CreateUObject(this, &AStratPlayerController::DecorateForPresentation));
+	}
+	else
+	{
+		// A world with no match subsystem draws no match at all, which `RefreshFromMachine`
+		// reports below in its own words. Said at Verbose here for the same reason that
+		// refusal is: it is the ordinary state of a world this game is not running in.
+		UE_LOG(LogStratPlay, Verbose,
+			TEXT("%s found no UStratMatchSubsystem to register a view decorator with."), *GetName());
+	}
+
 	// THE FIRST FRAME'S OVERLAYS. Nothing is selected, so both come back empty and the
 	// board's two overlay components clear -- which is the correct screen and not a no-op:
 	// `AStratBoardActor` spawns with whatever instance counts its Blueprint default left.
@@ -116,6 +140,26 @@ void AStratPlayerController::BeginPlay()
 			TEXT("%s could not paint an initial screen (this is ordinary before the match starts): %s"),
 			*GetName(), *RefreshReason);
 	}
+}
+
+void AStratPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	// GIVEN BACK WHERE IT WAS TAKEN. Unconditional and not guarded by "did I bind", because
+	// `ClearViewDecorator` is safe with nothing bound.
+	//
+	// IT CLEARS BY POSITION AND NOT BY IDENTITY, and the limitation is written down rather
+	// than argued away: in a world where a SECOND controller had since registered, this would
+	// drop that controller's binding instead of its own. There is no such world in this
+	// milestone -- Sec 2.11's hot seat is one controller holding two seats, and
+	// `FStratViewDecorator` records that as the reason the seam is single rather than
+	// multicast. What discharges it is the day a second controller can exist: the seam grows
+	// an owner argument, or the delegate grows an identity check, and this call passes `this`.
+	if (UStratMatchSubsystem* const Match = GetMatch())
+	{
+		Match->ClearViewDecorator();
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AStratPlayerController::SetupInputComponent()
@@ -491,22 +535,26 @@ bool AStratPlayerController::RefreshFromMachine(FString& OutFailureReason)
 		return false;
 	}
 
-	// THE SEAM. `bDone` and `bLockedThisTurn` reach the screen HERE, on the model, on its
-	// way to `ApplyView` -- and nowhere else. `StratViewModel.h` records the obligation and
-	// `UStratMatchSubsystem.h` split `BuildViewModel` from `ApplyView` to leave room for
-	// exactly this line: "the phase-4 path is build -> decorate -> `ApplyView`, with the
-	// decorated model being the one and only description of the screen."
-	// §2.11.6's guided opening, on the same seam and BEFORE the machine decorates. The
-	// order matters in one direction only: `Observe` writes the lock set that
-	// `SelectionMachine.DecorateViewModel` then publishes as `bLockedThisTurn`, so an
-	// `Observe` after it would publish last frame's locks. `FStratGuidedOpening::
-	// DecorateViewModel` writes the guidance block and touches no unit bit, which is why it
-	// can sit on either side of the machine's call and sits after it for readability.
-	TryArmGuidedOpening();
-	GuidedOpening.Observe(Model, SelectionMachine);
-
-	SelectionMachine.DecorateViewModel(Model);
-	GuidedOpening.DecorateViewModel(Model);
+	// THE SEAM, NOW NAMED. `bDone`, `bLockedThisTurn` and Sec 2.11.6's guidance block reach
+	// the screen on the model on its way to `ApplyView`, and the sequence that writes them
+	// lives in `DecorateForPresentation` so that the subsystem's own reconciles can run the
+	// same one. `StratViewModel.h` records the obligation and `UStratMatchSubsystem.h` split
+	// `BuildViewModel` from `ApplyView` to leave room for exactly this line: "the phase-4 path
+	// is build -> decorate -> `ApplyView`, with the decorated model being the one and only
+	// description of the screen."
+	//
+	// CALLED DIRECTLY AND NOT THROUGH `BuildViewModelForPresentation`, which would have been
+	// the tidier-looking shape and is the wrong one here. That function runs the REGISTERED
+	// decorator, and the registration is taken in `BeginPlay` -- so a controller driven
+	// before or without `BeginPlay`, which is every fixture that spawns one into a world it
+	// built itself, would silently stop decorating and this path's whole purpose would depend
+	// on an actor lifecycle step. Calling the method directly makes this path decorate
+	// because it is this controller, not because a registration happened to be in place.
+	//
+	// IT CANNOT DOUBLE-DECORATE. `BuildViewModel` above never runs the delegate; only
+	// `BuildViewModelForPresentation` does, and this function does not call it. Each model is
+	// decorated exactly once no matter which path built it.
+	DecorateForPresentation(Model);
 
 	Match->ApplyView(Model);
 
@@ -569,6 +617,27 @@ bool AStratPlayerController::RefreshFromMachine(FString& OutFailureReason)
 // ---------------------------------------------------------------------------
 // §2.11.6's guided opening — arming, and the one control a widget calls.
 // ---------------------------------------------------------------------------
+
+void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
+{
+	// ARMED FROM HERE, LAZILY, per `TryArmGuidedOpening`'s own declaration: actor `BeginPlay`
+	// order between this class and `AStratGameMode` is not something this file may assume, so
+	// arming is attempted on every decoration and returns immediately once it has taken.
+	// Reaching this function from the subsystem's reconcile rather than from a refresh does
+	// not change that -- it adds earlier opportunities to arm, which is the direction that
+	// helps.
+	TryArmGuidedOpening();
+
+	// THE ORDER MATTERS IN ONE DIRECTION ONLY. `Observe` writes the lock set that
+	// `SelectionMachine.DecorateViewModel` then publishes as `bLockedThisTurn`, so an
+	// `Observe` after it would publish last frame's locks. `FStratGuidedOpening::
+	// DecorateViewModel` writes the guidance block and touches no unit bit, which is why it
+	// can sit on either side of the machine's call and sits after it for readability.
+	GuidedOpening.Observe(Model, SelectionMachine);
+
+	SelectionMachine.DecorateViewModel(Model);
+	GuidedOpening.DecorateViewModel(Model);
+}
 
 void AStratPlayerController::TryArmGuidedOpening()
 {

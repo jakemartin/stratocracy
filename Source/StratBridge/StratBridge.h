@@ -577,6 +577,46 @@ public:
 	FStratResult Forecast(int32 AttackerId, const strat::Hex& DefenderHex,
 	                      strat::UiForecast& OutForecast) const;
 
+	// §2.11.5's production menu, as `strat::uiBuildOptions` returns it: one entry
+	// per §2.4 unit-table row, each carrying its price, whether this side can pay
+	// it, and whether this factory will take a build at all. Routed here for the
+	// reason the two queries above are -- the symbol carries no `_API` macro.
+	//
+	// A QUERY AND NOT A SNAPSHOT FIELD, which is a ruling rather than a preference.
+	// Every `UiSnapshot` field is pinned by T-UI-05's enumeration, so carrying the
+	// buildlist there would move that invariant and make every consumer of the
+	// snapshot hold a value only §2.11.5 reads. `MakeUiSnapshot` is unchanged by it.
+	//
+	// TWO CHANNELS, exactly as `Forecast` has them. `FStratResult` says whether the
+	// query could be ASKED; `available` and `reason` on each entry say what the rules
+	// ANSWERED. A factory this side does not hold, one that has already taken its
+	// build this turn, one already holding a waiting build, and a hex that is not a
+	// build point are all ANSWERS -- the menu shows each with the module's own reason
+	// -- so they arrive as Ok() with `available` false. THE FACTORY HEX IS THEREFORE
+	// NOT PRE-CHECKED HERE, deliberately, the way `Forecast` leaves the defender to
+	// the module.
+	//
+	// THE SIDE IS THE ONE MALFORMED-QUESTION CASE and is refused rather than left to
+	// the module, matching `Forecast`'s treatment of an unknown attacker id.
+	// `uiBuildOptions` would answer a side outside the match with `available` false
+	// and "invalid side" -- spelled the same way as "not a build point", and not the
+	// same kind of thing. Refusing here keeps the rule crisp (bOk false means the
+	// question was malformed, bOk true means the rules answered it) and makes the
+	// module's own "invalid side" unreachable through this bridge.
+	//
+	// REFUSES RATHER THAN HANDING BACK AN EMPTY SET, on `Reachable`'s reasoning.
+	// `uiBuildOptions` returns the empty vector only when the world carries no unit
+	// table, so an empty result is never an answer: the menu has one row per §2.4
+	// row whatever the board looks like. A successful call therefore always yields
+	// exactly as many entries as the loaded unit table has rows.
+	//
+	// COMPUTES NOTHING -- not the affordability, not the availability, not the reason.
+	// `affordable` is the MODULE's arithmetic precisely so that T-UI-03's
+	// no-widget-side-arithmetic clause has something to bind to; recomputing it here
+	// would put a second spelling of it one module closer to the screen.
+	FStratResult BuildOptions(int32 Side, const strat::Hex& FactoryHex,
+	                          std::vector<strat::UiBuildOption>& OutOptions) const;
+
 	// ---- The engine-typed façade -----------------------------------------
 	// The six methods below say exactly what the five above say, in `int32` and
 	// `FIntPoint`, and they exist for one reason: `StratPlay` NAMES NO `strat::`

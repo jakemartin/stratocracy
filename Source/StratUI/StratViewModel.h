@@ -402,6 +402,78 @@ struct FStratFactoryView
 	bool bSpawnBlocked = false;
 };
 
+/**
+ * One row of §2.11.5's production menu. Mirrors `strat::UiBuildOption` field for field.
+ *
+ * IT IS NOT A FIELD OF `FStratFactoryView`, and that is the same decision the rules
+ * module already made one layer down rather than a fresh one. `strat::uiBuildOptions` is
+ * a QUERY and not a `UiSnapshot` field because every snapshot field is pinned by
+ * T-UI-05's enumeration; hanging the buildlist off the factory view here would put four
+ * rows on each of four factories inside a value that is rebuilt on every refresh, to be
+ * read by the one surface that opens a production menu. `StratBuildProductionMenu`
+ * answers it on demand instead, and `FStratViewModel` does not grow.
+ */
+USTRUCT(BlueprintType)
+struct FStratBuildOptionView
+{
+	GENERATED_BODY()
+
+	/**
+	 * The §2.4 row this offer is, and the value `SubmitBuildAtHex` takes. Mirrors
+	 * `UiBuildOption::defIndex`.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Production")
+	int32 DefIndex = INDEX_NONE;
+
+	/** The unit's id, e.g. `Infantry`. Mirrors `UiBuildOption::id`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Production")
+	FName Id;
+
+	/** The §2.4 price. Mirrors `UiBuildOption::costFame`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Production")
+	int32 CostFame = 0;
+
+	/**
+	 * This side can pay for it right now. Mirrors `UiBuildOption::affordable`, which the
+	 * rules module computes as `costFame <= fameTotal`.
+	 *
+	 * THE WIDGET MUST NOT DERIVE THIS, and it is carried precisely so that it need not:
+	 * T-UI-03 forbids widget-side arithmetic, and comparing a price to a purse inside a
+	 * binding is exactly that. Nothing between here and the module recomputes it.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Production")
+	bool bAffordable = false;
+
+	/**
+	 * This factory will take a build right now. Mirrors `UiBuildOption::available`.
+	 *
+	 * A SEPARATE FIELD FROM `bAffordable`, AND NOT AN AND OF IT. "This factory has
+	 * already built this turn" and "you are still saving for this" are different answers
+	 * and §2.11.5 shows them differently; a menu handed one boolean could not tell the
+	 * player which one it was looking at.
+	 *
+	 * IT DOES NOT VARY BY ROW. Every gate behind it is a property of the FACTORY and the
+	 * SIDE, never of the unit type -- the per-type population cap is AI policy and the
+	 * player is bound by no cap. Rows that disagreed here would be that cap leaking into
+	 * a path a player command passes through.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Production")
+	bool bAvailable = false;
+
+	/**
+	 * Why not, when `bAvailable` is false; empty when it is true. Mirrors
+	 * `UiBuildOption::reason`.
+	 *
+	 * THE MODULE'S OWN WORDS AND NOT AUTHORED UI COPY -- a debt rather than a decision.
+	 * §2.11.5 states no strings for these refusals, and inventing them here would be the
+	 * widget layer deciding what the rules mean. When the GDD writes them, the mapping
+	 * belongs beside `ResultTierOf` and this field becomes its input rather than its
+	 * output.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Production")
+	FText Reason;
+};
+
 /** One side's standings. Mirrors `strat::UiSideView` field for field. */
 USTRUCT(BlueprintType)
 struct FStratSideView
@@ -720,3 +792,29 @@ STRATUI_API bool StratBuildViewModel(
 	int32               ViewingSide,
 	FStratViewModel&    OutModel,
 	FString&            OutFailureReason);
+
+/**
+ * §2.11.5's production menu for ONE factory, in engine types.
+ *
+ * A SEPARATE ENTRY POINT FROM `StratBuildViewModel` rather than a field it fills, for
+ * the reason `FStratBuildOptionView`'s own block gives: the buildlist is a query one
+ * surface asks, not state every consumer of the view model should carry.
+ *
+ * ALL-OR-NOTHING, exactly as `StratBuildViewModel` is. It fills a local and moves it
+ * across on the last line, so a refusal leaves the caller's array as it found it and a
+ * transient failure cannot blank a menu that was correct a moment ago.
+ *
+ * REFUSES RATHER THAN PRODUCING AN EMPTY MENU, forwarding `FStratBridge::BuildOptions`'s
+ * own words. The menu carries one row per §2.4 row, so an empty array is never an
+ * answer.
+ *
+ * @param Side        which `strat` side is shopping. Range checked by the bridge.
+ * @param FactoryHex  X = q, Y = r -- the encoding `FStratFactoryView::Hex` already
+ *                    carries, so a caller passes the view model's own value back in.
+ */
+STRATUI_API bool StratBuildProductionMenu(
+	const FStratBridge&            Bridge,
+	int32                          Side,
+	FIntPoint                      FactoryHex,
+	TArray<FStratBuildOptionView>& OutOptions,
+	FString&                       OutFailureReason);

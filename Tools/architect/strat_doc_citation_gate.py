@@ -50,6 +50,7 @@ import argparse
 import io
 import os
 import re
+import subprocess
 import sys
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -113,6 +114,78 @@ def _rel(path: str, start: str) -> str:
         return path
 
 
+def ignored_paths(repo: str, files: list[str]) -> tuple[set[str], str]:
+    """Which of `files` GIT considers ignored, so the scan below can skip them.
+
+    THE FILTER IS GIT'S, NOT A TYPED PATH LIST. Naming a directory here would repeat this
+    project's most repeated guard defect: a guard that types its own subject stops covering
+    that subject the moment it moves. `git check-ignore` answers out of the real `.gitignore`,
+    so a new ignore rule is honoured without editing this script.
+
+    THIS IS THE SECOND OF THE TWO FILTERS, AND IT IS NOT THE ONE THAT CAUGHT THE 2026-08-22
+    DEFECT -- `_is_nested_repo` is. Said explicitly because the handoff that opened this fix
+    asserted the worktree under `.claude/worktrees/` was gitignored, and it is NOT: `git
+    status` reports it `??`, untracked, and `git check-ignore` on a file inside it exits 1,
+    meaning not ignored. A filter built on that premise alone would have changed nothing and
+    passed review looking correct. Ignore-filtering is kept because it is independently right
+    -- a doc root may hold genuinely ignored prose -- not because it fixed anything here.
+
+    A TRACKED FILE IS NEVER SKIPPED. `check-ignore` consults the index by default, so a file
+    that git is tracking is not reported ignored even where a rule would otherwise match it.
+    The record's own documents are tracked, and stay scanned.
+
+    THE HOOK'S TEMP TREE IS NOT A GIT REPOSITORY, and that is the normal case rather than an
+    error. `Tools/architect/hooks/pre-commit` materialises the STAGED document blobs into
+    `mktemp -d` and points `--repo` at it. Nothing is filtered there -- which is correct and
+    not merely tolerable, because every file in that tree came out of the index and is
+    therefore tracked by construction. "Filter nothing" is the answer git itself would give.
+
+    ANY FAILURE FILTERS NOTHING. Git absent, git erroring, a path git will not answer for --
+    each falls back to SCANNING the file, never to skipping it. This gate's failure direction
+    is to over-report, because an unscanned file is not a clean file, and a filter that
+    quietly swallows its own subject is precisely the inert guard this project keeps finding.
+    """
+    if not files:
+        return set(), ""
+    try:
+        inside = subprocess.run(["git", "-C", repo, "rev-parse", "--is-inside-work-tree"],
+                                capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return set(), (f"git ignore-filter NOT APPLIED ({exc}) -- every file walked was "
+                       f"scanned, so this run over-reports rather than under-reports")
+    if inside.returncode != 0 or inside.stdout.strip() != "true":
+        return set(), ("scanned tree is not a git work tree -- no ignore filtering, and "
+                       "nothing there to filter: this is the pre-commit hook's temp tree of "
+                       "STAGED blobs, which are tracked by construction")
+    try:
+        proc = subprocess.run(["git", "-C", repo, "check-ignore", "-z", "--stdin"],
+                              input="\0".join(files) + "\0",
+                              capture_output=True, text=True, timeout=120)
+    except (OSError, subprocess.SubprocessError) as exc:
+        return set(), (f"git check-ignore FAILED ({exc}) -- every file walked was scanned")
+    # 0 = at least one path is ignored; 1 = none are. Anything else is git failing, and a
+    # failing git filters nothing.
+    if proc.returncode not in (0, 1):
+        return set(), (f"git check-ignore exited {proc.returncode} "
+                       f"({proc.stderr.strip()[:200]}) -- every file walked was scanned")
+    return {os.path.abspath(os.path.join(repo, p))
+            for p in proc.stdout.split("\0") if p}, ""
+
+
+def scanned_files(repo: str = _REPO,
+                  roots: tuple[str, ...] = DOC_ROOTS) -> tuple[list[str], int, str]:
+    """The documents this gate actually grades: walked, minus what git ignores.
+
+    Returns (files, skipped_count, note). The count is surfaced in the gate's own output --
+    a filter that removes files without saying how many is indistinguishable from a walk that
+    never found them.
+    """
+    walked = doc_files(repo, roots)          # already pruned at repository boundaries
+    ignored, note = ignored_paths(repo, walked)
+    kept = [f for f in walked if os.path.abspath(f) not in ignored]
+    return kept, len(walked) - len(kept), note
+
+
 def vendored_units(vendored_dir: str = VENDORED_DIR) -> tuple[list[str], str]:
     """Derived from the vendored directory, never typed.
 
@@ -137,6 +210,37 @@ def citation_re(units: list[str]) -> re.Pattern:
                       % "|".join(re.escape(u) for u in units))
 
 
+def _is_nested_repo(dirpath: str, repo: str) -> bool:
+    """Is `dirpath` the root of a DIFFERENT git repository than `repo`?
+
+    THIS IS THE FILTER THAT FIXED THE 2026-08-22 DEFECT, and the shape of that defect is worth
+    stating exactly, because the obvious diagnosis is the wrong one. An unrelated session left
+    a linked `git worktree` at `.claude/worktrees/brave-davinci-fcc3d8`, under `.claude`, which
+    is one of this gate's declared roots. It holds that worktree's own copy of
+    `Tools/architect/state.md` -- FROZEN history, whose vendored references are the record of
+    the very defect this guard exists for, and which the real scan excludes deliberately. The
+    gate reported 30 findings against a tree whose own documents had zero.
+
+    IT IS NOT AN IGNORE-RULE PROBLEM. `.claude/worktrees/` is not gitignored -- measured:
+    `git status` lists it `??` and `git check-ignore` on a file inside it exits 1. Git reports
+    the whole directory as ONE untracked entry, and never descends, because a `.git` entry
+    inside it marks a repository boundary. `os.walk` has no such notion and walked straight in.
+    So the fix is to give this gate the boundary git already honours.
+
+    A `.git` ENTRY IS THE BOUNDARY, FILE OR DIRECTORY ALIKE. A linked worktree carries a `.git`
+    FILE holding a `gitdir:` pointer, not a directory; a submodule or a stray clone carries
+    either. Testing for existence rather than for a directory covers all three, and is what
+    made the worktree visible here -- an `isdir` test would have walked straight past it.
+
+    THE REPO ROOT ITSELF IS NEVER PRUNED, which is why `repo` is a parameter rather than
+    assumed: the scanned tree has a `.git` too, and pruning at the root would have made this
+    gate scan nothing at all while exiting 0 -- an inert guard wearing a clean verdict.
+    """
+    if os.path.abspath(dirpath) == os.path.abspath(repo):
+        return False
+    return os.path.exists(os.path.join(dirpath, ".git"))
+
+
 def doc_files(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS) -> list[str]:
     out: list[str] = []
     for root in roots:
@@ -144,7 +248,12 @@ def doc_files(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS) -> list[str
         if os.path.isfile(full):
             out.append(full)
             continue
-        for dirpath, _dirs, files in os.walk(full):
+        for dirpath, dirs, files in os.walk(full):
+            # Prune in place so `os.walk` never descends into another repository. Done here
+            # rather than by filtering the results afterwards because a nested checkout can be
+            # arbitrarily large, and because pruning is what git itself does.
+            dirs[:] = [d for d in dirs
+                       if not _is_nested_repo(os.path.join(dirpath, d), repo)]
             for f in files:
                 if f.endswith(".md"):
                     out.append(os.path.join(dirpath, f))
@@ -178,11 +287,14 @@ def run(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS,
                  f"{'|'.join(units)}")
 
     cite = citation_re(units)
-    files = doc_files(repo, roots)
+    files, skipped, filter_note = scanned_files(repo, roots)
+    if filter_note:
+        notes.append(filter_note)
     if not files:
         return 1, [f"[**NOTHING SCANNED**] no .md files found under {list(roots)} -- this gate "
                    f"checked nothing at all."], notes
-    notes.append(f"documents scanned: {len(files)}")
+    notes.append(f"documents scanned: {len(files)}"
+                 + (f" ({skipped} skipped as git-ignored)" if skipped else ""))
 
     total = exempt_n = 0
     for path in files:
@@ -313,6 +425,107 @@ def check_self_test() -> tuple[bool, str]:
         lines.append(f"    [{'OK' if good else '**WRONG**'}] a NEW vendored header is covered "
                      f"without editing this script")
 
+    # -----------------------------------------------------------------------------------
+    # THE TWO SCAN-SCOPE FILTERS. Added 2026-08-22 with the filters themselves, because a
+    # filter with no fixture is the inert-guard shape this project keeps finding: it removes
+    # files, nobody can tell whether it removed the right ones, and it can only ever make the
+    # gate quieter. Each filter is tested in BOTH directions -- it hides what it should, and
+    # it does NOT hide what it should not.
+    #
+    # Note what the fixtures ABOVE already prove about the third case: every one of them runs
+    # `run()` on a plain temp directory with no `.git` in it at all, and `_LIVE` still FAILS
+    # there. That is the pre-commit hook's temp tree of staged blobs, and it stays fully
+    # scanned.
+    def _mkdocs(d, **files):
+        os.makedirs(os.path.join(d, "Source", "StratRules"), exist_ok=True)
+        for u in ("Replay", "Save", "Ui", "Ai"):
+            io.open(os.path.join(d, "Source", "StratRules", u + ".h"), "w").write("//\n")
+        for rel, body in files.items():
+            full = os.path.join(d, rel.replace("/", os.sep))
+            os.makedirs(os.path.dirname(full), exist_ok=True)
+            with io.open(full, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(body)
+
+    def _git(d, *a):
+        return subprocess.run(["git", "-C", d] + list(a), capture_output=True, text=True)
+
+    git_ok = True
+    try:
+        git_ok = subprocess.run(["git", "--version"],
+                                capture_output=True).returncode == 0
+    except OSError:
+        git_ok = False
+    if not git_ok:
+        ok = False
+        lines.append("    [**WRONG**] git is not runnable, so the scan-scope fixtures below "
+                     "could not run -- a fixture that silently skips is worse than none")
+
+    # A LINKED WORKTREE is the exact 2026-08-22 shape: a `.git` FILE, not a directory. It is
+    # tested first and separately because an `isdir` boundary test passes every other fixture
+    # here and still walks straight into this one.
+    if git_ok:
+        with tempfile.TemporaryDirectory() as d:
+            _mkdocs(d, **{"docs/clean.md": _CLEAN, "docs/wt/copy.md": _LIVE})
+            io.open(os.path.join(d, "docs", "wt", ".git"), "w").write(
+                "gitdir: /elsewhere/.git/worktrees/x\n")
+            _git(d, "init", "-q")
+            code, fails, _ = run(d, ("docs",), os.path.join(d, "Source", "StratRules"))
+            good = (code == 0 and not fails)
+            ok = ok and good
+            lines.append(f"    [{'OK' if good else '**WRONG**'}] a LINKED WORKTREE (`.git` "
+                         f"FILE) under a doc root is NOT scanned")
+
+    # A nested clone or submodule carries a `.git` DIRECTORY instead. Same boundary.
+    if git_ok:
+        with tempfile.TemporaryDirectory() as d:
+            _mkdocs(d, **{"docs/clean.md": _CLEAN, "docs/nested/copy.md": _LIVE})
+            _git(d, "init", "-q")
+            _git(os.path.join(d, "docs", "nested"), "init", "-q")
+            code, fails, _ = run(d, ("docs",), os.path.join(d, "Source", "StratRules"))
+            good = (code == 0 and not fails)
+            ok = ok and good
+            lines.append(f"    [{'OK' if good else '**WRONG**'}] a NESTED REPOSITORY (`.git` "
+                         f"directory) under a doc root is NOT scanned")
+
+    # THE CONTROL FOR BOTH OF THE ABOVE. The scanned tree has a `.git` of its own, and pruning
+    # at the root would make this gate scan nothing while exiting 0. This fixture is the reason
+    # `_is_nested_repo` takes `repo` as a parameter rather than assuming it.
+    if git_ok:
+        with tempfile.TemporaryDirectory() as d:
+            _mkdocs(d, **{"docs/live.md": _LIVE})
+            _git(d, "init", "-q")
+            _git(d, "add", "-A")
+            code, fails, _ = run(d, ("docs",), os.path.join(d, "Source", "StratRules"))
+            good = (code == 1 and any("Replay.good.cpp:486-487" in f for f in fails))
+            ok = ok and good
+            lines.append(f"    [{'OK' if good else '**WRONG**'}] the SCANNED TREE'S OWN `.git` "
+                         f"does not prune it -- a tracked doc still FAILS")
+
+    # The ignore filter, both directions in one tree: the ignored copy is skipped and the
+    # tracked one is not.
+    if git_ok:
+        with tempfile.TemporaryDirectory() as d:
+            _mkdocs(d, **{"docs/clean.md": _CLEAN, "docs/ignored/copy.md": _LIVE,
+                          ".gitignore": "docs/ignored/\n"})
+            _git(d, "init", "-q")
+            _git(d, "add", "-A")
+            code, fails, _ = run(d, ("docs",), os.path.join(d, "Source", "StratRules"))
+            good = (code == 0 and not fails)
+            ok = ok and good
+            lines.append(f"    [{'OK' if good else '**WRONG**'}] a GIT-IGNORED document is "
+                         f"not scanned")
+
+        with tempfile.TemporaryDirectory() as d:
+            _mkdocs(d, **{"docs/live.md": _LIVE, "docs/ignored/x.md": _CLEAN,
+                          ".gitignore": "docs/ignored/\n"})
+            _git(d, "init", "-q")
+            _git(d, "add", "-A")
+            code, fails, _ = run(d, ("docs",), os.path.join(d, "Source", "StratRules"))
+            good = (code == 1 and any("docs/live.md" in f.replace("\\", "/") for f in fails))
+            ok = ok and good
+            lines.append(f"    [{'OK' if good else '**WRONG**'}] an UNIGNORED document beside "
+                         f"an ignored one is still scanned")
+
     return ok, "\n".join(lines)
 
 
@@ -357,7 +570,7 @@ def main(argv: list[str] | None = None) -> int:
         units, _ = vendored_units(args.vendored_dir)
         if units:
             cite = citation_re(units)
-            for path in doc_files(args.repo):
+            for path in scanned_files(args.repo)[0]:
                 text = io.open(path, encoding="utf-8", errors="replace").read()
                 rel = _rel(path, args.repo).replace("\\", "/")
                 for line_no, hit, exempt, snippet in scan_text(text, cite):

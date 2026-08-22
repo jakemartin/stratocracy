@@ -1,5 +1,5 @@
 {
-  "rulesCommit": "cb8e12b3a897c7329497ced4d1c6207630f37101",
+  "rulesCommit": "cae01e3737ebc9e712814865908670cc314b3dfe",
   "generator": "sync_stratrules.py",
   "sourceRepo": "stratocracy-crew",
   "sourcePrefix": "cpp_reference/",
@@ -28,8 +28,8 @@
     "Scenario.h": "70042d6f582c9b868a89a462f97bc56e890c428682046737e3b9d32459fd0248",
     "Turn.good.cpp": "6b511463ddd6a3b3a45f26f44fd5fa016649b6b19253a4fae8d5247e03e893d0",
     "Turn.h": "f1e7623256399dea200c7e73dd0eb7261fc5ab49551024c897b3ef7639755d61",
-    "Ui.good.cpp": "498f776dddf252b485b25b0f6909f8253768fb382014b545b6f0eae34137af6e",
-    "Ui.h": "ad4376bde87cdc00654aeb1dd582c68f885c3e5588aeadd4e1333603954dcfe6"
+    "Ui.good.cpp": "e89ca05cd7459aa916738d3d2ae4a488fd66d42609fb000a3c4400450edc3a7f",
+    "Ui.h": "a69e398c73c6e960a0f7eb5e730426e90d5caf0eb0b440eb13123bd291835985"
   },
   "moduleFiles": {
     "StratRules.Build.cs": "ceed96c2cdbece19ea9793e4df3acfb4b9ce4af1be44a7309272ae639adc9a2c"

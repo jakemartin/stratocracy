@@ -295,3 +295,66 @@ bool StratBuildViewModel(
 	OutModel = MoveTemp(Built);
 	return true;
 }
+
+// ---------------------------------------------------------------------------
+// §2.11.5 — the production menu, per factory.
+// ---------------------------------------------------------------------------
+
+bool StratBuildProductionMenu(
+	const FStratBridge&            Bridge,
+	int32                          Side,
+	FIntPoint                      FactoryHex,
+	TArray<FStratBuildOptionView>& OutOptions,
+	FString&                       OutFailureReason)
+{
+	// Cleared up front so a success cannot leave a previous call's refusal sitting in
+	// the caller's string.
+	OutFailureReason.Reset();
+
+	// X = q, Y = r, the encoding the whole façade uses. Written out rather than routed
+	// through `HexPoint`, which converts the other way.
+	strat::Hex Factory;
+	Factory.q = static_cast<int>(FactoryHex.X);
+	Factory.r = static_cast<int>(FactoryHex.Y);
+
+	// The ONE read, and it is the bridge's answer whole. NAMING `strat::UiBuildOption`
+	// is legal in this .cpp and never in the header beside it; CALLING
+	// `strat::uiBuildOptions` from this module is not legal at all -- that is the single
+	// `LNK2019` this pair's header block records from the StratUI Automation test.
+	std::vector<strat::UiBuildOption> Options;
+	const FStratResult Result = Bridge.BuildOptions(Side, Factory, Options);
+	if (!Result.bOk)
+	{
+		// The bridge's own words. An empty menu is one of the things it refuses over,
+		// so there is nothing to fall back to and nothing to soften.
+		OutFailureReason = Result.Reason;
+		return false;
+	}
+
+	// ALL-OR-NOTHING: built into a local and moved across on the last line, so a
+	// refusal above leaves the caller's menu exactly as it found it.
+	TArray<FStratBuildOptionView> Built;
+	Built.Reserve(static_cast<int32>(Options.size()));
+	for (const strat::UiBuildOption& Source : Options)
+	{
+		FStratBuildOptionView OptionView;
+		OptionView.DefIndex    = static_cast<int32>(Source.defIndex);
+		OptionView.Id          = DefinitionName(Source.id);
+		OptionView.CostFame    = static_cast<int32>(Source.costFame);
+		// COPIED, NEVER RECOMPUTED. `affordable` is the module's comparison of price
+		// against purse; redoing it here would be T-UI-03's forbidden arithmetic moved
+		// one module rather than removed, and it would be able to disagree.
+		OptionView.bAffordable = Source.affordable;
+		OptionView.bAvailable  = Source.available;
+		// Copied whole and never composed: nothing here appends a price, a hint or a
+		// unit name to the sentence the module wrote.
+		OptionView.Reason      = Source.reason.empty()
+			? FText::GetEmpty()
+			: FText::FromString(UTF8_TO_TCHAR(Source.reason.c_str()));
+
+		Built.Add(MoveTemp(OptionView));
+	}
+
+	OutOptions = MoveTemp(Built);
+	return true;
+}

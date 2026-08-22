@@ -10,6 +10,85 @@
 > in any other file is a finding, enforced by `strat_banner_sweep.py`'s RECORD OWNERSHIP check.
 > Everything under `## NEXT
 
+- **§2.11.5's production-menu ROUTING is gated; the module's buildlist behaviour is not gated
+  here and must not be.** Eleven clauses under a new id `GATE-BUILDMENU`, split across two files
+  by what each can link against — `Source/StratBridge/Tests/StratBuildOptionRouting.cpp` (six)
+  and `Source/StratUI/Tests/StratProductionMenuRouting.cpp` (five). The live count is in
+  `Tools/architect/state/global.md` and nowhere else.
+  - **Why `GATE-BUILDMENU` and NOT `T-UI-04`.** T-UI-04 asserts the production menu *binds*,
+    which is in-editor over a widget that does not exist yet. Nothing in these eleven clauses
+    constructs a widget or touches Slate, so §4.11 row 8's ledger row is unmoved by them.
+    `GATE-BRIDGE-DEFS` and `GATE-SAVE-PARSE` are the precedent for a gate that has no acceptance
+    row of its own.
+  - **What the split of files is forced by, not chosen.** The bridge file compares
+    `FStratBridge::BuildOptions` against `strat::uiBuildOptions` over the bridge's own
+    `MakeUiWorld()`, so it must CALL both — only a `.cpp` inside `StratBridge` links the
+    vendored symbol. The StratUI file compares `StratBuildProductionMenu` against
+    `FStratBridge::BuildOptions` on the same bridge in the same frame, which needs no
+    `strat::` call at all. The same bridge-side file written in StratUI is not a weaker test,
+    it is `LNK2019`.
+  - **What each clause pins.** Bridge: full row-and-field parity with the module including
+    ORDER (`OptionsMatchTheModuleQuery`); the two channels — an unheld factory, a spent
+    allowance, a pending build and a non-build-point hex all arrive as `Ok()` with `available`
+    false, never as refusals (`AnswersRideTheOkChannel`); one row per loaded §2.4 row and never
+    empty, on the unavailable cases too (`SuccessIsOneRowPerUnitTableRow`); the side as the one
+    malformed-question case (`SideOutsideTheMatchIsRefused`); the module's own invalid-side
+    answer shown to EXIST and then shown not to reach a caller
+    (`TheModulesInvalidSideAnswerIsUnreachable`); and the two distinct pre-match refusals with
+    the out-parameter cleared (`RefusesBeforeThereIsAMatch`). StratUI: field-for-field mirror
+    including order (`MenuMirrorsTheBridgeRowForRow`); `bAffordable` copied and never recomputed
+    (`AffordabilityIsCopiedNotRecomputed`); the two flags independent in BOTH directions
+    (`AvailabilityAndAffordabilityAreIndependent`); an answered no returned as a SUCCESSFUL full
+    menu (`AnAnsweredNoIsNotARefusal`); and all-or-nothing on refusal
+    (`ARefusalLeavesTheCallersMenuIntact`).
+  - **What these clauses do NOT pin, and where it IS pinned.** None of the rules-module
+    behaviour: all four rows returned, the affordability split itself, the T-TURN-10 and
+    `buildWaiting` gates, Q31's boxed-in factory staying available, availability never varying
+    by row. That is the crew repo's `GATE-BUILDLIST`, 14 clauses in `test_ui.cpp`, vendored at
+    `cae01e3`. Duplicating it engine-side would give this tree a second opinion about a rule it
+    does not own. These eleven are about TRANSPORT only.
+  - **Technique worth reusing: enumerate the case list from the board, never pick a hex.** Every
+    clause asks every (factory, side) pair plus the first hex no factory claims, all read out of
+    the snapshot / view model. A pre-check that refuses exactly the enemy-held factory cannot
+    then hide behind a case the file happened not to choose, and a scenario edit moves the case
+    list with it. Measured: mutating `BuildOptions` to fold an answered no onto the refusal
+    channel reddened four of the six bridge clauses at once.
+  - **Technique worth reusing: a coverage assertion, so a clause cannot go vacuous in silence.**
+    `AnswersRideTheOkChannel` would be satisfied by a board on which every question answered
+    yes, and `AffordabilityIsCopiedNotRecomputed` is BLIND to the `affordable && available` fold
+    on any row where `available` is true. Both therefore assert that the board supplied the case
+    they need — an answered no, and an unavailable-yet-affordable row — and fail loudly naming
+    the missing case if a scenario edit ever stops producing it.
+  - **The case-insensitivity trap, and what was done about it.** `FString`'s `==`, `Contains`
+    and `TestEqual` are all case-insensitive, and so is `FName` comparison, so a reason-string
+    clause written the obvious way cannot fail on a casing defect. Both string comparisons in
+    the StratUI file go through `FString::Equals(..., ESearchCase::CaseSensitive)` against the
+    module's own `std::string` bytes. The bridge file compares `std::string` to `std::string`
+    directly, which is case-sensitive by construction. **No refusal sentence is transcribed
+    anywhere in either file** — "the module's invalid-side answer is unreachable" is pinned as
+    *zero rows reach the caller*, which needs no string and cannot be defeated by casing.
+  - **Two things deliberately NOT asserted, because the assertion could not fail.** (a) That
+    `isFlag` never appears in this query's output: it is a `Scenario.h` PLACEMENT field, the
+    buildlist declares no such member, and `data/units.csv` carries no flag row, so the check
+    passes on an empty implementation and a wrong one alike. (b) Any equality against a
+    transcribed refusal sentence — see above.
+  - **A default cannot signal "unset", and both sides default to -1.** `FStratBuildOptionView::DefIndex`
+    is `INDEX_NONE` and `UiBuildOption::defIndex` is `-1`, so a bare parity check could not tell
+    "copied" from "both untouched". Both files establish that the module's `defIndex` is a real
+    §2.4 row index BEFORE comparing, which is what gives the equality teeth. The all-or-nothing
+    clause plants a sentinel row (`DefIndex 4242`, `Id NotAUnit`) for the same reason and checks
+    it is still there after the refusal, then gone after the success.
+  - **Falsifiability, measured rather than argued.** Mutant A (`BuildOptions` folding an
+    answered no onto the refusal channel) → `AnswersRideTheOkChannel`,
+    `OptionsMatchTheModuleQuery`, `SuccessIsOneRowPerUnitTableRow` and
+    `SideOutsideTheMatchIsRefused` all red. Mutant B (`bAffordable = affordable && available` in
+    `StratBuildProductionMenu`) → `AffordabilityIsCopiedNotRecomputed` and
+    `AvailabilityAndAffordabilityAreIndependent` red, and `MenuMirrorsTheBridgeRowForRow`
+    correctly STAYS green, since that clause deliberately leaves `bAffordable` to the clause
+    named after it. Both restored from a byte copy held outside the repo and verified by
+    `git hash-object` — never `git checkout --`, which rewrites LF to CRLF under this repo's
+    `core.autocrlf=true`.
+
 - **The two guided-opening delivery defects now have clauses; they shipped green because nothing
   asked either question.** Nine clauses added to
   `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp`, all under `T-INT-05` — see "Why not

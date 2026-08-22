@@ -929,6 +929,49 @@ FStratResult FStratBridge::Forecast(int32 AttackerId, const strat::Hex& Defender
 	return FStratResult::Ok();
 }
 
+FStratResult FStratBridge::BuildOptions(int32 Side, const strat::Hex& FactoryHex,
+                                        std::vector<strat::UiBuildOption>& OutOptions) const
+{
+	// Cleared up front, exactly as Forecast resets its out-parameter: a refusal must
+	// not leave the caller holding the previous factory's menu and pricing it as this
+	// one's.
+	OutOptions.clear();
+
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	// The malformed-question case, refused here rather than left to the module. See
+	// the header: `uiBuildOptions` spells "invalid side" the same way it spells "not a
+	// build point", and those are not the same kind of thing.
+	if (Side < 0 || Side >= strat::SIDE_COUNT)
+	{
+		return FStratResult::Fail(FString::Printf(
+			TEXT("side %d is outside the %d sides this match has"), Side, strat::SIDE_COUNT));
+	}
+
+	// The one line this method exists for. The factory hex goes through untouched:
+	// whether it is an objective at all, whether this side holds it, whether it is a
+	// build point and whether it has already built are the module's answers, and they
+	// arrive on `available` and `reason` rather than on the refusal channel.
+	OutOptions = strat::uiBuildOptions(MakeUiWorld(), Side, FactoryHex);
+
+	// An empty vector is `uiBuildOptions`'s missing-table result and never an answer.
+	// A caller handed an empty menu cannot tell it from a board state that offers
+	// nothing -- and there is no such board state, which is the whole point.
+	if (OutOptions.empty())
+	{
+		return FStratResult::Fail(TEXT("the loaded unit table has no rows to offer"));
+	}
+
+	return FStratResult::Ok();
+}
+
 // ---------------------------------------------------------------------------
 // Recorded log -> §4.10 save (row 10 part (a)).
 // ---------------------------------------------------------------------------

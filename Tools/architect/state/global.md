@@ -38,13 +38,17 @@ really 12:01 UTC** -- its own capture, `ScreenShot00059.png`, has mtime `08:01:0
 log line reading `12.01.00`, so that session ran FOUR HOURS EARLIER than its stamp reads and this
 11:30-local amendment is after it, not before it. Recorded rather than silently rewritten, because
 the same mislabel is what makes two entries look out of order.]
-THE SUITE **IS NOW 160/160**, 151 -> 160 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
-walked over `Source/` -- +9, none removed, column-0 anchored, re-derived independently by the gate
-and again in the merged tree -- zero non-Success, `notRun` 0, 160 entries, all `Success`. The run is
-THIS tree's own: build `Result: Succeeded`, `REAL_EXIT=0` with the editor closed, report
-`reportCreatedOn 2026.08.22-04.54.16`, and all nine new clauses present in it by name.
-`Saved/SaveGames/` held ZERO files either side and the directory mtime MOVED, 22:46:55 -> 00:54:16,
-so the control is discharged on this tree again rather than borrowed.
+**THE SUITE IS NOW 171/171.** The figure this banner carried until 2026-08-22 **was 160/160**,
+superseded here rather than deleted. 160 -> 171 by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +11, none removed, column-0 anchored,
+and re-derived independently against `HEAD`, which still counts exactly 160 because the eleven new
+clauses live in two files that are not committed yet. Zero non-Success and `notRun` 0 across 171
+entries, every one `Success`. The run is THIS tree's own, with the editor closed, and the report it
+wrote is `reportCreatedOn 2026.08.22-20.39.04` -- 16:39 local, because report stamps are UTC and
+this record's dates are not. All eleven new clauses are present in it by name, six under
+`Stratocracy.StratBridge` and five under `Stratocracy.StratUI`, every one carrying `GATE-BUILDMENU`.
+`Saved/SaveGames/` holds ZERO files and the directory mtime reads 16:39 local -- the run's own
+minute -- so the save-slot control is discharged on this pass rather than borrowed from the last.
 WHAT THE TWO FIXES ARE. Defect 2 is fixed AT THE BUILD, NOT AT THE PUSH: `ApplyView`'s
 unconditional-push ruling is untouched and `BuildViewModelForPresentation` -- `BuildViewModel` plus
 one `ExecuteIfBound` on a new plain, single-cast, weak, unreflected `FStratViewDecorator` -- now
@@ -629,6 +633,61 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-22, COORDINATOR + STRAT-DATA-STEWARD, SEC 2.11.5 STEPS 1-3 ARE LANDED: THE RULES
+  MODULE'S BUILDLIST ANSWER IS RE-VENDORED, ROUTED THROUGH THE BRIDGE, AND MIRRORED INTO THE VIEW
+  MODEL. THIS RECORDS A LANDED STEP AND NOT A CLOSED PHASE.** Step 4 -- the production menu widget
+  itself -- HAS NOT RUN, it is `strat-editor-builder`'s lane and needs a live editor, and **no
+  verdict on Sec 2.11.5 is claimed anywhere in this entry.** The banner above carries the suite
+  count for the tree these three steps produced; this entry does not restate it.
+  - **THE RE-VENDOR, COMPARED BY BLOB RATHER THAN BY WORKTREE DIFF.** `rulesCommit` moved
+    `cb8e12b` -> `cae01e3`, the crew repo's `main`, whose working tree is clean. Exactly two
+    vendored hashes moved in `StratRules.manifest.json`, `Ui.h` and `Ui.good.cpp`; the vendored
+    file count is steady at 24 and `Data/` is byte-untouched. The comparison is `git hash-object`
+    and the manifest's own recorded digests, NOT a plain diff against the crew checkout -- that
+    checkout is CRLF and the vendored copy is LF, so a plain diff reports identical bytes as
+    moved. Upstream, the answer is gated by `GATE-BUILDLIST`, 14 clauses in the crew's
+    `cpp_reference/test_ui.cpp`.
+  - **WHAT STEP 3 ADDED, CITED AS SYMBOLS.** `FStratBridge::BuildOptions` is the new bridge seam,
+    carrying the module's answer on the same two channels `Forecast` already uses -- `FStratResult`
+    says whether the query was answerable, and a row's own `bAvailable` says whether it may be
+    built. A hex that is not a factory is a REFUSAL rather than an empty menu, which keeps `bOk`
+    false meaning one thing. `FStratBuildOptionView` is the reflected row, carrying `DefIndex`,
+    `CostFame`, `bAffordable` and `bAvailable`; `StratBuildProductionMenu` fills a caller's array
+    from it. **`bAffordable` is resolved module-side on purpose** -- T-UI-03 forbids widget-side
+    arithmetic, and this is what stops the menu ever comparing a price to a purse.
+  - **THE ELEVEN NEW CLAUSES ARE DELIBERATELY NOT T-UI-04, and Row 8's ledger row does not flip on
+    any of this.** T-UI-04 asserts that the production MENU BINDS, which is an in-editor claim over
+    a widget that does not exist yet. Counting these clauses against it would close a row on
+    evidence that never touched the thing the row is about. They are `GATE-BUILDMENU` instead.
+  - **THE INTEGRATION GATE, AND THE EXIT CODE THAT IS NOT A VERDICT.** Row 9 reports
+    `VERDICT: passed` at exit 0 with both rows graded, T-INT-01 and T-INT-04. **T-INT-04 only
+    becomes gradeable with a compiler on PATH.** Run `run.py --integration` from inside the VS
+    environment; without `vcvars` this box has no compiler the gate can find, T-INT-04 SKIPs, and
+    the runner exits 2 -- which means "could not run", not "passed". Read the verdict line, never
+    the exit code alone.
+  - **A GUARD DEFECT FOUND AND FIXED IN THE SAME PASS, and the handoff's diagnosis of it was
+    WRONG.** `strat_doc_citation_gate.py` reported 30 findings, every one inside a linked
+    `git worktree` under `.claude/worktrees/` holding that worktree's own copy of the FROZEN
+    `Tools/architect/state.md`. The real tree had zero. The handoff called that directory
+    gitignored; it is not -- `git status` lists it `??` and `git check-ignore` on a file inside it
+    exits 1. Git reports it as ONE untracked entry and never descends, because the `.git` entry
+    inside it marks a repository boundary; `os.walk` has no such notion and walked straight in. The
+    gate now prunes at that boundary and also skips genuinely ignored files, both filters carrying
+    fixtures in `--self-test` in BOTH directions. Falsifiability was measured, not assumed: a live
+    vendored reference written as ordinary prose into this very file was still caught and named,
+    the file restored byte-identical by SHA-256 afterwards; and with each filter sabotaged in turn
+    its own fixtures report `**WRONG**`. The scan went from 84 documents to 25. **The pre-commit
+    hook's temp tree of staged blobs is not a git repository and is therefore filtered not at all**,
+    which is correct rather than tolerated -- those blobs come out of the index and are tracked by
+    construction. This is the fourth time this project has found the fault in a guard rather than
+    in the code the guard watches.
+  - **A KNOWN GAP, FLAGGED RATHER THAN QUIETLY CLOSED.** "Zero Fame leaves every row available" is
+    pinned **BY PROXY, NOT LITERALLY**: no bridge seam sets a side's purse and `Data/` is read-only,
+    so the clause asserts the general property against a row found on the shipped board. Pinning
+    the literal case needs a spend-to-zero fixture sequence or a bridge-side test seam. **Neither
+    was added**, because adding a seam to the bridge to make a test easier is a design change
+    wearing a test's clothes. Whether it is worth one is a deliberate decision for a later lane.
 
 - **2026-08-22, COORDINATOR, THE DESIGN-TIME SENTINEL EXPERIMENT WAS RUN AND IT ANSWERS THE FORK
   THE ENTRY BELOW LEFT OPEN: THE BINDING IS DELIVERING, AND THE BOUND FUNCTION SUPPLIES A VALUE

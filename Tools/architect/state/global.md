@@ -530,6 +530,65 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-21, COORDINATOR, LIVE PIE ON THE INTEGRATION TREE, NO SOURCE AND NO ASSET CHANGE --
+  THE STRIP DRAWS, AND IT DRAWS BLANK AND UNCONDITIONALLY.** The three things the previous entry
+  said its evidence did not reach are now measured, and measuring them opened a defect that no
+  clause can see. Method: PIE from the game's own startup path (log: `Game class is
+  'BP_StratGameMode_C'`, then `Guided opening armed for side 0: objective hex (2, 7), window turns
+  1-4`), captured with `Shot showui` -- the only capture route that composites the UMG layer.
+  - **What is now observed.** A solid rectangle at x 750-805, y 157-194 in a 2544x1320 frame whose
+    viewport centre measures x 778; the box centre is 777.5. So (a) the Slate hierarchy DOES lay
+    out at top centre, (b) `AddToViewport` DOES yield a visible widget for this class, and (c) it
+    DOES paint on a real frame. Those were the three open unknowns.
+  - **Identity was established by REMOVAL, not by geometry.** `ke * RemoveFromParent` through the
+    PIE console removed every game widget (22 instances, the live strip's `Root` named in the log)
+    and the box went to ZERO pixels in the same frame the scoreboard did -- the scoreboard being
+    the positive control that the command took. Three cheaper measurements agreed and none of them
+    would have been sufficient: only one live `Border` existed in the world and it was
+    `StripBorder`; the box width is exactly the border's own `Left`+`Right` padding (28+28); and
+    the composited colour matches `BrushColor` over the sky within 1/255 on all three channels.
+    A targeted `ke <InstanceName> RemoveFromParent` reported SUCCESS and changed nothing, because
+    it resolved a same-named object under a different outer -- one contradicting result against
+    three agreeing ones, and it was the one that was wrong.
+  - **NO DIRECTIVE TEXT EVER APPEARED, in any frame.** Six captures across four different model
+    states are pixel-identical: the same 2128-pixel rectangle, which is padding alone with
+    zero-width content. §2.11.6-B's line has still never been on screen.
+  - **The text bindings ARE evaluating.** `GetAll TextBlock Text NAME=DirectiveText` reports the
+    LIVE instance still holding the design-time `"Text Block"` while the screen shows nothing: a
+    UMG property binding drives the Slate attribute and never writes the UPROPERTY back. Read
+    `GetAll` for unbound state only -- for painted state it is the wrong instrument.
+  - **THE FINDING. The border paints while the widget's own guidance is all default.** `GetAll
+    StratGuidanceWidget Guidance` read the live copy as `bActive=False, Beat=None,
+    DirectiveText=""`. `GetStripVisibility` is `ToVisibility(Active)` whose False pin default reads
+    `Collapsed` off the graph, so a false `bActive` must COLLAPSE the border. It did not. The
+    compiled `Bindings` array on the generated class carries all four entries with the right
+    `ObjectName`/`PropertyName`/`FunctionName`, `StripBorder`/`Visibility`/`GetStripVisibility`
+    among them. So the strip is drawn whenever the HUD creates it, guidance or no guidance, and
+    **no push has been observed to reach the widget at all** -- the paint is not evidence of one.
+  - **SECOND DEFECT, measured directly in a SECOND, FRESH PIE session rather than inferred from the
+    first: the widget's guidance is still all default two seconds after the opening arms.** The log
+    line `Guided opening armed for side 0: objective hex (2, 7), window turns 1-4` had already been
+    written when `GetAll StratGuidanceWidget Guidance` read `bActive=False, Beat=None,
+    DirectiveText=""` off the live instance, and the same session's `GetAll StratScoreboardHUD
+    GuidanceStrip` shows the HUD holding a pointer to THAT instance -- so the widget the HUD
+    created is the widget being read, and nothing has been pushed into it. `ApplyView`'s
+    `HUD->PushGuidance(Model.Guidance)` is guarded only by `FindScoreboardHUD()`, and
+    `AStratScoreboardHUD::PushGuidance` is guarded only by `GuidanceStrip != nullptr`, which is
+    demonstrably non-null. One of those two links does not run. That is a C++ question, answerable
+    in one PIE session with the console route, and it is separate from the visibility-binding
+    question above: EITHER defect alone would leave the strip blank, and both are live.
+  - **Driven both directions with no simulated input.** The guided opening was skipped on the model
+    side and PROVED skipped: a second `ke * SkipGuidance` reported 1 instance succeeded while
+    printing no "skipped by the player" line, that log sitting after the `!bActive` early return.
+    An explicit `ke * RefreshFromMachine` reconcile also succeeded on the live controller. The
+    screen did not move for either. `playtest_key`/`playtest_click` remain unable to drive
+    anything; `ke` on a `BlueprintCallable` entry point is a route that does not need them.
+  - **Consequence: §2.11.6-B IS NOT CLOSED and must still not be claimed.** What remains is a
+    C++/asset question in the engineer's and editor's lanes -- why a bound `Visibility` does not
+    take while bound `Text` does, and whether `ApplyView` -> `FindScoreboardHUD` -> `PushGuidance`
+    ever reaches this instance. Neither is answerable from the record; both are answerable in one
+    PIE session now that the console route exists.
+
 - **A claim in a document is checkable against an artifact, and the artifact wins — this has now
   cost six corrections across four separate occasions in this milestone alone.** (Corrected count:
   the earlier "four separate corrections" undercounted its own tally by conflating occasions with

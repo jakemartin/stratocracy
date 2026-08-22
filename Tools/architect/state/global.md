@@ -596,18 +596,42 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     `ObjectName`/`PropertyName`/`FunctionName`, `StripBorder`/`Visibility`/`GetStripVisibility`
     among them. So the strip is drawn whenever the HUD creates it, guidance or no guidance, and
     **no push has been observed to reach the widget at all** -- the paint is not evidence of one.
+    - **CORRECTION, same session, raised by the post-merge record gate and adopted before anyone
+      relied on it: this names ONE hypothesis where the evidence carries TWO.** What is measured is
+      that the border paints while `Guidance.bActive` reads false. "The bound `Visibility` does not
+      take" is one explanation. The other is that the binding DOES take and correctly returns
+      `Visible` because `GetStripVisibility`'s `Active` input is not fed by the native
+      `Guidance` -- the variable-shadowing failure this project has already met once, which
+      compiles clean and wires to nothing. The `Bindings` array proves the binding is REGISTERED,
+      not what its body reads, and the `Collapsed` false-pin default was read off the graph rather
+      than at runtime. `ae4795f` reports the reparent destroying the Blueprint-local `Guidance` and
+      re-scoping to `StratGuidanceWidget:Guidance` at the package-byte level, which makes the
+      shadowing branch less likely -- less likely is not excluded, and the two are different
+      defects in different lanes. Both stand until one is measured.
   - **SECOND DEFECT, measured directly in a SECOND, FRESH PIE session rather than inferred from the
     first: the widget's guidance is still all default two seconds after the opening arms.** The log
     line `Guided opening armed for side 0: objective hex (2, 7), window turns 1-4` had already been
     written when `GetAll StratGuidanceWidget Guidance` read `bActive=False, Beat=None,
     DirectiveText=""` off the live instance, and the same session's `GetAll StratScoreboardHUD
     GuidanceStrip` shows the HUD holding a pointer to THAT instance -- so the widget the HUD
-    created is the widget being read, and nothing has been pushed into it. `ApplyView`'s
-    `HUD->PushGuidance(Model.Guidance)` is guarded only by `FindScoreboardHUD()`, and
-    `AStratScoreboardHUD::PushGuidance` is guarded only by `GuidanceStrip != nullptr`, which is
-    demonstrably non-null. One of those two links does not run. That is a C++ question, answerable
+    created is the widget being read. `ApplyView`'s `HUD->PushGuidance(Model.Guidance)` is guarded
+    only by `FindScoreboardHUD()`, and `AStratScoreboardHUD::PushGuidance` is guarded only by
+    `GuidanceStrip != nullptr`, which is demonstrably non-null. That is a C++ question, answerable
     in one PIE session with the console route, and it is separate from the visibility-binding
     question above: EITHER defect alone would leave the strip blank, and both are live.
+    - **CORRECTION, same session, raised by the post-merge record gate and adopted: the sentence
+      that stood here -- "nothing has been pushed into it ... one of those two links does not run"
+      -- was a FALSE DICHOTOMY, and the tree's own prose says so.**
+      `UStratMatchSubsystem::ApplyView`'s guided-opening block records that `Model.Guidance` is
+      written by `FStratGuidedOpening::DecorateViewModel` on the decorated path and is
+      DEFAULT-CONSTRUCTED on every other, and that the push is unconditional with no branch on
+      `bActive`; `UStratGuidanceWidget::PushGuidance` then assigns with no guard. So an all-default
+      read is equally consistent with a push that SUCCEEDED and carried nothing -- an undecorated
+      rebuild, or one decorated for a different side. THREE branches, not two: `FindScoreboardHUD`
+      returns null, `GuidanceStrip` is null (excluded -- it is measured non-null), or the model
+      handed to `ApplyView` was never decorated. The third is the one this pass overlooked and it
+      is the cheapest to test. What is measured is only that the widget's copy is default; nothing
+      here establishes that no call was made.
   - **Driven both directions with no simulated input.** The guided opening was skipped on the model
     side and PROVED skipped: a second `ke * SkipGuidance` reported 1 instance succeeded while
     printing no "skipped by the player" line, that log sitting after the `!bActive` early return.

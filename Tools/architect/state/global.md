@@ -38,17 +38,18 @@ really 12:01 UTC** -- its own capture, `ScreenShot00059.png`, has mtime `08:01:0
 log line reading `12.01.00`, so that session ran FOUR HOURS EARLIER than its stamp reads and this
 11:30-local amendment is after it, not before it. Recorded rather than silently rewritten, because
 the same mislabel is what makes two entries look out of order.]
-**THE SUITE IS NOW 171/171.** The figure this banner carried until 2026-08-22 **was 160/160**,
-superseded here rather than deleted. 160 -> 171 by set-difference on
-`IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +11, none removed, column-0 anchored,
-and re-derived independently against `HEAD`, which still counts exactly 160 because the eleven new
-clauses live in two files that are not committed yet. Zero non-Success and `notRun` 0 across 171
+**THE SUITE IS NOW 181/181.** The figure this banner carried until 2026-08-22 **was 171/171**,
+and before that **was 160/160**; both are superseded here rather than deleted. 171 -> 181 by
+set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +10, none removed,
+column-0 anchored, and re-derived independently against `HEAD`, which counts exactly 171 because
+the ten new clauses live in one file that is not committed yet,
+`Source/StratPlay/Tests/StratProductionMenuSeam.cpp`. Zero non-Success and `notRun` 0 across 181
 entries, every one `Success`. The run is THIS tree's own, with the editor closed, and the report it
-wrote is `reportCreatedOn 2026.08.22-20.39.04` -- 16:39 local, because report stamps are UTC and
-this record's dates are not. All eleven new clauses are present in it by name, six under
-`Stratocracy.StratBridge` and five under `Stratocracy.StratUI`, every one carrying `GATE-BUILDMENU`.
-`Saved/SaveGames/` holds ZERO files and the directory mtime reads 16:39 local -- the run's own
-minute -- so the save-slot control is discharged on this pass rather than borrowed from the last.
+wrote is `reportCreatedOn 2026.08.22-22.40.50` -- 18:40 local, because report stamps are UTC and
+this record's dates are not. All ten new clauses are present in it by name, every one under
+`Stratocracy.StratPlay` and every one carrying `GATE-BUILDMENU`. `Saved/SaveGames/` holds ZERO
+files and the directory mtime reads 18:40 local -- the run's own minute -- so the save-slot control
+is discharged on this pass rather than borrowed from the last.
 WHAT THE TWO FIXES ARE. Defect 2 is fixed AT THE BUILD, NOT AT THE PUSH: `ApplyView`'s
 unconditional-push ruling is untouched and `BuildViewModelForPresentation` -- `BuildViewModel` plus
 one `ExecuteIfBound` on a new plain, single-cast, weak, unreflected `FStratViewDecorator` -- now
@@ -651,8 +652,20 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   - **WHAT STEP 3 ADDED, CITED AS SYMBOLS.** `FStratBridge::BuildOptions` is the new bridge seam,
     carrying the module's answer on the same two channels `Forecast` already uses -- `FStratResult`
     says whether the query was answerable, and a row's own `bAvailable` says whether it may be
-    built. A hex that is not a factory is a REFUSAL rather than an empty menu, which keeps `bOk`
-    false meaning one thing. `FStratBuildOptionView` is the reflected row, carrying `DefIndex`,
+    built. **[THE SENTENCE THAT STOOD HERE IS WITHDRAWN AS FALSE, 2026-08-22 -- it said "A hex
+    that is not a factory is a REFUSAL rather than an empty menu, which keeps `bOk` false meaning
+    one thing." It was never measured. `FStratBridge::BuildOptions` passes the factory hex through
+    UNTOUCHED and refuses only on unloaded definitions, an unseeded scenario, a side outside the
+    match, and an empty set; a hex that is not a build point is an ANSWER on each row's
+    `bAvailable`, carrying the module's own reason. THE HALF THAT SURVIVES IS THE ONE ABOUT
+    EMPTINESS -- a successful call always carries one row per §2.4 row, so an empty menu is never
+    an answer. THIS BULLET IS WHERE THE CLAIM ORIGINATED: it reached the step-4 kickoff note from
+    here, and the coordinator's dispatch brief carried it on into
+    `UStratMatchSubsystem::RefreshProductionMenu`'s declaration and into `engine.md`, all since
+    corrected. `strat-test-author` measured it false and refused the clause asserting it;
+    `GATE-BUILDMENU.ANonFactoryHexOpensAnUnavailableMenuAndIsNotRefused` pins the truth. Found by
+    `strat-integration-reviewer` gating step 4, which BLOCKED on this one finding.]**
+    `FStratBuildOptionView` is the reflected row, carrying `DefIndex`,
     `CostFame`, `bAffordable` and `bAvailable`; `StratBuildProductionMenu` fills a caller's array
     from it. **`bAffordable` is resolved module-side on purpose** -- T-UI-03 forbids widget-side
     arithmetic, and this is what stops the menu ever comparing a price to a purse.

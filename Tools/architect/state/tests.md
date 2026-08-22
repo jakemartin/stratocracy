@@ -10,6 +10,130 @@
 > in any other file is a finding, enforced by `strat_banner_sweep.py`'s RECORD OWNERSHIP check.
 > Everything under `## NEXT
 
+- **§2.11.5's production-menu SEAM on `UStratMatchSubsystem` is gated, and writing the
+  clauses measured the seam's own documentation to be WRONG about a refusal.** Ten clauses,
+  all under `GATE-BUILDMENU`, in one new file:
+  `Source/StratPlay/Tests/StratProductionMenuSeam.cpp`. Untracked at the time of writing;
+  staging is the user's call. The live suite figure for this pass is in
+  `Tools/architect/state/global.md` and is not restated here.
+  - **Why `GATE-BUILDMENU` and why a THIRD file under it.** `T-UI-04` asserts the menu
+    *binds*, which is in-editor over a widget that does not exist; nothing here constructs a
+    widget. The id already covers §2.11.5 TRANSPORT in `StratBuildOptionRouting.cpp`
+    (StratBridge) and `StratProductionMenuRouting.cpp` (StratUI). This file is the third and
+    the split is forced, not chosen: `StratPlay` is the only module that can see
+    `UStratMatchSubsystem`, `AStratUnitActor` and `FStratBridge` at once, which is what a
+    seam whose read is state, whose write is a rules command, and whose acceptance must reach
+    the BOARD actually needs. In either other module these are `LNK2019`, not tests.
+  - **THE FINDING THAT CHANGED THE CLAUSE LIST, and it has since been ACTED ON at the source.
+    `UStratMatchSubsystem::RefreshProductionMenu`'s declaration said "A hex that is not a
+    factory is REFUSED, in the bridge's own words". It was not.** `FStratBridge::BuildOptions`
+    sends "whether it is an objective at all, whether this side holds it, whether it is a
+    build point" out on `available`, never on the refusal channel -- its own comment says so
+    and StratBridge's `GATE-BUILDMENU.AnswersRideTheOkChannel` already pinned it one layer
+    down. So a non-factory hex OPENS a menu and `IsProductionMenuOpen()` goes TRUE for a hex
+    that is not a factory. The proposed clause "a non-factory hex is refused" was therefore
+    REFUSED as unwritable-as-specified, and
+    `ANonFactoryHexOpensAnUnavailableMenuAndIsNotRefused` pins what the code does instead.
+    A change that starts refusing turns it red on purpose; that redness is a decision
+    arriving, not a regression.
+    - **The disagreement is CLOSED, in favour of the code, and the clause did not move.**
+      `strat-gameplay-engineer` corrected `RefreshProductionMenu`'s block -- it now says a
+      non-factory hex opens a menu, and carries the withdrawn sentence beneath it under
+      `RETRACTED> ` rather than deleting it -- and corrected
+      `UStratMatchSubsystem::SubmitProductionChoice`'s `Bridge.Get() == nullptr` arm in the
+      same pass. The claim's ORIGIN was withdrawn in `Tools/architect/state/global.md`, from
+      which it had propagated into the kickoff note and the dispatch briefs. **The clause and
+      every assertion in it are byte-unchanged**: it was written against the CODE, and it is
+      the documentation that moved to meet it. Both prose sites in
+      `Source/StratPlay/Tests/StratProductionMenuSeam.cpp` -- the file header block and
+      `ANonFactoryHexOpensAnUnavailableMenuAndIsNotRefused`'s own block -- were re-pointed to
+      the past tense on 2026-08-22, because a caveat that goes stale by UNDER-claiming sends
+      the next reader to a site that agrees with the test and reads as if the correction never
+      happened. The sentences above stay as written for their own pass.
+      **[STAMPED 2026-08-22]**
+  - **The consequence for all-or-nothing, and it is why that clause looks strange.** Because
+    of the above, NO hex can produce a refused refresh on a live match. The only reachable
+    refusal is a viewing side outside the snapshot's sides, so
+    `ARefusedRefreshLeavesTheOpenMenuAndItsHexIntact` manufactures it with
+    `SetViewingSide(Model.Sides.Num())` -- deliberately leaning on that method's documented
+    non-range-check and documented non-rollback. The side count is read off the model; no
+    side count is written down. What the clause adds over StratUI's
+    `ARefusalLeavesTheCallersMenuIntact` is the HEX: the builder owns the array, the
+    subsystem owns `ProductionMenuHex` beside it, and only this file can see both.
+  - **What the other clauses pin.** `RefreshPublishesTheBridgesRowsInOrderAtTheHexAsked` --
+    field-for-field including ORDER against `StratBuildProductionMenu` on the same bridge in
+    the same frame, plus the published hex. `AnUnofferedDefIndexIsRefusedWithoutReachingThe-
+    Rules` and `SubmitWithNoMenuOpenIsRefusedWithoutReachingTheRules` -- both with
+    `FStratBridge::RecordedCommandCount()` as the control, because a bare `false` is the same
+    observable whether the seam declined to ask or asked and was told no, and the declaration
+    claims the first. `CloseEmptiesTheRowsForgetsTheFactoryAndSubmitsNothing`.
+    `AMenuDoesNotSurviveAReseed`. `AnAcceptedBuildReachesTheBoardWithNoManualRefresh` -- the
+    clause calls NOTHING after the submit, and the world's actor id set must equal the
+    rebuilt model's unit id set exactly.
+  - **The highest-value clause, and what it measures INSTEAD of the obvious thing.**
+    `AnAcceptedBuildLandsAtTheOpenMenusFactoryAndNoOther` does NOT check the new unit's hex:
+    §2.7 spawns at the factory hex OR AN ADJACENT ONE, so "standing on the factory" is not a
+    property that holds and measuring it would need an adjacency computation -- arithmetic
+    the gate would then be asserting against itself. It reads
+    `FStratFactoryView::bHasBuiltThisTurn`, the rules module's own per-factory record of
+    T-TURN-10's allowance keyed by hex, and requires that EXACTLY ONE factory's flag moved
+    and that it is `ProductionMenuHex`.
+  - **THE HONEST LIMIT OF THAT CLAUSE, and it is a `Data/` limit rather than a fixture one.**
+    On `ferrum_crossing.json` side 0 holds exactly ONE factory, so the fixture cannot exhibit
+    "built at the wrong factory the caller could legitimately have named". Measured, not
+    argued: the mutation below reddened it with *"factory is not held by this side"*, i.e.
+    via the rules refusing a hex this side does not hold, NOT via a unit appearing in the
+    wrong place. Distinguishing the two needs a scenario giving one side two factories -- a
+    `Data/` addition, vendored and hash-gated, writable from no lane in this repo.
+  - **The AI-turn refusal is reachable from outside the class, through a PRODUCTION seam.**
+    `bAiTurnRunning` is a private `TGuardValue` with no setter, but `RunAiTurnsNow` ends with
+    `RefreshPresentation()` STILL INSIDE the guard's scope, and that builds through
+    `BuildViewModelForPresentation`, which runs the registered `FStratViewDecorator`. So
+    `ASubmitDuringAnAiTurnIsRefusedAndRecordsNothing` submits from inside a decorator. Three
+    things make it non-vacuous: the decorator's FIRING is itself asserted (a removed seam
+    would otherwise leave it green having measured nothing); the menu is open and the index
+    is one the menu OFFERS, so only the AI arm can account for the refusal; and the count is
+    read on both sides of the call INSIDE the decorator, because the AI records into the same
+    bridge and a count taken outside would move for the AI's own reasons. Its own instrument
+    control is that the AI turn as a whole DID move the count.
+  - **Falsifiability MEASURED by two mutations inside `Tests/` only** -- production source is
+    not this lane's to touch even temporarily, so the pre-guard designs were simulated by
+    calling `FStratBridge::SubmitBuildAtHex` directly in place of `SubmitProductionChoice`.
+    M1 (a caller-supplied hex, at another factory) and M2 (submit with no reconcile) reddened
+    **exactly the two targeted clauses and no others**, M2 reproducing the defect verbatim:
+    *"actors [1..10] vs model [1..11]"* and *"the new unit 11 has an actor on the board ...
+    to be not null"*. Shipped bytes restored from a copy held outside the repo and proved
+    identical by `git hash-object` (`b1df955da5f95eb1f154a2dc4b1608ecf4975ed7` before and
+    after) -- never `git checkout --`, which rewrites LF to CRLF under `core.autocrlf=true`.
+  - **Technique reused and worth reusing again: enumerate the case list from the MODEL, never
+    pick a hex.** No hex literal appears anywhere in the file; the held factory, the other
+    factories and the first non-factory hex are all read out of `FStratViewModel`. This paid
+    immediately: the mutation reported the neighbouring factory as `(5, 2)` where the
+    scenario file writes `[6, 2]`, because `Factories` carries AXIAL coordinates and
+    `Data/ferrum_crossing.json` is authored in OFFSET. A clause that had transcribed a hex
+    from the data file would have been wrong and would have looked right.
+  - **Coverage assertions, so no clause can go vacuous in silence.** The non-factory clause
+    requires the SAME side in the SAME frame to produce an AVAILABLE menu at its held factory
+    (an absence and its control belong in one clause). The build clauses require an
+    affordable-AND-available row to exist, require the target factory's flag to be FALSE
+    before, and require the build to have actually spawned -- §2.7 HOLDS a build whose
+    factory is boxed in, so a build that spawned nothing would satisfy set equality for free.
+  - **What these ten clauses do NOT pin.** (a) Any rules-module buildlist behaviour -- that is
+    the crew repo's `GATE-BUILDLIST`, and a second opinion engine-side about a rule this tree
+    does not own is worse than none. (b) The `bAffordable`/`bAvailable` independence, already
+    pinned by StratUI's `AvailabilityAndAffordabilityAreIndependent`; nothing here re-asserts
+    it, and no clause anywhere asserts that "neither is the AND of anything" -- that phrasing
+    names no observable state and was declined. (c) That the forgotten `ProductionMenuHex` is
+    specifically the origin -- the close clause asserts only that it is no longer the factory
+    it was showing, because `FIntPoint(0, 0)` is a real hex on this board and writing it down
+    would make the clause a statement about a literal. A close that moved the hex to some
+    other non-opened value passes. (d) Anything about a menu WIDGET; no Slate, no
+    `UUserWidget`, all ten run headless under `-nullrhi`.
+  - **Slot hygiene held.** The one clause that plays a real AI turn names a slot of its own
+    (`StratocracyAutomation_ProductionMenuSeam`), deletes it on both ends, and leaves
+    `FStratMatchConfig::bRecordCompletionOnMatchEnd` at its C++ default rather than writing
+    the value down. `Saved/SaveGames/` was empty before the run and empty after it.
+
 - **§2.11.5's production-menu ROUTING is gated; the module's buildlist behaviour is not gated
   here and must not be.** Eleven clauses under a new id `GATE-BUILDMENU`, split across two files
   by what each can link against — `Source/StratBridge/Tests/StratBuildOptionRouting.cpp` (six)

@@ -64,6 +64,106 @@
 
 ---
 
+### 2026-08-22 — the reflected seam for §2.11.5's production menu (`UStratMatchSubsystem`)
+
+C++ only. No widget, no asset, no test — the WBP and the clauses are other lanes'. Build was
+`Build.bat StratocracyEditor Win64 Development` with the editor confirmed closed
+(`Get-Process UnrealEditor` empty): **Result: Succeeded**, 21 actions, 77.73 s, zero warnings.
+For the suite figure and any phase verdict see `global.md` — this file states neither.
+
+- **The seam went on `UStratMatchSubsystem` and not on `AStratScoreboardHUD`, and the WRITE
+  half is what decided it.** The HUD was the closer prior art on the read half — it has a
+  bridge, already hosts a second widget, and `RefreshScoreboard` is the exact shape
+  `RefreshProductionMenu` needed. Two things killed it. First, **an accepted Build puts a unit
+  on the board**, and the only thing in the project that can make the board agree with that is
+  `ApplyView`, which lives on the subsystem; a submit routed through the HUD would refresh the
+  scoreboard panel and leave the new unit unspawned until something else happened to reconcile
+  — a screen carrying a change its view model did not. Second, **the HUD is shedding its
+  bridge, not growing one**: `StratScoreboardHUD.h` states in advance that it must give up
+  bridge ownership once a proper owner exists, the subsystem IS that owner, and hanging a
+  MUTATING rules call off the borrower deepens the debt instead of discharging it. A
+  `UBlueprintFunctionLibrary` was the third shape and is structurally impossible rather than
+  merely worse: its statics would need an `FStratBridge&`, which is not a reflected type and
+  must never become one, so no Blueprint graph could ever supply the argument.
+- **No new `UCLASS`, and that is deliberate rather than incidental.** A WBP reaches the
+  subsystem with `Get World Subsystem` and derives from nothing of ours, so no
+  `/Script/Module.Class` parent is baked into an asset before anybody has decided who owns the
+  menu widget — a choice that is irreversible the moment an asset makes it. **The condition
+  that would discharge this into a `UStratProductionMenuWidget` base:** somebody deciding the
+  menu needs C++-side layout or a `BlueprintImplementableEvent` hook, which no caller needs
+  today.
+- **The submit takes no hex, and that is the one guard the engine adds.** `DefIndex` is
+  meaningful only as a row of the menu it was picked from, and `applyCommand` uses that field
+  as a raw bounds-checked-only index with no name lookup — the same property that makes
+  `DT_Units` row order load-bearing. A caller-supplied hex would let a widget pick row 2 of
+  factory A and build it at factory B, and the rules module would accept it silently.
+  `SubmitProductionChoice` reads the OPEN MENU's own hex, which removes the pairing rather than
+  checking it.
+- **On the SUBMIT path the engine refuses exactly one rules-shaped thing, and it is not a
+  legality question.** (The other two arms there are not rules-shaped: no live match, and an
+  AI turn in progress.) A `DefIndex` appearing in NO row of the open menu is refused locally
+  — a value the module never OFFERED.
+  `bAffordable` and `bAvailable` are **not read** on the submit path; whether the side can pay
+  and whether the factory will take a build are the rules module's answers and the submit asks
+  for them again from the authority that owns them. Nothing anywhere on this path ANDs the two
+  bits, which is T-UI-03's forbidden arithmetic — they are separate answers because
+  §2.11.5 shows them differently.
+- **The READ path has TWO CHANNELS and this seam collapses neither — and the prose that
+  shipped with this entry got the split backwards, so it is corrected here rather than
+  quietly.** `FStratBridge::BuildOptions` states it in its own declaration block:
+  `FStratResult` says whether the query could be ASKED; `bAvailable` and `Reason` on each row
+  say what the rules ANSWERED.
+  - **Riding the `FStratResult` refusal channel:** a bridge with no definitions loaded or no
+    scenario seeded; a SIDE outside the match — the one malformed-question case, refused in
+    the bridge rather than left to the module because `uiBuildOptions` spells "invalid side"
+    the same way it spells "not a build point"; and an EMPTY SET, which is unreachable with a
+    unit table loaded because the menu carries one row per §2.4 row.
+  - **Riding each ROW's `bAvailable` / `Reason`:** a factory this side does not hold, one that
+    has already taken its build this turn, one already holding a waiting build, and **a hex
+    that is not a build point at all**. The factory hex is therefore NOT pre-checked — not in
+    `FStratBridge::BuildOptions` and not in `UStratMatchSubsystem::RefreshProductionMenu` —
+    the way `Forecast` leaves the defender to the module.
+  **So a non-factory hex OPENS a menu and is not refused:** `IsProductionMenuOpen()` reads
+  true, every row reads `bAvailable` false with the module's own reason, and §2.11.5 draws
+  those reasons. A caller asking "is this hex a factory" must read the ROWS, never the return
+  value. **The opposite claim — that `UStratMatchSubsystem::RefreshProductionMenu` REFUSES a
+  hex that is not a factory — stood in this file and in that function's declaration block and
+  was never measured;** it reached both from a handoff note by way of the dispatch brief.
+  `strat-test-author` measured the tree independently, declined to write the clause asserting
+  it, and wrote `GATE-BUILDMENU.ANonFactoryHexOpensAnUnavailableMenuAndIsNotRefused` instead.
+  It is now **retracted in place** in that declaration block, and the `Bridge.Get() == nullptr`
+  arm in `UStratMatchSubsystem::RefreshProductionMenu` — which drew the same contrast in other
+  words, naming "that hex is not a factory" as a later refusal — is corrected beside it.
+  Corrected 2026-08-22; **no behaviour changed and no signature moved** — comment text only,
+  rebuilt to prove the headers still parse:
+  `Build.bat StratocracyEditor Win64 Development -project=… -waitmutex` with the editor
+  confirmed closed (`Get-Process UnrealEditor` empty), **Result: Succeeded**, 16 actions,
+  82.52 s, zero warnings.
+- **An empty array means "no menu open", and what makes that sound is one layer down.**
+  `StratBuildProductionMenu` REFUSES rather than producing an empty menu, so an empty array is
+  not a value any successful refresh can produce and is free to carry the marker.
+  `ProductionMenuHex` could not have carried it — `FIntPoint(0, 0)` is a real hex, and this
+  project has already paid once for treating a real default as an unset marker. **What would
+  break it:** a rules change making an empty buildlist a legal answer; the cost if it broke is
+  a refused submit, never a wrong build.
+- **`false` after an accepted command is possible and is stated rather than designed away.**
+  On acceptance the menu and then the screen are both rebuilt; the command is recorded and
+  irreversible by then, so a rollback is not on offer. Both rebuilds are attempted before
+  either is reported, and the reason is prefixed `build accepted, but …`.
+  `FStratBridge::RecordedCommandCount` is the disambiguator. Same trade `SetViewingSide`
+  documents about its own already-changed side.
+- **The header's "NOT IN THIS ROUND — submitting commands" bullet is RETRACTED IN PLACE for
+  Build and only for Build.** Its own stated condition — "a wrapper landed early is a wrapper
+  written without its caller" — was met: §2.11.5's menu is the caller. Move, Attack and
+  EndTurn still travel `FStratSelectionMachine` / `StratSubmitSelectionCommand` from
+  `AStratPlayerController`, because that is where a CLICK ON THE BOARD belongs and a menu pick
+  has no click and no selection to advance. **`SubmitCapture` still has no engine caller at
+  all** — the standing `## NEXT` entry above is untouched by this change.
+- **The menu is cleared in `TearDownPresentation`,** beside `AppliedModel`, because a buildlist
+  describes one factory in one `strat::GameState` and a reseed and a world death both
+  invalidate it.
+---
+
 ### 2026-08-21 — save-slot I/O and the §2.11.6 guided opening (lane B, merged at `1d6f758`)
 
 Built in the slot-1 worktree on `feat/save-and-guidance` off `870c611`, then rebuilt and re-run

@@ -66,10 +66,20 @@
 // (`StratScoreboardHUD.h`).
 //
 // NOT IN THIS ROUND, with reasons:
-// - Submitting commands. The five `FStratBridge::Submit*` methods exist and this class
-//   deliberately does not wrap them yet: phase 4 owns the PlayerController, the selection
-//   machine and the `STRAT-CMD accepted` log line, and a wrapper landed early is a wrapper
-//   written without its caller.
+// - Submitting commands -- STILL TRUE OF FOUR OF THE FIVE, AND NO LONGER TRUE OF BUILD.
+//   This bullet used to read, whole:
+//   RETRACTED> "Submitting commands. The five `FStratBridge::Submit*` methods exist and
+//   RETRACTED>  this class deliberately does not wrap them yet: phase 4 owns the
+//   RETRACTED>  PlayerController, the selection machine and the `STRAT-CMD accepted` log
+//   RETRACTED>  line, and a wrapper landed early is a wrapper written without its caller."
+//   Its own condition has now been met for Build and for Build alone: Sec 2.11.5's
+//   production menu is that caller, and `SubmitProductionChoice` below is the wrapper.
+//   Move, Attack and EndTurn are still reached through `FStratSelectionMachine` and
+//   `StratSubmitSelectionCommand` from `AStratPlayerController`, which is where a CLICK ON
+//   THE BOARD belongs; a menu pick has no board click and no selection state to advance,
+//   which is why it does not travel that path. Capture still has no engine caller at all.
+//   RETRACTED IN PLACE rather than deleted, because a reader who remembers the old claim
+//   needs to see WHICH HALF of it was withdrawn.
 // - Turn hand-over. §2.11's hot-seat swap changes the viewing side, and `SetViewingSide`
 //   below does exactly that and nothing more -- it submits no EndTurn, because whose screen
 //   this is and whose turn it is are different questions (`StratScoreboardHUD.h` on the same
@@ -658,6 +668,196 @@ public:
 	/** Which `strat` side the screen is drawn for. A reader and nothing else. */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
 	int32 GetViewingSide() const { return ViewingSide; }
+
+	// ---- Sec 2.11.5's production menu --------------------------------------
+	//
+	// WHY THIS CLASS AND NOT THE HUD, which was the other candidate and is the closest
+	// prior art in the tree. `AStratScoreboardHUD` has a bridge, already hosts a second
+	// widget (the Sec 2.11.6 strip) and already exposes a refresh in exactly this shape, so
+	// the READ half would have fitted there unchanged. The WRITE half decided it, twice
+	// over:
+	//   1. AN ACCEPTED BUILD PUTS A UNIT ON THE BOARD, and the only thing in this project
+	//      that can make the board agree with that is `ApplyView`, which is here. A submit
+	//      routed through the HUD could refresh the scoreboard panel and would leave the new
+	//      unit unspawned until something else happened to reconcile -- a screen carrying a
+	//      change the view model it was drawn from did not, which is the delta-shaped
+	//      thinking `FStratViewModel` was written to exclude.
+	//   2. THE HUD IS SHEDDING ITS BRIDGE, NOT GROWING ONE. `StratScoreboardHUD.h` states in
+	//      advance that it must give up bridge ownership once a proper owner exists; this
+	//      class IS that owner and `AdoptBridge` is the handover. Hanging a MUTATING rules
+	//      call off the borrower would deepen the dependency that debt exists to discharge.
+	//
+	// AND NOT A `UBlueprintFunctionLibrary`, which was the third shape considered and is
+	// structurally impossible rather than merely worse: every static there would need an
+	// `FStratBridge&` parameter, `FStratBridge` is not a reflected type and must never
+	// become one, so no Blueprint graph could ever supply the argument.
+	//
+	// THE WIDGET THEREFORE OWNS NO RULES AND HOLDS NO BRIDGE. A WBP reaches this with `Get
+	// World Subsystem`, binds to `ProductionMenu`, and calls the two functions below. It
+	// derives from nothing of ours -- which also means no `/Script/Module.Class` parent is
+	// baked into an asset before anybody has decided who owns the menu widget, and that
+	// choice is irreversible once an asset makes it.
+
+	/**
+	 * Rebuilds Sec 2.11.5's buildlist for ONE factory, for the side whose screen this is.
+	 *
+	 * THE SIDE IS `ViewingSide` AND IS DELIBERATELY NOT A PARAMETER. A side argument would
+	 * let a widget ask what the OTHER player could buy, which in a hot-seat game sharing one
+	 * screen is the whole of the information it must not leak. Whose TURN it is remains a
+	 * different question and remains the rules module's: asked out of turn the rows come
+	 * back with `bAvailable` false and the module's own reason, and this class asserts
+	 * nothing about it either way.
+	 *
+	 * ALL-OR-NOTHING, inherited from `StratBuildProductionMenu` and re-stated here because
+	 * the hex beside the rows is this class's and not the builder's: a refusal leaves BOTH
+	 * `ProductionMenu` and `ProductionMenuHex` exactly as it found them, so a transient
+	 * failure cannot blank a menu that was correct a moment ago.
+	 *
+	 * TWO CHANNELS, AND THIS FUNCTION ROUTES BOTH WITHOUT COLLAPSING EITHER. `FStratBridge::
+	 * BuildOptions` states the split in its own words: `FStratResult` says whether the query
+	 * could be ASKED, and `bAvailable` / `Reason` on each row say what the rules ANSWERED.
+	 *   - ON THE REFUSAL CHANNEL, so `false` from here: a bridge with no definitions loaded or
+	 *     no scenario seeded; a SIDE outside the match -- the one malformed-question case,
+	 *     refused in the bridge rather than left to the module because `uiBuildOptions` spells
+	 *     "invalid side" the same way it spells "not a build point"; and an EMPTY SET, which is
+	 *     unreachable with a unit table loaded, since the menu carries one row per Sec 2.4 row.
+	 *   - ON EACH ROW, so `true` from here with a full menu: a factory this side does not hold,
+	 *     one that has already taken its build this turn, one already holding a waiting build,
+	 *     and A HEX THAT IS NOT A BUILD POINT AT ALL. THE FACTORY HEX IS NOT PRE-CHECKED --
+	 *     not by the bridge and not here -- the way `Forecast` leaves the defender to the module.
+	 *
+	 * SO A NON-FACTORY HEX OPENS A MENU RATHER THAN REFUSING ONE, and every row of it reads
+	 * `bAvailable` false carrying the module's own reason. This paragraph claimed the opposite
+	 * and is RETRACTED IN PLACE, because a reader who remembers the old claim needs to see it
+	 * withdrawn and not silently absent:
+	 * RETRACTED> "A REFUSAL IS NOT AN EMPTY MENU, and nothing on this path converts one into
+	 * RETRACTED>  the other. A hex that is not a factory is REFUSED, in the bridge's own words."
+	 * The half that survives is the half about EMPTINESS, and it survives unchanged: an empty
+	 * array is never an answer to this question -- which is exactly what lets
+	 * `IsProductionMenuOpen()` read the rows below. Nothing on this path converts a refusal into
+	 * an empty menu, or an empty menu into a refusal.
+	 *
+	 * A CALLER ASKING "IS THIS HEX A FACTORY" MUST READ THE ROWS AND NOT THE RETURN VALUE, and
+	 * Sec 2.11.5 shows those reasons to the player, so there is nothing here for this class to
+	 * decide and no hex test for it to grow.
+	 *
+	 * ROW ORDER IS THE BRIDGE'S AND IS NEVER SORTED. `DefIndex` is a raw, bounds-checked-only
+	 * index into the definitions vector (`FStratBridge::SubmitBuildAtHex` records why), so a
+	 * reordering here would not be cosmetic -- it would be a different unit built.
+	 *
+	 * @param FactoryHex        X = q, Y = r -- the encoding `FStratFactoryView::Hex` already
+	 *                          carries, so a widget passes the view model's own value back in.
+	 * @param OutFailureReason  the refusing layer's own words, forwarded unchanged.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
+	bool RefreshProductionMenu(FIntPoint FactoryHex, FString& OutFailureReason);
+
+	/**
+	 * Submits the chosen row as a Sec 4.10 Build at the factory the OPEN MENU is for.
+	 *
+	 * IT TAKES NO HEX, AND THAT IS THE ONE GUARD THIS FUNCTION ADDS. `DefIndex` is meaningful
+	 * only as a row of the menu it was picked from; pairing a caller-supplied hex with it
+	 * would let a widget choose row 2 of factory A and build it at factory B, and the rules
+	 * module would accept that silently because `applyCommand` uses the field as a raw index
+	 * and never as a name. Taking the open menu's own hex removes the pairing rather than
+	 * checking it.
+	 *
+	 * IT DECIDES NO LEGALITY. `bAffordable` and `bAvailable` are NOT consulted here and must
+	 * not be: whether this side can pay, and whether this factory will take a build, are the
+	 * rules module's answers and it gets to give them again below in its own words. The only
+	 * thing refused locally is a `DefIndex` appearing in NO row of the open menu -- a value
+	 * the module never OFFERED, which is a different question from a value it offered and
+	 * would refuse.
+	 *
+	 * REFUSES DURING AN AI TURN, for `LoadMatchFromSlot`'s neighbouring reason: `RunAiTurnsNow`
+	 * is submitting into this same bridge, and interleaving a player command into that loop
+	 * would put two authors' commands into one recorded log.
+	 *
+	 * ON A REFUSAL NOTHING MOVES -- no command, no menu change, no redraw.
+	 *
+	 * ON ACCEPTANCE THE MENU AND THE SCREEN ARE BOTH REBUILT, in that order, because the build
+	 * changed both: the factory has now built this turn and the fame has been spent, so every
+	 * row is stale; and there is a unit in the rules with no actor. REBUILT AND NEVER PATCHED,
+	 * and reconciled through `RefreshPresentation` rather than by spawning anything here.
+	 *
+	 * IT DOES NOT CLOSE THE MENU. Whether the panel stays up after a build is a Sec 2.11.5
+	 * presentation question; `CloseProductionMenu` is the widget's answer to it, and closing
+	 * here would decide it in C++ for every skin.
+	 *
+	 * A `false` RETURN AFTER AN ACCEPTED COMMAND IS POSSIBLE, and it is stated rather than
+	 * designed away -- it is the same trade `SetViewingSide` documents about its own
+	 * already-changed side. The command is recorded and irreversible by the time the rebuild
+	 * runs, so a rollback is not on offer; what a caller gets is the rebuild's reason, prefixed
+	 * with "build accepted". `FStratBridge::RecordedCommandCount` is the disambiguator for a
+	 * caller that must tell "the build did not happen" from "the build happened and the redraw
+	 * did not".
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
+	bool SubmitProductionChoice(int32 DefIndex, FString& OutFailureReason);
+
+	/**
+	 * Closes the menu: empties the rows and forgets the factory.
+	 *
+	 * VOID AND UNREFUSABLE. Closing a menu that is not open is the state the caller asked for,
+	 * not a failure, and there is nothing a caller could do with the difference.
+	 *
+	 * IT SUBMITS NOTHING AND CANCELS NOTHING. There is no Sec 4.10 command for "changed my
+	 * mind": a build either was submitted or was not, and closing the panel is neither.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
+	void CloseProductionMenu();
+
+	/**
+	 * Whether a menu is open -- i.e. whether `ProductionMenu` describes a factory.
+	 *
+	 * IT READS THE ROWS AND IS NOT A SECOND BOOL BESIDE THEM, on this class's standing rule
+	 * against a mirror that can disagree with the thing it mirrors (see the absent `bSeeded`
+	 * at the bottom of this file). What makes that sound is a guarantee one layer down and not
+	 * a convention here: `StratBuildProductionMenu` REFUSES rather than producing an empty
+	 * menu, so an empty array is not a value any successful refresh can produce and is
+	 * therefore free to mean "none". `ProductionMenuHex` could NOT have carried the marker --
+	 * `FIntPoint(0, 0)` is a real hex, and this project has already paid once for treating a
+	 * real default as an unset marker.
+	 *
+	 * IT ANSWERS "A MENU IS OPEN" AND NEVER "THAT HEX IS A FACTORY", and the two come apart on
+	 * a real input. A refresh aimed at a hex that is not a build point SUCCEEDS -- the factory
+	 * hex is not pre-checked anywhere on this path, see `RefreshProductionMenu`'s two-channel
+	 * block -- so this reads true over a full menu whose every row is `bAvailable` false with
+	 * the module's own reason. That is the state Sec 2.11.5 draws, reasons and all;
+	 * `SubmitProductionChoice` does not consult those bits, so a build attempted from such a
+	 * menu is refused by the rules module in its own words and never by this class.
+	 *
+	 * WHAT WOULD BREAK IT: a rules change that made an empty buildlist a legal answer. The
+	 * cost if it broke is a refused submit, not a wrong build.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Production")
+	bool IsProductionMenuOpen() const { return !ProductionMenu.IsEmpty(); }
+
+	/**
+	 * Sec 2.11.5's rows for the open factory, IN THE ORDER THE RULES MODULE RETURNED THEM.
+	 *
+	 * THE ONE THING A WIDGET BINDS TO. `BlueprintReadOnly` and never writable: there is
+	 * exactly one writer, `RefreshProductionMenu`, and a menu a Blueprint could also write is
+	 * a menu with two authors and no way to tell which one the player is looking at.
+	 *
+	 * NOTHING IN A ROW MAY BE RECOMPUTED, COMBINED OR RE-DERIVED. `bAffordable` and
+	 * `bAvailable` are separate answers deliberately -- "you are still saving for this" and
+	 * "this factory has already built this turn" -- and Sec 2.11.5 shows them differently.
+	 * ANDing them in a binding is T-UI-03's forbidden widget-side arithmetic and would
+	 * collapse two states the player must be able to tell apart.
+	 */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Production")
+	TArray<FStratBuildOptionView> ProductionMenu;
+
+	/**
+	 * The factory `ProductionMenu` is for. X = q, Y = r.
+	 *
+	 * MEANINGLESS WHILE `IsProductionMenuOpen()` IS FALSE, and it is published anyway so a
+	 * widget can label the panel with the factory it is showing without keeping a second copy
+	 * of the hex it passed in. Read it only alongside the rows.
+	 */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Production")
+	FIntPoint ProductionMenuHex = FIntPoint(0, 0);
 
 	// ---- §4.10 save slots ---------------------------------------------------
 	// THIS CLASS OWNS WHERE A SAVE LIVES, and it is the only thing in the tree that does.

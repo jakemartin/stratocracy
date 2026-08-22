@@ -687,6 +687,159 @@ bool UStratMatchSubsystem::SetViewingSide(int32 InViewingSide, FString& OutFailu
 	return RefreshPresentation(OutFailureReason);
 }
 
+// ---------------------------------------------------------------------------
+// Sec 2.11.5 -- the production menu. TWO DIRECTIONS, ONE RULES AUTHORITY.
+//
+// EVERY ANSWER BELOW IS `FStratBridge`'S. The read is `StratBuildProductionMenu`, a StratUI
+// free function over `FStratBridge::BuildOptions`; the write is
+// `FStratBridge::SubmitBuildAtHex` unchanged. Nothing here filters a row, sorts a row,
+// combines two of a row's booleans, or decides that a build is legal -- see the
+// declarations for why each of those four was specifically refused.
+// ---------------------------------------------------------------------------
+
+bool UStratMatchSubsystem::RefreshProductionMenu(FIntPoint FactoryHex, FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	FStratBridge* const Live = Bridge.Get();
+	if (Live == nullptr)
+	{
+		// NAMED HERE rather than left to arrive as some later refusal. "There is no match" and
+		// "that side is outside this match" send the next reader to different files.
+		//
+		// THE CONTRAST THIS USED TO DRAW WAS THE WRONG ONE and is corrected rather than dropped:
+		// it named "that hex is not a factory" as the later refusal being distinguished from.
+		// That is not a refusal at all -- `FStratBridge::BuildOptions` does not pre-check the
+		// factory hex, so a non-build-point hex comes back as a FULL MENU with every row
+		// `bAvailable` false carrying the module's own reason. See the declaration's two-channel
+		// block for what rides which channel.
+		OutFailureReason = TEXT("there is no live match to open a production menu on");
+		return false;
+	}
+
+	// BUILT INTO A LOCAL AND MOVED ACROSS ONLY ON SUCCESS. `StratBuildProductionMenu` is
+	// already all-or-nothing on the array it fills; the hex beside it is ours, and written
+	// before the call it could move on a call that produced no rows.
+	TArray<FStratBuildOptionView> Built;
+	if (!StratBuildProductionMenu(*Live, ViewingSide, FactoryHex, Built, OutFailureReason))
+	{
+		// FORWARDED UNCHANGED AND NOT CONVERTED INTO AN EMPTY MENU. The caller keeps
+		// whatever menu it already had, which is what makes a transient refusal invisible
+		// to a player who was reading correct rows a moment ago.
+		return false;
+	}
+
+	ProductionMenu    = MoveTemp(Built);
+	ProductionMenuHex = FactoryHex;
+	return true;
+}
+
+bool UStratMatchSubsystem::SubmitProductionChoice(int32 DefIndex, FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	if (bAiTurnRunning)
+	{
+		// `RunAiTurnsNow` is submitting into this same bridge. `LoadMatchFromSlot` refuses
+		// on the same flag for the neighbouring reason.
+		OutFailureReason = TEXT(
+			"an AI turn is running; a player build would interleave into its command log");
+		UE_LOG(LogStratPlay, Warning, TEXT("Build refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	FStratBridge* const Live = Bridge.Get();
+	if (Live == nullptr)
+	{
+		OutFailureReason = TEXT("there is no live match to build in");
+		return false;
+	}
+
+	if (!IsProductionMenuOpen())
+	{
+		OutFailureReason = TEXT(
+			"no production menu is open, so there is no factory to build at and no row to build");
+		return false;
+	}
+
+	// THE PAIRING GUARD, AND THE ONLY THING THIS FUNCTION DECIDES. It asks whether the module
+	// OFFERED this row for this factory -- never whether the module would ACCEPT it.
+	// `bAffordable` and `bAvailable` are deliberately not read here: those are rules answers
+	// and the submit below asks for them again, freshly, from the authority that owns them.
+	const bool bOffered = ProductionMenu.ContainsByPredicate(
+		[DefIndex](const FStratBuildOptionView& Row) { return Row.DefIndex == DefIndex; });
+	if (!bOffered)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("definition index %d is not a row of the production menu open at (%d, %d)"),
+			DefIndex, ProductionMenuHex.X, ProductionMenuHex.Y);
+		return false;
+	}
+
+	// THE ONE WRITE. Routed through `SubmitBuildAtHex` so it is stamped `{turn, side}` and
+	// recorded in `RecordedLog()` on the same path as every other command -- that method's
+	// own block states the obligation, and a second, non-recording apply path is the precise
+	// defect `ReplayRecordedLogOnto` exists to make visible.
+	const FStratResult Applied = Live->SubmitBuildAtHex(ProductionMenuHex, DefIndex);
+	if (!Applied.bOk)
+	{
+		// REFUSED, AND THE MENU IS UNTOUCHED. Nothing moved in the rules, so nothing moves on
+		// screen: the player sees the same rows and the module's own sentence about them.
+		OutFailureReason = Applied.Reason;
+		UE_LOG(LogStratPlay, Warning, TEXT("STRAT-CMD refused: %s"), *OutFailureReason);
+		return false;
+	}
+
+	UE_LOG(LogStratPlay, Log,
+		TEXT("STRAT-CMD accepted: Build definition index %d at factory (%d, %d), menu drawn for side %d."),
+		DefIndex, ProductionMenuHex.X, ProductionMenuHex.Y, ViewingSide);
+
+	// THE MENU FIRST, THE SCREEN SECOND, AND BOTH BECAUSE THE BUILD CHANGED BOTH. The factory
+	// has now built this turn and the fame has been spent, so every row's answers are stale;
+	// and there is a unit in the rules with no actor beside it. Both are REBUILT from a freshly
+	// asked answer and neither is patched.
+	//
+	// A MENU REBUILD THAT REFUSES LEAVES THE PREVIOUS ROWS, by `RefreshProductionMenu`'s own
+	// all-or-nothing contract, and is reported rather than swallowed.
+	FString MenuReason;
+	const bool bMenuRebuilt = RefreshProductionMenu(ProductionMenuHex, MenuReason);
+
+	FString RefreshReason;
+	const bool bRefreshed = RefreshPresentation(RefreshReason);
+
+	// THE COMMAND IS ALREADY RECORDED AND CANNOT BE ROLLED BACK, so a failure past this point
+	// is REPORTED AND NOT UNDONE -- exactly what `SetViewingSide` documents about its own
+	// already-changed side. Both halves are attempted before either is reported, so a menu
+	// that could not rebuild does not also cost the board its redraw.
+	if (!bMenuRebuilt)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("build accepted, but the menu did not rebuild: %s"), *MenuReason);
+		UE_LOG(LogStratPlay, Warning, TEXT("%s"), *OutFailureReason);
+		return false;
+	}
+
+	if (!bRefreshed)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("build accepted, but the screen did not rebuild: %s"), *RefreshReason);
+		UE_LOG(LogStratPlay, Warning, TEXT("%s"), *OutFailureReason);
+		return false;
+	}
+
+	return true;
+}
+
+void UStratMatchSubsystem::CloseProductionMenu()
+{
+	ProductionMenu.Reset();
+
+	// THE HEX GOES WITH THE ROWS, for the reason `TearDownPresentation` clears `AppliedModel`
+	// beside `UnitActors`: a value left behind an emptied container reads like live state to
+	// anyone who consults it without consulting the container first.
+	ProductionMenuHex = FIntPoint(0, 0);
+}
+
 AStratUnitActor* UStratMatchSubsystem::FindUnitActor(int32 UnitId) const
 {
 	const TObjectPtr<AStratUnitActor>* const Found = UnitActors.Find(UnitId);
@@ -1259,6 +1412,13 @@ void UStratMatchSubsystem::TearDownPresentation()
 	// behind an emptied map would make that claim false for exactly as long as it took
 	// someone to read it.
 	AppliedModel = FStratViewModel();
+
+	// THE PRODUCTION MENU GOES WITH THE MATCH, not with the world. A buildlist describes one
+	// factory in one `strat::GameState`; carried across a reseed it would offer rows against a
+	// board that no longer exists, and `SubmitProductionChoice` would submit one at a hex the
+	// new scenario need not have a factory on. Cleared here rather than only in `Deinitialize`
+	// because a reseed and a world death are different events and both invalidate it.
+	CloseProductionMenu();
 
 	// THE BRIDGE IS NOT TOUCHED HERE, and the asymmetry with `Deinitialize` is the point.
 	// `StartMatchInternal` replaces it a few lines later with a `MakePimpl` whose assignment

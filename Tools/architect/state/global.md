@@ -586,7 +586,9 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     delivers a default. Engineer's lane, and the fix is a call site rather than a mechanism.
   - **Question (1) is ANSWERED AND ITS LEAD IS DEAD -- the answer is bigger than the question.**
     **[THE "LEAD IS DEAD" HALF IS RETRACTED -- see item 4 of the CORRECTION ending this bullet.
-    This run CORROBORATES that lead's open branch rather than killing it.]**
+    This run CORROBORATES that lead's open branch rather than killing it. The pixel and channel
+    wording in the rest of this sub-bullet is repaired there too, in the correction's trailing
+    paragraph.]**
     The screen is PIXEL-IDENTICAL in all three states: the same 56x38 rectangle at x 750-805,
     y 157-194, n=2128, in state A (`Guidance` default), in state B (fully populated, quoted above)
     and in state C after `ke * SkipGuidance` put it back to default. **A widget holding a 76-
@@ -631,8 +633,13 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
        model, all in frame 27 at `03.06.08:571`. **And that model was decorated with a POPULATED
        block, which is measured rather than inferred:** `FStratGuidedOpening::Begin` returns before
        the arming line on BOTH its early exits -- the `bSuppressed` branch and the `!Guided.bOk`
-       branch -- and sets `bActive = true` three lines above it, so the log line cannot be emitted
-       by an armed-but-inactive opening. A later reader asking "armed, but suppressed?" has the
+       branch -- and sets `bActive = true` on the same straight-line path above it, with no
+       intervening return, so the log line cannot be emitted by an armed-but-inactive opening.
+       (Cited that way on the second attempt: "three lines above it" was both WRONG -- it is
+       six --
+       and a positional citation, which this project forbids for the reason it keeps proving, that
+       the next edit to the function invalidates it.) A later reader asking "armed, but
+       suppressed?" has the
        answer here rather than a reopened question.
     2. **`FindScoreboardHUD` and `PushGuidance` are therefore NOT exonerated, and the bullet above
        had no evidence about them.** It tested them at t+2.5 s and t+6 s, when the strip already
@@ -654,8 +661,13 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
        over-closure closed over-tightly itself, one level down, which is the pattern this whole
        correction exists to break.) `CreateGuidanceWidget`'s own comment already names the
        shape: "The strip draws its
-       own defaults until the first `ApplyView`" -- it assumes a LATER `ApplyView` that, without
-       input, never comes.
+       own defaults until the first `ApplyView`" -- it assumes a LATER `ApplyView`, and whether one
+       comes without input is exactly what is NOT established here. (Third attempt at this item's
+       closure. The first over-closed, the second over-closed its own repair, and this one closes
+       nothing: the sentence that stood here said such an `ApplyView` "never comes", which is the
+       proposition labelled a non-control five sentences above it. A fix applied to the sentences a
+       gate enumerated, rather than derived over the whole passage, leaves the tail asserting what
+       the head withdrew -- the same shape as the marker-set miss, one paragraph down.)
     3. **The GetAll-based elimination is WITHDRAWN -- it used an instrument this same file rules
        out for that purpose four bullets down.** The 2026-08-21 entry says: a UMG property binding
        drives the Slate attribute and never writes the UPROPERTY back, so read `GetAll` for unbound

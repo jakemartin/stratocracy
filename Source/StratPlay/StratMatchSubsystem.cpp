@@ -526,6 +526,35 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 		It.RemoveCurrent();
 	}
 
+	// ---- Sec 2.11.6's guided-opening strip ----------------------------------
+	// THE THIRD SURFACE RECONCILED FROM THIS ONE VALUE, alongside the board and the units,
+	// and reached the same way they are: it is told what to show, it is not asked to find
+	// out. `Model.Guidance` was written by `FStratGuidedOpening::DecorateViewModel` before
+	// this call on the decorated path and is default-constructed -- `bActive` false -- on
+	// every other, so an undecorated rebuild CLEARS the strip rather than leaving the last
+	// directive standing. That is correct and not a gap: on that path the model really does
+	// say no guidance is running.
+	//
+	// UNCONDITIONAL, WITH NO BRANCH ON `bActive`. Skipping the push when guidance is
+	// inactive would make the strip's contents depend on the history of calls instead of on
+	// the current model, which is the delta-shaped thinking this whole function is written
+	// to exclude.
+	//
+	// THROUGH THE HUD BECAUSE THE HUD OWNS THE WIDGET. This class holds `TSubclassOf`s for
+	// the board and the unit actors and could have held one for the strip too -- it was
+	// rejected because creating a widget means `CreateWidget` and `AddToViewport`, and
+	// `StratPlay.Build.cs` would have had to name `UMG`, `Slate` and `SlateCore` to say
+	// those words. `AStratScoreboardHUD::PushGuidance` takes a reflected struct, so this
+	// module needs none of them. Its own header records the debt that arrangement creates.
+	//
+	// NO REASON STRING AND NO RETURN VALUE TO IGNORE. `PushGuidance` is void: with no strip
+	// configured there is nothing to do and nothing went wrong, which is a different thing
+	// from the scoreboard's refusable refresh in `RefreshPresentation`.
+	if (AStratScoreboardHUD* const HUD = FindScoreboardHUD())
+	{
+		HUD->PushGuidance(Model.Guidance);
+	}
+
 	// CACHED AFTER THE FACT AND NEVER READ BACK. See `GetViewModel`: this is a record of
 	// what was applied, not an input to anything above.
 	AppliedModel = Model;

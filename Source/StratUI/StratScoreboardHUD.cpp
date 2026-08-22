@@ -65,6 +65,8 @@
 
 #include "StratScoreboardHUD.h"
 
+#include "StratGuidanceWidget.h"
+
 #include "StratScoreboardWidget.h"
 #include "StratUI.h"
 
@@ -236,6 +238,36 @@ void AStratScoreboardHUD::BeginPlay()
 		return;
 	}
 
+	// THE GUIDANCE STRIP IS CREATED BEFORE THE SCOREBOARD BLOCK, AND THE ORDER IS THE
+	// WHOLE POINT. Everything below this line can return early -- an unset
+	// `ScoreboardWidgetClass` returns, a failed create returns, a refused first refresh
+	// returns -- and each of those is a statement about the SCOREBOARD. Sitting after any
+	// of them would make GDD Sec 2.11.6's strip silently conditional on Sec 2.11.4's panel
+	// being configured, which is two surfaces sharing one failure mode for no reason
+	// either of them gives.
+	//
+	// IT IS AFTER THE BRIDGE AND VIEWING-SIDE CHECKS, though, and that IS a real
+	// dependency: those two returns mean no match will be drawn at all, and a directive
+	// strip over a board that never seeded would be instructing the player about a game
+	// that is not running.
+	if (GuidanceWidgetClass == nullptr)
+	{
+		// Logged at Log and not recorded in `LastFailureReason`. That member answers "why
+		// is there no scoreboard", and overwriting it here would have a guidance sentence
+		// explain a scoreboard that is about to come up perfectly well.
+		UE_LOG(LogStratUI, Log,
+			TEXT("No guided-opening strip requested: no GuidanceWidgetClass is set on this HUD's Blueprint defaults."));
+	}
+	else if (!CreateGuidanceWidget(FailureReason))
+	{
+		// NOT A RETURN. A missing strip is not a reason to abandon the scoreboard, and the
+		// converse holds below. Reported at Warning rather than Error because the match
+		// remains fully playable without it -- Sec 2.11.6's guidance is an opening aid,
+		// and Sec 2.11.6-B's End Turn gate lives on the selection machine rather than on
+		// this widget, so nothing becomes unreachable when the strip is absent.
+		UE_LOG(LogStratUI, Warning, TEXT("No guided-opening strip this session: %s"), *FailureReason);
+	}
+
 	if (ScoreboardWidgetClass == nullptr)
 	{
 		// LEGITIMATE CONFIGURATION, NOT A FAILURE -- the header says so about this
@@ -303,6 +335,16 @@ void AStratScoreboardHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		Scoreboard->RemoveFromParent();
 		Scoreboard = nullptr;
+	}
+
+	// The strip goes down the same way and for the same reason. It holds no pointer into
+	// the bridge either -- `PushGuidance` copies a reflected struct in -- so the order
+	// between the two widgets is not load-bearing and is written out only so that a later
+	// change which does introduce a dependency has an obvious place to be wrong in.
+	if (GuidanceStrip != nullptr)
+	{
+		GuidanceStrip->RemoveFromParent();
+		GuidanceStrip = nullptr;
 	}
 
 	// TWO MEMBERS, TWO DIFFERENT ACTS, and the asymmetry is the whole content of the
@@ -443,6 +485,68 @@ bool AStratScoreboardHUD::CreateScoreboardWidget(FString& OutFailureReason)
 	// afterwards, so "the widget was created" and "the widget has data" fail separately
 	// and the log names which of the two went wrong.
 	return true;
+}
+
+bool AStratScoreboardHUD::CreateGuidanceWidget(FString& OutFailureReason)
+{
+	// Same shape as CreateScoreboardWidget above, deliberately, so that a reader who has
+	// understood one has understood both. Unset is handled by BeginPlay as a
+	// configuration rather than an error; reaching here with it null means someone called
+	// this directly, and that IS an error.
+	if (GuidanceWidgetClass == nullptr)
+	{
+		OutFailureReason = TEXT("GuidanceWidgetClass is unset");
+		return false;
+	}
+
+	APlayerController* const OwningPlayer = GetOwningPlayerController();
+	if (OwningPlayer == nullptr)
+	{
+		OutFailureReason = TEXT("this HUD has no owning player controller to parent the guidance strip to");
+		return false;
+	}
+
+	UStratGuidanceWidget* const Created =
+		CreateWidget<UStratGuidanceWidget>(OwningPlayer, GuidanceWidgetClass);
+	if (Created == nullptr)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("CreateWidget returned null for GuidanceWidgetClass '%s'"),
+			*GetNameSafe(GuidanceWidgetClass));
+		return false;
+	}
+
+	Created->AddToViewport(GuidanceZOrder);
+
+	// Assigned only after it is on screen, so `GuidanceStrip != nullptr` and "there is a
+	// strip" never disagree.
+	GuidanceStrip = Created;
+
+	// DELIBERATELY NOT PUSHED TO HERE, and the reason differs from the scoreboard's. The
+	// scoreboard could be refreshed at this point and is not, so that two failures stay
+	// distinguishable. This one CANNOT be: the value it wants is a field of a view model
+	// that only exists once `UStratMatchSubsystem` has seeded a match and built one, and
+	// this HUD has no way to ask for that without becoming a second thing that runs
+	// matches. The strip draws its own defaults until the first `ApplyView`.
+	return true;
+}
+
+void AStratScoreboardHUD::PushGuidance(const FStratGuidanceView& InGuidance)
+{
+	// THE ENTIRE BODY IS A NULL CHECK AND A FORWARD, and the header records why that is
+	// the design: no strip is a configuration, not a refusal, so there is nothing to
+	// report and nothing to log. A log line here would fire once per reconcile for the
+	// whole of a session that was configured exactly as intended.
+	//
+	// NO BRANCH ON THE VALUE. This function does not read `InGuidance.bActive`, does not
+	// show or hide the widget, and does not decide anything about the strip's appearance.
+	// `FStratGuidanceView` carries `bActive` precisely so the widget can bind visibility
+	// to it; a `RemoveFromParent` here would be this file forming a second opinion about
+	// when guidance is over, and Sec 2.11.6's window closing is not this class's fact.
+	if (GuidanceStrip != nullptr)
+	{
+		GuidanceStrip->PushGuidance(InGuidance);
+	}
 }
 
 bool AStratScoreboardHUD::RefreshScoreboard(FString& OutFailureReason)

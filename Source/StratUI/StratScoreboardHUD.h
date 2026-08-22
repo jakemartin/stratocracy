@@ -131,6 +131,44 @@
 // - Reacting to state changes automatically. There is no change notification to
 //   subscribe to, and inventing a tick-driven poll would make the scoreboard's update
 //   rate a frame-rate property instead of a turn property.
+//
+// ---------------------------------------------------------------------------
+// A DEBT TAKEN ON KNOWINGLY: THIS CLASS NOW HOSTS A SURFACE ITS NAME DOES NOT COVER.
+//
+// It also creates and owns GDD Sec 2.11.6's guided-opening strip -- `GuidanceWidgetClass`,
+// `GuidanceStrip`, `CreateGuidanceWidget` and `PushGuidance` below. That is a second
+// surface on a class called `AStratScoreboardHUD`, and the name is now narrower than the
+// job.
+//
+// WHY IT IS HERE ANYWAY, and the alternative that was measured against.
+// The only other candidate owner was `UStratMatchSubsystem`, which is where the push
+// comes FROM and which already holds `TSubclassOf` properties for the board and unit
+// actors. It was rejected on a module arrow: creating a widget means `CreateWidget` and
+// `AddToViewport`, so `StratPlay.Build.cs` would have had to name `UMG`, `Slate` and
+// `SlateCore` -- three new dependencies on a module whose own block records that every
+// existing arrow is load-bearing and measured. StratUI already declares all three
+// (privately) because it is the module that names `UUserWidget`. Widening this class is a
+// prose cost; widening that dependency list is a structural one, and the structural cost
+// is the one this project's constraints exist to avoid.
+// A HUD is also the only object in reach that has both an owning player controller to
+// parent a widget to and a lifetime that ends with the map -- the same three reasons this
+// class is an `AHUD` at all, restated for a second widget. And a player controller has
+// exactly one HUD, so "a separate guidance HUD" is not an available shape.
+//
+// THE CONDITION THAT DISCHARGES IT, stated so it is a debt and not a design: when a
+// Sec 2.11 UI-layer owner exists -- an `AStratHudBase` that both panels hang off, or a UI
+// subsystem that owns viewport widgets -- the four guidance members move there UNCHANGED
+// and this class goes back to being about the scoreboard. `PushGuidance` was given a
+// signature that survives that move: it takes a reflected struct by const reference and
+// touches no member of this class other than the widget pointer, so relocating it is a
+// cut and paste plus one call-site edit in `UStratMatchSubsystem::ApplyView`. This is the
+// same shape as the bridge-ownership debt recorded above, and it is written down here for
+// the same reason: a debt nobody wrote down is indistinguishable from a decision.
+//
+// WHAT THE TWO SURFACES DO NOT SHARE, deliberately. The scoreboard builds its own model
+// FROM THE BRIDGE; the strip is HANDED a value that came from the view model. They have
+// different sources on purpose and there is no path below on which one can become the
+// other's input -- `PushGuidance` never touches `GetBridge()`.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -144,7 +182,13 @@
 // never become an include in this file.
 class FStratBridge;
 class UDataTable;
+class UStratGuidanceWidget;
 class UStratScoreboardWidget;
+
+// A reflected struct, forward declared because it appears only in a NON-reflected
+// signature (`PushGuidance`). UHT never has to size it here, and this file stays free of
+// an include it would otherwise carry only to pass a value straight through.
+struct FStratGuidanceView;
 
 /**
  * Owns a live `FStratBridge`, seeds it from the shipped scenario, and puts §2.11.4's
@@ -333,6 +377,35 @@ public:
 	TObjectPtr<UStratScoreboardWidget> Scoreboard;
 
 	/**
+	 * Hands GDD Sec 2.11.6's guidance projection to the strip, if there is a strip.
+	 *
+	 * NOT A UFUNCTION, and for a different reason than the ones above it: every argument
+	 * here IS reflectable. It is plain C++ so that Blueprint has no way to state a
+	 * guidance value. The strip must be readable off `FStratViewModel::Guidance` alone --
+	 * see `UStratGuidanceWidget`'s header on why a reflected setter would make the screen
+	 * a thing two authors can write.
+	 *
+	 * VOID AND UNREFUSABLE, matching `UStratMatchSubsystem::ApplyView`, which is its only
+	 * caller. Reconciliation is not a request that can be declined; it is the act of
+	 * making the screen agree with a value already decided. There is nothing a caller
+	 * could do with a failure here.
+	 *
+	 * NO STRIP IS A NO-OP AND NOT A REFUSAL, and this is the one judgement in the
+	 * function. An unset `GuidanceWidgetClass` is a legitimate configuration -- exactly as
+	 * `ScoreboardWidgetClass` is, and recorded once at BeginPlay in the same words. A
+	 * `bool` return here would have been false on every reconcile of every session that
+	 * ships without a strip, which is a warning that means "configured as intended" and
+	 * therefore means nothing.
+	 */
+	void PushGuidance(const FStratGuidanceView& InGuidance);
+
+	/** The guided-opening strip, or null when none was configured or setup refused.
+	 *  Read-only for the same reason `Scoreboard` is: this HUD creates and owns it, and a
+	 *  second creator is a second lifetime to reason about. */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Guidance")
+	TObjectPtr<UStratGuidanceWidget> GuidanceStrip;
+
+	/**
 	 * Why there is no scoreboard, when there is none. Empty on success.
 	 *
 	 * Kept as state rather than only logged, because a log line is gone by the time
@@ -439,6 +512,28 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Scoreboard")
 	int32 ScoreboardZOrder = 0;
 
+	/**
+	 * The WBP_ asset deriving from UStratGuidanceWidget -- `WBP_DirectiveStrip`.
+	 *
+	 * A `TSubclassOf` set on a Blueprint default, never a ConstructorHelpers path literal,
+	 * for the reason the scoreboard's copy of this property gives.
+	 *
+	 * UNSET IS A LEGITIMATE CONFIGURATION AND NOT AN ERROR. A session that wants the match
+	 * to run with no guided opening on screen leaves it empty; the .cpp says so in the log
+	 * at Log level and finishes setup. Note what this does NOT do: leaving it unset does
+	 * not stop `FStratGuidedOpening` advancing beats, because the beat machine is not a
+	 * property of the screen. It only means nothing draws the directive.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Guidance")
+	TSubclassOf<UStratGuidanceWidget> GuidanceWidgetClass;
+
+	/** Viewport Z-order for the guidance strip. Defaults ABOVE `ScoreboardZOrder` because
+	 *  Sec 2.11.6-B's strip is a foreground instruction and the scoreboard is persistent
+	 *  chrome; both remain properties so the layering is a designer's call, not this
+	 *  file's. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Guidance")
+	int32 GuidanceZOrder = 10;
+
 	// ---- Setup steps, split so a failure names the step that refused --------
 	// Each returns false with the refusing layer's own reason rather than logging and
 	// swallowing it, so BeginPlay can record one reason in `LastFailureReason` and the
@@ -451,6 +546,12 @@ protected:
 	 *  BeginPlay refreshes once afterwards, so that "created" and "has data" fail
 	 *  separately and a reader of the log can tell which one went wrong. */
 	bool CreateScoreboardWidget(FString& OutFailureReason);
+
+	/** Creates the configured guidance strip and adds it to the viewport. Does NOT push a
+	 *  value into it: there is no view model to push until a match is running, and this
+	 *  HUD is not the thing that runs one. It stays showing whatever its own defaults draw
+	 *  until `UStratMatchSubsystem::ApplyView` reconciles it for the first time. */
+	bool CreateGuidanceWidget(FString& OutFailureReason);
 
 private:
 	/**

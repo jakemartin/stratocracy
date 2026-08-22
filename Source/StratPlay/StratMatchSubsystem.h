@@ -467,6 +467,26 @@ public:
 	 *
 	 * DOES NOT TOUCH THE SCOREBOARD. The HUD projects from the bridge itself and has its own
 	 * refresh; driving it from here would give the panel two sources.
+	 *
+	 * IT DOES PUSH GDD Sec 2.11.6'S GUIDANCE STRIP, and the asymmetry with the scoreboard
+	 * above is the reason rather than an inconsistency. `Model.Guidance` is a FIELD OF THIS
+	 * ARGUMENT -- written by `FStratGuidedOpening::DecorateViewModel` on the decorated path,
+	 * default-constructed and inactive on every other -- so pushing it here gives the strip
+	 * ONE source, the same one the board and the units were drawn from. The scoreboard has
+	 * its own projection off the bridge and would have gained a second; the strip has none
+	 * and would otherwise have no route at all.
+	 *
+	 * IT IS HERE AND NOT IN `RefreshPresentation`, which is the load-bearing half of that
+	 * choice. `RefreshPresentation` is the UNDECORATED path; the decorated one --
+	 * `AStratPlayerController`, build -> `Observe` -> decorate -> `ApplyView` -- calls this
+	 * function directly, and that is the only path on which guidance is ever non-default. A
+	 * push in `RefreshPresentation` would therefore have been a push that never carried a
+	 * live directive, and would have missed every frame that did.
+	 *
+	 * WHICH MAKES A STALE DIRECTIVE STRUCTURALLY IMPOSSIBLE rather than merely unlikely: an
+	 * undecorated rebuild pushes an INACTIVE view and clears the strip, because the model
+	 * really does say guidance is not running on that path. Reconciled, not evented -- the
+	 * same property the unit set difference above has.
 	 */
 	void ApplyView(const FStratViewModel& Model);
 

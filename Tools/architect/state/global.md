@@ -11,6 +11,78 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-21 (THE GUIDANCE ROUTE LANDED AND THE THREE WIDGETS ARE NO LONGER INERT BY
+DESIGN -- though nothing has DRAWN yet, and that distinction is kept below rather than blurred.
+The suite **is now 148/148**, 141 -> 148 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
+walked over `Source/` -- +7, none removed, derived independently three times and never
+incremented -- zero non-Success, `notRun` 0, `reportCreatedOn 2026.08.21-23.56.04`. Build
+`Result: Succeeded`, `REAL_EXIT=0`.
+WHAT CLOSED THE GAP THE LAST ENTRY NAMED. `UStratGuidanceWidget` (`Source/StratUI/`) is a
+`UCLASS(Abstract, Blueprintable)` `UUserWidget` holding `UPROPERTY(BlueprintReadOnly, Transient)
+FStratGuidanceView Guidance`, a `BlueprintImplementableEvent` refresh hook, and a NON-REFLECTED
+`PushGuidance`. Lifetime is owned by `AStratScoreboardHUD`; the push happens in
+`UStratMatchSubsystem::ApplyView`. `GetViewModel()` was NOT made a `UFUNCTION` -- its header
+comment is a ruling with a stated reason, not an oversight, and it stands untouched.
+TWO ENGINEERING CALLS WERE BETTER THAN THE BRIEF THAT COMMISSIONED THEM, and the gate improved
+on one again. Widget lifetime sits on the HUD rather than the subsystem because creating a
+widget from StratPlay would have forced `UMG`, `Slate` and `SlateCore` into `StratPlay.Build.cs`;
+no `.Build.cs` changed and no arrow moved. And the push is in `ApplyView` rather than
+`RefreshPresentation` because the latter is the UNDECORATED path -- the reviewer then traced it
+further and found `RefreshPresentation` ITSELF calls `ApplyView`, so a push there would have been
+a DOUBLE push on that path, not merely a dead one. The header records the weaker of the two
+reasons.
+THE ACCEPTANCE ID WAS RULED `T-INT-05`, AGAINST THE ENGINEER'S PROPOSAL, AND THE GATE AGREED
+INDEPENDENTLY. `T-UI-02` is *"the UI queries the module and never recomputes movement"* -- a
+query-result comparison of the highlight set against `Move.h::reachable`. `T-UI-06` is the beat-1a
+AVAILABILITY property, and its own spec warns that a clause reaching past availability *"has
+wandered back into `T-UI-02`"*. These seven pin neither: they pin TRANSPORT, which is
+`T-INT-05`'s *"rebuild the screen from the view model alone"*. Precedent decided it rather than
+taste -- `T-INT-05.LockArisesFromTheGuidanceLayer` ALREADY files guidance-layer state reaching
+presentation under this ID, and `T-INT-05.ApplyViewSpawnsMovesAndDestroys` is the direct sibling
+of the new `ApplyViewPushesTheModelsGuidance`. Two consequences worth naming: no ID was minted,
+nothing went upstream, and the `T-UI-02` PARTIAL FIT recorded above was not deepened by seven
+more clauses.
+NO CLAUSE TYPES A GUIDANCE FIELD VALUE ANYWHERE. Equality is
+`FStratGuidanceView::StaticStruct()->CompareScriptStruct` and every varied shape comes from
+`TFieldIterator<FProperty>`, so no `FString`/`FText` comparison appears in any assertion and the
+case-insensitivity trap -- which has already produced one clause that could not fail -- cannot
+bite. One of the seven is an INSTRUMENT CONTROL: `GuidanceComparisonDistinguishesViews` forces
+the comparator to answer NO once per declared field before any sibling relies on it answering
+YES, and asserts `FieldsSeen > 0` so an empty iteration cannot pass it vacuously.
+THE STANDING SAVE CONTROL IS DISCHARGED ON THIS PASS AND NO LONGER BORROWED. `Saved/SaveGames/`
+held ZERO files before and after, and the directory mtime MOVED, 11:54:15 -> 19:56:04, so the
+absence was measured here rather than inherited from a neighbouring run. The borrowed 13:56:49
+stamp the last two entries carried is retired.
+A BRIEF OF MINE WAS WRONG AND IT COST A RED BUILD. I assumed the test-only concrete subclass could
+live in `Source/StratPlay/Tests/`. `UMG` is a PRIVATE dependency of StratUI, so StratPlay cannot
+name `UStratGuidanceWidget` by include or by link: ~60 `LNK2019` in `Module.StratPlay.gen.cpp.obj`.
+The author refused to fix it by editing `StratPlay.Build.cs`, which is outside its lane, and split
+the clauses across two modules behind a UMG-free probe instead. The gate confirmed the probe leaks
+no UMG type and no `.Build.cs` moved.
+TWO RESIDUES, NAMED RATHER THAN DISCOVERED LATER. `AStratScoreboardHUD::PushGuidance`'s literal
+SOURCE SHAPE is not pinned: automation cannot read a function body, and a `.cpp` text scan would
+flake on a comment edit while passing on an unexpected branch form. What IS pinned is one
+distinguishable shape per declared field, each preceded by a clear-to-default push so "unchanged"
+cannot be satisfied by a resident value -- but A BRANCH THAT READS A FIELD AND CHANGES NOTHING
+SURVIVES IT, and the green tick is not proof the source is field-blind. Separately,
+`AlterOneField` reinterprets ANY `FStructProperty` as an `FIntPoint` while its own block promises
+to refuse kinds it cannot vary; harmless today because `FIntPoint` is the struct's only such
+field, but it is the reflection-driven design's ONE typed assumption and it is the going-inert
+failure that design exists to avoid, relocated. Gate it on
+`TBaseStructure<FIntPoint>::Get()`. OWED BY `strat-test-author`.
+STILL NOT DRAWN, AND THIS IS THE HONEST STATE OF IT. `WBP_DirectiveStrip` is not yet reparented
+onto `UStratGuidanceWidget` and `BP_StratScoreboardHUD` has no `GuidanceWidgetClass` set, so the
+route compiles, is pinned by seven clauses, and puts nothing on screen. The reparent must DELETE
+the Blueprint's own `Guidance` variable rather than rename the C++ property -- renaming would
+orphan all 33 bindings -- and a Set node on that variable would fail to compile against the
+inherited `BlueprintReadOnly` one. MEASURED BEFOREHAND: `WBP_DirectiveStrip` holds 21 nodes, 4 of
+them `Get Guidance` and ZERO `Set`, with the detector controlled by planting a real `Set Guidance`
+node in a throwaway widget and confirming it was seen. `CreateGuidanceWidget` and `GuidanceZOrder`
+stay unpinned until then, because they end in `AddToViewport` and a `-nullrhi` run has no viewport.
+Gated twice, PASS both times, zero findings each: once over the C++ alone, once over the clauses
+as a post-pass change.)
+
+
 _Last run 2026-08-21 (2.11.6'S FIRST THREE SURFACES ARE BUILT AND THE FIRST GATE ON THEM RETURNED
 `VERDICT: BLOCK` -- ON THIS VERY RECORD'S ABSENCE, WHICH IS WHY THIS ENTRY EXISTS. `Content/UI/`
 gained `WBP_DirectiveStrip`, `WBP_PreMatchBriefing` and `WBP_OneShotTip`, authored by the
@@ -144,7 +216,7 @@ crew `a8c8cdb`, is unchanged and still waits on a Director.]_
 _Last run 2026-08-21 (THE SHIPPED OPT-IN LANDED AND THE CLAUSE THAT PINS IT IS NO LONGER
 OWED. `BP_StratGameMode`'s `MatchConfig` now carries `bRecordCompletionOnMatchEnd` TRUE, so the
 packaged game records a completed match and §2.11.6's guided opening retires instead of
-re-arming for every player forever. The suite **is now 141/141**, 140 -> 141 by set-difference
+re-arming for every player forever. The suite **was 141/141** at that pass, 140 -> 141 by set-difference
 on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +1, none removed -- zero
 non-Success, `notRun` 0. Build `Result: Succeeded`, `REAL_EXIT=0`, and the new translation unit
 is named in the build log as `[3/7] Compile StratShippedGameModeOptIn.cpp` rather than assumed

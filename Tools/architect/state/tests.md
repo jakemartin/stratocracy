@@ -10,6 +10,75 @@
 > in any other file is a finding, enforced by `strat_banner_sweep.py`'s RECORD OWNERSHIP check.
 > Everything under `## NEXT
 
+- **§2.11.6's guidance route is pinned by six clauses under `T-INT-05`, and writing them
+  measured a module boundary the brief had not accounted for.** New files, all in `Tests/`:
+  `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp` (six macros — five clauses plus one
+  instrument control) and `Source/StratUI/Tests/StratGuidanceStripClauses.cpp` (one), with
+  `Source/StratUI/Tests/StratGuidanceRouteDouble.h` and `StratGuidanceRouteProbe.h/.cpp` as the
+  fixture. Untracked at time of writing; staging is the user's call. The live suite figure for
+  this pass is in `Tools/architect/state/global.md` and is not restated here.
+  - **THE MEASUREMENT THAT SHAPED EVERY FILE: `UMG` is a PRIVATE dependency of StratUI**
+    (`StratUI.Build.cs`). A `UUserWidget` subclass therefore cannot be declared in StratPlay,
+    and StratPlay cannot name `UStratGuidanceWidget` at all — not by include (the path to
+    `Blueprint/UserWidget.h` is not exposed) and not by link. Measured as ~60 `LNK2019`s in
+    `Module.StratPlay.gen.cpp.obj` naming `UUserWidget::NativeTick`, `::Initialize`,
+    `::RebuildWidget` and friends, from a first attempt that put the test double in
+    `Source/StratPlay/Tests/`. `AStratScoreboardHUD.h` already records the same boundary from
+    the other side: it FORWARD DECLARES the widget and holds a `TObjectPtr`, precisely so
+    StratPlay can include the HUD without acquiring UMG. **The consequence for this lane is
+    permanent: any future clause that must touch a StratUI widget AND a StratPlay type needs a
+    UMG-free probe in `Source/StratUI/Tests/`, not a shared header.** That probe is
+    `StratGuidanceRouteProbe.h` — every signature in it is expressible in types StratPlay
+    already has (`AStratScoreboardHUD*`, `FStratGuidanceView&`).
+  - **What each clause pins.** `ApplyViewPushesTheModelsGuidance` — the value reaching the strip
+    is the ARGUMENT's `Model.Guidance`, and it deliberately also asserts the strip does *not*
+    match a fresh undecorated `BuildViewModel`, which is what a re-query would have produced.
+    `UndecoratedRebuildClearsTheStrip` — the sharpest one: an active view applied, then a model
+    with no decorate step applied over it; the strip must agree with the LAST model and not the
+    union. That is the falsification test for the widget's copy becoming an independent source
+    of truth. `ReconcileCompletesWithNoStripConfigured` — the board and units still reconcile by
+    set difference with no strip, and no strip is invented; needs no asset.
+    `StripHoldsWhatItWasPushed` — `UStratGuidanceWidget::PushGuidance` assigns unconditionally,
+    including an inactive push over an active one, reached by a probe that bypasses the HUD so
+    a regression names the widget rather than the HUD. `HudForwardsEveryGuidanceShapeUnchanged`
+    — see the caveat below. `Stratocracy.StratUI.T-INT-05.GuidanceHasNoBlueprintWriter` —
+    neither `PushGuidance` is reflected, `Guidance` is `BlueprintReadOnly` and is exactly
+    `FStratGuidanceView`, `GuidanceStrip` is read-only, `GuidanceWidgetClass` is
+    `EditDefaultsOnly`.
+  - **WHAT `HudForwardsEveryGuidanceShapeUnchanged` DOES NOT PIN, and this is the honest
+    limit.** The property asked for was "no `FStratGuidanceView` field is read inside
+    `AStratScoreboardHUD::PushGuidance`". An automation test cannot read a function body, and a
+    clause that scanned the `.cpp` text would fail on a comment edit and pass on a branch
+    written in an unexpected form — a flake, not a gate. What is measured instead is the
+    observable consequence: one distinguishable shape per field the struct declares, each
+    required to arrive at the strip unaltered. **A branch that reads a field and changes
+    nothing survives this clause.** That is not a defect, but a reader must not take the green
+    tick as proof the method's source is field-blind.
+  - **Technique worth reusing: compare through the struct's own reflection data, never a typed
+    field list.** `SameGuidance` is `FStratGuidanceView::StaticStruct()->CompareScriptStruct`.
+    A hand-written field-by-field comparison would go silently incomplete the day the struct
+    grows an eleventh field, and the clause it feeds would still pass — the exact way a parity
+    test stops testing. Same reason `AlterOneField` picks its target by walking
+    `TFieldIterator<FProperty>` and REFUSES (with a reason the caller reports) on a property
+    kind it cannot vary, rather than skipping it. Side benefit: no `FString`/`FText` comparison
+    appears in any assertion, so this file is immune to the case-insensitivity trap;
+    `CompareScriptStruct` uses `FProperty::Identical`, which is not case-folding.
+  - **The comparator has its own control, `GuidanceComparisonDistinguishesViews`, and it is one
+    of the six macros.** It shows `CompareScriptStruct` answering NO once per declared field
+    before any clause relies on it answering YES. Without it every clause in the file would be
+    green under a comparator that returned true unconditionally.
+  - **Fixture caveat: `AStratScoreboardHUD::BeginPlay` is NOT dispatched by these clauses**,
+    unlike `StratMatchLifecycle.cpp`'s fixture. `CreateGuidanceWidget` ends in `AddToViewport`,
+    which a headless `-nullrhi` run has no viewport for; the strip is installed directly onto
+    `GuidanceStrip` — the same member that method assigns. **So nothing here pins
+    `CreateGuidanceWidget` itself, nor the `GuidanceZOrder` layering.** Those are the editor
+    lane's, and need `WBP_DirectiveStrip` reparented onto `UStratGuidanceWidget` first.
+  - **`UStratGuidanceWidget` is `UCLASS(Abstract)` and that ruling was not weakened.** The
+    concrete class is `UStratGuidanceRouteDouble` in `Source/StratUI/Tests/`, which adds and
+    overrides *nothing* — no `PushCount`, no captured-argument member. A double that recorded
+    its own copy would let a clause pass by comparing the double's bookkeeping against itself
+    while the inherited `Guidance` property, the one a WBP binds to, was never written.
+
 - **The completion hook now has an OPT-IN, the fixtures declare it in writing, and the trap that
   made it necessary is gated rather than remembered.** The reviewer blocked the previous pass on
   a measured defect: `FStratMatchConfig::SaveSlotName` defaults to `TEXT("StratocracyMatch")` —

@@ -1211,7 +1211,19 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   vendored commit is **18 commits**, re-derived with `git rev-list --count` rather than
   incremented from the seventeen and eighteen recorded in older banners; none of the 24 vendored
   files moved in that span, so there is no re-vendor pressure yet and `Source/StratRules/` here
-  is current. **Three residual decisions the ruling deliberately did not settle are already
+  is current. **[SUPERSEDED WITHIN THE HOUR BY THIS SESSION'S OWN WORK, 2026-08-22
+  — the gap is NINETEEN, not the eighteen recorded one commit earlier in this same file.**
+  The Director's rulings on the three residual questions were committed to the crew repo at
+  `6532a46`, which is a nineteenth commit over `cb8e12b`. Re-derived with
+  `git rev-list --count cb8e12b..HEAD` after that commit rather than incremented, for the same
+  reason the 2026-08-21 banner gives when its own count moved. **The rest of the sentence still
+  holds and is the part that matters:** `git diff --name-only cb8e12b..HEAD -- cpp_reference/`
+  returns only `test_balance.cpp`, `test_replay.cpp` and `test_save.cpp`, none of which is among
+  the 24 vendored files, so no vendored byte has moved, there is still no re-vendor pressure, and
+  `Source/StratRules/` here is still current. A gap that grows by spec commits is not a gap that
+  owes a re-vendor. **What DID change is the blocker's shape:** with `6532a46` every decision
+  blocking `uiBuildOptions` is ruled, so the item is no longer waiting on a Director at all —
+  it waits on one header change in `cpp_reference/Ui.h` plus two comment corrections.] **Three residual decisions the ruling deliberately did not settle are already
   filed upstream** — affordable-only vs all four rows with a module-computed `affordable`
   (upstream recommends all four), what factory state does to the answer (Q31), and whether the
   per-type population cap binds the player — and they await a Director ruling, not another

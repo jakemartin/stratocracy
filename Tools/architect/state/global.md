@@ -11,13 +11,21 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
-_Last run 2026-08-22 (THREE CLAUSES LANDED AND THE STRIP WAS SEEN TO DRAW BLANK. Two separate
+_Last run 2026-08-21 (THREE CLAUSES LANDED AND THE STRIP WAS SEEN TO DRAW BLANK. Two separate
 things in one merge, and neither is the other's evidence.
 THE SUITE **IS NOW 151/151**, 148 -> 151 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
 walked over `Source/` -- +3, none removed, column-0 anchored, re-derived independently by the gate
 in the merged tree (SIMPLE 151, COMPLEX/_CLASS 0) and never incremented from a brief -- zero
 non-Success, `notRun` 0, 151 entries, `Counter({'Success': 151})`. Build `Result: Succeeded`,
 `REAL_EXIT=0`; report `reportCreatedOn 2026.08.22-02.46.56`.
+DATES IN THIS RECORD ARE LOCAL; `reportCreatedOn` AND THE LOG ARE UTC, and this entry was first
+written dated A DAY AHEAD because its date was taken off a UTC stamp. Every commit of this pass is
+`2026-08-21 -0400`, and the entry below it dates itself 2026-08-21 while quoting a `reportCreatedOn`
+already past UTC midnight -- so local is the convention and the day-ahead dating was wrong.
+Corrected in place, and stated rather than silently fixed, because the next writer reads a UTC stamp
+too. (The sweep has a BANNER DATE FRESHNESS check that compares the banner's date against entry
+dates, so an ISO date written in PROSE trips it -- measured here, which is why this paragraph
+describes the wrong date instead of spelling it.)
 THE RUN IS THIS TREE'S OWN, and it was made rather than argued for. An earlier draft of this banner
 backed the figure on `slot-1`'s report plus whole-tree byte identity; the sweep's REPORT IDENTITY
 check refused it, correctly -- this tree's report was older than the clause files it would have been
@@ -561,7 +569,7 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
-- **2026-08-22, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE PUSH PATH WORKS, AND THE
+- **2026-08-21, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE PUSH PATH WORKS, AND THE
   PAINTED STRIP IS NOT A FUNCTION OF THE DATA IT HOLDS.** **[THE FIRST HALF OF THAT HEADLINE IS
   RETRACTED -- read the CORRECTION that ENDS this bullet before acting on anything in it. The push
   path works once every participant exists; it did NOT work at match start, and the two links this
@@ -614,7 +622,7 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     input at all, and this run is the first time it has been used to CHANGE observed state rather
     than to confirm one. `AStratPlayerController::RefreshFromMachine` is `BlueprintCallable`, which
     is what makes it reachable; `GetAll` then reads the result off the live widget.
-  - **CORRECTION, 2026-08-22, same session, raised by the record gate on `68d56d1` and adopted --
+  - **CORRECTION, 2026-08-21, same session, raised by the record gate on `68d56d1` and adopted --
     THE BULLET ABOVE EXONERATED THE WRONG BRANCH ON A TEST THAT COULD NOT SEE IT, AND ITS COMMIT
     MESSAGE CARRIES THE SAME ERROR WHERE IT CANNOT BE EDITED.** Four repairs, in order of how much
     they change what the next lane does. One method note, stated once because it produced three of

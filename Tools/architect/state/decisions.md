@@ -392,3 +392,38 @@
     two more than the 15 recorded at the `RE-MEASURED 2026-08-21` entry above, reflecting the
     crew's two moves since then (`a8c8cdb`, then `3510bc2`). This entry does not restate a suite
     count or a phase verdict; both stay in `state/global.md` only.
+
+- **RULED 2026-08-21, by `strat-integration-reviewer` — a retraction or repair to this record
+  must derive its own blast radius, not enumerate it.** A fix applied only to the sentences a
+  gate names, rather than derived over the whole passage it sits in, leaves the tail asserting
+  what the head withdrew. This session's record-gate sequence on `global.md` produced this
+  finding three times in three shapes, and the ruling is to write it down as a standing rule
+  rather than leave it scattered through the bullet it happened in. Full blow-by-blow is in the
+  commit messages of `68d56d1`, `de517f0`, `c21e7a5`, `d67471b`, `a55f924` and `8eef22b`, cited
+  rather than retold here.
+  - **The three shapes, each its own evidence for the rule.** (1) A correction retracted a claim
+    where the evidence was discussed, and the same claim stood unretracted in the "what remains"
+    sentence the next lane reads as its task. (2) A gate named three sites carrying a retracted
+    claim; the fix marked those three rather than deriving the list from the retraction itself,
+    and missed a fourth — the one carrying both the whole withdrawn argument and a dispatch
+    instruction the correction forbids. (3) A numbered item was rewritten to open a closed
+    disjunction, and its own closing sentence — untouched because it was not one of the named
+    sentences — went on restating the closure affirmatively.
+  - **The rule.** When a claim in `Tools/architect/state/` is retracted or repaired, derive the
+    set of affected sites from what the retraction withdraws — not from a gate's or a reviewer's
+    named list of sites, which is itself a sample — walk every derived site, and state explicitly
+    which sites were checked and deliberately left alone, with the reason. Naming the sites left
+    alone is what makes the sweep falsifiable: the same reasoning this project already holds for
+    guard code, that a checker which types its own subject list stops covering that subject
+    silently.
+  - **Two measured facts that make this enforceable rather than aspirational, not merely
+    advisory.** First: a phrase-level `grep` over this record MISSES a claim that straddles a
+    line break — `grep "does not take"` returned only an unrelated hit while the claim still
+    stood in `global.md`; `rg -U` (multiline) found it. The record wraps at roughly 100 columns,
+    so any three-word phrase will eventually straddle a line. **Any claim-shape sweep over
+    `Tools/architect/state/` must be multiline.** Second: the same habit shows up as whitespace —
+    patching a sentence without re-flowing its paragraph left eight short fragment lines in one
+    bullet. No guard reads it and it is cosmetic, but it is the same failure shape: a change
+    scoped to the named span rather than derived over the passage it sits in.
+  - **This entry does not state a suite count or a phase verdict** — both stay in
+    `state/global.md` only; see that file for the live figure.

@@ -638,11 +638,29 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     An explicit `ke * RefreshFromMachine` reconcile also succeeded on the live controller. The
     screen did not move for either. `playtest_key`/`playtest_click` remain unable to drive
     anything; `ke` on a `BlueprintCallable` entry point is a route that does not need them.
-  - **Consequence: §2.11.6-B IS NOT CLOSED and must still not be claimed.** What remains is a
-    C++/asset question in the engineer's and editor's lanes -- why a bound `Visibility` does not
-    take while bound `Text` does, and whether `ApplyView` -> `FindScoreboardHUD` -> `PushGuidance`
-    ever reaches this instance. Neither is answerable from the record; both are answerable in one
-    PIE session now that the console route exists.
+  - **Consequence: §2.11.6-B IS NOT CLOSED and must still not be claimed.** What remains is two
+    questions in the engineer's and editor's lanes, and NEITHER IS ASKED AS A "WHY", because a
+    "why X" presupposes X and X is what is in doubt.
+    (1) Does `StripBorder`'s `Visibility` binding fail to take -- or does it take while its `Active`
+    input reads something other than the native `Guidance.bActive`? Whichever it is, it must read
+    something TRUE, since the border paints: a DEAD input would default false and `ToVisibility`
+    would return `Collapsed`, so "wires to nothing" is not a sufficient mechanism for what is on
+    screen and the shadowing branch above needs a live-but-wrong source, not an unfed pin. That
+    constraint is itself a lead.
+    (2) Where does the guided-opening projection stop -- `FindScoreboardHUD` returning null,
+    `GuidanceStrip` null (excluded, measured non-null), or the model reaching `ApplyView`
+    UNDECORATED so that an unconditional push delivers a default? Three branches, not the two an
+    earlier draft of this bullet named; the third is the cheapest to test and the one this pass
+    overlooked.
+    Neither is answerable from the record; both are answerable in one PIE session now that the
+    console route exists.
+    - **CORRECTION, same session, second gate: this sub-bullet kept BOTH retracted framings after
+      the notes above were written, and it is the sentence the next lane reads as its task.** It
+      asked "why a bound `Visibility` does not take", presupposing the claim demoted 30 lines
+      earlier, and framed the push question as "whether it ever reaches this instance", the
+      two-branch shape the other note refuted. A correction that does not reach the handoff
+      sentence has not been made. Worth knowing for the next sweep: the phrase straddled a line
+      break, so a line-oriented `grep "does not take"` did not return it at all -- use `rg -U`.
 
 - **A claim in a document is checkable against an artifact, and the artifact wins — this has now
   cost six corrections across four separate occasions in this milestone alone.** (Corrected count:

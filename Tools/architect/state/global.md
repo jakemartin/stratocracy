@@ -572,7 +572,8 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   - **Question (2) is ANSWERED: the third branch is the one, and `FindScoreboardHUD` and
     `PushGuidance` are both innocent.** **[RETRACTED IN FULL -- see item 1 and item 2 of the
     CORRECTION ending this bullet. This is the one sentence here that changes what the next lane
-    does, and it is wrong: it retires a branch that must still be measured at t+0.]** State A, 2.5 s after `Guided opening armed for side 0`:
+    does, and it is wrong: it retires a branch that must still be measured at t+0.]**
+    State A, 2.5 s after `Guided opening armed for side 0`:
     the widget's `Guidance` reads all default. Then `ke * RefreshFromMachine` on the live
     controller, and state B reads
     `bActive=True, Beat=Beat1a, DirectiveText="Select the marked Infantry. Lit hexes are its true
@@ -595,7 +596,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     channel. The conditional lead recorded below -- "if the false pin resolves to a non-painting
     visibility then `Active` must be reading something true" -- is now MOOT rather than merely
     unmeasured, and is superseded here rather than deleted. Its premise never got to matter.
-  - **What the text channel shows, and it is the sharpest clue in the run.** `DirectiveText`
+  - **What the text channel shows, and it is the sharpest clue in the run.** **[RETRACTED IN FULL,
+    AND IT ENDS IN AN INSTRUCTION THAT MUST NOT BE ACTED ON -- see item 3 of the CORRECTION ending
+    this bullet, which withdraws the whole `GetAll` elimination below, and item 4, which says of
+    this sub-bullet's closing handoff: do not dispatch an engineer on it. This is the most
+    actionable-looking paragraph in the entry and it is the one most fully withdrawn.]**
+    `DirectiveText`
     renders NEITHER the bound value (state B's 76 characters) NOR its design-time default, which
     `GetAll TextBlock Text NAME=DirectiveText` confirms is still `"Text Block"` on the live
     instance. It renders EMPTY. An empty string is what the Text binding returns when `Guidance`
@@ -622,7 +628,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
        and `HandleSelectionEvent` -- and no input event occurred at match start. So
        `RefreshFromMachine` ran, cleared its bridge and build-model guards (they precede
        `TryArmGuidedOpening` in its body), decorated, and reached `ApplyView` with a DECORATED
-       model, all in frame 27 at `03.06.08:571`.
+       model, all in frame 27 at `03.06.08:571`. **And that model was decorated with a POPULATED
+       block, which is measured rather than inferred:** `FStratGuidedOpening::Begin` returns before
+       the arming line on BOTH its early exits -- the `bSuppressed` branch and the `!Guided.bOk`
+       branch -- and sets `bActive = true` three lines above it, so the log line cannot be emitted
+       by an armed-but-inactive opening. A later reader asking "armed, but suppressed?" has the
+       answer here rather than a reopened question.
     2. **`FindScoreboardHUD` and `PushGuidance` are therefore NOT exonerated, and the bullet above
        had no evidence about them.** It tested them at t+2.5 s and t+6 s, when the strip already
        existed. The question is the state at t+0. `AStratScoreboardHUD::BeginPlay` creates the
@@ -635,7 +646,14 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
        null; or the decorated push DID land and a later UNDECORATED `ApplyView` overwrote it,
        `PushGuidance` being documented as assigning unconditionally. The third is not excluded by
        "no later `ApplyView` comes without input" -- `ApplyView` logs nothing, so the log's silence
-       is not a control. All three sit inside the branch the bullet above calls innocent. `CreateGuidanceWidget`'s own comment already names the shape: "The strip draws its
+       is not a control. TWO of the three sit inside the branch the bullet above calls innocent;
+       the THIRD does not -- there both links did their job and the fault is a later undecorated
+       `ApplyView`, which is the call-site story rather than the link story. That is exactly why
+       this pass can neither convict nor exonerate those links, and why the t+0 ordering still has
+       to be measured. (Written that way on the second attempt: the first repair for an
+       over-closure closed over-tightly itself, one level down, which is the pattern this whole
+       correction exists to break.) `CreateGuidanceWidget`'s own comment already names the
+       shape: "The strip draws its
        own defaults until the first `ApplyView`" -- it assumes a LATER `ApplyView` that, without
        input, never comes.
     3. **The GetAll-based elimination is WITHDRAWN -- it used an instrument this same file rules

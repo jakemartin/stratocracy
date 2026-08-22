@@ -561,6 +561,49 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-22, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE PUSH PATH WORKS, AND
+  THE PAINTED STRIP IS NOT A FUNCTION OF THE DATA IT HOLDS.** The ordered experiment the bullet
+  below asked for was run, and it answers BOTH questions -- differently from the way either was
+  framed. One fresh PIE session, three states, `GetAll` for the data and `Shot showui` for the
+  screen at each.
+  - **Question (2) is ANSWERED: the third branch is the one, and `FindScoreboardHUD` and
+    `PushGuidance` are both innocent.** State A, 2.5 s after `Guided opening armed for side 0`:
+    the widget's `Guidance` reads all default. Then `ke * RefreshFromMachine` on the live
+    controller, and state B reads
+    `bActive=True, Beat=Beat1a, DirectiveText="Select the marked Infantry. Lit hexes are its true
+    reach. Click one to move.", bHasObjectiveRing=True, ObjectiveHex=(X=2,Y=7), bEndTurnGated=True,
+    EndTurnGateHover="Move the marked Infantry first.", LockedUnitHover="Locked this turn."` --
+    the whole decorated projection, delivered to the widget by the ordinary route. So the route
+    from `FStratGuidedOpening::DecorateViewModel` through `ApplyView` and `PushGuidance` to the
+    widget is WORKING. What is missing is the CALL: nothing runs `RefreshFromMachine` at match
+    start, so the model that reaches `ApplyView` then is UNDECORATED and the unconditional push
+    delivers a default. Engineer's lane, and the fix is a call site rather than a mechanism.
+  - **Question (1) is ANSWERED AND ITS LEAD IS DEAD -- the answer is bigger than the question.**
+    The screen is PIXEL-IDENTICAL in all three states: the same 56x38 rectangle at x 750-805,
+    y 157-194, n=2128, in state A (`Guidance` default), in state B (fully populated, quoted above)
+    and in state C after `ke * SkipGuidance` put it back to default. **A widget holding a 76-
+    character directive drew exactly the same empty box as one holding an empty string.** So the
+    fault is not specific to `Visibility` and there is nothing left to explain about
+    `ToVisibility`'s false branch: the strip's Slate state is not a function of `Guidance` in ANY
+    channel. The conditional lead recorded below -- "if the false pin resolves to a non-painting
+    visibility then `Active` must be reading something true" -- is now MOOT rather than merely
+    unmeasured, and is superseded here rather than deleted. Its premise never got to matter.
+  - **What the text channel shows, and it is the sharpest clue in the run.** `DirectiveText`
+    renders NEITHER the bound value (state B's 76 characters) NOR its design-time default, which
+    `GetAll TextBlock Text NAME=DirectiveText` confirms is still `"Text Block"` on the live
+    instance. It renders EMPTY. An empty string is what the Text binding returns when `Guidance`
+    is default -- which is what `Guidance` held at construction. That reads as a binding evaluated
+    ONCE and never again, rather than one never applied; a binding never applied would have left
+    "Text Block" on screen. `StripBorder` is the opposite shape: it shows its DESIGN value
+    (`Visible`), where a binding evaluated once at construction would have returned `Collapsed`
+    and drawn nothing. Two channels, two different failures, one widget. NOT DIAGNOSED HERE, and
+    deliberately not: the next step is an engineer reading `UWidget::SynchronizeProperties` and
+    the generated class's `InitializeWidget` against this asset, not another black-box round.
+  - **Instrument note.** `ke * RefreshFromMachine` is a way to drive a reconcile with no simulated
+    input at all, and this run is the first time it has been used to CHANGE observed state rather
+    than to confirm one. `AStratPlayerController::RefreshFromMachine` is `BlueprintCallable`,
+    which is what makes it reachable; `GetAll` then reads the result off the live widget.
+
 - **2026-08-21, COORDINATOR, LIVE PIE ON THE INTEGRATION TREE, NO SOURCE AND NO ASSET CHANGE --
   THE STRIP DRAWS, AND IT DRAWS BLANK AND UNCONDITIONALLY.** The three things the previous entry
   said its evidence did not reach are now measured, and measuring them opened a defect that no

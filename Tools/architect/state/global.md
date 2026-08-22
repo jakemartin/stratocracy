@@ -11,11 +11,18 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
-_Last run 2026-08-22 (BOTH DELIVERY DEFECTS ARE FIXED AND PINNED, AND THE STRIP HAS STILL NOT BEEN
-SEEN TO DRAW A DIRECTIVE. Both halves are load-bearing: the two mechanisms that kept it blank are
-closed in C++ and held by clauses, and NOBODY HAS WATCHED A DIRECTIVE APPEAR ON SCREEN since.
-**Sec 2.11.6-B IS NOT CLOSED AND IS NOT CLAIMED HERE.** What closes it is a human-driven playtest,
-or the next coordinator PIE session repeating the console measurements with the fix in the tree.
+_Last run 2026-08-22 (BOTH DELIVERY DEFECTS ARE FIXED AND PINNED, AND THE STRIP HAS NOW BEEN
+WATCHED WITH THE FIX IN THE TREE, AND IT STILL PAINTS NO DIRECTIVE. **[HEADLINE AMENDED
+2026-08-22 12:01 local, coordinator, after the PIE session this banner asked for was actually
+run. It formerly recorded that the strip HAD NOT BEEN SEEN since the fix; it has now been seen,
+and the answer is negative. The delivery half of this banner is CONFIRMED ON A LIVE WIDGET -- the
+widget's guidance now arrives fully populated where it used to arrive default -- and the painted
+strip did not follow it. The newest `## NEXT` entry carries the session.]** Both halves are
+load-bearing: the two mechanisms that kept it blank are closed in C++ and held by clauses, and the
+screen still shows no directive.
+**Sec 2.11.6-B IS NOT CLOSED AND IS NOT CLAIMED HERE.** What closes it is a human-driven playtest; the
+coordinator PIE session it also named was RUN on 2026-08-22 and returned NO, so it is discharged
+rather than owed -- the newest `## NEXT` entry carries its console measurements.
 THE SUITE **IS NOW 160/160**, 151 -> 160 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
 walked over `Source/` -- +9, none removed, column-0 anchored, re-derived independently by the gate
 and again in the merged tree -- zero non-Success, `notRun` 0, 160 entries, all `Success`. The run is
@@ -607,6 +614,103 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-22, COORDINATOR, LIVE PIE ON THE INTEGRATION TREE, NO SOURCE AND NO ASSET CHANGE --
+  THE DELIVERY FIX IS CONFIRMED ON A LIVE WIDGET, AND THE STRIP STILL PAINTS NO DIRECTIVE.
+  Sec 2.11.6-B DOES NOT CLOSE. What remains is inside the widget asset, and that is now separated
+  from C++ by measurement rather than by argument -- editor-builder's lane.** The session this
+  banner asked for was run: editor launched on this tree, PIE from the game's own startup path
+  (`Game class is 'BP_StratGameMode_C'`, then `Guided opening armed for side 0: objective hex
+  (2, 7), window turns 1-4` at `12.01.00:065`), and no asset opened at any point in it.
+  - **THE DELIVERY HALF WORKS, and this is the first time it has been seen on a live widget.**
+    At t+2.4 s, `GetAll StratGuidanceWidget Guidance` on `WBP_DirectiveStrip_C_0` returned
+    `bActive=True, Beat=Beat1a, DirectiveText="Select the marked Infantry. Lit hexes are its true
+    reach. Click one to move.", bHasObjectiveRing=True, ObjectiveHex=(X=2,Y=7), bEndTurnGated=True`
+    -- the whole decorated projection, with no `ke` and no input. The comparable read on
+    2026-08-21 was taken at t+2.5 s and returned all-default. Same instrument, same moment in the
+    match, opposite result.
+  - **THE PAINTED STRIP DID NOT MOVE, to the pixel.** `Shot showui` gives the same 2128-pixel
+    rectangle at x 750-805, y 157-194, centre 777.5 in a 2544x1320 frame, which is what all six
+    2026-08-21 captures gave. Width 56 is the border's own 28+28 padding, so the content is still
+    ZERO-WIDTH: no glyph of the 76-character directive is on screen.
+  - **THE DIFFERENTIAL THAT IS NEW, and it is why this run was worth taking.** Every prior capture
+    was taken while the guidance was default, so "the painted state is not a function of the
+    guidance" rested on three states that never differed in the variable. This run supplies the
+    other side: guidance populated, output byte-identical. The variable was finally VARIED, and the
+    screen did not respond.
+  - **What is already correct, so the next lane does not re-measure it.** `bp:list_bindings()`
+    returns all four as `kind=Function` with the right `object_name`/`property_name`/
+    `function_name` -- `DirectiveText.Text` to `GetDirectiveText`, `StripBorder.Visibility` to
+    `GetStripVisibility`, and the two tag ones. All four graphs are fully wired: `Get Guidance` to
+    `Break Strat Guidance View` to the right member to the Return node, and `Active` to
+    `To Visibility (Boolean)` whose False pin is `Collapsed`. The blueprint has ZERO local
+    variables and its parent is native `StratGuidanceWidget`, so the variable-shadowing branch the
+    2026-08-21 correction kept alive is DEAD -- there is nothing to shadow with. And in the live
+    PIE world the tree is fully instantiated: `WidgetTree_0` with `Root`, `StripBorder`,
+    `StripRow`, `DirectiveText` and `WindowEndTag`, every one of them `Visible`.
+  - **A LEAD WAS RAISED HERE AND IS WITHDRAWN IN THE SAME PASS, BEFORE ANY LANE ACTED ON IT.**
+    What was observed is real: in all four binding graphs the `K2Node_FunctionEntry` carries an
+    exec output pin and the `K2Node_FunctionResult` an exec input pin, and BOTH ARE UNCONNECTED.
+    The reading built on it was that these are ordinary impure graphs, so no body ever executes and
+    each binding takes its Return pin default -- which would have matched the screen exactly
+    (`Visible` for the border whatever `bActive` is, empty for the Text ones). **That reading is
+    almost certainly WRONG, and the thing that refutes it was already recorded.** The UMG compiler
+    REFUSES a binding to a non-pure function, in its own words -- *"property 'TextDelegate' on
+    widget 'DirectiveText' needs to be bound to a pure function, 'Get Directive Text' is not
+    pure"* -- and that error is why these four were authored with `add_function(..., pure=true)` in
+    the first place. The generated class carries all four bindings, so the blueprint compiled with
+    them; therefore the four functions ARE pure, and this reader reports entry/result exec pins on
+    a pure graph too. **The pin dump was never evidence of impurity, and it is the reader's shape
+    rather than the asset's.** Recorded rather than deleted because the observation stands and the
+    next reader will otherwise draw the same inference from the same dump.
+  - **SO THE MECHANISM IS STILL OPEN, and these are excluded rather than guessed at.** Not the
+    input wiring (`Return Value` reports `connected=true, linked_to_count=1` on every binding
+    function). Not variable shadowing (zero local variables; the reparent re-scoped the member to
+    native `StratGuidanceWidget:Guidance`). Not an unregistered binding (all four present, correct
+    triple). Not a dead widget tree (fully instantiated, all five `Visible`). Not the value
+    (`bActive=True` with the 76-character directive on the live instance). The four functions also
+    EXECUTE on demand: `ke * GetDirectiveText`, `ke * GetStripVisibility` and
+    `ke * GetWindowEndTagText` each answered `1 instances succeeded` with no `Bad or missing
+    property` line above the count, which is the positive control on that call -- though `ke`
+    prints no return value, so what they RETURN is still unmeasured.
+  - **THE ONE EXPERIMENT THAT SEPARATES THE TWO SURVIVORS, and it is a Content/ write, so it is
+    the editor-builder's to run.** Set `DirectiveText`'s DESIGN-TIME `Text` to a distinctive string
+    and take one PIE capture. If that string PAINTS, the binding is not delivering and Slate is
+    showing the UPROPERTY. If the strip stays blank, the binding IS delivering and the function is
+    returning an empty `FText`. Today the design value is the stock `"Text Block"` and the screen
+    shows NEITHER it nor the 76 characters, which is what makes the two indistinguishable from
+    outside. Revert the design value afterwards; the asset is gated bytes.
+  - **INSTRUMENT WARNING, AND IT COST A FALSE FINDING THAT WAS CAUGHT BEFORE IT REACHED THIS FILE.
+    `open_asset` ON A WIDGET BLUEPRINT RECOMPILES IT, AND DOING THAT DURING PIE DESTROYS THE LIVE
+    WIDGET TREE.** In the first session of this pass I opened `WBP_DirectiveStrip` to read its
+    graphs while PIE was running. Afterwards `GetAll UserWidget WidgetTree` returned
+    `WBP_DirectiveStrip_C_0.WidgetTree = None` with zero live children, while the scoreboard's
+    `WidgetTree_0` and its fifteen children answered in the SAME command -- a control that made the
+    absence look real. It was not real; it was my own recompile. What exposed it was that the box
+    had already left the screen BEFORE the removal test meant to identify it, so the timeline did
+    not fit. Re-run clean, with a fresh editor and nothing opened, the tree is fully live.
+    **Nothing after the first `open_asset` in a PIE session is evidence about the game.** The same
+    session then crashed the editor on PIE teardown at `PlayLevel.cpp:553`, the leak chain naming
+    `TransBuffer` -- the editor's own undo buffer -- and no game object; a later `playtest_stop`
+    with no recompile behind it ended PIE cleanly and the editor survived, which is the control on
+    that half. Read the asset with PIE STOPPED, or not at all.
+  - **Consequence for the lanes, stated because two of them have been waiting on it.** The
+    engineer's delivery work is done as far as the screen can see: the value arrives. What remains
+    is inside `WBP_DirectiveStrip` and belongs to `strat-editor-builder`. The two questions the
+    2026-08-21 entry left open collapse to one, and it is NOT "does the binding take, or does its
+    input read something other than the native guidance" -- the input wiring is confirmed correct
+    and the shadowing branch is dead. It is: **does the delivered value reach Slate, or does the
+    bound function return an empty one?** The design-time-text swap above answers it in one PIE
+    capture.
+  - **THE BUILDER COULD NOT BE DISPATCHED IN THIS SESSION, and the reason is the proxy, not the
+    editor.** `ToolSearch` for `execute_script` returned nothing while the same keyword search
+    returned `unreal_status` and `list_unreal_projects` -- the two-tool fallback surface, control
+    passing. `strat-editor-builder` carries the NeoStack tools plus Read/Grep/Glob/Skill and **no
+    Bash**, and a subagent only receives tools the session already has, so with `execute_script`
+    absent it has no route to the editor at all. The editor itself was fine throughout: every
+    measurement above was taken by the coordinator over the editor's own HTTP endpoint. Dispatch
+    the builder from a session whose surface actually carries `execute_script`; do not spend a
+    round having it discover the wall.
 
 - **2026-08-22, COORDINATOR, MEASURED WHILE WRITING THIS PASS'S BANNER -- `strat_banner_sweep.py`
   CAN BE MADE TO SKIP THE BANNER'S LIVE COUNT ENTIRELY BY AN ORDINARY ENGLISH WORD, AND IT PASSES

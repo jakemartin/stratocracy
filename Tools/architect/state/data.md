@@ -40,8 +40,17 @@
   ```
   python Tools/architect/strat_banner_sweep.py              # sweep, exit 0/1
   python Tools/architect/strat_banner_sweep.py --explain    # + its LIVE/STAMPED call on every claim
-  python Tools/architect/strat_banner_sweep.py --self-test  # 14 fixtures proving it can FAIL
+  python Tools/architect/strat_banner_sweep.py --self-test  # fixtures proving it can FAIL
   ```
+
+  **[CORRECTED 2026-08-22 -- the crib above said "14 fixtures" from this entry's own day and was
+  never updated when the count moved; the 2026-08-20 and 2026-08-21 entries below each recorded a
+  new count without the correction reaching this line, which is where a reader actually looks.
+  The number is now derived rather than restated: `--self-test` prints one `[OK]` per fixture, so
+  `python Tools/architect/strat_banner_sweep.py --self-test | grep -c "\[OK\]"` answers it and
+  cannot go stale. As of 2026-08-22 that is 33 -- 29 inline plus 4 for REPORT IDENTITY. The
+  dated accounts below say 15, 23 and 27 and are correct FOR THEIR OWN PASSES; they are history
+  and are left alone.]**
 
   - **Three checks:** SUITE COUNT AGREEMENT (live claims must agree with each other AND with
     `Saved/AutomationReport/index.json` and an independent macro census), ITEM STATE AGREEMENT

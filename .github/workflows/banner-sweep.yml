@@ -45,12 +45,15 @@ jobs:
       # THE TOOL IS CHECKED BEFORE ITS VERDICT IS TRUSTED. A sweep whose own fixtures have
       # rotted can report SWEEP CLEAN for the wrong reason, and this project has already
       # shipped one revision of it that was silently inert on the very banner it polices.
-      # `--self-test` runs 23 inline fixtures, each proving one check can FAIL. The count is
+      # `--self-test` runs 29 inline fixtures, each proving one check can FAIL. The count is
       # written here only as orientation -- the step runs whatever the script declares, and the
       # script fails the step if any fixture is wrong, so a stale number here cannot make the
-      # gate weaker. Six of the 23 were added with the 2026-08-20 `state/` split: the
-      # sentence-final regex blind spot, four cross-file contradiction shapes, and a check that
-      # a NEW `.md` dropped into the record directory is swept without editing the script.
+      # gate weaker. Six were added with the 2026-08-20 `state/` split: the sentence-final regex
+      # blind spot, four cross-file contradiction shapes, and a check that a NEW `.md` dropped
+      # into the record directory is swept without editing the script. Six more on 2026-08-22,
+      # when the quoted-figure exclusion was found to swallow a live count outright: a reporting
+      # verb one sentence upstream, its near-twin in the figure's own sentence, a verbatim code
+      # span, an owner file with no live count at all, and a superseded/current banner pair.
       - name: sweep self-test (prove the tool can fail)
         run: python Tools/architect/strat_banner_sweep.py --self-test
 

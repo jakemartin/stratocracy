@@ -796,7 +796,11 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 
 - **2026-08-22, COORDINATOR, MEASURED WHILE WRITING THIS PASS'S BANNER -- `strat_banner_sweep.py`
   CAN BE MADE TO SKIP THE BANNER'S LIVE COUNT ENTIRELY BY AN ORDINARY ENGLISH WORD, AND IT PASSES
-  CLEAN WHEN IT DOES. Steward's lane; this is a guard going inert on its own subject.** The first
+  CLEAN WHEN IT DOES. Steward's lane; this is a guard going inert on its own subject.**
+  **[STAMPED 2026-08-22, later session -- FIXED IN THE SCRIPT; true when written. Both repairs
+  named below shipped, plus four the fix itself uncovered. The closing sub-bullet carries what
+  landed and how it was measured; the diagnosis above is kept because the mechanism it names is
+  the one that was repaired.]** The first
   draft of the banner above ended a sentence with "repeating the console reads with the fix in the
   tree" immediately before `THE SUITE **IS NOW 160/160**`. The sweep then reported
   `suite claims found: 18 (0 live, 18 stamped)` and `SWEEP CLEAN`, exit 0 -- with a banner asserting
@@ -824,6 +828,51 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     find its subject must say so, not report clean.
   - Owner: `strat-data-steward` (`Tools/architect/` is its lane). Found by the coordinator while
     writing a banner, not by the guard's own self-tests.
+  - **FIXED 2026-08-22, later session, coordinator, in `Tools/architect/strat_banner_sweep.py`
+    alone -- no record file's figures were touched.** The two repairs above landed, and four
+    more that only became visible once they had. **[STAMPED with this sub-bullet: everything
+    here is the state of the script as of this commit.]**
+    - **The exclusion is scoped to the figure's own sentence** (`quoting_window`,
+      `_SENTENCE_BREAK_RE`), so a reporting verb one sentence upstream no longer silences the
+      claim after it. The boundary is tuned to this record's prose: `2.11.6-B`, `global.md` and
+      a `reportCreatedOn` timestamp are not read as sentence ends.
+    - **An explicit live tense outranks the exclusion** -- repair (1) as filed.
+    - **`check_live_count_present` refuses a sweep of this file that finds no live count** --
+      repair (2) as filed, and the one that makes the whole class non-silent.
+    - **`in_code_span` replaces the single-character backtick test.** Uncovered by repair (1):
+      the old test caught a figure written `` `107/107` `` but not one inside
+      `` `THE SUITE **IS NOW 160/160**` ``, because the character before it is an asterisk.
+      This record quotes its own banner verbatim, so the sentence above that reproduces the
+      banner's first-draft wording was then collected as a SECOND live claim. It agreed with
+      the banner by luck, so the sweep stayed green while carrying a claim it had misread.
+    - **The tense markers now reach across a bold opener.** `was **N/N**` puts `**` between the
+      verb and the number and the old `\s*$` anchor could not span it, so the verb was never
+      seen and the claim fell through to the default, which is LIVE. Every such figure in this
+      record carries an explicit stamp, which outranks the verb anyway, so the record masked it
+      and so did two fixtures.
+    - **The banner region is a stack of banners, newest first** (`current_banner_end`). This
+      file has no heading until `## BUILT`, so `section_of` called everything above it "BANNER"
+      -- eleven successive `_Last run` blocks. The existing "last banner figure wins" rule is
+      right within one block and backwards across the stack: a post-milestone figure written
+      2026-08-14 was collected as this file's live claim and superseded the real one.
+      `check_banner_date` already reads only the FIRST `_Last run` as current; the figures now
+      follow the same rule.
+    - **Measured, both directions, against this record rather than a fixture.** Planting a live
+      count at each of the 766 non-blank lines of `## NEXT`: never-collected went from 132 to 38
+      for the bolded wording and 134 to 38 for plain prose, and the residual 38 are the probe
+      landing inside an unclosed code span on the line it was appended to. In `engine.md`, 29 to
+      zero. Seven realistic wordings planted as their own bullet -- sentence-final full stop,
+      closing paren, after a colon, all caps, an em-dash clause, mid-list with commas, and one
+      with no live verb at all -- exit 0 on the old script for all seven, exit 1 on the new one
+      for all seven. Stamping the banner's own live figure out: exit 0 before, exit 1 now with
+      `LIVE COUNT MISSING`. The untouched record exits 0 on both.
+    - **The bolded-versus-plain framing this entry was filed under was a symptom.** The figure
+      pattern has matched a bare `N/N` since 2026-08-20. Both wordings were swallowed at the
+      same 132 sites; they diverged at exactly two, where the bold form's extra two characters
+      pushed the reporting verb past the 120-character cut. Read the window, not the markup.
+    - Self-test now carries 29 inline fixtures, six of them for these repairs, including a pair
+      that fails in one direction and passes in its near-twin so the scoping cannot quietly
+      widen. CI's three steps all exit 0.
 
 - **2026-08-21, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE THREE t+0 BRANCHES ARE
   SEPARATED, AND TWO OF THEM ARE REAL.** Branch 1 is eliminated by an artifact already in the log,

@@ -107,6 +107,55 @@ class UDataTable;
 class UStratSaveGame;
 
 /**
+ * The seam that completes a freshly built model before anything is drawn from it.
+ *
+ * WHAT GAP THIS CLOSES, AND IT IS A MEASURED DEFECT RATHER THAN A TIDY-UP. Until this
+ * existed there were THREE paths on which a model reached `ApplyView` and only ONE of them
+ * decorated: `AStratPlayerController::RefreshFromMachine` built, observed, decorated and
+ * applied, while `StartMatchInternal`'s first reconciliation and `RefreshPresentation`
+ * built and applied a model whose `Guidance` block was still default-constructed. Driven
+ * and watched in PIE on 2026-08-21: a decorated refresh put a live directive on GDD
+ * Sec 2.11.6's strip, and the very next `SetViewingSide` -- which goes through
+ * `RefreshPresentation` -- left the widget reading `bActive=False, Beat=None,
+ * DirectiveText=""` one second later. The same clearing was inferred, not observed, for the
+ * first AI turn, which reaches `RefreshPresentation` through `RunAiTurnsNow`.
+ *
+ * THE PUSH WAS NOT THE DEFECT AND HAS NOT BEEN CHANGED. `ApplyView`'s guidance block is
+ * emphatic that the push is "UNCONDITIONAL, WITH NO BRANCH ON `bActive`", because a strip
+ * whose contents depended on which pushes were skipped would depend on the history of calls
+ * instead of on the current model. That ruling stands untouched. What was wrong is that
+ * models MISSING THEIR GUIDANCE SECTION reached `ApplyView` at all -- so the fix is at the
+ * build, where the section is filled in, and not at the push, where a branch would have
+ * bought a stale directive instead.
+ *
+ * A DELEGATE AND NOT A DEPENDENCY ON THE CONTROLLER. `FStratGuidedOpening` and
+ * `FStratSelectionMachine` are held BY VALUE on `AStratPlayerController` -- both headers
+ * record why they are plain C++ and not `UObject`s -- so this subsystem cannot own the
+ * decoration without owning those two machines, which would move a per-seat input machine
+ * onto a per-world object. Nor may it reach out and find the controller by type: that would
+ * make "who decorates" a search rather than a registration, and a search answers
+ * differently, silently, in a test world with no controller in it.
+ *
+ * BOUND WITH `CreateUObject`, SO IT IS WEAK. A controller destroyed without unbinding stops
+ * decorating rather than crashing, and `ExecuteIfBound` reports that as "nobody decorates",
+ * which is the same state a world with no controller has.
+ * `AStratPlayerController::EndPlay` still releases it explicitly, because a seam taken
+ * should be given back where it was taken.
+ *
+ * AT MOST ONE, AND THE LAST WRITER WINS. Sec 2.11's hot seat is ONE controller holding two
+ * seats -- `FStratGuidedOpening::Begin` takes the guided side by argument precisely so the
+ * viewing side can move without the guided seat moving -- so there is no configuration in
+ * this milestone with two decorators to arbitrate between. A multicast delegate would have
+ * invited two authors to write the same fields of one model, and which of them won would be
+ * bind order.
+ *
+ * NOT REFLECTED, AND IT MAY NOT BECOME SO. A `DYNAMIC` delegate would let a Blueprint graph
+ * register itself as the author of the guidance block, which is exactly the second-author
+ * failure `UStratGuidanceWidget::PushGuidance` declines reflection to prevent.
+ */
+DECLARE_DELEGATE_OneParam(FStratViewDecorator, FStratViewModel& /*Model*/);
+
+/**
  * Everything `StartMatch` needs and nothing it can derive.
  *
  * A STRUCT AND NOT SEVEN ARGUMENTS, because the caller is a Blueprint default -- one
@@ -451,6 +500,57 @@ public:
 	bool BuildViewModel(FStratViewModel& OutModel, FString& OutFailureReason) const;
 
 	/**
+	 * Builds the view model AND runs the registered decorator over it. The only build this
+	 * class applies from.
+	 *
+	 * THE INVARIANT IT EXISTS TO HOLD, stated as the thing a reader can check: no model this
+	 * class builds reaches `ApplyView` without passing through here first. There are exactly
+	 * two internal build-and-apply sites -- `StartMatchInternal`'s first reconciliation and
+	 * `RefreshPresentation` -- and both call this. `BuildViewModel` above remains public and
+	 * undecorated because two callers legitimately want a model they will NOT draw:
+	 * `IsAiTurnDue` and `RunAiTurnsNow`'s loop read `sideToMove` and `bHasResult` off it, and
+	 * decorating there would run `FStratGuidedOpening::Observe` -- documented as "THE ONLY
+	 * THING THAT ADVANCES A BEAT" -- for a question nobody is drawing an answer to.
+	 *
+	 * IT IS BUILD-THEN-DECORATE AND NEVER DECORATE-THEN-BUILD. The decorator writes onto a
+	 * model the rules module has just produced; a decoration that outlived a build would be
+	 * the delta-shaped thinking `FStratViewModel` was written to exclude.
+	 *
+	 * WITH NO DECORATOR REGISTERED IT IS `BuildViewModel` EXACTLY, and that is a supported
+	 * state rather than a degraded one: a world with no player controller -- every automation
+	 * fixture that drives this subsystem directly -- has nobody to decorate, and the models it
+	 * builds are correct and simply carry no guidance and no selection bits.
+	 *
+	 * PUBLIC SO THE INVARIANT IS PINNABLE. A clause can register a decorator, call this, and
+	 * assert the section is present; with `RefreshPresentation` alone it could only observe
+	 * the consequence on a widget.
+	 */
+	bool BuildViewModelForPresentation(FStratViewModel& OutModel, FString& OutFailureReason);
+
+	/**
+	 * Registers the one object allowed to complete a built model before it is drawn. See
+	 * `FStratViewDecorator` for why it is a single, weak, non-reflected delegate.
+	 *
+	 * REPLACES WHATEVER WAS THERE, without complaint. A second controller taking over a world
+	 * is a hand-over and not a conflict, and refusing the second binding would leave the
+	 * screen decorated by an object that is on its way out.
+	 */
+	void SetViewDecorator(FStratViewDecorator InDecorator);
+
+	/** Drops the registered decorator. Called from `AStratPlayerController::EndPlay`; safe
+	 *  when nothing is bound. */
+	void ClearViewDecorator();
+
+	/**
+	 * Whether anybody is registered to complete a model.
+	 *
+	 * FOR DIAGNOSIS AND FOR CLAUSES, never as a branch inside this class: every path here
+	 * runs the decorator through `ExecuteIfBound` and behaves identically whether or not one
+	 * is present, which is what keeps "no decorator" a configuration rather than a mode.
+	 */
+	bool HasViewDecorator() const;
+
+	/**
 	 * Makes the world look like this model. Spawn what is here and absent, move what is
 	 * here and misplaced, destroy what is absent and present.
 	 *
@@ -477,26 +577,50 @@ public:
 	 * and would otherwise have no route at all.
 	 *
 	 * IT IS HERE AND NOT IN `RefreshPresentation`, which is the load-bearing half of that
-	 * choice. `RefreshPresentation` is the UNDECORATED path; the decorated one --
-	 * `AStratPlayerController`, build -> `Observe` -> decorate -> `ApplyView` -- calls this
-	 * function directly, and that is the only path on which guidance is ever non-default. A
-	 * push in `RefreshPresentation` would therefore have been a push that never carried a
-	 * live directive, and would have missed every frame that did.
+	 * choice: the push belongs with the reconciliation, so that every surface this class
+	 * draws is drawn from one argument in one call.
 	 *
-	 * WHICH MAKES A STALE DIRECTIVE STRUCTURALLY IMPOSSIBLE rather than merely unlikely: an
-	 * undecorated rebuild pushes an INACTIVE view and clears the strip, because the model
-	 * really does say guidance is not running on that path. Reconciled, not evented -- the
-	 * same property the unit set difference above has.
+	 * THE REASON GIVEN FOR THAT PLACEMENT HAS BEEN WITHDRAWN, and it is withdrawn in place
+	 * because a reader who remembers the old claim needs to see it retracted and not
+	 * silently absent. It used to read:
+	 * RETRACTED> "`RefreshPresentation` is the UNDECORATED path; the decorated one --
+	 * RETRACTED>  `AStratPlayerController`, build -> `Observe` -> decorate -> `ApplyView` --
+	 * RETRACTED>  calls this function directly, and that is the only path on which guidance
+	 * RETRACTED>  is ever non-default. A push in `RefreshPresentation` would therefore have
+	 * RETRACTED>  been a push that never carried a live directive."
+	 * That described the tree accurately and described a DEFECT. `RefreshPresentation` and
+	 * `StartMatchInternal` reached this function with an undecorated model, so every
+	 * subsystem-side reconcile cleared a live directive -- measured through `SetViewingSide`
+	 * in PIE on 2026-08-21, see `FStratViewDecorator`. Both now build through
+	 * `BuildViewModelForPresentation`, so there is no longer an undecorated path into this
+	 * function from inside this class, and the premise the retracted sentence rested on is
+	 * gone rather than merely inconvenient.
+	 *
+	 * WHAT DID NOT CHANGE, AND MUST NOT: an undecorated model applied FROM OUTSIDE -- which
+	 * is what a clause driving `ApplyView` directly does -- still pushes an INACTIVE view and
+	 * still clears the strip. The strip is a function of the argument, whatever the argument
+	 * says. Reconciled, not evented -- the same property the unit set difference above has.
 	 */
 	void ApplyView(const FStratViewModel& Model);
 
 	/**
-	 * Build, apply, and refresh the scoreboard. The undecorated path, and the one a caller
-	 * with nothing to add uses.
+	 * Build, decorate, apply, and refresh the scoreboard. The path a caller with nothing of
+	 * its own to add uses.
 	 *
-	 * WRITTEN IN TERMS OF `BuildViewModel` AND `ApplyView` so it cannot drift from the
-	 * phase-4 path that calls those two directly with a decoration in between. There is no
-	 * third reconciliation implementation in this class and there must not be.
+	 * IT USED TO BE THE UNDECORATED PATH AND THAT WAS THE DEFECT, so the old first line is
+	 * retracted in place rather than reworded away:
+	 * RETRACTED> "Build, apply, and refresh the scoreboard. The undecorated path, and the
+	 * RETRACTED>  one a caller with nothing to add uses."
+	 * "Nothing to ADD" was read as "nothing to COMPLETE", and the two are not the same: this
+	 * function's callers -- `SetViewingSide` and `RunAiTurnsNow` -- have no selection or beat
+	 * of their own to contribute, but the model they draw from still has a guidance section
+	 * that somebody has to fill in. It is filled in by the registered decorator, through
+	 * `BuildViewModelForPresentation`.
+	 *
+	 * WRITTEN IN TERMS OF `BuildViewModelForPresentation` AND `ApplyView` so it cannot drift
+	 * from `AStratPlayerController::RefreshFromMachine`, which calls the same two around its
+	 * own overlay work. There is no third reconciliation implementation in this class and
+	 * there must not be.
 	 */
 	bool RefreshPresentation(FString& OutFailureReason);
 
@@ -891,6 +1015,15 @@ private:
 	 * adoption and frees nothing.
 	 */
 	TPimplPtr<FStratBridge> Bridge;
+
+	/**
+	 * Who completes a built model before it is drawn. Unbound until somebody registers.
+	 *
+	 * NOT A UPROPERTY, because a plain (non-`DYNAMIC`) delegate is not a reflected type and
+	 * must not become one -- see `FStratViewDecorator`. It holds a WEAK reference to its
+	 * bound object, so it is not a GC root and cannot keep a controller alive past the world.
+	 */
+	FStratViewDecorator ViewDecorator;
 
 	/** The spawned board, or null. Destroyed in `Deinitialize`. */
 	UPROPERTY(Transient)

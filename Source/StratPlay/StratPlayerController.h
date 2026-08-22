@@ -130,6 +130,42 @@ public:
 	bool RefreshFromMachine(FString& OutFailureReason);
 
 	/**
+	 * Writes this controller's two presentation layers onto a model somebody else built:
+	 * `FStratSelectionMachine`'s `bDone` / `bLockedThisTurn`, and Sec 2.11.6's guidance
+	 * block.
+	 *
+	 * WHAT GAP THIS CLOSES. This sequence used to live inline inside `RefreshFromMachine`,
+	 * which made it reachable ONLY from a refresh this controller started -- so the two
+	 * reconciles `UStratMatchSubsystem` starts for itself (`RefreshPresentation`, and
+	 * `StartMatchInternal`'s first) applied models with an empty guidance block, and the
+	 * strip cleared. Measured in PIE on 2026-08-21 through `SetViewingSide`; see
+	 * `FStratViewDecorator`. Lifting it into a named method and registering it as that
+	 * delegate is what makes the completion a property of the MODEL rather than of the
+	 * caller.
+	 *
+	 * IT IS NOT A REFRESH AND MUST NOT BECOME ONE. It does not build, does not apply, does
+	 * not touch the overlays and asks the subsystem for nothing -- which is what lets the
+	 * subsystem call it from inside its own build without re-entering this class's refresh
+	 * path. `RefreshFromMachine` calls it too, so there is one implementation of "what this
+	 * controller adds to a model" and not two.
+	 *
+	 * IT ADVANCES THE BEATS, and that is deliberate rather than a side effect that leaked
+	 * out. `FStratGuidedOpening::Observe` is documented as the only thing that advances a
+	 * beat, and it belongs with every model that will be DRAWN -- including the ones drawn
+	 * after an AI turn, which this controller never asked for and which are exactly where
+	 * beat 1b's "the enemy turn ends" becomes observable. `Observe` is a function of the
+	 * model plus the machine's own memory, so being called twice for one board state
+	 * retires nothing twice: the turn clock only moves on a new `Turn`, and retirement is
+	 * re-read off the model each time.
+	 *
+	 * NOT A `UFUNCTION`. It takes `FStratViewModel&` by non-const reference to write into,
+	 * and a reflected version would hand Blueprint an authoring seat at the model -- the
+	 * second-author failure `UStratGuidanceWidget::PushGuidance` declines reflection to
+	 * prevent, arrived at from the other end.
+	 */
+	void DecorateForPresentation(FStratViewModel& Model);
+
+	/**
 	 * Feeds one event to the selection machine, submits whatever it asks for, and refreshes.
 	 *
 	 * PUBLIC AND NOT PROTECTED, so that a hand-over screen, a debug command or a gate can
@@ -268,8 +304,30 @@ protected:
 
 	// ---- Lifetime ---------------------------------------------------------
 
-	/** Adds the mapping context, shows the cursor, and paints the first frame's overlays. */
+	/**
+	 * Adds the mapping context, registers this controller as the match's view decorator, and
+	 * paints the first frame's overlays.
+	 *
+	 * THE REGISTRATION HAPPENS BEFORE THE FIRST REFRESH AND MAKES NO CLAIM ABOUT WHEN THE
+	 * MATCH STARTED. `UStratMatchSubsystem` is a world subsystem and exists before any actor
+	 * runs `BeginPlay`, so the binding lands whether or not `AStratGameMode::BeginPlay` has
+	 * seeded anything yet -- which is the property that keeps the fix from depending on actor
+	 * `BeginPlay` order. A binding taken before the match starts simply decorates nothing
+	 * until there is something to decorate.
+	 */
 	virtual void BeginPlay() override;
+
+	/**
+	 * Releases the view-decorator registration.
+	 *
+	 * NOT STRICTLY REQUIRED FOR SAFETY, and that is worth saying so the next reader does not
+	 * take it for one: the delegate is bound with `CreateUObject` and therefore holds a weak
+	 * reference, so a destroyed controller stops decorating on its own. It is released here
+	 * anyway because the subsystem outlives this actor within one world, and a subsystem
+	 * reporting `HasViewDecorator()` true while pointing at a dead controller is a fact that
+	 * will one day be read as evidence.
+	 */
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/**
 	 * Arms §2.11.6's guided opening once, the first time a seeded match is reachable.

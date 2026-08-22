@@ -361,11 +361,22 @@ bool UStratMatchSubsystem::StartMatchInternal(const FStratMatchConfig& Config,
 	// would either draw the wrong match for one frame or produce a refusal about a bridge
 	// that is about to be replaced, and both would be reported as this match's problem. The
 	// panel is refreshed by `HandBridgeToScoreboard` below, once it is reading THIS bridge.
+	//
+	// DECORATED, THOUGH, AND THAT IS NOT THE SAME QUESTION. Skipping `RefreshPresentation`
+	// here is about the SCOREBOARD's bridge, not about the model: this reconciliation still
+	// draws the board, the units and Sec 2.11.6's strip, so the model it applies must be
+	// complete. Whether anybody is registered to complete it depends on whether the
+	// controller's `BeginPlay` has run yet, and actor `BeginPlay` order is not something this
+	// file may assume -- which is why the fix does not rest on it. If nobody is registered
+	// yet, this applies an undecorated model and the controller's own first refresh, moments
+	// later, applies a decorated one; if somebody is, this one is already decorated. Both
+	// orders end with a decorated model applied, and `AStratScoreboardHUD` holds the last
+	// pushed value for a strip that does not exist yet, so neither order loses it.
 	FString RefreshReason;
 	bool bRefreshed = false;
 	{
 		FStratViewModel Model;
-		bRefreshed = BuildViewModel(Model, RefreshReason);
+		bRefreshed = BuildViewModelForPresentation(Model, RefreshReason);
 		if (bRefreshed)
 		{
 			ApplyView(Model);
@@ -435,6 +446,44 @@ bool UStratMatchSubsystem::BuildViewModel(FStratViewModel& OutModel, FString& Ou
 	// empty model is a legitimate value and reconciling against one would destroy every
 	// actor on screen.
 	return StratBuildViewModel(*Live, ViewingSide, OutModel, OutFailureReason);
+}
+
+bool UStratMatchSubsystem::BuildViewModelForPresentation(FStratViewModel& OutModel,
+                                                         FString&         OutFailureReason)
+{
+	if (!BuildViewModel(OutModel, OutFailureReason))
+	{
+		// DECORATING A MODEL THAT DID NOT BUILD IS NOT AN OPTION AND NOT A CHOICE MADE HERE.
+		// `BuildViewModel` refuses rather than handing back an empty model, so on this branch
+		// `OutModel` is whatever the caller brought; running the decorator over it would ask
+		// `FStratGuidedOpening::Observe` to advance beats off a board that was never read.
+		return false;
+	}
+
+	// THE ONE DECORATION POINT. `ExecuteIfBound` and not a null test plus a call, so that
+	// "nobody is registered" and "the registered object has been destroyed" take the same
+	// path -- both mean the model is drawn exactly as the rules module produced it, which is
+	// correct and is what every fixture with no controller in its world gets.
+	ViewDecorator.ExecuteIfBound(OutModel);
+	return true;
+}
+
+void UStratMatchSubsystem::SetViewDecorator(FStratViewDecorator InDecorator)
+{
+	ViewDecorator = MoveTemp(InDecorator);
+}
+
+void UStratMatchSubsystem::ClearViewDecorator()
+{
+	ViewDecorator.Unbind();
+}
+
+bool UStratMatchSubsystem::HasViewDecorator() const
+{
+	// `IsBound()` and not a stored bool. A `CreateUObject` binding whose object has been
+	// destroyed still reports bound here, which is honest -- somebody DID register -- and it
+	// is why nothing in this class branches on this answer.
+	return ViewDecorator.IsBound();
 }
 
 void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
@@ -574,8 +623,15 @@ bool UStratMatchSubsystem::RefreshPresentation(FString& OutFailureReason)
 	// WRITTEN IN TERMS OF THE TWO PUBLIC HALVES, per the declaration, so that this path and
 	// phase 4's decorated path cannot drift. There is no third reconciliation
 	// implementation in this class.
+	//
+	// THROUGH `BuildViewModelForPresentation` AND NOT `BuildViewModel`, which is the whole of
+	// the second guidance-delivery fix. This function's callers -- `SetViewingSide` and
+	// `RunAiTurnsNow` -- have no beat of their own to add, but the model they draw from still
+	// needs its Sec 2.11.6 section filled in by whoever owns the beats. Built the other way,
+	// every hot-seat hand-over and every AI turn applied a model whose `Guidance` block was
+	// default-constructed, and `ApplyView` correctly pushed that default onto the strip.
 	FStratViewModel Model;
-	if (!BuildViewModel(Model, OutFailureReason))
+	if (!BuildViewModelForPresentation(Model, OutFailureReason))
 	{
 		return false;
 	}

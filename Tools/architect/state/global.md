@@ -562,12 +562,17 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 ## NEXT
 
 - **2026-08-22, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE PUSH PATH WORKS, AND
-  THE PAINTED STRIP IS NOT A FUNCTION OF THE DATA IT HOLDS.** The ordered experiment the bullet
+  THE PAINTED STRIP IS NOT A FUNCTION OF THE DATA IT HOLDS.** **[THE FIRST HALF OF THAT HEADLINE IS
+  RETRACTED -- read the CORRECTION that ENDS this bullet before acting on anything in it. The push
+  path works once every participant exists; it did NOT work at match start, and the two links this
+  bullet clears are not cleared.]** The ordered experiment the bullet
   below asked for was run, and it answers BOTH questions -- differently from the way either was
   framed. One fresh PIE session, three states, `GetAll` for the data and `Shot showui` for the
   screen at each.
   - **Question (2) is ANSWERED: the third branch is the one, and `FindScoreboardHUD` and
-    `PushGuidance` are both innocent.** State A, 2.5 s after `Guided opening armed for side 0`:
+    `PushGuidance` are both innocent.** **[RETRACTED IN FULL -- see item 1 and item 2 of the
+    CORRECTION ending this bullet. This is the one sentence here that changes what the next lane
+    does, and it is wrong: it retires a branch that must still be measured at t+0.]** State A, 2.5 s after `Guided opening armed for side 0`:
     the widget's `Guidance` reads all default. Then `ke * RefreshFromMachine` on the live
     controller, and state B reads
     `bActive=True, Beat=Beat1a, DirectiveText="Select the marked Infantry. Lit hexes are its true
@@ -579,6 +584,8 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     start, so the model that reaches `ApplyView` then is UNDECORATED and the unconditional push
     delivers a default. Engineer's lane, and the fix is a call site rather than a mechanism.
   - **Question (1) is ANSWERED AND ITS LEAD IS DEAD -- the answer is bigger than the question.**
+    **[THE "LEAD IS DEAD" HALF IS RETRACTED -- see item 4 of the CORRECTION ending this bullet.
+    This run CORROBORATES that lead's open branch rather than killing it.]**
     The screen is PIXEL-IDENTICAL in all three states: the same 56x38 rectangle at x 750-805,
     y 157-194, n=2128, in state A (`Guidance` default), in state B (fully populated, quoted above)
     and in state C after `ke * SkipGuidance` put it back to default. **A widget holding a 76-
@@ -623,9 +630,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
        milliseconds AFTER the arming line, in the same frame; `CreateGuidanceWidget` logs nothing
        on success, so **the log cannot resolve the order and neither can this pass.** What IS
        measured: a decorated `ApplyView` ran at match start, and 2.4 s later the widget still held
-       defaults -- so that push did not land on the strip. Either `FindScoreboardHUD` returned
-       null or `GuidanceStrip` was still null. Both sit inside the branch the bullet above calls
-       innocent. `CreateGuidanceWidget`'s own comment already names the shape: "The strip draws its
+       defaults -- so that push did not land on the strip, or did not survive. THREE branches, and
+       this pass cannot separate them: `FindScoreboardHUD` returned null; `GuidanceStrip` was still
+       null; or the decorated push DID land and a later UNDECORATED `ApplyView` overwrote it,
+       `PushGuidance` being documented as assigning unconditionally. The third is not excluded by
+       "no later `ApplyView` comes without input" -- `ApplyView` logs nothing, so the log's silence
+       is not a control. All three sit inside the branch the bullet above calls innocent. `CreateGuidanceWidget`'s own comment already names the shape: "The strip draws its
        own defaults until the first `ApplyView`" -- it assumes a LATER `ApplyView` that, without
        input, never comes.
     3. **The GetAll-based elimination is WITHDRAWN -- it used an instrument this same file rules
@@ -643,7 +653,10 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
        `Active` is not fed by the native `Guidance`. Three captures showing the screen is not a
        function of the native `Guidance` is precisely what that branch predicts, and ONE such
        defect -- bindings reading a source the native `Guidance` never reaches -- would explain
-       both channels at once. "Both stand until one is measured" is restored. The handoff in the
+       both channels at once -- PROVIDED the false pin does not resolve to `Collapsed` at runtime,
+       which is still only read off the graph, since a shadowed always-default source would take
+       that false pin and the border would not have painted at all. "Both stand until one is
+       measured" is restored. The handoff in the
        bullet above (read `UWidget::SynchronizeProperties` and `InitializeWidget`) rests on the
        reading withdrawn in item 3; **do not dispatch an engineer on it.** The binding's input
        wiring is at least as good a place to look.

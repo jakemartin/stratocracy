@@ -642,11 +642,18 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     questions in the engineer's and editor's lanes, and NEITHER IS ASKED AS A "WHY", because a
     "why X" presupposes X and X is what is in doubt.
     (1) Does `StripBorder`'s `Visibility` binding fail to take -- or does it take while its `Active`
-    input reads something other than the native `Guidance.bActive`? Whichever it is, it must read
-    something TRUE, since the border paints: a DEAD input would default false and `ToVisibility`
-    would return `Collapsed`, so "wires to nothing" is not a sufficient mechanism for what is on
-    screen and the shadowing branch above needs a live-but-wrong source, not an unfed pin. That
-    constraint is itself a lead.
+    input reads something other than the native `Guidance.bActive`? CONDITIONAL, and the condition
+    is the thing to measure first: *if* the false pin resolves at runtime to a non-painting
+    visibility -- the `Collapsed` the graph shows, or `Hidden` -- then `Active` must be reading
+    something TRUE, since the border paints; a DEAD input would default false and the border would
+    not be there at all. On that condition "wires to nothing" is not a sufficient mechanism for
+    what is on screen, and the shadowing branch above needs a live-but-wrong source rather than an
+    unfed pin. The premise is NOT measured: the `Collapsed` default was read off the graph, not at
+    runtime, which is exactly the caveat the note above attaches to it, and if the false branch
+    resolves to something that paints then a false `Active` explains the screen and this whole
+    lead dissolves. So the cheapest measurement in this bullet is `ToVisibility`'s false-branch
+    return AT RUNTIME, in the same PIE session -- it may settle question (1) outright without
+    touching the shadowing hypothesis at all.
     (2) Where does the guided-opening projection stop -- `FindScoreboardHUD` returning null,
     `GuidanceStrip` null (excluded, measured non-null), or the model reaching `ApplyView`
     UNDECORATED so that an unconditional push delivers a default? Three branches, not the two an

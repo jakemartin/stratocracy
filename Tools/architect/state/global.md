@@ -569,6 +569,82 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-21, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE THREE t+0 BRANCHES ARE
+  SEPARATED, AND TWO OF THEM ARE REAL.** Branch 1 is eliminated by an artifact already in the log,
+  branch 2 is confirmed, and branch 3 is CONFIRMED AS A MECHANISM -- an undecorated reconcile was
+  driven and the strip's guidance was watched being wiped. This answers question (2) of the entry
+  below. Question (1), the binding, is untouched and still open. Measured 23:40-23:53 LOCAL on
+  2026-08-21 and filed after local midnight, so the commit that carries it is stamped the 22nd:
+  the entry date records when the work was measured, not when the filing landed, and the log's own
+  dual stamp settles it (`[2026.08.22-03.53.09]` carries `at 2026.08.21-23.53.09`). **Both defects
+  have to be fixed:
+  correcting the match-start ordering alone would leave any later undecorated reconcile clearing
+  the strip -- and the AI turn is one, by the same call, though that specific caller is inferred
+  rather than driven (see branch 3).**
+  - **BRANCH 1 -- `FindScoreboardHUD` returned null: ELIMINATED, on evidence every log in this
+    investigation already carried.** `UStratMatchSubsystem::HandBridgeToScoreboard` obtains the HUD
+    through `FindScoreboardHUD()` and returns early on the null branch, so `AdoptBridge` is
+    unreachable without one; `Bridge adopted: this HUD now draws a match it does not own` appears at
+    match start in every session. Nothing new had to be run.
+  - **BRANCH 2 -- `GuidanceStrip` was still null: CONFIRMED, by a chain whose every link is a log
+    artifact, a straight-line reading, or a graph with zero connections.**
+    (a) The HUD's terminal `BeginPlay` line reads `Scoreboard live on an adopted bridge (this HUD
+    seeded nothing)`, the branch taken only when `AdoptedBridge` is already set -- so that
+    `BeginPlay` ran AFTER the handover.
+    (b) Nothing that `AStratScoreboardHUD::BeginPlay` reaches can log the arming line, so its
+    terminal line bounds its whole execution. Checked on BOTH sides rather than asserted: in C++,
+    the adopted path calls `Super::BeginPlay`, `ViewingSideInRange`, `CreateGuidanceWidget`,
+    `CreateScoreboardWidget` and `RefreshScoreboard`, none of which reaches
+    `AStratPlayerController::RefreshFromMachine`, the sole route to that log line; and on the
+    Blueprint side, which is where re-entry would hide, `BP_StratScoreboardHUD`'s EventGraph and
+    `WBP_DirectiveStrip`'s EventGraph each hold three event stubs with **zero connections** --
+    `ReceiveBeginPlay`, `PreConstruct` and `Construct` execute nothing. `WBP_Scoreboard` is the
+    ONLY one of the three constructed late enough to have broken the chain, and it is closed by its
+    ENTRY POINTS rather than by counting its interior: its four events are `PreConstruct`,
+    `Construct`, `Tick` and `OnScoreboardRefreshed`, and the first three have UNCONNECTED exec pins
+    -- only `OnScoreboardRefreshed` runs anything. Nothing in that graph executes at
+    `CreateWidget`/`AddToViewport` time at all, which settles it whatever the interior holds.
+    Corroboration rather than the load-bearing link: 39 nodes, 44 connections, and all nine of its
+    `K2Node_CallFunction` nodes are `SetText (Text)`. Only a re-entry AFTER `CreateGuidanceWidget`
+    could have broken the chain, and the one graph that could have is closed at its door.
+    (c) `CreateGuidanceWidget` runs inside that `BeginPlay`, above the scoreboard block and so
+    before the terminal log.
+    (d) In FIVE fresh PIE sessions the order was identical -- adopt, `Guided opening armed`, then
+    the terminal line -- and by (b) the `BeginPlay` cannot straddle the arming line, so it STARTED
+    after it.
+    Therefore at the decorated `ApplyView`, which runs in the same `RefreshFromMachine` call that
+    logged the arming, `GuidanceStrip` was null and `AStratScoreboardHUD::PushGuidance` -- whose
+    whole body is a null check and a forward -- dropped it silently. That silence is deliberate and
+    documented: "no strip is a configuration, not a refusal". The strip is then built holding the
+    default, and in those five sessions the read ~2.9 s later is all-default.
+  - **BRANCH 3 -- a later UNDECORATED `ApplyView` overwrites it: CONFIRMED AS A MECHANISM, driven
+    and observed.** `ke * RefreshFromMachine` put the full decorated projection on the widget;
+    `ke * SetViewingSide 0` then ran `UStratMatchSubsystem::SetViewingSide` ->
+    `RefreshPresentation` -> `BuildViewModel` + undecorated `ApplyView` -> `PushGuidance`, and the
+    next read one second later was `bActive=False, Beat=None, DirectiveText=""`. **An undecorated
+    reconcile clears the strip, watched happening.** It does NOT fire spontaneously: after an
+    earlier decorated push the projection survived on the widget for 46 seconds of live idle match.
+    Production callers of an undecorated `ApplyView` are exactly three --
+    `UStratMatchSubsystem::StartMatchInternal`'s first reconciliation, which does it deliberately
+    and says why in its own comment, and `RefreshPresentation`, reached from `SetViewingSide` and
+    from `RunAiTurnsNow`. The AI route is the one that matters in play and is the one NOT directly
+    driven here, because taking a turn needs input; it is the same function through the same call,
+    so it is a strong inference rather than an observation, and is labelled as such.
+  - **THE SHAPE OF THE DEFECT, which is larger than either branch.** The guided-opening decoration
+    lives on `AStratPlayerController::RefreshFromMachine` alone, while three subsystem-side paths
+    reconcile the same screen without it. At match start the strip does not yet exist for the only
+    decorated push, and afterwards any subsystem-side reconcile clears what a decorated push left.
+    Engineer's lane. Neither a call site nor a null check is the whole answer.
+  - **INSTRUMENT, and it cost a wrong claim before it paid for one.** `ke` parses arguments
+    POSITIONALLY: `ke * SetViewingSide 0` works, `ke * SetViewingSide InViewingSide=0` does not, and
+    the bare form does not either -- both print `'SetViewingSide': Bad or missing property
+    'InViewingSide'` and then, on the SAME command, `Called 'SetViewingSide' on everything in the
+    world and 2 instances succeeded`. **A `ke` success count is not evidence the function executed**;
+    read the lines above it. An earlier draft of this bullet concluded from those two failures that
+    `ke` could not reach the function at all, and spent that conclusion to leave branch 3
+    unmeasured -- a capability claim about the instrument, drawn from one unsupported syntax, that
+    the gate caught and the positional form disproved in a single run.
+
 - **2026-08-21, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE PUSH PATH WORKS, AND THE
   PAINTED STRIP IS NOT A FUNCTION OF THE DATA IT HOLDS.** **[THE FIRST HALF OF THAT HEADLINE IS
   RETRACTED -- read the CORRECTION that ENDS this bullet before acting on anything in it. The push
@@ -579,7 +655,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   - **Question (2) is ANSWERED: the third branch is the one, and `FindScoreboardHUD` and
     `PushGuidance` are both innocent.** **[RETRACTED IN FULL -- see item 1 and item 2 of the
     CORRECTION ending this bullet. This is the one sentence here that changes what the next lane
-    does, and it is wrong: it retires a branch that must still be measured at t+0.]** State A, 2.5 s
+    does, and it is wrong: it retires a branch that must still be measured at t+0.]**
+    **[THAT MEASUREMENT HAS SINCE BEEN MADE -- newest bullet, five sessions of ordering plus a
+    driven reconcile. DO NOT REDO IT. `GuidanceStrip` was null at t+0. Kept as a sibling marker
+    rather than nested inside the one above, because markdown does not nest `**` and the nested
+    form rendered this sentence UNbolded inside a bold retraction -- emphasis inverted on the one
+    clause meant to stop a redo.]** State A, 2.5 s
     after `Guided opening armed for side 0`: the widget's `Guidance` reads all default. Then `ke *
     RefreshFromMachine` on the live controller, and state B reads `bActive=True, Beat=Beat1a,
     DirectiveText="Select the marked Infantry. Lit hexes are its true reach. Click one to move.",
@@ -661,10 +742,22 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
        control. TWO of the three sit inside the branch the bullet above calls innocent; the THIRD
        does not -- there both links did their job and the fault is a later undecorated `ApplyView`,
        which is the call-site story rather than the link story. That is exactly why this pass can
-       neither convict nor exonerate those links, and why the t+0 ordering still has to be measured.
+       neither convict nor exonerate those links, and why the t+0 ordering still has to be
+       measured. **[ANSWERED by the newest bullet at the top of `## NEXT`, dated the same day: the
+       t+0 ordering WAS measured, five sessions of it. Branch 1 is eliminated; branch 2 is
+       CONFIRMED; branch 3 is CONFIRMED AS A MECHANISM -- an undecorated reconcile was driven and
+       the strip's guidance was watched being cleared -- though it does not fire spontaneously.
+       TWO of the three are real, and both need fixing. This item's refusal to convict or exonerate
+       was right for the evidence it had; it is superseded, not wrong. (This marker first said
+       "branch 3 does not fire at match start", which is the framing the newest bullet retired in
+       the same pass for reading as an exoneration -- carried over verbatim instead of re-derived
+       against the text it summarises.)]**
        `CreateGuidanceWidget`'s own comment already names the shape: "The strip draws its own
        defaults until the first `ApplyView`" -- it assumes a LATER `ApplyView`, and whether one
-       comes without input is exactly what is NOT established here.
+       comes without input is exactly what is NOT established here. **[NOW ESTABLISHED, BOTH WAYS,
+       by the newest bullet: none comes spontaneously -- a decorated projection survived 46 s of
+       live idle match -- and a driven one CLEARS the strip. The question this sentence leaves open
+       is closed.]**
     3. **The GetAll-based elimination is WITHDRAWN -- it used an instrument this same file rules out
        for that purpose four bullets down.** The 2026-08-21 entry says: a UMG property binding
        drives the Slate attribute and never writes the UPROPERTY back, so read `GetAll` for unbound
@@ -747,8 +840,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
       shadowing branch less likely -- less likely is not excluded, and the two are different
       defects in different lanes. Both stand until one is measured.
   - **SECOND DEFECT, measured directly in a SECOND, FRESH PIE session rather than inferred from the
-    first: the widget's guidance is still all default two seconds after the opening arms.** The log
-    line `Guided opening armed for side 0: objective hex (2, 7), window turns 1-4` had already been
+    first: the widget's guidance is still all default two seconds after the opening arms.**
+    **[THE "demonstrably non-null" CLAIM BELOW IS SUPERSEDED -- see the newest bullet at the top of
+    `## NEXT`. `GuidanceStrip` was measured non-null at t+2.5 s and it IS null at t+0, which is the
+    moment that decides; the reading was true of the time it sampled and wrong as an exclusion.]**
+    The log line `Guided opening armed for side 0: objective hex (2, 7), window turns 1-4` had
+    already been
     written when `GetAll StratGuidanceWidget Guidance` read `bActive=False, Beat=None,
     DirectiveText=""` off the live instance, and the same session's `GetAll StratScoreboardHUD
     GuidanceStrip` shows the HUD holding a pointer to THAT instance -- so the widget the HUD
@@ -768,8 +865,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
       rebuild, or one decorated for a different side. THREE branches, not two: `FindScoreboardHUD`
       returns null, `GuidanceStrip` is null (excluded -- it is measured non-null), or the model
       handed to `ApplyView` was never decorated. The third is the one this pass overlooked and it
-      is the cheapest to test. What is measured is only that the widget's copy is default; nothing
-      here establishes that no call was made.
+      is the cheapest to test. **[SUPERSEDED -- see the newest bullet at the top of `## NEXT`. The
+      exclusion of the `GuidanceStrip`-null branch was drawn from a t+2.5 s sample and does not
+      hold at t+0, where it is now CONFIRMED; and the third branch is confirmed too, as a mechanism
+      that clears the strip on any undecorated reconcile. Two of the three are real.]**
+      What is measured is only that the widget's copy is default; nothing here establishes that no
+      call was made.
   - **Driven both directions with no simulated input.** The guided opening was skipped on the model
     side and PROVED skipped: a second `ke * SkipGuidance` reported 1 instance succeeded while
     printing no "skipped by the player" line, that log sitting after the `!bActive` early return.
@@ -792,7 +893,9 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     lead dissolves. So the cheapest measurement in this bullet is `ToVisibility`'s false-branch
     return AT RUNTIME, in the same PIE session -- it may settle question (1) outright without
     touching the shadowing hypothesis at all.
-    (2) Where does the guided-opening projection stop -- `FindScoreboardHUD` returning null,
+    (2) **[ANSWERED -- see the newest bullet at the top of `## NEXT`. `GuidanceStrip` was null,
+    because the HUD's `BeginPlay` had not run yet. Question (1), the binding, is still open.]**
+    Where does the guided-opening projection stop -- `FindScoreboardHUD` returning null,
     `GuidanceStrip` null (excluded, measured non-null), or the model reaching `ApplyView`
     UNDECORATED so that an unconditional push delivers a default? Three branches, not the two an
     earlier draft of this bullet named; the third is the cheapest to test and the one this pass

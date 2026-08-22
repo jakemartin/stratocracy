@@ -11,6 +11,37 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-22 (THREE CLAUSES LANDED AND THE STRIP WAS SEEN TO DRAW BLANK. Two separate
+things in one merge, and neither is the other's evidence.
+THE SUITE **IS NOW 151/151**, 148 -> 151 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
+walked over `Source/` -- +3, none removed, column-0 anchored, re-derived independently by the gate
+in the merged tree (SIMPLE 151, COMPLEX/_CLASS 0) and never incremented from a brief -- zero
+non-Success, `notRun` 0, 151 entries, `Counter({'Success': 151})`. Build `Result: Succeeded`,
+`REAL_EXIT=0`; report `reportCreatedOn 2026.08.22-02.46.56`.
+THE RUN IS THIS TREE'S OWN, and it was made rather than argued for. An earlier draft of this banner
+backed the figure on `slot-1`'s report plus whole-tree byte identity; the sweep's REPORT IDENTITY
+check refused it, correctly -- this tree's report was older than the clause files it would have been
+describing -- and the editor was closed so the build and the suite could run here. That guard is the
+reason the number in this banner means what it says. `Saved/SaveGames/` held ZERO files either side
+and the directory mtime MOVED, 20:21:06 -> 22:46:55: the control discharged on this tree again, not
+borrowed.
+WHAT LANDED. `AlterOneField` in `StratGuidanceRouteClauses.cpp` was reinterpreting ANY
+`FStructProperty` as an `FIntPoint` while promising to refuse kinds it could not vary -- the
+going-inert shape the property-walk control exists to prevent, relocated one level down. It now
+gates on `TBaseStructure<FIntPoint>::Get()`. And the two shipped-asset facts the last entry named as
+an unpinned gap are pinned: `WBP_DirectiveStrip`'s ancestry and `BP_StratScoreboardHUD`'s non-null
+`GuidanceWidgetClass`, both read off the CDO, both checking their own premise first. The author's
+two mutation builds showing both directions red are a SELF-REPORT; the restored-bytes identity is
+verified (`git hash-object` -> `c0b8693dbb7d2d6874b7b59264ba83fa9b75a3e4`), the mutation runs are
+not, and the gate said so.
+THE STRIP DRAWS, AND WHAT IT DRAWS IS AN EMPTY BOX THAT IGNORES THE MODEL. Landed separately at
+`d0d2e2e`; the account and both defects are under `## NEXT` and are not restated here.
+**Sec 2.11.6-B IS NOT CLOSED AND IS NOT CLAIMED.**
+GATES: `VERDICT: PASS` with zero findings on the branch in slot-1 (twelve checks), and `VERDICT:
+PASS` with zero findings on the merged tree afterwards, because a verdict describes a tree and a
+merge is a post-pass change. The post-merge gate's one substantive remark was about how to attribute
+a lane run; the run above makes that attribution unnecessary rather than merely careful.)
+
 _Last run 2026-08-21 (THE STRIP IS WIRED END TO END AND HAS NEVER DRAWN. Both halves of that
 sentence are load-bearing and the second is the one a later reader will otherwise lose.
 `WBP_DirectiveStrip` is reparented onto `UStratGuidanceWidget` and
@@ -20,7 +51,7 @@ SCREEN. Authored by the coordinator over the editor's HTTP endpoint under the st
 gated and PASSED with zero findings.
 WHAT THE EVIDENCE REACHES, AND THE THREE THINGS IT DOES NOT. It proves the property path
 resolves, the parent class binds, all four `Return Value` pins are `connected`, and the suite
-stayed 148/148 across the change. It proves NOTHING about (a) whether the strip's Slate hierarchy
+**was 148/148** across the change. It proves NOTHING about (a) whether the strip's Slate hierarchy
 lays out at top centre, (b) whether `AddToViewport` yields a VISIBLE widget for this class, or
 (c) whether `StripBorder.Visibility` evaluates to `Visible` on a real frame while a beat holds the
 line. A reparent that destroys a variable and re-scopes four bindings is PRECISELY the change
@@ -78,7 +109,7 @@ gate's reading was correct and this pass's was not.)
 
 _Last run 2026-08-21 (THE GUIDANCE ROUTE LANDED AND THE THREE WIDGETS ARE NO LONGER INERT BY
 DESIGN -- though nothing has DRAWN yet, and that distinction is kept below rather than blurred.
-The suite **is now 148/148**, 141 -> 148 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
+The suite **was 148/148** at that pass, 141 -> 148 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
 walked over `Source/` -- +7, none removed, derived independently three times and never
 incremented -- zero non-Success, `notRun` 0, `reportCreatedOn 2026.08.21-23.56.04`. Build
 `Result: Succeeded`, `REAL_EXIT=0`.

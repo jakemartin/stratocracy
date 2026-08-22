@@ -319,6 +319,21 @@ namespace StratGuidanceRoute
 	};
 
 	/**
+	 * The one struct kind `AlterOneField` is able to vary: EXACTLY `FIntPoint`.
+	 *
+	 * Factored out of the branch that uses it so that both of its directions can be exercised
+	 * against real `FStructProperty` instances WITHOUT performing the write. That matters: the
+	 * write goes through the property's own offset, so a probe that proved the refusal by
+	 * calling the writing path on a foreign struct field would be relying on the very gate it
+	 * is trying to test in order not to scribble on unrelated bytes. Asking the predicate is
+	 * free of that circularity.
+	 */
+	static bool CanVaryStructField(const FStructProperty* AsStruct)
+	{
+		return AsStruct != nullptr && AsStruct->Struct == TBaseStructure<FIntPoint>::Get();
+	}
+
+	/**
 	 * Moves exactly one field of a view, chosen through reflection rather than by name.
 	 *
 	 * WHY REFLECTION AND NOT A TYPED LIST. Two clauses need "a view that differs from this one
@@ -367,11 +382,28 @@ namespace StratGuidanceRoute
 		}
 		if (FStructProperty* const AsStruct = CastField<FStructProperty>(Property))
 		{
-			// The one struct field is FIntPoint; move it.
-			FIntPoint* const Point = AsStruct->ContainerPtrToValuePtr<FIntPoint>(&InOut);
-			Point->X += 3;
-			Point->Y += 5;
-			return true;
+			// GATED ON THE STRUCT'S IDENTITY, not on "it is a struct at all".
+			//
+			// `FIntPoint` is the ONLY struct kind this helper knows how to move. Reinterpreting
+			// some other struct field's bytes as an FIntPoint would let the control clause below
+			// keep reporting green while proving nothing whatever about that field -- the exact
+			// going-inert failure this property-walk design exists to prevent, relocated one
+			// level down into the helper. Anything that is not exactly FIntPoint therefore falls
+			// through to the refusal at the bottom of this function, which names the field, so
+			// the day `FStratGuidanceView` grows a second struct field
+			// `T-INT-05.GuidanceComparisonDistinguishesViews` goes RED with that field's name in
+			// the message instead of passing on garbage.
+			//
+			// WHAT IS COVERED, honestly: FIntPoint and nothing else in the struct family.
+			// `T-INT-05.GuidanceFieldVaryingHelperGatesOnStructIdentity` exercises BOTH
+			// directions of this gate -- accept and refuse -- against real reflection data.
+			if (CanVaryStructField(AsStruct))
+			{
+				FIntPoint* const Point = AsStruct->ContainerPtrToValuePtr<FIntPoint>(&InOut);
+				Point->X += 3;
+				Point->Y += 5;
+				return true;
+			}
 		}
 
 		OutError = FString::Printf(
@@ -436,6 +468,124 @@ bool FStratGuidanceInstrumentDistinguishesTest::RunTest(const FString& /*Paramet
 	}
 
 	TestTrue(TEXT("the struct declared fields for this control to walk"), FieldsSeen > 0);
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// The control ON the control -- the field-varying helper gates on struct IDENTITY.
+//
+// `GuidanceComparisonDistinguishesViews` above is only a gate for as long as
+// `AlterOneField` genuinely alters the field it was handed. Its struct branch used to
+// reinterpret ANY struct field as an `FIntPoint`, which was harmless only by the accident
+// that `FIntPoint` is the single struct kind `FStratGuidanceView` declares. The day a second
+// struct field arrived, that branch would have written eight bytes of nonsense through a
+// foreign offset, the comparator would have called the two views different for the wrong
+// reason, and the control clause would have stayed GREEN while covering nothing about the new
+// field. That is a going-inert failure one level below the one the property walk was built to
+// prevent, so it gets its own clause rather than a comment.
+//
+// BOTH DIRECTIONS ARE EXERCISED, ON REAL REFLECTION DATA, AND NEITHER CAN PASS VACUOUSLY:
+//   - ACCEPT: every `FStructProperty` `FStratGuidanceView` actually declares is accepted.
+//     A predicate that refused everything reddens here. This is deliberately a walk and not a
+//     lookup of `ObjectiveHex` by name, so a second struct field on the view is REQUIRED to be
+//     handled rather than silently unmentioned.
+//   - REFUSE: a real `FStructProperty` of a different struct kind -- `FStratViewModel::Guidance`,
+//     which is an `FStratGuidanceView` -- is refused, and `AlterOneField` itself refuses it
+//     with a message naming the field. A predicate that accepted everything reddens here.
+//
+// WHY THE PREDICATE AND NOT ONLY THE WRITER. The refuse direction is also asserted through
+// `AlterOneField`, which is safe BECAUSE the gate holds. The accept direction is asked of
+// `CanVaryStructField` rather than by writing through a foreign container, because a probe
+// that had to survive the ungated write in order to report on it would be leaning on the very
+// property under test.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceFieldVaryingHelperGatesOnStructIdentityTest,
+	"Stratocracy.StratPlay.T-INT-05.GuidanceFieldVaryingHelperGatesOnStructIdentity",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceFieldVaryingHelperGatesOnStructIdentityTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidanceRoute;
+
+	UScriptStruct* const ViewStruct = FStratGuidanceView::StaticStruct();
+	UScriptStruct* const ModelStruct = FStratViewModel::StaticStruct();
+	if (!TestNotNull(TEXT("FStratGuidanceView publishes reflection data"), ViewStruct) ||
+		!TestNotNull(TEXT("FStratViewModel publishes reflection data"), ModelStruct))
+	{
+		return false;
+	}
+
+	// ---- PREMISE: the two struct kinds below are genuinely different ----------------------
+	//
+	// Checked first, because if `FStratViewModel::Guidance` were somehow an FIntPoint the
+	// refuse direction would be asking nothing.
+	if (!TestTrue(
+			TEXT("PREMISE: FStratGuidanceView is not FIntPoint, so a property of it is a real "
+			     "non-FIntPoint struct field for the refuse direction to be about"),
+			ViewStruct != TBaseStructure<FIntPoint>::Get()))
+	{
+		return false;
+	}
+
+	// ---- ACCEPT: every struct field the view declares is one the helper can vary ----------
+	int32 StructFieldsSeen = 0;
+	for (TFieldIterator<FProperty> It(ViewStruct); It; ++It)
+	{
+		FStructProperty* const AsStruct = CastField<FStructProperty>(*It);
+		if (AsStruct == nullptr)
+		{
+			continue;
+		}
+		++StructFieldsSeen;
+
+		TestTrue(*FString::Printf(
+				TEXT("the field-varying helper accepts FStratGuidanceView's struct field '%s' "
+				     "(a '%s'). If this is red, the view has grown a struct field AlterOneField "
+				     "cannot move -- extend AlterOneField and CanVaryStructField to cover it; do "
+				     "NOT widen the gate to 'any struct', which is what made the helper inert."),
+				*AsStruct->GetName(),
+				AsStruct->Struct != nullptr ? *AsStruct->Struct->GetName() : TEXT("<null>")),
+			CanVaryStructField(AsStruct));
+	}
+	TestTrue(TEXT("FStratGuidanceView declares at least one struct field for the accept "
+	              "direction to be about"), StructFieldsSeen > 0);
+
+	// ---- REFUSE: a struct field of any other kind is turned away, by name -----------------
+	FStructProperty* const Foreign =
+		CastField<FStructProperty>(FindFProperty<FProperty>(ModelStruct, FName(TEXT("Guidance"))));
+	if (!TestNotNull(
+			TEXT("FStratViewModel::Guidance is a reflected struct property, which is this "
+			     "clause's stand-in for 'a struct field of a kind the helper does not know'"),
+			Foreign))
+	{
+		return false;
+	}
+
+	TestFalse(*FString::Printf(
+			TEXT("the field-varying helper REFUSES a non-FIntPoint struct field ('%s', a '%s'). "
+			     "If this is red the gate accepts any struct again, and "
+			     "T-INT-05.GuidanceComparisonDistinguishesViews is no longer proving anything "
+			     "about a struct field it appears to cover."),
+			*Foreign->GetName(),
+			Foreign->Struct != nullptr ? *Foreign->Struct->GetName() : TEXT("<null>")),
+		CanVaryStructField(Foreign));
+
+	// And the writer built on the predicate refuses it too, with the field named in its reason.
+	FStratGuidanceView Untouched;
+	FStratGuidanceView Subject;
+	FString AlterError;
+	const bool bAltered = AlterOneField(Foreign, Subject, AlterError);
+
+	TestFalse(TEXT("AlterOneField refuses a struct field it cannot vary rather than "
+	               "reinterpreting its bytes"), bAltered);
+	TestTrue(*FString::Printf(
+			TEXT("the refusal names the field it turned away (reported: '%s')"), *AlterError),
+		AlterError.Contains(Foreign->GetName(), ESearchCase::CaseSensitive));
+	TestTrue(TEXT("and the refused call left the view untouched, so nothing was written "
+	              "through the foreign field's offset"),
+		SameGuidance(Untouched, Subject));
+
 	return true;
 }
 

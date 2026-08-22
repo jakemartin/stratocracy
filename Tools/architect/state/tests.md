@@ -10,6 +10,89 @@
 > in any other file is a finding, enforced by `strat_banner_sweep.py`'s RECORD OWNERSHIP check.
 > Everything under `## NEXT
 
+- **A helper inside my own lane had gone inert, and the fix is now itself falsifiable by
+  measurement rather than by claim.** `AlterOneField` in
+  `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp` (namespace `StratGuidanceRoute`) took
+  any `FStructProperty` and reinterpreted its bytes as an `FIntPoint`, while the same block's
+  trailing `OutError` promised to refuse "a field of a kind this helper cannot vary". It was
+  harmless only because `FIntPoint` happens to be the one struct kind `FStratGuidanceView`
+  declares. The moment a second struct field arrived, `T-INT-05.GuidanceComparisonDistinguishesViews` would have written eight bytes through a foreign offset, seen the comparator answer
+  "different" for the wrong reason, and stayed GREEN while proving nothing about the new field —
+  the going-inert failure the property-walk design exists to prevent, relocated one level down
+  into the helper. The gate is now on the struct's identity
+  (`AsStruct->Struct == TBaseStructure<FIntPoint>::Get()`, factored into `CanVaryStructField`),
+  and anything else falls through to the existing refusal, which names the field.
+  - **New clause: `Stratocracy.StratPlay.T-INT-05.GuidanceFieldVaryingHelperGatesOnStructIdentity`.**
+    ACCEPT direction: it walks `FStratGuidanceView`'s own property list and requires *every*
+    struct field it declares to be one the helper can vary — deliberately a walk and not a
+    lookup of `ObjectiveHex` by name, so a second struct field on the view is *required* to be
+    handled rather than silently unmentioned. REFUSE direction: a real `FStructProperty` of
+    another kind (`FStratViewModel::Guidance`) is refused by the predicate, refused by
+    `AlterOneField`, named in the refusal string, and leaves the view untouched.
+  - **What this clause does NOT pin:** any struct kind other than `FIntPoint` is *unsupported*,
+    not *supported and tested*. The clause pins that the helper says so out loud instead of
+    guessing. It also says nothing about whether the FIntPoint mutation is the *right* mutation,
+    only that it happens and that the comparator notices.
+  - **Technique worth reusing: ask the predicate, do not perform the write.** The refuse
+    direction cannot be proved by calling the writing path on a foreign struct field — that
+    write goes through the foreign property's own offset, so a probe built that way relies on
+    the very gate it is testing in order not to smash the stack. Splitting the predicate out
+    (`CanVaryStructField`) removes the circularity and makes both directions free to assert.
+  - **The fix was MEASURED falsifiable in two directions, not asserted.** Two mutation builds,
+    each run through `UnrealEditor-Cmd.exe` against the named clauses, then the shipped bytes
+    restored and verified identical by `git hash-object`
+    (`c0b8693dbb7d2d6874b7b59264ba83fa9b75a3e4` before and after):
+    - *Gate re-pointed at `TBaseStructure<FVector>::Get()`* (safe: no write becomes reachable) —
+      the ACCEPT direction went red, and so did the pre-existing
+      `T-INT-05.GuidanceComparisonDistinguishesViews`, with
+      `Error : field 'ObjectiveHex' is of a kind this helper cannot vary`. That second failure
+      is the load-bearing evidence: it is exactly the message a newly-added struct field will
+      produce, and it proves the control clause is now coupled to the gate.
+    - *Gate widened back to `return AsStruct != nullptr;` with the write neutralised in the same
+      mutation* (the neutralising is what keeps the widened gate from scribbling through a
+      foreign offset) — the REFUSE direction went red on all three of its assertions,
+      `Expected 'the field-varying helper REFUSES a non-FIntPoint struct field ('Guidance', a
+      'StratGuidanceView')' ... to be false`.
+    Recorded because a one-directional mutation would have proved half of it, and because the
+    *reason* the second mutation had to neutralise the write is the same reason the predicate
+    was split out at all.
+
+- **Two shipped-asset facts that lived in `.uasset` bytes and in nothing else are now clauses,
+  filed under `T-UI-02`.** Both in `Source/StratUI/Tests/StratGuidanceStripClauses.cpp`,
+  namespace `StratGuidanceStripAssets`. `T-UI-06` was *not* minted for them: it is not defined
+  in the shipped GDD, and `T-UI-02` is the recorded partial fit.
+  - `Stratocracy.StratUI.T-UI-02.TheDirectiveStripAssetIsAGuidanceWidget` — the generated class
+    of `Content/UI/WBP_DirectiveStrip.uasset` has `UStratGuidanceWidget` as an ancestor. Nothing
+    else in the build says so: re-parenting a Widget Blueprint compiles, saves and cooks
+    silently, and the only symptom is a strip that never draws.
+  - `Stratocracy.StratUI.T-UI-02.TheShippedHudNamesAGuidanceWidgetClass` — the
+    `GuidanceWidgetClass` class default on `Content/UI/BP_StratScoreboardHUD.uasset`'s CDO is
+    non-null *and* derives from `UStratGuidanceWidget`. `AStratScoreboardHUD::CreateGuidanceWidget` treats an unset class as a legitimate configuration and logs it at Log verbosity — by
+    design, since a build shipping without a guided opening is a real build — so a `None` there
+    produces no warning, no error and no red test. One went unnoticed for a whole phase.
+  - **Where the expectations come from:** `UStratGuidanceWidget::StaticClass()` on both, read
+    from reflection, never a typed class-name string. The only literals are the two asset
+    *paths*, which are subjects and not expectations, and which were verified against
+    `Content/UI/` in the tree. Loading a `/Game/` path in a fixture is one of the two standing
+    exceptions to the no-path-literals rule; `Source/StratBridge/Tests/StratBridgeParity.cpp`
+    does the same with `DT_Units`/`DT_Terrain`.
+  - **Trap avoided, worth reusing: do NOT pass the asserted base class to `StaticLoadClass`.**
+    It filters, returning null when the loaded class fails the filter — so filtering on
+    `UStratGuidanceWidget` would turn "the asset was re-parented", the defect the clause exists
+    to catch, into "the asset did not load", and the failure message would blame the wrong
+    thing. `LoadGeneratedClass` passes `UObject::StaticClass()` and asserts kinship afterwards.
+  - **Both clauses check that the class they resolved is Blueprint-generated and not native**
+    before reading anything off it, and the HUD clause checks the PREMISE that the C++ default
+    is null first — same shape as `T-UI-03.TheShippedGameModeOptsIn`. Without the premise the
+    clause could pass on an asset that overrode nothing while still wearing its own name.
+  - **What these clauses do NOT pin:** anything about the strip's *appearance*, its widget tree,
+    or whether it is on screen. Both read reflection/CDO data only, so both run headless under
+    `-nullrhi` — chosen deliberately over a clause needing a real widget tree.
+  - **Not a flake, but a real finding if it ever changes:** `/Game/` packages loaded fine in the
+    `-nullrhi` automation environment on this pass. If either clause ever goes red on *loading*
+    rather than on kinship, that is a harness finding to report, never something to soften into
+    a skip — every failure path in both clauses is red for that reason.
+
 - **§2.11.6's guidance route is pinned by six clauses under `T-INT-05`, and writing them
   measured a module boundary the brief had not accounted for.** New files, all in `Tests/`:
   `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp` (six macros — five clauses plus one

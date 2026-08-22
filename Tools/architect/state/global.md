@@ -11,6 +11,71 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-21 (THE STRIP IS WIRED END TO END AND HAS NEVER DRAWN. Both halves of that
+sentence are load-bearing and the second is the one a later reader will otherwise lose.
+`WBP_DirectiveStrip` is reparented onto `UStratGuidanceWidget` and
+`BP_StratScoreboardHUD.GuidanceWidgetClass` now names it, so the route from
+`FStratViewModel::Guidance` to a widget is complete in every link. NOTHING HAS BEEN OBSERVED ON
+SCREEN. Authored by the coordinator over the editor's HTTP endpoint under the standing ruling;
+gated and PASSED with zero findings.
+WHAT THE EVIDENCE REACHES, AND THE THREE THINGS IT DOES NOT. It proves the property path
+resolves, the parent class binds, all four `Return Value` pins are `connected`, and the suite
+stayed 148/148 across the change. It proves NOTHING about (a) whether the strip's Slate hierarchy
+lays out at top centre, (b) whether `AddToViewport` yields a VISIBLE widget for this class, or
+(c) whether `StripBorder.Visibility` evaluates to `Visible` on a real frame while a beat holds the
+line. A reparent that destroys a variable and re-scopes four bindings is PRECISELY the change
+that leaves all of those green and the screen blank. **§2.11.6-B IS NOT CLOSED AND IS NOT CLAIMED
+HERE.** It closes when a human-driven playtest has seen a directive on screen -- automated PIE
+input cannot do it, because injection never reaches `UPlayerInput`. OWNED: coordinator, to
+schedule with the user.
+THE REPARENT WAS PROVED AT THE PACKAGE-BYTE LEVEL, NOT BY THE COMPILER'S SILENCE. The gate
+diffed the real bytes and found the corroboration this pass had not: `NewVariables` and
+`EStratGuidanceBeat::None` BOTH DISAPPEAR -- the local `Guidance` variable AND its serialized
+default, so the shadow is genuinely gone rather than hidden -- while `StratGuidanceWidget:Guidance`
+APPEARS, which is the member reference re-scoping to the native class. That is byte-level proof
+the four bindings resolve to the INHERITED property. `remove_variable`'s "variable not found" was
+truthful rather than a miss. Re-measured independently afterwards: `WontTick` True -> False,
+`WillTick` False -> True, `NewVariables` True -> False, `StratGuidanceWidget:Guidance` False ->
+True.
+THE REPARENT FLIPPED THE WIDGET'S TICK PREDICTION AND THIS PASS DID NOT NOTICE. `WBP_DirectiveStrip`
+serialized `WontTick` before and serializes `WillTick` now, with `bClassRequiresNativeTick` newly
+present -- while `UStratGuidanceWidget` overrides NO `NativeTick` (grepped: the only out-of-line
+definition in its `.cpp` is `PushGuidance`). The likely mechanism is the UMG compiler treating any
+native `UUserWidget` subclass parent as tick-requiring; THE MECHANISM IS NOT VERIFIED and is
+recorded as an inference from serialized bytes. Cost is one per-frame no-op tick on one HUD widget,
+negligible -- but it is a real behavioural delta this pass introduced and the next profiling pass
+should not have to rediscover why the strip ticks.
+`GuidanceZOrder` STAYS AT ITS C++ DEFAULT OF 10 AND IS NOT DERIVABLE FROM THE GDD -- do not cite
+§2.11 for it. The GDD carries no z-order language anywhere; what it fixes is GEOMETRY, and it
+SEPARATES these two surfaces: §2.11.4 puts the scoreboard TOP-LEFT, §2.11.2 draws the directive
+strip TOP CENTRE. They are not designed to overlap, so ordering is not load-bearing for occlusion
+in the intended layout. 10-over-0 is right as the SAFE DIRECTION UNDER A LAYOUT NOBODY HAS SEEN:
+a full-width strip can overlap a top-left panel at real resolutions whatever the mock-up says, and
+§2.11.6's "no beat expires unheard" fails SILENTLY if the line is drawn behind something. Above is
+recoverable; behind is a blank teach. It is deliberately NOT overridden on the Blueprint -- the
+property is ABSENT from the `.uasset`, which under this tree's own rule is STRONGER evidence that
+it equals the C++ default than setting it would be.
+NEITHER EDITED ASSET IS PINNED BY ANY CLAUSE, and that is a new gap this pass created. Nothing
+asserts `WBP_DirectiveStrip`'s parent is `UStratGuidanceWidget`, and nothing asserts
+`BP_StratScoreboardHUD.GuidanceWidgetClass` is non-null; both facts are held by `.uasset` bytes
+alone and would regress silently under an editor accident. A CDO-default clause is cheap and would
+have caught the pre-existing `None`. CANDIDATE FOR `strat-test-author`, not owed by this pass.
+THE SUITE WAS RE-RUN AFTER THE ASSET EDITS RATHER THAN ASSUMED UNAFFECTED, because clauses in this
+tree do read `.uasset` bytes: `succeeded 148 / failed 0 / notRun 0`, zero non-Success,
+`reportCreatedOn 2026.08.22-00.21.06`. `Saved/SaveGames/` held ZERO files either side and the
+directory mtime MOVED, 20:15:10 -> 20:21:06 -- the control discharged a second time on this tree,
+not borrowed.
+A MEASUREMENT INSTRUMENT WAS WRONG TWICE IN ONE HOUR AND BOTH WOULD HAVE PRODUCED CONFIDENT
+FALSEHOODS. Reading pins, `p.linked` DOES NOT EXIST -- the field is `connected` -- so a check
+written against it reported ZERO connected bindings immediately after the reparent, which reads
+exactly like the reparent silently breaking every binding, and a clean compile would not have
+contradicted it because an unconnected return simply yields a default. Separately, `.uasset` is
+LFS-FILTERED here, so `git show HEAD:<path>` returns the THREE-LINE POINTER and not the package;
+a byte comparison against it disagreed with the gate on two tokens until the bytes were smudged.
+`git hash-object` applies the filters and stays trustworthy; `git show` does not. Both times the
+gate's reading was correct and this pass's was not.)
+
+
 _Last run 2026-08-21 (THE GUIDANCE ROUTE LANDED AND THE THREE WIDGETS ARE NO LONGER INERT BY
 DESIGN -- though nothing has DRAWN yet, and that distinction is kept below rather than blurred.
 The suite **is now 148/148**, 141 -> 148 by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`

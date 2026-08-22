@@ -603,6 +603,61 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     input at all, and this run is the first time it has been used to CHANGE observed state rather
     than to confirm one. `AStratPlayerController::RefreshFromMachine` is `BlueprintCallable`,
     which is what makes it reachable; `GetAll` then reads the result off the live widget.
+  - **CORRECTION, 2026-08-22, same session, raised by the record gate on `68d56d1` and adopted --
+    THE BULLET ABOVE EXONERATED THE WRONG BRANCH ON A TEST THAT COULD NOT SEE IT, AND ITS
+    COMMIT MESSAGE CARRIES THE SAME ERROR WHERE IT CANNOT BE EDITED.** Four repairs, in order of
+    how much they change what the next lane does.
+    1. **"nothing runs `RefreshFromMachine` at match start" IS FALSE, and the tree says so twice.**
+       `AStratPlayerController::BeginPlay` calls it unconditionally, and its comment there
+       anticipates this exact ordering ("actor BeginPlay order is not guaranteed"). Independently,
+       `Guided opening armed for side 0` is emitted only by `FStratGuidedOpening::Begin`, reachable
+       only through `TryArmGuidedOpening`, which has exactly TWO call sites -- `RefreshFromMachine`
+       and `HandleSelectionEvent` -- and no input event occurred at match start. So
+       `RefreshFromMachine` ran, cleared its bridge and build-model guards (they precede
+       `TryArmGuidedOpening` in its body), decorated, and reached `ApplyView` with a DECORATED
+       model, all in frame 27 at `03.06.08:571`.
+    2. **`FindScoreboardHUD` and `PushGuidance` are therefore NOT exonerated, and the bullet above
+       had no evidence about them.** It tested them at t+2.5 s and t+6 s, when the strip already
+       existed. The question is the state at t+0. `AStratScoreboardHUD::BeginPlay` creates the
+       strip before the scoreboard, and its terminal `Scoreboard live` line lands at `08:573`, two
+       milliseconds AFTER the arming line, in the same frame; `CreateGuidanceWidget` logs nothing
+       on success, so **the log cannot resolve the order and neither can this pass.** What IS
+       measured: a decorated `ApplyView` ran at match start, and 2.4 s later the widget still held
+       defaults -- so that push did not land on the strip. Either `FindScoreboardHUD` returned
+       null or `GuidanceStrip` was still null. Both sit inside the branch the bullet above calls
+       innocent. `CreateGuidanceWidget`'s own comment already names the shape: "The strip draws its
+       own defaults until the first `ApplyView`" -- it assumes a LATER `ApplyView` that, without
+       input, never comes.
+    3. **The GetAll-based elimination is WITHDRAWN -- it used an instrument this same file rules
+       out for that purpose four bullets down.** The 2026-08-21 entry says: a UMG property binding
+       drives the Slate attribute and never writes the UPROPERTY back, so read `GetAll` for unbound
+       state only. Then "the live instance still holds `Text Block`" is equally what a FULLY
+       WORKING binding leaves behind, and it eliminates nothing. So "a binding evaluated ONCE and
+       never again", "a binding never applied would have left Text Block on screen", and "two
+       channels, two different failures, one widget" are all unsupported and are retracted. Also
+       disclosed, because the bullet above did not: those two reads were taken at `03.07.57`, ~98 s
+       after the last capture and after `SkipGuidance` -- in state C, not in state B where the 76
+       characters were loaded.
+    4. **The `ToVisibility` lead is NOT moot; this run CORROBORATES its open branch.** That lead's
+       second branch is that the binding takes and returns `Visible` because `GetStripVisibility`'s
+       `Active` is not fed by the native `Guidance`. Three captures showing the screen is not a
+       function of the native `Guidance` is precisely what that branch predicts, and ONE such
+       defect -- bindings reading a source the native `Guidance` never reaches -- would explain
+       both channels at once. "Both stand until one is measured" is restored. The handoff in the
+       bullet above (read `UWidget::SynchronizeProperties` and `InitializeWidget`) rests on the
+       reading withdrawn in item 3; **do not dispatch an engineer on it.** The binding's input
+       wiring is at least as good a place to look.
+    Two wording repairs, neither load-bearing but both stated because this record has been blocked
+    for smaller: "pixel-identical" overstates the artifact -- re-derived independently, 283 to 309
+    of the 2128 pixels differ between any two of the three frames, all by a single LSB of dither,
+    max per-channel delta 1, with 3 to 4 unique colours and no glyphs in any state; the conclusion
+    that nothing painted, resized or appeared is untouched. And "not a function of `Guidance` in
+    ANY channel" should read "in any channel a composited capture can observe" -- the hover strings
+    were never exercised and the objective ring is drawn by the board, not the strip.
+    **What survives the correction, unaffected:** the route from `DecorateViewModel` through
+    `ApplyView` and `PushGuidance` to the widget WORKS once every participant exists -- state B is
+    a direct observation of the full projection arriving -- and the strip's painted state did not
+    follow it. Those two facts are what the next lane should start from.
 
 - **2026-08-21, COORDINATOR, LIVE PIE ON THE INTEGRATION TREE, NO SOURCE AND NO ASSET CHANGE --
   THE STRIP DRAWS, AND IT DRAWS BLANK AND UNCONDITIONALLY.** The three things the previous entry

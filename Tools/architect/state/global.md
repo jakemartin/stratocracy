@@ -561,67 +561,68 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
-- **2026-08-22, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE PUSH PATH WORKS, AND
-  THE PAINTED STRIP IS NOT A FUNCTION OF THE DATA IT HOLDS.** **[THE FIRST HALF OF THAT HEADLINE IS
+- **2026-08-22, COORDINATOR, LIVE PIE, NO SOURCE AND NO ASSET CHANGE -- THE PUSH PATH WORKS, AND THE
+  PAINTED STRIP IS NOT A FUNCTION OF THE DATA IT HOLDS.** **[THE FIRST HALF OF THAT HEADLINE IS
   RETRACTED -- read the CORRECTION that ENDS this bullet before acting on anything in it. The push
   path works once every participant exists; it did NOT work at match start, and the two links this
-  bullet clears are not cleared.]** The ordered experiment the bullet
-  below asked for was run, and it answers BOTH questions -- differently from the way either was
-  framed. One fresh PIE session, three states, `GetAll` for the data and `Shot showui` for the
-  screen at each.
+  bullet clears are not cleared.]** The ordered experiment the bullet below asked for was run, and
+  it answers BOTH questions -- differently from the way either was framed. One fresh PIE session,
+  three states, `GetAll` for the data and `Shot showui` for the screen at each.
   - **Question (2) is ANSWERED: the third branch is the one, and `FindScoreboardHUD` and
     `PushGuidance` are both innocent.** **[RETRACTED IN FULL -- see item 1 and item 2 of the
     CORRECTION ending this bullet. This is the one sentence here that changes what the next lane
-    does, and it is wrong: it retires a branch that must still be measured at t+0.]**
-    State A, 2.5 s after `Guided opening armed for side 0`:
-    the widget's `Guidance` reads all default. Then `ke * RefreshFromMachine` on the live
-    controller, and state B reads
-    `bActive=True, Beat=Beat1a, DirectiveText="Select the marked Infantry. Lit hexes are its true
-    reach. Click one to move.", bHasObjectiveRing=True, ObjectiveHex=(X=2,Y=7), bEndTurnGated=True,
-    EndTurnGateHover="Move the marked Infantry first.", LockedUnitHover="Locked this turn."` --
-    the whole decorated projection, delivered to the widget by the ordinary route. So the route
-    from `FStratGuidedOpening::DecorateViewModel` through `ApplyView` and `PushGuidance` to the
-    widget is WORKING. What is missing is the CALL: nothing runs `RefreshFromMachine` at match
-    start, so the model that reaches `ApplyView` then is UNDECORATED and the unconditional push
-    delivers a default. Engineer's lane, and the fix is a call site rather than a mechanism.
+    does, and it is wrong: it retires a branch that must still be measured at t+0.]** State A, 2.5 s
+    after `Guided opening armed for side 0`: the widget's `Guidance` reads all default. Then `ke *
+    RefreshFromMachine` on the live controller, and state B reads `bActive=True, Beat=Beat1a,
+    DirectiveText="Select the marked Infantry. Lit hexes are its true reach. Click one to move.",
+    bHasObjectiveRing=True, ObjectiveHex=(X=2,Y=7), bEndTurnGated=True, EndTurnGateHover="Move the
+    marked Infantry first.", LockedUnitHover="Locked this turn."` -- the whole decorated projection,
+    delivered to the widget by the ordinary route. So the route from
+    `FStratGuidedOpening::DecorateViewModel` through `ApplyView` and `PushGuidance` to the widget is
+    WORKING. What is missing is the CALL: nothing runs `RefreshFromMachine` at match start, so the
+    model that reaches `ApplyView` then is UNDECORATED and the unconditional push delivers a
+    default. Engineer's lane, and the fix is a call site rather than a mechanism.
   - **Question (1) is ANSWERED AND ITS LEAD IS DEAD -- the answer is bigger than the question.**
-    **[THE "LEAD IS DEAD" HALF IS RETRACTED -- see item 4 of the CORRECTION ending this bullet.
-    This run CORROBORATES that lead's open branch rather than killing it. The pixel and channel
-    wording in the rest of this sub-bullet is repaired there too, in the correction's trailing
-    paragraph.]**
-    The screen is PIXEL-IDENTICAL in all three states: the same 56x38 rectangle at x 750-805,
-    y 157-194, n=2128, in state A (`Guidance` default), in state B (fully populated, quoted above)
-    and in state C after `ke * SkipGuidance` put it back to default. **A widget holding a 76-
-    character directive drew exactly the same empty box as one holding an empty string.** So the
-    fault is not specific to `Visibility` and there is nothing left to explain about
-    `ToVisibility`'s false branch: the strip's Slate state is not a function of `Guidance` in ANY
-    channel. The conditional lead recorded below -- "if the false pin resolves to a non-painting
-    visibility then `Active` must be reading something true" -- is now MOOT rather than merely
-    unmeasured, and is superseded here rather than deleted. Its premise never got to matter.
+    **[THE "LEAD IS DEAD" HALF IS RETRACTED -- see item 4 of the CORRECTION ending this bullet. This
+    run CORROBORATES that lead's open branch rather than killing it. The pixel and channel wording
+    in the rest of this sub-bullet is repaired there too, in the correction's trailing paragraph.]**
+    The screen is PIXEL-IDENTICAL in all three states: the same 56x38 rectangle at x 750-805, y
+    157-194, n=2128, in state A (`Guidance` default), in state B (fully populated, quoted above) and
+    in state C after `ke * SkipGuidance` put it back to default. **A widget holding a 76-character
+    directive drew exactly the same empty box as one holding an empty string.** So the fault is not
+    specific to `Visibility` and there is nothing left to explain about `ToVisibility`'s false
+    branch: the strip's Slate state is not a function of `Guidance` in ANY channel. The conditional
+    lead recorded below -- "if the false pin resolves to a non-painting visibility then `Active`
+    must be reading something true" -- is now MOOT rather than merely unmeasured, and is superseded
+    here rather than deleted. Its premise never got to matter.
   - **What the text channel shows, and it is the sharpest clue in the run.** **[RETRACTED IN FULL,
     AND IT ENDS IN AN INSTRUCTION THAT MUST NOT BE ACTED ON -- see item 3 of the CORRECTION ending
     this bullet, which withdraws the whole `GetAll` elimination below, and item 4, which says of
     this sub-bullet's closing handoff: do not dispatch an engineer on it. This is the most
     actionable-looking paragraph in the entry and it is the one most fully withdrawn.]**
-    `DirectiveText`
-    renders NEITHER the bound value (state B's 76 characters) NOR its design-time default, which
-    `GetAll TextBlock Text NAME=DirectiveText` confirms is still `"Text Block"` on the live
-    instance. It renders EMPTY. An empty string is what the Text binding returns when `Guidance`
-    is default -- which is what `Guidance` held at construction. That reads as a binding evaluated
-    ONCE and never again, rather than one never applied; a binding never applied would have left
-    "Text Block" on screen. `StripBorder` is the opposite shape: it shows its DESIGN value
-    (`Visible`), where a binding evaluated once at construction would have returned `Collapsed`
-    and drawn nothing. Two channels, two different failures, one widget. NOT DIAGNOSED HERE, and
-    deliberately not: the next step is an engineer reading `UWidget::SynchronizeProperties` and
-    the generated class's `InitializeWidget` against this asset, not another black-box round.
+    `DirectiveText` renders NEITHER the bound value (state B's 76 characters) NOR its design-time
+    default, which `GetAll TextBlock Text NAME=DirectiveText` confirms is still `"Text Block"` on
+    the live instance. It renders EMPTY. An empty string is what the Text binding returns when
+    `Guidance` is default -- which is what `Guidance` held at construction. That reads as a binding
+    evaluated ONCE and never again, rather than one never applied; a binding never applied would
+    have left "Text Block" on screen. `StripBorder` is the opposite shape: it shows its DESIGN value
+    (`Visible`), where a binding evaluated once at construction would have returned `Collapsed` and
+    drawn nothing. Two channels, two different failures, one widget. NOT DIAGNOSED HERE, and
+    deliberately not: the next step is an engineer reading `UWidget::SynchronizeProperties` and the
+    generated class's `InitializeWidget` against this asset, not another black-box round.
   - **Instrument note.** `ke * RefreshFromMachine` is a way to drive a reconcile with no simulated
     input at all, and this run is the first time it has been used to CHANGE observed state rather
-    than to confirm one. `AStratPlayerController::RefreshFromMachine` is `BlueprintCallable`,
-    which is what makes it reachable; `GetAll` then reads the result off the live widget.
+    than to confirm one. `AStratPlayerController::RefreshFromMachine` is `BlueprintCallable`, which
+    is what makes it reachable; `GetAll` then reads the result off the live widget.
   - **CORRECTION, 2026-08-22, same session, raised by the record gate on `68d56d1` and adopted --
-    THE BULLET ABOVE EXONERATED THE WRONG BRANCH ON A TEST THAT COULD NOT SEE IT, AND ITS
-    COMMIT MESSAGE CARRIES THE SAME ERROR WHERE IT CANNOT BE EDITED.** Four repairs, in order of
-    how much they change what the next lane does.
+    THE BULLET ABOVE EXONERATED THE WRONG BRANCH ON A TEST THAT COULD NOT SEE IT, AND ITS COMMIT
+    MESSAGE CARRIES THE SAME ERROR WHERE IT CANNOT BE EDITED.** Four repairs, in order of how much
+    they change what the next lane does. One method note, stated once because it produced three of
+    the findings that got this bullet here: a fix applied to the sentences a gate ENUMERATES, rather
+    than derived over the whole passage, leaves the tail asserting what the head withdrew. The
+    attempt-by-attempt history lives in the commit messages of `68d56d1`, `de517f0`, `c21e7a5`,
+    `d67471b` and `a55f924`, where it cannot be edited and does not compete with the state of the
+    world; this file answers what the next lane should DO.
     1. **"nothing runs `RefreshFromMachine` at match start" IS FALSE, and the tree says so twice.**
        `AStratPlayerController::BeginPlay` calls it unconditionally, and its comment there
        anticipates this exact ordering ("actor BeginPlay order is not guaranteed"). Independently,
@@ -634,72 +635,60 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
        block, which is measured rather than inferred:** `FStratGuidedOpening::Begin` returns before
        the arming line on BOTH its early exits -- the `bSuppressed` branch and the `!Guided.bOk`
        branch -- and sets `bActive = true` on the same straight-line path above it, with no
-       intervening return, so the log line cannot be emitted by an armed-but-inactive opening.
-       (Cited that way on the second attempt: "three lines above it" was both WRONG -- it is
-       six --
-       and a positional citation, which this project forbids for the reason it keeps proving, that
-       the next edit to the function invalidates it.) A later reader asking "armed, but
-       suppressed?" has the
-       answer here rather than a reopened question.
+       intervening return, so the log line cannot be emitted by an armed-but-inactive opening. A
+       later reader asking "armed, but suppressed?" has the answer here rather than a reopened
+       question.
     2. **`FindScoreboardHUD` and `PushGuidance` are therefore NOT exonerated, and the bullet above
        had no evidence about them.** It tested them at t+2.5 s and t+6 s, when the strip already
-       existed. The question is the state at t+0. `AStratScoreboardHUD::BeginPlay` creates the
-       strip before the scoreboard, and its terminal `Scoreboard live` line lands at `08:573`, two
-       milliseconds AFTER the arming line, in the same frame; `CreateGuidanceWidget` logs nothing
-       on success, so **the log cannot resolve the order and neither can this pass.** What IS
-       measured: a decorated `ApplyView` ran at match start, and 2.4 s later the widget still held
-       defaults -- so that push did not land on the strip, or did not survive. THREE branches, and
-       this pass cannot separate them: `FindScoreboardHUD` returned null; `GuidanceStrip` was still
-       null; or the decorated push DID land and a later UNDECORATED `ApplyView` overwrote it,
-       `PushGuidance` being documented as assigning unconditionally. The third is not excluded by
-       "no later `ApplyView` comes without input" -- `ApplyView` logs nothing, so the log's silence
-       is not a control. TWO of the three sit inside the branch the bullet above calls innocent;
-       the THIRD does not -- there both links did their job and the fault is a later undecorated
-       `ApplyView`, which is the call-site story rather than the link story. That is exactly why
-       this pass can neither convict nor exonerate those links, and why the t+0 ordering still has
-       to be measured. (Written that way on the second attempt: the first repair for an
-       over-closure closed over-tightly itself, one level down, which is the pattern this whole
-       correction exists to break.) `CreateGuidanceWidget`'s own comment already names the
-       shape: "The strip draws its
-       own defaults until the first `ApplyView`" -- it assumes a LATER `ApplyView`, and whether one
-       comes without input is exactly what is NOT established here. (Third attempt at this item's
-       closure. The first over-closed, the second over-closed its own repair, and this one closes
-       nothing: the sentence that stood here said such an `ApplyView` "never comes", which is the
-       proposition labelled a non-control five sentences above it. A fix applied to the sentences a
-       gate enumerated, rather than derived over the whole passage, leaves the tail asserting what
-       the head withdrew -- the same shape as the marker-set miss, one paragraph down.)
-    3. **The GetAll-based elimination is WITHDRAWN -- it used an instrument this same file rules
-       out for that purpose four bullets down.** The 2026-08-21 entry says: a UMG property binding
+       existed. The question is the state at t+0. `AStratScoreboardHUD::BeginPlay` creates the strip
+       before the scoreboard, and its terminal `Scoreboard live` line lands at `08:573`, two
+       milliseconds AFTER the arming line, in the same frame; `CreateGuidanceWidget` logs nothing on
+       success, so **the log cannot resolve the order and neither can this pass.** What IS measured:
+       a decorated `ApplyView` ran at match start, and 2.4 s later the widget still held defaults --
+       so that push did not land on the strip, or did not survive. THREE branches, and this pass
+       cannot separate them: `FindScoreboardHUD` returned null; `GuidanceStrip` was still null; or
+       the decorated push DID land and a later UNDECORATED `ApplyView` overwrote it, `PushGuidance`
+       being documented as assigning unconditionally. The third is not excluded by "no later
+       `ApplyView` comes without input" -- `ApplyView` logs nothing, so the log's silence is not a
+       control. TWO of the three sit inside the branch the bullet above calls innocent; the THIRD
+       does not -- there both links did their job and the fault is a later undecorated `ApplyView`,
+       which is the call-site story rather than the link story. That is exactly why this pass can
+       neither convict nor exonerate those links, and why the t+0 ordering still has to be measured.
+       `CreateGuidanceWidget`'s own comment already names the shape: "The strip draws its own
+       defaults until the first `ApplyView`" -- it assumes a LATER `ApplyView`, and whether one
+       comes without input is exactly what is NOT established here.
+    3. **The GetAll-based elimination is WITHDRAWN -- it used an instrument this same file rules out
+       for that purpose four bullets down.** The 2026-08-21 entry says: a UMG property binding
        drives the Slate attribute and never writes the UPROPERTY back, so read `GetAll` for unbound
-       state only. Then "the live instance still holds `Text Block`" is equally what a FULLY
-       WORKING binding leaves behind, and it eliminates nothing. So "a binding evaluated ONCE and
-       never again", "a binding never applied would have left Text Block on screen", and "two
-       channels, two different failures, one widget" are all unsupported and are retracted. Also
-       disclosed, because the bullet above did not: those two reads were taken at `03.07.57`, ~98 s
-       after the last capture and after `SkipGuidance` -- in state C, not in state B where the 76
-       characters were loaded.
-    4. **The `ToVisibility` lead is NOT moot; this run CORROBORATES its open branch.** That lead's
-       second branch is that the binding takes and returns `Visible` because `GetStripVisibility`'s
-       `Active` is not fed by the native `Guidance`. Three captures showing the screen is not a
-       function of the native `Guidance` is precisely what that branch predicts, and ONE such
-       defect -- bindings reading a source the native `Guidance` never reaches -- would explain
-       both channels at once -- PROVIDED the false pin does not resolve to `Collapsed` at runtime,
-       which is still only read off the graph, since a shadowed always-default source would take
-       that false pin and the border would not have painted at all. "Both stand until one is
-       measured" is restored. The handoff in the
-       bullet above (read `UWidget::SynchronizeProperties` and `InitializeWidget`) rests on the
-       reading withdrawn in item 3; **do not dispatch an engineer on it.** The binding's input
-       wiring is at least as good a place to look.
+       state only. Then "the live instance still holds `Text Block`" is equally what a FULLY WORKING
+       binding leaves behind, and it eliminates nothing. So "a binding evaluated ONCE and never
+       again", "a binding never applied would have left Text Block on screen", and "two channels,
+       two different failures, one widget" are all unsupported and are retracted. Also disclosed,
+       because the bullet above did not: those two reads were taken at `03.07.57`, ~98 s after the
+       last capture and after `SkipGuidance` -- in state C, not in state B where the 76 characters
+       were loaded.
+    4. **The `ToVisibility` lead is NOT moot; this run is CONSISTENT with its open branch and
+       predicts the text channel exactly.** That lead's second branch is that the binding takes and
+       returns `Visible` because `GetStripVisibility`'s `Active` is not fed by the native
+       `Guidance`. Three captures showing the screen is not a function of the native `Guidance` is
+       precisely what that branch predicts, and ONE such defect -- bindings reading a source the
+       native `Guidance` never reaches -- would explain both channels at once -- PROVIDED the false
+       pin does not resolve to `Collapsed` at runtime, which is still only read off the graph, since
+       a shadowed always-default source would take that false pin and the border would not have
+       painted at all. "Both stand until one is measured" is restored. The handoff in the bullet
+       above (read `UWidget::SynchronizeProperties` and `InitializeWidget`) rests on the reading
+       withdrawn in item 3; **do not dispatch an engineer on it.** The binding's input wiring is at
+       least as good a place to look.
     Two wording repairs, neither load-bearing but both stated because this record has been blocked
     for smaller: "pixel-identical" overstates the artifact -- re-derived independently, 283 to 309
     of the 2128 pixels differ between any two of the three frames, all by a single LSB of dither,
     max per-channel delta 1, with 3 to 4 unique colours and no glyphs in any state; the conclusion
-    that nothing painted, resized or appeared is untouched. And "not a function of `Guidance` in
-    ANY channel" should read "in any channel a composited capture can observe" -- the hover strings
-    were never exercised and the objective ring is drawn by the board, not the strip.
+    that nothing painted, resized or appeared is untouched. And "not a function of `Guidance` in ANY
+    channel" should read "in any channel a composited capture can observe" -- the hover strings were
+    never exercised and the objective ring is drawn by the board, not the strip.
     **What survives the correction, unaffected:** the route from `DecorateViewModel` through
-    `ApplyView` and `PushGuidance` to the widget WORKS once every participant exists -- state B is
-    a direct observation of the full projection arriving -- and the strip's painted state did not
+    `ApplyView` and `PushGuidance` to the widget WORKS once every participant exists -- state B is a
+    direct observation of the full projection arriving -- and the strip's painted state did not
     follow it. Those two facts are what the next lane should start from.
 
 - **2026-08-21, COORDINATOR, LIVE PIE ON THE INTEGRATION TREE, NO SOURCE AND NO ASSET CHANGE --

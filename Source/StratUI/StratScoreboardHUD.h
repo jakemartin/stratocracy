@@ -219,6 +219,7 @@ class FStratBridge;
 class UDataTable;
 class UStratGuidanceWidget;
 class UStratScoreboardWidget;
+class UUserWidget;
 
 // `FStratGuidanceView` used to be forward declared here, and the reason is retracted in
 // place rather than deleted because it was correct for as long as it held:
@@ -516,6 +517,93 @@ public:
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Scoreboard")
 	FString LastFailureReason;
 
+	// ---- §2.11.5's production menu -----------------------------------------
+	// A THIRD SURFACE ON A CLASS CALLED `AStratScoreboardHUD`, AND IT JOINS THE DEBT
+	// RECORDED ABOVE RATHER THAN OPENING A NEW ONE. The guidance block already states why
+	// widget creation lives here: `CreateWidget` and `AddToViewport` mean `UMG`, `Slate`
+	// and `SlateCore`, and `StratPlay.Build.cs` would have to grow all three to create a
+	// widget itself -- a structural cost where widening this class is a prose cost. That
+	// argument is unchanged for this widget, so the SEVEN guidance members become ELEVEN,
+	// and the same condition discharges all of them together: when a §2.11 UI-layer owner
+	// exists, `ProductionMenuWidgetClass`, `ProductionMenuZOrder`, `ProductionMenu`,
+	// `OpenProductionMenuWidget`, `CloseProductionMenuWidget`, `IsProductionMenuWidgetOpen`
+	// and `CreateProductionMenuWidget` move there unchanged with the other seven.
+	//
+	// WHAT IS DIFFERENT FROM THE OTHER TWO WIDGETS, AND IT IS THE ONLY DIFFERENCE: this one
+	// is created ON DEMAND and destroyed on close, where the scoreboard and the strip are
+	// created once in `BeginPlay` and live for the map. §2.11.5's menu is modal in the
+	// player's attention -- it is about ONE factory, chosen at the moment the player asks
+	// for it -- and a permanently-resident panel would have to carry "no factory" as a
+	// drawable state that nothing in the rules produces. `BeginPlay` still reports an unset
+	// `ProductionMenuWidgetClass` once, exactly as it reports an unset `GuidanceWidgetClass`,
+	// so "no menu was configured" and "the menu failed to open" stay distinguishable.
+	//
+	// THIS CLASS ASKS THE RULES MODULE NOTHING ABOUT THE MENU AND HOLDS NO ROW. The rows
+	// live on `UStratMatchSubsystem::ProductionMenu`, written by `RefreshProductionMenu`
+	// and by nothing else; this class creates a widget and takes it down again. In
+	// particular nothing here calls the WBP's `RefreshMenu` -- that is a Blueprint custom
+	// event, the widget refreshes itself from its own `Construct`, and a C++ caller would
+	// be a second author of when the menu's contents are decided.
+
+	/**
+	 * Puts §2.11.5's production menu on screen, if a class is configured and one is not
+	 * already up.
+	 *
+	 * IT DOES NOT SAY WHICH FACTORY, and that is deliberate rather than an omission. The
+	 * hex is `AStratPlayerController`'s answer (`GetProductionTargetHex`) and the rows are
+	 * `UStratMatchSubsystem`'s; a hex parameter here would make this class a third party to
+	 * a pairing it has no way to check, and `UStratMatchSubsystem::SubmitProductionChoice`
+	 * exists in the shape it does precisely to remove that pairing rather than check it.
+	 *
+	 * ALREADY-OPEN IS A REFUSAL AND NOT A NO-OP. Two menus over one board is a screen with
+	 * two answers on it, and the caller -- a toggle -- needs to be able to tell that it
+	 * asked for something that did not happen.
+	 *
+	 * @return true when a menu is on the viewport because of this call.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
+	bool OpenProductionMenuWidget(FString& OutFailureReason);
+
+	/**
+	 * Takes the menu back down. Safe to call with none up.
+	 *
+	 * VOID AND UNREFUSABLE, matching `PushGuidance`: there is nothing a caller could do
+	 * with a failure to close something that is already closed.
+	 *
+	 * IT DOES NOT CLEAR `UStratMatchSubsystem::ProductionMenu`. Removing the panel and
+	 * clearing the rows are two acts on two objects, and this class must not reach into the
+	 * subsystem -- see the header block on why it never becomes a second thing that runs
+	 * matches. The caller closes both, in that order; `AStratPlayerController` is the one
+	 * caller and does exactly that.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
+	void CloseProductionMenuWidget();
+
+	/**
+	 * Whether a production menu is on the viewport.
+	 *
+	 * IT READS THE WIDGET AND IS NOT A BOOL BESIDE IT, on the same rule
+	 * `UStratMatchSubsystem::IsProductionMenuOpen` states about its own rows: a mirror can
+	 * disagree with the thing it mirrors. A WBP that removes itself -- a Cancel button in
+	 * the asset, which is a shape the widget is free to have -- leaves `ProductionMenu`
+	 * non-null and NOT in the viewport, and this answers false for it. A cached bool would
+	 * have answered true and the toggle would have needed two presses.
+	 *
+	 * OUT OF LINE AND NOT INLINE, AND THAT IS A MODULE ARROW RATHER THAN A STYLE CHOICE.
+	 * The body calls `UUserWidget::IsInViewport()`, which needs UMG's definition; inlining
+	 * it here would push `UMG` onto every module that includes this header, and
+	 * `StratPlay.Build.cs`'s dependency list is measured line by line. `UUserWidget` is
+	 * forward declared in this file and stays that way.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Production")
+	bool IsProductionMenuWidgetOpen() const;
+
+	/** The production menu, or null when none is up. Read-only for the reason `Scoreboard`
+	 *  and `GuidanceStrip` are: this HUD creates and owns it, and a second creator is a
+	 *  second lifetime to reason about. */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Production")
+	TObjectPtr<UUserWidget> ProductionMenu;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -634,6 +722,44 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Guidance")
 	int32 GuidanceZOrder = 10;
 
+	/**
+	 * The WBP_ asset for §2.11.5's production menu -- `WBP_ProductionMenu`.
+	 *
+	 * A `TSubclassOf` set on a Blueprint default, never a `ConstructorHelpers` path
+	 * literal, for the reason the scoreboard's copy of this property gives.
+	 *
+	 * `UUserWidget` AND NOT A C++ BASE OF OURS, AND THAT IS THE IRREVERSIBLE PART OF THIS
+	 * CHANGE HELD OPEN RATHER THAN SPENT. A Blueprint deriving from a C++ class bakes
+	 * `/Script/Module.Class` into itself permanently, so typing this property as, say,
+	 * `UStratProductionMenuWidget` would decide which module owns the menu widget before
+	 * anybody has needed to decide it -- the same call `engine.md` records the reflected
+	 * seam declining to make. Typed as the engine's own base, the asset commits to nothing
+	 * of ours and this property narrows for free on the day a base class exists.
+	 * THE CONDITION THAT DISCHARGES IT: somebody needing C++-side layout or a
+	 * `BlueprintImplementableEvent` hook on the menu, which no caller needs today.
+	 *
+	 * THE COST OF THAT, STATED: this class cannot call anything on the widget beyond
+	 * `UUserWidget`'s own surface, so it cannot refresh it. It does not want to -- see the
+	 * block on `OpenProductionMenuWidget` -- but a future caller that does will have to
+	 * pay for a base class first, and should read this paragraph before assuming it is free.
+	 *
+	 * UNSET IS A LEGITIMATE CONFIGURATION AND NOT AN ERROR, exactly as `GuidanceWidgetClass`
+	 * is: a session that wants the match playable with no production surface leaves it
+	 * empty, and `BeginPlay` says so once at Log rather than refusing to finish setup. What
+	 * it does NOT mean is that production is unreachable -- `UStratMatchSubsystem`'s three
+	 * `Stratocracy|Production` entry points are reflected and a console or a gate can drive
+	 * them with no widget in existence.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Production")
+	TSubclassOf<UUserWidget> ProductionMenuWidgetClass;
+
+	/** Viewport Z-order for the production menu. Defaults ABOVE `GuidanceZOrder` because
+	 *  §2.11.5's menu is the thing the player is looking at while it is up, and both the
+	 *  scoreboard and the directive strip are chrome behind it. A property rather than a
+	 *  literal so the layering stays a designer's call. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Production")
+	int32 ProductionMenuZOrder = 20;
+
 	// ---- Setup steps, split so a failure names the step that refused --------
 	// Each returns false with the refusing layer's own reason rather than logging and
 	// swallowing it, so BeginPlay can record one reason in `LastFailureReason` and the
@@ -652,6 +778,12 @@ protected:
 	 *  HUD is not the thing that runs one. It stays showing whatever its own defaults draw
 	 *  until `UStratMatchSubsystem::ApplyView` reconciles it for the first time. */
 	bool CreateGuidanceWidget(FString& OutFailureReason);
+
+	/** Creates the configured production menu and adds it to the viewport. Does NOT refresh
+	 *  it and CANNOT: `RefreshMenu` is a Blueprint custom event on the WBP and this class
+	 *  holds the widget as a bare `UUserWidget`. The asset refreshes itself from its own
+	 *  `Construct`, reading `AStratPlayerController::GetProductionTargetHex`. */
+	bool CreateProductionMenuWidget(FString& OutFailureReason);
 
 private:
 	/**

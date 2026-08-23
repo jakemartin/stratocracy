@@ -427,3 +427,142 @@
     scoped to the named span rather than derived over the passage it sits in.
   - **This entry does not state a suite count or a phase verdict** — both stay in
     `state/global.md` only; see that file for the live figure.
+
+- **RECORDED 2026-08-23, ON THE COORDINATOR'S REQUEST AFTER `strat-integration-reviewer` DECLINED
+  TO ASSIGN IT — the match-does-not-end entry at the top of `global.md`'s `## NEXT` took four
+  `BLOCK`s to reach its `VERDICT: PASS`, and every one is the SAME DEFECT CLASS, not four
+  unrelated mistakes.** The reviewer's own closing note said this belonged in `decisions.md` as a
+  standing caution about that entry's provenance — written fast against a live log — and said
+  assigning it was not its call. All four are re-derived below against
+  `Saved/Logs/Stratocracy.log` and the current tree; the entry as it now stands is correct on all
+  four, so nothing here corrects `global.md` — this bullet is the caution itself.
+  - **ORDINAL.** A drafted version of the entry called the flag kill the AI's "eighth" applied
+    command on turn 7. `grep -n "STRAT-AI applied ... turn=7 side=1" Saved/Logs/Stratocracy.log`
+    returns exactly nine lines, and the killing `Attack unit=6` line is the ninth, not the eighth.
+    The entry's own later sentence already quoted the runner's report of "9 applied command(s)"
+    two bullets below the wrong ordinal — it disagreed with its own cited evidence in the same
+    passage. The version now in the tree reads "NINTH AND LAST applied command" and matches.
+  - **ATTRIBUTION.** A drafted version credited the single quoted line `Selection: unit 24 belongs
+    to side 0 and side 1 is to move` with firing "four times". `grep -n "Selection: unit .*
+    belongs to side .* and side .* is to move" Saved/Logs/Stratocracy.log` shows that exact line
+    firing exactly TWICE (both for unit 24); the count of four belongs to the SHAPE across
+    **[CORRECTED 2026-08-23, `strat-integration-reviewer` `VERDICT: BLOCK`, stamped in place per
+    this file's own header ("Never rewritten -- an entry that has moved is stamped in place"):
+    this sentence read "four distinct units -- 24, 24, 5 and 21". Distinct units are THREE (24, 5,
+    21 -- 24 fires twice), not four. Four is the OCCURRENCE count, not the distinct-unit count --
+    the fourth instance of this very entry's own defect class, found inside the bullet teaching
+    it. Correct wording: four times across three distinct units -- 24, 24, 5 and 21.]** three
+    distinct units — 24, 24, 5 and 21 — not to the one exemplar. The version now in the tree says
+    so explicitly: "the count is the shape's, and no single one of those lines carries it."
+  - **FABRICATED SYMBOL.** A drafted version attributed a verbatim quotation to `FStratAiTurnPort`.
+    That name exists nowhere in the tree —
+    `grep -rn "FStratAiTurnPort\b" Source/` returns zero hits. It fuses two real, distinct symbols
+    in `Source/StratPlay/StratAiTurnRunner.h`: the interface `IStratAiTurnPort` (line 105), which
+    owns the comment quoted ("deliberately no `IsMatchOver()` and no `IsSideAi()`...",
+    **[CORRECTED 2026-08-23, `strat-integration-reviewer` `VERDICT: BLOCK`, stamped in place: this
+    citation read "lines 90-93 and 105-107". The quotation is fully contained in lines 90-92; line
+    93 is a different sentence not in the quote, and lines 105-107 (`struct STRATPLAY_API
+    IStratAiTurnPort`, `{`, the destructor) are the struct's opening brace and body, not comment at
+    all, and needlessly re-cite 105 which this same sentence already gives as the declaration line.
+    Correct span: lines 90-92.]** lines 90-92), and its concrete implementer
+    `FStratBridgeAiTurnPort` **[CORRECTED 2026-08-23, `strat-integration-reviewer`
+    `VERDICT: BLOCK`, stamped in place -- this is the finding that matters most, because
+    the bullet committed the exact defect it exists to name: this citation read "(named
+    at line 97)". Line 97 (`* adapter (`FStratBridgeAiTurnPort`, below) becomes a named,
+    separately assertable thing`) is a PROSE MENTION inside a doc comment -- exactly the
+    kind of hit this same bullet's own closing sentence, three bullets below, tells the
+    reader to reject. Re-derived: `grep -n "FStratBridgeAiTurnPort"
+    Source/StratPlay/StratAiTurnRunner.h` returns four lines -- 48 and 97 are prose
+    mentions, 150 is the declaration (`struct STRATPLAY_API FStratBridgeAiTurnPort final
+    : public IStratAiTurnPort`), 152 is the constructor. Correct citation: declared at
+    line 150, not "named at line 97".]** (declared at line 150).
+    Under this project's cite-by-symbol convention a wrong symbol is UNGREPPABLE — the reader gets
+    zero hits and cannot tell whether the evidence moved, was renamed, or never existed. It also
+    silently weakens the argument the entry is making: the inference rests on a PORT delegating,
+    and an `F`-prefixed name points at the adapter rather than the interface contract that
+    actually states the omission. The version now in the tree names `IStratAiTurnPort` and says
+    "the INTERFACE, not the concrete `FStratBridgeAiTurnPort`" — correct on both counts.
+  - **UNREPRODUCIBLE EVIDENCE.** A drafted version cited the diagnostic regex
+    `MatchOver|EndMatch|OnMatchEnd|MatchEnded|Victory|Defeat|GameOver` wrapped mid-alternation
+    across a line break, so copying it out of the record reconstructed a broken pattern. The
+    version now in the tree carries it on one unbroken line (`global.md`, the "AND THE REASON IS
+    THAT NO END-OF-MATCH TRANSITION EXISTS TO MISFIRE" bullet).
+  - **THE COMMON SHAPE, which is the point of this entry.** Every one of the four figures was
+    REAL — nine applied commands, four refusal lines, a real interface, a real regex — and each
+    had drifted onto the wrong SUBJECT: the wrong ordinal for a correctly-counted total, the wrong
+    line for a correctly-counted shape, the wrong symbol for a correctly-quoted comment, the wrong
+    line-wrap for a correctly-chosen pattern. None was a wrong measurement. All four survived a
+    re-read and were caught only by RE-DERIVING against the log and the tree. This is the
+    project's existing "subject, not scope" concern, but sharper — it recurred three times in one
+    entry written in a single pass.
+  - **A COUNT VERIFIED IN THE AGGREGATE IS NOT VERIFIED IN ITS ATTRIBUTION.** The reviewer
+    volunteered this against its own first audit: it confirmed the four-line SHAPE count and
+    reported "exactly four" without checking that the quoted exemplar line actually carried that
+    count. Verifying a total is not verifying its subject.
+  - **BEFORE WRITING ANY SYMBOL INTO THIS RECORD, GREP IT, AND REQUIRE A DEFINITION RATHER THAN A
+    PROSE MENTION.** The fabricated name returned exactly one hit in the drafted text and it was
+    its own sentence — no definition, no other reference. In UE, check the prefix against the
+    declaration site — `I` interface, `F` struct, `U` UObject, `A` Actor — because adjacent real
+    symbols blend into a plausible third that greps like a hit until you look for where it is
+    DEFINED rather than where it is SAID.
+  - **This entry does not state a suite count or a phase verdict** — both stay in
+    `state/global.md` only; see that file for the live figure.
+
+- **CORRECTED 2026-08-23, SAME DAY, ON THE COORDINATOR'S FLAG — the FABRICATED SYMBOL bullet
+  above commits its own defect class while stating the rule against it.** **[SUPERSEDED 2026-08-23,
+  SAME DAY, BY `strat-integration-reviewer` `VERDICT: BLOCK`: this entry's mechanism was wrong, not
+  its content. It corrected the site by appending a new entry below rather than stamping the
+  defect in place at the sentence that carried it, which does not satisfy this file's own header
+  ("Never rewritten -- an entry that has moved is stamped in place"): a reader following the
+  original bullet's line-97 citation got it as supporting evidence with no signal that a
+  withdrawal existed ~40 lines below. The three findings this entry raised (span 90-93/105-107,
+  the line-97 citation, and — caught only on a second gate — the "four distinct units" miscount)
+  are now stamped in place, inline, at each site in the entry above, in the marker style
+  `content.md` and `global.md` already use elsewhere in the tree today. This entry is kept rather
+  than deleted, per append-only, and its own reasoning about keeping accurate line numbers and
+  citing the symbol first (the sub-bullet below) still stands and was not superseded.]** It cites
+  `FStratBridgeAiTurnPort` "(named at line 97)" as support for the fabricated-symbol finding. Line
+  97 of `Source/StratPlay/StratAiTurnRunner.h` is `* adapter (`FStratBridgeAiTurnPort`, below)
+  becomes a named, separately assertable thing` — a PROSE MENTION inside a doc comment, not the
+  declaration. Re-derived directly rather than trusting the coordinator's message:
+  `grep -n "FStratBridgeAiTurnPort" Source/StratPlay/StratAiTurnRunner.h` returns four lines — 48
+  (a different prose mention, inside a separate comment), 97 (the one cited, also prose), 150 (`struct
+  STRATPLAY_API FStratBridgeAiTurnPort final : public IStratAiTurnPort` — the actual declaration),
+  and 152 (the constructor). The bullet's own closing sentence reads "REQUIRE A DEFINITION RATHER
+  THAN A PROSE MENTION ... look for where it is DEFINED rather than where it is SAID," and its own
+  supporting citation is exactly the kind of hit that sentence tells the reader to
+  reject. **[CORRECTED 2026-08-23, `strat-integration-reviewer` `VERDICT: BLOCK`,
+  non-gating, stamped for consistency: this sentence read "Left in place above rather
+  than rewritten, per this file's append-only convention", describing the FABRICATED
+  SYMBOL bullet as unedited. It no longer is -- the bullet is now stamped in place,
+  inline, at each site this entry and the gate's later findings named. The substance
+  this sentence went on to state (the bullet's core claim unaffected, only the line-97
+  citation wrong) was and is correct; only the "left in place ... unedited" framing went
+  stale once the in-place stamps landed.]** The bullet's substance (the fabricated
+  symbol, its two real referents, the tree's current correct text) is unaffected; only
+  the line-97 citation for `FStratBridgeAiTurnPort` was wrong. The correct citation for
+  that symbol's declaration is line 150.
+  - **ON CITING BY LINE NUMBER AT ALL, IN A BULLET ARGUING FOR CITE-BY-SYMBOL.** The coordinator
+    raised this as a second, lower-stakes point and left the call to this file's writer. The
+    project's standing finding (see the RULED 2026-08-21 blast-radius entry above, and
+    `cite-functions-not-line-numbers` in project memory) is that a `file:NNN` written during a
+    change is invalidated by that same change — measured three times in one milestone.
+    Judgement, and its premises: **[CORRECTED 2026-08-23, `strat-integration-reviewer`
+    `VERDICT: BLOCK`, stamped in place -- the SUPERSEDED marker above vouched for this
+    sub-bullet and both of its premise clauses were false. This sentence read "the line
+    numbers in the FABRICATED SYMBOL bullet are currently accurate ... and are left as
+    written rather than retrofitted to symbol citations, because rewriting them would
+    violate append-only for no correctness gain today." "Currently accurate" was false
+    WHEN WRITTEN -- this same entry's headline finding is that the line-97 citation and
+    the 90-93/105-107 span were both wrong; the sub-bullet asserted accuracy in the
+    entry that disproves it. "Left as written rather than retrofitted" is false NOW --
+    "declared at line 150" was retrofitted into the FABRICATED SYMBOL bullet this same
+    pass. The CONCLUSION below is sound and stands unstamped: cite the symbol first,
+    treat the line number as provisional, re-grep to re-find it if the file is ever
+    edited.]** The risk the standing finding names is real and this bullet is exactly
+    the kind of place it would recur, so the citation here is stated as a symbol first:
+    `FStratBridgeAiTurnPort`'s declaration is the `struct STRATPLAY_API FStratBridgeAiTurnPort final : public
+    IStratAiTurnPort` line in `Source/StratPlay/StratAiTurnRunner.h`, presently line 150 — grep the
+    symbol to re-find the line if this file is ever edited, rather than trusting the number.
+  - **This entry does not state a suite count or a phase verdict** — both stay in
+    `state/global.md` only; see that file for the live figure.

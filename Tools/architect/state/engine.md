@@ -13,6 +13,140 @@
 
 ## NEXT
 
+- **2026-08-23, `strat-gameplay-engineer`: SEC 2.8'S END-OF-MATCH TRANSITION IS BUILT. THE CODE
+  COMPILES AND THE BUILD IS NOT GREEN, AND THOSE ARE TWO DIFFERENT SENTENCES.** Written against
+  `global.md`'s topmost `## NEXT` entry ("A MATCH THAT ENDS DOES NOT END THE GAME"). No suite
+  count and no verdict is stated here; neither could be measured this pass and `global.md` owns
+  both anyway.
+  - **THE UNVERIFIED LEAD IN THE BRIEF IS CONFIRMED, and it is confirmed by symbol rather than by
+    line number.** `UStratMatchSubsystem::IsAiTurnDue` and `UStratMatchSubsystem::RunAiTurnsNow`
+    are the two sites that read `FStratMatchView::bHasResult` in `StratPlay` outside `Tests/`, and
+    both gate whether an AI turn should START. Neither gates the human, and neither survives the
+    flag going down MID-`RunTurn`. So the subsystem could always SEE the result; it had nowhere to
+    put the answer.
+  - **ONE CORRECTION TO THE BRIEF'S ACCOUNT OF THE FIVE GREP HITS.** The brief describes the fifth
+    as "a comment saying the thing does not exist", separately from the `IStratAiTurnPort` design
+    note. Re-run in this tree, they are the SAME hit: the only non-`bRecordCompletionOnMatchEnd`
+    match is `IStratAiTurnPort`'s own "no `IsMatchOver()`" sentence in
+    `Source/StratPlay/StratAiTurnRunner.h`. Four flag hits plus that one is five. The conclusion is
+    unaffected; the count was never five independent facts.
+  - **WHAT THE FIX IS, IN THREE PIECES, CITED BY SYMBOL.**
+    - `StratMatchIsConcluded` and `StratMatchAcceptsPlayerCommands` — new `STRATPLAY_API` free
+      functions declared at file scope in `StratMatchSubsystem.h`, pure predicates over an
+      `FStratViewModel`. `StratMatchConcludedRefusalText` is the single spelling of the refusal
+      sentence, a function rather than a literal at three sites for the reason the `STRAT-AI`
+      format string already taught this project.
+    - `UStratMatchSubsystem::ConcludeMatchIfEnded` — the one-shot transition, called from
+      `ApplyView` where `NoteMatchResultIfEnded` used to be called from directly. It calls
+      `NoteMatchResultIfEnded` FIRST and OUTSIDE its own latch, so §2.11.6's completion writer
+      keeps its own opt-in, its own latch and its own retry-on-failure; then it clears
+      `AiTurnTimer` and logs `STRAT-MATCH concluded` once. `bMatchConclusionAnnounced` is the
+      latch, cleared in `StartMatchInternal` beside `bMatchResultRecorded`.
+      `UStratMatchSubsystem::IsMatchConcluded` and `UStratMatchSubsystem::GetConcludedMatchView`
+      are the two reflected accessors.
+    - `AStratPlayerController::HandleSelectionEvent` gates on the model it has ALREADY built,
+      ahead of `TryArmGuidedOpening` and ahead of the machine;
+      `AStratPlayerController::ToggleProductionMenu` gates only its OPEN branch; and
+      `UStratMatchSubsystem::SubmitProductionChoice` gates the build path, because a gate on move
+      / attack / wait / end-turn alone would have been a lockout with a build-shaped hole in it.
+  - **THE RULES MODULE DOES NOT STOP THESE COMMANDS, WHICH IS WHY AN ENGINE GATE IS THE FIX AND
+    NOT A BELT.** The 2026-08-23 log shows `STRAT-CMD accepted kind=Move unit=14 ... side=1` and
+    `STRAT-CMD accepted kind=Attack unit=14 ... side=1` landing AFTER the flag fell; only `EndTurn`
+    carries the `[T-SAVE-05] no match is running` check. "The rules will refuse it anyway" was
+    available as an argument and is false.
+  - **THE AI'S TURN NOW TERMINATES, AND THE PORT DID NOT CHANGE.** `RunAiTurnsNow` re-reads the
+    view model after an `FStratAiTurnOutcome` with `bOk` false and, when the match has since
+    concluded, ends its loop with an EMPTY stop reason rather than reporting a fault. It keys on
+    the rebuilt model and never on the refusal's text, so a re-vendored wording cannot silently
+    turn this arm off. **THE ALTERNATIVE WAS `IsMatchOver()` ON `IStratAiTurnPort` AND IT WAS
+    KILLED TWICE:** it would make a runner able to decide, which that interface's own header
+    forbids in as many words, and it would oblige every test double in `Tests/` — a lane this
+    agent may not edit — to grow an arm before the tree would build at all.
+  - **THREE COMMENTS THAT THIS CHANGE INVALIDATED WERE UPDATED IN THE SAME CHANGE**, which is the
+    obligation `StratGuidedOpening.h` names: `IStratAiTurnPort`'s "decided before `RunTurn` is
+    called" paragraph now carries the amendment and the measurement; `FStratAiTurnOutcome::bOk`
+    records that a `false` is no longer always a fault at the caller; and
+    `NoteMatchResultIfEnded`'s declaration records that its caller moved and its behaviour did not.
+  - **[SUPERSEDED 2026-08-23, LATER THE SAME DAY, BY THIS ENTRY'S OWN AUTHOR. THE TREE NOW LINKS
+    AND THE SUITE HAS RUN IN IT.** The two bullets that stood here reported a compiled-but-unlinked
+    tree and a non-empty save slot, and both were true of the tree they described. Superseded
+    rather than deleted, because the compile-only measurement is what separated "the code is wrong"
+    from "the editor is open", and the next reader who hits `LNK1104` needs to see that the
+    distinction was made rather than assumed.]** The editor was closed, and
+    `Saved/SaveGames/StratocracyMatch.sav` was MOVED rather than deleted, on the user's decision,
+    to `C:\Users\me\AppData\Local\Temp\claude\E--MultiAgent-Stratocracy\e142e851-499d-4869-9f61-e543568bbc02\scratchpad\StratocracyMatch.sav.2026-08-23-1114`. Both blockers were RE-VERIFIED HERE rather than taken on report: `tasklist` returns
+    `INFO: No tasks are running which match the specified criteria.` for `UnrealEditor.exe`, with
+    `explorer.exe` PID 13508 listed in the same round as the control that shows the instrument can
+    speak, and `Saved/SaveGames/` enumerates zero entries.
+  - **THE BUILD IS GREEN UNDER THE PLAIN DOCUMENTED COMMAND, WITH NO FLAG.** `Build.bat` with the
+    documented arguments and NO `-NoHotReloadFromIDE`: `Result: Succeeded`, `REAL_EXIT=0`, all
+    nineteen actions -- sixteen compiles including `Module.StratPlay.gen.cpp`, then
+    `[17/19] Link [x64] UnrealEditor-StratPlay.dll`, `[18/19] Link [x64] UnrealEditor-StratPlay.lib`
+    and `WriteMetadata StratocracyEditor.target`. Zero warnings and zero errors reported.
+    **THE FIRST PLAIN RUN LINKED IN TWO ACTIONS OFF CACHED OBJECTS AND THAT WAS NOT ACCEPTED AS
+    EVIDENCE**, because those objects were produced by the earlier `-NoHotReloadFromIDE` run. The
+    four changed sources were `touch`ed to force a recompile under the plain invocation, with
+    `git hash-object` taken before and after proving all four blobs BYTE-IDENTICAL across the
+    touch, and the nineteen-action build above is that second run. A cached object is not a compile
+    anybody watched.
+  - **THE SUITE RAN IN THIS TREE, HEADLESS, WITH THE EDITOR CLOSED, AND IT IS GREEN.** Zero
+    non-Success and `notRun` zero, every entry `Success`. `reportCreatedOn 2026.08.23-19.55.53` --
+    UTC, which is 15:55:53 local on the same day; do not "correct" either stamp to match the other.
+    **NO FIGURE IS WRITTEN HERE AND NONE MAY BE**: `global.md` owns the count, and the figure went
+    to the coordinator instead. No clause was added or removed by this pass, which is correct --
+    this agent writes none.
+  - **THE REPORT IS THIS TREE'S OWN AND ITS IDENTITY WAS CHECKED, not assumed.** `index.json` is
+    stamped 15:55:53 local against the four changed sources at 15:52:42 and the relinked
+    `UnrealEditor-StratPlay.dll` at 15:54:21 -- so the report is newer than both the code it
+    describes and the binary it ran against.
+  - **THE SAVE-SLOT CONTROL IS DISCHARGED ON THIS RUN AND NOT BORROWED.** `Saved/SaveGames/`
+    enumerated ZERO entries before and ZERO after, and the directory mtime MOVED, 15:51:20 ->
+    15:55:53, the run's own minute. **NOTHING APPEARED DURING THE RUN**, which matters more than
+    usual this pass: the change touches the completion-write path, and a file materialising there
+    would have been a finding rather than something to tidy away.
+  - **THE NEW TRANSITION EXECUTES AT RUNTIME, AND THE ABSENCE THAT FIRST LOOKED LIKE A DEFECT WAS
+    THE INSTRUMENT.** `STRAT-MATCH concluded` greps to ZERO in `suite.log` -- and so does the bare
+    string `LogStratPlay`, 0 hits, so that file carries no `LogStratPlay` output at all and its
+    silence proves nothing about the line. The control moved the question to
+    `Saved/Logs/Stratocracy.log`, which carries 2909 `LogStratPlay` lines from this run, and there
+    `STRAT-MATCH concluded` fires SIX times, every one inside the run's own window, reading e.g.
+    `STRAT-MATCH concluded turn=6 turnCap=20 sideToMove=1 tier=Decisive`. So
+    `UStratMatchSubsystem::ConcludeMatchIfEnded` is reached by the EXISTING AI-vs-AI clauses with
+    no clause written for it, and `StaticEnum<EStratResultTier>()` resolves the tier name at
+    runtime rather than printing an integer.
+  - **THE ONCE-PER-MATCH LATCH IS CORROBORATED AND IS NOT PROVED, and the difference is stated
+    because this record has been corrected before for reaching further.** Six conclusion lines
+    stand against 73 `STRAT-AI turn-ended` and 967 `STRAT-AI applied` in the same log, and a broken
+    `bMatchConclusionAnnounced` would emit one line per `ApplyView` on a finished match -- orders
+    of magnitude more than six. That is an argument from MAGNITUDE and not a count of how many
+    matches actually concluded; nothing here enumerated them. The clause that would settle it is
+    named in the handoff to `strat-test-author` and is not owed by this pass.
+  - **THE TWO LATCHES ARE VISIBLY INDEPENDENT IN THAT SAME LOG**, which is the property the
+    ordering inside `ConcludeMatchIfEnded` was written for: six `STRAT-MATCH concluded` against
+    five `now records a completed match`. Sec 2.11.6's writer stayed gated on its own opt-in and
+    its own slot while the transition ran regardless, so neither became the other's condition. And
+    `Saved/SaveGames/` is still empty after all five, so none of them reached the player's slot.
+  - **THE DEBT THIS ENTRY OPENED AS "NOTHING VERIFIES AT LINK OR AT RUNTIME" IS DISCHARGED HERE.**
+    Its stated discharge condition was the editor closing and the build plus suite running; both
+    happened, the tree links, the suite is green, and the new transition was observed executing.
+    What is NOT discharged and is not claimed: no human has played a match to a result with this
+    fix in the tree, so the player-facing half -- that a finished match stops accepting clicks on
+    screen -- rests on the input gate's source and on clauses nobody has written yet, not on
+    anything anybody has watched. Injected input never reaches `UPlayerInput` on this project, so
+    that observation needs a human at the keyboard. OWNED: coordinator, to schedule with the user.
+  - **A DEBT SHIPS WITH THIS AND IT IS THE ONE A VICTORY SCREEN NEEDS: NOBODY DOWNSTREAM CAN SAY
+    WHO WON.** `strat::MatchResult` carries `winner`, `cause` and `decidedByKey` and lives on
+    `TurnState`; `strat::UiMatchView` — the only thing `FStratMatchView` mirrors — carries
+    `turn`, `turnCap`, `sideToMove`, `hasResult` and `resultTier` and NO winner. So
+    `GetConcludedMatchView` can say *Decisive* and cannot say *for whom*. **DELIBERATELY NOT
+    CLOSED HERE**, because both routes cost more than the defect did: either a new `FStratBridge`
+    accessor over `TurnState::result` plus a new reflected struct in `StratViewModel.h`, which
+    would put a field on the view model that mirrors nothing and would need its own parity clause;
+    or an upstream `UiMatchView::winner`, which is a vendored, hash-gated change in
+    `E:\MultiAgent\stratocracy-crew` and a re-vendor. **DISCHARGED WHEN** a victory surface is
+    actually specified — until then a screen can say a match ended and its tier, which is the
+    transition this pass owed.
+
 - **`HexSize` on `AStratBoardActor`** is centre-to-centre spacing for a pointy-top layout, the
   only axial→world constant in the project; must be matched to whatever tile mesh phase 5 picks.
 - **`EnhancedInput` is absent from `StratPlay.Build.cs` by design**; phase 4 adds it. Do not
@@ -63,6 +197,140 @@
   serializes. One policy over the bytes, one direction each.
 
 ---
+
+### 2026-08-22 — the BUILD affordance for §2.11.5's production menu (input + widget host)
+
+C++ only. No asset, no test — `WBP_ProductionMenu` and the clauses are other lanes'.
+
+**THE BUILD IS RED AND THE CODE IS NOT THE REASON.**
+`Build.bat StratocracyEditor Win64 Development -project=… -waitmutex -NoHotReloadFromIDE`
+with the editor OPEN (the coordinator was driving it): **Result: Failed
+(OtherCompilationError)**, 164.94 s. All 22 compile actions succeeded — including
+`Module.StratUI.gen.cpp` and `Module.StratPlay.gen.cpp`, so UHT parsed every new reflected
+member — and both LINK actions failed with
+`LINK : fatal error LNK1104: cannot open file
+'E:\MultiAgent\Stratocracy\Binaries\Win64\UnrealEditor-StratUI.dll'` and the same line for
+`UnrealEditor-StratPlay.dll`, each preceded by `UbaSessionServer - ERROR opening file … for
+write after retrying for 20 seconds (The process cannot access the file because it is being
+used by another process. - …\UnrealEditor.exe)`. **A GREEN BUILD OF THIS CHANGE HAS NOT BEEN
+MEASURED** and nothing below may be read as if one had; it needs one rerun with the editor
+closed. **[SUPERSEDED 2026-08-22: THAT RERUN HAPPENED AND WAS GREEN.** The coordinator
+closed the editor and rebuilt these exact bytes -- `Result: Succeeded`, exit 0, the two links
+that had failed completing normally. For the suite run over these bytes see `global.md`'s
+banner, which owns that fact class; this file does not restate it. The red
+measurement above is KEPT rather than deleted because its finding is the durable half:
+`-NoHotReloadFromIDE` does not cover the open-editor DLL write lock, which
+`.agents/ue-project-context.md` now records. **Do not read the sentence before this bracket as a
+live instruction to rebuild** -- doing so is the stale-status-line failure this project has paid
+for, in its under-claiming direction. Stamped by the COORDINATOR and not by
+`strat-gameplay-engineer`, whose file this is, under the same declared-deviation form as
+`content.md`'s newest entry; `strat-integration-reviewer` raised the staleness as its one BLOCK
+finding and named either owner as acceptable.]** For any suite figure or phase verdict see `global.md` — this file states neither.
+
+- **`-NoHotReloadFromIDE` DOES NOT DEFEAT THE OPEN-EDITOR DLL LOCK, AND THE DISPATCH BRIEF
+  SAID IT WOULD.** The memory it came from is about the Live Coding **mutex**, which is
+  engine-keyed and global and which that switch does defeat — that is what lets a worktree
+  build start at all while an editor is up. The **write lock on `Binaries\Win64\*.dll`** is a
+  different mechanism: the running `UnrealEditor.exe` has the DLLs mapped, and no UBT switch
+  unmaps them. Measured above; the two failures are 20 s apart in the same run, so the switch
+  bought the compile phase and nothing after it. `.agents/ue-project-context.md` already
+  states the rule correctly ("a link error naming `UnrealEditor-Strat*.dll` and 'cannot open
+  for writing' means *close the editor*"); what was missing was that `-NoHotReloadFromIDE`
+  is not an exemption from it.
+
+- **THE RULING'S PREMISE WAS WRONG AND THE AFFORDANCE IS BUILT ON THE CURSOR INSTEAD.** The
+  user's ruling — a dedicated action opens the menu "for the CURRENTLY SELECTED HEX" — names
+  a thing this project does not have. `FStratSelectionMachine` holds `SelectedUnitId` and
+  nothing spatial; its `HexPrimary` arm treats a click on empty ground with nothing selected
+  as "an ordinary click and not a failure", so **a factory hex with no unit on it cannot be
+  selected at all**, and one with a unit on it is not a hex you can build at. An accessor
+  over the machine's state would have had to ADD a hex-selection concept to the machine —
+  exactly what the ruling was shaped to avoid. `AStratPlayerController::HexUnderCursor` is
+  used instead: the same source `OnSelect` already uses to decide which hex a click means.
+  **The ruling's INTENT is intact and is what was implemented** — `HexPrimary`'s semantics
+  are untouched, `FStratSelectionMachine` gained no BUILD arm, no
+  `EStratSelectionCommand::Build` exists, and `StratSubmitSelectionCommand`'s `switch` gained
+  no arm. Only the ruling's account of where the hex comes from moved.
+
+- **THE HEX IS LATCHED AT THE KEYPRESS AND NEVER RE-READ, and the widget's own lifecycle is
+  what forces that.** `AStratPlayerController::GetProductionTargetHex(FIntPoint& OutHex)`
+  hands back what `ToggleProductionMenu` recorded, not a live cursor read. The asset's
+  `Construct` runs INSIDE `AddToViewport`, so a live read would answer a different hex the
+  moment the mouse moved off the factory between the keypress and the construct — a menu
+  built for a factory the player never pointed at. Two channels rather than one because
+  `FIntPoint(0, 0)` is a real hex and cannot signal its own absence, the same trap
+  `IsProductionMenuOpen` records about `ProductionMenuHex`. **T-INT-05 does not reach this
+  latch**: that clause forbids an actor holding `bDone` / `bLockedThisTurn`, which are fields
+  OF THE VIEW MODEL and would drift if copied; this is an input intent, appears in no view
+  model, and nothing on screen is drawn from it.
+
+- **THE WIDGET IS CREATED BY `AStratScoreboardHUD` AND THE DEBT THAT FILE RECORDS GREW FROM
+  SEVEN MEMBERS TO ELEVEN RATHER THAN A SECOND DEBT BEING OPENED.** The guidance block's
+  argument transfers unchanged: `CreateWidget` + `AddToViewport` mean `UMG`, `Slate` and
+  `SlateCore`, and `StratPlay.Build.cs` growing all three is a structural cost where widening
+  the HUD is a prose one. The same condition discharges all eleven together — a §2.11 UI-layer
+  owner existing. The **only** difference from the other two widgets is lifetime: this one is
+  created ON DEMAND and destroyed on close, because §2.11.5's menu is about ONE factory chosen
+  at the moment it is asked for, and a resident panel would need "no factory" as a drawable
+  state nothing in the rules produces. An unset `ProductionMenuWidgetClass` is still reported
+  once at `BeginPlay` beside the other two, so "not configured" and "failed to open" stay
+  distinguishable.
+
+- **`ProductionMenuWidgetClass` IS TYPED `TSubclassOf<UUserWidget>` AND THAT IS THE
+  IRREVERSIBLE CALL BEING HELD OPEN RATHER THAN SPENT.** A Blueprint deriving from a C++ class
+  bakes `/Script/Module.Class` into itself permanently. Typing this property as a base of ours
+  would decide which module owns the menu widget before anybody needed to decide it — the same
+  call the reflected seam declined a day earlier. **The cost, stated so the next reader does
+  not assume it is free:** the HUD can call nothing on the widget beyond `UUserWidget`'s own
+  surface, so it cannot refresh it. It does not want to; a caller that does must pay for a
+  base class first. **The condition that discharges it:** somebody needing C++-side layout or
+  a `BlueprintImplementableEvent` hook.
+
+- **NOTHING IN C++ CALLS `RefreshMenu`, AND THE HUD COULD NOT IF IT WANTED TO.** `RefreshMenu`
+  is a Blueprint custom event on the asset and the member is typed `UUserWidget`, so there is
+  no C++ name to call — the constraint is structural, not a convention someone could forget.
+  C++ creates and shows; the widget refreshes itself from `Construct` off
+  `GetProductionTargetHex`. That keeps WHEN a menu's contents are decided in one place.
+  `ToggleProductionMenu` likewise calls no `RefreshProductionMenu` and asks the rules module
+  nothing at all.
+
+- **THE ONE THING THE TOGGLE REFUSES IS A CURSOR OFF THE BOARD, AND IT IS NOT A RULES
+  ANSWER.** It does not test whether the hex is a factory, whether the side holds it, or
+  whether the side can pay. All three are rows on the menu with the module's own reasons
+  attached, and `RefreshProductionMenu` is documented to SUCCEED on a hex that is not a build
+  point — drawing a full menu of unavailable rows, which is what §2.11.5 draws. A pre-check
+  here would replace the module's reason with this class's silence.
+
+- **CLOSING IS TWO ACTS ON TWO OBJECTS IN A FIXED ORDER: panel down, then rows cleared.** The
+  reverse leaves a live panel bound to an empty `ProductionMenu` array for however long the
+  two lines are apart — a screen showing a menu the subsystem says is not open.
+  `AStratScoreboardHUD::CloseProductionMenuWidget` deliberately does NOT reach into
+  `UStratMatchSubsystem` to do the second act itself; that would be the first line of the HUD
+  becoming a second thing that runs matches, which its header block forbids in those words.
+  `AStratPlayerController::ToggleProductionMenu` is the one caller and does both.
+
+- **`IsProductionMenuWidgetOpen()` READS THE WIDGET AND IS NOT A BOOL BESIDE IT**, on the rule
+  `IsProductionMenuOpen` states about its own rows. A WBP that removes ITSELF — a Cancel button
+  in the asset, a shape the asset is free to have — leaves the pointer non-null and the widget
+  off the viewport; a cached bool would have answered true and the toggle would have needed two
+  presses. It is **out of line rather than inline**, and that is a module arrow rather than a
+  style choice: the body calls `UUserWidget::IsInViewport()`, and inlining it would push `UMG`
+  onto every module including `StratScoreboardHUD.h`.
+
+- **`CreateProductionMenuWidget` ASSIGNS THE MEMBER BEFORE `AddToViewport`, WHICH IS THE
+  OPPOSITE ORDER TO `CreateGuidanceWidget`.** `AddToViewport` constructs the widget, so the
+  asset's `Construct` runs inside that call — and this asset's `Construct` refreshes the menu,
+  which can reach a Blueprint asking the HUD whether a menu is open. Assigning afterwards would
+  have that question answered "no" from inside the act of opening one. The strip has no such
+  graph and keeps the narrower rule.
+
+- **TWO DEFERRAL BULLETS WERE RETRACTED IN PLACE, AND ONE HALF-BULLET WAS DELIBERATELY LEFT
+  STANDING.** `AStratPlayerController.h`'s "CAPTURE and BUILD … neither has an answered
+  affordance question" is retracted for BUILD only; `FStratSelectionMachine`'s "BUILD.
+  §2.11.5's production menu is explicitly out of the hot-seat milestone" is retracted with the
+  substance being that nothing in that struct changed. **`SubmitCapture` still has no
+  affordance and no engine caller** — the standing `## NEXT` entry above is untouched, and the
+  capture half of the controller's bullet stands unretracted.
 
 ### 2026-08-22 — the reflected seam for §2.11.5's production menu (`UStratMatchSubsystem`)
 

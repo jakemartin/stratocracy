@@ -46,4 +46,10 @@ editor, `strat-data-steward` owns `Config/` and `Tools/architect/`, and
 **only its own**: `engine.md` is the engineer's, `tests.md` the test-author's, `content.md` the
 editor-builder's, `data.md` and `decisions.md` the steward's, `global.md` the coordinator's and
 the steward's. So "the steward owns `Tools/architect/`" holds for everything in that directory
-**except** those three files. Each file names its sole writer in its own header.
+**except** those three files. Each file names its writer in its own header.
+
+`content.md` has one standing exception, added 2026-08-23: the `coordinator` is its **fallback
+writer** when `execute_script` is absent from the session's tool surface, because without that
+tool `strat-editor-builder` has no route to the editor and cannot write anything. The condition
+and the two obligations that ride with it are stated in that file's own header, which is the
+authority. No other record file has a fallback writer.

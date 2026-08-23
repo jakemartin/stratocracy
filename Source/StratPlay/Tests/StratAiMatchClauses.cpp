@@ -638,9 +638,32 @@ bool FStratAiBothSidesAiReachesAResultWithinTheBoundTest::RunTest(const FString&
 	// refusal's own text. It is a production-side finding, filed rather than fixed here --
 	// `Tests/` is this agent's lane and `StratAiTurnRunner.cpp` is not.
 	//
+	// **[THE FINDING ABOVE IS FIXED AS OF 2026-08-23 AND THE PARAGRAPH IS KEPT RATHER THAN
+	// DELETED, because what it describes is exactly what the fix changed.** The filing was
+	// acted on: `UStratMatchSubsystem::RunAiTurnsNow` now REBUILDS the model after a refused
+	// turn and, when `StratMatchIsConcluded` answers yes, treats the refusal as an ordinary
+	// end -- so it returns TRUE with an EMPTY reason for a game that finished, and the
+	// sentence above beginning "so `FStratAiTurnRunner::RunTurn` reports `bOk = false` and
+	// `RunAiTurnsNow` returns FALSE" no longer describes this tree. The half that is still
+	// exactly true is the FIRST half: the rules module still refuses the winning side's
+	// closing EndTurn and `RunTurn` still reports `bOk = false`, which is why the expectation
+	// below still fires. `Stratocracy.StratPlay.T-AI-01.AMatchWonMidTurnIsNotReportedAsAnAiFault`
+	// in `StratMatchConclusion.cpp` is the clause that now ASSERTS the return value this one
+	// still only records, and `.T-AI-01.AGenuineAiRefusalIsStillAFault` is its negative
+	// control. Nothing in THIS clause moved.
+	//
+	// AND THE TRIPWIRE BELOW DID NOT TRIP WHEN THE BEHAVIOUR WAS CORRECTED, WHICH IS ITSELF
+	// WORTH KNOWING. The paragraph after this one predicted that a correction would fail this
+	// line. It did not, and the prediction was wrong rather than the fix incomplete: the
+	// expectation is aimed at the runner's LOG LINE, and the fix is a reclassification one
+	// layer above the runner that leaves that line exactly where it was. A tripwire on a log
+	// line cannot see a change in a return value. Recorded so the next reader does not take
+	// the green tick as evidence the behaviour is unchanged.]**
+	//
 	// `Occurrences = 0` means ONE OR MORE, so if that behaviour is later corrected THIS LINE
 	// FAILS and the clause is revisited deliberately instead of quietly keeping a suppression
-	// for a warning that no longer exists.
+	// for a warning that no longer exists. **[SUPERSEDED by the two paragraphs above --
+	// measured 2026-08-23: the correction landed and this line did not fail.]**
 	AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ELogVerbosity::Warning,
 		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
 
@@ -730,6 +753,15 @@ bool FStratAiBothSidesAiReachesAResultWithinTheBoundTest::RunTest(const FString&
 	// correct game; asserting `false` would make this clause DEMAND the defect and turn a
 	// future fix into a red suite. The three facts below are what "reached a result within
 	// the bound" actually means, and none of them depends on the return value.
+	//
+	// **[CORRECTED 2026-08-23: "a completed AI-vs-AI game currently comes back FALSE" WAS
+	// true when written and is not true now.** `RunAiTurnsNow` returns TRUE with an empty
+	// reason on this path since the end-of-match transition landed. This clause STILL does not
+	// assert it, and that is now a choice rather than a necessity: its subject is the bound
+	// and the handover silence, and the return value has a clause of its own,
+	// `T-AI-01.AMatchWonMidTurnIsNotReportedAsAnAiFault` in `StratMatchConclusion.cpp`, with
+	// `.AGenuineAiRefusalIsStillAFault` as its negative control. Two clauses asserting one
+	// value is one clause too many; the `AddInfo` stays and nothing here moved.]**
 	AddInfo(FString::Printf(TEXT("RunAiTurnsNow returned %s; reason: '%s'"),
 		bRan ? TEXT("true") : TEXT("false"), *RunReason));
 
@@ -1199,6 +1231,17 @@ bool FStratAiBothSidesAiReachesAResultOnDifferentContentTest::RunTest(const FStr
 	// reaches a §2.8 result MID-TURN ends with the rules module refusing the winning side's
 	// closing EndTurn. `Occurrences = 0` means ONE OR MORE, so a future fix to that production
 	// behaviour fails this line and the clause is revisited deliberately.
+	//
+	// **[THE PREDICTION IN THE LAST SENTENCE WAS TESTED ON 2026-08-23 AND WAS WRONG. KEPT AND
+	// STAMPED RATHER THAN DELETED.** The production behaviour WAS fixed -- Sec 2.8's
+	// end-of-match transition landed and `UStratMatchSubsystem::RunAiTurnsNow` now returns
+	// TRUE with an empty reason for a game that finished -- and this line did NOT fail. The
+	// fix is a RECLASSIFICATION one layer above `FStratAiTurnRunner`, which still refuses and
+	// still logs; the expectation is aimed at the runner's LOG LINE, and a tripwire on a log
+	// line cannot see a change in a return value. So the first two sentences remain exactly
+	// true and only the prediction moved. The return value is now pinned by
+	// `Stratocracy.StratPlay.T-AI-01.AMatchWonMidTurnIsNotReportedAsAnAiFault` in
+	// `StratMatchConclusion.cpp`, with `.AGenuineAiRefusalIsStillAFault` as its control.]**
 	AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ELogVerbosity::Warning,
 		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
 
@@ -1313,6 +1356,14 @@ bool FStratAiBothSidesAiReachesAResultOnDifferentContentTest::RunTest(const FStr
 
 	// Recorded, not asserted -- the same standing production finding the phase-3 clause
 	// declares: a correctly finished game currently comes back false.
+	// **[CORRECTED 2026-08-23: "a correctly finished game currently comes back false" WAS true
+	// when written and is not true now.** It comes back TRUE with an empty reason since the
+	// end-of-match transition landed. THIS WAS THE THIRD COPY of one claim -- the sweep that
+	// found it was by claim SHAPE rather than by phrase, and a phrase sweep for the two known
+	// wordings would have missed this one, which says "comes back false" where the header says
+	// "returns FALSE". Still recorded and not asserted, now by choice rather than necessity:
+	// the value has a clause of its own in `StratMatchConclusion.cpp` and this clause's
+	// subject is content-independence.]**
 	AddInfo(FString::Printf(TEXT("RunAiTurnsNow returned %s; reason: '%s'"),
 		bRan ? TEXT("true") : TEXT("false"), *RunReason));
 

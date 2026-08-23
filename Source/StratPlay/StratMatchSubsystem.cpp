@@ -213,6 +213,10 @@ bool UStratMatchSubsystem::StartMatchInternal(const FStratMatchConfig& Config,
 	// matches can share one world; see the member's declaration.
 	bMatchResultRecorded = false;
 
+	// AND A NEW MATCH HAS NOT CONCLUDED, whatever the last one did. Same event, same reason;
+	// see `ConcludeMatchIfEnded` and the member's declaration.
+	bMatchConclusionAnnounced = false;
+
 	// ---- The bridge. STEP ONE OF THE ORDERED SEQUENCE ----------------------
 	// Constructed here rather than in the constructor: a bridge that exists before its
 	// inputs have been checked is a bridge `GetBridge()` could hand out unseeded, and this
@@ -608,12 +612,16 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// what was applied, not an input to anything above.
 	AppliedModel = Model;
 
-	// §2.11.6's MATCH-ENDED HOOK, LAST AND OFF THE SAME VALUE THE SCREEN WAS DRAWN FROM.
+	// §2.8's END-OF-MATCH TRANSITION, LAST AND OFF THE SAME VALUE THE SCREEN WAS DRAWN FROM.
 	// After the reconciliation rather than before it, so that the frame in which the player
-	// SEES the result is the frame in which it is recorded -- and so that a failure to
+	// SEES the result is the frame in which the match stops -- and so that a failure to
 	// persist can never leave the board undrawn. It reads `Model` and asks the bridge
-	// nothing; see the declaration of `NoteMatchResultIfEnded`.
-	NoteMatchResultIfEnded(Model);
+	// nothing; see the declaration of `ConcludeMatchIfEnded`.
+	//
+	// §2.11.6's completion writer -- which is what used to be called from this line, and is
+	// the whole of what a result used to cause -- is now one of the things that transition
+	// does, in the same order it always ran in.
+	ConcludeMatchIfEnded(Model);
 }
 
 bool UStratMatchSubsystem::RefreshPresentation(FString& OutFailureReason)
@@ -760,6 +768,28 @@ bool UStratMatchSubsystem::SubmitProductionChoice(int32 DefIndex, FString& OutFa
 		OutFailureReason = TEXT(
 			"no production menu is open, so there is no factory to build at and no row to build");
 		return false;
+	}
+
+	// §2.8: THE SECOND PLAYER COMMAND PATH INTO THE BRIDGE, GATED LIKE THE FIRST.
+	// `AStratPlayerController::HandleSelectionEvent` carries move, attack, wait and end turn;
+	// a build arrives here instead, and a gate on one of the two would have been a lockout
+	// with a hole in it. Reachable when the AI's turn ended the match while a menu was still
+	// on screen. The sentence is `StratMatchAcceptsPlayerCommands`' own, so the two paths
+	// cannot come to say different things.
+	// ONE MODEL, BUILT HERE AND GATED ON, for the reason the free function's declaration
+	// gives: a caller with a model in hand asks that model. A refusal to BUILD the model is
+	// not a refusal to build a unit -- it is this object being unable to tell, and the submit
+	// below is left to answer, which is the authority that owns the question anyway.
+	{
+		FStratViewModel Current;
+		FString         ModelReason;
+		FString         GateReason;
+		if (BuildViewModel(Current, ModelReason)
+			&& !StratMatchAcceptsPlayerCommands(Current, GateReason))
+		{
+			OutFailureReason = GateReason;
+			return false;
+		}
 	}
 
 	// THE PAIRING GUARD, AND THE ONLY THING THIS FUNCTION DECIDES. It asks whether the module
@@ -996,6 +1026,36 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 
 		if (!Outcome.bOk)
 		{
+			// ---- ONE REFUSAL IS NOT A FAULT, AND IT IS THIS ONE --------------
+			// A COMMAND THE AI APPLIED THIS TURN MAY HAVE ENDED THE MATCH. §2.8's primary
+			// win is a flag kill, and the rules module then refuses the AI's own `EndTurn`
+			// with `[T-SAVE-05] no match is running` -- measured 2026-08-23: the AI's turn-7
+			// ninth command killed side 0's flag and its tenth, the EndTurn, was refused.
+			// Reported as a fault, that reads as "the AI broke" for the single most ordinary
+			// way an AI-vs-human match finishes, and it left the caller with a failure it
+			// could do nothing about while the real event -- the match ending -- had no
+			// name anywhere.
+			//
+			// ASKED AFTER, NOT PREDICTED. The model is rebuilt here rather than inferred
+			// from the refusal's text, so this arm keys on the rules module's own answer and
+			// not on a string that a re-vendor could reword.
+			//
+			// THE RUNNER IS NOT TOLD AND MUST NOT BE. `IStratAiTurnPort`'s header rules that
+			// there is deliberately no `IsMatchOver()` on it, "decided before `RunTurn` is
+			// called, by the subsystem that has the view model" -- this is that subsystem
+			// deciding, one call later than the header's sentence implies but in the same
+			// place. Adding the question to the port was the alternative and was rejected:
+			// it would let a runner decide, and every test double would have to grow an arm.
+			FStratViewModel AfterModel;
+			FString         AfterReason;
+			if (BuildViewModel(AfterModel, AfterReason) && StratMatchIsConcluded(AfterModel))
+			{
+				// ORDINARY, AND `StopReason` STAYS EMPTY. The refresh below reconciles the
+				// final board and `ApplyView` runs `ConcludeMatchIfEnded`, which is where
+				// the match actually leaves play.
+				break;
+			}
+
 			// THE HARD STOP. Whatever the runner applied stands; it has already logged the
 			// `STRAT-AI refused` line naming the phase. Handing play back with the AI's turn
 			// half-played and no fault reported is the failure this whole phase is shaped
@@ -1198,6 +1258,95 @@ void UStratMatchSubsystem::NoteMatchResultIfEnded(const FStratViewModel& Model)
 	}
 
 	bMatchResultRecorded = true;
+}
+
+// ---------------------------------------------------------------------------
+// §2.8's end of match: the predicate, the gate, and the one-shot transition.
+// See the block above the two free functions in the header for the measurement
+// that made all three necessary.
+// ---------------------------------------------------------------------------
+
+bool StratMatchIsConcluded(const FStratViewModel& Model)
+{
+	// ONE FIELD. See the declaration on why `ResultTier` is not consulted here.
+	return Model.Match.bHasResult;
+}
+
+bool StratMatchAcceptsPlayerCommands(const FStratViewModel& Model, FString& OutRefusalReason)
+{
+	OutRefusalReason.Reset();
+
+	if (!StratMatchIsConcluded(Model))
+	{
+		return true;
+	}
+
+	OutRefusalReason = StratMatchConcludedRefusalText();
+	return false;
+}
+
+FString StratMatchConcludedRefusalText()
+{
+	// A SENTENCE FOR A HUMAN AND NOT A RULES VERDICT, on `FStratGuidedOpening`'s line: an
+	// inert input is one that was never asked about. It deliberately does not name a winner,
+	// because this layer has none to name -- see the header.
+	return TEXT("the match is over; no further commands are accepted");
+}
+
+bool UStratMatchSubsystem::IsMatchConcluded() const
+{
+	FStratViewModel Model;
+	FString         Reason;
+	if (!BuildViewModel(Model, Reason))
+	{
+		// NOT "THE MATCH IS OVER". This object could not read the state, which establishes
+		// nothing -- see the declaration.
+		return false;
+	}
+
+	return StratMatchIsConcluded(Model);
+}
+
+FStratMatchView UStratMatchSubsystem::GetConcludedMatchView() const
+{
+	// FROM WHAT WAS DRAWN AND NOT FROM A FRESH QUERY, exactly as `GetViewModel` answers.
+	// Before any `ApplyView` this is a default-constructed view whose `bHasResult` is false,
+	// which is the right answer to "what result was shown" when none was.
+	return AppliedModel.Match;
+}
+
+void UStratMatchSubsystem::ConcludeMatchIfEnded(const FStratViewModel& Model)
+{
+	// §2.11.6's completion writer runs FIRST and on every refresh, unlatched by this
+	// function, because it has its own latch, its own opt-in and its own retry-on-failure
+	// behaviour -- see its declaration. Ordering it inside this function's latch would have
+	// made a transient write failure permanent.
+	NoteMatchResultIfEnded(Model);
+
+	if (bMatchConclusionAnnounced || !StratMatchIsConcluded(Model))
+	{
+		return;
+	}
+
+	bMatchConclusionAnnounced = true;
+
+	// THE PACING TIMER, CLEARED RATHER THAN LEFT TO FIRE AND FIND NOTHING TO DO. Belt and
+	// braces; the reason is in the declaration.
+	if (UWorld* const World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(AiTurnTimer);
+	}
+
+	// ONE LINE, ONCE PER MATCH, AND IT IS THE FIRST END-OF-MATCH LINE THIS PROJECT HAS EVER
+	// LOGGED. The 2026-08-23 session's diagnosis had to be built entirely out of the ABSENCE
+	// of a transition, because there was no line whose absence would have proved anything.
+	// `STRAT-MATCH` is a new prefix and it is fixed-field on the `STRAT-CMD` / `STRAT-AI`
+	// pattern, so a gate can split it without knowing its content.
+	UE_LOG(LogStratPlay, Log,
+		TEXT("STRAT-MATCH concluded turn=%d turnCap=%d sideToMove=%d tier=%s"),
+		Model.Match.Turn, Model.Match.TurnCap, Model.Match.SideToMove,
+		*StaticEnum<EStratResultTier>()->GetNameStringByValue(
+			static_cast<int64>(Model.Match.ResultTier)));
 }
 
 bool UStratMatchSubsystem::SaveMatchToSlot(const FString& SlotName, FString& OutFailureReason)

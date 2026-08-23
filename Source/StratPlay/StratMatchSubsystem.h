@@ -409,6 +409,85 @@ struct FStratMatchConfig
 	bool bRecordCompletionOnMatchEnd = false;
 };
 
+// ---------------------------------------------------------------------------
+// SEC 2.8's END OF MATCH, AS A PREDICATE OVER A MODEL AND NOTHING ELSE.
+//
+// WHAT GAP THESE TWO FUNCTIONS CLOSE. Measured 2026-08-23 in a human-driven PIE session and
+// recorded in `Tools/architect/state/global.md`: the AI's turn-7 command killed side 0's flag,
+// the rules module correctly declared the match over, this class correctly PERSISTED the
+// completion three milliseconds later -- and then nothing left play. The AI's `EndTurn` was
+// refused by the rules module (`[T-SAVE-05] no match is running`), so the turn number and the
+// side to move stayed where they were, and the human went on issuing commands that the rules
+// module ACCEPTED, as the AI's side. The engine detected the result and never acted on it.
+//
+// WHY A FREE FUNCTION OVER A MODEL AND NOT A METHOD ON THE SUBSYSTEM. The controller has
+// already built the model it is about to act on before it can gate anything -- a gate written
+// as `Match->IsMatchConcluded()` would build a SECOND model, and two models built at two
+// instants are two answers to one question. Handed the caller's own model, the gate is the
+// same value the screen was drawn from, by construction. It is also the shape a clause can
+// drive: no world, no bridge, no PIE, and a planted `FStratViewModel` is enough to make it
+// answer both ways.
+//
+// IT MIRRORS NOTHING AND LATCHES NOTHING. `FStratMatchView::bHasResult` is the rules module's
+// own answer, copied by `StratBuildViewModel`; these functions read it and add no state of
+// their own. That is deliberate and it is this class's standing rule -- see the note at the
+// bottom of the class on why there is no `bSeeded` bool. A `bMatchOver` member beside the
+// model could disagree with it, and the disagreement would present as exactly the defect
+// above, wearing the fix's colours.
+//
+// NOT IN THESE, with reasons:
+// - WHO WON. `strat::UiMatchView` carries `turn`, `turnCap`, `sideToMove`, `hasResult` and
+//   `resultTier` and NO winning side; `strat::MatchResult::winner` lives on `TurnState` and
+//   reaches no projection. A victory SCREEN needs it and this pass does not supply it -- see
+//   `engine.md` for the debt and the two routes that could discharge it.
+// - THE TRANSITION'S SIDE EFFECTS. Clearing the pacing timer and logging the conclusion once
+//   are `UStratMatchSubsystem::ConcludeMatchIfEnded`'s, because they are acts on an object.
+//   A predicate that also did something would be unusable from the two callers that only want
+//   to ask.
+
+/**
+ * Whether the model describes a match that has reached a Sec 2.8 result.
+ *
+ * ONE FIELD, READ, NEVER INFERRED FROM `ResultTier`. `FStratMatchView` says on the field
+ * itself that the two are read separately so they cannot disagree, and a predicate that
+ * asked `ResultTier != InProgress` instead would be a second author of the same fact.
+ */
+STRATPLAY_API bool StratMatchIsConcluded(const FStratViewModel& Model);
+
+/**
+ * Whether a human command may still be offered to the rules module for this model.
+ *
+ * FALSE MEANS INERT, NOT REFUSED. The distinction is the one Sec 2.11.6-B's input gates
+ * already draw in `AStratPlayerController::HandleSelectionEvent`: nothing reaches
+ * `FStratBridge`, no selection state moves, and `OutRefusalReason` is a sentence for a
+ * human rather than a rules module's verdict.
+ *
+ * IT EXISTS BECAUSE THE RULES MODULE DOES NOT REFUSE THESE COMMANDS. Measured in the session
+ * above: after the flag fell, `STRAT-CMD accepted kind=Move unit=14 ... side=1` and
+ * `STRAT-CMD accepted kind=Attack unit=14 ... side=1` both landed. Only `EndTurn` carries the
+ * `no match is running` check. So "the rules will stop it" was false, and this is the gate
+ * that does.
+ *
+ * @param OutRefusalReason  reset on entry; written only when the answer is false.
+ */
+STRATPLAY_API bool StratMatchAcceptsPlayerCommands(const FStratViewModel& Model,
+                                                   FString&               OutRefusalReason);
+
+/**
+ * The one sentence a concluded match refuses a command with.
+ *
+ * IT IS A FUNCTION AND NOT A LITERAL AT EACH SITE because there are three sites --
+ * `StratMatchAcceptsPlayerCommands`, `AStratPlayerController::ToggleProductionMenu`'s open
+ * path, and whatever a victory surface eventually says -- and a second spelling of the same
+ * refusal is a second thing to keep in step. This project has already paid for that once,
+ * with the `STRAT-AI` format string that drifted within a single diff.
+ *
+ * `FString` AND NOT `FText`, unlike `FStratGuidedOpening::EndTurnGateHoverText`. That one is
+ * quoted verbatim from the GDD and reaches a widget; this one is engine prose that reaches a
+ * log and a failure-reason channel, and §2.11.6's no-`LOCTEXT` ruling applies to neither.
+ */
+STRATPLAY_API FString StratMatchConcludedRefusalText();
+
 /**
  * Owns the authoritative `strat::GameState` for one world, and reconciles the board, the
  * units and the scoreboard against it.
@@ -1061,6 +1140,38 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
 	AStratUnitActor* FindUnitActor(int32 UnitId) const;
 
+	// ---- §2.8's end of match ---------------------------------------------
+
+	/**
+	 * Whether the match this object is running has reached a §2.8 result.
+	 *
+	 * THE CONVENIENCE FORM OF `StratMatchIsConcluded`, for a caller that has no model in
+	 * hand -- a widget, a GameMode, a clause. It builds one and asks; a caller that already
+	 * built a model must use the free function on THAT model instead, because two models
+	 * built at two instants are two answers.
+	 *
+	 * FALSE WHEN IT CANNOT TELL. No bridge, no seed, or a model that refused to build all
+	 * answer false, and that is deliberate: this is "the match is over", and an object that
+	 * cannot read the state has not established that it is. `IsMatchLive()` is the question
+	 * that separates "no match" from "a match in progress".
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
+	bool IsMatchConcluded() const;
+
+	/**
+	 * The §2.8 result as the screen last saw it, or a default-constructed view.
+	 *
+	 * VALID ONLY WHEN `IsMatchConcluded()`, and it is a projection of `AppliedModel.Match`
+	 * rather than a fresh query, so it answers "what was drawn" the way `GetViewModel` does.
+	 * A victory surface reads `ResultTier` from here.
+	 *
+	 * IT DOES NOT CARRY WHO WON, and that is a gap rather than a design: `strat::UiMatchView`
+	 * has no winning side to mirror. See the block above the free functions at the top of
+	 * this file.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
+	FStratMatchView GetConcludedMatchView() const;
+
 	// ---- §2.9's opponent -------------------------------------------------
 	// THIS CLASS DRIVES THE AI AND DOES NOT IMPLEMENT IT. Every command comes from
 	// `FStratAiTurnRunner`, which gets every command from `FStratBridge::NextAiCommand`,
@@ -1171,8 +1282,14 @@ private:
 	AStratScoreboardHUD* FindScoreboardHUD() const;
 
 	/**
-	 * §2.11.6's match-ended hook. Called from `ApplyView` with the model being applied; if
-	 * that model says the match has a result, records it on the slot.
+	 * §2.11.6's match-ended hook: if the model says the match has a result, record it on the
+	 * slot.
+	 *
+	 * ITS CALLER MOVED ON 2026-08-23 AND ITS BEHAVIOUR DID NOT. `ApplyView` used to call this
+	 * directly and now calls `ConcludeMatchIfEnded`, which calls this FIRST and unlatched, in
+	 * the same position in the same function. That ordering is deliberate: this function has
+	 * its own latch, its own opt-in and its own retry-on-failure, and running it inside the
+	 * conclusion latch would have made a transient write failure permanent.
 	 *
 	 * IT HANGS OFF `ApplyView` AND NOT OFF A COMMAND RESULT, because `ApplyView` is the one
 	 * place EVERY model reaches the screen through -- `RefreshPresentation` calls it,
@@ -1202,6 +1319,42 @@ private:
 	 * RETRACTED>  configured nothing resolved to it and wrote there.
 	 */
 	void NoteMatchResultIfEnded(const FStratViewModel& Model);
+
+	/**
+	 * §2.8's TRANSITION OUT OF PLAY. Called from `ApplyView` with the model being applied;
+	 * if that model says the match has a result, this is where the match stops being played.
+	 *
+	 * WHAT IT IS FOR, IN ONE SENTENCE. Before it existed the engine DETECTED a result and
+	 * persisted it and then did nothing else, so the AI's turn never terminated, the side to
+	 * move never moved, and the human inherited the AI's side and kept issuing commands the
+	 * rules module accepted. `NoteMatchResultIfEnded` -- which this function calls, and which
+	 * is unchanged -- was the whole of what a result used to cause.
+	 *
+	 * IT IS THE SIDE-EFFECT HALF AND `StratMatchIsConcluded` IS THE PREDICATE HALF. The split
+	 * is what lets the input gate be a pure function of a model: the controller asks and does
+	 * not transition, this transitions and is not asked. A single function doing both would
+	 * be unusable from the gate, which runs on every click of a finished match.
+	 *
+	 * ONCE PER MATCH, LATCHED ON `bMatchConclusionAnnounced`. `ApplyView` runs on every
+	 * refresh, and a finished match refreshes as often as an unfinished one; the log line and
+	 * the timer clear would otherwise repeat forever. THE LATCH IS NOT A MIRROR OF RULES
+	 * STATE and nothing reads it as one -- exactly the distinction `bMatchResultRecorded`'s
+	 * own block draws. Every question about whether the match is over is answered by asking
+	 * the model.
+	 *
+	 * THE PACING TIMER IS CLEARED HERE and that is belt-and-braces rather than the mechanism:
+	 * `RunAiTurnsNow`'s loop already exits on `bHasResult` before it asks the runner for
+	 * anything. Clearing it means a queued turn does not fire into a finished match at all,
+	 * rather than firing and finding nothing to do.
+	 *
+	 * IT DOES NOT LOCK INPUT AND CANNOT. Input arrives at `AStratPlayerController`, which
+	 * gates itself on `StratMatchAcceptsPlayerCommands` over its own model. A lock latched
+	 * here would be a second authority on whether play is open, and the two could disagree.
+	 *
+	 * VOID, FOR `ApplyView`'s STATED REASON: reconciliation is not a request that can be
+	 * declined.
+	 */
+	void ConcludeMatchIfEnded(const FStratViewModel& Model);
 
 	/**
 	 * THE AUTHORITATIVE `strat::GameState`, one level of indirection down.
@@ -1281,6 +1434,21 @@ private:
 	 * session records its own completion rather than inheriting the first one's latch.
 	 */
 	bool bMatchResultRecorded = false;
+
+	/**
+	 * Whether THIS OBJECT has already run §2.8's transition out of play for the match it is
+	 * running. See `ConcludeMatchIfEnded`.
+	 *
+	 * IT IS A "HAVE I ALREADY DONE THE ONE-SHOT WORK" LATCH AND NOT AN ANSWER TO "IS THE
+	 * MATCH OVER", on `bMatchResultRecorded`'s line exactly and for its reason. Nothing reads
+	 * it as a fact about the match: `IsMatchConcluded`, `StratMatchIsConcluded` and the
+	 * controller's input gate all ask the model. Setting it by hand would suppress a log line
+	 * and a timer clear and would not open or close play by one command.
+	 *
+	 * CLEARED IN `StartMatchInternal`, beside `bMatchResultRecorded`, so a second match in
+	 * the same session concludes on its own account rather than inheriting the first's latch.
+	 */
+	bool bMatchConclusionAnnounced = false;
 
 	// THERE IS NO `bSeeded` MIRROR HERE, deliberately. `IsMatchLive()` asks
 	// `Bridge->IsSeeded()` from the .cpp, where the definition is available. A bool beside

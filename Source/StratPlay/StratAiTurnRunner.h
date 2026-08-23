@@ -92,6 +92,23 @@ class FStratBridge;
  * before `RunTurn` is called, by the subsystem that has the view model. A runner that could
  * ask would be a runner that could decide.
  *
+ * AMENDED 2026-08-23, BECAUSE "BEFORE `RunTurn` IS CALLED" WAS ONLY HALF OF IT AND THE OTHER
+ * HALF WAS UNBUILT. The match can end DURING a turn -- §2.8's primary win is a flag kill, and
+ * the AI's own command is what lands it -- and when it does, the rules module refuses this
+ * runner's closing `EndTurn` with `[T-SAVE-05] no match is running`. Measured in a
+ * human-driven PIE session: the AI's turn-7 ninth command killed side 0's flag, the tenth was
+ * refused, and because nothing downstream classified that refusal the turn never terminated,
+ * the side to move never moved, and the human went on playing the AI's side. **The delegation
+ * this paragraph describes was correct and had no receiver.** It has one now:
+ * `UStratMatchSubsystem::RunAiTurnsNow` re-reads the model after a refused turn and, when the
+ * match has concluded, treats the refusal as an ordinary end rather than a fault; and
+ * `UStratMatchSubsystem::ConcludeMatchIfEnded` is the transition out of play. So the sentence
+ * above still holds -- the subsystem decides, and this interface still cannot -- but it now
+ * decides AFTER a turn as well as before one, and the port is unchanged for exactly that
+ * reason. Adding `IsMatchOver()` here was the alternative and was rejected twice over: it
+ * would let a runner decide, and it would oblige every test double to grow an arm for a
+ * question the shipping runner must not ask.
+ *
  * WHY AN INTERFACE RATHER THAN AN `FStratBridge&` -- the same two reasons
  * `IStratRulesQuery` gives, plus one that is specific to this file. First, the production
  * adapter (`FStratBridgeAiTurnPort`, below) becomes a named, separately assertable thing
@@ -177,7 +194,14 @@ private:
  */
 struct STRATPLAY_API FStratAiTurnOutcome
 {
-	/** True only when an EndTurn was APPLIED. Every refusal and the bound leave this false. */
+	/**
+	 * True only when an EndTurn was APPLIED. Every refusal and the bound leave this false.
+	 *
+	 * `false` IS NOT ALWAYS A FAULT AT THE CALLER, and that is the caller's judgement rather
+	 * than this field's meaning. `UStratMatchSubsystem::RunAiTurnsNow` re-reads the view model
+	 * on a `false` and, when the match has since concluded, ends its loop quietly -- see the
+	 * amendment on `IStratAiTurnPort`. This field still means exactly what it says.
+	 */
 	bool bOk = false;
 
 	/** True when the applied final command was EndTurn. See above on why this is not `bOk`. */

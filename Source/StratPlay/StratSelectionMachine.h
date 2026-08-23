@@ -71,7 +71,25 @@
 //   capture affordance is a §2.7 interaction with its own affordance question (which hex
 //   offers it, and how the player is told) that no phase has answered. Recorded as a
 //   deferral rather than guessed at; the applier's `switch` will need one new arm.
-// - BUILD. §2.11.5's production menu is explicitly out of the hot-seat milestone.
+// - BUILD, AND THIS BULLET IS RETRACTED IN PLACE. It used to read:
+//   RETRACTED> "BUILD. §2.11.5's production menu is explicitly out of the hot-seat
+//   RETRACTED>  milestone."
+//   The menu exists and has an affordance as of 2026-08-22, and NOTHING IN THIS STRUCT
+//   CHANGED FOR IT -- which is the substance of the retraction rather than an aside. The
+//   user ruled that §2.11.5's menu opens on a DEDICATED INPUT ACTION
+//   (`AStratPlayerController::OpenProductionMenuAction`), specifically so that
+//   `EStratSelectionEvent::HexPrimary` keeps meaning select / move / attack and this machine
+//   needs no BUILD arm. There is still no `EStratSelectionCommand::Build`, this machine
+//   still never emits one, and `StratSubmitSelectionCommand`'s `switch` gained no arm:
+//   `UStratMatchSubsystem::SubmitProductionChoice` is the submit path and it does not pass
+//   through here at all.
+//   THE ONE THING A READER MUST NOT CONCLUDE from the menu existing is that this machine now
+//   knows about hexes that hold no unit. It does not. `SelectedUnitId` is still the whole of
+//   its selection state, a click on empty ground is still "an ordinary click and not a
+//   failure", and the production menu's hex therefore comes from
+//   `AStratPlayerController::HexUnderCursor` and never from here -- recorded in that class's
+//   header block, because the ruling was phrased "the currently selected hex" and this
+//   project has no such thing.
 // - MOVE-UNDO. Out of the milestone. Note that this machine could not offer one anyway:
 //   the rules module applies a command directly and `FStratBridge::Submit` records it, so
 //   an undo is a rules-module question and not a selection-machine one.

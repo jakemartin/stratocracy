@@ -62,6 +62,34 @@
 // the defect. What this file needs from that call is only that the match reached a result, and
 // `bHasResult` is what says so.
 //
+// **[THE SENTENCE ABOVE BEGINNING "a completed AI-vs-AI game currently returns FALSE" IS
+// FALSIFIED AS OF 2026-08-23. IT WAS TRUE WHEN WRITTEN AND IS KEPT, STAMPED, RATHER THAN
+// DELETED.** Sec 2.8's end-of-match transition landed:
+// `UStratMatchSubsystem::RunAiTurnsNow` now rebuilds the model after a refused turn and, when
+// `StratMatchIsConcluded` answers yes, breaks out with its `StopReason` EMPTY -- so it falls
+// past both the `StopReason` arm and the refresh arm and returns TRUE with an empty reason for
+// a game that finished. "Asserting true would fail on a correct game" is no longer so.
+//
+// THE CROSS-REFERENCE IS THE PART THAT MATTERED, AND IT IS WHY THIS WAS A GATE FINDING RATHER
+// THAN AN OBSERVATION. "the reason that same clause states" points at
+// `T-INT-05.BothSidesAiReachesAResultWithinTheBound` in `StratAiMatchClauses.cpp`, whose
+// paragraph WAS corrected in the same pass that landed the transition. This local copy was
+// missed, so the pointer aimed at corrected text while restating the uncorrected version
+// nearer to the reader -- and a reader trusts the nearer sentence. Two copies of one claim;
+// the retraction reached the one where the evidence sits and not the one where the work is.
+//
+// WHAT IS STILL EXACTLY TRUE, AND IT IS WHY NOT ONE ASSERTION IN THIS FILE MOVES. The rules
+// module still refuses the winning side's closing `EndTurn` with `[T-SAVE-05] no match is
+// running`, and `FStratAiTurnRunner::RunTurn` still reports `bOk = false` for it; what changed
+// is the CLASSIFICATION one layer above the runner. And this paragraph's operative sentence --
+// "what this file needs from that call is only that the match reached a result, and
+// `bHasResult` is what says so" -- was never about the return value and is unaffected.
+// Recording the return rather than asserting it is now a CHOICE and not a necessity: the
+// return value has clauses of its own,
+// `Stratocracy.StratPlay.T-AI-01.AMatchWonMidTurnIsNotReportedAsAnAiFault` and
+// `.AGenuineAiRefusalIsStillAFault` in `StratMatchConclusion.cpp`, and two files asserting one
+// value is one file too many.]**
+//
 // THE SLOT IS THIS FILE'S OWN AND IT IS DELETED ON BOTH ENDS OF EVERY CLAUSE. The shipped
 // `SaveSlotName` is `StratocracyMatch`, the player's slot; a gate that wrote there would destroy
 // a developer's in-progress game on every suite run, and -- worse for a file about a bool that
@@ -368,6 +396,18 @@ namespace StratMatchCompletionRecording
 // the slot afterwards says a match was completed. So the clause goes red on all three of the
 // ways the feature can be absent:
 //   - the `NoteMatchResultIfEnded(Model)` line deleted from `ApplyView`;
+//     **[CITATION CORRECTED 2026-08-23, AND THE ARGUMENT IS DELIBERATELY UNWEAKENED.
+//     `ApplyView` NO LONGER CONTAINS THAT LINE**: it now calls
+//     `UStratMatchSubsystem::ConcludeMatchIfEnded`, which calls `NoteMatchResultIfEnded`
+//     itself, FIRST and unlatched, in the same order it always ran in. Read the bullet as
+//     "the `NoteMatchResultIfEnded(Model)` call deleted from anywhere in the `ApplyView` ->
+//     `ConcludeMatchIfEnded` -> `NoteMatchResultIfEnded` chain" -- deleting the link at
+//     EITHER end still reddens this clause, which is the property the bullet always claimed,
+//     so the reasoning survives the indirection intact. The old wording stays because it was
+//     accurate for the tree it described; what a reader following it to `ApplyView` will not
+//     find is the literal line, and that is the whole of the staleness. The new intermediate
+//     link has a clause of its own,
+//     `Stratocracy.StratPlay.T-INT-05.ConcludingLogsOnceAndOnlyOnce`.]**
 //   - the hook moved onto a path this clause does not take (a command-submit hook would never
 //     fire here -- the AI's commands go through `FStratAiTurnRunner` and the result is observed
 //     by the reconciliation `RunAiTurnsNow` ends in);

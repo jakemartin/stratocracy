@@ -8,6 +8,15 @@
 // its third. `GATE-BRIDGE-DEFS` and `GATE-SAVE-PARSE` are the precedent for a gate with no
 // acceptance row of its own.
 //
+// **[THE WIDGET NOW EXISTS, 2026-08-23: `Content/UI/WBP_ProductionMenu.uasset` is in the tree
+// (untracked at the time of writing), so the words "that does not exist yet" above are stale.**
+// EVERYTHING THE PARAGRAPH CONCLUDES IS UNCHANGED AND THE ID DOES NOT MOVE: `T-UI-04` is still
+// an IN-EDITOR claim about BINDING, and this file still constructs no widget and touches no
+// Slate, which is exactly what puts these clauses under `GATE-BUILDMENU` rather than under
+// that row. What the asset's arrival changes is only what `T-UI-04` is now BLOCKED ON -- a
+// human-driven playtest rather than a missing asset -- and `global.md` carries that. No clause
+// in this file may be read as moving that row's ledger.]**
+//
 // WHAT THE THREE FILES DIVIDE BETWEEN THEM, and the division is forced by what each module
 // can LINK against rather than chosen:
 //   - StratBridge's file compares `FStratBridge::BuildOptions` against `strat::uiBuildOptions`.

@@ -11,15 +11,136 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-23 (A MATCH THAT ENDS NOW ENDS THE GAME. The most serious thing open on this
+project is fixed, linked, executed and pinned. The delegation `IStratAiTurnPort`'s header made --
+"whether this side should be playing at all is decided before `RunTurn` is called, by the subsystem
+that has the view model" -- finally has a receiver.
+WHAT WAS BUILT, and it is `strat-gameplay-engineer`'s; `engine.md` carries it and this banner does
+not restate it. A concluded match runs a one-shot `UStratMatchSubsystem::ConcludeMatchIfEnded`; the
+human's input path and both build paths go inert behind `StratMatchAcceptsPlayerCommands`, a pure
+free function over the `FStratViewModel` THE CALLER ALREADY BUILT rather than a second model built
+at a second instant; and `RunAiTurnsNow` re-reads the model after a refused turn and reclassifies a
+post-conclusion refusal as an ordinary end instead of a fault. Four source files, no `Tests/`, no
+`Content/`, no vendored byte.
+THE CALL THAT SHAPED IT WAS A REFUSAL. `IsMatchOver()` was NOT added to `IStratAiTurnPort` -- that
+interface's own header forbids a runner that decides, and adding it would have obliged every test
+double in a lane the engineer may not edit to grow an arm before the tree would build at all.
+**THE SUITE IS NOW 194/194.** The figure this record carried before this pass **was 189/189**, and
+that entry is stamped below rather than deleted. 189 -> 194 by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +5, none removed, column-0 anchored,
+re-derived by the coordinator independently of the lane report. Zero non-Success and `notRun` 0
+across 194 entries, every one `Success`, at `reportCreatedOn 2026.08.23-20.13.33` (UTC; 16:13:33
+local the same day). All five new clauses are present in the report by name and `Success`, two
+under `T-AI-01` and three under `T-INT-05`. `Saved/SaveGames/` held ZERO files before and after and
+the directory mtime moved to the run's own minute, so the save-slot control is this pass's rather
+than borrowed.
+A GREEN BUILD WAS REFUSED AS EVIDENCE, and that is the methodological point of this pass. The first
+plain `Build.bat` linked in two actions off objects an earlier `-NoHotReloadFromIDE` diagnostic run
+had cached -- green, and describing a compile nobody performed. The four sources were `touch`ed to
+force a real nineteen-action rebuild, with `git hash-object` before and after proving all four
+blobs byte-identical across the touch. The green build reported here is that second run.
+THE TRANSITION WAS OBSERVED EXECUTING, AND ITS FIRST INSTRUMENT WAS BLIND. `STRAT-MATCH concluded
+turn=5 turnCap=20 sideToMove=1 tier=Decisive` and five more, inside the run's own window. It greps
+to ZERO in `suite.log` -- which reads as the transition never firing until you notice `LogStratPlay`
+greps to zero in that file too, so its silence proves nothing about any `LogStratPlay` string. The
+engine log is `Saved/Logs/Stratocracy.log`; 6 lines against a 2909-line `LogStratPlay` control,
+counted by the coordinator as well as the lane. **`suite.log` cannot answer a `LogStratPlay`
+question on this project** and that is worth more than the count.
+THE LATCH IS NOW A COUNT AND NOT AN ARGUMENT. It was corroborated by magnitude -- 6 concluded lines
+against 73 turn-ends and 967 applied commands -- which is an argument, not an enumeration.
+`T-INT-05.ConcludingLogsOnceAndOnlyOnce` pins exactly one across five further presentation
+refreshes off a live `GLog` capture. The two latches are visibly independent: 6 `STRAT-MATCH
+concluded` against 5 `now records a completed match`, with the slot still empty, so
+§2.11.6's writer stayed gated on its own opt-in while the transition ran regardless. **The
+save-suppression side effect that silently blanked the guided opening for three runs is closed.**
+FALSIFIABILITY WAS MEASURED, NOT ASSERTED: five simultaneous mutations, all inside `Tests/`,
+reddened exactly those five clauses and no others, with the shipped bytes restored from a copy held
+OUTSIDE the repo and proved identical by `git hash-object` (`4e4c460f…` either side) rather than by
+`git checkout --`, which on this project rewrites line endings. One honest limit the lane stated
+itself: the latch mutation simulates no real broken implementation, because the latch is production
+state a test may not remove.
+WHAT IS NOT CLOSED, AND IS NOT CLAIMED HERE. **No human has played a match to a result with this
+fix in the tree.** That a finished match stops accepting clicks ON SCREEN rests on the input gate's
+source and on three CALL SITES that no clause reaches -- a transient world never begins play, so
+`HandleSelectionEvent`, `ToggleProductionMenu`'s open branch and `SubmitProductionChoice` are
+unreachable headlessly, and **a controller that stopped calling the gate would pass all five new
+clauses.** That needs a human at the keyboard, unchanged. Also open and filed rather than fixed:
+nothing downstream can say WHO won, because `strat::UiMatchView` carries no winning side for
+`FStratMatchView` to mirror.
+A NARROW RE-GATE IS OWED. The standing `VERDICT: PASS` describes a tree without any of this.)
+
+_Last run 2026-08-23 (THE STRIP PAINTS. The question the section had been narrowed to -- what the
+binding function RETURNS rather than whether it runs -- is answered, the defect it named is fixed
+in the asset, and the screen was re-measured against this record's own baseline.
+WHAT THE DEFECT WAS. All six of this project's UMG property-binding functions were returning their
+type's default, because no exec wire ran from the `K2Node_FunctionEntry` to the
+`K2Node_FunctionResult` in any of them. **[CORRECTED 2026-08-23 afternoon: this sentence read
+"Each was authored IMPURE, so the data wire..." and the six are in fact PURE -- measured, and
+`content.md`'s topmost CORRECTION bullet carries the control. Purity does not exempt a function
+body from needing an exec wire, so the missing wire, the defect and the fix are all unchanged;
+only the word IMPURE was wrong.]** The data wire that three
+sessions had verified as "connected" fed a return node that was never reached. An empty `FText` is
+what painted zero-width, and `ESlateVisibility`'s zero value being `Visible` is why the strip
+painted a visible empty box instead of collapsing -- one cause under both halves of what was seen.
+Six wires, two assets, no source file touched. `content.md` carries the assets, the API findings
+and the full measurements; this banner does not restate them.
+CAUSATION WAS MEASURED, NOT INFERRED. The first wire went onto `GetStripVisibility` ALONE and
+flipped it `Visible` -> `Collapsed` in the same call in which the still-unwired `GetDirectiveText`
+returned empty as the live negative control, with the planted model read back identical either
+side. Both visibility functions then moved in BOTH directions on the model value, and a vary-text
+control shows the text functions track their input rather than returning one cached answer.
+THE PIXEL RESULT, AND THE INSTRUMENT WAS CONTROLLED BEFORE IT WAS TRUSTED. In the same 2544x1320
+frame the strip rectangle went from x 750-805, w=56, h=38, 2128 border pixels and ZERO glyph
+pixels, to x 434-1121, w=688, h=38, 22298 border pixels and 3017 glyph pixels -- same height, same
+centre 777.5, grown symmetrically around it. The measuring script reproduces the recorded baseline
+digit for digit from the retained capture before it was believed on the new one.
+**SEC 2.11.6-B IS NOT CLOSED AND IS NOT CLAIMED HERE.** Only BEAT 1a was observed -- the directive
+present at match start, which needs no input. Beats 1b and 2, the window-end tag and the gated
+end-turn hovers all require actual play, and injected input still never reaches `UPlayerInput`
+here, so what closes the section is a human-driven playtest, unchanged. The glyph count is a SHAPE
+claim; nothing read the painted text back.
+NO SUITE FIGURE MOVES AND NONE IS MEASURED HERE. No source file changed this pass and the suite was
+not re-run; the standing figure is the one the 2026-08-22 banner below carries, and this banner
+neither restates nor supersedes it.
+GATES: NOT RUN, AND THAT IS OWED RATHER THAN OVERLOOKED. **[SUPERSEDED 2026-08-23: THE RE-GATE HAS
+SINCE BEEN RUN AND RETURNED `VERDICT: PASS` WITH ZERO FINDINGS.** Twelve standing checks, both guard
+scripts re-run CLEAN with their self-tests all correct, all four in-scope hashes re-derived rather
+than carried from the brief, and an arithmetic-node scan returning NONE across all three UI packages
+-- so the added wires introduced no computation. The `WBP_OneShotTip` byte question the rest of this
+paragraph raises was HALF-settled by the gate: it recovered both packages' HEAD bytes from
+`.git/lfs/objects/` and proved every probe string absent, twice by independent instruments, but
+could not settle the explicitly-set-versus-default-constructed empty `FText` form, because UE
+serialises that property by deduplicated FName index and no instrument it had could see it. **That
+half is now settled too, and the answer is that the round trip is BYTE-LOSSLESS** -- `content.md`
+carries the controlled experiment and the falsifiability check that makes it mean something. The
+gate's one non-gating observation concerns the lane-deviation header and is recorded in `content.md`
+where that header lives.]** This pass changed two shipped assets --
+`Content/UI/WBP_DirectiveStrip.uasset` and `Content/UI/WBP_OneShotTip.uasset` -- after a
+`VERDICT: PASS` describing a tree without them, so it needs a narrow re-gate. One thing for that
+gate specifically: `WBP_OneShotTip`'s probe wrote ordinary Blueprint variables on the CDO and the
+restore is a REPRESENTATIONAL match, not a proved byte match, so its saved bytes may carry more
+than the two wires. `WBP_DirectiveStrip` has no such exposure because `Guidance` is `Transient`.
+A LANE DEVIATION, RECORDED RATHER THAN HIDDEN: `execute_script` was again absent from the session's
+tool surface, so `strat-editor-builder` had no route to the editor and the coordinator drove it
+over the editor's own MCP endpoint and wrote `content.md`. Second occurrence, same measured cause;
+`content.md`'s own top entry carries it.)
+
 _Last run 2026-08-22 (BOTH DELIVERY DEFECTS ARE FIXED AND PINNED, AND THE STRIP HAS NOW BEEN
 WATCHED WITH THE FIX IN THE TREE, AND IT STILL PAINTS NO DIRECTIVE. **[HEADLINE AMENDED
 2026-08-22 12:01 local, coordinator, after the PIE session this banner asked for was actually
 run. It formerly recorded that the strip HAD NOT BEEN SEEN since the fix; it has now been seen,
 and the answer is negative. The delivery half of this banner is CONFIRMED ON A LIVE WIDGET -- the
 widget's guidance now arrives fully populated where it used to arrive default -- and the painted
-strip did not follow it. The newest `## NEXT` entry carries the session.]** Both halves are
+strip did not follow it. The newest `## NEXT` entry carries the session.]**
+**[BOTH THE HEADLINE ABOVE AND THE 2026-08-22 AMENDMENT BEFORE IT ARE SUPERSEDED
+2026-08-23: THE STRIP NOW PAINTS. It was never watched with the WHOLE fix in the tree -- the
+remaining half was in the widget asset, six binding functions returning their type's default
+for want of an exec wire. Superseded rather than deleted: every measurement this banner
+reports was correct for the tree it described, and the negative result it records is exactly
+what separated the C++ from the asset. See the 2026-08-23 banner above.]** Both halves are
 load-bearing: the two mechanisms that kept it blank are closed in C++ and held by clauses, and the
-screen still shows no directive.
+screen still shows no directive. **[SECOND HALF SUPERSEDED 2026-08-23 -- see the stamp
+above and the banner at the top of this file.]**
 **Sec 2.11.6-B IS NOT CLOSED AND IS NOT CLAIMED HERE.** What closes it is a human-driven playtest; the
 coordinator PIE session it also named was RUN on 2026-08-22 and returned NO, so it is discharged
 rather than owed -- the 08:01-local `## NEXT` entry carries its console measurements.
@@ -38,18 +159,26 @@ really 12:01 UTC** -- its own capture, `ScreenShot00059.png`, has mtime `08:01:0
 log line reading `12.01.00`, so that session ran FOUR HOURS EARLIER than its stamp reads and this
 11:30-local amendment is after it, not before it. Recorded rather than silently rewritten, because
 the same mislabel is what makes two entries look out of order.]
-**THE SUITE IS NOW 181/181.** The figure this banner carried until 2026-08-22 **was 171/171**,
-and before that **was 160/160**; both are superseded here rather than deleted. 171 -> 181 by
-set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +10, none removed,
-column-0 anchored, and re-derived independently against `HEAD`, which counts exactly 171 because
-the ten new clauses live in one file that is not committed yet,
-`Source/StratPlay/Tests/StratProductionMenuSeam.cpp`. Zero non-Success and `notRun` 0 across 181
-entries, every one `Success`. The run is THIS tree's own, with the editor closed, and the report it
-wrote is `reportCreatedOn 2026.08.22-22.40.50` -- 18:40 local, because report stamps are UTC and
-this record's dates are not. All ten new clauses are present in it by name, every one under
-`Stratocracy.StratPlay` and every one carrying `GATE-BUILDMENU`. `Saved/SaveGames/` holds ZERO
-files and the directory mtime reads 18:40 local -- the run's own minute -- so the save-slot control
-is discharged on this pass rather than borrowed from the last.
+**THE SUITE WAS 189/189 ON THIS PASS.** **[SUPERSEDED 2026-08-23 -- the live figure has since
+moved and the banner at the top of this file carries it. Stamped rather than deleted: every
+measurement below was correct for the tree it described. This entry deliberately does not restate
+the new figure, because two live claims in one file is the contradiction the sweep exists to
+catch.]** The figure this banner carried earlier on 2026-08-22
+**was 181/181**, before that **was 171/171**, and before that **was 160/160**; all three are
+superseded here rather than deleted. 181 -> 189 by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +8, none removed, column-0 anchored,
+and re-derived independently against `HEAD` (`ac77bc2`), which counts exactly 181 because the
+eight new clauses live in two files that are not committed yet,
+`Source/StratUI/Tests/StratProductionMenuHostClauses.cpp` and
+`Source/StratPlay/Tests/StratProductionMenuAffordance.cpp`. Zero non-Success and `notRun` 0 across
+189 entries, every one `Success`. The run is THIS tree's own, with the editor closed, and the
+report it wrote is `reportCreatedOn 2026.08.23-02.59.58`. **THAT UTC STAMP READS 08-23 WHILE THIS
+ENTRY IS DATED 08-22, AND BOTH ARE RIGHT**: 02:59:58 UTC is 22:59:58 local on 2026-08-22, which is
+exactly the crossing this record's local-vs-UTC rule exists for -- do not "correct" either one to
+match the other. All eight new clauses are present in the report by name and `Success`, four under
+`Stratocracy.StratUI` and four under `Stratocracy.StratPlay`, every one carrying `GATE-BUILDMENU`.
+`Saved/SaveGames/` holds ZERO files and the directory mtime reads 22:59 local -- the run's own
+minute -- so the save-slot control is discharged on this pass rather than borrowed from the last.
 WHAT THE TWO FIXES ARE. Defect 2 is fixed AT THE BUILD, NOT AT THE PUSH: `ApplyView`'s
 unconditional-push ruling is untouched and `BuildViewModelForPresentation` -- `BuildViewModel` plus
 one `ExecuteIfBound` on a new plain, single-cast, weak, unreflected `FStratViewDecorator` -- now
@@ -635,6 +764,123 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **A MATCH THAT ENDS DOES NOT END THE GAME: THE HUMAN INHERITS THE AI'S SIDE AND KEEPS PLAYING.
+  NEW, MEASURED 2026-08-23 IN A HUMAN-DRIVEN PIE SESSION, AND IT IS THE MOST SERIOUS THING OPEN.**
+  **[ANSWERED 2026-08-23, LATER THE SAME DAY. The transition is built, linked, executed and pinned
+  by five clauses; the banner at the top of this file carries the account. This entry is kept
+  ENTIRE and unedited below because it is the diagnosis the fix was built from, and because the
+  half it could not reach is still open: NO HUMAN HAS PLAYED A MATCH TO A RESULT WITH THE FIX IN
+  THE TREE, and the three call sites on the player's input path are unreachable headlessly, so a
+  controller that stopped calling the gate would pass all five clauses. The ENGINE half is closed;
+  the PLAYER-FACING half is not, and it is not claimed. OWNED: coordinator, to schedule with the
+  user, alongside the §2.11.6-B playtest below -- one session covers both.]**
+  Reported by the user as "at turn 7 the teams switch and I'm no longer in control of team 1 but
+  have taken over control of team 2, and the AI no longer is in control". The log carries the whole
+  chain and the report is accurate.
+  - **THE TRIGGER IS A LEGITIMATE WIN.** On the AI's turn 7 its NINTH AND LAST applied command
+    killed side 0's flag: `STRAT-COMBAT resolved attacker=6 defender=1 hex=-2,4 ... ddied=1`, with side 1's
+    Fame moving 600 -> 1100 on the kill award. Axial `(-2, 4)` is side 0's Tank FLAG start hex, and
+    `Turn.h` states a downed flag ends the match. So the RULES are right and the match is over.
+  - **THE ENGINE HALF-NOTICES.** Three milliseconds later, at `15.14.34:394` against the kill's
+    `15.14.34:391`, it logged
+    `Slot 'StratocracyMatch' now records a completed match; ~2.11.6 guidance is suppressed from
+    here on.` -- so the completion was detected and persisted. What did not happen is any
+    transition out of play: no victory state, no input lockout, no turn advance.
+  - **AND THE REASON IS THAT NO END-OF-MATCH TRANSITION EXISTS TO MISFIRE.** Stated this way on the
+    re-gate's suggestion, because it is stronger than the log's silence and does not depend on it:
+    there is no victory or defeat log line anywhere in the codebase, so an absence in the log would
+    have proved nothing on its own. What proves it is the CODE. A scan of `Source/StratPlay` and
+    `Source/StratUI` outside `Tests/` for
+    `MatchOver|EndMatch|OnMatchEnd|MatchEnded|Victory|Defeat|GameOver`
+    returns five hits and NOT ONE is a transition: four are the
+    `bRecordCompletionOnMatchEnd` save-write flag, and the fifth is a comment saying the thing does
+    not exist. **[CORRECTED 2026-08-23 by `strat-gameplay-engineer`, re-run in the tree and
+    confirmed by the coordinator: that fifth hit and the `IStratAiTurnPort` design note quoted two
+    paragraphs below are THE SAME HIT, not two independent facts. The count of five is right; the
+    reading that five separate sites each declined to be a transition is not. The conclusion is
+    unaffected -- none of the five is a transition either way.]** And no `IsMatchRunning` gate
+    stands on the player input path -- stated exactly:
+    that symbol does not exist anywhere in `Source/`, 0 hits tree-wide, so there is no gate to be
+    unwired. The `no match is running` refusal in the log is the RULES module's own
+    (`[T-SAVE-05]`), not `StratPlay`'s, which is the point.
+    **THE DESIGN INTENT IS ON RECORD AND ONLY HALF OF IT IS BUILT, which is the whole defect in one
+    sentence.** `IStratAiTurnPort`'s own header -- the INTERFACE, not the concrete
+    `FStratBridgeAiTurnPort` that implements it -- says there is "deliberately no `IsMatchOver()` and
+    no `IsSideAi()`: whether this side should be playing at all is decided before `RunTurn` is
+    called, by the subsystem that has the view model." The runner is right to delegate; the
+    subsystem never decides. So this is not a transition that fired wrongly -- it is a delegation
+    with no receiver, and the AI's refused `EndTurn` is the first thing downstream that notices.
+    **THE CONTROL on that scan**: the same pattern across all of `Source/` returns 33 hits, so the
+    grep can speak; the five above are what survives excluding `Tests/`.
+  - **WHAT THE PLAYER THEN GETS.** The AI's own `EndTurn` was refused --
+    `STRAT-AI refused phase=apply kind=EndTurn ... turn=7 side=1 reason=[T-SAVE-05] no match is
+    running`, and the runner reported `the paced AI turn refused ... after 9 applied command(s)`.
+    Because that EndTurn never lands, the turn stays 7 and the side to move stays 1, so the human
+    is now driving the AI's side. Measured, not inferred: the refusal SHAPE
+    `Selection: unit <N> belongs to side 0 and side 1 is to move` fired four times as the user
+    clicked their OWN units, for units 24, 24, 5 and 21 -- the count is the shape's, and no single
+    one of those lines carries it -- while
+    `STRAT-CMD accepted kind=Move unit=14 ... side=1` and
+    `STRAT-CMD accepted kind=Attack unit=14 ... side=1` show side 1's units accepting the human's
+    commands. The AI is not "no longer in control" by any switch -- its turn never terminated.
+  - **AND THIS IS WHERE THE SUPPRESSING SAVE COMES FROM, which links it to ~2.11.6-B.** The
+    completed-match slot that suppressed the guided opening on three consecutive runs is written by
+    exactly this path. A match ending in a lost flag leaves a save that silently disables ~2.11.6
+    guidance for every later run, and the only symptom is a blank strip.
+  - **NOT DIAGNOSED BEYOND THIS, deliberately.** Whether the fix belongs at the AI turn runner, at
+    the match subsystem's completion handling, or at both is an engine call. OWNED:
+    `strat-gameplay-engineer`; `engine.md` is its file and nothing here is written into it. A
+    clause is owed alongside -- OWNED: `strat-test-author`.
+
+- **SEC 2.11.6-B: THE GUIDED OPENING NOW ARMS, AND THAT IS ONE RUNG, NOT THE SECTION.**
+  2026-08-23. `Guided opening armed for side 0: objective hex (2, 7), window turns 1-4.` was
+  logged at 15:09:49 in a human-driven session, with the control that the suppression line is
+  present in all three earlier sessions and absent from that one. The cause was the completed-match
+  save and nothing in the widget or the C++; `content.md` carries the evidence.
+  **THE SECTION DOES NOT CLOSE AND IS NOT CLAIMED HERE.** The armed run lasted 24 seconds and
+  issued no `EndTurn`, so BEAT 1a remains the only beat observed from the strip's side. Beats 1b
+  and 2, the window-end tag and the gated end-turn hovers are all still unseen, and the window-end
+  tag needs turns 1-4 to elapse. **One thing is newly known and is worth more than it looks:**
+  `Guided beat 3 retired on turn 1: a unit spawned.` fired unprompted, which is a beat past 1a
+  observing the world and retiring correctly -- the first evidence in this record that the beat
+  machinery advances at all. It is not a strip claim: nothing read painted text back this session,
+  so whether the strip PAINTS a readable directive with the fix in the tree is STILL unverified by
+  a human eye.
+
+- **2026-08-23, COORDINATOR, THE STRIP'S LAST QUESTION IS ANSWERED AND THE DEFECT IS FIXED IN THE
+  ASSET. TWO SHIPPED ASSETS CHANGED, NO SOURCE. SEC 2.11.6-B IS STILL NOT CLOSED AND IS NOT CLAIMED
+  HERE.** The banner at the top of this file carries the account; `content.md` carries the assets,
+  the measurements and the API findings. This entry carries only what is now owed.
+  - **THE PRIOR SEPARATION HELD, WHICH IS WORTH SAYING BECAUSE IT WAS THE EXPENSIVE PART.** The
+    entry that read "what remains is inside the widget asset, and that is now separated from C++ by
+    measurement rather than by argument" was RIGHT, and the exclusion list the two sessions before
+    it built is what made the remaining question small enough to answer in one pass. Nothing in
+    those entries is retracted by this one.
+  - **WHAT CLOSES SEC 2.11.6-B, UNCHANGED: A HUMAN-DRIVEN PLAYTEST.** Only BEAT 1a has been seen --
+    the directive present at match start, which needs no input. Beats 1b and 2, the window-end tag
+    and the gated end-turn hovers all need someone at the keyboard, because injected input never
+    reaches `UPlayerInput` on this project. OWNED: coordinator, to schedule with the user.
+  - **A NARROW RE-GATE IS OWED, ON A TREE NO VERDICT DESCRIBES.** **[DISCHARGED 2026-08-23:
+    `VERDICT: PASS`, zero findings, and the byte question this bullet hands the gate is settled as
+    byte-lossless. See the banner. Kept rather than deleted because the reasoning for why it was
+    owed is what a later reader needs when the next asset-only pass lands.]** The standing `VERDICT: PASS`
+    describes a tree without `Content/UI/WBP_DirectiveStrip.uasset` or
+    `Content/UI/WBP_OneShotTip.uasset` as they now stand. One thing for that gate specifically:
+    `WBP_OneShotTip`'s probe wrote ordinary Blueprint variables on the CDO, so its restore is a
+    representational match rather than a proved byte match and its saved bytes may carry more than
+    the two wires. `WBP_DirectiveStrip` has no such exposure -- `Guidance` is `Transient`, so
+    nothing planted there could reach disk, and that asymmetry is the reason only one of the two
+    needs looking at.
+  - **T-UI-04 IS UNTOUCHED BY THIS PASS AND STILL NEEDS ITS OWN HUMAN-DRIVEN PLAYTEST.** The
+    production menu was not opened, not driven and not measured here; the census that found the
+    binding defect confirms `WBP_ProductionMenu`'s one function graph does NOT carry it, and that
+    is the only thing this pass says about it.
+  - **BEFORE ANY FUTURE GUIDED-OPENING CAPTURE, READ THE ARMING LINE.** An existing
+    `Saved/SaveGames/StratocracyMatch.sav` makes the game log `Guided opening suppressed for side
+    0: this save has a completed match`, leaving the live projection all-default with no error
+    anywhere -- a capture taken then is a FALSE NEGATIVE indistinguishable from the defect that was
+    just fixed. It cost this session a cycle. `content.md` records the handling.
+
 - **2026-08-22, COORDINATOR + STRAT-DATA-STEWARD, SEC 2.11.5 STEPS 1-3 ARE LANDED: THE RULES
   MODULE'S BUILDLIST ANSWER IS RE-VENDORED, ROUTED THROUGH THE BRIDGE, AND MIRRORED INTO THE VIEW
   MODEL. THIS RECORDS A LANDED STEP AND NOT A CLOSED PHASE.** Step 4 -- the production menu widget
@@ -817,6 +1063,16 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     a pure graph too. **The pin dump was never evidence of impurity, and it is the reader's shape
     rather than the asset's.** Recorded rather than deleted because the observation stands and the
     next reader will otherwise draw the same inference from the same dump.
+    **[CONFIRMED BY MEASUREMENT 2026-08-23 afternoon, and this bullet was RIGHT -- including its
+    prediction of what the next reader would do. The 2026-08-23 morning pass drew exactly the same
+    inference from the same dump and wrote it into the record as fact; it has now been corrected in
+    both files. A `pure=true` function does show entry/result exec pins, verified side by side
+    against a `pure=false` twin on a throwaway probe, and the compiler's refusal of the impure twin
+    is what proves the shipped six are pure. What this bullet did NOT reach, and what kept the
+    section open for another day, is that purity does not exempt the body from needing an exec
+    wire -- so "the four functions ARE pure" and "no body ever executes" are BOTH true at once, and
+    the mechanism this bullet then called still-open was in fact the unconnected exec pins it had
+    just finished describing. `content.md`'s topmost CORRECTION bullet carries the experiment.]**
   - **SO THE MECHANISM IS STILL OPEN, and these are excluded rather than guessed at.** Not the
     input wiring (`Return Value` reports `connected=true, linked_to_count=1` on every binding
     function). Not variable shadowing (zero local variables; the reparent re-scoped the member to

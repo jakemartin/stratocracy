@@ -8,7 +8,293 @@
 > **One file owns each fact class.** Other files may *link* to a fact recorded here; they may not
 > restate it. Only `global.md` may carry a live suite count or a phase verdict — a live `N/N`
 > in any other file is a finding, enforced by `strat_banner_sweep.py`'s RECORD OWNERSHIP check.
-> Everything under `## NEXT
+> Everything below this block is swept as live; stamp an entry that has become history rather
+> than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
+> file was split; completed 2026-08-22, no meaning changed.)
+
+- **§2.8's END-OF-MATCH TRANSITION IS GATED, AND THE ONE-SHOT LATCH IS NOW A COUNT RATHER THAN AN
+  ARGUMENT.** Five clauses in one new file, `Source/StratPlay/Tests/StratMatchConclusion.cpp` —
+  three under `T-INT-05`, two under `T-AI-01`, both ids pre-existing and neither minted here.
+  Untracked at the time of writing; staging is the user's call. The live suite figure for this
+  pass is in `Tools/architect/state/global.md` and is not restated here.
+  - **THE DEFECT THEY ARE ABOUT.** A match that reached a §2.8 result did not end the game: the
+    rules module was right, `UStratMatchSubsystem` persisted the completion three milliseconds
+    later, and no end-of-match transition existed in `StratPlay` or `StratUI` at all. The AI's
+    closing `EndTurn` was refused with `[T-SAVE-05] no match is running`, so the turn and the
+    side to move never moved and the HUMAN inherited the AI's side and kept issuing accepted
+    commands. `global.md`'s `## NEXT` entry carries the measured chain; nothing here restates it.
+  - **WHAT EACH CLAUSE PINS.**
+    - `T-INT-05.AConcludedModelRefusesPlayerCommands` — `StratMatchAcceptsPlayerCommands` answers
+      BOTH ways over two planted models differing in EXACTLY ONE FIELD, with the accepting
+      direction IN THE SAME CLAUSE. Its refusal is compared against
+      `StratMatchConcludedRefusalText()` byte for byte through `ESearchCase::CaseSensitive`; the
+      sentence is nowhere transcribed, because a clause that typed it would BE the fourth site
+      the function exists to prevent. The out-parameter is asserted empty on the accepting path,
+      which is the declared contract.
+    - `T-INT-05.ConclusionIsReadFromHasResultAndNotFromResultTier` — both directions, over a
+      REFLECTION WALK of `EStratResultTier` rather than a typed tier list, so a fifth tier is
+      REQUIRED to be handled instead of silently unmentioned. The null is
+      `FStratMatchView().ResultTier`, the module's own default, not the enumerator named in
+      source. It carries a coverage assertion (`DecidedTiersSeen > 0`) so a walk that found
+      nothing cannot pass having asserted nothing. **This is the one clause whose planted pair
+      is IMPOSSIBLE by construction** — `StratBuildViewModel` never emits `bHasResult == false`
+      beside a decided tier — and that is deliberate: the independence of the two fields IS the
+      subject, so no module-side value exists to read and the pairing is what isolates which
+      field the predicate consults.
+    - `T-AI-01.AMatchWonMidTurnIsNotReportedAsAnAiFault` — the clause that would have caught the
+      defect. **It plants no result.** Both sides AI, one synchronous `RunAiTurnsNow`, a real
+      §2.8 result, and FOUR facts asserted together: the match reached a result, the call
+      returned TRUE, its `OutFailureReason` is EMPTY, and a `STRAT-AI refused` line actually
+      appeared. That fourth one is not decoration — without it the clause goes green over a game
+      that ended tidily at a turn boundary, where the post-refusal reclassification arm is never
+      entered at all.
+    - `T-AI-01.AGenuineAiRefusalIsStillAFault` — the negative control, and the clause that a
+      correct-but-over-broad fix fails. **The refusal is manufactured through a PRODUCTION seam
+      and NOT a scripted port**: `RunAiTurnsNow` constructs its own `FStratBridgeAiTurnPort` and
+      takes no port argument, so there is no injection point and adding one is outside this
+      lane. `FStratMatchConfig::AiMaxCommandsPerTurn = 1` makes the runner exceed its own bound
+      and report `phase=bound` while the match is one command old. The reason is asserted
+      NON-EMPTY and never compared for content — the bound's sentence is
+      `StratAiTurnRunner.cpp`'s and `T-AI-01.LoopBoundIsAReportedFault` already owns it.
+      The clause's PREMISE (`!After.Match.bHasResult`) is checked first and is fatal.
+    - `T-INT-05.ConcludingLogsOnceAndOnlyOnce` — **this is the entry with the most value per
+      line.** Before it, `bMatchConclusionAnnounced` was CORROBORATED by a magnitude argument
+      over a PIE log — six `STRAT-MATCH concluded` lines against 967 `STRAT-AI applied` — with
+      nothing ever enumerating how many matches concluded, so the ratio was suggestive and not a
+      measurement. Here the denominator is known: ONE match, then five counted
+      `RefreshPresentation` calls, and `STRAT-MATCH concluded` is asserted to still read exactly
+      one. The five refreshes are required to have RETURNED TRUE, which is what stops "still
+      one" being satisfied by refreshes that never reached `ApplyView`.
+  - **THE CAPTURE IS THE SIXTH IN THIS SUITE AND CARRIES `CanBeUsedOnMultipleThreads() = true`.**
+    Without it the 1-in-4 flake returns. **Its filter is deliberately CASE-INSENSITIVE and only
+    the counting is `ESearchCase::CaseSensitive`** — a strict filter would drop a `strat-match`
+    line, and the "exactly one" assertion would then pass at ZERO by being blind to the very
+    defect it is aimed at. Instruments loose, claims strict.
+  - **`RefreshPresentation` RETURNS TRUE IN THIS FIXTURE, unlike in `StratGuidanceRouteClauses.cpp`'s**,
+    and the difference is worth knowing before reusing either. `FindScoreboardHUD()` finds
+    nothing here, so the scoreboard step — the only refusable one — is skipped entirely and the
+    return is a real signal. In the guidance-route fixture a HUD exists without a scoreboard
+    widget, so the same call always refuses at that last step and its return is asserted nowhere.
+  - **FALSIFIABILITY MEASURED BY FIVE SIMULTANEOUS MUTATIONS, ALL INSIDE `Tests/`.** Production
+    source is not this lane's to touch even temporarily, so each pre-fix or broken design was
+    simulated in the clause itself: a local `MutantAlwaysAccepts` for the gate that never
+    existed; a local `MutantTierIsConcluded` reading `ResultTier` for the second-author defect;
+    the two `RunAiTurnsNow` assertions inverted; and the latch's expected count set to the
+    unlatched prediction. Result: **exactly the five targeted clauses reddened and no others.**
+    The messages are the ones each mutation was designed to produce — *"got '', expected 'the
+    match is over; no further commands are accepted'"*, *"tier 'Draw' … to be false"* three
+    times over (which is the reflection walk proving itself live), *"RunAiTurnsNow returned true
+    (it returned true, reason '')"*, *"…to be 6, but it was 1"*. Shipped bytes restored from a
+    copy held outside the repo and proved identical by `git hash-object`
+    (`4e4c460fa7b29d1e426e0f21e00fac9aa1626fd6` before and after) — never `git checkout --`,
+    which rewrites LF to CRLF under `core.autocrlf=true`.
+  - **THE HONEST LIMIT OF THE LATCH CLAUSE.** The four other mutations simulate a real broken
+    implementation; the latch one does not, because the latch is production state this lane
+    cannot remove. What that mutation proves is that the clause DISCRIMINATES 1 from 6 on live
+    data — it is not asserting a constant it also computed. It does not prove that deleting
+    `bMatchConclusionAnnounced` would redden it, though the arithmetic is not in doubt.
+  - **WHAT THESE FIVE DO NOT PIN, and it is a real list rather than a hedge.**
+    - **WHO WON.** `strat::UiMatchView` carries no winning side and `strat::MatchResult::winner`
+      reaches no projection, so nothing here can assert one. A victory SCREEN has no gate under
+      it and cannot get one until that value is projected — `engine.md` carries the debt.
+    - **THE CONTROLLER-SIDE GATES.** `AStratPlayerController::HandleSelectionEvent`,
+      `ToggleProductionMenu`'s open branch and `SubmitProductionChoice` all now call
+      `StratMatchAcceptsPlayerCommands`, and **not one of those three CALL SITES is pinned
+      here.** What is pinned is the predicate they call. A controller that stopped calling it
+      passes all five of these clauses. That is the same shape as `BeginPlay`'s unpinned
+      `SetViewDecorator` line recorded further down this file, and it has the same cause: a
+      transient world does not begin play, so no spawned controller runs `BeginPlay` and the
+      input path is not reachable headlessly.
+    - **THE PACING-TIMER CLEAR** inside `ConcludeMatchIfEnded`. `AiTurnTimer` is private with no
+      accessor and the delayed path needs a ticking world; the transition's OTHER side effect
+      (the one log line) is what carries the latch clause.
+    - **`GetConcludedMatchView()`'s CONTENTS.** Only `bHasResult` is read off it. It is
+      `AppliedModel.Match` — what was drawn, not a fresh query — and nothing here distinguishes
+      those two, because on this path they agree.
+  - **A STALE-PROSE FINDING IN AN EXISTING CLAUSE, CORRECTED IN PLACE AND STAMPED RATHER THAN
+    DELETED.** `T-INT-05.BothSidesAiReachesAResultWithinTheBound` in `StratAiMatchClauses.cpp`
+    carried two paragraphs stating as present-tense fact that a completed AI-vs-AI game "comes
+    back FALSE" and that this was "a production-side finding, filed rather than fixed". The
+    filing was acted on and both sentences stopped describing the tree. **Comment text only; not
+    one assertion in that clause moved**, and the clause is deliberately left NOT asserting the
+    return value, because `AMatchWonMidTurnIsNotReportedAsAnAiFault` now owns it and two clauses
+    asserting one value is one too many.
+    - **AND THE THING THAT FINDING TAUGHT: the tripwire did not trip.** That block predicted in
+      writing that if the behaviour were corrected, its
+      `AddExpectedMessagePlain(TEXT("STRAT-AI refused"), …, Occurrences 0)` "THIS LINE FAILS".
+      The behaviour was corrected and the line did not fail. The prediction was wrong, not the
+      fix incomplete: the expectation is aimed at the RUNNER'S LOG LINE, and the fix is a
+      reclassification one layer above the runner that leaves that line exactly where it was.
+      **A tripwire on a log line cannot see a change in a return value.** Worth generalising
+      before the next one is written.
+
+  - **THE GATE FOUND A SECOND COPY AND MY OWN SWEEP THEN FOUND A THIRD. THE CLAIM EXISTED IN
+    THREE PLACES AND THE FIRST CORRECTION REACHED ONE.** All three now stamped in place;
+    comment text only, and not one assertion in any of the three files moved.
+    1. `StratAiMatchClauses.cpp`, `T-INT-05.BothSidesAiReachesAResultWithinTheBound` — corrected
+       in the landing pass.
+    2. `StratMatchCompletionRecording.cpp`'s header block — **the gate's BLOCK finding**, and it
+       blocked rather than being an observation for a reason worth keeping: its sentence reads
+       *"for the reason that same clause states"*, and that same clause is copy 1. So after the
+       first correction the cross-reference POINTED AT CORRECTED TEXT WHILE RESTATING THE
+       UNCORRECTED VERSION LOCALLY — and a reader trusts the nearer sentence. A duplicated claim
+       with a pointer between the copies is strictly worse than two independent copies, because
+       the pointer manufactures corroboration.
+    3. `StratAiMatchClauses.cpp`, `T-INT-05.BothSidesAiReachesAResultOnDifferentContent` —
+       **found by my own sweep, known to nobody.** It says *"a correctly finished game currently
+       comes back false"*, where the other two say *"returns FALSE"*. **A phrase sweep for the
+       two known wordings would have missed it.** It also carried a SECOND copy of the wrong
+       tripwire prediction, likewise stamped.
+    - **THE TECHNIQUE THAT FOUND IT, and it is the reusable part.** Sweep by CLAIM SHAPE over
+      COMMENT PROSE ONLY, with the subject set derived from the tree (`find Source -type d -name
+      Tests`) rather than typed. Fourteen varied patterns, case-insensitive: `returns FALSE`,
+      `comes back false|come back false|came back false`, `currently returns|currently
+      comes|currently reports|currently answers`, `refused closing|closing EndTurn`, `no match is
+      running`, `asserting .?true`, `RunAiTurnsNow`, `for a game that finished|finished
+      correctly`, `production-side finding|filed rather than fixed`, `deleted from .?ApplyView`,
+      `NoteMatchResultIfEnded`, `does not exist yet|that does not exist`, `no end-of-match|no
+      transition`, `reported as a fault|reads as a fault`. **Restricting to comment lines is not
+      cosmetic** — an unrestricted `returns? FALSE` returned 1235 hits, almost all of them
+      `return false;`, which is a result nobody reads. Restricted to prose it returned 27, of
+      which the three that mattered were visible at a glance. `reported as a fault` returned
+      ZERO, and reporting a zero is part of the method: it is what says the shape was looked for
+      rather than assumed absent.
+  - **A STALE CITATION, CORRECTED WITHOUT WEAKENING THE ARGUMENT IT SERVES.**
+    `StratMatchCompletionRecording.cpp`'s falsifiability list cited "the
+    `NoteMatchResultIfEnded(Model)` line deleted from `ApplyView`". `ApplyView` no longer holds
+    that line — it calls `ConcludeMatchIfEnded`, which calls `NoteMatchResultIfEnded` itself,
+    first and unlatched. **Only the CITATION was stale; the REASONING survives the indirection**,
+    because deleting the link at either end of the `ApplyView` -> `ConcludeMatchIfEnded` ->
+    `NoteMatchResultIfEnded` chain still reddens `T-UI-03.AMatchReachingAResultRecordsCompletion-
+    OnTheSlot`. The bullet is re-pointed at the chain and the old wording kept beneath it. This
+    is the reason this record cites by SYMBOL rather than by `file:NNN` — a symbol cite degrades
+    into "follow one more link", a line cite degrades into silence.
+  - **TWO NON-GATING CITES TAKEN WHILE THE FILES WERE OPEN, because stamping them before the
+    commit is cheaper than after.** `StratProductionMenuSeam.cpp` and
+    `StratProductionMenuRouting.cpp` both described T-UI-04's widget as "a widget that does not
+    exist yet"; `Content/UI/WBP_ProductionMenu.uasset` is in the tree (451 KB, untracked,
+    verified rather than taken from the brief). **Only those five words were stale and the id
+    does not move** — T-UI-04 is still an in-editor BINDING claim, both files still construct no
+    widget and touch no Slate, and that is precisely what keeps their clauses under
+    `GATE-BUILDMENU`. What changed is what T-UI-04 is BLOCKED ON: a human-driven playtest rather
+    than a missing asset.
+  - **LINE ENDINGS VARY WITHIN THIS ONE LANE AND IT COST A ROUND.**
+    `StratMatchCompletionRecording.cpp` is CRLF; `StratAiMatchClauses.cpp`,
+    `StratMatchConclusion.cpp`, `StratProductionMenuSeam.cpp` and
+    `StratProductionMenuRouting.cpp` are all LF. A patch written with `
+` endings silently
+    matched ZERO in the CRLF file — which fails safe only because the edit was written to assert
+    its match count first. Every edit above was made ending-aware and verified by
+    `git diff --numstat` showing ADDITIONS ONLY (+52/-1, +40/-0, +9/-0, +5/-0) rather than
+    whole-file churn, which is what a silent conversion looks like.
+
+- **§2.11.5's BUILD AFFORDANCE is gated on the paths a headless run can reach, and THREE of the
+  seven proposed clauses were refused as unfalsifiable.** Eight clauses, all under
+  `GATE-BUILDMENU`, across two new clause files plus a UMG-free probe pair:
+  `Source/StratUI/Tests/StratProductionMenuHostClauses.cpp` (4),
+  `Source/StratPlay/Tests/StratProductionMenuAffordance.cpp` (4),
+  `Source/StratUI/Tests/StratProductionMenuHostProbe.{h,cpp}` and
+  `Source/StratUI/Tests/StratProductionMenuHostDouble.h`. Untracked at the time of writing;
+  staging is the user's call. The live suite figure for this pass is in
+  `Tools/architect/state/global.md` and is not restated here.
+
+  - **THE CONDITION THAT SHAPES EVERY CLAUSE AND EVERY REFUSAL, measured in the engine rather
+    than assumed.** Two headless facts, and between them they decide what the affordance can
+    and cannot be gated on:
+    1. `APlayerController::GetHitResultUnderCursor` needs a `ULocalPlayer` with a viewport
+       client. A transient `UWorld` has neither, so `AStratPlayerController::HexUnderCursor`
+       returns **false in every state a headless clause can reach**.
+    2. `UUserWidget::AddToViewport` routes to `UGameViewportSubsystem::AddToScreen`, which
+       returns early — no widget added — when the world is not a game world **or** when that
+       game world has no `UGameViewportClient`. So no widget in the test lane is ever in a
+       viewport, and `AStratScoreboardHUD::IsProductionMenuWidgetOpen()` is false throughout.
+
+  - **What the eight clauses pin.**
+    - `StratUI.GATE-BUILDMENU.MenuOpenReadsTheViewportAndNotThePointer` — the one clause a
+      pointer-only `IsProductionMenuWidgetOpen` fails. Fact 2 above is what makes it a gate
+      rather than a tautology: the pointer is non-null and the viewport is empty, which is the
+      only state the two readers disagree in. **Both halves are asserted**, so a green cannot
+      mean "there was no widget"; and the clause `AddError`s and fails rather than passing if a
+      viewport ever does appear, because the discrimination would be gone.
+    - `StratUI.GATE-BUILDMENU.CloseDropsThePanelUnconditionallyAndIsSafeWithNoneUp` — the
+      ABSENCE of an `IsInViewport()` guard in `CloseProductionMenuWidget` is falsifiable
+      precisely because of fact 2: an implementation that acquired one would leave the pointer
+      set headlessly.
+    - `StratUI.GATE-BUILDMENU.AnUnsetMenuClassRefusesTheOpenInItsOwnWords` — the refusal names
+      the property, and is pinned as NOT the `CreateWidget returned null` sentence.
+    - `StratUI.GATE-BUILDMENU.AnUnsetMenuClassIsReportedAtBeginPlayWithoutRaisingAFailure` —
+      the fifth `GLog` capture in this suite; it carries `CanBeUsedOnMultipleThreads() = true`
+      and would reintroduce the 1-in-4 flake without it. The instrument is given a control (the
+      guidance and scoreboard sibling lines) before its report about the menu line is trusted.
+      Reaching `BeginPlay`'s production-menu block at all needs an **adopted seeded bridge** — a
+      bare HUD returns at `SeedBridge` long before it.
+    - `StratPlay.GATE-BUILDMENU.AFreshControllerLatchesNoTargetHex`
+    - `StratPlay.GATE-BUILDMENU.AToggleWithNoScoreboardHudRefusesNamingTheHost`
+    - `StratPlay.GATE-BUILDMENU.AToggleWithABoardButNoCursorRefusesAndLatchesNothing` — starts a
+      real match so `GetBoard()` is non-null, which is what makes the refusal the CURSOR one by
+      elimination rather than the no-board one. The two refusal clauses assert the two sentences
+      DIFFER, which is what stops them collapsing into one message a player cannot act on.
+    - `StratPlay.GATE-BUILDMENU.TheHudCloseTakesThePanelDownAndLeavesTheRowsToItsCaller` — the
+      load-bearing half is the NEGATIVE: the HUD does not clear `UStratMatchSubsystem::
+      ProductionMenu`. A "helpful" HUD that did passes every other clause and fails this one.
+
+  - **WHAT THESE CLAUSES DO NOT PIN. A third of the affordance has no gate under it, and this
+    is the entry a future reader most needs.**
+    - **`GetProductionTargetHex` has NO POSITIVE CONTROL.** By fact 1, `bHasProductionTargetHex`
+      is never set headlessly, so the accessor answers false in every reachable state and an
+      implementation that ALWAYS answered false passes. The latch-at-the-keypress design — the
+      thing the whole affordance turns on — is unmeasured.
+    - **The UNWIND branch is unreachable and is deliberately ungated.** `ToggleProductionMenu`
+      returns at "the cursor is not on the board" *before* the latch is set and *before*
+      `OpenProductionMenuWidget` is called, so `ARefusedOpenLeavesNoLatch` as proposed would
+      assert `false == false` over a branch that never executed. The engineer's own judgement
+      that this is the branch "most likely to rot" stands, with nothing under it.
+    - **The CLOSE ARM of the toggle, and the ORDER of its two acts, are unreachable** (fact 2
+      gates the arm). What is pinned is that the two acts belong to two different objects — the
+      property the order is *about* — not the order itself.
+    - **The "a menu is already open" refusal is unreachable** for the same reason; the
+      stale-pointer branch below it is taken instead.
+    - **`OpenProductionMenuAction`'s binding at `ETriggerEvent::Started` is not pinned.** The
+      property is `protected`, `SetupInputComponent` never runs on a transient-world controller,
+      and the action asset is the editor lane's. Asset-and-PIE gate, not a headless one.
+    - **`AStratScoreboardHUD::CreateProductionMenuWidget`'s SUCCESS path is unreachable.**
+      `UUserWidget::CreateWidgetInstance` refuses a controller that is not a *local* player
+      controller, so `CreateWidget` returns null headlessly. `ProductionMenuWidgetClass` is also
+      `protected`, so a clause cannot set it without a HUD subclass; none was written, because
+      the path behind it does not run anyway.
+
+  - **REFUSED: `SelectionMachineHasNoBuildArm`, and the code change that would make it
+    writable.** The negative is TRUE — verified against the tree, not taken from the brief: the
+    working-tree diff to `StratSelectionMachine.h` is **comment text only** (19 insertions, all
+    inside the deferral block), `EStratSelectionCommand` still enumerates exactly
+    `None, Move, Attack, EndTurn`, and `StratSubmitSelectionCommand` gained no arm. It is not
+    WRITABLE. `EStratSelectionCommand` is a plain `enum class` and **not** a `UENUM`, so there
+    is no reflected enumerator list to read and compare; the only assertions available are over
+    the enumerators' integer values, which a `Build` **appended after `EndTurn`** would not
+    disturb. A clause named for the absence while measuring only the ordering carries a subject
+    broader than what it pins. **The change that would discharge this: mark
+    `EStratSelectionCommand` `UENUM()`**, after which
+    `StaticEnum<EStratSelectionCommand>()->GetIndexByNameString(TEXT("Build")) == INDEX_NONE`
+    is a real measurement with `Move`/`Attack`/`EndTurn` as its positive control. This lane does
+    not make that change.
+
+  - **A NEW TEST-ONLY `UCLASS` AND A NEW UMG-FREE PROBE PAIR, on `StratGuidanceRouteDouble.h`'s
+    exact precedent.** `UStratProductionMenuHostDouble` exists because
+    `AStratScoreboardHUD::ProductionMenu` is `TObjectPtr<UUserWidget>` and `UUserWidget` is
+    `UCLASS(Abstract)` — a clause cannot construct one, and the shipped occupant is an asset no
+    headless run may depend on. It adds and overrides nothing, so every clause reads the HUD's
+    own property. `StratProductionMenuHostProbe.h` is the UMG-free surface, and it is a module
+    boundary and not a convenience: `UMG` is PRIVATE to StratUI, so a StratPlay clause can
+    neither construct nor dereference a `UUserWidget` — which is why the affordance clauses live
+    in StratPlay and the host clauses in StratUI, and why either set in the other module would
+    be `LNK2019` rather than a test.
+
+  - **INSTRUMENT NOTE.** `ProductionMenu` (the pointer) and `LastFailureReason` are public on
+    `AStratScoreboardHUD`; `ProductionMenuWidgetClass`, `ProductionMenuZOrder` and
+    `CreateProductionMenuWidget` are `protected`. `ToggleProductionMenu`,
+    `GetProductionTargetHex` and `HexUnderCursor` are public on `AStratPlayerController`;
+    `OpenProductionMenuAction`, `OnToggleProductionMenu` and `GetMatch` are not. Any future
+    clause list should be checked against that split before it is agreed to.
 
 - **§2.11.5's production-menu SEAM on `UStratMatchSubsystem` is gated, and writing the
   clauses measured the seam's own documentation to be WRONG about a refusal.** Ten clauses,

@@ -241,6 +241,22 @@ void AStratPlayerController::SetupInputComponent()
 		UE_LOG(LogStratPlay, Warning,
 			TEXT("%s: EndTurnAction is unset; no end-turn binding exists."), *GetName());
 	}
+
+	// THE FIFTH BINDING, AND IT IS `Started` FOR A REASON THE OTHER FOUR DO NOT HAVE. This
+	// one is a TOGGLE, so `Triggered` on a held key would open and close the menu once per
+	// frame -- a symptom that reads as a flickering panel rather than as a wrong trigger
+	// event, and would send the next reader to the widget.
+	if (OpenProductionMenuAction != nullptr)
+	{
+		EnhancedInput->BindAction(OpenProductionMenuAction, ETriggerEvent::Started, this,
+			&AStratPlayerController::OnToggleProductionMenu);
+	}
+	else
+	{
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("%s: OpenProductionMenuAction is unset; no production-menu binding exists."),
+			*GetName());
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -341,6 +357,121 @@ void AStratPlayerController::OnEndTurn()
 	}
 }
 
+void AStratPlayerController::OnToggleProductionMenu()
+{
+	FString Reason;
+	if (!ToggleProductionMenu(Reason))
+	{
+		// AT LOG AND NOT WARNING, on `OnSelect`'s rule: most of what arrives here is a
+		// player pressing the key with the cursor off the board, which is the interface
+		// working.
+		UE_LOG(LogStratPlay, Log, TEXT("Production menu: %s"), *Reason);
+	}
+}
+
+// ---------------------------------------------------------------------------
+// §2.11.5's production menu. Which hex, and nothing else.
+// ---------------------------------------------------------------------------
+
+bool AStratPlayerController::GetProductionTargetHex(FIntPoint& OutHex) const
+{
+	OutHex = bHasProductionTargetHex ? ProductionTargetHex : FIntPoint::ZeroValue;
+	return bHasProductionTargetHex;
+}
+
+bool AStratPlayerController::ToggleProductionMenu(FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	AStratScoreboardHUD* const Hud = Cast<AStratScoreboardHUD>(GetHUD());
+	if (Hud == nullptr)
+	{
+		// THE HUD IS WHERE WIDGET CREATION LIVES, and `StratScoreboardHUD.h` records why:
+		// `CreateWidget` and `AddToViewport` mean `UMG`, `Slate` and `SlateCore`, and
+		// `StratPlay.Build.cs` naming those three is a structural cost this project has
+		// already declined to pay once. So no HUD of that class means no menu, and it is
+		// reported rather than worked around.
+		OutFailureReason = TEXT("this controller has no AStratScoreboardHUD to host a production menu");
+		return false;
+	}
+
+	UStratMatchSubsystem* const Match = GetMatch();
+
+	// --- Already open: this press closes it. -------------------------------
+	if (Hud->IsProductionMenuWidgetOpen())
+	{
+		Hud->CloseProductionMenuWidget();
+
+		// TWO ACTS ON TWO OBJECTS, IN THIS ORDER, AND THE ORDER IS THE CONTRACT. The panel
+		// comes down first, then the rows are cleared. The reverse would leave a live panel
+		// bound to an empty `ProductionMenu` array for however long the two lines are apart,
+		// which is a screen showing a menu the subsystem says is not open.
+		//
+		// A NULL SUBSYSTEM IS NOT A FAILURE HERE. The panel is down either way, which is
+		// what the player asked for; there is simply nothing left holding rows.
+		if (Match != nullptr)
+		{
+			Match->CloseProductionMenu();
+		}
+
+		// THE LATCH IS CLEARED WITH THE PANEL AND NOT WHEN THE NEXT ONE OPENS. Leaving it
+		// set would have `GetProductionTargetHex` answer true with no menu on screen, and
+		// the accessor's whole first channel is "is there one".
+		bHasProductionTargetHex = false;
+		ProductionTargetHex     = FIntPoint::ZeroValue;
+
+		return true;
+	}
+
+	// --- Not open: this press opens one on the hex under the cursor. -------
+
+	// §2.8: A FINISHED MATCH DOES NOT OPEN A MENU. Only the OPEN path is gated -- the close
+	// branch above runs whatever the match's state, because taking a panel down is never a
+	// command and a player left unable to dismiss a menu on a finished match would be worse
+	// than the defect this gate closes.
+	//
+	// THROUGH THE SUBSYSTEM RATHER THAN A MODEL, unlike `HandleSelectionEvent`'s gate: this
+	// function builds no model of its own, and building one here purely to ask would be the
+	// second model that gate exists to avoid.
+	if (Match != nullptr && Match->IsMatchConcluded())
+	{
+		OutFailureReason = StratMatchConcludedRefusalText();
+		return false;
+	}
+
+	FIntPoint Hex;
+	if (!HexUnderCursor(Hex))
+	{
+		// The same ordinary answer `OnSelect` gets. Not a fault, and nothing is latched --
+		// see `GetProductionTargetHex` on why a hex cannot signal its own absence.
+		OutFailureReason = TEXT("the cursor is not on the board");
+		return false;
+	}
+
+	// LATCHED BEFORE THE WIDGET IS CREATED, WHICH IS THE ONLY ORDER THAT WORKS. The asset's
+	// `Construct` runs inside `AddToViewport`, inside `OpenProductionMenuWidget` below, and
+	// `Construct` is where it reads this value. Latching afterwards would hand the first
+	// menu of every session a `false`.
+	ProductionTargetHex     = Hex;
+	bHasProductionTargetHex = true;
+
+	if (!Hud->OpenProductionMenuWidget(OutFailureReason))
+	{
+		// UNWOUND, so that a refused open leaves no latch behind claiming a menu is about a
+		// hex. The refusal reason is the HUD's own, forwarded unchanged.
+		bHasProductionTargetHex = false;
+		ProductionTargetHex     = FIntPoint::ZeroValue;
+		return false;
+	}
+
+	// NO `RefreshProductionMenu` CALL, AND NO `RefreshMenu` CALL. The widget asks the
+	// subsystem for its own rows from `Construct`, using the hex latched three lines above.
+	// A refresh started here would be a second author of when the menu's contents are
+	// decided, and this class would then have to know what a menu is made of -- which is the
+	// whole of what it is arranged not to know.
+	return true;
+}
+
 // ---------------------------------------------------------------------------
 // Decide, submit, refresh.
 // ---------------------------------------------------------------------------
@@ -372,6 +503,32 @@ bool AStratPlayerController::HandleSelectionEvent(EStratSelectionEvent Event,
 	if (!Match->BuildViewModel(Model, OutFailureReason))
 	{
 		return false;
+	}
+
+	// ---- §2.8's end of match, before anything else looks at the event ------
+	// FIRST, AHEAD OF THE GUIDED OPENING AND AHEAD OF THE MACHINE. A finished match has no
+	// beat to observe and no selection to advance, and running either would move state on a
+	// match that is over. This is the gate whose absence let a human inherit the AI's side
+	// and go on playing it -- measured 2026-08-23, recorded in `global.md`.
+	//
+	// ON THE MODEL BUILT SIX LINES ABOVE, WHICH IS THE POINT OF THE FREE FUNCTION. Asking
+	// the subsystem would build a second model at a second instant; this gate is the same
+	// value the rest of this function acts on, by construction.
+	//
+	// INERT, NOT REFUSED, AND NO REFRESH. Nothing reaches `FStratBridge`, no machine state
+	// moves, and the screen already shows the final board -- `ApplyView` drew it on the
+	// refresh that concluded the match. Refreshing here would repaint an unchanged screen
+	// once per click for the rest of the session.
+	//
+	// IT DOES NOT CHECK WHOSE TURN IT IS and must not: that is the rules module's answer and
+	// the selection machine already asks for it. This gate is about the MATCH.
+	{
+		FString ConcludedReason;
+		if (!StratMatchAcceptsPlayerCommands(Model, ConcludedReason))
+		{
+			OutFailureReason = ConcludedReason;
+			return false;
+		}
 	}
 
 	// The one production query adapter. Constructed per event and holding nothing: it is a

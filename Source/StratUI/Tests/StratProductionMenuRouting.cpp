@@ -21,6 +21,11 @@
 //  - T-UI-04, which is the production menu BINDING -- a widget that does not exist yet.
 //    These clauses touch no Slate, construct no widget, and must not be read as moving
 //    that row's ledger.
+//    **[THE WIDGET NOW EXISTS, 2026-08-23: `Content/UI/WBP_ProductionMenu.uasset` is in the
+//    tree (untracked at the time of writing), so "that does not exist yet" is stale.** The
+//    exclusion itself is unchanged and is if anything sharper now: the binding is a real thing
+//    these clauses still do not touch. T-UI-04 is blocked on a human-driven playtest, not on a
+//    missing asset.]**
 //
 // WHERE EVERY EXPECTATION COMES FROM. The right-hand side of every comparison is
 // `FStratBridge::BuildOptions` over the SAME bridge, in the same frame, with no command

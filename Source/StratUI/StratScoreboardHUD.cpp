@@ -268,6 +268,24 @@ void AStratScoreboardHUD::BeginPlay()
 		UE_LOG(LogStratUI, Warning, TEXT("No guided-opening strip this session: %s"), *FailureReason);
 	}
 
+	// §2.11.5'S MENU IS REPORTED HERE AND CREATED NOWHERE NEAR HERE, and the split is
+	// deliberate. The class is checked at `BeginPlay` so that "no menu was configured" is a
+	// line in the session log next to the other two widgets' -- otherwise the only witness
+	// would be a refusal at the moment the player first pressed the key, which is exactly
+	// when nobody is reading the log. The WIDGET is created on demand by
+	// `OpenProductionMenuWidget`, because the menu is about one factory chosen at the moment
+	// it is asked for. It sits before the scoreboard's early returns for `CreateGuidanceWidget`'s
+	// stated reason: an unset `ScoreboardWidgetClass` is a statement about §2.11.4 and must
+	// not silently make §2.11.5 conditional on it.
+	//
+	// LOG AND NOT WARNING, AND `LastFailureReason` IS NOT TOUCHED. That member answers "why
+	// is there no scoreboard".
+	if (ProductionMenuWidgetClass == nullptr)
+	{
+		UE_LOG(LogStratUI, Log,
+			TEXT("No production menu requested: no ProductionMenuWidgetClass is set on this HUD's Blueprint defaults."));
+	}
+
 	if (ScoreboardWidgetClass == nullptr)
 	{
 		// LEGITIMATE CONFIGURATION, NOT A FAILURE -- the header says so about this
@@ -346,6 +364,12 @@ void AStratScoreboardHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		GuidanceStrip->RemoveFromParent();
 		GuidanceStrip = nullptr;
 	}
+
+	// §2.11.5's menu goes down the same way, and unlike the two above it may legitimately
+	// already be down -- it is the one widget on this class with a lifetime shorter than the
+	// map. `CloseProductionMenuWidget` is written to be safe with none up, which is why this
+	// is one unguarded call rather than a third copy of the pattern above.
+	CloseProductionMenuWidget();
 
 	// TWO MEMBERS, TWO DIFFERENT ACTS, and the asymmetry is the whole content of the
 	// ownership split recorded in the header block.
@@ -764,4 +788,120 @@ int32 AStratScoreboardHUD::GetViewingSide() const
 	// reflected ones are kept together on this side of the include so that a later reader
 	// looking for "what Blueprint can call" finds them in one file.
 	return ViewingSide;
+}
+
+// ---------------------------------------------------------------------------
+// §2.11.5's production menu. Created on demand, destroyed on close.
+// ---------------------------------------------------------------------------
+
+bool AStratScoreboardHUD::IsProductionMenuWidgetOpen() const
+{
+	// BOTH TESTS, AND THE SECOND ONE IS THE POINT. A WBP that removed itself -- a Cancel
+	// button in the asset -- leaves this pointer non-null and the widget off the viewport.
+	// Reading only the pointer would report a menu that is not on screen, and the toggle
+	// above this would then need two presses to reopen it. See the header on why this is
+	// not a cached bool.
+	return ProductionMenu != nullptr && ProductionMenu->IsInViewport();
+}
+
+bool AStratScoreboardHUD::OpenProductionMenuWidget(FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	if (ProductionMenuWidgetClass == nullptr)
+	{
+		// A CONFIGURATION AND NOT A FAULT -- `BeginPlay` has already said so once at Log.
+		// It is still a refusal HERE, because reaching this function means something asked
+		// for a menu and did not get one, and a caller that was told nothing would have no
+		// way to distinguish that from a menu that opened.
+		OutFailureReason = TEXT("no ProductionMenuWidgetClass is set on this HUD's Blueprint defaults");
+		return false;
+	}
+
+	if (IsProductionMenuWidgetOpen())
+	{
+		OutFailureReason = TEXT("a production menu is already open");
+		return false;
+	}
+
+	// A STALE POINTER IS DROPPED RATHER THAN REUSED. Reaching here with `ProductionMenu`
+	// non-null means the widget took itself off the viewport; re-adding that instance would
+	// show the player a menu whose `Construct` has already run, and `Construct` is where
+	// this asset reads the target hex. A fresh widget is the only way the hex is re-read.
+	if (ProductionMenu != nullptr)
+	{
+		ProductionMenu->RemoveFromParent();
+		ProductionMenu = nullptr;
+	}
+
+	return CreateProductionMenuWidget(OutFailureReason);
+}
+
+void AStratScoreboardHUD::CloseProductionMenuWidget()
+{
+	if (ProductionMenu == nullptr)
+	{
+		return;
+	}
+
+	// `RemoveFromParent` on a widget that is not in the viewport is a no-op in the engine,
+	// so this needs no `IsInViewport` guard and deliberately does not have one: a guard
+	// would make the pointer-clear conditional on a state this function's whole job is to
+	// leave behind.
+	ProductionMenu->RemoveFromParent();
+	ProductionMenu = nullptr;
+
+	// NOTHING IS SAID TO `UStratMatchSubsystem` HERE. Clearing its rows is the caller's
+	// second act on its second object -- see the header. A HUD that reached into the match
+	// subsystem to clear a menu would be the first line of this class becoming a thing that
+	// runs matches.
+}
+
+bool AStratScoreboardHUD::CreateProductionMenuWidget(FString& OutFailureReason)
+{
+	// Same shape as `CreateGuidanceWidget` and `CreateScoreboardWidget`, deliberately, so
+	// that a reader who has understood one has understood all three. Unset is handled by
+	// `OpenProductionMenuWidget` above and reported at `BeginPlay`; reaching here with it
+	// null means someone called this directly, and that IS an error.
+	if (ProductionMenuWidgetClass == nullptr)
+	{
+		OutFailureReason = TEXT("ProductionMenuWidgetClass is unset");
+		return false;
+	}
+
+	APlayerController* const OwningPlayer = GetOwningPlayerController();
+	if (OwningPlayer == nullptr)
+	{
+		OutFailureReason = TEXT("this HUD has no owning player controller to parent the production menu to");
+		return false;
+	}
+
+	UUserWidget* const Created = CreateWidget<UUserWidget>(OwningPlayer, ProductionMenuWidgetClass);
+	if (Created == nullptr)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("CreateWidget returned null for ProductionMenuWidgetClass '%s'"),
+			*GetNameSafe(ProductionMenuWidgetClass));
+		return false;
+	}
+
+	// THE MEMBER IS ASSIGNED BEFORE `AddToViewport`, WHICH IS THE OPPOSITE ORDER TO
+	// `CreateGuidanceWidget`, AND THE REVERSAL IS LOAD-BEARING. `AddToViewport` constructs
+	// the widget, so the asset's `Construct` runs inside that call -- and this asset's
+	// `Construct` refreshes the menu, which can reach a Blueprint that asks this HUD whether
+	// a menu is open. Assigning afterwards would have that question answered "no" from
+	// inside the act of opening one. The strip has no such graph and is assigned after, on
+	// the narrower rule that `GuidanceStrip != nullptr` should mean "on screen"; here the
+	// pointer alone was never the answer -- `IsProductionMenuWidgetOpen` reads
+	// `IsInViewport()` too, which is false until the line below returns.
+	ProductionMenu = Created;
+	Created->AddToViewport(ProductionMenuZOrder);
+
+	// NOT REFRESHED FROM HERE, AND THIS CLASS COULD NOT DO IT. `RefreshMenu` is a Blueprint
+	// custom event on `WBP_ProductionMenu` and this member is typed `UUserWidget` on purpose
+	// (see `ProductionMenuWidgetClass`), so there is no C++ name to call. The asset reads
+	// `AStratPlayerController::GetProductionTargetHex` from its own `Construct`, which has
+	// already run by the time this line is reached. That keeps the decision of WHEN a menu's
+	// contents are decided in one place instead of two.
+	return true;
 }

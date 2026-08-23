@@ -71,8 +71,33 @@
 //   on it -- who is looking matters -- and a key that silently flipped the viewing side
 //   would let either player see the other's board at any time. The affordance is UI work
 //   that no phase of this milestone owns.
-// - CAPTURE and BUILD. See `FStratSelectionMachine`'s own deferral list; neither is on the
-//   phase list and neither has an answered affordance question.
+// - CAPTURE and BUILD, AND THIS BULLET IS RETRACTED IN PLACE FOR BUILD AND ONLY FOR BUILD.
+//   It used to read:
+//   RETRACTED> "CAPTURE and BUILD. See `FStratSelectionMachine`'s own deferral list;
+//   RETRACTED>  neither is on the phase list and neither has an answered affordance
+//   RETRACTED>  question."
+//   BUILD's affordance question was answered by the user on 2026-08-22: §2.11.5's
+//   production menu opens on a DEDICATED INPUT ACTION -- `OpenProductionMenuAction` below --
+//   and never on `EStratSelectionEvent::HexPrimary`. The ruling was made in exactly that
+//   shape so that a primary click keeps meaning select / move / attack and
+//   `FStratSelectionMachine` needs no BUILD arm; that struct is untouched by this change and
+//   its own deferral bullet carries the same retraction.
+//   `SubmitCapture` STILL HAS NO AFFORDANCE AND NO ENGINE CALLER. Nothing here covers it and
+//   its half of the original bullet stands unretracted.
+
+// - AND THE HEX THE MENU OPENS FOR IS THE ONE UNDER THE CURSOR, NOT A SELECTED ONE, BECAUSE
+//   NOTHING IN THIS PROJECT SELECTS A HEX. The ruling was phrased "the currently selected
+//   hex", and the tree does not have one to read: `FStratSelectionMachine` holds
+//   `SelectedUnitId` and nothing else spatial, and its `HexPrimary` arm treats a click on
+//   empty ground with nothing selected as "an ordinary click and not a failure" -- so a
+//   factory hex with no unit standing on it cannot be selected at all, and a factory hex
+//   with one standing on it is not a hex you can build at. An accessor over the machine's
+//   state would therefore have had to ADD a hex-selection concept to the machine, which is
+//   precisely what the ruling was shaped to avoid.
+//   `HexUnderCursor` is the same source `OnSelect` already uses to decide which hex a click
+//   means, so the menu opens on the hex the player is pointing at when they press the key.
+//   IT IS LATCHED AT THE MOMENT THE KEY FIRES AND NEVER RE-READ. See
+//   `GetProductionTargetHex`.
 // - SAVE / LOAD, AND THIS BULLET IS RETRACTED IN PLACE. It used to read:
 //   RETRACTED> "`SerializeRecordedSave` still has no engine-side caller and the save-slot
 //   RETRACTED>  UI is out of the milestone."
@@ -250,6 +275,77 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Guidance")
 	bool IsGuidanceActive() const;
 
+	// ---- §2.11.5's production menu ----------------------------------------
+	// THIS CLASS DECIDES WHICH HEX AND NOTHING ELSE ABOUT PRODUCTION. It does not ask what
+	// can be built, does not read `bAffordable` or `bAvailable`, does not submit a choice
+	// and does not call the widget's `RefreshMenu` -- which is a Blueprint custom event it
+	// has no C++ name for. The rows are `UStratMatchSubsystem::RefreshProductionMenu`'s, the
+	// submit is `SubmitProductionChoice`'s, the widget's lifetime is
+	// `AStratScoreboardHUD`'s, and the only thing left over is "which hex did the player
+	// mean", which is a question about input and therefore this class's.
+
+	/**
+	 * The hex §2.11.5's menu was opened for, if one is open.
+	 *
+	 * WHAT GAP THIS CLOSES. `WBP_ProductionMenu` refreshes itself from its own `Construct`
+	 * and needs the factory hex to do it; before this there was no reflected route from the
+	 * input path to a widget graph, and `GetSelectionMachine()` is deliberately not a
+	 * `UFUNCTION` (`FStratSelectionMachine` is not a reflected type, for the two reasons its
+	 * own header gives, and neither of them has expired).
+	 *
+	 * IT IS A LATCH AND NOT A LIVE CURSOR READ, AND THAT IS THE ONE DECISION IN IT.
+	 * `OnToggleProductionMenu` records `HexUnderCursor` at the instant the key fires; this
+	 * hands back what was recorded. A live read would answer a DIFFERENT hex the moment the
+	 * player moved the mouse off the factory -- and the widget's `Construct` runs inside
+	 * `AddToViewport`, one mouse-movement later than the keypress in the worst case -- so a
+	 * menu could be built for a factory the player never pointed at. What the latch costs is
+	 * that it is a piece of input history held on an actor; what it buys is that "which
+	 * factory is this menu about" has one answer for the life of the menu.
+	 *
+	 * IT IS NOT A PRESENTATION BIT AND T-INT-05 DOES NOT REACH IT. That clause forbids an
+	 * actor holding `bDone` / `bLockedThisTurn` -- fields OF THE VIEW MODEL, which
+	 * `DecorateViewModel` produces and which would drift if copied. This is an input intent,
+	 * appears in no view model, and nothing on screen is drawn from it: the rows the menu
+	 * draws come from `UStratMatchSubsystem::ProductionMenu`, and that hex is separately
+	 * published as `ProductionMenuHex` by the refresh this value only ever STARTS.
+	 *
+	 * TWO CHANNELS, ON THIS CODEBASE'S STANDING HABIT. `FIntPoint(0, 0)` is a real hex on
+	 * this board, so the hex cannot signal its own absence -- the same trap
+	 * `UStratMatchSubsystem::IsProductionMenuOpen` records about `ProductionMenuHex` and the
+	 * same one `FStratMatchConfig::SaveSlotName` has already been paid for once.
+	 *
+	 * @return false when no menu has been opened this session, or the last one was closed.
+	 *         `OutHex` is left at (0, 0) and means nothing.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Production")
+	bool GetProductionTargetHex(FIntPoint& OutHex) const;
+
+	/**
+	 * Opens §2.11.5's menu on the hex under the cursor, or closes the open one.
+	 *
+	 * A TOGGLE AND NOT AN OPEN, because the action that opens the menu is the only key
+	 * bound to it and a player who pressed it by mistake needs a way back that is not
+	 * "find the Cancel button". `CancelAction` is deliberately NOT wired to this: cancel
+	 * means drop the selection, and overloading it would make one key's meaning depend on
+	 * whether a panel happens to be up.
+	 *
+	 * IT ASKS NO RULES QUESTION AND MAKES NO LEGALITY CHECK. In particular it does not test
+	 * whether the hex is a factory, whether this side holds it, or whether the side can pay
+	 * -- all three are rows on the menu the widget is about to build, with the rules
+	 * module's own reasons attached. `UStratMatchSubsystem::RefreshProductionMenu` is
+	 * documented to SUCCEED on a hex that is not a build point, drawing a full menu of
+	 * unavailable rows, and §2.11.5 draws exactly that. A pre-check here would replace the
+	 * module's reason with this class's silence.
+	 *
+	 * THE ONE THING IT REFUSES IS A CURSOR THAT IS NOT ON THE BOARD, which is not a rules
+	 * answer -- there is no hex to be about.
+	 *
+	 * PUBLIC AND `BlueprintCallable` so a menu button, a console command or a gate can
+	 * drive the same path the key does; the Enhanced Input handler is one call to this.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
+	bool ToggleProductionMenu(FString& OutFailureReason);
+
 protected:
 	// ---- Enhanced Input assets. Null as C++ DEFAULTS; set on the `BP_` subclass. ------
 	// EVERY ONE IS AN `EditDefaultsOnly` `TObjectPtr` AND NOT A PATH. The project forbids a
@@ -301,6 +397,29 @@ protected:
 	 *  is valid with nothing selected. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Input")
 	TObjectPtr<UInputAction> EndTurnAction;
+
+	/**
+	 * §2.11.5's production menu: open it on the hex under the cursor, or close it.
+	 *
+	 * A FIFTH ACTION RATHER THAN A FIFTH MEANING FOR `SelectAction`, and that is the user's
+	 * ruling of 2026-08-22 rather than this file's preference. A primary click on a factory
+	 * hex already means something -- select, move to, or attack whatever stands there -- and
+	 * `FStratSelectionMachine::HandleEvent` decides which. Adding a BUILD arm there would put
+	 * a §2.11.5 question inside the §2.11.1 state machine and make one click's meaning depend
+	 * on the terrain under it.
+	 *
+	 * IT MAPS TO NO `EStratSelectionEvent`. Unlike the four above, this action does not reach
+	 * `HandleSelectionEvent` at all: it starts no command, advances no selection and submits
+	 * nothing. `OnToggleProductionMenu` calls `ToggleProductionMenu` and that is the whole
+	 * path.
+	 *
+	 * NULL IS SUPPORTED exactly as the four above are: no binding, one Warning naming this
+	 * property, and a match that is otherwise fully playable -- the production surface is
+	 * still reachable from a console or a gate through `UStratMatchSubsystem`'s three
+	 * reflected `Stratocracy|Production` entry points.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Input")
+	TObjectPtr<UInputAction> OpenProductionMenuAction;
 
 	// ---- Lifetime ---------------------------------------------------------
 
@@ -369,6 +488,22 @@ private:
 	void OnCancel();
 	void OnWait();
 	void OnEndTurn();
+
+	/** §2.11.5's fifth handler. One call to `ToggleProductionMenu`, and the only one of the
+	 *  five that does not go through `HandleSelectionEvent`. */
+	void OnToggleProductionMenu();
+
+	/**
+	 * The latched target hex and whether anything is latched. See `GetProductionTargetHex`.
+	 *
+	 * TWO MEMBERS AND NOT ONE, because `FIntPoint(0, 0)` is a real hex and cannot mean
+	 * "none". NOT `UPROPERTY`s: `FIntPoint` and `bool` hold nothing for the garbage
+	 * collector, and publishing them would give a Widget Blueprint a second place to read
+	 * the target from -- one that could be WRITTEN, which would make "which factory is this
+	 * menu about" a question with two authors. The reflected route is the accessor.
+	 */
+	FIntPoint ProductionTargetHex = FIntPoint::ZeroValue;
+	bool      bHasProductionTargetHex = false;
 
 	/**
 	 * §2.11.1's selection state and the producer of `bDone` / `bLockedThisTurn`.

@@ -56,7 +56,7 @@ not carry `UnrealEditor-StratBridge.lib` onto the link line. **A module that CAL
 declares the module that exports it.** Note which methods did *not* appear in that error —
 `IsSeeded()` and `GetBridge()` are inline in the header and linked fine, which is exactly how the
 omission would survive a smaller caller. `EnhancedInput` is likewise `Private`: `AStratPlayerController`
-is the only file including an Enhanced Input header, and the five asset properties are
+is the only file including an Enhanced Input header, and the six asset properties are
 forward-declared `TObjectPtr`s.
 
 **`InputCore` is absent from `StratPlay` deliberately, and one `FKey` call brings it back.**
@@ -308,6 +308,18 @@ A run that reports "Project file not found" has run **zero** tests. Do not read 
 code*. Live Coding does not support new `UCLASS`es, so every new reflected class costs a full
 close → build → reopen cycle. Batch new classes into one pass rather than adding them one at a
 time.
+
+**`-NoHotReloadFromIDE` IS NOT AN EXEMPTION FROM THIS, and it looks like one.** That flag defeats
+the Live Coding **mutex**, which is engine-keyed and machine-wide and is what blocks a build in a
+*linked worktree* (a worktree has its own `Binaries/`, so the mutex is the only thing in its way).
+It does NOT defeat the **write lock** here: the running `UnrealEditor.exe` has this tree's
+`Binaries\Win64\*.dll` mapped and no UBT switch unmaps them. Passing it on THIS tree makes the
+failure later and stranger rather than removing it -- measured 2026-08-22: every compile action
+succeeds, including both `.gen.cpp` files, so UHT has parsed everything and a reflection error is
+NOT what you are looking at; then the links fail, first as
+`UbaSessionServer - ERROR opening file ... for write after retrying for 20 seconds` and then, on
+the non-UBA retry, as `LINK : fatal error LNK1104: cannot open file ...UnrealEditor-<Module>.dll`.
+The fix is still *close the editor*.
 
 ---
 

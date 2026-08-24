@@ -11,6 +11,25 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-24 (THE `Skip guidance` BUTTON IS BUILT -- THE ONE SURFACE SEC 2.11.6-B'S
+CLOSURE WAS RECORDED OVER. Written by the `coordinator`, under `content.md`'s fallback condition,
+with the tool-surface control that condition requires. `/Game/UI/WBP_DirectiveStrip` now carries a
+`SkipButton` whose `OnClicked` casts the owning controller and calls `Skip Guidance`; it was seen
+PAINTED in a PIE capture with the guided opening armed, and seen going out TOGETHER with the strip
+under a `ke * SkipGuidance` positive control. The `OWNED: strat-editor-builder` line this closure
+carried is stamped DISCHARGED where it stands, twice, rather than deleted. `content.md` holds the
+evidence and this banner does not restate it.
+NO SUITE FIGURE MOVES AND NONE IS CLAIMED HERE. One `.uasset` changed and no test or source file
+was touched; the live figure is the one the block below cites and it is unchanged.
+WHAT IS STILL NOT MEASURED, stated because the entry it discharges was itself about a surface that
+read as built. No mouse event was injected -- injection still never reaches this project's input --
+so "a Slate click on that rectangle fires `OnClicked`" is INFERRED from a compiled, fully-connected
+graph on a live, painted, hit-testable widget. It is not observed. A human click closes it, exactly
+as one closed the ring and the marker.
+ALSO FOUND AND WORTH MORE THAN THE BUTTON: `find_nodes` is filtered to `self`'s class and returns
+ZERO for any other class's UFUNCTION -- proved with two engine controls, not assumed. The
+pin-context form in `help("FindNodes")` is the only route. `content.md` carries it.)
+
 _Last run 2026-08-24 (SEC 2.11.6-B CLOSES, ON A HUMAN PLAYTEST AND A USER RULING. Written by the
 `coordinator`. The ring and the turn-1a marker were seen DRAWN on screen by the user and they
 passed -- the last thing that section was waiting on, and the one thing no clause could ever have
@@ -28,6 +47,8 @@ the same frame and is pinned by a clause -- and HAS NO CALLER: no input binding,
 and no asset under `Content/` names it. Its own header says "for the button that will eventually
 call it". Measured in this pass, raised to the user, and the user ruled the section closed
 regardless. OWNED: `strat-editor-builder`, one button on one already-reflected verb.
+[DISCHARGED 2026-08-24, later the same day -- see the newest banner block above and
+`content.md`. True when written.]
 ALSO NOT MEASURED, AND ITS ITEM IS UNTOUCHED: `GuidedMarkerZOffset` is still `150.0f` and the
 standing note that it occludes the unit at this camera pitch is neither confirmed nor retracted.
 A playtest that passes on what it looked at says nothing about what it did not.
@@ -976,6 +997,14 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     raised to the user, who ruled the section closed regardless. It is recorded here because a
     closure that quietly swallows an unbuilt surface is how the surface stops being owed at all.
     **OWNED: `strat-editor-builder`** -- one button bound to one already-reflected verb.
+    **[DISCHARGED 2026-08-24, later the same day, by the `coordinator` under `content.md`'s
+    fallback condition. `/Game/UI/WBP_DirectiveStrip` now carries a `SkipButton` whose
+    `OnClicked` casts the owning controller and calls `Skip Guidance`. Seen painted in PIE
+    with the opening armed, and seen going out together with the strip under a
+    `ke * SkipGuidance` positive control; `content.md` holds the evidence and this entry does
+    not restate it. WHAT IS STILL NOT MEASURED: no mouse event was injected, so the
+    Slate-click-to-delegate link is inferred from a fully-connected graph on a live, painted
+    widget rather than observed. Everything this bullet says was true when written.]**
   - **`GuidedMarkerZOffset` WAS NOT MEASURED BY THIS PLAYTEST, and its item stands untouched.**
     It is still `150.0f` in `StratUnitActor.h` and the standing note that it occludes the unit at
     this camera pitch is neither confirmed nor retracted here. A playtest that passes on the
@@ -1079,7 +1108,9 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   "nobody has seen a ring or a marker on a screen". All three were true when written. All three
   are now false: the defaults are set and committed, and a HUMAN saw both drawn on 2026-08-24.
   The `OWNED: strat-editor-builder` line is discharged for the assets and survives for one thing
-  only -- the `Skip guidance` button, which has never had a caller. Nothing above is deleted and
+  only -- the `Skip guidance` button, which has never had a caller.
+  **[FULLY DISCHARGED 2026-08-24, later the same day: the button is built. This sentence was
+  true when written; see the newest banner block and `content.md`.]** Nothing above is deleted and
   no measurement is withdrawn. See the closing entry at the top of `## NEXT`; it is not restated
   here.]**
   **THE TURN-1a UNIT MARKER AND THE OBJECTIVE RING WERE NEVER BUILT, AND TWO OF THE FOUR DIRECTIVES

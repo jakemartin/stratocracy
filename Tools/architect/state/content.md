@@ -27,6 +27,67 @@
 
 ## NEXT
 
+- **THE `Skip guidance` BUTTON EXISTS AND IS PAINTED ON THE STRIP -- THE ONE SURFACE
+  Sec 2.11.6-B's closure was recorded OVER.** 2026-08-24. `global.md` carries what this does for
+  that `OWNED:` line; this file states no count and no verdict.
+  **WRITTEN BY THE COORDINATOR UNDER THIS FILE'S FALLBACK CONDITION, WITH THE CONTROL THE HEADER
+  REQUIRES.** `execute_script` was absent from this session's tool surface: a `select:` lookup for
+  `mcp__NeoStack_Connect__execute_script`, `mcp__unreal-editor-direct__execute_script` and
+  `mcp__NeoStack_Connect__unreal_status` returned **exactly one** schema, `unreal_status` -- so the
+  same lookup that found nothing for the two `execute_script` names DID return the tool that is
+  served, which is what makes the absence a measurement rather than a missing name. Driven over
+  the editor's own MCP endpoint with `Tools/neostack/ns.py`, probed with
+  `lua("print(project_dir())")` -> `E:/MultiAgent/Stratocracy/`, so the evidence below is this
+  tree's.
+  - **THE EDITOR WAS CLOSED WHEN THIS PASS STARTED, AND THE STANDING NOTE SAID IT WAS OPEN.**
+    `runtimes.json` held `"runtimes":[]`, no `UnrealEditor.exe` was in `tasklist` (control: the
+    same command listed 915 processes), and `ns.py` raised `no live MCP port among 0 advertised
+    url(s)`. The editor was launched from
+    `C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe` on the `.uproject`
+    and advertised `http://127.0.0.1:9315/mcp` within 50 s. A UMG button cannot be authored
+    without a live editor, so this is the whole of why the pass began with a launch.
+  - **WHAT WAS ADDED, to `/Game/UI/WBP_DirectiveStrip` and to nothing else.** `SkipButton`, a
+    `Button` appended as the third child of `StripRow` (after `DirectiveText` and `WindowEndTag`),
+    holding one `TextBlock` `SkipLabel` reading `Skip guidance`. Names chosen disjoint from every
+    member variable, which is this file's own recorded collision trap. `bind_event` auto-promoted
+    `SkipButton` to a variable, which is the widget's own variable and not a second one.
+  - **THE GRAPH, AND THE PALETTE LIMIT THAT SHAPES IT.** `EventGraph`:
+    `On Clicked (SkipButton)` -> `Cast To StratPlayerController` -> `Skip Guidance`, with
+    `Get Owning Player` feeding the cast's `Object` and the cast's `As Strat Player Controller`
+    feeding the call's `Target`. **`find_nodes` IS FILTERED TO `self`'s CLASS AND CANNOT SEE A
+    FOREIGN CLASS'S VERBS AT ALL.** `find_nodes("Skip Guidance", …)` returned **0** from this
+    widget -- and so did `Set Show Mouse Cursor` and `Client Restart`, two engine
+    `BlueprintCallable`s on `APlayerController` that certainly exist. Those two are the control
+    that makes the zero a property of the tool rather than of the function. The route that works
+    is the **pin-context form** documented only in `help("FindNodes")`:
+    `find_nodes({query=…, asset_path=…, graph_name=…, from_handle=<cast>, from_pin="As Strat
+    Player Controller"})`, which is the API's "drag off a pin" and returned `Skip Guidance` at
+    score 100 immediately. Anyone wiring a call to another class's UFUNCTION needs this; the
+    plain form will read as "the function does not exist".
+  - **VERIFIED FROM A FRESH `read_graph`, NOT FROM THE GREEN COMPILE.** All five links report
+    `connected=true, is_orphaned=false` in both directions. The four pre-existing binding function
+    graphs were re-read in the same pass and are unchanged -- each still exec-wired with
+    `Return Value` connected, which is the defect this file spent four sessions on and which a
+    structural edit could plausibly have disturbed.
+  - **IT IS ON THE SCREEN, AND IT GOES OUT WITH THE STRIP.** PIE from the game's own startup path
+    (`Game class is 'BP_StratGameMode_C'`, `Guided opening armed for side 0: objective hex (2, 7),
+    window turns 1-4`; no `.sav` existed, so the suppression trap this file records did not
+    apply). The live instance
+    `UnrealEdEngine_0:GameInstance_0.WBP_DirectiveStrip_C_0` carried `bActive=True, Beat=Beat1a`
+    and its `WidgetTree_0` held `SkipButton` and `SkipLabel.Text = "Skip guidance"`.
+    `Shot showui` at 2544x1320 shows the chip painted inside the strip immediately right of the
+    directive line. **THE POSITIVE CONTROL:** `ke * SkipGuidance` -- `1 instances succeeded` --
+    dropped the projection to `bActive=False, Beat=None`, and the next capture shows the strip and
+    the button gone TOGETHER. The button carries no visibility binding of its own; it inherits
+    `StripBorder`'s, which is what that control demonstrates rather than asserts.
+  - **WHAT THIS DOES NOT REACH, and it is the same last link the ring and the marker needed.**
+    No mouse event was injected -- injection still never reaches this project's input -- so
+    "a Slate click on that rectangle fires `OnClicked`" is NOT measured here. What is measured is
+    everything up to it: the button is in the live widget tree, painted, hit-testable by
+    construction (`StripRow` is `SelfHitTestInvisible`, so its children hit-test), and its
+    `OnClicked` is bound to a compiled graph whose every pin reads connected. A human click is
+    what closes it, exactly as one closed the ring and the marker.
+
 - **THE OBJECTIVE RING AND THE TURN-1a MARKER ARE ON THE SCREEN, AND EACH WAS IDENTIFIED BY BEING
   REMOVED RATHER THAN BY MATCHING A SHAPE.** 2026-08-23, written by `strat-editor-builder` -- the
   first entry this lane has written here since the tool-surface condition began -- over

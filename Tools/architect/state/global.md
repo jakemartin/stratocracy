@@ -11,6 +11,33 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-24 (SEC 2.11.6-B CLOSES, ON A HUMAN PLAYTEST AND A USER RULING. Written by the
+`coordinator`. The ring and the turn-1a marker were seen DRAWN on screen by the user and they
+passed -- the last thing that section was waiting on, and the one thing no clause could ever have
+discharged, because `IsGuidedMarkerVisible` reports a component flag and
+`GetObjectiveOverlayCount` an instance count, so both can be green on a blank screen. The verdict
+is stated in the closing entry at the top of `## NEXT` and this banner does not restate its
+evidence.
+NO SUITE FIGURE MOVES AND NONE IS CLAIMED HERE. Nothing in this pass touched a test or any source
+file; it is a record-only pass. The live figure is the one the block below cites and it is
+unchanged.
+WHAT THE CLOSURE IS RECORDED OVER, because a closure that swallows an unbuilt surface is how the
+surface stops being owed. Sec 2.11.6 specifies a `Skip guidance` control that "kills it instantly
+for anyone". `AStratPlayerController::SkipGuidance` exists, is `BlueprintCallable`, refreshes in
+the same frame and is pinned by a clause -- and HAS NO CALLER: no input binding, no widget button,
+and no asset under `Content/` names it. Its own header says "for the button that will eventually
+call it". Measured in this pass, raised to the user, and the user ruled the section closed
+regardless. OWNED: `strat-editor-builder`, one button on one already-reflected verb.
+ALSO NOT MEASURED, AND ITS ITEM IS UNTOUCHED: `GuidedMarkerZOffset` is still `150.0f` and the
+standing note that it occludes the unit at this camera pitch is neither confirmed nor retracted.
+A playtest that passes on what it looked at says nothing about what it did not.
+THE STAMP THAT WENT WITH IT. The `[HALF-ANSWERED 2026-08-23]` block further down held three
+sentences that had gone stale by UNDER-claiming -- the assets "ship UNSET", the defaults are
+"still owed", and "nobody has seen a ring or a marker on a screen". All three were true when
+written and all three are now false. Stamped as a SIBLING after that block, never nested inside
+it, which is the dangling-closer trap `content.md` records. Nothing deleted, no measurement
+withdrawn.)
+
 _Last run 2026-08-24 (A HUMAN PLAYTEST FOUND A LATCHED MARKER, AND THE RECORD IT SAT IN WAS
 REPAIRED. This block exists partly because
 `content.md` now carries an entry dated 2026-08-24 and this banner may not be older than any date
@@ -919,7 +946,45 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
-- **SEC 2.11.6-B: EVERYTHING OBSERVABLE IS NOW OBSERVED, AND WHAT REMAINS IS TWO BUILD ITEMS.
+- **SEC 2.11.6-B CLOSES. 2026-08-24, HUMAN-DRIVEN PLAYTEST, THE USER AT THE KEYBOARD: THE RING
+  AND THE MARKER WERE SEEN DRAWN AND THEY PASSED. RULED CLOSED BY THE USER; RECORDED BY THE
+  `coordinator`, WHICH IS THIS FILE'S TO STATE.** This is the verdict the entries below have
+  refused for four days, and it is stated here and nowhere else -- `global.md` is the only file
+  that may carry one. No suite count moves on it: nothing in this pass touched a test.
+  - **WHY THE HUMAN EYE WAS THE ONLY INSTRUMENT THAT COULD DO IT, restated because it is the
+    reusable half.** `content.md` already carried an AGENT-driven PIE sighting of both, each with
+    a positive control. That was never sufficient and was never claimed to be:
+    `IsGuidedMarkerVisible` reports a component FLAG, not pixels, and `GetObjectiveOverlayCount`
+    reports an instance count -- so every headless and every scripted route can be green on a
+    blank screen. No clause can be written that discharges this, which is why it sat open rather
+    than being automated away.
+  - **WHAT THIS RESTS ON, AND WHERE ITS DETAIL IS.** The assets are committed and were measured
+    off the package bytes, not off a lane report: `BP_StratBoard` carries `MI_Overlay_Objective`
+    against `ObjectiveMaterial`; `BP_StratUnit` carries `SM_GuidedMarker` and `MI_Marker_Guided`
+    against `GuidedMarkerMesh` and `GuidedMarkerMaterial`. The four directives, both input-gate
+    hovers, the window-end tag and all four beats retiring were read back by the user on
+    2026-08-23 and -24; beat 2's live retirement on its second arm and the ring, marker and strip
+    going dark in ONE frame were witnessed on 2026-08-24. `content.md` and `engine.md` carry the
+    detail and this entry does not restate it.
+  - **ONE SPECIFIED SURFACE OF SEC 2.11.6-B IS NOT BUILT, AND THE CLOSURE IS RECORDED OVER IT
+    RATHER THAN AROUND IT.** The GDD says a `Skip guidance` control "kills it instantly for
+    anyone". `AStratPlayerController::SkipGuidance` exists, is `BlueprintCallable`, refreshes in
+    the same frame, and is pinned by `GuidedMarkerGoesOutAfterSkipGuidance` -- but **it has no
+    caller.** No input binding, no widget button, and `grep` over `Content/` returns no asset
+    naming it; the header says so itself, in the words "for the button that will eventually call
+    it". So no player can reach it. This was measured in the pass that recorded the closure and
+    raised to the user, who ruled the section closed regardless. It is recorded here because a
+    closure that quietly swallows an unbuilt surface is how the surface stops being owed at all.
+    **OWNED: `strat-editor-builder`** -- one button bound to one already-reflected verb.
+  - **`GuidedMarkerZOffset` WAS NOT MEASURED BY THIS PLAYTEST, and its item stands untouched.**
+    It is still `150.0f` in `StratUnitActor.h` and the standing note that it occludes the unit at
+    this camera pitch is neither confirmed nor retracted here. A playtest that passes on the
+    things it looked at says nothing about the thing it did not.
+
+- **[SUPERSEDED 2026-08-24 BY THE ENTRY ABOVE, WHICH CLOSES SEC 2.11.6-B. Kept entire: its
+  "TWO BUILD ITEMS" framing is the rung this section was on for four days, and its distinction
+  between "unobserved" and "unbuilt" is the part worth carrying forward.]**
+  **SEC 2.11.6-B: EVERYTHING OBSERVABLE IS NOW OBSERVED, AND WHAT REMAINS IS TWO BUILD ITEMS.
   2026-08-23, HUMAN-DRIVEN PIE, THE USER AT THE KEYBOARD. THE SECTION STILL DOES NOT CLOSE AND IS
   NOT CLAIMED CLOSED HERE** -- but the reason has changed from "unobserved" to "unbuilt", and that
   is a different kind of open.
@@ -1006,6 +1071,17 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   and note its route to the editor was itself broken for four days and was fixed in this same
   commit, see `content.md`. What changed is that the lane is no longer blocked on C++ that does
   not exist; it is blocked on assets it can now actually author.]**
+  **[DISCHARGED 2026-08-24. A SIBLING STAMP, NOT A NESTED ONE -- the stamp above is the block
+  this corrects, and nesting one inside it is the dangling-closer trap `content.md` records.
+  Three sentences in that stamp have gone stale by UNDER-claiming, which is the direction that
+  sends the next reader to redo settled work: "the three `EditDefaultsOnly` ASSET REFERENCES ship
+  UNSET", "the meshes, the material instances and the Blueprint defaults ... are still owed", and
+  "nobody has seen a ring or a marker on a screen". All three were true when written. All three
+  are now false: the defaults are set and committed, and a HUMAN saw both drawn on 2026-08-24.
+  The `OWNED: strat-editor-builder` line is discharged for the assets and survives for one thing
+  only -- the `Skip guidance` button, which has never had a caller. Nothing above is deleted and
+  no measurement is withdrawn. See the closing entry at the top of `## NEXT`; it is not restated
+  here.]**
   **THE TURN-1a UNIT MARKER AND THE OBJECTIVE RING WERE NEVER BUILT, AND TWO OF THE FOUR DIRECTIVES
   ARE UNFOLLOWABLE WITHOUT THEM. Raised by the user at the keyboard 2026-08-23.**
   Beat 1a says "Select the marked Infantry" with nothing marked. Beat 2 says "the ringed Factory"

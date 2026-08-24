@@ -286,10 +286,39 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
 	TObjectPtr<UMaterialInterface> GuidedMarkerMaterial;
 
-	/** How far above the body the marker floats. Presentation; the right value depends on
-	 *  the meshes the content lane assigns and this file must not guess it for them. */
+	/**
+	 * How far above the body the marker floats. Presentation, and still EditDefaultsOnly so
+	 * the content lane keeps the last word.
+	 *
+	 * WAS 150.0f, WHICH PUT THE MARKER ON TOP OF THE UNIT IT NAMES. `content.md` filed that
+	 * as an eyeball observation -- "at this camera pitch it OCCLUDES the unit" -- and it is
+	 * now DERIVED, because every operand became a measured number once the meshes landed:
+	 * `SM_GuidedMarker` is a 100 uu cone centred on its origin, `FallbackMesh` is
+	 * `/Engine/BasicShapes/Cylinder`, 100 uu and also centred, and `AStratCameraPawn` looks
+	 * down `ArmPitch` = -60 with NO YAW on any path (`bInheritYaw` is false, the arm's
+	 * rotation is `FRotator(ArmPitch, 0, 0)`, and `PanBy` is a world offset that never
+	 * rotates the pawn). So screen-up is `0.866*x + 0.5*z` in body space and depth is
+	 * `0.5*x - 0.866*z`. The body's silhouette tops out at 68.3; the marker's base rim
+	 * bottoms out at `0.5*(Z - 50) - 43.3`. Equal at Z = 273.2. AT 150 THE MARKER'S BASE SAT
+	 * 61.6 BELOW THE BODY'S TOP AND 111.6 NEARER THE CAMERA, so it drew in front of the head
+	 * of the unit -- the one thing a "this unit" marker must not hide. 300 clears by 13.4,
+	 * about 10% past contact.
+	 *
+	 * THE COST, STATED RATHER THAN DISCOVERED LATER: a marker at positive Z is always nearer
+	 * the camera than anything up-screen of it, so it draws over the LOWER BODY OF THE UNIT
+	 * ON THE HEX BEHIND. That trade is deliberate. The defect was the marker hiding its own
+	 * subject, which makes it unreadable; crowding a neighbour leaves it readable.
+	 *
+	 * THE ARITHMETIC ASSUMES THE SHIPPED CAMERA PITCH AND UNIT SCALE, and this file cannot
+	 * see either -- it holds no camera pointer and reads no component scale. That is why the
+	 * number is a default and not a constant: change `ArmPitch`, or scale `Body` or
+	 * `GuidedMarker` on the Blueprint, and this wants re-deriving. NO TEST PINS IT. `T-INT-05`
+	 * compares unit Z deltas against each other and never names a marker offset, so nothing
+	 * headless goes red if it drifts; the gate is a human eye, as it was for the marker
+	 * itself.
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
-	float GuidedMarkerZOffset = 150.0f;
+	float GuidedMarkerZOffset = 300.0f;
 
 	/**
 	 * Mesh per §2.4 definition `id` ("Infantry", "Tank", ...).

@@ -56,6 +56,43 @@ regardless. OWNED: `strat-editor-builder`, one button on one already-reflected v
 ALSO NOT MEASURED, AND ITS ITEM IS UNTOUCHED: `GuidedMarkerZOffset` is still `150.0f` and the
 standing note that it occludes the unit at this camera pitch is neither confirmed nor retracted.
 A playtest that passes on what it looked at says nothing about what it did not.
+[SUPERSEDED 2026-08-24, LATER THE SAME DAY. BOTH HALVES OF THAT SENTENCE ARE NOW FALSE and the
+correction is written where the sentence is, not only where the work was done. The occlusion is
+CONFIRMED -- derived rather than eyeballed, off three numbers that only became measurable once the
+meshes landed -- and the default is `300.0f`. `StratUnitActor.h`'s own block on the property
+carries the derivation and this line does not restate it. NOT OBSERVED: no eye has been on the new
+value, and none could be taken here. True when written.]
+[AND NOW OBSERVED. 2026-08-24, later the same day: the editor was reopened, the user looked at the
+marker in the running game and ruled it FINE, TO BE KEPT. The derivation is no longer the only
+thing standing behind this default.]
+AND THE SECOND ITEM FILED BESIDE IT WAS ALREADY DONE, WHICH IS WORTH MORE THAN THE FIX WOULD HAVE
+BEEN. `content.md` still files, as item (1) of that pair, that `StratBoardActor.h` and
+`StratUnitActor.h` name `BP_StratBoardActor` / `BP_StratUnitActor` -- assets that never existed --
+in the very sentence that ASSIGNS work to the content lane. The user asked for it to be fixed on
+2026-08-24 and THERE WAS NOTHING TO FIX: both names are ABSENT from `Source/` (zero hits), and the
+correct `BP_StratBoard` / `BP_StratUnit` sit at exactly the two sites the filing describes. It was
+done on 2026-08-23, in the comment-only pass `engine.md` records. **SO THAT FILING WENT STALE BY
+UNDER-CLAIMING, AND THIS RECORD ALREADY KNOWS THAT IS THE DIRECTION THAT COSTS MOST:** an
+over-claim gets caught by the next measurement, an under-claim sends the next reader to redo
+finished work and looks like diligence while doing it.
+THE DEFECT CLASS WAS THEN CLOSED WHOLE RATHER THAN AT THE TWO NAMES FILED, and the subject set was
+DERIVED, never typed -- a guard that types its own subject list is the failure this record has paid
+for before. Every `BP_`/`WBP_` token in `StratPlay`, `StratUI` and `StratBridge` was extracted and
+checked against the 1876 real asset filenames: NINE referenced, NINE resolve, ZERO missing. Every
+`/Game/` path named in those modules was resolved the same way: SIX named, SIX resolve. **There is
+no second instance of this defect anywhere in our source.**
+TWO INSTRUMENT FAULTS FOUND WHILE MEASURING IT, BOTH OF WHICH WOULD HAVE MANUFACTURED FINDINGS.
+(1) `grep -roE 'BP_[A-Za-z0-9_]+'` reported `BP_DirectiveStrip` TEN TIMES and `BP_ProductionMenu`
+NINE, none of which exist -- because both are SUBSTRINGS of the `WBP_` assets that do. An
+extraction without a word boundary invents names. (2) The `BP_`-prefixed tokens in
+`Source/Stratocracy/Variant_Strategy` and `Variant_TwinStick` -- `BP_Damaged`, `BP_UnitSelected`,
+`BP_CursorFeedback` and nine more -- are `BlueprintImplementableEvent` FUNCTION names in UE's own
+template sample code, where `BP_` is a calling convention and not an asset reference. **READ THE
+SITE, NOT THE HIT COUNT**; a count alone would have filed twelve fabricated defects here.
+OWNED: `strat-editor-builder` -- `content.md` is its file and the stale item is still standing in
+it. This pass did not write `content.md`: the fallback condition is `execute_script` being absent
+from the session, and it was PRESENT and used throughout. NOTHING IN SOURCE WAS EDITED FOR THIS
+ITEM, so no build was owed and none is claimed.
 THE STAMP THAT WENT WITH IT. The `[HALF-ANSWERED 2026-08-23]` block further down held three
 sentences that had gone stale by UNDER-claiming -- the assets "ship UNSET", the defaults are
 "still owed", and "nobody has seen a ring or a marker on a screen". All three were true when
@@ -1014,6 +1051,60 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     It is still `150.0f` in `StratUnitActor.h` and the standing note that it occludes the unit at
     this camera pitch is neither confirmed nor retracted here. A playtest that passes on the
     things it looked at says nothing about the thing it did not.
+    **[SUPERSEDED 2026-08-24, LATER THE SAME DAY. The item did not need a playtest after all: the
+    occlusion is DERIVABLE, and was derived once `SM_GuidedMarker` (100 uu cone, centred on its
+    origin), `FallbackMesh` (`/Engine/BasicShapes/Cylinder`, 100 uu, also centred) and
+    `AStratCameraPawn`'s `ArmPitch` of -60 with NO YAW on any path were all in hand. In body space
+    screen-up is `0.866*x + 0.5*z`: the body tops out at 68.3, the marker's base rim at 150
+    bottomed out at 6.7 and sat 111.6 nearer the camera, so it drew IN FRONT OF the head of the
+    unit it names. Contact is Z = 273.2; the default is now `300.0f`, clearing by 13.4.
+    **THE COST IS STATED IN THE HEADER AND NOT HIDDEN:** any positive Z draws over whatever is
+    up-screen, so the marker now crowds the lower body of the unit on the hex BEHIND it. That is a
+    trade taken deliberately -- a marker that hides its own subject is unreadable, one that crowds
+    a neighbour is not.
+    **WHAT IS NOT CLAIMED.** No eye has been on the new value, no suite covers it -- `T-INT-05`
+    compares unit Z deltas against each other and never names a marker offset -- and the build that
+    carried it compiled all 14 actions clean but could not LINK: `LNK1104`, the open editor holding
+    `UnrealEditor-StratPlay.dll`, which is this project's own documented outcome for an in-place
+    build and not a finding. **SO THE VALUE IS IN THE TREE AND NOT YET IN A RUNNING EDITOR.**
+    **[THE LINK HALF OF THIS IS NOW FALSE. 2026-08-24, LATER THE SAME DAY, ON THE USER'S
+    INSTRUCTION.** The editor was closed and the build re-run: `Result: Succeeded`, exit 0, and
+    `UnrealEditor-StratPlay.dll` rewritten -- 2 actions, because the 14 objects from the refused
+    run were still good and only the link was owed. **THE VALUE IS NOW IN THE BINARY.** The rest of
+    this bullet stands unchanged: no eye has been on it and no suite covers it.
+    **THE CLOSE WAS GRACEFUL AND THE DATA WAS NEVER AT RISK,** which was established BEFORE the
+    close rather than after: `playtest_status` reported no PIE world, and `git status Content/` was
+    empty, so every asset was committed. `CloseMainWindow()` returned true, the process exited
+    inside the timeout with NO `Save Content` dialog and NO `CrashReportClientEditor`, and the DLL
+    lock was then proved released by a rename round-trip before the build was started.
+    **AND ONE NEGATIVE RESULT THAT IS NOT A FINDING, RECORDED SO THE NEXT LANE DOES NOT RE-DERIVE
+    IT:** `exec_command` could not quit the editor -- `QUIT_EDITOR`, `CLOSE_SLATE_MAINFRAME`,
+    `quit` and `exit` all came back `success=false / unrecognized`. **THAT IS THE CHANNEL, NOT THE
+    COMMANDS.** The control settles it: `stat none` and `obj list class=World` are indisputably
+    valid and returned `success=false` in the same call, with `has_pie_world = false`. So
+    `exec_command` reaches no console without a world, exactly as `playtest_console` does. **Note
+    the shape:** every one of those calls printed a leading `[OK]`, which this record already knows
+    is not a verdict -- the field to read is `success`. True when written.]**
+    OWNED: coordinator, to schedule a human look. `engine.md` and `content.md` each carry this item
+    in their own lane's words and are owed by their own writers; this file does not write either.
+    Everything this bullet says was true when written.]**
+    **[DISCHARGED 2026-08-24, LATER THE SAME DAY, BY THE USER'S OWN EYE. THE HUMAN LOOK THAT LINE
+    SCHEDULES HAS BEEN TAKEN.** The editor was reopened on `Lvl_FerrumCrossing` and the user
+    reports the marker FINE and to be KEPT. **`GuidedMarkerZOffset = 300.0f` IS NOW A SHIPPED,
+    HUMAN-CONFIRMED VALUE** and this item is closed.
+    **THE BINARY WAS CONFIRMED BEFORE THE LOOK, so the eye and the tree cannot have disagreed:**
+    `class_properties("/Script/StratPlay.StratUnitActor")` read `GuidedMarkerZOffset` back as
+    `default=300.000000` off the CDO -- which IS the shipping value here, `BP_StratUnit` carrying
+    no override for it -- and returned the NEW tooltip text verbatim, a string that exists only in
+    this edit. A stale DLL could not have produced it.
+    **WHAT THE RULING COVERS AND WHAT IT DOES NOT.** It is a SINGLE global verdict on what the user
+    saw. Three questions were put -- the clearance over the unit's own head, the deliberate cost of
+    crowding the unit on the hex BEHIND, and whether the marker still reads as naming ITS unit --
+    and the answer itemised none of them. So the acceptance is recorded as an acceptance and NOT
+    as three separate measurements; in particular the neighbour-crowding trade is accepted in
+    effect, not inspected on the record. **The standing caveat is unchanged and still load-bearing:
+    the whole derivation rests on `ArmPitch` = -60, and if that pitch is ever retuned this number
+    wants re-deriving with nothing headless to say so.** True when written.]**
 
 - **[SUPERSEDED 2026-08-24 BY THE ENTRY ABOVE, WHICH CLOSES SEC 2.11.6-B. Kept entire: its
   "TWO BUILD ITEMS" framing is the rung this section was on for four days, and its distinction

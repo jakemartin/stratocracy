@@ -35,21 +35,25 @@ AStratBoardActor::AStratBoardActor()
 	BoardRoot = CreateDefaultSubobject<USceneComponent>(TEXT("BoardRoot"));
 	SetRootComponent(BoardRoot);
 
-	// The two overlays are constructor subobjects and the tile layers are not. See the
-	// header block: there are exactly two overlays for as long as §2.11.1 has a move phase
-	// and an attack phase, and their count is not data the way the terrain kinds are.
+	// The overlays are constructor subobjects and the tile layers are not. See the header
+	// block: one component per MEANING, and the count is not data the way the terrain kinds
+	// are. It was two until §2.11.6-B's ring made it three.
 	ReachOverlay = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("ReachOverlay"));
 	ReachOverlay->SetupAttachment(BoardRoot);
 
 	TargetOverlay = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("TargetOverlay"));
 	TargetOverlay->SetupAttachment(BoardRoot);
 
+	ObjectiveOverlay = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("ObjectiveOverlay"));
+	ObjectiveOverlay->SetupAttachment(BoardRoot);
+
 	// NO COLLISION ON EITHER OVERLAY, and this is the same rule `AStratUnitActor` states
 	// for itself: every rules question this game asks is asked about a HEX, so the cursor
 	// must reach the tile underneath. An overlay that blocked the trace would make a hex
 	// unpickable exactly when it is highlighted as pickable, which is the worst available
 	// time for it.
-	for (UHierarchicalInstancedStaticMeshComponent* const Overlay : { ReachOverlay.Get(), TargetOverlay.Get() })
+	for (UHierarchicalInstancedStaticMeshComponent* const Overlay :
+	     { ReachOverlay.Get(), TargetOverlay.Get(), ObjectiveOverlay.Get() })
 	{
 		Overlay->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Overlay->SetCanEverAffectNavigation(false);
@@ -71,6 +75,7 @@ void AStratBoardActor::BeginPlay()
 	{
 		ReachOverlay->SetStaticMesh(OverlayMesh);
 		TargetOverlay->SetStaticMesh(OverlayMesh);
+		ObjectiveOverlay->SetStaticMesh(OverlayMesh);
 
 		if (ReachMaterial != nullptr)
 		{
@@ -80,11 +85,21 @@ void AStratBoardActor::BeginPlay()
 		{
 			TargetOverlay->SetMaterial(0, TargetMaterial);
 		}
+		// UNSET IS SILENT HERE AND NOT LOGGED, unlike a missing `OverlayMesh`. A ring with no
+		// material of its own still draws, in the mesh's material -- so the failure is a ring
+		// that looks like a reach highlight, which is visible on screen and needs no line in
+		// a log to find. A missing MESH draws nothing at all, which is the case that has to
+		// announce itself.
+		if (ObjectiveMaterial != nullptr)
+		{
+			ObjectiveOverlay->SetMaterial(0, ObjectiveMaterial);
+		}
 	}
 	else
 	{
 		UE_LOG(LogStratPlay, Log,
-			TEXT("Board '%s' has no OverlayMesh set; reach and target highlights will not draw."),
+			TEXT("Board '%s' has no OverlayMesh set; reach, target and objective-ring "
+			     "highlights will not draw."),
 			*GetName());
 	}
 }
@@ -321,6 +336,25 @@ void AStratBoardActor::ShowTargets(const TArray<FIntPoint>& Hexes)
 void AStratBoardActor::ClearTargets()
 {
 	FillOverlay(TargetOverlay, TArray<FIntPoint>());
+}
+
+void AStratBoardActor::ShowObjective(FIntPoint Hex)
+{
+	// ONE HEX, THROUGH THE SAME `FillOverlay` THE OTHER TWO USE, so the ring cannot drift
+	// from the highlights in how it clears or how it is offset off the tile plane. See the
+	// declaration on why the parameter is a hex and not a set.
+	FillOverlay(ObjectiveOverlay, TArray<FIntPoint>({ Hex }));
+}
+
+void AStratBoardActor::ClearObjective()
+{
+	FillOverlay(ObjectiveOverlay, TArray<FIntPoint>());
+}
+
+int32 AStratBoardActor::GetObjectiveOverlayCount() const
+{
+	// Off the component and never off a cached count -- see the declaration.
+	return ObjectiveOverlay != nullptr ? ObjectiveOverlay->GetInstanceCount() : 0;
 }
 
 int32 AStratBoardActor::GetTargetOverlayCount() const

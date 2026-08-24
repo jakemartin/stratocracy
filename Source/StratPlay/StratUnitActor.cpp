@@ -35,10 +35,67 @@ AStratUnitActor::AStratUnitActor()
 	Body->SetCanEverAffectNavigation(false);
 	Body->SetGenerateOverlapEvents(false);
 
+	// §2.11.6-B's turn-1a marker. Attached to `Body` and not to the actor root separately,
+	// so it follows the unit through `SetActorLocation` with no second placement path -- the
+	// same reason `ApplyUnitView` takes the world location rather than computing one.
+	//
+	// HIDDEN BY DEFAULT, which is the safe direction: a unit that is never observed is a unit
+	// with no marker, where a marker defaulting to visible would put one on all ten units for
+	// the whole of any path that spawns an actor without applying a view.
+	GuidedMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GuidedMarker"));
+	GuidedMarker->SetupAttachment(Body);
+	GuidedMarker->SetVisibility(false);
+
+	// THE COMPONENT THE CONSTRUCTOR COMMENT ABOVE ANTICIPATED. "Clearing the actor-level
+	// flags stops a later component added to this actor from quietly reintroducing a
+	// blocker" -- this is that later component, and it is given the same three settings
+	// explicitly rather than relying on the actor-level flag alone.
+	GuidedMarker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GuidedMarker->SetCollisionProfileName(TEXT("NoCollision"));
+	GuidedMarker->SetCanEverAffectNavigation(false);
+	GuidedMarker->SetGenerateOverlapEvents(false);
+	GuidedMarker->SetCastShadow(false);
+
 	SetActorEnableCollision(false);
 }
 
-void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation)
+void AStratUnitActor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// The marker's mesh and material are applied here rather than in the constructor because
+	// the properties they read are Blueprint defaults, and a constructor running on the CDO
+	// sets them on the wrong object -- the reason `AStratBoardActor::BeginPlay` gives for the
+	// overlays. Unset is a content-lane gap and not a match failure.
+	if (GuidedMarker == nullptr)
+	{
+		return;
+	}
+
+	GuidedMarker->SetRelativeLocation(FVector(0.0, 0.0, static_cast<double>(GuidedMarkerZOffset)));
+
+	if (GuidedMarkerMesh != nullptr)
+	{
+		GuidedMarker->SetStaticMesh(GuidedMarkerMesh);
+		if (GuidedMarkerMaterial != nullptr)
+		{
+			GuidedMarker->SetMaterial(0, GuidedMarkerMaterial);
+		}
+	}
+	else
+	{
+		// ONCE PER ACTOR AT SPAWN, not once per `ApplyUnitView`, which runs on every refresh
+		// for every unit. Logged at all because an unconfigured marker and an unmarked unit
+		// are indistinguishable on screen and have entirely different fixes -- the same
+		// argument the missing-mesh line above it makes.
+		UE_LOG(LogStratPlay, Log,
+			TEXT("Unit actor '%s' has no GuidedMarkerMesh set; the guided opening's turn-1a marker will "
+			     "not draw."),
+			*GetName());
+	}
+}
+
+void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation, int32 ViewingSide)
 {
 	// THE ID FIRST, because everything else is a description of THIS unit and a mismatch
 	// here means the caller reconciled against the wrong actor. Overwritten rather than
@@ -95,4 +152,33 @@ void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& W
 	// Sliding towards a position difference would be inferring what HAPPENED from what IS,
 	// which is the conflation that header warns about by name.
 	SetActorLocation(WorldLocation + FVector(0.0, 0.0, static_cast<double>(BodyZOffset)));
+
+	// §2.11.6-B's turn-1a marker. A PASS-THROUGH OF TWO PUBLISHED FIELDS ANDed -- no
+	// comparison against a scenario hex, no lookup, no arithmetic. See the declaration of
+	// `GuidedMarker` on why a hex-keyed derivation would unmark the unit at the moment the
+	// mark is needed, and on the 2026-08-23 user ruling that added the second operand.
+	//
+	// THE SIDE TEST IS THE RULING AND IT IS NOT AN OPTIMISATION. The shipped scenario authors
+	// a `guidedOpening` for BOTH seats, so two units carry `bIsGuidedMarked` at once; without
+	// this the enemy seat's Infantry is marked on the player's screen, telling them to select
+	// a unit they cannot select. `ViewingSide` is `FStratViewModel::ViewingSide` off the same
+	// model `View` came from -- not `UStratMatchSubsystem::GetViewingSide`, which would be a
+	// second input into what should be on screen.
+	//
+	// SET UNCONDITIONALLY IN BOTH DIRECTIONS, on every call, like every other line in this
+	// function. A writer that only ever SHOWS is a writer whose hide can be missed on one
+	// path -- and for this bit that means a permanent marker on a unit §2.11.6's window
+	// closed on. `FStratGuidedOpening::PublishLocks` records the same rule for the lock set,
+	// and it is what makes "the marker clears in the same frame as the strip" structural:
+	// both ride the one `ApplyView` that pushed the strip.
+	if (GuidedMarker != nullptr)
+	{
+		GuidedMarker->SetVisibility(View.bIsGuidedMarked && View.Side == ViewingSide);
+	}
+}
+
+bool AStratUnitActor::IsGuidedMarkerVisible() const
+{
+	// Off the component and never off `LastAppliedView` -- see the declaration.
+	return GuidedMarker != nullptr && GuidedMarker->IsVisible();
 }

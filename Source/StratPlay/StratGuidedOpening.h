@@ -25,6 +25,10 @@
 //     counts `sidesEnded` within one `turnNumber`), so the GDD's "turn 1" is both seats'
 //     turn 1 and the schedule table's rows line up with this field one for one.
 //   - the capture pip       -> `FStratUnitView::CaptureProgress`.
+//   - who holds the ring    -> `FStratHexView::Owner` at the objective hex, which mirrors
+//     `UiHexView::owner` and therefore `strat::Objective::owner`. Added 2026-08-23; see
+//     `IsRingedObjectiveHeldByGuidedSide` for the defect that made the pip alone
+//     insufficient.
 //   - the ringed factory    -> `FStratBridge::GuidedOpeningHexes`, a LOOKUP of the
 //     authored `guidedOpening.objective`. §2.11.6 forbids the alternative by name:
 //     "no 'nearest objective' heuristic is used".
@@ -92,12 +96,21 @@
 // THE FOUR RETIREMENT TRIGGERS, and where each is read:
 //   1a — the marked Infantry's move completes -> `bHasMoved` on the marked unit.
 //   1b — the enemy turn ends -> the round advances past the one 1b took the line on.
-//   2  — a capture pip appears ON THE RINGED OBJECTIVE, on whatever turn ->
-//        `CaptureProgress > 0` on a guided-seat unit standing on `guidedOpening.objective`.
-//        Narrowed by user ruling, 2026-08-21, from what this line used to say:
+//   2  — THE RINGED OBJECTIVE IS TAKEN BY THE GUIDED SEAT, on whatever turn. TWO
+//        OBSERVABLES, OR'd, because on the shipped scenario only the second one ever
+//        becomes visible:
+//          (a) `CaptureProgress > 0` on a guided-seat unit standing on
+//              `guidedOpening.objective` — `HasCapturePipLanded`; and
+//          (b) `FStratHexView::Owner == GuidedSide` at that same hex —
+//              `IsRingedObjectiveHeldByGuidedSide`.
+//        Narrowed to the ringed objective by user ruling, 2026-08-21, from what this line
+//        used to say:
 //        RETRACTED> "a capture pip appears, on whatever turn -> `CaptureProgress > 0`."
-//        `HasCapturePipLanded` carries why §2.11.6 does not settle it on its own and
-//        what the narrowing costs.
+//        THAT RULING IS INTACT AND IS NOT WHAT CHANGED ON 2026-08-23. What changed is that
+//        the pip was measured UNOBSERVABLE at the shipped scenario's `captureTurns = 1`, so
+//        arm (a) alone could never fire and beat 2 could never retire. Arm (b) is the fix.
+//        `HasCapturePipLanded` carries why §2.11.6 does not settle the SUBJECT on its own;
+//        `IsRingedObjectiveHeldByGuidedSide` carries the measurement behind the OR.
 //   3  — a unit spawns, on whatever turn including turn 1 -> a friendly unit id this
 //        machine has not seen before.
 //
@@ -116,10 +129,19 @@
 // WHAT IS DELIBERATELY NOT IN HERE
 // ---------------------------------------------------------------------------
 //
-// - NO WIDGET, AND NO `/Game/` PATH. The directive strip, the ring mesh and the turn-1a
-//   marker are `strat-editor-builder`'s lane. This file's whole output is
-//   `FStratGuidanceView` on the model plus the lock set on the selection machine, which is
-//   what that widget will bind to.
+// - NO WIDGET, AND NO `/Game/` PATH. The directive strip, and the MESHES AND MATERIALS of
+//   the ring and the turn-1a marker, are `strat-editor-builder`'s lane. This file's whole
+//   output is `FStratGuidanceView` on the model plus the lock set on the selection machine,
+//   which is what that widget will bind to.
+//   [AMENDED 2026-08-23: this said "the ring mesh and the turn-1a marker are
+//   `strat-editor-builder`'s lane", which became imprecise the day the seams landed. The
+//   ring's COMPONENT and its show/clear are `AStratBoardActor::ShowObjective` /
+//   `ClearObjective`, and the marker's COMPONENT and its visibility are
+//   `AStratUnitActor::GuidedMarker` / `ApplyUnitView` -- both C++, both in this lane. What
+//   is still the content lane's is the asset half: the meshes, the material instances, and
+//   their assignment on `BP_StratBoardActor` / `BP_StratUnitActor`. NOTHING ABOUT THIS FILE
+//   CHANGED -- `FStratGuidedOpening` still draws nothing and still names no component; the
+//   sentence was describing a boundary that moved underneath it.]
 // - NO §2.11.6-A PRE-MATCH BRIEFING. Three anchored callouts over a dimmed board with a
 //   click-through are a widget and a camera state, not a beat; nothing in A is scheduled
 //   by rules 1–2 and nothing in B depends on A having run. Its three strings are not
@@ -370,10 +392,72 @@ private:
 	 * notion of what a unit is capturing — `CaptureProgress` is turns-held and the hex is
 	 * where the unit stands. §2.11.6 line 771 makes that the right join anyway: the pip is
 	 * "the arrival receipt", so a pip on a unit standing on the objective IS the arrival
-	 * the directive asked for, and the ownership flip a turn later is a different event
-	 * this beat deliberately does not wait for.
+	 * the directive asked for.
+	 *
+	 * AMENDED 2026-08-23. The sentence that stood here is retracted:
+	 * RETRACTED> "and the ownership flip a turn later is a different event this beat
+	 * RETRACTED>  deliberately does not wait for."
+	 * It is retracted because on the shipped scenario there IS no "a turn later" — the flip
+	 * happens inside the same `captureTick` that creates the pip, and the pip is erased
+	 * before any snapshot can be taken. This function is UNCHANGED and still means exactly
+	 * what it says; it is simply no longer beat 2's only retirement arm. See
+	 * `IsRingedObjectiveHeldByGuidedSide`.
 	 */
 	bool HasCapturePipLanded(const FStratViewModel& Model) const;
+
+	/**
+	 * Whether the ringed objective is held by the guided seat. Beat 2's durable observable.
+	 *
+	 * WHY THIS EXISTS, MEASURED RATHER THAN ARGUED. `HasCapturePipLanded` cannot fire on the
+	 * shipped scenario, and the defect was confirmed by a human-driven PIE session on
+	 * 2026-08-23 — the guided Infantry took the ringed objective, the factory became the
+	 * player's, and no `Guided beat 2 retired` line was emitted while `1a` and `1b` both
+	 * were. Read out of the vendored sources rather than inferred:
+	 *
+	 *   - `strat::EconomyState::captureTurns` is declared `= 1` and NOTHING sets it. The
+	 *     shipped `Data/ferrum_crossing.json` carries no `captureTurns` key and
+	 *     `strat::seedFromScenario` names the field nowhere, so the shipped match runs at 1.
+	 *   - `strat::captureTick` pushes a `CaptureProgress` with `turnsHeld = 1`, tests
+	 *     `turnsHeld >= captureTurns` in the same iteration, flips `Objective::owner`, and
+	 *     calls `strat::clearProgress`, which ERASES the entry. All inside one call.
+	 *   - `strat::captureTick` holds the only `push_back` into `EconomyState::captures` in
+	 *     the whole vendored tree, so no other path can leave one standing.
+	 *   - the projection's `progressForUnit` then finds nothing and returns 0, so
+	 *     `UiUnitView::captureProgress` — and therefore `FStratUnitView::CaptureProgress` —
+	 *     reads 0 in every snapshot that can ever be taken.
+	 *
+	 * A beat that cannot retire does not fall silent: rule 1 puts it back on the line every
+	 * turn, and the player is instructed to capture a factory they already captured. That is
+	 * the symptom this closes.
+	 *
+	 * THE SUBJECT IS UNCHANGED AND THE 2026-08-21 RULING IS UNTOUCHED. This reads the SAME
+	 * hex `HasCapturePipLanded` reads — `guidedOpening.objective` through
+	 * `FStratBridge::GuidedOpeningHexes` — so `Stratocracy.StratBridge.T-SCN-07.
+	 * GuidedOpeningHexesMatchesTheScenarioFile` is load-bearing for this arm exactly as it is
+	 * for that one. No "nearest objective" heuristic is introduced and no hex is derived.
+	 *
+	 * IT IS A READ AND NOT A DERIVATION. `FStratHexView::Owner` mirrors `UiHexView::owner`,
+	 * which `strat::buildUiSnapshot` mirrors off `Objective::owner`, and the parity clause
+	 * `Stratocracy.StratUI.T-INT-05.MirrorsSnapshotFieldForField` already pins that mirror
+	 * (its `.Owner == UiHexView::owner` assertion). There is no arithmetic here,
+	 * no distance and no legality test — one equality against a field the rules module
+	 * published.
+	 *
+	 * IT IS A STATE AND NOT AN EVENT, AND THAT IS DELIBERATE. A scenario whose ringed
+	 * objective is ALREADY the guided seat's at seed retires beat 2 on the first observation
+	 * rather than never. That is the correct answer, not a leniency: `strat::captureTick`
+	 * short-circuits on `o.owner == side`, so on such a scenario the directive "Move the
+	 * Infantry onto the ringed Factory" is already satisfied and no pip and no flip could
+	 * ever follow. Retiring at once is what stops rule 1 re-issuing an impossible
+	 * instruction — the same defect this function was written for. Measured on the shipped
+	 * data: both seats' `guidedOpening.objective` hexes appear in `ownership` with
+	 * `owner: -1`, so nothing retires early on Ferrum Crossing.
+	 *
+	 * WHAT WOULD MAKE THIS ARM WRONG: a rules change that let a side hold an objective it
+	 * did not take, or a §2.11.6 rewrite that made beat 2 about the ARRIVAL specifically
+	 * rather than about the objective becoming yours. Neither exists today.
+	 */
+	bool IsRingedObjectiveHeldByGuidedSide(const FStratViewModel& Model) const;
 
 	/** True once a friendly unit id appears that this object has not seen. See the header block. */
 	bool HasAnyUnitSpawned(const FStratViewModel& Model) const;

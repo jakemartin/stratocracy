@@ -33,11 +33,20 @@
 // to be styled individually; the answer to styling is `TerrainMeshes`, which is keyed the
 // same way the data is.
 //
-// THE TWO OVERLAYS ARE DECLARED IN C++, and the asymmetry is deliberate. `ReachOverlay`
-// and `TargetOverlay` are not data -- there are exactly two of them for as long as §2.11.1
-// has a move phase and an attack phase, they need distinct materials a designer will want
-// to see in the details panel, and neither is keyed by anything. They are constructor
+// THE OVERLAYS ARE DECLARED IN C++, and the asymmetry is deliberate. `ReachOverlay`,
+// `TargetOverlay` and `ObjectiveOverlay` are not data -- their count follows the meanings
+// the game has, not the rows a table has; they need distinct materials a designer will want
+// to see in the details panel, and none is keyed by anything. They are constructor
 // subobjects.
+//
+// THERE ARE THREE OF THEM AS OF 2026-08-23, AND THIS BLOCK USED TO SAY TWO:
+// RETRACTED> "THE TWO OVERLAYS ARE DECLARED IN C++ ... there are exactly two of them for as
+// RETRACTED>  long as §2.11.1 has a move phase and an attack phase"
+// The third is §2.11.6-B's objective ring. THE COUNT WAS NEVER THE INVARIANT -- one meaning
+// per component was -- and the retracted wording tied a structural rule to an arithmetic
+// fact that a new GDD section was always going to move. A FOURTH MEANING MUST BE A FOURTH
+// COMPONENT and never a third use of an existing one; see `ShowObjective` on why reusing
+// `TargetOverlay` for the ring was refused.
 //
 // PICKING IS AN INSTANCE-INDEX LOOKUP AND NOT A DISTANCE SEARCH. A trace against the tile
 // components returns a component and an instance index; `HexAtInstance` maps that pair
@@ -62,7 +71,12 @@
 //
 // NOT IN THIS ROUND, with reasons:
 // - Selection state, hover state, the cursor. Phase 4's PlayerController owns input and
-//   the selection machine; this class exposes the two overlays it drives and nothing more.
+//   the selection machine; this class exposes the overlays it drives and nothing more.
+//   [CORRECTED 2026-08-23: this line said "the two overlays it drives". There are THREE as
+//   of that date -- the third is §2.11.6-B's ring -- and the count was never what the
+//   sentence was about. It is now count-free rather than re-numbered, so the next section
+//   that needs a component does not have to come back here. The invariant is stated once,
+//   at "THE OVERLAYS ARE DECLARED IN C++" above: one meaning per component.]
 // - Any `/Game/` path. Every mesh and material below is an EditDefaultsOnly property set
 //   on a Blueprint default in phase 5. There is not one ConstructorHelpers lookup here and
 //   there must never be one.
@@ -209,6 +223,56 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Board")
 	void ClearTargets();
 
+	/**
+	 * §2.11.6-B's objective ring: lights the ONE hex the guided opening's beat 2 names.
+	 *
+	 * WHAT GAP THIS CLOSES. §2.11.6-B beat 2's directive reads "Move the Infantry onto the
+	 * ringed Factory", and until this landed nothing drew a ring. Confirmed at the keyboard
+	 * on 2026-08-23: the only way a player learned which factory was meant was by reading
+	 * the log. `strat-editor-builder` could not close it from `Content/` because there was
+	 * nothing in C++ to bind to -- this class declared exactly two overlays.
+	 *
+	 * A THIRD COMPONENT AND EMPHATICALLY NOT A THIRD USE OF `TargetOverlay`. That component
+	 * is §2.6's ATTACK targets and `T-UI-02.AttackIsClosedForTheMarkedInfantry` asserts
+	 * `ShowTargets` filled exactly one component and that it is not the reach one -- so a
+	 * ring drawn there would be both semantically wrong and clause-visible, and worse, it
+	 * would be lit during beat 1a precisely when that clause says nothing may be. The ring
+	 * and the attack targets are also on screen at once in the ordinary case.
+	 *
+	 * ONE HEX AND NOT A SET, and the signature says so rather than documenting it. §4.7's
+	 * `guidedOpening.objective` is a single authored hex per seat; a `TArray` here would
+	 * invite a caller to pass "every objective", which is the "nearest objective" heuristic
+	 * §2.11.6 forbids by name arriving through the back door.
+	 *
+	 * THE HEX IS HANDED IN AND IS NEVER FOUND HERE. It comes from
+	 * `FStratGuidanceView::ObjectiveHex`, which `FStratGuidedOpening::DecorateViewModel`
+	 * copied from `FStratBridge::GuidedOpeningHexes`. This class holds no bridge and could
+	 * not look one up if it wanted to -- the same inability `ShowReach` records.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Board")
+	void ShowObjective(FIntPoint Hex);
+
+	/** Clears the objective ring. Called on every refresh where guidance is not running, so
+	 *  the ring "clears in the same frame as the strip" structurally rather than by promise
+	 *  -- see `FStratGuidedOpening::SkipGuidance`. */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Board")
+	void ClearObjective();
+
+	/**
+	 * How many hexes the §2.11.6-B objective ring is currently lighting: 0 or 1.
+	 *
+	 * OFF THE COMPONENT, NOT A CACHED NUMBER, for `GetTargetOverlayCount`'s reason -- a
+	 * cached count agrees with the code that set it while disagreeing with the screen.
+	 *
+	 * IT EXISTS FOR A CLAUSE, and an accessor with no named caller is the shape that rots.
+	 * The clause is named in this change's handoff: without it, "the ring clears when
+	 * guidance goes inactive" is unobservable from outside this class, because
+	 * `ObjectiveOverlay` is protected -- the same hole `GetTargetOverlayCount` was added to
+	 * close for the attack overlay.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Board")
+	int32 GetObjectiveOverlayCount() const;
+
 	/** How many hexes are currently drawn. Exposed so a caller can tell "the board was
 	 *  never built" from "the board was built and is empty" without reaching into the
 	 *  layers, which is the same distinction `FStratBridge::MakeUiSnapshot` refuses to let
@@ -251,6 +315,12 @@ public:
 	 * RETRACTED>  the wrong component the day a third overlay lands."
 	 * A reader sent to that file looking for the scan would not have found one.
 	 *
+	 * THE HYPOTHETICAL IN THAT RETRACTED QUOTE IS NO LONGER HYPOTHETICAL, STAMPED 2026-08-23.
+	 * "The day a third overlay lands" arrived: `ObjectiveOverlay` exists. Reading these
+	 * counts BY NAME is therefore now load-bearing rather than merely tidier, and a
+	 * `GetComponents` scan for "the one that is not the reach overlay" would today return
+	 * whichever of two components the iteration order happened to reach first.
+	 *
 	 * READ-ONLY AND OFF THE COMPONENT, not off a cached number. There is deliberately no
 	 * `SetTargetCount` and no member behind this: `ShowTargets` is the only writer, the
 	 * component is the truth, and a cached count is a second answer that can disagree with
@@ -267,7 +337,10 @@ public:
 
 protected:
 	/** Nothing but a transform. The tile components are runtime-created and attach here;
-	 *  the two overlays are constructor subobjects and attach here too. */
+	 *  the overlays are constructor subobjects and attach here too.
+	 *  [CORRECTED 2026-08-23: this said "the two overlays". `ObjectiveOverlay` is a third
+	 *  `CreateDefaultSubobject` calling `SetupAttachment(BoardRoot)` beside the other two,
+	 *  so the count was false; it is now count-free for the reason the header block gives.] */
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Board")
 	TObjectPtr<USceneComponent> BoardRoot;
 
@@ -281,6 +354,11 @@ protected:
 	/** §2.6's attack targets. See `ShowTargets` on why this is a second component. */
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Board")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> TargetOverlay;
+
+	/** §2.11.6-B's objective ring. See `ShowObjective` on why this is a THIRD component and
+	 *  not a third meaning loaded onto `TargetOverlay`. */
+	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Board")
+	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> ObjectiveOverlay;
 
 	// ---- Configuration. All EditDefaultsOnly, all set on a Blueprint default. --------
 
@@ -311,8 +389,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UStaticMesh> FallbackTerrainMesh;
 
-	/** The flat quad both overlays instance. One mesh, two components, two materials --
-	 *  see `ShowTargets`. */
+	/** The flat quad every overlay instances. One mesh, three components, three materials --
+	 *  see `ShowTargets` and `ShowObjective`. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UStaticMesh> OverlayMesh;
 
@@ -321,6 +399,13 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UMaterialInterface> TargetMaterial;
+
+	/** §2.11.6-B's ring. UNSET IS LEGITIMATE AND IS THE STATE THIS SHIPS IN: the material
+	 *  instance and its assignment on `BP_StratBoardActor` are the CONTENT lane's, and this
+	 *  file must not name a `/Game/` path to fill it. Unset draws the ring in `OverlayMesh`'s
+	 *  own material, which is a visibly-wrong ring rather than an absent one. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
+	TObjectPtr<UMaterialInterface> ObjectiveMaterial;
 
 	/** How far above the tile plane the overlays sit, so they do not z-fight the tiles.
 	 *  Presentation, exposed because the right value depends on the meshes phase 5
@@ -364,7 +449,13 @@ private:
 	/** Finds or creates the layer for a terrain id, registering the component. */
 	FStratTerrainLayer& LayerFor(FName TerrainId);
 
-	/** Points an overlay component at exactly these hexes. The shared tail of `ShowReach`
-	 *  and `ShowTargets`, so the two cannot drift in how they clear or how they offset. */
+	/** Points an overlay component at exactly these hexes. The shared tail of `ShowReach`,
+	 *  `ShowTargets` AND `ShowObjective`, so they cannot drift in how they clear or how they
+	 *  offset.
+	 *  [CORRECTED 2026-08-23, AND THIS ONE WAS FOUND BY CLAIM SHAPE RATHER THAN BY THE PHRASE
+	 *  "two overlays", WHICH IT NEVER CONTAINED. It said "The shared tail of `ShowReach` and
+	 *  `ShowTargets`, so the two cannot drift" -- an overlay-count claim spelled as a caller
+	 *  list, invisible to a sweep for the wording anyone would think to grep. `ShowObjective`
+	 *  calls this too.] */
 	void FillOverlay(UHierarchicalInstancedStaticMeshComponent* Overlay, const TArray<FIntPoint>& Hexes) const;
 };

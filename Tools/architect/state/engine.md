@@ -13,6 +13,465 @@
 
 ## NEXT
 
+- **2026-08-23, `strat-gameplay-engineer`: THE OVERLAY-COUNT CLAIM IS SWEPT OUT OF THE TREE BY
+  CLAIM SHAPE, AND THE SWEEP FOUND ONE THE REVIEWER DID NOT.** Comment-only; no signature, no
+  behaviour and no `UPROPERTY` moved. Build green, suite green. `global.md` owns the count.
+  - **THE GATING FINDING WAS MINE AND IT WAS A HALF-DONE RETRACTION.** Closing the "exactly
+    two overlays" claim in `AStratBoardActor`'s header block, `ShowTargets` and `OverlayMesh`
+    left it standing in two more places in the same file, both verified false against the
+    tree: the "NOT IN THIS ROUND" bullet's "this class exposes the two overlays it drives"
+    and `BoardRoot`'s "the two overlays are constructor subobjects and attach here too".
+    `ObjectiveOverlay` is a third `CreateDefaultSubobject` and calls `SetupAttachment(BoardRoot)`
+    beside the other two. **A RETRACTION THAT DOES NOT REACH EVERY SITE IS A RETRACTION THAT
+    LEAVES THE CLAIM LOAD-BEARING SOMEWHERE**, and this is the second time this project has
+    paid for that specific shape.
+  - **A THIRD SITE WAS FOUND, AND ONLY THE SHAPE SWEEP COULD HAVE FOUND IT.** `FillOverlay`'s
+    declaration read "The shared tail of `ShowReach` and `ShowTargets`, so the two cannot
+    drift" -- **an overlay-count claim spelled as a CALLER LIST**, containing neither the word
+    "overlays" nor any number a reader would think to grep. `ShowObjective` calls it too. A
+    phrase sweep for "two overlays" returns this line zero times.
+  - **WHAT WAS SEARCHED FOR AND WHAT CAME BACK, ZEROES INCLUDED**, because a sweep that
+    reports only its hits cannot be told from a sweep that only ran one pattern. Over
+    `StratBoardActor.h`: `two overlays` 4, `both overlays` 0, `the pair` 0, `two components`
+    1, `there are exactly` 1, `second component` 2, `second material` 0, `one mesh, two` 0,
+    `the other overlay` 0, `duo` 0, `these two` 0, `two of them` 1, `overlay component` 2,
+    `\btwo\b` 15, `\bboth\b` 8, `\bexactly\b` 6, `\bpair\b` 1, `the two` 5. Every hit
+    on the three broad shapes was read rather than counted; the survivors are unrelated
+    counts (two containers, two copies of a formula, two materials on ONE component, two
+    accessors easy to conflate, two readers of a clause, two adjacent hexes, two of three
+    callers) and are listed here so the next sweeper does not re-open them.
+  - **ONE "two overlays" HIT IS KEPT DELIBERATELY AND IS NAMED SO IT IS NOT MISTAKEN FOR A
+    MISS.** `ShowObjective`'s own block says "there was nothing in C++ to bind to -- this
+    class declared exactly two overlays". That is PAST TENSE inside a what-gap-this-closes
+    narrative and is true of the tree before this change; rewriting it would delete the
+    reason the component exists. The other two surviving hits are inside `RETRACTED>` quotes,
+    which is what a retraction looks like when it works.
+  - **THE CORRECTIONS ARE COUNT-FREE RATHER THAN RE-NUMBERED, WHICH IS THE ACTUAL FIX.**
+    "the overlays it drives", "the overlays are constructor subobjects", "`ShowReach`,
+    `ShowTargets` AND `ShowObjective`". Re-numbering to three would have rebuilt the same
+    trap for whichever GDD section needs a fourth component. **The invariant is stated once**,
+    in the header block: ONE MEANING PER COMPONENT. A count is a fact; that is a rule.
+  - **ALL THREE NON-GATING SENTENCES WERE TAKEN, AND ONE WAS TAKEN AGAINST THE ARGUMENT FOR
+    DECLINING IT.** `UStratMatchSubsystem::GetBoard`'s "the selection machine drives the two
+    overlays through it" was TRUE -- the machine owns exactly two highlight sets and does not
+    know the ring exists. It was amended anyway, because a reader arriving at it by grepping
+    the count generalises it to the board, and an understatement that reads as a total is how
+    a true sentence teaches a false thing. `AStratPlayerController::RefreshFromMachine`'s
+    declaration and its `.cpp` counterpart were genuinely stale: that path repaints three
+    overlays by two routes, this class calling `ShowReach` / `ShowTargets` itself while the
+    ring rides the `ApplyView` step. Its step list is accurate for what that class does and
+    was left alone; only the count moved.
+  - **`StratGuidedOpening.h`'S LANE SENTENCE IS AMENDED AND THE BOUNDARY IS RESTATED WHERE IT
+    ACTUALLY FELL.** It said "the ring mesh and the turn-1a marker are `strat-editor-builder`'s
+    lane". The ring's COMPONENT and its show/clear are `AStratBoardActor::ShowObjective` /
+    `ClearObjective`, and the marker's COMPONENT and its visibility are
+    `AStratUnitActor::GuidedMarker` / `ApplyUnitView` -- C++, this lane. What remains the
+    content lane's is the ASSET half: meshes, material instances, and their assignment on
+    `BP_StratBoardActor` / `BP_StratUnitActor`. **Nothing about `FStratGuidedOpening` changed**
+    -- it still draws nothing and names no component; the sentence described a boundary that
+    moved underneath it.
+  - **BUILD GREEN, AND A COMMENT-ONLY CHANGE WAS NOT ARGUED TO BE SAFE.** Plain `Build.bat`,
+    no `-NoHotReloadFromIDE`, editor re-verified absent: `Result: Succeeded`, `REAL_EXIT=0`,
+    136.70 s, twenty-five actions -- twenty-two compiles including `Module.StratPlay.gen.cpp`,
+    then both links. Five headers changed, so UHT and every dependent TU rebuilt; that is why
+    the run is bigger than the diff.
+  - **SUITE GREEN AND THE FIGURE HELD, MEASURED RATHER THAN INFERRED.** Zero non-Success,
+    `notRun` zero, `reportCreatedOn 2026.08.23-23.48.14` (UTC; 19:48:14 local). **CLAUSE DELTA
+    ZERO BY MACRO SET-DIFFERENCE** -- `IMPLEMENT_SIMPLE_AUTOMATION_TEST` over `Source/` reads
+    identically before and after, correct because this agent writes none. **NO FIGURE IS
+    WRITTEN HERE**; `global.md` owns it and it went to the coordinator. The clause that was
+    red by design in the previous pass is green again, which is the test author's update
+    landing and not anything this pass did.
+  - **`Saved/SaveGames/` ENUMERATED ZERO BEFORE AND ZERO AFTER**, directory mtime moving
+    19:09:36 -> 19:48:13, the run's own minute.
+  - **WHAT WAS NOT DONE.** `global.md`, `content.md`, `decisions.md` and `tests.md` were not
+    touched -- the record finding is the coordinator's and the steward's. No clause was
+    written or edited. No `Content/` asset was touched, so **nothing has been seen on a
+    screen** and this pass changes nothing about that.
+
+- **2026-08-23, `strat-gameplay-engineer`: THE TURN-1a MARKER IS FILTERED TO THE VIEWING SIDE,
+  AND A FALSE SENTENCE THIS LANE WROTE IS RETRACTED WHERE IT WAS BORN.** Build green; one
+  clause red ON PURPOSE and named below. `global.md` owns the count and the verdict.
+  - **THE PREMISE WAS RE-VERIFIED IN THIS TREE BEFORE ANY CODE MOVED.**
+    `Data/ferrum_crossing.json` authors `guidedOpening` for BOTH seats -- side 0
+    `infantry [1, 5]`, side 1 `infantry [9, 3]` -- so two units carry `bIsGuidedMarked` at
+    once and the unfiltered pass-through marked the ENEMY seat's Infantry on the player's
+    screen. **THE USER RULED IT OUT:** a marker that says "select this" pointing at a unit
+    the player cannot select is confusing. That reasoning is carried in `GuidedMarker`'s own
+    block, not only here.
+  - **THE FILTER LANDED IN `AStratUnitActor::ApplyUnitView`, WHICH GREW A THIRD PARAMETER,
+    AND THE VIEWING SIDE COMES OFF THE MODEL RATHER THAN OFF THE SUBSYSTEM.** The predicate
+    is `View.bIsGuidedMarked && View.Side == ViewingSide` -- two published fields ANDed, no
+    derivation, no lookup, no hex comparison, and `bIsGuidedMarked` still read off
+    `placement` by the rules module and never recomputed here.
+    `UStratMatchSubsystem::ApplyView` passes `Model.ViewingSide`.
+  - **`UStratMatchSubsystem::GetViewingSide` EXISTS, WAS THE OTHER CANDIDATE, AND WAS
+    REFUSED -- BY A SENTENCE ALREADY IN THE TREE.** `FStratViewModel::ViewingSide`'s own
+    declaration block says it lives on the model "rather than in the actor that draws it so
+    that 'what should be on screen' is a function of this value alone -- a viewing side held
+    beside the model is a second input, and T-INT-05 would then be about two things". The
+    subsystem's member is equal to the model's on every path that reaches `ApplyView` TODAY;
+    reading it from the actor would make the marker a function of the model PLUS a member,
+    and a stale member would put the mark on the wrong seat with a green build.
+  - **THE THIRD PARAMETER IS NOT DEFAULTED, DELIBERATELY.** A default would have let a future
+    caller get an unfiltered marker silently; making it a compile error is the cheaper
+    failure. It cost nothing to require: `ApplyUnitView` has exactly ONE caller in the whole
+    tree -- measured, `grep` for `ApplyUnitView(` outside its own declaration returns one
+    line, in `UStratMatchSubsystem::ApplyView` -- and no file under `Tests/` calls it
+    directly, so no lane but this one had to move.
+  - **EXACTLY ONE CLAUSE WENT RED AND IT IS THE ONE THAT WAS SUPPOSED TO.**
+    `Stratocracy.StratPlay.T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex`, with two
+    assertions failing, both about unit 7 (side 1) and neither about unit 3 (side 0, the
+    viewing seat): *"before the move: unit 7's turn-1a marker equals ITS OWN published
+    `bIsGuidedMarked` -- a pass-through, not a side policy (the guided seat's marked unit is
+    3; 2 units carry the bit): The two values are not equal."* and *"after the move: unit 7's
+    turn-1a marker still equals ITS OWN published `bIsGuidedMarked`: The two values are not
+    equal."* Its author wrote it against the unfiltered pass-through knowing a filter would
+    turn it red. **NOT EDITED -- `Tests/` is not this lane** -- and NOT worked around. NO
+    OTHER CLAUSE MOVED, which is the finding that matters: 197 Success, 1 Fail, 0 notRun, so
+    the failure set is exactly the predicted singleton and not a superset.
+  - **A FALSE SENTENCE THIS LANE WROTE IS RETRACTED AT ITS SOURCE, AND IT HAD ALREADY
+    PROPAGATED TWO HOPS.** `AStratUnitActor::IsGuidedMarkerVisible`'s block claimed it
+    answers "FALSE WITH NO MARKER MESH ASSIGNED" and concluded that a clause must "assign
+    `GuidedMarkerMesh` on the spawned actor first". `USceneComponent::IsVisible` consults
+    `bHiddenInGame`, the visible flag and the cached level collection -- NOT the static mesh
+    -- so it answers TRUE for a marked unit whose marker draws nothing. Measured by
+    `strat-test-author` in the suite; never measured by the author who wrote it. It reached
+    a dispatch brief and from there a test author's instructions, which is why this is
+    recorded as a propagation and not as a stray comment: **an unmeasured sentence in a
+    declaration block is an instruction to everyone downstream.**
+  - **THE CONSEQUENCE IS THE HONEST LIMIT OF THIS SEAM AND IT IS NOW IN THE HEADER.**
+    `IsGuidedMarkerVisible` reports a FLAG, NOT PIXELS. It cannot say whether
+    `GuidedMarkerMesh` was ever assigned and it cannot say a marker reached the screen, so
+    **"the marker is actually on screen" has NO headless gate at all** and none is available
+    from this class. The `BeginPlay` log line is the only place "unconfigured" is
+    distinguishable from "not marked", and that path is still reached by no clause.
+  - **FOUR COMMENTS THIS CHANGE FALSIFIED WERE AMENDED IN THE SAME CHANGE.**
+    `GuidedMarker`'s "PASS-THROUGH OF ONE PUBLISHED FIELD" is retracted in place and now says
+    two, with the ruling attached; `IsGuidedMarkerVisible`'s false sentence and the "assign
+    the mesh first" instruction that rested on it are retracted together;
+    `GuidedMarkerMesh`'s "`IsGuidedMarkerVisible` answers false" clause is corrected; and
+    `UStratMatchSubsystem::ApplyView`'s "this function knowing nothing about either" is
+    amended, because it now supplies an argument -- it still decides nothing.
+  - **BUILD GREEN.** Plain `Build.bat`, no `-NoHotReloadFromIDE`, editor re-verified absent
+    by `tasklist` with `explorer.exe` PID 13508 as the control: `Result: Succeeded`,
+    `REAL_EXIT=0`, 94.50 s, seventeen actions including `Module.StratPlay.gen.cpp`. Zero
+    warnings, zero errors.
+  - **SUITE RAN IN THIS TREE, HEADLESS, EDITOR CLOSED.** `reportCreatedOn
+    2026.08.23-22.51.00` (UTC; 18:51:00 local), `notRun` zero, one Fail as named above.
+    **CLAUSE DELTA ZERO BY MACRO SET-DIFFERENCE** -- `IMPLEMENT_SIMPLE_AUTOMATION_TEST` over
+    `Source/` reads the same before and after, correct because this agent writes none. **NO
+    FIGURE IS WRITTEN HERE**; `global.md` owns it and the figure went to the coordinator.
+  - **THE MARKER WRITER IS OBSERVED EXECUTING AND ITS `BeginPlay` STILL IS NOT.**
+    `ApplyUnitView` ran 1757 times in this run, counted off the pre-existing unconditional
+    `No mesh assigned for unit definition` line. `Saved/SaveGames/` enumerated zero before
+    and zero after, directory mtime moving 18:37:24 -> 18:51:00, the run's own minute.
+  - **WHAT WAS NOT DONE.** The red clause was not edited and no clause was written --
+    `Tests/` is not this lane; the update is owed to `strat-test-author` and the symbol names
+    it needs are `AStratUnitActor::ApplyUnitView` (third parameter `ViewingSide`),
+    `FStratViewModel::ViewingSide`, and `AStratUnitActor::IsGuidedMarkerVisible`. No
+    `Content/` asset was touched, so **nothing draws yet and nobody has seen a marker on a
+    screen** -- the filter is proved by a flag and by one clause going red in the predicted
+    place, not by pixels.
+
+- **2026-08-23, `strat-gameplay-engineer`: THE RING AND THE MARKER NOW HAVE C++ SEAMS. THE
+  CONTENT LANE WAS BLOCKED BY AN ABSENCE IN THIS LANE AND IT IS NOT ANY MORE.** Build green,
+  suite green in this tree; `global.md` owns the count and the verdict and neither is stated
+  here.
+  - **THE BLOCK WAS REAL AND IT WAS THIS LANE'S.** §2.11.6-B beat 1a says "Select the marked
+    Infantry" and beat 2 says "the ringed Factory"; nothing on screen was marked or ringed, and
+    the user learned the objective hex by reading the log. `strat-editor-builder` could not fix
+    it from `Content/` because there was nothing declared to bind to: `AStratBoardActor` had
+    exactly two overlay components and `AStratUnitActor` had one component and one `UFUNCTION`.
+    Verified in this tree before building anything.
+  - **RING: A THIRD OVERLAY, AND REUSING `TargetOverlay` WAS REFUSED FOR TWO REASONS, NOT ONE.**
+    `AStratBoardActor::ObjectiveOverlay`, with `ShowObjective` / `ClearObjective` /
+    `GetObjectiveOverlayCount` and an `EditDefaultsOnly` `ObjectiveMaterial` left UNSET. The
+    semantic reason is that `TargetOverlay` is §2.6's ATTACK targets. The sharper one is
+    clause-visible and would have failed loudly: `T-UI-02.AttackIsClosedForTheMarkedInfantry`
+    asserts the attack overlay is dark during beat 1a, and beat 1a and the ring are on screen
+    together - a ring drawn there would have lit the very component that clause says must be
+    empty, so this was never a style question.
+  - **`ShowObjective` TAKES ONE HEX AND NOT A `TArray`, AND THE SIGNATURE IS THE GUARD.**
+    §4.7's `guidedOpening.objective` is one authored hex per seat. A set-shaped parameter would
+    invite a caller to pass "every objective", which is the "nearest objective" heuristic
+    §2.11.6 forbids by name arriving through a parameter list instead of through a function.
+    Internally it goes through the same private `FillOverlay` the other two use, so the ring
+    cannot drift from the highlights in how it clears or how it is Z-offset.
+  - **[AMENDED 2026-08-23, LATER THE SAME DAY, BY THIS ENTRY'S OWN AUTHOR: THE MARKER IS NOW
+    FILTERED TO THE VIEWING SIDE, ON A USER RULING, SO "ONE BOOL" AND "FROM NOTHING ELSE"
+    BELOW ARE SUPERSEDED BY THE ENTRY ABOVE.** Kept rather than rewritten: the unfiltered
+    pass-through is what a clause was written against, and the next reader needs to see that
+    the second operand arrived by ruling rather than that it was always there.]** MARKER: A
+    COMPONENT ON `AStratUnitActor`, DRIVEN OFF THE VIEW THAT ACTOR WAS ALREADY HANDED. `GuidedMarker`, a `VisibleAnywhere`
+    component; plus THREE `EditDefaultsOnly` properties this change added to
+    `AStratUnitActor` -- `GuidedMarkerMesh`, `GuidedMarkerMaterial` and
+    `GuidedMarkerZOffset` -- of which TWO ship unset and `GuidedMarkerZOffset` carries a real
+    default of `150.0f`; and `AStratUnitActor::IsGuidedMarkerVisible` as the clause seam.
+    **THE SCOPE OF THAT COUNT IS THIS ACTOR AND THIS CHANGE, AND IT IS STATED BECAUSE STATING
+    IT IS THE FIX.** `AStratUnitActor` carries SEVEN `EditDefaultsOnly` properties in total --
+    `MeshByDefId`, `FallbackMesh`, `SideMaterials` and `BodyZOffset` predate this change -- so
+    "the `EditDefaultsOnly` properties on this actor" would be a third wrong number. The
+    feature's third unset asset reference is `AStratBoardActor::ObjectiveMaterial`, which is on
+    the BOARD actor and is covered by the RING bullet above; it does not belong in this count.
+    **[CORRECTED 2026-08-23, TWICE, AND BOTH ARE SHOWN BECAUSE THE SEQUENCE IS THE LESSON.**
+    FIRST it read "all `EditDefaultsOnly` and all UNSET" -- false, because `GuidedMarkerZOffset`
+    is `= 150.0f`. THEN the correction itself read "all four `EditDefaultsOnly`, of which THREE
+    are unset" -- **false in two independent ways in one sentence**, and it CONTRADICTED THE STAMP
+    IT WAS PART OF, which said in the same edit that `GuidedMarker` is `VisibleAnywhere` and not
+    in the set. (That stamp's wording is superseded by this one; do not look for it below, it is
+    not there. The true statement was written in the stamp and the false one in the sentence the
+    stamp was correcting, four lines apart, by one author in one pass.) The denominator wrongly counted `GuidedMarker`, a `CreateDefaultSubobject`
+    component that can never be unset; and the numerator, THREE, only balanced by importing
+    `AStratBoardActor::ObjectiveMaterial` -- a property on a DIFFERENT ACTOR -- across a scope
+    boundary into a bullet whose subject is one actor.
+    **THE MEASUREMENT, RE-DERIVED FROM THE HEADERS FOR THIS BULLET'S ACTOR ONLY AND REUSING
+    NEITHER PREVIOUS NUMBER:** `git diff` on `Source/StratPlay/StratUnitActor.h` adds exactly
+    four `UPROPERTY`s -- `UPROPERTY(VisibleAnywhere)` on
+    `TObjectPtr<UStaticMeshComponent> GuidedMarker`, and `UPROPERTY(EditDefaultsOnly)` on
+    `TObjectPtr<UStaticMesh> GuidedMarkerMesh`, `TObjectPtr<UMaterialInterface>
+    GuidedMarkerMaterial` and `float GuidedMarkerZOffset = 150.0f`. Three `EditDefaultsOnly`;
+    two with no initialiser.
+    **WHAT THE THREE ROUNDS HAVE IN COMMON, AND IT IS NOT CARELESSNESS WITH ARITHMETIC.** Round
+    one named a set that was not the set measured. Round two counted across a scope the sentence
+    did not own. NEITHER IS A COUNTING ERROR -- both are SCOPE errors that produced a wrong
+    count as a symptom, which is why re-checking the number would not have caught either. The
+    procedure that does catch them is the one the coordinator imposed on round three: **state
+    the scope of the sentence in the sentence, then count only inside it.** The previous
+    correction closed with "a recorded lesson is not a guard; only a measurement at the moment
+    of writing is" -- and then got it wrong again while writing that very sentence, which is the
+    second data point for its own claim and the reason it is left standing rather than
+    softened.]**
+    `AStratUnitActor::ApplyUnitView` sets visibility from `FStratUnitView::bIsGuidedMarked` and
+    from nothing else - no hex comparison against `guidedOpening.infantry`, which
+    `StratGuidedOpening.h` records as the trap that would unmark the unit at the exact moment
+    beat 1a needs it marked, because that beat's entire content is that the unit MOVES.
+  - **SET IN BOTH DIRECTIONS ON EVERY CALL, WHICH IS THE SAME RULE `PublishLocks` ALREADY
+    CARRIES.** A writer that only ever SHOWS is a writer whose hide can be missed on one path,
+    and for this bit that means a permanent marker on a unit the §2.11.6 window closed on. Same
+    for the ring: the `ApplyView` call site has an `else` that clears, so "the ring and the
+    marker clear in the same frame as the strip" - `FStratGuidedOpening::SkipGuidance`'s wording
+    - is structural. The clear and the strip's push are a few lines apart in one function, on
+    one value, and neither surface has a second driver.
+  - **ONE CALL SITE FOR THE RING AND ZERO FOR THE MARKER, AND THE ASYMMETRY IS THE POINT.**
+    `UStratMatchSubsystem::ApplyView` drives the ring because the board is not per-unit. The
+    marker needs no call site there at all: `ApplyUnitView` is already called once per unit per
+    refresh from that same function, so the subsystem knows nothing about the marker and the two
+    visuals still ride one refresh. A second call site would have been a second driver.
+  - **NEITHER VISUAL PERFORMS ARITHMETIC OR A DERIVATION.** The ring reads
+    `FStratGuidanceView::bActive` and `bHasObjectiveRing` as a visibility condition and copies
+    `ObjectiveHex`; the marker copies one bool (TWO as of the ruling in the entry above). `bHasObjectiveRing` is read because
+    `FStratGuidanceView` declares that it alone qualifies `ObjectiveHex` - `FIntPoint(0, 0)` is a
+    real hex and cannot signal its own absence, the trap this project has now paid for three
+    times. **This is not T-UI-03's forbidden arithmetic**: no number is drawn and no widget
+    renders the conjunction.
+  - **NO `/Game/` LITERAL AND NO ASSET WAS TOUCHED.** THIS BULLET'S SCOPE IS THE WHOLE
+    FEATURE -- both actors -- and it is named here so that it cannot be read as disagreeing
+    with the MARKER bullet above, whose scope is `AStratUnitActor` alone and which therefore
+    correctly says TWO. THREE of the four new configuration properties this change added
+    across `AStratBoardActor` and `AStratUnitActor` ship unset -- `ObjectiveMaterial`,
+    `GuidedMarkerMesh`, `GuidedMarkerMaterial`, which is every one that decides whether
+    anything DRAWS; the meshes, the
+    material instances and their assignment on `BP_StratBoardActor` / `BP_StratUnitActor` are
+    the CONTENT lane's and are what actually makes either visual appear.
+    **[CORRECTED 2026-08-23. THIS READ "All four new configuration properties ship UNSET" AND
+    IT IS THREE.** `GuidedMarkerZOffset` is `= 150.0f` and has nothing to do with whether
+    anything draws -- it is how high the marker floats once it does.
+    **THE SUBJECT WAS WRONG, NOT THE SCOPE, WHICH IS WHY IT SURVIVED:** narrowing "all" to
+    "most" would not have caught it, because the sentence named a DIFFERENT SET than the one
+    that was measured. A quantifier check passes cleanly over a mis-named subject.
+    **THIS FILE ALREADY CARRIED THE WARNING AND THE WARNING DID NOT STOP IT.** An entry
+    further down says in as many words that "this project has already paid once for treating a
+    real default as an unset marker" -- about `FIntPoint(0, 0)` and `ProductionMenuHex` -- and
+    the same author, in the same file, then wrote a real `float` default into a set defined by
+    being unset. A recorded lesson is not a guard; only a measurement taken at the moment of
+    writing is.
+    **THE FIGURE CAME IN FROM A DISPATCH AND WAS NOT INVENTED HERE, AND THAT IS THE LESS
+    USEFUL HALF OF THE FINDING** -- it was reproduced here without being checked against the
+    header this same agent had written minutes earlier, which no provenance excuses.]**
+    **UNTIL THAT LANDS, NOTHING DRAWS** - the seam is necessary and is not sufficient, and this
+    entry does not claim the section is unblocked on screen, only that the binding surface
+    exists.
+  - **THE TWO UNSET CASES ARE REPORTED DIFFERENTLY ON PURPOSE.** A missing `GuidedMarkerMesh` is
+    logged once per actor at `BeginPlay`, because an unconfigured marker and an unmarked unit are
+    indistinguishable on screen and have entirely different fixes. A missing `ObjectiveMaterial`
+    is SILENT, because a ring with no material still draws in the mesh's own material - a
+    visibly-wrong ring, which needs no log line to find. Only a missing `OverlayMesh`, which
+    draws nothing at all, keeps the loud line.
+  - **THE BOARD ACTOR'S HEADER SAID "THERE ARE EXACTLY TWO OF THEM" AND THAT IS RETRACTED IN
+    PLACE.** The count was never the invariant; ONE MEANING PER COMPONENT was, and the retracted
+    wording tied a structural rule to an arithmetic fact a new GDD section was always going to
+    move. `GetTargetOverlayCount`'s block is stamped too: its "the day a third overlay lands"
+    hypothetical is no longer hypothetical, so reading these counts BY NAME is now load-bearing
+    rather than merely tidier. `AStratUnitActor`'s "NOT IN THIS ROUND" bullet about the
+    DONE/locked visual is amended to draw the contrast rather than left to look inconsistent:
+    `bIsGuidedMarked` names one unit for the whole match and its directive is unreadable without
+    it, where `bDone` and `bLockedThisTurn` change several times a turn and §2.11 has not said
+    what they look like. That bullet still stands for those two bits.
+  - **BUILD GREEN.** `Build.bat` with the documented arguments and NO `-NoHotReloadFromIDE`,
+    editor confirmed absent: `Result: Succeeded`, `REAL_EXIT=0`, 114.94 s, nineteen actions,
+    including `Module.StratPlay.gen.cpp` - so UHT parsed the new `UFUNCTION`s and `UPROPERTY`s -
+    and all four changed sources compiled as their own translation units per
+    `[Adaptive Build] Excluded from StratPlay unity file`. Zero warnings, zero errors.
+  - **SUITE GREEN IN THIS TREE.** Zero non-Success, `notRun` zero.
+    `reportCreatedOn 2026.08.23-22.10.25` (UTC; 18:10:25 local). Clause delta ZERO by macro
+    set-difference over `Source/`, unchanged across both passes. `Saved/SaveGames/` enumerated
+    zero before and zero after, directory mtime moving 18:03:09 -> 18:10:24, the run's own
+    minute. **NO FIGURE IS WRITTEN HERE**; `global.md` owns it.
+  - **THE MARKER'S PER-REFRESH WRITER IS OBSERVED EXECUTING; NEITHER `BeginPlay` PATH IS.**
+    `ApplyUnitView` ran 1697 times in this run - counted off the pre-existing
+    `No mesh assigned for unit definition` line, which is unconditional on that path - so the
+    `SetVisibility(View.bIsGuidedMarked)` line executed 1697 times without incident. But
+    `Saved/Logs/Stratocracy.log` carries ZERO `GuidedMarkerMesh set` lines AND zero
+    `has no OverlayMesh set` lines, and the second is PRE-EXISTING board behaviour. **So no
+    clause in this suite reaches EITHER actor's `BeginPlay`**, the mesh/material assignment path
+    is unobserved, and it will first execute in PIE. Stated because a green suite over this
+    change proves the writer and not the configuration.
+  - **WHAT WAS NOT DONE AND CANNOT BE CLAIMED.** No clause was written - `Tests/` is not this
+    lane, and four are named in the handoff. No `Content/` asset was touched. **Nobody has SEEN
+    a ring or a marker**: injected input never reaches `UPlayerInput` on this project, so that
+    needs the content defaults plus a human at the keyboard, and it is the one thing that would
+    close §2.11.6-B's visual half. OWNED: coordinator, to schedule.
+
+- **2026-08-23, `strat-gameplay-engineer`: SEC 2.11.6-B'S BEAT 2 COULD NOT RETIRE ON THE SHIPPED
+  SCENARIO. THE CODE IS WRITTEN AND NOTHING HAS COMPILED IT.** No suite count and no verdict is
+  stated here; `global.md` owns both.
+  - **THE DISPATCH BRIEF'S MECHANISM IS CONFIRMED, AND IT WAS RE-DERIVED FROM THE VENDORED
+    SOURCES RATHER THAN TAKEN ON REPORT.** Four readings, each independently checkable:
+    `strat::EconomyState::captureTurns` is declared `= 1` and NOTHING assigns it — the shipped
+    `Data/ferrum_crossing.json` carries no `captureTurns` key and it is named in no loader, so
+    the shipped match runs at 1. `strat::captureTick` pushes a `CaptureProgress` with
+    `turnsHeld = 1`, tests `turnsHeld >= captureTurns` in the same iteration, flips
+    `Objective::owner` and calls `strat::clearProgress`, which erases the entry — one call.
+    That `push_back` is the ONLY write into `EconomyState::captures` anywhere in the vendored
+    tree, so no other path can leave one standing. The projection's `progressForUnit` therefore
+    finds nothing and returns 0, so `UiUnitView::captureProgress` and
+    `FStratUnitView::CaptureProgress` read 0 in every snapshot that can ever be taken, and
+    `FStratGuidedOpening::HasCapturePipLanded` is unreachable at `captureTurns = 1`.
+  - **[RETRACTED 2026-08-23, SAME DAY, BY THIS ENTRY'S OWN AUTHOR AFTER A COORDINATOR
+    CORRECTION. THE TWO HEXES ARE THE SAME HEX AND THERE WAS NEVER A DISCREPANCY.** The bullet
+    below is KEPT rather than deleted because the reading was reasonable and the next person to
+    diff a scenario file against a log needs to see why it was wrong.] It said:
+    RETRACTED> "ONE FIGURE IN THE BRIEF IS REFUTED BY THE TREE, AND IT DOES NOT CHANGE THE
+    RETRACTED>  DIAGNOSIS. The brief names the ringed objective as `(2, 7)`.
+    RETRACTED>  `Data/ferrum_crossing.json`'s `guidedOpening` block authors `objective` as
+    RETRACTED>  `[5, 7]` for side 0 and `[6, 2]` for side 1; `(2, 7)` is a capturable hex in
+    RETRACTED>  the `ownership` block (`owner: -1`) and is NOT either seat's ring. Either the
+    RETRACTED>  session captured a different factory than the one it was directed to — in which
+    RETRACTED>  case beat 2 correctly did not retire, and the 2026-08-21 ruling was doing its
+    RETRACTED>  job — or the hex was mis-transcribed. Nobody re-ran the session, so this is NOT
+    RETRACTED>  settled."
+  - **WHY THAT WAS WRONG: A SCENARIO AUTHORS ODD-R OFFSET AND THE RUNTIME SPEAKS AXIAL.** Two
+    coordinate systems, one bracket notation, and nothing in the JSON says which it is.
+    `Source/StratRules/Hex.h` states the conversion in its own comment — "odd-r offset <-> axial
+    (§4.7): q = col - (row - (row & 1)) / 2, r = row" — and `Source/StratRules/Save.h` says
+    "PARSED STATE HOLDS AXIAL ONLY. Hexes are authored odd-r `[col, row]`, converted at" parse.
+    So authored `[5, 7]` is col 5, row 7, and q = 5 - (7 - (7 & 1)) / 2 = 5 - 3 = 2, r = 7 —
+    **axial (2, 7)**, exactly what the log printed in two separate sessions. Re-derived here
+    against those two headers rather than taken on report.
+  - **WHAT THAT PUTS BACK, AND IT ALL RUNS THE FIX'S WAY.** The user stood on the RIGHT ringed
+    objective; beat 2 genuinely failed to retire on the hex it was supposed to retire on; the
+    observed symptom IS evidence of the defect and not a confounder; and
+    `T-SCN-07.GuidedOpeningHexesMatchesTheScenarioFile` is green because it is CORRECT, not
+    because it is weak — it compares like with like across the same conversion. Nothing about
+    the fix or its reasoning changes; only the confidence it rests on, which goes UP.
+  - **THE DURABLE LESSON, AND IT IS NOT ABOUT THIS HEX.** A bracketed integer pair in
+    `Data/ferrum_crossing.json` and a bracketed integer pair in a `LogStratPlay` line are
+    DIFFERENT COORDINATE SYSTEMS that print identically, and a straight comparison between them
+    manufactures a discrepancy for roughly every hex with an odd row. Convert before comparing,
+    or compare through `FStratBridge::GuidedOpeningHexes`, which has already converted.
+  - **THE FIX IS A SECOND OBSERVABLE OR'd ONTO BEAT 2, AND THE SUBJECT IS UNCHANGED.**
+    `FStratGuidedOpening::IsRingedObjectiveHeldByGuidedSide` is new: it reads
+    `FStratHexView::Owner` at the SAME hex `HasCapturePipLanded` reads —
+    `guidedOpening.objective` through `FStratBridge::GuidedOpeningHexes`. The 2026-08-21 user
+    ruling is untouched, no "nearest objective" heuristic is introduced, no hex is derived, and
+    there is no arithmetic: one equality against a field the rules module published.
+    `Stratocracy.StratBridge.T-SCN-07.GuidedOpeningHexesMatchesTheScenarioFile` is load-bearing
+    for the new arm exactly as it already was for the old one.
+  - **THE PIP ARM IS KEPT RATHER THAN REPLACED, AND THAT WAS A CALL.** Deleting it would drop
+    §2.11.6's own named trigger, and at `captureTurns >= 2` the pip is the EARLIER of the two —
+    the arrival receipt, not the deed. Keeping both also means every existing clause in
+    `Source/StratPlay/Tests/StratGuidedOpeningClauses.cpp` that plants `CaptureProgress` stays
+    green, so this change is additive to the suite rather than a rewrite of another lane's file.
+  - **`FStratHexView` AND NOT `FStratFactoryView`.** `guidedOpening.objective` is an
+    `strat::Objective` and is not obliged to sit on Factory terrain; §2.11.6 says "ringed
+    Factory" because that is what Ferrum Crossing authored. `FStratHexView::Owner` mirrors
+    `UiHexView::owner` for every capturable hex, so the arm survives a scenario whose ring is a
+    Town. A non-capturable hex reads `INDEX_NONE` (`== strat::OWNER_NEUTRAL`), which can never
+    equal a side, so a mis-authored objective fails CLOSED.
+  - **THE ARM IS A STATE AND NOT AN EVENT, DELIBERATELY.** A scenario seeding the ring already
+    held by the guided seat retires beat 2 on the first observation. That is correct, not
+    lenient: `strat::captureTick` short-circuits on `o.owner == side`, so no pip and no flip
+    could ever follow there, and rule 1 would re-issue an impossible instruction forever — the
+    same defect. Measured on the shipped data: both seats' objective hexes appear in `ownership`
+    with `owner: -1`, so nothing retires early on Ferrum Crossing. The alternative shape — latch
+    the ring's owner at the first `Observe` and retire on a CHANGE — was rejected for adding a
+    second piece of remembered state beside `SeenFriendlyUnitIds` to make the machine WORSE in
+    the only case the two differ on.
+  - **THE RETIREMENT LOG NOW NAMES WHICH ARM FIRED** (`pip=`, `held=`), because the two mean
+    different things to a reader of a session log and a single line would let this fix look like
+    it worked for the reason nobody checked. The `Guided beat 2 retired on turn %d:` prefix is
+    preserved. No test captures that string — the one existing reference is a `TestFalse` on a
+    bool, not a log filter.
+  - **TWO COMMENTS THIS CHANGE FALSIFIED WERE AMENDED IN THE SAME CHANGE.**
+    `HasCapturePipLanded`'s block said "the ownership flip a turn later is a different event
+    this beat deliberately does not wait for" — retracted in place, because on the shipped
+    scenario there is no "a turn later": the flip and the pip's erasure are the same call. The
+    header's four-retirement-triggers list and its "every fact this machine branches on" list
+    both carry the new observable and the measurement behind it.
+  - **[SUPERSEDED 2026-08-23, LATER THE SAME DAY, BY THIS ENTRY'S OWN AUTHOR. THE EDITOR
+    CLOSED, THE TREE BUILT, AND THE SUITE RAN IN IT.** The bullet below reported a tree with no
+    compiler output at all, and that was true of the tree it described. It is KEPT rather than
+    deleted because its finding is durable and is a DIFFERENT finding from the `LNK1104` one
+    this record already carries: the Live Coding mutex aborts ahead of the action graph, so a
+    mutex block yields ZERO compile actions and zero diagnostics, where the DLL write lock
+    yields a full compile and then a link failure. A reader who has only ever seen the second
+    would misread the first as a code fault. **Do not read the bullet below as a live
+    instruction to rebuild.**]**
+  - **THE BUILD IS GREEN UNDER THE PLAIN DOCUMENTED COMMAND, WITH NO FLAG, AND THE EDITOR'S
+    ABSENCE WAS RE-VERIFIED HERE RATHER THAN TAKEN ON REPORT.** `tasklist` returns `INFO: No
+    tasks are running which match the specified criteria.` for `UnrealEditor.exe`, with
+    `explorer.exe` PID 13508 listed in the same round as the control that shows the instrument
+    can speak. `Build.bat` with the documented arguments and NO `-NoHotReloadFromIDE`:
+    `Result: Succeeded`, `REAL_EXIT=0`, 56.29 s, fifteen actions. `[7/15] Compile [x64]
+    StratGuidedOpening.cpp` is the first compile these bytes have ever had, and
+    `[Adaptive Build] Excluded from StratPlay unity file: StratGuidedOpening.cpp` confirms the
+    file was compiled as its own translation unit rather than folded into a cached unity blob.
+    Zero warnings, zero errors, both links completed.
+  - **THE SUITE RAN IN THIS TREE, HEADLESS, EDITOR CLOSED, AND IT IS GREEN.** Zero non-Success
+    and `notRun` zero, every entry `Success`. `reportCreatedOn 2026.08.23-22.03.10` — UTC, which
+    is 18:03:10 local; do not "correct" either stamp to match the other. **NO FIGURE IS WRITTEN
+    HERE AND NONE MAY BE:** `global.md` owns the count, and the figure went to the coordinator.
+    **THE CLAUSE DELTA IS ZERO AND IT WAS MEASURED BY MACRO SET-DIFFERENCE, NOT BY NAME** — the
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` count over `Source/` is identical before and after, which
+    is correct: this agent writes none.
+  - **THE EXISTING PIP-DRIVEN CLAUSES STAYED GREEN, WHICH IS THE SPECIFIC THING THE OR ARM
+    RISKED.** Four `Guided beat 2 retired` lines in `Saved/Logs/Stratocracy.log` from this run,
+    every one reading `(pip=true, held=false)` — so the fixtures that plant `CaptureProgress`
+    still retire beat 2 through the OLD arm and the new arm did not quietly take over. The new
+    per-arm logging is what made that checkable at all; a single line would have hidden it.
+  - **THE ODD-R CORRECTION IS CONFIRMED BY THE RUNTIME AND NOT ONLY BY ARITHMETIC.** Those same
+    four lines print the ringed objective as `(2, 7)` — the machine's `Objective`, taken from
+    `FStratBridge::GuidedOpeningHexes` off authored `[5, 7]`. The conversion is therefore
+    observed, not merely computed, and the retracted discrepancy bullet above is settled.
+  - **THE SAVE-SLOT CONTROL IS DISCHARGED ON THIS RUN AND NOT BORROWED.** `Saved/SaveGames/`
+    enumerated ZERO entries before and ZERO after, and the directory mtime MOVED,
+    17:26:41 -> 18:03:09, the run's own minute.
+  - **THE BUILD WAS ATTEMPTED ONCE AND WAS BLOCKED BEFORE ANY COMPILE ACTION RAN.** `Build.bat`
+    with the documented arguments and NO `-NoHotReloadFromIDE`, with `UnrealEditor.exe` open by
+    prior arrangement: `Unable to build while Live Coding is active. Exit the editor and game,
+    or press Ctrl+Alt+F11 if iterating on code in the editor or game`, then
+    `Result: Failed (OtherCompilationError)`, 2.06 s, exit 6. **This is the Live Coding MUTEX
+    and not the `LNK1104` DLL write lock** — it aborts ahead of the action graph, so ZERO
+    compile actions ran and **there is no compiler output at all for these bytes**. Nothing
+    below or above may be read as if the change had compiled. Discharged by the coordinator
+    running the documented command with the editor closed.
+  - **WHAT WAS NOT DONE.** No clause was written — `Tests/` is not this lane, and the clause
+    this needs is named in the handoff. No `Content/` asset was touched; the editor-builder was
+    live in that directory during this pass. `Source/StratRules/` and `Data/` were READ and not
+    written, and no upstream re-vendor request is filed, because the fix needed neither — that
+    is the reason option 3 (`captureTurns`) was not taken even though it would also have worked.
+
 - **2026-08-23, `strat-gameplay-engineer`: SEC 2.8'S END-OF-MATCH TRANSITION IS BUILT. THE CODE
   COMPILES AND THE BUILD IS NOT GREEN, AND THOSE ARE TWO DIFFERENT SENTENCES.** Written against
   `global.md`'s topmost `## NEXT` entry ("A MATCH THAT ENDS DOES NOT END THE GAME"). No suite

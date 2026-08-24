@@ -12,6 +12,342 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **THE MARKER CLAUSE WAS RESHAPED TO PIN THE 2026-08-23 USER RULING, AND IT GAINED A THIRD
+  FRAME THAT PINS SOMETHING NOTHING IN THE TREE COULD SEE BEFORE.** One clause updated, none
+  added: `Stratocracy.StratPlay.T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex` in
+  `Source/StratPlay/Tests/StratGuidedOpeningVisuals.cpp`. **Clause delta +0** — the macro census
+  and the clause-name set are byte-identical to the previous pass, nothing renamed, nothing
+  removed. Unstaged; staging is the user's call. The live suite figure is in
+  `Tools/architect/state/global.md` and is not restated here.
+  - **IT WENT RED ON PURPOSE AND THAT WAS THE SYSTEM WORKING.** The entry above records the
+    finding — two units carry `bIsGuidedMarked` on the shipped scenario, one per authored
+    `guidedOpening` seat, and `ApplyUnitView` passed the bit through unfiltered, so the enemy
+    seat's Infantry wore the turn-1a marker on the player's screen. That entry predicted in
+    writing that "a fix that filters by viewing side turns it red on purpose, and that redness
+    would be a decision arriving rather than a regression". The user ruled, the engineer
+    implemented `View.bIsGuidedMarked && View.Side == ViewingSide`, and the prediction held:
+    **exactly one clause failed and its two failing assertions were both about unit 7 (side 1)
+    and neither about unit 3 (the viewing seat)** — the predicted singleton, not a superset.
+    Worth keeping because the tripwire this lane wrote in `StratAiMatchClauses.cpp` did NOT trip
+    when its subject changed; this one did, and the difference is that it asserted a VALUE a
+    fix would move rather than the presence of a log line.
+  - **WHAT THE RESHAPED CLAUSE PINS. THREE PROPERTIES, INDEPENDENT.**
+    - **(A) THE RULING.** Three populations are enumerated off the applied model by
+      `FMarkerCensus` — marked-and-on-the-viewing-side, marked-and-NOT, and unmarked — and
+      **each is asserted non-empty**, so no case can go vacuous in silence. The first two
+      **differ in exactly one field**, and the clause asserts that too: both carry
+      `bIsGuidedMarked`, and their `Side` values differ. A positive and a negative subject
+      separated by one field is what makes this strictly stronger than the pass-through clause
+      it replaces, which had **no marked negative subject at all**. Both frames also assert
+      **exactly one marker is lit board-wide**, which is the count a removed filter reads as 2.
+    - **(B) THE MARK IS NOT KEYED TO A HEX.** Kept intact and unweakened: the marked Infantry is
+      moved **through the rules** (`FStratBridge::ReachableHexes` supplies the destination,
+      `SubmitMoveToHex` performs it), the model is rebuilt, `bIsGuidedMarked` is asserted still
+      true by the RULES MODULE on a unit that really left `guidedOpening.infantry`, and the
+      marker is required to still be showing. This is still the only thing in the tree that
+      catches a hex-keyed re-derivation.
+    - **(C) THE VIEWING SIDE IS READ OFF THE MODEL AND NOT OFF THE SUBSYSTEM — NEW, AND THE
+      HIGHEST-VALUE PART OF THIS PASS.** A third frame applies the **same model** with
+      `FStratViewModel::ViewingSide` alone changed to the other seat, and requires the marker to
+      **move** to that seat's Infantry while the first unit goes dark. Every unit, every hex and
+      every `bIsGuidedMarked` bit is identical across frames two and three; one field moved and
+      the marker moved with it. **`UStratMatchSubsystem`'s own member is untouched by that edit,
+      so this is the only place in the tree where the two sources disagree** — on every other
+      path they hold the same number, and an actor reading the member would keep the marker on
+      the wrong unit here with a green build everywhere else. `AStratUnitActor::GuidedMarker`'s
+      block forbids the member by name for T-INT-05's reason; this frame is that sentence turned
+      into a measurement.
+      - **`SetViewingSide` IS DELIBERATELY NOT USED.** It rebuilds and re-applies through the
+        subsystem, moving the member and the model together — which would destroy precisely the
+        divergence the frame exists to create. The model is edited and applied directly, which
+        is fixture construction on `StratMatchReconcile.cpp`'s standing.
+  - **THE ONE PLACE THIS CLAUSE COMPUTES ITS EXPECTATION, AND WHY THAT IS THE HONEST SHAPE HERE.**
+    `FMarkerCensus` classifies by `bIsGuidedMarked && Side == ViewingSide`, which mirrors the
+    production predicate. **No module-side value produces "should this actor's marker be lit"** —
+    the ruling IS the conjunction — and the only cached answer available is
+    `AStratUnitActor::LastAppliedView`, which is exactly what `IsGuidedMarkerVisible`'s
+    declaration refuses to answer from, because a clause reading it would report what the actor
+    was TOLD and pass whether or not anything reached the component. So both operands are read
+    off the applied model, neither is derived, neither is a literal, and **the clause earns its
+    keep through the three-population coverage and frame three rather than through the
+    conjunction itself.** Same standing `T-INT-05.ConclusionIsReadFromHasResultAndNotFrom-
+    ResultTier` records for its planted pair: when the INDEPENDENCE of two fields is the
+    subject, the pairing is what isolates which field the code consults.
+  - **NO MESH IS ASSIGNED, AND THAT IS NOW SETTLED RATHER THAN A JUDGEMENT CALL.**
+    `AStratUnitActor::IsGuidedMarkerVisible`'s "FALSE WITH NO MARKER MESH ASSIGNED" sentence
+    **has been retracted at its source** with this lane's measurement attached — the header now
+    carries it under `RETRACTED>` and records that it "propagated off this file into a dispatch
+    brief and from there into a test author's instructions". `USceneComponent::IsVisible`
+    consults `bHiddenInGame`, the visible flag and the cached level collection, and **not** the
+    static mesh. The discrimination is available on unconfigured actors and is measured (a true
+    and a false in the same frame) rather than assumed. **THE LIMIT THAT SURVIVES: the accessor
+    reports a FLAG, not pixels. Nothing headless gates "the marker is on screen" and no clause
+    here tries to build one.**
+  - **FALSIFIABILITY MEASURED IN THE TWO DIRECTIONS THAT MATTER, BOTH INSIDE `Tests/`.**
+    Production source is not this lane's to touch even temporarily, so each broken predicate was
+    simulated by **substituting the instrument**: the clause reads `bLit` from a local
+    `MutantMarker` that answers as an actor driven by that predicate would, instead of from the
+    real actor. Same technique `StratMatchConclusion.cpp`'s `MutantAlwaysAccepts` records.
+    - **MF1 — THE FILTER REMOVED** (`bIsGuidedMarked` alone, the pre-ruling pass-through
+      exactly). **Exactly this clause reddened**, on six assertions: the enemy `TestFalse` in
+      frames one and two, both "exactly one marker is lit" counts reading **2**, and frame
+      three's dark assertion — *"THE 2026-08-23 RULING: unit 7 carries `bIsGuidedMarked` and is
+      NOT on the viewing side 0, so it must NOT wear the marker"*, *"exactly one marker is lit
+      on the whole board, on unit 3' to be 1, but it was 2"*.
+    - **MF2 — THE FILTER WIDENED THE WRONG WAY**, hiding a marked unit that IS on the viewing
+      seat (`bIsGuidedMarked && Side != ViewingSide`). **Exactly this clause reddened**, on six
+      assertions **including the load-bearing after-move step** — *"AFTER THE MOVE: the marked
+      Infantry, unit 3, has left axial X=-1 Y=5 for axial X=2 Y=2 and its turn-1a marker is
+      STILL SHOWING …"* — and frame three fired the other way, *"VIEWED FROM SEAT 1: unit 7 …
+      wears the marker … to be true"*.
+    - **The two mutations redden DISJOINT-ENOUGH assertion sets to tell them apart**, which is
+      what says the clause distinguishes the two failure modes rather than merely noticing that
+      something is wrong. Shipped bytes restored from a copy held OUTSIDE the repo and proved
+      identical by `git hash-object` — `61a601c1360e1d765bc063fed75a3bed64e8534e`, before and
+      after, on both rounds — never `git checkout --`, which rewrites LF to CRLF under
+      `core.autocrlf=true`. `StratGuidedOpeningClauses.cpp` was not touched in this pass and is
+      still `ba3513a8950940197e87dbe9dbc85bd5d1ca7efd`.
+  - **A MUTATION THAT PROVED TOO LITTLE, AND WHY IT WAS THROWN AWAY RATHER THAN REPORTED.** The
+    first attempt at MF1 mutated `FMarkerCensus`'s classifier. It reddened the clause — but at
+    the census's own *"the viewing seat has exactly one marked Infantry … to be 1, but it was
+    2"* premise, which is **fatal and returns before any actor is read**. That demonstrates the
+    premise is live and demonstrates **nothing at all** about whether the marker assertions can
+    see an unfiltered actor. **A mutation that reddens a clause at a guard clause has not tested
+    the clause**, and the distinction is easy to miss because the report looks identical: one
+    clause, red, on the predicted name. Substituting the instrument instead of the classifier is
+    what reached the assertions, and adding frame three removed the need for the argument
+    entirely — the ruling is now measured in both directions on real actors in the green run.
+  - **WHAT THIS CLAUSE STILL DOES NOT PIN.** That anything is on screen (above). That the
+    *enemy* seat's guidance is suppressed anywhere other than the marker — the strip, the ring
+    and the lock set are not asked about here. And `ApplyUnitView`'s new third parameter is
+    **not defaulted**, which is what stops a future caller silently getting an unfiltered
+    marker; **no file under `Tests/` calls that method directly**, so nothing in this lane was
+    forced to move by the signature and nothing here pins the non-defaulting either.
+
+- **§2.11.6-B's BEAT 2 NOW HAS A GATE UNDER THE ARM THE SHIPPED SCENARIO CAN ACTUALLY FIRE, AND
+  ITS TWO ON-SCREEN SURFACES HAVE ONE AT ALL.** Four clauses: two appended to
+  `Source/StratPlay/Tests/StratGuidedOpeningClauses.cpp` under `T-UI-03`, two in one new file
+  `Source/StratPlay/Tests/StratGuidedOpeningVisuals.cpp` under `T-UI-02`. Both ids pre-existing;
+  neither minted here. Untracked / unstaged at the time of writing; staging is the user's call.
+  The live suite figure for this pass is in `Tools/architect/state/global.md` and is not
+  restated here.
+
+  - **THE DEFECT THE FIRST TWO ARE ABOUT, and it is the reason one of them is written the way
+    it is.** `Data/ferrum_crossing.json` sets `captureTurns` to 1, so `strat::captureTick`
+    pushes a `CaptureProgress` with `turnsHeld` 1, flips the objective's owner and calls
+    `clearProgress` — all inside ONE call. The projection's `progressForUnit` then finds
+    nothing, so `FStratUnitView::CaptureProgress` reads **0 in every snapshot that can exist**;
+    the pip lives only in that function's own stack frame. Beat 2's only arm was
+    `FStratGuidedOpening::HasCapturePipLanded`, whose first conjunct is `CaptureProgress > 0`,
+    so on this scenario beat 2 **could not retire at all** and rule 1 re-issued its directive on
+    turns 3 and 4 over a Factory the player already held. The fix ORs a second observable,
+    `IsRingedObjectiveHeldByGuidedSide`, reading `FStratHexView::Owner` at the hex
+    `FStratBridge::GuidedOpeningHexes` answers.
+  - **THE TRAP, AND IT IS THE WHOLE VALUE OF THE FIRST CLAUSE: IT PLANTS NO PIP.** A clause that
+    planted one would drive `HasCapturePipLanded`, which was never broken, and would go **green
+    on exactly the tree that failed**. `FGuidanceHarness::NoUnitShowsACapturePip` is asserted on
+    BOTH sides of the retirement — before the flip and again after it — so "the pip arm cannot
+    have fired" is a measurement taken in the run rather than a property of how the fixture
+    happens to be written.
+  - **WHAT EACH CLAUSE PINS.**
+    - `T-UI-03.Beat2RetiresWhenTheRingedObjectiveBecomesTheGuidedSides` — differential, on the
+      shape its pip-arm sibling already uses. One fixture, two observations at the SAME turn,
+      and between them exactly one field of one hex changes: the ringed hex's `Owner`. The
+      unheld half is the control; without it, "outstanding, then not" would be
+      indistinguishable from a machine that retires beat 2 on any observation at all. Its two
+      premises — the ring does not start out held, and no unit shows a pip — are asserted first
+      and are fatal.
+    - `T-UI-03.Beat2StaysOutstandingWhenAnotherObjectiveFlips` — the 2026-08-21 user ruling,
+      inherited by the second arm. **The ruling was about beat 2's SUBJECT, not about which
+      observable reports it**, so the new arm inherits it and needs its own gate: without this
+      clause the one above passes on an arm that scans every hex with the `H.Hex == Objective`
+      test dropped, which is one tidy-up away. **Its control is inside itself**: after the wrong
+      hex is flipped and beat 2 must stay outstanding, the RINGED hex is flipped in the same
+      fixture and beat 2 must retire — so an arm that was DELETED reddens the second half and an
+      arm that was WIDENED reddens the first, and there is no state of the tree in which both
+      pass for the wrong reason.
+    - `T-UI-02.ObjectiveRingLightsExactlyTheGuidanceHex` — three things asserted together:
+      `GetObjectiveOverlayCount() == 1`; `GetTargetOverlayCount() == 0`, because a ring drawn on
+      §2.6's attack overlay is the most plausible wrong implementation AND would light
+      `T-UI-02.AttackIsClosedForTheMarkedInfantry`'s subject at exactly the moment that clause
+      requires it empty; and **the drawn instance's world position**, compared in XY against
+      `AStratBoardActor::WorldLocationOfHex(Model.Guidance.ObjectiveHex)`. That third one is the
+      one worth having — a count of one says something was drawn, not where. Z is deliberately
+      not compared: `OverlayZOffset` is a phase-5 property this lane must not guess.
+    - `T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex` — the last step is the clause and
+      the rest is its setup. The marked Infantry is **moved through the rules**
+      (`FStratBridge::ReachableHexes` supplies the destination, `SubmitMoveToHex` performs it),
+      the model is rebuilt, and the RULES MODULE'S OWN `bIsGuidedMarked` is asserted still true
+      on a unit that really has left `guidedOpening.infantry` — then the marker is required to
+      still be showing. Nothing in the tree measured that before. A hex-keyed re-derivation
+      anywhere in the chain unmarks the unit at the exact moment beat 1a's directive needs it.
+
+  - **THE CLAUSE THE RUN REFUTED, AND WHAT IT TAUGHT: `bIsGuidedMarked` IS NOT ONE UNIT, IT IS
+    ONE PER SEAT.** The marker clause first asserted "true on the guided seat's unit and false
+    on every other actor" and FAILED with *"before the move: unit 7's turn-1a marker follows
+    `bIsGuidedMarked` (the marked unit is 3): The two values are not equal."*
+    `Data/ferrum_crossing.json` authors a `guidedOpening` entry for side 0 **and** for side 1,
+    and `Ui.h` declares `isGuidedMarked` true "on the placement that the scenario file's
+    `guidedOpening.infantry` names for this unit's SEAT", so TWO units carry the bit. The clause
+    was wrong and the code was right — `AStratUnitActor::GuidedMarker`'s own declaration says "A
+    PASS-THROUGH OF ONE PUBLISHED FIELD" — so the clause was corrected to compare each actor
+    against **its own** unit's published bit, which is the pass-through and is a stronger
+    statement than the side policy nobody wrote.
+    - **AND THE FINDING THAT FALLS OUT OF IT, WHICH IS NOT THIS LANE'S TO FIX.**
+      `UStratMatchSubsystem::ApplyView` hands every unit's view to its actor with no viewing-side
+      filter, so **the ENEMY seat's guided Infantry wears the turn-1a marker on the player's
+      screen too.** Measured, not inferred: unit 3 (side 0) and unit 7 (side 1) both read
+      `IsGuidedMarkerVisible() == true` in the same frame. Whether that is correct is a
+      presentation ruling; §2.11.6-B's marker is described as the thing that makes "Select the
+      marked Infantry" readable, which reads as a one-seat visual. **The clause pins the
+      pass-through and deliberately does NOT pin a side policy**, so a fix that filters by
+      viewing side turns it red on purpose, and that redness would be a decision arriving rather
+      than a regression. **[STAMPED 2026-08-23] That is exactly what happened, within the same
+      day: the user ruled, `ApplyUnitView` gained the side filter, the clause went red as
+      predicted and has been reshaped to pin the ruling. See the entry above; the sentences here
+      stay as written for their own pass.**
+
+  - **A HEADER CLAIM MEASURED FALSE, AND IT IS THE PREMISE THE BRIEF ASKED THIS CLAUSE TO BE
+    BUILT ON.** `AStratUnitActor::IsGuidedMarkerVisible`'s declaration states *"FALSE WITH NO
+    MARKER MESH ASSIGNED, which is the state this ships in"* and concludes that a clause telling
+    "not marked" from "marked but unconfigured" apart *"must assign `GuidedMarkerMesh` on the
+    spawned actor first"*. **The engine does not do that.** `IsGuidedMarkerVisible` returns
+    `GuidedMarker->IsVisible()`, and `USceneComponent::IsVisible` consults `bHiddenInGame`, the
+    visible flag and the cached level collection — and **not** the static mesh. Confirmed in the
+    run: this fixture assigns no marker mesh and the marked units read TRUE. So the clause
+    assigns nothing and instead MEASURES the discrimination (a true and a false in the same
+    frame on the same unconfigured actors), which needed no reach into a protected property.
+    - **WHAT THIS COSTS, AND IT IS REAL.** The accessor reports the visible FLAG, not pixels. It
+      cannot tell anyone whether a marker mesh was ever assigned, so **"the turn-1a marker is on
+      screen" has no gate under it and cannot get one headlessly** — the same shape as the
+      overlay accessors, which is why the ring clause has to assign `OverlayMesh` before it can
+      speak at all. The engineer's declaration should be corrected; this lane does not edit it.
+
+  - **AN INSTRUMENT THAT IS MUTE READS AS PASSING, AND THE RING CLAUSE IS SHAPED AROUND IT.**
+    `AStratBoardActor::FillOverlay` returns early — silently, by design — when the overlay
+    component has no static mesh. On a fixture with no Blueprint defaults every overlay accessor
+    reads 0 for every input forever, so "the ring is dark" could never go red.
+    `GiveTheBoardAnOverlayMesh` (lifted from `StratGuidanceInputGates.cpp`, which measured it
+    first) is what gives the accessor a voice, and **the lit half of the clause is the dark
+    half's control** — having shown 1 on the same board in the same clause is what gives the 0
+    its meaning.
+  - **THE RING COMPONENT IS READ BY NAME THROUGH REFLECTION AND NOT BY A COMPONENT SCAN.**
+    `ObjectiveOverlay` is `protected`, and `AStratBoardActor.h` records as of 2026-08-23 that
+    with a THIRD overlay in existence a `GetComponents` scan for "the one that is not the reach
+    overlay" returns whichever of two the iteration order reached first. The public
+    `GetObjectiveOverlayCount()` is asserted equal to that component's own instance count, which
+    turns the accessor's "off the component, not a cached number" sentence into a measurement.
+
+  - **THE ACCEPTANCE IDs WERE MOVED OFF THE ONES PROPOSED, AND THE SPLIT IS THE POINT.** The
+    engineer proposed all four under `T-UI-02`. The two beat clauses are `T-UI-03`'s: every
+    beat-machine clause in `StratGuidedOpeningClauses.cpp` is T-UI-03's, including
+    `Beat2RetiresOnlyOnAPipAtTheRingedObjective`, which is the OR-partner of the first new one —
+    filing beat 2's second arm elsewhere would split ONE beat's retirement across two ids, which
+    is the thing an id exists to prevent. The two visual clauses stay `T-UI-02`, which is
+    `StratPlay`'s board-and-highlight id (`BoardHexRoundTrip`, `ReachOverlayIsNotComputedHere`,
+    `AttackIsClosedForTheMarkedInfantry`). Both ids verified present in the tree before use.
+
+  - **THREE PROSE SITES CORRECTED IN PLACE AND STAMPED, ALL IN ONE FILE, ALL COMMENT TEXT — NOT
+    ONE ASSERTION MOVED.** In `StratGuidedOpeningClauses.cpp`:
+    1. `FGuidanceHarness::CapturePipHasLanded`'s block, *"beat 2's retirement trigger"* — the
+       definite article now survives only as the name of what that helper plants.
+    2. The header block of `T-UI-03.Beat2RetiresOnlyOnAPipAtTheRingedObjective`, *"Beat 2 retires
+       ONLY on a capture pip at the RINGED objective"* — flatly false since the OR landed. What
+       the clause pins is unchanged and is worth exactly what it was worth: that the PIP arm is
+       qualified by the ring. Read it as "a capture pip retires beat 2 only at the ringed
+       objective".
+    3. That same clause's *"OFF THE RING: beat 2 must stay OUTSTANDING"* bullet — true only
+       because the ringed hex has not changed hands, a premise that clause **does not assert**.
+       Both new clauses assert it explicitly and first.
+    - **THE CLAUSE NAME `Beat2RetiresOnlyOnAPipAtTheRingedObjective` NOW READS AS THE WIDER,
+      FALSE CLAIM AND WAS LEFT STANDING.** A rename is a change to the suite's clause set and
+      this pass was scoped to prose; it is filed here so the next pass can make it. This is the
+      one place in this entry where the record disagrees with the tree on purpose.
+    - **THE SWEEP WAS BY CLAIM SHAPE OVER COMMENT PROSE ONLY, subject set derived from the tree
+      (`find Source -type d -name Tests`) and never typed.** Twenty-nine patterns across two
+      passes, case-insensitive, anchored to `^\s*(//|\*|/\*)`: `only on a pip`, `only a pip`,
+      `a pip is the only`, `pip.{0,40}retires beat 2`, `beat 2.{0,60}pip`,
+      `retires when.{0,40}pip`, `HasCapturePipLanded`, `capture pip`, `ringed objective`,
+      `ringed Factory`, `unqualified reading`, `a pip anywhere`, `no other way.{0,40}beat 2`,
+      `beat 2.{0,40}outstanding`, `iff`, `if and only if`, `only when`, `and nothing else`,
+      `the only .{0,30}(trigger|arm|way|route)`, `retirement trigger`, `four retirement`,
+      `no other`, `exactly one .{0,30}(trigger|arm)`, `beat 2`, `Beat2`, `objective ring`,
+      `objective is held|held by`, `Owner`, `captureTurns`. **REPORTING THE ZEROES IS PART OF
+      THE METHOD**: `only on a pip`, `only a pip`, `a pip is the only`, `retires when.*pip`,
+      `no other way.*beat 2`, `if and only if`, `four retirement`,
+      `exactly one .*(trigger|arm)` and `captureTurns` all returned **nothing anywhere in the
+      tree** — that is what says the shape was looked for rather than assumed absent. **No
+      fourth copy exists**: every hit outside `StratGuidedOpeningClauses.cpp` was either a
+      different subject or historically-scoped text that is still true. The three sites above
+      are all of them, and `Source/StratBridge/Tests/StratGuidedOpeningScenarioParity.cpp` — the
+      file the ring arm is load-bearing on — carries no beat-2 claim at all.
+
+  - **FALSIFIABILITY MEASURED BY FOUR SIMULTANEOUS MUTATIONS, ALL INSIDE `Tests/`.** Production
+    source is not this lane's to touch even temporarily, so each broken design was simulated in
+    the clause itself. M1: the ringed hex never changes hands, which is the PRE-FIX TREE exactly
+    — no pip is possible on this scenario and the held arm has nothing to fire on. M2: the
+    "other" hex flipped IS the ring, simulating an arm widened to scan every hex. M3a: the
+    second `ApplyView` is never made, which is precisely what a show arm with no `else`
+    produces. M3b: the position expectation pointed at a different hex of the same model. M4:
+    the after-move expectation re-derived FROM THE HEX, which is the broken derivation
+    `StratGuidedOpening.h` warns about by name. Result: **exactly the four targeted clauses
+    reddened and no others**, and the messages are the ones each mutation was designed to
+    produce — *"…beat 2 RETIRES once the ringed objective at axial X=2 Y=7 reads owner 0 … to be
+    false"*, *"…leaves beat 2 OUTSTANDING … to be true"* with the line correctly reported as
+    beat 3, *"…leaves the objective overlay EMPTY…"*, *"WorldLocationOfHex(axial X=2 Y=7) is
+    (0.0, 0.0), the instance is at (550.0, 606.2)"*, and *"after the move: unit 3's turn-1a
+    marker still equals ITS OWN published `bIsGuidedMarked`"*. Shipped bytes restored from
+    copies held OUTSIDE the repo and proved identical by `git hash-object` —
+    `ba3513a8950940197e87dbe9dbc85bd5d1ca7efd` (clauses) and
+    `5ae5b066451b799e2f8b96eb7cebb471ba1385a7` (visuals), before and after — never
+    `git checkout --`, which rewrites LF to CRLF under `core.autocrlf=true`.
+
+  - **THE HEX LITERAL TRAP PAID AGAIN, AND IT IS WHY NO COORDINATE APPEARS IN EITHER FILE.** The
+    mutation reported the ringed objective as axial `(2, 7)`; `Data/ferrum_crossing.json` writes
+    `"objective": [5, 7]`, because the model carries AXIAL and the data file is authored in
+    OFFSET. A clause that had transcribed the hex from the data file would have been wrong and
+    would have looked right. Every hex in both files is read — from
+    `FStratBridge::GuidedOpeningHexes`, from `FStratViewModel::Factories`, from
+    `FStratBridge::ReachableHexes` — and none is chosen.
+
+  - **WHAT THESE FOUR DO NOT PIN, and it is a real list rather than a hedge.**
+    - **THAT ANYTHING IS ON SCREEN.** Both visual clauses read a component's state, not pixels.
+      The ring clause needs a stand-in `OverlayMesh` to read non-zero at all, and the marker
+      clause reads a visibility FLAG on a component with no mesh. The shipped `ObjectiveMaterial`
+      and `GuidedMarkerMesh`/`GuidedMarkerMaterial` Blueprint defaults are the CONTENT lane's and
+      have **no gate under them from here**. `T-UI-02.TheShippedHudNamesAGuidanceWidgetClass`'s
+      shape — an asset-CDO clause in StratUI — is the precedent for one that could be written
+      against `BP_StratBoardActor` and `BP_StratUnitActor` once those defaults are authored.
+    - **THE VIEWING-SIDE QUESTION FOR THE MARKER**, above. Pinned as a pass-through; not pinned
+      as a policy.
+    - **`AStratUnitActor::BeginPlay`'s MARKER SETUP.** `GuidedMarkerMesh`,
+      `GuidedMarkerMaterial` and `GuidedMarkerZOffset` are applied there, and unit actors are
+      spawned by `ApplyView` into a world that has not begun play, so that function does not run
+      in either clause. The "has no GuidedMarkerMesh set" log line is consequently never emitted
+      and is deliberately NOT declared expected — `Occurrences 0` means *at least one*, and
+      declaring a line that cannot fire is how three clauses in `StratGuidanceInputGates.cpp`
+      failed once already.
+    - **`AStratBoardActor::BeginPlay`'s `ObjectiveMaterial` ARM.** The ring clause dispatches
+      BeginPlay with `OverlayMesh` set and `ObjectiveMaterial` unset, so the `!= nullptr` branch
+      is never taken. What is pinned is that an unset material is silent, by the run producing no
+      undeclared log; the material's *assignment* is unpinned.
+    - **WHICH ARM RETIRED BEAT 2, AS THE LOG REPORTS IT.** `RetireWhatTheModelRetires` logs
+      `(pip=…, held=…)` precisely so a session log distinguishes the two, and no clause reads
+      that line. The clauses distinguish the arms by CONSTRUCTION instead — zero pips throughout
+      — which is stronger for the property and says nothing about the log's accuracy.
+    - **THE `ObjectiveOverlay` COLLISION SETTINGS.** The constructor clears collision on all
+      three overlays for the reason `AStratUnitActor` states; nothing here asks whether a ring
+      can block the cursor trace, and `HexUnderCursor` returns false in every headless state
+      (`GATE-BUILDMENU`'s fact 1), so it cannot be asked here.
+
+  - **LINE ENDINGS, AGAIN, AND THEY DID NOT COST A ROUND THIS TIME BECAUSE THEY WERE CHECKED
+    FIRST.** `StratGuidedOpeningClauses.cpp` is **CRLF**; `StratMatchReconcile.cpp` is LF. Every
+    edit to the CRLF file was made ending-aware, asserted its anchor matched **exactly once**
+    before writing, and was verified by `git diff --numstat` showing **+473 / -0** — additions
+    only, which is what says no silent whole-file conversion happened. The new
+    `StratGuidedOpeningVisuals.cpp` is CRLF in the worktree, matching its neighbours in that
+    directory.
+
 - **§2.8's END-OF-MATCH TRANSITION IS GATED, AND THE ONE-SHOT LATCH IS NOW A COUNT RATHER THAN AN
   ARGUMENT.** Five clauses in one new file, `Source/StratPlay/Tests/StratMatchConclusion.cpp` —
   three under `T-INT-05`, two under `T-AI-01`, both ids pre-existing and neither minted here.

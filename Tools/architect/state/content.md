@@ -27,8 +27,69 @@
 
 ## NEXT
 
-- **WRITTEN BY THE COORDINATOR UNDER THE HEADER'S FALLBACK CONDITION, WHICH IS MET:**
-  `execute_script` was absent from this session's tool surface for the THIRD consecutive day.
+- **WRITTEN BY THE COORDINATOR UNDER THE HEADER'S FALLBACK CONDITION, WHICH IS MET FOR THE FOURTH
+  CONSECUTIVE DAY (2026-08-21, -22, -23, and this pass).** `execute_script` was again absent from
+  `strat-editor-builder`'s tool surface; its NeoStack surface was exactly `unreal_status` and
+  `list_unreal_projects`. **Measured with a control, per obligation (1), and the control is
+  unusually good this time because the two tools CONTRADICT EACH OTHER:**
+  `list_unreal_projects` answered `Active editors: - Stratocracy: E:/MultiAgent/Stratocracy/` --
+  so the instrument speaks, and it confirms the live editor (PID 77172) is on the real tree and
+  not a worktree -- while `unreal_status` in the same round reported that no active editors were
+  found in `runtimes.json`. That is the recorded proxy latch, not a closed editor, and the
+  disagreement is INSIDE the proxy between two of its own tools.
+  - **THE STANDING-CONDITION QUESTION IS NOW OVERDUE AND IS THE USER'S TO SETTLE.** The header was
+    amended on 2026-08-23 after three consecutive days; this is the fourth, and a fallback invoked
+    every single time a lane runs is not a fallback. Either the proxy gets fixed or the lane's
+    route to the editor gets redefined. Recorded here rather than silently invoked a fourth time.
+
+- **THE MARKER AND THE RING CANNOT BE BUILT IN THE CONTENT LANE AT ALL, AND RESTORING EDITOR ACCESS
+  WOULD NOT CHANGE THAT. Measured 2026-08-23 by `strat-editor-builder`, re-verified independently
+  by the coordinator before recording.**
+  **[SUPERSEDED 2026-08-23, LATER THE SAME DAY, BY THE COMMIT THIS ENTRY IS COMMITTED IN. The two
+  C++ seams this bullet says do not exist WERE BUILT by `strat-gameplay-engineer` in the same
+  change: `AStratBoardActor::ObjectiveOverlay` is a third constructor subobject with
+  `ShowObjective` / `ClearObjective` / `GetObjectiveOverlayCount`, and `AStratUnitActor::GuidedMarker`
+  with `IsGuidedMarkerVisible`. So "there is no surface to draw on" and "no marked-state seam of
+  any kind" are both FALSE as of this commit. Stamped rather than deleted because the measurement
+  was correct when made and is the reason the seams exist. WHAT SURVIVES UNCHANGED: the content
+  lane still cannot draw anything, because the THREE `EditDefaultsOnly` ASSET REFERENCES ship UNSET
+  — `AStratBoardActor::ObjectiveMaterial`, `AStratUnitActor::GuidedMarkerMesh` and
+  `GuidedMarkerMaterial`, all null `TObjectPtr`s. (The fourth new `EditDefaultsOnly` property,
+  `GuidedMarkerZOffset`, is a numeric carrying a real default and is NOT part of this claim; an
+  earlier draft of this bullet said "all four ship UNSET", which named a different set than was
+  measured.) The
+  meshes, the material instances and the Blueprint defaults on `BP_StratBoardActor` /
+  `BP_StratUnitActor` are still owed, and nobody has seen a ring or a marker on a screen. The
+  blocker moved from "no seam" to "no assets"; it did not lift.]** This is the more important half of this pass and it is
+  independent of the latch above.
+  - **THE STRUCTS ARE REFLECTED; NOTHING HANDS A BLUEPRINT AN INSTANCE.** `FStratUnitView::
+    bIsGuidedMarked`, `FStratGuidanceView::bHasObjectiveRing`, `ObjectiveHex` and `bActive` are all
+    `UPROPERTY(BlueprintReadOnly)` in `StratViewModel.h`. But `UStratMatchSubsystem` reflects 21
+    `UFUNCTION`s and NOT ONE returns the view model, the units array or the guidance view. The two
+    carrying `Category = "Stratocracy|Guidance"` are `HasCompletedAMatchOnSave` and
+    `RecordMatchCompletionOnSave` -- the save-slot completion reader and writer, nothing to do with
+    the guidance view. The accessor is deliberately unreflected and the header says why: UHT does
+    not accept a reference return. **Verified by reading both functions, not by counting hits.**
+  - **AND THERE IS NO SURFACE TO DRAW ON.** `AStratBoardActor` declares exactly TWO overlay
+    components, `ReachOverlay` and `TargetOverlay`, with `ShowReach`/`ClearReach`/`ShowTargets`/
+    `ClearTargets` and one shared `OverlayMesh`. There is no third overlay for a guidance ring, and
+    reusing `TargetOverlay` would hijack §2.6's attack-target overlay -- which is not merely untidy
+    but clause-visible, since `T-UI-02` asserts `ShowTargets` filled exactly one component and that
+    it is not the reach one. `AStratUnitActor` exposes exactly ONE `UFUNCTION` (`GetUnitId`), has
+    no marker component beside `Body`, and holds `LastAppliedView` as a bare
+    `UPROPERTY(Transient)` with no Blueprint visibility. There is no marked-state seam of any kind.
+  - **SO `StratGuidedOpening.h`'S DIVISION OF LABOUR IS HALF-SPECIFIED, and that is the finding.**
+    It assigns "the ring mesh and the turn-1a marker" to this lane, which is right for the MESH and
+    the MATERIAL -- authorable here -- but the plumbing that decides WHERE they appear was never
+    built. The directive strip works because `UStratGuidanceWidget::Guidance` is PUSHED from C++;
+    the ring and the marker have no equivalent push. **A lane cannot draw a field it cannot reach.**
+  - **NOTHING WAS BUILT, PROBED OR CLAIMED.** No `create_asset`, no `set`, no `compile`, no `save`,
+    no Lua executed, no PIE, no screenshot. The builder stopped rather than improvising, which is
+    the correct call and is recorded as such.
+  - **WHAT THE CONTENT LANE WILL OWN once the seams exist:** the ring and marker meshes and
+    material instances under `Content/`, and the Blueprint defaults assigning them on
+    `BP_StratBoardActor` and `BP_StratUnitActor`. Blocked until then. The two seams proposed to
+    `strat-gameplay-engineer` are recorded in `global.md`'s `## NEXT`, not restated here.
   Measured with a control -- the same keyword lookup returned `unreal_status` and
   `list_unreal_projects`, so the instrument could speak; independently the editor's own endpoint
   served `serverInfo: unreal-editor 1.0.0-r4254` and round-tripped Lua against the live pid, and

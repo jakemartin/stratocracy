@@ -715,8 +715,11 @@ bool AStratPlayerController::RefreshFromMachine(FString& OutFailureReason)
 
 	Match->ApplyView(Model);
 
-	// The two overlays, from the rules module through the machine. `BuildOverlays` computes
-	// neither set; with nothing selected both are empty and the overlays clear.
+	// The reach and target overlays, from the rules module through the machine.
+	// `BuildOverlays` computes neither set; with nothing selected both are empty and both
+	// clear. NAMED RATHER THAN COUNTED as of 2026-08-23 -- this said "The two overlays", and
+	// the board now carries a third that this block has nothing to do with: §2.11.6-B's ring
+	// was already repainted by the `Match->ApplyView(Model)` call above.
 	AStratBoardActor* const Board = Match->GetBoard();
 	if (Board != nullptr)
 	{

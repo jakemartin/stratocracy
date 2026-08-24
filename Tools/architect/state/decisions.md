@@ -566,3 +566,82 @@
     symbol to re-find the line if this file is ever edited, rather than trusting the number.
   - **This entry does not state a suite count or a phase verdict** — both stay in
     `state/global.md` only; see that file for the live figure.
+
+- **RULED, 2026-08-23, BY THE USER — §2.11.6-B's turn-1a unit marker must be filtered to the
+  VIEWING SIDE; the enemy seat's guided Infantry must not carry a marker on the player's
+  screen.** The reasoning given and ruled on: a marker that says "select this" pointing at a
+  unit the player cannot select is confusing.
+  - **The measurement that raised it, so this entry records a fact and not a preference.** Found
+    by `strat-test-author` when its first draft of a clause FAILED; the premise was independently
+    confirmed against the tree rather than taken on the draft's word. `Data/ferrum_crossing.json`
+    authors a `guidedOpening` entry for BOTH seats — side 0 `infantry [1, 5]`, `objective [5, 7]`;
+    side 1 `infantry [9, 3]`, `objective [6, 2]` — so TWO units carry `bIsGuidedMarked`
+    simultaneously (`UStratViewModel`'s `UnitView.bIsGuidedMarked = Source.isGuidedMarked;` pass-
+    through, `Source/StratUI/StratViewModel.cpp`). `UStratMatchSubsystem::ApplyView` applied no
+    viewing-side filter, so in one frame unit 3 (side 0) and unit 7 (side 1) both read
+    `AStratUnitActor::IsGuidedMarkerVisible() == true`. The test author corrected its clause
+    rather than the code, because the code matched its own stated contract — a pass-through of
+    one published field — and that clause deliberately pinned the unfiltered behaviour, written
+    knowing a later filter would turn it red on purpose.
+  - **Why this needed a ruling rather than a reading.** Nothing in the GDD or in this record
+    settles it. The scenario data authoring both seats is not evidence of intent either way — it
+    is what makes a hot-seat match symmetrical. In hot-seat both seats are the same person, which
+    is exactly why the answer was not obvious and why it was put to the user instead of decided
+    in a lane.
+  - **Distinct from, and NOT to be conflated with, the 2026-08-21 USER RULING above narrowing
+    §2.11.6-B beat 2's retirement to a capture pip at the ringed objective.** That one resolved an
+    AMBIGUITY IN THE GDD. This one resolves a question the GDD does not raise at all — a
+    presentation policy the C++ had answered by omission.
+  - **State: MADE, implementation IN FLIGHT, not landed.** `strat-gameplay-engineer` is
+    implementing the filter now, as a second published field ANDed with the first — still a
+    pass-through, no derivation, and `bIsGuidedMarked` stays read off `placement` and is never
+    re-derived from a hex. `strat-test-author` will then update
+    `Stratocracy.StratPlay.T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex`
+    (`Source/StratPlay/Tests/StratGuidedOpeningVisuals.cpp`). Neither has reported yet as of this
+    writing.
+    **[STAMPED 2026-08-23, SAME DAY, ON THE COORDINATOR'S REPORT — this "neither has reported
+    yet" line has been true and is now stale, and this project's own record holds that
+    under-claiming is the dangerous staleness direction: it sends the next reader to redo work
+    already finished, where over-claiming at least gets caught by someone looking for the
+    feature. Both landed, in the commit this entry is about. The filter is in
+    `AStratUnitActor::ApplyUnitView`, which gained a non-defaulted third parameter `int32
+    ViewingSide`; verified present at `Source/StratPlay/StratUnitActor.h:119` and
+    `Source/StratPlay/StratUnitActor.cpp:98`. The predicate is `View.bIsGuidedMarked && View.Side
+    == ViewingSide`, matching the comment at `Source/StratPlay/StratUnitActor.h:190`. The side is
+    read from `FStratViewModel::ViewingSide` (verified present, `Source/StratUI/StratViewModel.h:738`)
+    off the same model, deliberately NOT `UStratMatchSubsystem::GetViewingSide` (verified present,
+    `Source/StratPlay/StratMatchSubsystem.h:749`) — on that field's own recorded reasoning
+    (`Source/StratPlay/StratUnitActor.h:107` and `:216`) that a viewing side held beside the model
+    is a second input, and a stale member would put the mark on the wrong seat with a green
+    build. The clause `Stratocracy.StratPlay.T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex`
+    is updated and green per the coordinator's report; it now pins three populations, each
+    asserted non-empty, and adds a third frame that re-applies the same model with only
+    `FStratViewModel::ViewingSide` changed to the other seat, requiring the marker to move — the
+    only place in the tree where the model field and the subsystem member can disagree. **This
+    does NOT close §2.11.6-B.** Per the coordinator's report, all four `EditDefaultsOnly`
+    properties this feature draws through ship UNSET, so nothing draws — the ruling is
+    implemented in code and unobserved in play; nobody has seen a ring or a marker on a screen.
+    This stamp does not state a suite count or a phase verdict — see `state/global.md` for the
+    live figure.
+    **[CORRECTED 2026-08-23, SAME DAY, ON THE COORDINATOR'S FLAG, VERIFIED HERE INDEPENDENTLY
+    AGAINST THE TREE RATHER THAN TAKEN ON THE COORDINATOR'S SECOND LIST — the "all four
+    `EditDefaultsOnly` properties" figure two sentences above is wrong, and the coordinator's own
+    correction was checked before being copied in, because it had already been wrong once on this
+    exact sentence. It is THREE asset references that ship unset, not four properties. Read
+    directly: `AStratBoardActor::ObjectiveMaterial` (`Source/StratPlay/StratBoardActor.h:408`,
+    `TObjectPtr<UMaterialInterface> ObjectiveMaterial;`, no initialiser),
+    `AStratUnitActor::GuidedMarkerMesh` (`Source/StratPlay/StratUnitActor.h:237`,
+    `TObjectPtr<UStaticMesh> GuidedMarkerMesh;`, no initialiser), and
+    `AStratUnitActor::GuidedMarkerMaterial` (`Source/StratPlay/StratUnitActor.h:241`,
+    `TObjectPtr<UMaterialInterface> GuidedMarkerMaterial;`, no initialiser) all ship with no
+    default and are therefore null until a Blueprint default sets them. The fourth,
+    `AStratUnitActor::GuidedMarkerZOffset` (`Source/StratPlay/StratUnitActor.h:246`), is `float
+    GuidedMarkerZOffset = 150.0f;` — a numeric with a real default, unrelated to whether anything
+    draws. The SUBJECT of the earlier sentence was wrong, not its scope; narrowing "all" would not
+    have caught it. **The load-bearing conclusion is unchanged:** nothing draws, because the three
+    asset references are null; the meshes, material instances and Blueprint defaults on
+    `BP_StratBoardActor` / `BP_StratUnitActor` are still owed; nobody has seen a ring or a marker
+    on a screen; §2.11.6-B does not close. This correction does not state a suite count or a phase
+    verdict — see `state/global.md` for the live figure.]**
+  - **This entry does not state a suite count or a phase verdict** — both stay in
+    `state/global.md` only; see that file for the live figure.

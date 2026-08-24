@@ -50,7 +50,11 @@
 //   about.
 // - The DONE / locked visual. The bits exist on `FStratUnitView` and nothing produces them
 //   until phase 4's selection machine does. This class reads them and applies no treatment;
-//   phase 5 decides what "done" looks like.
+//   phase 5 decides what "done" looks like. NOTE THE CONTRAST WITH THE §2.11.6-B MARKER
+//   ADDED 2026-08-23, which this class DOES apply a treatment for: `bIsGuidedMarked` names
+//   one unit for the whole match and its directive is unreadable without it, where `bDone`
+//   and `bLockedThisTurn` change several times a turn and §2.11 has not said what they look
+//   like. See `GuidedMarker`.
 // - Health bars, damage numbers, hit flashes. All presentation over an event stream that
 //   does not exist yet, and none of it is named by an acceptance ID in this milestone.
 // - Any `/Game/` path. Every mesh and material is an EditDefaultsOnly property.
@@ -97,11 +101,22 @@ public:
 	 * the only axial -> world conversion in the project; a second copy here would be a unit
 	 * that is half a tile off the day `HexSize` changes.
 	 *
+	 * THE VIEWING SIDE IS PASSED IN AND IS NOT ASKED FOR. `FStratViewModel::ViewingSide` is
+	 * where it lives, and that field's own block says why an actor must not fetch it instead:
+	 * "a viewing side held beside the model is a second input, and T-INT-05 would then be
+	 * about two things". `UStratMatchSubsystem::GetViewingSide` was the other candidate and
+	 * was refused for exactly that sentence -- reading it here would let the screen disagree
+	 * with the model it was reconciled from. Only the marker reads it; see `GuidedMarker`.
+	 *
 	 * @param View           the model's entry for this unit. Its `UnitId` becomes this
 	 *                       actor's, and the two are never allowed to disagree.
 	 * @param WorldLocation  from the board actor, for `View.Hex`.
+	 * @param ViewingSide    `FStratViewModel::ViewingSide` off the SAME model `View` came
+	 *                       from. A value that is no side at all -- `INDEX_NONE` -- shows no
+	 *                       marker, which is the safe direction and is not a sentinel: no
+	 *                       real side equals it, so nothing is collapsed.
 	 */
-	void ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation);
+	void ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation, int32 ViewingSide);
 
 	/**
 	 * Which unit this actor stands for. `FStratUnitView::UnitId`, and the key
@@ -118,6 +133,41 @@ public:
 	 *  second one. */
 	const FStratUnitView& GetLastAppliedView() const { return LastAppliedView; }
 
+	/**
+	 * Whether §2.11.6-B's turn-1a marker is showing on this unit.
+	 *
+	 * OFF THE COMPONENT AND NOT OFF `LastAppliedView.bIsGuidedMarked`, and the distinction
+	 * is the whole value of the accessor. Answering from the cached view would report what
+	 * this actor was TOLD and pass whether or not anything reached the screen -- the
+	 * lazily-armed-subject shape that makes a clause unable to fail. `IsVisible()` is what a
+	 * player would see.
+	 *
+	 * [CORRECTED 2026-08-23 BY THIS BLOCK'S OWN AUTHOR. THE SENTENCE BELOW WAS FALSE, IT WAS
+	 * NEVER MEASURED, AND IT PROPAGATED OFF THIS FILE INTO A DISPATCH BRIEF AND FROM THERE
+	 * INTO A TEST AUTHOR'S INSTRUCTIONS.] It said:
+	 * RETRACTED> "FALSE WITH NO MARKER MESH ASSIGNED, which is the state this ships in until
+	 * RETRACTED>  the content lane assigns one. That is honest rather than a defect: nothing
+	 * RETRACTED>  is drawn, so nothing is showing. A clause distinguishing 'not marked' from
+	 * RETRACTED>  'marked but unconfigured' must assign `GuidedMarkerMesh` on the spawned
+	 * RETRACTED>  actor first."
+	 * `USceneComponent::IsVisible` consults `bHiddenInGame`, the visible flag and the cached
+	 * level collection -- and NOT the static mesh. So this answers TRUE for a marked unit
+	 * whose marker has no mesh and draws nothing. Measured by `strat-test-author` in the
+	 * suite, not argued: a fixture assigning no mesh reads true for the marked units.
+	 * The mandated "assign the mesh first" step rested on the retracted sentence and is
+	 * withdrawn with it -- the marked/unmarked discrimination is available on an
+	 * unconfigured actor.
+	 *
+	 * WHAT THIS ACCESSOR THEREFORE CANNOT DO, WHICH IS THE HONEST LIMIT OF THE WHOLE SEAM:
+	 * IT REPORTS A FLAG, NOT PIXELS. It cannot tell anyone whether `GuidedMarkerMesh` was
+	 * ever assigned, and it cannot tell anyone that a marker reached the screen. **There is
+	 * no headless gate on "the marker is actually visible to a player"** and none is
+	 * available from this class -- that needs the content lane's defaults plus a human at
+	 * the keyboard. Anything claiming otherwise off this function is over-reading it.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Unit")
+	bool IsGuidedMarkerVisible() const;
+
 protected:
 	/**
 	 * The unit's body.
@@ -127,6 +177,73 @@ protected:
 	 */
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
 	TObjectPtr<UStaticMeshComponent> Body;
+
+	/**
+	 * §2.11.6-B's turn-1a marker: the thing that makes "Select the marked Infantry" readable.
+	 *
+	 * WHAT GAP THIS CLOSES. Beat 1a's directive names a marked unit and, until this landed,
+	 * nothing on screen was marked. Confirmed at the keyboard on 2026-08-23. The rules module
+	 * has published the fact since phase 2 -- `FStratUnitView::bIsGuidedMarked` -- and this
+	 * actor was already handed it on every refresh and threw it away.
+	 *
+	 * ITS VISIBILITY IS A PASS-THROUGH OF TWO PUBLISHED FIELDS ANDed, AND NEITHER IS
+	 * DERIVED. `ApplyUnitView` sets it from `View.bIsGuidedMarked && View.Side ==
+	 * ViewingSide` and from nothing else. THE COUNT WAS ONE UNTIL 2026-08-23 and this block
+	 * said so:
+	 * RETRACTED> "ITS VISIBILITY IS A PASS-THROUGH OF ONE PUBLISHED FIELD ... `ApplyUnitView`
+	 * RETRACTED>  sets it from `View.bIsGuidedMarked` and from nothing else."
+	 * THE SECOND FIELD IS A USER RULING AND NOT A READING. `Data/ferrum_crossing.json`
+	 * authors a `guidedOpening` for BOTH seats, so TWO units carry `bIsGuidedMarked` at once
+	 * -- measured by `strat-test-author`, who saw unit 3 (side 0) and unit 7 (side 1) both
+	 * marked in one frame -- and the unfiltered pass-through therefore marked the ENEMY
+	 * seat's Infantry on the player's screen. The user ruled it out: a marker that says
+	 * "select this" pointing at a unit the player cannot select is confusing.
+	 *
+	 * IT IS STILL A PASS-THROUGH AND THE RULING DID NOT COST THAT. Both operands are fields
+	 * this actor was handed off one model; nothing is computed, nothing is looked up, and no
+	 * hex is compared. IN PARTICULAR IT IS NEVER RE-DERIVED FROM A HEX COMPARISON against
+	 * `guidedOpening.infantry`: the rules module derives that flag off `placement`, and
+	 * `StratGuidedOpening.h` records why -- beat 1a's entire content is that the marked
+	 * Infantry MOVES, so a hex-keyed derivation would unmark it at the exact moment the mark
+	 * is needed. This class holds no bridge and no scenario and could not make that mistake
+	 * cheaply, which is the arrangement working rather than luck.
+	 *
+	 * IT ADDS NO STATE THE MODEL DOES NOT HOLD. The header block's sharpest constraint is
+	 * intact: nothing here is a bit an actor owns. Component visibility is a rendering of
+	 * two fields of the applied model, overwritten totally on every `ApplyUnitView`, and
+	 * `T-INT-05`'s "rebuild the screen from the view model alone" stays true by construction
+	 * -- WHICH IS PRECISELY WHY THE VIEWING SIDE COMES FROM `FStratViewModel::ViewingSide`
+	 * AND NOT FROM `UStratMatchSubsystem::GetViewingSide`. The subsystem's member is the same
+	 * number today and is a SECOND INPUT in principle; reading it here would make the screen
+	 * a function of the model plus one other thing, which is the exact wording that field's
+	 * own block uses to forbid it.
+	 *
+	 * NO COLLISION, for `Body`'s reason and not a weaker one: the cursor must reach the tile
+	 * underneath, and a marker is by definition on the one unit a player is being told to
+	 * click.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
+	TObjectPtr<UStaticMeshComponent> GuidedMarker;
+
+	/** The marker's mesh. UNSET IS LEGITIMATE AND IS THE STATE THIS SHIPS IN -- the mesh and
+	 *  its assignment on `BP_StratUnitActor` are the CONTENT lane's, and this file must not
+	 *  name a `/Game/` path to fill it. Unset means the marker never draws -- but
+	 *  `IsGuidedMarkerVisible` STILL ANSWERS TRUE, which is the correction that function's
+	 *  block now carries; this sentence used to claim it answered false. It is reported once
+	 *  per actor at spawn precisely because no accessor can tell the two apart: the LOG is
+	 *  the only place "the marker is unconfigured" is distinguishable from "nothing is
+	 *  marked". */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	TObjectPtr<UStaticMesh> GuidedMarkerMesh;
+
+	/** Optional material override for the marker. Unset leaves the mesh's own. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	TObjectPtr<UMaterialInterface> GuidedMarkerMaterial;
+
+	/** How far above the body the marker floats. Presentation; the right value depends on
+	 *  the meshes the content lane assigns and this file must not guess it for them. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	float GuidedMarkerZOffset = 150.0f;
 
 	/**
 	 * Mesh per §2.4 definition `id` ("Infantry", "Tank", ...).
@@ -158,6 +275,11 @@ protected:
 	 *  the meshes phase 5 assigns. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
 	float BodyZOffset = 0.0f;
+
+	/** Applies the marker's Blueprint-default mesh, material and offset. Overridden for the
+	 *  reason `AStratBoardActor::BeginPlay` gives: a constructor reading a Blueprint default
+	 *  runs on the CDO and sets it on the wrong object. */
+	virtual void BeginPlay() override;
 
 private:
 	/** See `GetUnitId`. Written only by `ApplyUnitView`. */

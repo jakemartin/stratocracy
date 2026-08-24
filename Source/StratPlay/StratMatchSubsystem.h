@@ -1132,7 +1132,12 @@ public:
 	bool RecordMatchCompletionOnSave(const FString& SlotName, FString& OutFailureReason);
 
 	/** The board actor, or null when none was spawned. Phase 4's selection machine drives
-	 *  the two overlays through it. */
+	 *  the reach and target overlays through it, and `ApplyView` drives §2.11.6-B's objective
+	 *  ring through it directly.
+	 *  [AMENDED 2026-08-23: this said "the two overlays", which was TRUE OF THE SELECTION
+	 *  MACHINE and is still true of it -- the machine owns exactly two highlight sets. It is
+	 *  amended anyway because a reader arriving here by grepping the count would generalise
+	 *  it to the board, which has three components and two different drivers.] */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
 	AStratBoardActor* GetBoard() const { return Board; }
 

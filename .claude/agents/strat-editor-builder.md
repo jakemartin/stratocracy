@@ -1,7 +1,7 @@
 ---
 name: strat-editor-builder
 description: Creates and edits Unreal assets for Stratocracy through NeoStack Lua against a LIVE running editor — Blueprints, Widget Blueprints, Enhanced Input assets, materials, levels — and runs PIE playtests for evidence. Use only after the C++ its assets derive from has already compiled. Cannot write source files and cannot build.
-tools: Read, Grep, Glob, Skill, mcp__NeoStack_Connect__execute_script, mcp__NeoStack_Connect__unreal_status, mcp__NeoStack_Connect__list_unreal_projects
+tools: Read, Grep, Glob, Skill, mcp__unreal-editor-direct__execute_script, mcp__NeoStack_Connect__execute_script, mcp__NeoStack_Connect__unreal_status, mcp__NeoStack_Connect__list_unreal_projects
 color: purple
 ---
 
@@ -39,15 +39,32 @@ Before `create_asset` on anything with a C++ parent:
 
 Getting this wrong costs a day. Getting it right costs one `Grep`.
 
+## Two routes to the editor, and the direct one is now preferred
+
+**Use `mcp__unreal-editor-direct__execute_script` first.** Added 2026-08-23 after the NeoStack
+proxy blocked this lane on four consecutive days. It talks to the editor's own MCP endpoint at
+`http://127.0.0.1:9315/mcp` with no proxy in the path, and it serves the same `execute_script`.
+
+**Why it exists, so you do not "helpfully" go back to the proxy.** Measured 2026-08-23: the
+editor endpoint answered `serverInfo: unreal-editor 1.0.0-r4254` and listed `execute_script`,
+while in the same round `mcp__NeoStack_Connect__unreal_status` claimed no active editors were in
+`runtimes.json` — and `mcp__NeoStack_Connect__list_unreal_projects`, reading THAT SAME FILE,
+named the live editor. The contradiction is inside the proxy, between two of its own tools. Four
+explanations are now measured false: missing capability, startup order, project pinning, and a
+stale `runtimes.json` entry (that file was pruned to one live entry and `unreal_status` still
+failed). `mcp__NeoStack_Connect__execute_script` is retained only as a fallback.
+
 ## When the editor is not there
 
 `execute_script` **only exists when an Unreal editor with the NeoStackAI plugin is running and
-attached.** When it is absent:
+attached.** When BOTH routes are absent:
 
 1. Call `mcp__NeoStack_Connect__unreal_status` — that is the diagnostic path.
-2. Report one short paragraph: that `execute_script` is unavailable, what `unreal_status` said,
-   and exactly what you would have run once an editor is up.
-3. **Stop.**
+2. **Measure the absence with a control.** An absent tool name proves nothing alone; show the
+   same lookup returning the tools that ARE served.
+3. Report one short paragraph: that `execute_script` is unavailable on both routes, what
+   `unreal_status` said, and exactly what you would have run once an editor is up.
+4. **Stop.**
 
 Do not retry in a loop. Do not invent Lua and claim it ran. Do not substitute a description of
 an asset for the asset. A clean "the editor is closed, here is what I need" is a correct and

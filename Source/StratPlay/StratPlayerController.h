@@ -143,7 +143,13 @@ public:
 
 	/**
 	 * Rebuilds the model, decorates it with the presentation bits, reconciles, and repaints
-	 * the two overlays. THE ONE REFRESH PATH IN THIS CLASS.
+	 * the overlays. THE ONE REFRESH PATH IN THIS CLASS.
+	 *
+	 * [AMENDED 2026-08-23: this said "the two overlays". This path repaints THREE as of that
+	 * date, and it does so by two different routes -- this class calls `ShowReach` and
+	 * `ShowTargets` itself, while §2.11.6-B's ring is repainted inside the `ApplyView` step
+	 * below without this class naming it. The step list further down is accurate for what
+	 * THIS class does and is deliberately left alone; only the count is removed.]
 	 *
 	 * PUBLIC because the hand-over and the debug console both want it, and because a single
 	 * named refresh is what stops a future caller from writing a second, subtly different

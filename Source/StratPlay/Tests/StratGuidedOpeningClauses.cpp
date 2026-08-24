@@ -193,6 +193,16 @@ namespace StratGuidedOpeningClauses
 		/**
 		 * Fixture input: beat 2's retirement trigger, a capture pip ON THE RINGED OBJECTIVE.
 		 *
+		 * "THE" TRIGGER WAS RIGHT WHEN THIS WAS WRITTEN AND IS NOT RIGHT NOW. [STAMPED
+		 * 2026-08-23] Beat 2 has TWO retirement observables as of 2026-08-23 and they are OR'd:
+		 * this pip, and `FStratGuidedOpening::IsRingedObjectiveHeldByGuidedSide`, which reads
+		 * `FStratHexView::Owner` at the ringed hex. The definite article above survives only as
+		 * the name of what THIS HELPER plants. Nothing below it moved: the pip arm was KEPT, it
+		 * is still SS2.11.6's own named trigger, and it is still the earlier of the two wherever
+		 * `captureTurns` is 2 or more. The second arm is pinned by
+		 * `T-UI-03.Beat2RetiresWhenTheRingedObjectiveBecomesTheGuidedSides` at the bottom of this
+		 * file, and that clause plants NO pip on purpose -- see its block.
+		 *
 		 * THE PIP IS PLACED ON `guidedOpening.objective` AND NOWHERE ELSE, because that is what
 		 * §2.11.6-B's "Retires when" cell means as ruled. The cell is unqualified in the GDD --
 		 * "A capture pip appears -- on whatever turn that happens" -- while the directive text
@@ -322,6 +332,117 @@ namespace StratGuidedOpeningClauses
 				}
 			}
 			return false;
+		}
+
+		/**
+		 * The published owner of a hex, read off `FStratHexView::Owner`.
+		 *
+		 * THE MODEL'S OWN FIELD AND NEVER A DERIVATION. `FStratHexView::Owner` mirrors
+		 * `UiHexView::owner` and reads `INDEX_NONE` -- which is `strat::OWNER_NEUTRAL` -- both
+		 * where a capturable hex is neutral and where a hex is not capturable at all; the view
+		 * model's own block says so. Nothing here tries to tell those two apart, because
+		 * `FStratGuidedOpening::IsRingedObjectiveHeldByGuidedSide` does not either: it compares
+		 * the field against a side, and a hex nobody can own fails that comparison CLOSED.
+		 */
+		bool HexOwner(FIntPoint Hex, int32& OutOwner) const
+		{
+			for (const FStratHexView& H : Model.Hexes)
+			{
+				if (H.Hex == Hex)
+				{
+					OutOwner = H.Owner;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * Fixture input: beat 2's SECOND retirement observable -- a hex changes hands.
+		 *
+		 * THIS IS THE ONE THE SHIPPED SCENARIO CAN ACTUALLY SHOW, and that is a measurement
+		 * rather than a preference. `Data/ferrum_crossing.json` sets `captureTurns` to 1, so
+		 * `strat::captureTick` creates the `CaptureProgress` entry, flips the objective's owner
+		 * and calls `clearProgress` inside ONE call; the projection's `progressForUnit` then
+		 * finds nothing, and `FStratUnitView::CaptureProgress` reads 0 in every snapshot that
+		 * can exist. The pip lives only in that function's own stack frame. So a clause that
+		 * drove beat 2 through `CapturePipHasLanded` above would pass on exactly the tree the
+		 * player found broken at the keyboard on 2026-08-23, where beat 2 stayed outstanding
+		 * after the ringed Factory was captured and rule 1 re-issued its directive on turns 3
+		 * and 4.
+		 *
+		 * THE OWNER IS AN INPUT HERE AND NEVER AN EXPECTATION. `Owner` is what
+		 * `IsRingedObjectiveHeldByGuidedSide` reads; the beat, the rule and the line are the
+		 * outputs and are what gets asserted -- the same standing this file already records for
+		 * `bHasMoved`, `CaptureProgress` and `Match.Turn`.
+		 */
+		bool SetHexOwner(FIntPoint Hex, int32 NewOwner)
+		{
+			for (FStratHexView& H : Model.Hexes)
+			{
+				if (H.Hex == Hex)
+				{
+					H.Owner = NewOwner;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * A capturable hex that is NOT the ring, enumerated from the model's own `Factories`.
+		 *
+		 * ENUMERATED, NEVER PICKED. No hex literal appears in this file and none may: the
+		 * factories arrive from `strat::UiFactoryView` through `StratBuildViewModel`, so a
+		 * scenario edit moves this case with it rather than leaving a transcribed coordinate
+		 * pointing at whatever now stands there. `StratProductionMenuSeam.cpp` records the same
+		 * technique and the reason it paid immediately -- `Factories` carries AXIAL coordinates
+		 * while `Data/ferrum_crossing.json` is authored in OFFSET, so a hex copied out of the
+		 * data file would have been wrong and would have looked right.
+		 *
+		 * A FACTORY IS CAPTURABLE BY CONSTRUCTION, which is what makes it the right control for
+		 * "some other objective flipped". `FStratHexView::Owner` alone cannot tell a neutral
+		 * capturable hex from a hex nobody can own -- both read `INDEX_NONE` -- so choosing the
+		 * control off that field would risk flipping a hex that is not an objective at all, and
+		 * the clause would then prove less than its name claims.
+		 */
+		bool AnotherCapturableHex(FIntPoint& OutHex) const
+		{
+			for (const FStratFactoryView& F : Model.Factories)
+			{
+				if (F.Hex != ObjectiveHex)
+				{
+					OutHex = F.Hex;
+					return true;
+				}
+			}
+			return false;
+		}
+
+		/**
+		 * True when NO unit in the model shows a capture pip, naming the offender if one does.
+		 *
+		 * THE ASSERTION THAT KEEPS THE TWO ARMS APART, and it is the whole reason the two
+		 * clauses at the bottom of this file are worth writing. `HasCapturePipLanded`'s first
+		 * conjunct is `CaptureProgress > 0`; with this true of every unit that predicate CANNOT
+		 * have fired, so a beat 2 that retires anyway did so through
+		 * `IsRingedObjectiveHeldByGuidedSide` and through nothing else. Without it, a clause
+		 * that flipped an owner would go green on an implementation whose only arm is the pip,
+		 * provided some unit in the fixture happened to be carrying one.
+		 */
+		bool NoUnitShowsACapturePip(FString& OutOffender) const
+		{
+			for (const FStratUnitView& U : Model.Units)
+			{
+				if (U.CaptureProgress > 0)
+				{
+					OutOffender = FString::Printf(
+						TEXT("unit %d (side %d) at axial %s shows CaptureProgress %d"),
+						U.UnitId, U.Side, *U.Hex.ToString(), U.CaptureProgress);
+					return false;
+				}
+			}
+			return true;
 		}
 
 		/** One observation at a given round. Sets the field the machine reads, then observes. */
@@ -851,6 +972,22 @@ bool FStratGuidanceSuppressedByCompletedMatchTest::RunTest(const FString& /*Para
 // Beat 2 retires ONLY on a capture pip at the RINGED objective -- the ruling of 2026-08-21,
 // made into a gate.
 //
+// "ONLY" IS NOW FALSE AS A STATEMENT ABOUT BEAT 2, AND THE CLAUSE'S OWN NAME INHERITS THAT.
+// [STAMPED 2026-08-23] Beat 2 gained a second, OR'd observable on 2026-08-23 --
+// `FStratGuidedOpening::IsRingedObjectiveHeldByGuidedSide`, reading `FStratHexView::Owner` at
+// the ringed hex -- so "retires ONLY on a capture pip" over-describes what this clause pins.
+// WHAT IT ACTUALLY PINS, unchanged and still worth exactly what it was worth: that the PIP arm
+// is qualified by the ring. Read the sentence as "a capture pip retires beat 2 only at the
+// ringed objective", which is the ruling, and which the two halves below measure. The clause
+// NAME `Beat2RetiresOnlyOnAPipAtTheRingedObjective` reads as the wider claim and is left
+// standing rather than renamed here, because a rename is a change to the suite's clause set
+// and this pass is prose; it is filed in `Tools/architect/state/tests.md`.
+//
+// AND THE OFF-RING HALF NOW HAS AN UNSTATED PREMISE. It requires beat 2 to stay outstanding
+// while a pip sits off the ring, which is true only because the ringed hex is not yet the
+// guided seat's in this fixture. That premise is asserted -- explicitly, and before anything
+// else -- by both clauses at the bottom of this file; it is not asserted here.
+//
 // WHAT WAS RULED, AND WHY IT NEEDED A CLAUSE AT ALL. §2.11.6-B's "Retires when" cell is
 // unqualified -- "A capture pip appears -- on whatever turn that happens" -- while the
 // directive text names the ring. `FStratGuidedOpening::HasCapturePipLanded` first shipped
@@ -862,6 +999,9 @@ bool FStratGuidanceSuppressedByCompletedMatchTest::RunTest(const FString& /*Para
 // THE FORM IS DIFFERENTIAL, AND THAT IS THE POINT RATHER THAN A CONVENIENCE. One fixture, one
 // pipped unit, two observations, and between them exactly one field changes: that unit's `Hex`.
 //   - OFF THE RING: beat 2 must stay OUTSTANDING and keep the line.
+//     [STAMPED 2026-08-23] -- and that now holds only because the ringed hex has not
+//     changed hands. See the header stamp above; the premise is asserted in the two
+//     held-arm clauses at the bottom of this file, not in this one.
 //   - ON THE RING: the same pip, the same unit, the same turn -- beat 2 must RETIRE.
 // The two halves fail in OPPOSITE DIRECTIONS, and that is what makes the pair worth more than
 // either half alone: a regression to the unqualified reading reddens the off-ring half, while a
@@ -973,6 +1113,339 @@ bool FStratGuidanceBeat2RingOnlyTest::RunTest(const FString& /*Parameters*/)
 	TestEqual(
 		TEXT("and the line passes on rather than emptying, since beat 3 is still outstanding"),
 		BeatName(H.Guidance.BeatOnTheLine()), BeatName(EStratGuidanceBeat::Beat3));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// Beat 2 retires when the RINGED objective becomes the guided seat's -- the arm the shipped
+// scenario is the only one that can fire, and the defect that made it necessary.
+//
+// THE DEFECT, MEASURED AT THE KEYBOARD ON 2026-08-23 AND NOT ARGUED FROM A DIFF. The player
+// captured the ringed Factory and beat 2 stayed OUTSTANDING, so rule 1 re-issued "Move the
+// Infantry onto the ringed Factory" on turns 3 and 4 over a Factory the player already held.
+// The cause is in `Data/ferrum_crossing.json`: `captureTurns` is 1, so `strat::captureTick`
+// pushes a `CaptureProgress` with `turnsHeld` 1, flips the objective's owner and calls
+// `clearProgress` -- all inside ONE call. `progressForUnit` then finds nothing, and
+// `FStratUnitView::CaptureProgress` reads 0 in EVERY snapshot that can exist. Beat 2's only
+// arm at the time was `HasCapturePipLanded`, whose first conjunct is `CaptureProgress > 0`, so
+// on this scenario it could never fire.
+//
+// SO THIS CLAUSE PLANTS NO PIP, AND THAT IS THE WHOLE POINT RATHER THAN AN ECONOMY. A clause
+// that planted one would drive `HasCapturePipLanded`, which was never broken, and would go
+// GREEN ON EXACTLY THE TREE THAT FAILED. `FGuidanceHarness::NoUnitShowsACapturePip` is
+// asserted on both sides of the retirement, so "the pip arm cannot have fired" is a
+// measurement taken in the run rather than a property of how the fixture was written.
+//
+// THE FORM IS DIFFERENTIAL, on the shape `Beat2RetiresOnlyOnAPipAtTheRingedObjective` above
+// already uses. One fixture, two observations at the SAME turn, and between them exactly one
+// field of one hex changes -- the ringed hex's `FStratHexView::Owner`.
+//   - RING NOT HELD: beat 2 must stay OUTSTANDING and keep the line. This half is the control,
+//     and without it "outstanding, then not" would be indistinguishable from a machine that
+//     retires beat 2 on the first observation for any reason at all.
+//   - RING HELD BY THE GUIDED SEAT: the same turn, the same units, the same zero pips -- beat 2
+//     must RETIRE. This is the half the pre-fix tree turns red.
+//
+// WHERE EVERY VALUE COMES FROM. The ringed hex is `FStratBridge::GuidedOpeningHexes`, a lookup
+// of `guidedOpening.objective` whose agreement with the data file is pinned one module down by
+// `Stratocracy.StratBridge.T-SCN-07.GuidedOpeningHexesMatchesTheScenarioFile` -- load-bearing
+// for this arm exactly as it is for the pip arm. The side is `FStratBridge::SideToMove`. The
+// hex owners are `FStratHexView::Owner`, read before the flip and asserted rather than assumed
+// to start unheld. Nothing in this clause is a coordinate, a side number or a beat this file
+// computed.
+//
+// WHY T-UI-03 AND NOT THE T-UI-02 PROPOSED. Every beat-machine clause in this file is
+// T-UI-03's, including the sibling this one is the OR-partner of. T-UI-02 in `StratPlay` is
+// the board-overlay and input-gate id (`BoardHexRoundTrip`, `ReachOverlayIsNotComputedHere`,
+// `AttackIsClosedForTheMarkedInfantry`). Filing beat 2's second arm under it would split one
+// beat's retirement across two acceptance ids, which is the thing an id exists to prevent.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceBeat2RingHeldTest,
+	"Stratocracy.StratPlay.T-UI-03.Beat2RetiresWhenTheRingedObjectiveBecomesTheGuidedSides",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceBeat2RingHeldTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidedOpeningClauses;
+
+	FGuidanceHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("the guided opening arms against the shipped scenario"),
+			H.Arm(/*bSuppressed*/ false, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	if (!TestTrue(TEXT("the scenario rings an objective, which is this clause's whole subject"),
+			H.Guidance.HasObjective()))
+	{
+		return false;
+	}
+	TestTrue(
+		*FString::Printf(
+			TEXT("the machine's ringed hex is the one FStratBridge::GuidedOpeningHexes answered "
+			     "with, axial %s"),
+			*H.ObjectiveHex.ToString()),
+		H.Guidance.ObjectiveHex() == H.ObjectiveHex);
+
+	// ---- premise: the ring does not start out held by the guided seat --------
+	// ASSERTED AND NOT ASSUMED OF THE SHIPPED SCENARIO. A ring seeded already-held would
+	// retire beat 2 on the first observation, and every assertion below would then be about a
+	// beat that was never outstanding.
+	int32 RingOwnerBefore = INDEX_NONE;
+	if (!TestTrue(
+			*FString::Printf(TEXT("the ringed hex, axial %s, is one the model publishes"),
+				*H.ObjectiveHex.ToString()),
+			H.HexOwner(H.ObjectiveHex, RingOwnerBefore)))
+	{
+		return false;
+	}
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("the ringed objective does not start out held by the guided seat: side %d "
+				     "plays, the ring's published owner is %d"),
+				H.GuidedSide, RingOwnerBefore),
+			RingOwnerBefore != H.GuidedSide))
+	{
+		return false;
+	}
+
+	// ---- premise: nobody is showing a capture pip ---------------------------
+	// THE ASSERTION THAT MAKES THIS CLAUSE ABOUT THE SECOND ARM. See `NoUnitShowsACapturePip`.
+	FString Offender;
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("no unit shows a capture pip before the flip, so `HasCapturePipLanded` "
+				     "cannot be what retires anything below (%s)"),
+				*Offender),
+			H.NoUnitShowsACapturePip(Offender)))
+	{
+		return false;
+	}
+
+	// ---- get to turn 2, where beat 2 holds the line -------------------------
+	H.ObserveAtTurn(1);
+	H.MarkedInfantryHasMoved();
+	H.ObserveAgain();
+	H.ObserveAtTurn(2);
+
+	if (!TestEqual(TEXT("beat 2 holds the line on turn 2, so there is something to retire"),
+			BeatName(H.Guidance.BeatOnTheLine()), BeatName(EStratGuidanceBeat::Beat2)))
+	{
+		return false;
+	}
+
+	// ---- half one: the ring is not held -- the control ----------------------
+	H.ObserveAgain();
+	TestTrue(
+		*FString::Printf(
+			TEXT("with the ring's published owner still %d and not side %d, beat 2 stays "
+			     "OUTSTANDING. This is the control: without it, the half below could be "
+			     "satisfied by a machine that retires beat 2 on any observation at all"),
+			RingOwnerBefore, H.GuidedSide),
+		H.Guidance.IsBeatOutstanding(EStratGuidanceBeat::Beat2));
+
+	// ---- half two: ONE field changes -- the ringed hex changes hands --------
+	if (!TestTrue(
+			*FString::Printf(TEXT("the ringed hex at axial %s changes hands to side %d"),
+				*H.ObjectiveHex.ToString(), H.GuidedSide),
+			H.SetHexOwner(H.ObjectiveHex, H.GuidedSide)))
+	{
+		return false;
+	}
+	H.ObserveAgain();
+
+	TestFalse(
+		*FString::Printf(
+			TEXT("2.11.6-B: beat 2 RETIRES once the ringed objective at axial %s reads owner "
+			     "%d -- the guided seat -- with no capture pip anywhere. This is the half the "
+			     "pre-2026-08-23 tree, whose only arm was `HasCapturePipLanded`, turns red"),
+			*H.ObjectiveHex.ToString(), H.GuidedSide),
+		H.Guidance.IsBeatOutstanding(EStratGuidanceBeat::Beat2));
+
+	// ---- and the pip arm still cannot account for it ------------------------
+	// READ AGAIN AFTER THE RETIREMENT, not merely before it. `Observe` takes the model by
+	// const reference today, but a machine that came to write a pip onto it and read it back
+	// would satisfy a pre-flip check alone while retiring through the wrong arm.
+	FString OffenderAfter;
+	TestTrue(
+		*FString::Printf(
+			TEXT("and still no unit shows a capture pip AFTER the retirement, so the arm that "
+			     "fired is `IsRingedObjectiveHeldByGuidedSide` and no other (%s)"),
+			*OffenderAfter),
+		H.NoUnitShowsACapturePip(OffenderAfter));
+
+	// The strip does not go blank on a mid-turn retirement -- 2.11.6: "Rule 2 has no exit".
+	TestEqual(
+		TEXT("and the line passes on rather than emptying, since beat 3 is still outstanding"),
+		BeatName(H.Guidance.BeatOnTheLine()), BeatName(EStratGuidanceBeat::Beat3));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// Some OTHER objective changing hands leaves beat 2 outstanding -- the clause that keeps the
+// new arm inside the subject the 2026-08-21 user ruling narrowed it to.
+//
+// WHY THIS EXISTS AND WHAT IT IS WORTH. The clause above passes just as happily on an
+// implementation that retires beat 2 when ANY hex anywhere reads the guided side's owner -- a
+// scan over `Model.Hexes` with the `H.Hex == Objective` test dropped, which is a one-line
+// tidy-up away and is precisely the shape the 2026-08-21 ruling refused for the pip arm. That
+// ruling was about beat 2's SUBJECT and not about which observable reports it, so the second
+// arm inherits it and needs its own gate.
+//
+// THE CONTROL IS IN THIS CLAUSE AND NOT IN THE ONE ABOVE, and it is what stops this clause
+// from being satisfiable by an implementation with NO held-arm at all. After the wrong hex is
+// flipped and beat 2 is required to stay outstanding, the RINGED hex is flipped in the same
+// fixture and beat 2 is required to retire. An arm that was deleted reddens the second half;
+// an arm that was widened reddens the first. There is no state of the tree in which both pass
+// for the wrong reason.
+//
+// THE OTHER HEX IS A FACTORY, ENUMERATED FROM `FStratViewModel::Factories`. See
+// `FGuidanceHarness::AnotherCapturableHex` on why a factory rather than "a hex whose Owner is
+// not INDEX_NONE": a factory is capturable BY CONSTRUCTION, where `Owner` cannot tell a
+// neutral objective from a hex nobody can own. The clause additionally asserts the hex it
+// picked is not the ring rather than trusting the shipped board to keep the two apart.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidanceBeat2OtherObjectiveTest,
+	"Stratocracy.StratPlay.T-UI-03.Beat2StaysOutstandingWhenAnotherObjectiveFlips",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidanceBeat2OtherObjectiveTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidedOpeningClauses;
+
+	FGuidanceHarness H;
+	FString Error;
+	if (!TestTrue(TEXT("the guided opening arms against the shipped scenario"),
+			H.Arm(/*bSuppressed*/ false, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	if (!TestTrue(TEXT("the scenario rings an objective, which is this clause's whole subject"),
+			H.Guidance.HasObjective()))
+	{
+		return false;
+	}
+
+	int32 RingOwnerBefore = INDEX_NONE;
+	if (!TestTrue(TEXT("the ringed hex is one the model publishes"),
+			H.HexOwner(H.ObjectiveHex, RingOwnerBefore)) ||
+		!TestTrue(
+			*FString::Printf(
+				TEXT("the ringed objective does not start out held by the guided seat: side %d "
+				     "plays, the ring's published owner is %d"),
+				H.GuidedSide, RingOwnerBefore),
+			RingOwnerBefore != H.GuidedSide))
+	{
+		return false;
+	}
+
+	FString Offender;
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("no unit shows a capture pip, so nothing below can retire through "
+				     "`HasCapturePipLanded` (%s)"),
+				*Offender),
+			H.NoUnitShowsACapturePip(Offender)))
+	{
+		return false;
+	}
+
+	// ---- get to turn 2, where beat 2 holds the line -------------------------
+	H.ObserveAtTurn(1);
+	H.MarkedInfantryHasMoved();
+	H.ObserveAgain();
+	H.ObserveAtTurn(2);
+
+	if (!TestEqual(TEXT("beat 2 holds the line on turn 2, so there is something to retire"),
+			BeatName(H.Guidance.BeatOnTheLine()), BeatName(EStratGuidanceBeat::Beat2)))
+	{
+		return false;
+	}
+
+	// ---- the wrong objective changes hands ----------------------------------
+	FIntPoint OtherHex = FIntPoint::ZeroValue;
+	if (!TestTrue(
+			TEXT("the board carries a capturable hex that is not the ringed objective -- "
+			     "enumerated from `FStratViewModel::Factories`, never picked"),
+			H.AnotherCapturableHex(OtherHex)))
+	{
+		return false;
+	}
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("and the hex it enumerated, axial %s, really is NOT the ringed objective, "
+				     "axial %s -- asserted rather than assumed of the shipped board"),
+				*OtherHex.ToString(), *H.ObjectiveHex.ToString()),
+			OtherHex != H.ObjectiveHex))
+	{
+		return false;
+	}
+
+	int32 OtherOwnerBefore = INDEX_NONE;
+	if (!TestTrue(TEXT("the other capturable hex is one the model publishes"),
+			H.HexOwner(OtherHex, OtherOwnerBefore)) ||
+		!TestTrue(
+			*FString::Printf(
+				TEXT("and it does not already read the guided seat as its owner, so flipping it "
+				     "is a real change: side %d plays, axial %s reads owner %d"),
+				H.GuidedSide, *OtherHex.ToString(), OtherOwnerBefore),
+			OtherOwnerBefore != H.GuidedSide))
+	{
+		return false;
+	}
+
+	if (!TestTrue(
+			*FString::Printf(TEXT("the OTHER capturable hex at axial %s changes hands to side %d"),
+				*OtherHex.ToString(), H.GuidedSide),
+			H.SetHexOwner(OtherHex, H.GuidedSide)))
+	{
+		return false;
+	}
+	H.ObserveAgain();
+
+	// ---- the clause ---------------------------------------------------------
+	TestTrue(
+		*FString::Printf(
+			TEXT("the 2026-08-21 ruling, inherited by the second arm: side %d taking the "
+			     "objective at axial %s -- which is NOT the ring at axial %s -- leaves beat 2 "
+			     "OUTSTANDING. This is the half an arm that scanned every hex turns red"),
+			H.GuidedSide, *OtherHex.ToString(), *H.ObjectiveHex.ToString()),
+		H.Guidance.IsBeatOutstanding(EStratGuidanceBeat::Beat2));
+	TestEqual(
+		TEXT("and it keeps the line -- an outstanding beat that had silently lost the strip "
+		     "would be a different defect wearing the same pass"),
+		BeatName(H.Guidance.BeatOnTheLine()), BeatName(EStratGuidanceBeat::Beat2));
+
+	// ---- the control: the RIGHT hex, in the same fixture ---------------------
+	// WITHOUT THIS THE ASSERTION ABOVE IS SATISFIED BY A DELETED ARM. See the block above.
+	if (!TestTrue(
+			*FString::Printf(TEXT("and now the RINGED hex at axial %s changes hands to side %d"),
+				*H.ObjectiveHex.ToString(), H.GuidedSide),
+			H.SetHexOwner(H.ObjectiveHex, H.GuidedSide)))
+	{
+		return false;
+	}
+	H.ObserveAgain();
+
+	TestFalse(
+		*FString::Printf(
+			TEXT("and the SAME flip on the RINGED hex at axial %s does retire beat 2 -- the "
+			     "control, and the half an implementation with no held-arm at all turns red"),
+			*H.ObjectiveHex.ToString()),
+		H.Guidance.IsBeatOutstanding(EStratGuidanceBeat::Beat2));
+
+	FString OffenderAfter;
+	TestTrue(
+		*FString::Printf(
+			TEXT("and no unit showed a capture pip at any point, so both halves are about the "
+			     "held arm and neither is about the pip arm (%s)"),
+			*OffenderAfter),
+		H.NoUnitShowsACapturePip(OffenderAfter));
 
 	return true;
 }

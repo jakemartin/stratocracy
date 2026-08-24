@@ -559,7 +559,14 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 			? Board->WorldLocationOfHex(View.Hex)
 			: FVector::ZeroVector;
 
-		(*Existing)->ApplyUnitView(View, Where);
+		// THE VIEWING SIDE COMES OFF THE MODEL AND NOT OFF THIS CLASS'S OWN `ViewingSide`
+		// MEMBER, even though the two are equal on every path that reaches here. The model's
+		// field is the one `FStratViewModel` declares as "the caller's statement", and its
+		// block forbids the alternative in as many words: "a viewing side held beside the
+		// model is a second input, and T-INT-05 would then be about two things". Passing
+		// `ViewingSide` here would make the marker a function of the model PLUS a member,
+		// and a stale member would put the mark on the wrong seat with a green build.
+		(*Existing)->ApplyUnitView(View, Where, Model.ViewingSide);
 	}
 
 	// DESTROY WHAT THE MODEL NO LONGER CARRIES. `FStratViewModel::Units` is "every LIVING
@@ -577,6 +584,44 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 			It.Value()->Destroy();
 		}
 		It.RemoveCurrent();
+	}
+
+	// ---- Sec 2.11.6-B's objective ring --------------------------------------
+	// ONE CALL SITE AND IT IS THIS ONE. `ApplyView` is the only place every model reaches
+	// the screen through, so driving the ring here makes "the ring and the marker clear in
+	// the same frame as the strip" -- `FStratGuidedOpening::SkipGuidance`'s wording --
+	// structural rather than a promise: the clear and the strip's push are eight lines
+	// apart in one function, on one value.
+	//
+	// UNCONDITIONAL IN BOTH DIRECTIONS, with an else. Showing without clearing would leave
+	// the ring standing after the window closed, and the model would carry no record of why
+	// -- the delta-shaped thinking the strip's block below refuses in the same terms.
+	//
+	// TWO FIELDS ARE READ AND NEITHER IS COMBINED WITH ANYTHING ELSE. `bActive` is whether
+	// guidance is running at all; `bHasObjectiveRing` is whether the scenario authored an
+	// objective for the guided seat, and `FStratGuidanceView` declares that it alone
+	// qualifies `ObjectiveHex` -- `FIntPoint(0, 0)` is a real hex and cannot signal its own
+	// absence. THIS IS NOT T-UI-03'S FORBIDDEN ARITHMETIC: it is a visibility condition over
+	// two booleans, not a number drawn on screen, and no widget renders the conjunction.
+	//
+	// THE MARKER HAS NO CALL SITE HERE BY DESIGN, AND THAT IS STILL TRUE WITH ONE AMENDMENT.
+	// `AStratUnitActor::ApplyUnitView` sets it from the `FStratUnitView` this function
+	// already hands that actor, so the two visuals ride the same refresh and there is no
+	// second driver. What changed on 2026-08-23 is that this function now also hands over
+	// `Model.ViewingSide`, for the user ruling that filters the marker to the viewing seat;
+	// this sentence previously said this function knew "nothing about either", which is no
+	// longer exact. It supplies an argument; it still decides nothing and calls nothing
+	// marker-shaped.
+	if (Board != nullptr)
+	{
+		if (Model.Guidance.bActive && Model.Guidance.bHasObjectiveRing)
+		{
+			Board->ShowObjective(Model.Guidance.ObjectiveHex);
+		}
+		else
+		{
+			Board->ClearObjective();
+		}
 	}
 
 	// ---- Sec 2.11.6's guided-opening strip ----------------------------------

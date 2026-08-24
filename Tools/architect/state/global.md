@@ -25,13 +25,26 @@ post-conclusion refusal as an ordinary end instead of a fault. Four source files
 THE CALL THAT SHAPED IT WAS A REFUSAL. `IsMatchOver()` was NOT added to `IStratAiTurnPort` -- that
 interface's own header forbids a runner that decides, and adding it would have obliged every test
 double in a lane the engineer may not edit to grow an arm before the tree would build at all.
-**THE SUITE IS NOW 194/194.** The figure this record carried before this pass **was 189/189**, and
-that entry is stamped below rather than deleted. 189 -> 194 by set-difference on
-`IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- +5, none removed, column-0 anchored,
-re-derived by the coordinator independently of the lane report. Zero non-Success and `notRun` 0
-across 194 entries, every one `Success`, at `reportCreatedOn 2026.08.23-20.13.33` (UTC; 16:13:33
-local the same day). All five new clauses are present in the report by name and `Success`, two
-under `T-AI-01` and three under `T-INT-05`. `Saved/SaveGames/` held ZERO files before and after and
+**THE SUITE IS NOW 198/198.** Zero non-Success, zero `succeededWithWarnings` and zero `notRun`
+across all 198 entries, every one `Success`. The delta is +4 and nothing was removed, measured by
+set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/`, column-0 anchored, and
+re-derived by the coordinator independently of the lane reports rather than copied from them. The
+four newest clauses are two under `T-UI-03` -- beat 2's second retirement arm and the control that
+pins its narrowing -- and two under `T-UI-02`, for the objective ring and the turn-1a marker.
+`Saved/SaveGames/` was enumerated empty before and after the run, with the directory mtime moving
+to the run's own minute, so that control is this pass's rather than borrowed.
+THE FIGURES THIS BANNER CARRIED EARLIER ON 2026-08-23 **were 194/194** and, before that,
+**189/189**; both are superseded here rather than deleted, and each was correct for the tree it
+described. The 194 pass recorded +5 over 189 for the match-end clauses and reported
+`reportCreatedOn 2026.08.23-20.13.33`; this pass's own run is
+`reportCreatedOn 2026.08.23-22.37.25` (UTC; 18:37:25 local the same day).
+A NOTE ON WHY THIS PARAGRAPH IS SHAPED LIKE THIS, because the next person to edit it will
+otherwise undo it. `strat_banner_sweep.py` judges stampedness on a **220-character window** around
+each figure, and `reportCreatedOn` is an explicit stamp marker that OUTRANKS the live verb. A
+banner that writes "is now N/N" within 220 characters of a `reportCreatedOn` is read as history in
+present tense -- the sweep reported `0 live, 21 stamped` on exactly that shape, meaning the record
+carried NO live suite count at all while still passing. Keep the live figure and the report stamps
+in separate sentences, well apart. `Saved/SaveGames/` held ZERO files before and after and
 the directory mtime moved to the run's own minute, so the save-slot control is this pass's rather
 than borrowed.
 A GREEN BUILD WAS REFUSED AS EVIDENCE, and that is the methodological point of this pass. The first
@@ -60,7 +73,11 @@ OUTSIDE the repo and proved identical by `git hash-object` (`4e4c460f…` either
 itself: the latch mutation simulates no real broken implementation, because the latch is production
 state a test may not remove.
 WHAT IS NOT CLOSED, AND IS NOT CLAIMED HERE. **No human has played a match to a result with this
-fix in the tree.** That a finished match stops accepting clicks ON SCREEN rests on the input gate's
+fix in the tree.** **[SUPERSEDED 2026-08-23, LATER THE SAME DAY: one has. The gate was observed
+refusing live on a human's won match -- see the `## NEXT` stamp on the match-end entry for the
+three log lines. Two of the three call sites are witnessed; the production-menu build path is not.
+Stamped rather than deleted: this was true when the banner was written.]** That a finished match
+stops accepting clicks ON SCREEN rests on the input gate's
 source and on three CALL SITES that no clause reaches -- a transient world never begins play, so
 `HandleSelectionEvent`, `ToggleProductionMenu`'s open branch and `SubmitProductionChoice` are
 unreachable headlessly, and **a controller that stopped calling the gate would pass all five new
@@ -764,6 +781,109 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **SEC 2.11.6-B: EVERYTHING OBSERVABLE IS NOW OBSERVED, AND WHAT REMAINS IS TWO BUILD ITEMS.
+  2026-08-23, HUMAN-DRIVEN PIE, THE USER AT THE KEYBOARD. THE SECTION STILL DOES NOT CLOSE AND IS
+  NOT CLAIMED CLOSED HERE** -- but the reason has changed from "unobserved" to "unbuilt", and that
+  is a different kind of open.
+  - **THE PAINTED DIRECTIVE TEXT WAS READ BACK BY A HUMAN EYE, WHICH HAD NEVER HAPPENED.** Every
+    prior claim about the strip was a SHAPE claim -- 688 px wide, 3017 glyph pixels -- and a strip
+    can rasterise glyphs and still paint the wrong string. The user read beat 2's line off the
+    screen as `Move the Infantry onto the ringed Factory. Only Infantry captures.`, byte-exact
+    against `FStratGuidedOpening::DirectiveTextFor`, capitalisation and both full stops included.
+    **The last unverified piece of the exec-wire binding fix is closed.**
+  - **THE WINDOW-END TAG RENDERS, ON TURN 4, ALONGSIDE THE DIRECTIVE.** Read back as
+    `guidance ends this turn`, byte-exact against `WindowEndTagText()`. The pairing is itself
+    correct per the beat model: turn 4 is always a rule-2 last call and beat 2 was the lowest
+    outstanding beat, so the schedule table reproduced itself on screen.
+  - **BOTH INPUT-GATE HOVERS SHOW THE RIGHT TEXT** -- `Move the marked Infantry first.` on End Turn
+    and `Locked this turn.` on a non-marked unit, hovered before the marked Infantry moved, which
+    is the only window in which either is armed.
+  - **BEATS 1a AND 1b RETIRED AND LOGGED**, and the window closed at the end of turn 4. Beat 3
+    retired in an earlier session the same day.
+  - **WHAT IS LEFT IS NOT OBSERVATION. It is two things nobody built, and one confirmed defect.**
+    See the two entries below; neither is the coordinator's to fix.
+    **[AMENDED 2026-08-23, LATER THE SAME DAY, IN THE COMMIT THIS ENTRY IS COMMITTED IN. The
+    CONFIRMED DEFECT is fixed and pinned, and the TWO THINGS NOBODY BUILT now have their C++ seams
+    and are down to assets. So what is left is neither observation nor C++: it is the ring and
+    marker MESHES, MATERIALS and Blueprint defaults, plus one human-driven playtest to see all of
+    it on screen. Both entries below carry their own stamps.]**
+
+- **BEAT 2'S RETIREMENT TRIGGER CANNOT FIRE ON THE SHIPPED SCENARIO. NEW, CONFIRMED 2026-08-23 --
+  [ANSWERED 2026-08-23, LATER THE SAME DAY, IN THE COMMIT THIS ENTRY IS COMMITTED IN. Both
+  `OWNED:` lines at the foot of this entry are DISCHARGED.** `FStratGuidedOpening::
+  IsRingedObjectiveHeldByGuidedSide` reads `FStratHexView::Owner` at the hex
+  `FStratBridge::GuidedOpeningHexes` answers, and beat 2 now retires on the pip **OR** that; the
+  pip arm was kept rather than replaced, so §2.11.6's named trigger survives and every clause that
+  plants `CaptureProgress` stays green. `strat-test-author` pinned it with
+  `T-UI-03.Beat2RetiresWhenTheRingedObjectiveBecomesTheGuidedSides`, which asserts
+  `CaptureProgress` is 0 on every unit before AND after the flip so the pip arm provably cannot
+  account for the retirement, plus `T-UI-03.Beat2StaysOutstandingWhenAnotherObjectiveFlips` as its
+  narrowing control. The entry is kept ENTIRE below because the mechanism it records is what the
+  fix was built from, and because the create-and-erase-in-one-call finding generalises past this
+  beat. **The fix is verified headlessly and has NOT been seen by a human in play.**]** --
+  PREDICTED FROM THE RULES, THEN OBSERVED FAILING, THEN PROVED BY READING THE PROJECTION.**
+  The user moved the guided Infantry onto the ringed objective `(2, 7)` and ended the turn. The
+  factory became theirs. **No `Guided beat 2 retired` line was emitted**, with the control that
+  `Guided beat 1a retired` and `Guided beat 1b retired` are both present in the same session, so
+  the instrument can speak.
+  - **THE MECHANISM, and it is create-and-erase inside one call rather than a race.** The shipped
+    scenario sets `captureTurns = 1`. `captureTick` pushes a `CaptureProgress` with `turnsHeld = 1`,
+    immediately tests `turnsHeld >= captureTurns`, flips the objective's owner and calls
+    `clearProgress`, which ERASES the entry -- all within `captureTick`. The projection's
+    `progressForUnit` then searches `economy.captures` for that unit and finds nothing, so
+    `UiUnitView::captureProgress` is **0** in every snapshot that can ever be taken. The pip exists
+    only inside `captureTick`'s own stack frame.
+  - **SO BEAT 2 WATCHES FOR A STATE NO OBSERVER CAN SEE.** `FStratGuidedOpening::HasCapturePipLanded`
+    reads `CaptureProgress > 0` on a guided-seat unit standing on `guidedOpening.objective`. That
+    is unreachable at `captureTurns = 1`. It would work at 2 or more.
+  - **NEITHER HALF IS WRONG ON ITS OWN, WHICH IS WHY THIS SURVIVED REVIEW.** `captureTurns = 1` is
+    authored scenario data. The narrowing of beat 2 to the ringed objective is the 2026-08-21 USER
+    RULING, recorded in `decisions.md`, and it was the right call on the question it answered --
+    it prevented a nearest-factory heuristic retiring the beat on the wrong tile. The defect is the
+    COMBINATION, and no clause covers a combination: `T-SCN-07` pins the objective hex against the
+    scenario file and says nothing about whether the pip is ever visible.
+  - **THE PLAYER-FACING SYMPTOM IS WORSE THAN A MISSING BEAT.** Beat 2 stays outstanding, so rule 1
+    puts it back on the line every turn. The user was instructed to capture a factory they had
+    already captured, and read that instruction off the screen on turns 3 and 4. A beat that cannot
+    retire does not fall silent; it repeats.
+  - **NOT DIAGNOSED BEYOND THIS, deliberately.** Whether the fix is a different observable for beat
+    2, a projection that survives the flip, or scenario data is an engine-and-rules call and may
+    need an upstream re-vendor. OWNED: `strat-gameplay-engineer` to scope; a clause is owed from
+    `strat-test-author`, and note it must not be written against a planted `CaptureProgress`, since
+    planting the field would pass on exactly the tree that fails.
+
+- **[HALF-ANSWERED 2026-08-23, LATER THE SAME DAY, IN THE COMMIT THIS ENTRY IS COMMITTED IN, AND
+  THE OWNER MOVED. The C++ SEAMS NOW EXIST** -- `AStratBoardActor::ObjectiveOverlay` (a third
+  constructor subobject, never a third meaning on `TargetOverlay`, which `T-UI-02` requires to be
+  dark during beat 1a) with `ShowObjective` / `ClearObjective` / `GetObjectiveOverlayCount`, driven
+  from one site in `UStratMatchSubsystem::ApplyView` with an `else` that clears; and
+  `AStratUnitActor::GuidedMarker` with `IsGuidedMarkerVisible`, its visibility a pass-through of
+  `bIsGuidedMarked` ANDed with the viewing side per the 2026-08-23 user ruling recorded in
+  `decisions.md`. Both are pinned by `T-UI-02` clauses. **THE ENTRY DOES NOT CLOSE.** The three
+  `EditDefaultsOnly` ASSET REFERENCES ship UNSET as null `TObjectPtr`s -- `ObjectiveMaterial`,
+  `GuidedMarkerMesh` and `GuidedMarkerMaterial`; the fourth new property, `GuidedMarkerZOffset`,
+  is a numeric with a real default and is not part of this claim. So nothing draws: the meshes, the material instances
+  and the Blueprint defaults on `BP_StratBoardActor` / `BP_StratUnitActor` are still owed, and
+  **nobody has seen a ring or a marker on a screen.** OWNED, unchanged: `strat-editor-builder` --
+  and note its route to the editor was itself broken for four days and was fixed in this same
+  commit, see `content.md`. What changed is that the lane is no longer blocked on C++ that does
+  not exist; it is blocked on assets it can now actually author.]**
+  **THE TURN-1a UNIT MARKER AND THE OBJECTIVE RING WERE NEVER BUILT, AND TWO OF THE FOUR DIRECTIVES
+  ARE UNFOLLOWABLE WITHOUT THEM. Raised by the user at the keyboard 2026-08-23.**
+  Beat 1a says "Select the marked Infantry" with nothing marked. Beat 2 says "the ringed Factory"
+  with nothing ringed. The only way the user learned the objective was hex `(2, 7)` was by reading
+  the log.
+  - **THE DATA IS PUBLISHED AND REACHES THE VIEW MODEL; NOTHING DRAWS IT.**
+    `FStratUnitView::bIsGuidedMarked` is written in `UStratViewModel`'s projection off the rules
+    module's own `isGuidedMarked`, and `FStratGuidanceView` carries `bHasObjectiveRing` and
+    `ObjectiveHex`, written by `FStratGuidedOpening::DecorateViewModel`. Measured:
+    `bHasObjectiveRing` has exactly TWO non-test sites tree-wide -- the line that writes it and the
+    comment describing it. **No reader.**
+  - **THIS IS A DIVISION OF LABOUR THAT NEVER GOT ITS SECOND HALF, not an oversight in the C++.**
+    `StratGuidedOpening.h` states it: "NO WIDGET, AND NO `/Game/` PATH. The directive strip, the
+    ring mesh and the turn-1a marker are `strat-editor-builder`'s lane." The strip was built. The
+    other two were not. OWNED: `strat-editor-builder`.
+
 - **A MATCH THAT ENDS DOES NOT END THE GAME: THE HUMAN INHERITS THE AI'S SIDE AND KEEPS PLAYING.
   NEW, MEASURED 2026-08-23 IN A HUMAN-DRIVEN PIE SESSION, AND IT IS THE MOST SERIOUS THING OPEN.**
   **[ANSWERED 2026-08-23, LATER THE SAME DAY. The transition is built, linked, executed and pinned
@@ -774,6 +894,16 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   controller that stopped calling the gate would pass all five clauses. The ENGINE half is closed;
   the PLAYER-FACING half is not, and it is not claimed. OWNED: coordinator, to schedule with the
   user, alongside the §2.11.6-B playtest below -- one session covers both.]**
+  **[THE PLAYER-FACING HALF IS NOW DISCHARGED TOO, 2026-08-23, LATER THE SAME DAY. The user played
+  a match to a result with the fix in the tree and destroyed the AI's flag, and the gate was
+  OBSERVED REFUSING LIVE:
+  `STRAT-MATCH concluded turn=5 turnCap=20 sideToMove=0 tier=Decisive`, then
+  `End turn: the match is over; no further commands are accepted` and
+  `Selection: the match is over; no further commands are accepted` TWICE as they kept clicking.
+  Note `sideToMove=0` -- they won, the mirror image of the turn-7 session that found the defect.
+  So TWO of the three gated call sites are now witnessed by a human where no clause can reach
+  them; only the production-menu build path is still unwitnessed. **This defect is closed.** The
+  entry stays because the diagnosis is what the fix was built from.]**
   Reported by the user as "at turn 7 the teams switch and I'm no longer in control of team 1 but
   have taken over control of team 2, and the AI no longer is in control". The log carries the whole
   chain and the report is accurate.

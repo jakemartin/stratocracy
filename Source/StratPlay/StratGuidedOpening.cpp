@@ -266,14 +266,32 @@ bool FStratGuidedOpening::RetireWhatTheModelRetires(const FStratViewModel& Model
 			TEXT("Guided beat 1b retired on turn %d: the enemy turn ended."), Model.Match.Turn);
 	}
 
-	// ---- 2: a capture pip appears, on whatever turn -------------------------
-	if (bOutstanding[SlotOf(EStratGuidanceBeat::Beat2)] && HasCapturePipLanded(Model))
+	// ---- 2: the ringed objective is taken by the guided seat ----------------
+	// TWO OBSERVABLES, OR'd, AND THE SECOND IS THE ONLY ONE THE SHIPPED SCENARIO CAN SHOW.
+	// `IsRingedObjectiveHeldByGuidedSide` carries the measurement: at `captureTurns = 1` the
+	// pip is created and erased inside one `strat::captureTick`, so `CaptureProgress` reads 0
+	// in every snapshot and `HasCapturePipLanded` cannot fire. The pip arm is KEPT rather
+	// than replaced because it is §2.11.6's own named trigger and it is the earlier of the
+	// two at `captureTurns >= 2` — the arrival receipt, not the deed.
+	//
+	// WHICH ARM FIRED IS LOGGED, and that is not decoration. The two arms mean different
+	// things to anyone reading a session log, and a single line would have made this defect
+	// look like a fix that worked for the reason nobody checked.
+	if (bOutstanding[SlotOf(EStratGuidanceBeat::Beat2)])
 	{
-		bOutstanding[SlotOf(EStratGuidanceBeat::Beat2)] = false;
-		bAnything = true;
-		UE_LOG(LogStratPlay, Log,
-			TEXT("Guided beat 2 retired on turn %d: a capture pip appeared on the ringed "
-			     "objective (%d, %d)."), Model.Match.Turn, Objective.X, Objective.Y);
+		const bool bPip  = HasCapturePipLanded(Model);
+		const bool bHeld = IsRingedObjectiveHeldByGuidedSide(Model);
+		if (bPip || bHeld)
+		{
+			bOutstanding[SlotOf(EStratGuidanceBeat::Beat2)] = false;
+			bAnything = true;
+			UE_LOG(LogStratPlay, Log,
+				TEXT("Guided beat 2 retired on turn %d: the ringed objective (%d, %d) was "
+				     "taken by side %d (pip=%s, held=%s)."),
+				Model.Match.Turn, Objective.X, Objective.Y, GuidedSide,
+				bPip ? TEXT("true") : TEXT("false"),
+				bHeld ? TEXT("true") : TEXT("false"));
+		}
 	}
 
 	// ---- 3: a unit spawns, on whatever turn including turn 1 ----------------
@@ -540,6 +558,39 @@ bool FStratGuidedOpening::HasCapturePipLanded(const FStratViewModel& Model) cons
 		if (U.Side == GuidedSide && U.CaptureProgress > 0 && U.Hex == Objective)
 		{
 			return true;
+		}
+	}
+	return false;
+}
+
+bool FStratGuidedOpening::IsRingedObjectiveHeldByGuidedSide(const FStratViewModel& Model) const
+{
+	// See the declaration for the measurement that made this arm necessary, for why the
+	// 2026-08-21 ruling is untouched by it, and for why a scenario that seeds the objective
+	// already-held retiring beat 2 at once is the correct answer.
+	//
+	// NO OBJECTIVE MEANS NO RETIREMENT, for `HasCapturePipLanded`'s reason and not a
+	// different one: `Begin` leaves the machine inactive when `GuidedOpeningHexes` refuses.
+	if (!bHasObjective)
+	{
+		return false;
+	}
+
+	// THE HEX VIEW AND NOT THE FACTORY VIEW, and the choice is load-bearing rather than
+	// incidental. `guidedOpening.objective` is an OBJECTIVE, and `strat::Objective` is not
+	// obliged to sit on Factory terrain — §2.11.6's directive says "ringed Factory" because
+	// that is what Ferrum Crossing authored, not because the beat is about factories.
+	// `FStratHexView::Owner` mirrors `UiHexView::owner` for every capturable hex, so this
+	// arm keeps working on a scenario whose ringed objective is a Town.
+	//
+	// A HEX THAT IS NOT CAPTURABLE READS `INDEX_NONE`, which is `strat::OWNER_NEUTRAL` and
+	// can never equal a side, so a mis-authored objective fails CLOSED — beat 2 stays
+	// outstanding — rather than retiring on a hex nobody can own.
+	for (const FStratHexView& H : Model.Hexes)
+	{
+		if (H.Hex == Objective)
+		{
+			return H.Owner == GuidedSide;
 		}
 	}
 	return false;

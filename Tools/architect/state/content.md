@@ -87,6 +87,12 @@
     construction (`StripRow` is `SelfHitTestInvisible`, so its children hit-test), and its
     `OnClicked` is bound to a compiled graph whose every pin reads connected. A human click is
     what closes it, exactly as one closed the ring and the marker.
+    **[CLOSED 2026-08-24, later the same evening: THE USER CLICKED IT AND REPORTS THAT IT WORKS.**
+    That is the whole of the evidence and it is stated as what it is -- a human observation at the
+    keyboard, not an instrument reading, which is the same standing this project gave the ring and
+    the turn-1a marker and for the same reason: no instrument here can fire a Slate click. The
+    paragraph above was true when written and nothing in it is withdrawn; what changes is that the
+    link it names as inferred is now observed.]**
 
 - **THE OBJECTIVE RING AND THE TURN-1a MARKER ARE ON THE SCREEN, AND EACH WAS IDENTIFIED BY BEING
   REMOVED RATHER THAN BY MATCHING A SHAPE.** 2026-08-23, written by `strat-editor-builder` -- the

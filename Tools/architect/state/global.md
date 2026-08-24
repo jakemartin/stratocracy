@@ -21,11 +21,15 @@ carried is stamped DISCHARGED where it stands, twice, rather than deleted. `cont
 evidence and this banner does not restate it.
 NO SUITE FIGURE MOVES AND NONE IS CLAIMED HERE. One `.uasset` changed and no test or source file
 was touched; the live figure is the one the block below cites and it is unchanged.
-WHAT IS STILL NOT MEASURED, stated because the entry it discharges was itself about a surface that
-read as built. No mouse event was injected -- injection still never reaches this project's input --
-so "a Slate click on that rectangle fires `OnClicked`" is INFERRED from a compiled, fully-connected
-graph on a live, painted, hit-testable widget. It is not observed. A human click closes it, exactly
-as one closed the ring and the marker.
+WHAT WAS NOT MEASURED WHEN THIS PASS ENDED, AND WAS CLOSED THE SAME EVENING. No mouse event was
+injected -- injection still never reaches this project's input -- so "a Slate click on that
+rectangle fires `OnClicked`" was INFERRED from a compiled, fully-connected graph on a live,
+painted, hit-testable widget rather than observed. **THE USER THEN CLICKED IT AND REPORTS THAT IT
+WORKS.** So the last link is closed on a human observation at the keyboard, which is exactly the
+standing the ring and the turn-1a marker were closed on, and for the same reason: nothing here can
+fire a Slate click. **SEC 2.11.6-B NOW STANDS OVER NO UNBUILT SURFACE** -- the one item its closure
+was recorded over is built and exercised. The `GuidedMarkerZOffset` item is untouched by this and
+is NOT claimed either way.
 ALSO FOUND AND WORTH MORE THAN THE BUTTON: `find_nodes` is filtered to `self`'s class and returns
 ZERO for any other class's UFUNCTION -- proved with two engine controls, not assumed. The
 pin-context form in `help("FindNodes")` is the only route. `content.md` carries it.)
@@ -1002,9 +1006,10 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     `OnClicked` casts the owning controller and calls `Skip Guidance`. Seen painted in PIE
     with the opening armed, and seen going out together with the strip under a
     `ke * SkipGuidance` positive control; `content.md` holds the evidence and this entry does
-    not restate it. WHAT IS STILL NOT MEASURED: no mouse event was injected, so the
-    Slate-click-to-delegate link is inferred from a fully-connected graph on a live, painted
-    widget rather than observed. Everything this bullet says was true when written.]**
+    not restate it. THE LAST LINK IS CLOSED TOO: no mouse event could be injected, so the
+    Slate-click-to-delegate link was inferred rather than observed -- and the USER then clicked the
+    button and reports that it works, which closes it on the same human-observation standing as the
+    ring and the marker. Everything this bullet says was true when written.]**
   - **`GuidedMarkerZOffset` WAS NOT MEASURED BY THIS PLAYTEST, and its item stands untouched.**
     It is still `150.0f` in `StratUnitActor.h` and the standing note that it occludes the unit at
     this camera pitch is neither confirmed nor retracted here. A playtest that passes on the

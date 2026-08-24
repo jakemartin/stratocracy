@@ -267,9 +267,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
 	TObjectPtr<UStaticMeshComponent> GuidedMarker;
 
-	/** The marker's mesh. UNSET IS LEGITIMATE AND IS THE STATE THIS SHIPS IN -- the mesh and
-	 *  its assignment on `BP_StratUnitActor` are the CONTENT lane's, and this file must not
-	 *  name a `/Game/` path to fill it. Unset means the marker never draws -- but
+	/** The marker's mesh. ASSIGNED AS OF 2026-08-24 AND THAT IS THE STATE THIS SHIPS IN --
+	 *  `BP_StratUnit`'s default carries `SM_GuidedMarker` here, and `MI_Marker_Guided` in
+	 *  `GuidedMarkerMaterial` below. The mesh and its assignment stay the CONTENT lane's, and
+	 *  this file must not name a `/Game/` path to fill it -- which is why it is still
+	 *  `EditDefaultsOnly` and still has no initializer. This block said unset was the shipping
+	 *  state until the default landed. Unset remains LEGITIMATE for any other Blueprint of
+	 *  this class, and it means the marker never draws -- but
 	 *  `IsGuidedMarkerVisible` STILL ANSWERS TRUE, which is the correction that function's
 	 *  block now carries; this sentence used to claim it answered false. It is reported once
 	 *  per actor at spawn precisely because no accessor can tell the two apart: the LOG is

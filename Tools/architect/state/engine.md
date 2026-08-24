@@ -13,6 +13,86 @@
 
 ## NEXT
 
+- **2026-08-24, `strat-gameplay-engineer`: THREE COMMENTS NAMED BLUEPRINTS THAT DO NOT EXIST, IN
+  THE SENTENCES THAT ASSIGN THE WORK TO THE CONTENT LANE. COMMENT-ONLY; NO DECLARATION, SIGNATURE
+  OR EXECUTABLE LINE MOVED.** Four name instances across `StratBoardActor.h`, `StratUnitActor.h`
+  and `StratGuidedOpening.h`: `BP_StratBoardActor` -> `BP_StratBoard`, `BP_StratUnitActor` ->
+  `BP_StratUnit`. `Content/StratPlay/` holds six Blueprints and no `...Actor` variant of anything;
+  the content lane's own record has said so since 2026-08-23. No suite count and no verdict is
+  stated here -- `global.md` owns both, and no suite figure moves on a comment.
+  - **WHY THIS IS NOT AN ORDINARY STALE COMMENT.** All three sentences are hand-off sentences:
+    each one names the asset the CONTENT lane is being told to author or assign. A stale comment
+    misinforms whoever reads it; a comment that names a non-existent asset in the sentence that
+    ASSIGNS the work sends the receiving lane to search `/Game/StratPlay` for a name that has
+    never been there, and the search comes back empty with nothing to indicate the brief was
+    wrong rather than the asset missing. That asymmetry is the reason this was worth a pass.
+  - **BUILD: 22 OF 25 ACTIONS COMPILED CLEAN; THE LINK WAS REFUSED BY THE OPEN EDITOR AND THAT
+    WAS THE EXPECTED OUTCOME.** `Build.bat StratocracyEditor Win64 Development -waitmutex
+    -NoHotReloadFromIDE`, 172.58 s. UHT re-ran (`Invalidating makefile ... working set of source
+    files changed`) and `Module.StratPlay.gen.cpp` compiled, so the three edited headers parsed.
+    Then `UbaSessionServer - ERROR opening file ...UnrealEditor-StratPlay.dll for write after
+    retrying for 20 seconds`, and on the non-UBA retry `LINK : fatal error LNK1104: cannot open
+    file 'E:\MultiAgent\Stratocracy\Binaries\Win64\UnrealEditor-StratPlay.dll'`. **For a
+    comment-only change the compile IS the evidence** -- what a comment edit can break is a block
+    comment or a line continuation, and that is a compile error, not a link error. The link adds
+    nothing here and its refusal is not a finding.
+  - **`sed` STRIPPED THE CARRIAGE RETURNS AND IT DID NOT ANNOUNCE ITSELF.** `StratBoardActor.h`
+    and `StratGuidedOpening.h` are CRLF in this worktree (461 and 528 CRs); `StratUnitActor.h` is
+    LF (0 CRs) -- measured per file, not assumed. An in-place `sed` rewrote both CRLF files whole
+    and `git diff --numstat` would have read `461 461` instead of `1 1`. Restored before
+    inspecting the diff. Measure endings per file before any scripted edit to a header.
+  - **TWO NEIGHBOURING SENTENCES ARE NOW WRONG AS A CONSEQUENCE, AND ARE DELIBERATELY NOT FIXED
+    IN THIS PASS.** Both say the assignment is still owed, and it is not: `BP_StratBoard`'s bytes
+    carry `/Game/StratArt/Materials/MI_Overlay_Objective` against `ObjectiveMaterial`, and
+    `BP_StratUnit`'s carry `/Game/StratArt/Meshes/SM_GuidedMarker` and
+    `/Game/StratArt/Materials/MI_Marker_Guided` against `GuidedMarkerMesh` and
+    `GuidedMarkerMaterial`. So `ObjectiveMaterial`'s "UNSET IS LEGITIMATE AND IS THE STATE THIS
+    SHIPS IN", `GuidedMarkerMesh`'s identical clause, and `StratGuidedOpening.h`'s "What is still
+    the content lane's is the asset half: the meshes, the material instances, and their
+    assignment" all describe a tree that stopped existing when those defaults were committed.
+    Kept out so this diff stays exactly what its message claims. **Discharged by** a follow-up
+    pass that rewrites those three blocks to say the defaults are authored -- and note the ring
+    needs no new mesh at all, it instances `OverlayMesh`, so "the meshes" is plural about one.
+    **DISCHARGED 2026-08-24 by the entry immediately below.** (Its own lead says "TWO
+    NEIGHBOURING SENTENCES" and then lists three; three is the count, and three were fixed.)
+
+- **2026-08-24, WRITTEN BY THE `coordinator` INTO THE ENGINEER'S FILE, DECLARED: THE THREE
+  BLOCKS THE ENTRY ABOVE DEFERRED NOW SAY THE DEFAULTS ARE AUTHORED. COMMENT-ONLY; NO
+  DECLARATION, SIGNATURE OR EXECUTABLE LINE MOVED.** `strat-gameplay-engineer` is `engine.md`'s
+  sole writer and was not dispatched for this pass; the user asked for the fix directly in the
+  main session. Recorded here rather than nowhere, and named so the next reader knows whose hand
+  it was. No suite count and no verdict is stated here -- `global.md` owns both, and no suite
+  figure moves on a comment.
+  - **WHAT EACH BLOCK NOW SAYS.** `AStratBoardActor::ObjectiveMaterial` and
+    `AStratUnitActor::GuidedMarkerMesh` are rewritten in place: the assignment is stated as
+    landed and the instance is named, "unset is legitimate" is kept but demoted to *any other
+    Blueprint of this class* rather than the shipping state, and each block says outright that
+    it used to claim otherwise. `StratGuidedOpening.h`'s block gets an APPENDED
+    `[AMENDED 2026-08-24: ...]` instead of a rewrite -- the sentence under it is itself an
+    amendment, and leaving it standing keeps the boundary it drew legible when only its tense
+    is wrong.
+  - **"THE MESHES" WAS PLURAL ABOUT ONE, AND THE AMENDMENT SAYS SO.** The ring instances
+    `AStratBoardActor::OverlayMesh`; `SM_GuidedMarker` is the only mesh the content lane added.
+  - **THE PREMISE WAS RE-MEASURED OFF THE PACKAGE BYTES, NOT CARRIED OVER FROM THE ENTRY
+    ABOVE.** `grep -a` over the working-tree `.uasset`s: `BP_StratBoard.uasset` yields
+    `/Game/StratArt/Materials/MI_Overlay_Objective` alongside the name `ObjectiveMaterial`;
+    `BP_StratUnit.uasset` yields `/Game/StratArt/Meshes/SM_GuidedMarker` and
+    `/Game/StratArt/Materials/MI_Marker_Guided` alongside `GuidedMarkerMesh` and
+    `GuidedMarkerMaterial`. Working-tree bytes, not `git show` -- `.uasset` is LFS there. Both
+    packages are clean in `git status`, so the defaults are committed, not pending.
+  - **BUILD: 22 OF 25 ACTIONS COMPILED CLEAN; THE LINK WAS REFUSED BY THE OPEN EDITOR, THE SAME
+    EXPECTED OUTCOME AS THE PASS ABOVE.** 169.34 s.
+    `Module.StratPlay.gen.cpp`, `StratBoardActor.cpp`, `StratGuidedOpening.cpp` and
+    `StratUnitActor.cpp` all compiled, so all three edited headers parsed. Then
+    `UbaSessionServer - ERROR opening file ...UnrealEditor-StratPlay.dll for write` and on the
+    non-UBA retry `LINK : fatal error LNK1104`. For a comment-only change the compile IS the
+    evidence; the link adds nothing and its refusal is not a finding.
+  - **THE CARRIAGE-RETURN TRAP FROM THE PASS ABOVE WAS AVOIDED BY NOT USING `sed`.** Edits made
+    through the line-local editor; CRs counted before and after with `tr -cd '\r' | wc -c`
+    (`grep` cannot see a CR on this box). `StratBoardActor.h` 461 -> 464, `StratGuidedOpening.h`
+    528 -> 536, `StratUnitActor.h` 0 -> 0, each delta equal to that file's added-line count.
+    `git diff --numstat` reads `7 4` / `9 1` / `7 3` -- line-local, not a whole-file rewrite.
+
 - **2026-08-24, `strat-gameplay-engineer`: THE TURN-1a MARKER COULD NEVER CLEAR, BECAUSE EVERY
   OPERAND IT HAD WAS MATCH-CONSTANT. THE CODE COMPILES AND THE TREE LINKS.** Found in a human
   playtest, not by any clause. No suite count and no verdict is stated here; `global.md` owns

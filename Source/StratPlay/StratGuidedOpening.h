@@ -139,9 +139,17 @@
 //   `ClearObjective`, and the marker's COMPONENT and its visibility are
 //   `AStratUnitActor::GuidedMarker` / `ApplyUnitView` -- both C++, both in this lane. What
 //   is still the content lane's is the asset half: the meshes, the material instances, and
-//   their assignment on `BP_StratBoardActor` / `BP_StratUnitActor`. NOTHING ABOUT THIS FILE
+//   their assignment on `BP_StratBoard` / `BP_StratUnit`. NOTHING ABOUT THIS FILE
 //   CHANGED -- `FStratGuidedOpening` still draws nothing and still names no component; the
 //   sentence was describing a boundary that moved underneath it.]
+//   [AMENDED 2026-08-24: "what is still the content lane's" above is now DISCHARGED, not
+//   pending, and "the meshes" was plural about one. The ring needs no mesh of its own -- it
+//   instances `AStratBoardActor::OverlayMesh` -- so `SM_GuidedMarker` is the only new one.
+//   `BP_StratBoard` assigns `MI_Overlay_Objective` to `ObjectiveMaterial`; `BP_StratUnit`
+//   assigns `SM_GuidedMarker` and `MI_Marker_Guided` to `GuidedMarkerMesh` and
+//   `GuidedMarkerMaterial`. Read off the package bytes, not off a lane report. The sentence
+//   above is left standing rather than deleted so the boundary it drew stays legible; only
+//   its tense is wrong. NOTHING ABOUT THIS FILE CHANGED, again.]
 // - NO §2.11.6-A PRE-MATCH BRIEFING. Three anchored callouts over a dimmed board with a
 //   click-through are a widget and a camera state, not a beat; nothing in A is scheduled
 //   by rules 1–2 and nothing in B depends on A having run. Its three strings are not

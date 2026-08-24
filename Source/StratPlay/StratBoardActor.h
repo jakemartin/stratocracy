@@ -400,10 +400,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UMaterialInterface> TargetMaterial;
 
-	/** §2.11.6-B's ring. UNSET IS LEGITIMATE AND IS THE STATE THIS SHIPS IN: the material
-	 *  instance and its assignment on `BP_StratBoardActor` are the CONTENT lane's, and this
-	 *  file must not name a `/Game/` path to fill it. Unset draws the ring in `OverlayMesh`'s
-	 *  own material, which is a visibly-wrong ring rather than an absent one. */
+	/** §2.11.6-B's ring. ASSIGNED AS OF 2026-08-24 AND THAT IS THE STATE THIS SHIPS IN:
+	 *  `BP_StratBoard`'s default carries `MI_Overlay_Objective` here. The material instance
+	 *  and its assignment stay the CONTENT lane's, and this file must not name a `/Game/`
+	 *  path to fill it -- which is why it is still `EditDefaultsOnly` and still has no
+	 *  initializer. Unset remains LEGITIMATE for any other Blueprint of this class: it draws
+	 *  the ring in `OverlayMesh`'s own material, which is a visibly-wrong ring rather than an
+	 *  absent one. This block said unset was the shipping state until the default landed. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UMaterialInterface> ObjectiveMaterial;
 

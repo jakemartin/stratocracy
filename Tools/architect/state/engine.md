@@ -13,6 +13,227 @@
 
 ## NEXT
 
+- **2026-08-24, `strat-gameplay-engineer`: THE TURN-1a MARKER COULD NEVER CLEAR, BECAUSE EVERY
+  OPERAND IT HAD WAS MATCH-CONSTANT. THE CODE COMPILES AND THE TREE LINKS.** Found in a human
+  playtest, not by any clause. No suite count and no verdict is stated here; `global.md` owns
+  both, and NO SUITE WAS RUN THIS PASS -- it is the test author's and is owed after this
+  signature.
+  **[HEADLINE AMENDED 2026-08-24, LATER THE SAME MORNING, BY THIS ENTRY'S OWN AUTHOR.** It read
+  "THE CODE COMPILES AND THE TREE DOES NOT LINK", which was true of the tree it described: the
+  editor held the DLL. The editor closed and the link completed. The two build bullets at the
+  foot of this entry carry both runs and neither is deleted, because the compile-only measurement
+  is what separated "the code is wrong" from "the editor is open".]**
+  - **THE DIAGNOSIS IS CONFIRMED IN THIS TREE AND WAS RE-DERIVED RATHER THAN TAKEN ON REPORT.**
+    `AStratUnitActor::ApplyUnitView` set the marker from
+    `View.bIsGuidedMarked && View.Side == ViewingSide`. `bIsGuidedMarked` is the rules module's
+    derivation off `placement` -- `StratViewModel.cpp` copies `Source.isGuidedMarked` and is its
+    only producer -- and both sides are fixed for a match. So the conjunction HAD NO FALSE IN IT
+    once true, and the marker latched on for the rest of the match. The player saw the objective
+    ring clear with the Infantry's marker still lit.
+  - **THE DURABLE FINDING IS NOT THE MISSING BIT. BOTH-DIRECTIONS IS A PROPERTY OF THE OPERAND
+    SET AND NOT ONLY OF THE WRITER.** The comment directly above the defective line already named
+    this exact failure mode -- "a writer that only ever SHOWS is a writer whose hide can be missed
+    on one path -- and for this bit that means a permanent marker on a unit §2.11.6's window
+    closed on" -- and the writer SATISFIED it: `SetVisibility` ran unconditionally, in both
+    directions, on every one of the ~1700 calls a suite run makes. **A correctly-written
+    unconditional writer produced a latch**, because the discipline was checked at the assignment
+    and never at the inputs. That sentence is now in `GuidedMarker`'s own block.
+  - **THE MISSING OPERAND IS `FStratViewModel::Guidance.bActive`, AND THE GDD PICKED IT RATHER
+    THAN THIS LANE.** §2.11.6, quoted in `StratGuidedOpening.h`: the ring "and the turn-1a unit
+    marker clear in the same frame as the strip". The strip IS `bActive`. **NOT "beat 1a
+    retired"** -- that would clear the mark the moment the beat it belongs to succeeded, one beat
+    early -- and **NOT a hex test**, which `StratGuidedOpening.h` records as the trap that unmarks
+    the unit at the exact moment beat 1a needs it marked. `bIsGuidedMarked` WAS NOT TOUCHED and
+    must not be; `StratViewModelParity` pins it and a second producer is the drift the view model
+    header exists to refuse.
+  - **THE RING'S BEHAVIOUR MAKES "SAME FRAME" STRUCTURAL AND THAT WAS MEASURED, NOT ASSUMED.**
+    `FStratGuidedOpening` writes `bHasObjective = false` in exactly three places -- `SkipGuidance`,
+    the turn-4 window close, the all-beats-retired branch -- and ALL THREE set `bActive = false`
+    beside it; `DecorateViewModel` assigns `View.bActive = bActive` unconditionally and writes
+    `bHasObjectiveRing` only inside `if (bActive)`. So a frame in which the ring is out is a frame
+    in which `bActive` is out, and the marker now rides the same bool through the same
+    `UStratMatchSubsystem::ApplyView` that drives the ring twenty lines below it.
+  - **THE SIGNATURE GREW A FOURTH PARAMETER AND IT IS A `bool`, NOT THE `FStratGuidanceView`.**
+    `AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation,
+    int32 ViewingSide, bool bGuidanceActive)`. Passing the whole struct was the other shape and
+    was killed on one measurement rather than on taste: it would put `ObjectiveHex` within reach
+    of the marker writer, which is the hex-keyed derivation `GuidedMarker`'s block forbids by
+    name. **WHAT THIS CLASS CANNOT SEE, IT CANNOT USE**, and that is the same argument the
+    `ViewingSide` parameter was shaped by on 2026-08-23. Not defaulted, for that parameter's
+    recorded reason: a default lets a future caller get a latching marker silently.
+  - **ONE CALL SITE, MEASURED AND NOT ASSUMED.** `grep` for `->ApplyUnitView(` over `Source/`
+    returns exactly one line, in `UStratMatchSubsystem::ApplyView`, which already held the whole
+    `FStratViewModel`. **NO FILE UNDER `Tests/` CALLS IT**, so no lane but this one had to move --
+    corroborated at compile time, since `StratGuidedOpeningVisuals.cpp` and
+    `StratMatchReconcile.cpp` both rebuilt clean against the new declaration.
+  - **THE FALSE SENTENCE IN `FStratGuidedOpening::SkipGuidance` IS STAMPED, NOT DELETED.** It read
+    "the marker clears because that same call publishes `bActive` false and the marker is drawn
+    only while guidance runs" -- **an unimplemented mechanism asserted as fact for a day**, and it
+    is exactly the shape this record has been corrected for before. It is left standing with a
+    dated stamp because it is TRUE OF THIS TREE NOW and a reader should see that it described an
+    intention before it described an implementation. **A SENTENCE IN ONE FILE ASSERTING WHAT
+    ANOTHER FILE DOES IS A CLAIM AND NOT A SPECIFICATION.**
+  - **A SECOND FALSE SENTENCE WAS FOUND BY FOLLOWING THE FIRST, AND THE BRIEF DID NOT NAME IT.**
+    `FStratGuidedOpening::SkipGuidance`'s DECLARATION in `StratGuidedOpening.h` said "the marker
+    reads `bIsGuidedMarked` on a model the very next `DecorateViewModel` writes with `bActive`
+    false" -- which implies `bIsGuidedMarked` falls with `bActive`, and it does not and must not.
+    Retracted in place with the `RETRACTED>` form. The `.cpp` and the `.h` carried the same wrong
+    belief in different words, which is why fixing the site the brief named would not have
+    finished the job.
+  - **THE COUNT IN `GuidedMarker`'s BLOCK MOVES A SECOND TIME AND IS NOW RETIRED AS AN
+    INVARIANT.** ONE until 2026-08-23, TWO until 2026-08-24, THREE today; both prior wordings are
+    kept as `RETRACTED>` quotes. The "rendering of two fields" sentence further down is rewritten
+    **COUNT-FREE** rather than re-numbered, on the precedent this file already set for the overlay
+    count: the invariant was never the arithmetic, it is that every operand comes off ONE model
+    and none is remembered. Re-numbering to three would rebuild the same trap for whichever
+    ruling adds a fourth.
+  - **[SUPERSEDED 2026-08-24, LATER THE SAME MORNING, BY THIS ENTRY'S OWN AUTHOR: THE EDITOR
+    CLOSED AND THE TREE LINKED. The bullet below is KEPT rather than deleted -- it carries the
+    twenty compiles and the zero diagnostics that the two-action link run does NOT contain, so it
+    is the only record of this change ever being compiled. Do not read it as a live instruction to
+    rebuild.]**
+  - **THE BUILD COMPILED EVERYTHING AND LINKED NOTHING, AND THE EDITOR WAS OPEN BY ARRANGEMENT.**
+    `Get-Process` returns `UnrealEditor` PID 88652, with `explorer.exe` PID 13508 in the same
+    round as the control that shows the instrument can speak. `Build.bat` with the documented
+    arguments PLUS `-NoHotReloadFromIDE`, twenty-three actions: **all twenty compiles succeeded**,
+    `[1/23] Module.StratPlay.gen.cpp` -- so UHT parsed the changed header -- through
+    `[20/23] StratUnitActor.cpp`, with all five changed/adjacent sources excluded from the unity
+    file per `[Adaptive Build]`. **ZERO WARNINGS AND ZERO COMPILER DIAGNOSTICS.** Then
+    `UbaSessionServer - ERROR opening file E:\MultiAgent\Stratocracy\Binaries\Win64\UnrealEditor-StratPlay.dll for write after retrying for 20 seconds (The process cannot access the file because it is being used by another process. - C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe)`,
+    then on the non-UBA retry `LINK : fatal error LNK1104: cannot open file 'E:\MultiAgent\Stratocracy\Binaries\Win64\UnrealEditor-StratPlay.dll'`,
+    `Result: Failed (OtherCompilationError)`, `REAL_EXIT=6`, 158.47 s.
+  - **THIS IS THE WRITE LOCK AND NOT THE LIVE CODING MUTEX, AND THE FLAG BEHAVED EXACTLY AS
+    `.agents/ue-project-context.md` PREDICTS.** That file records that `-NoHotReloadFromIDE`
+    defeats the engine-keyed mutex but NOT this tree's DLL write lock, and that the symptom is a
+    full compile followed by a UBA write error and then `LNK1104`. Observed shape matches
+    line-for-line, including the retry wording. The mutex form aborts ahead of the action graph
+    with zero compiles; this ran twenty. **NOT WORKED AROUND, NOT RETRIED, AND NO DLL DELETED** --
+    the fix is the editor closing.
+  - **THE LINK COMPLETED ON A SECOND RUN WITH THE EDITOR CLOSED, AND IT WAS TWO ACTIONS, WHICH IS
+    STATED PLAINLY RATHER THAN GLOSSED.** `Get-Process UnrealEditor` returns nothing, with
+    `explorer.exe` PID 13508 in the same round as the control. Same command, same flags:
+    `Using Unreal Build Accelerator local executor to run 2 action(s)`,
+    `[1/2] Link [x64] UnrealEditor-StratPlay.dll`, `[2/2] WriteMetadata StratocracyEditor.target`,
+    `Result: Succeeded`, `REAL_EXIT=0`, 2.44 s. **THE TWENTY COMPILES ARE THE EARLIER PASS'S AND
+    NOT THIS RUN'S** -- this run compiled nothing at all. That is sound here and the soundness was
+    measured rather than asserted: the objects were produced by a BYTE-IDENTICAL INVOCATION over
+    BYTE-IDENTICAL SOURCES. All five changed sources carry mtimes of 10:10:36 - 10:12:38, every
+    one of them BEFORE the 20-compile pass, and `git hash-object` over all six changed files
+    returns the same digests after this run as before it. No file was touched between the compile
+    and the link.
+  - **A NEW DLL EXISTS AND THE FILE MOVED, WHICH IS THE ONLY THING THAT DISTINGUISHES A LINK FROM
+    A CACHED `Succeeded`.** `Binaries/Win64/UnrealEditor-StratPlay.dll` went from **1431552 B /
+    2026-08-23 19:46** to **1435136 B / 2026-08-24 10:22** -- 3584 bytes larger, stamped in the
+    run's own minute. **THE FAILED PASS HAD ALREADY MOVED THE `.pdb` AND NOT THE `.dll`**
+    (`UnrealEditor-StratPlay.pdb` stamped 10:15 while the DLL still read 19:46), which is worth
+    knowing: on an `LNK1104` the debug symbols can advance while the binary does not, so a `.pdb`
+    timestamp is NOT evidence that a link happened.
+  - **[STAMPED 2026-08-24, LATER THE SAME DAY. THE FIGURE ABOVE WAS CORRECT FOR THIS LANE'S LINK
+    AND NO LONGER DESCRIBES THE BINARY ON DISK, WHICH IS EXPECTED RATHER THAN A DRIFT.]** A reader
+    who stats `UnrealEditor-StratPlay.dll` now gets **1460224 B / 2026-08-24 10:40:11**, not the
+    **1435136 B / 10:22** recorded above. Nothing was rewritten and nothing was relinked here:
+    `strat-test-author` added roughly 690 lines of clauses to `Source/StratPlay/Tests/` and
+    relinked the same module eighteen minutes later, in its own lane. **THE ORDERING IS COHERENT
+    AND IS THE POINT** -- this lane's link at 10:22 local, the test lane's relink at 10:40:11, and
+    the suite at `reportCreatedOn 2026.08.24-14.41.49` UTC, which is 10:41 local, so the suite ran
+    against the LATER binary and that binary contains this change. Re-measured here with `ls -la`
+    over the whole directory rather than taken on report, with the four untouched sibling DLLs
+    (`StratBridge`, `StratRules`, `Stratocracy` at 2026-08-22, `StratUI` at 2026-08-23) as the
+    control that the listing reports real per-file stamps and not one blanket time.
+    **THE ORIGINAL FIGURE IS KEPT AND MUST NOT BE REFRESHED TO MATCH THE DISK.** It is the only
+    record that this lane's link produced a binary at all -- the two-action run compiled nothing,
+    so the moved byte count is the whole of that evidence. A number that tracks the current file
+    would prove nothing about any particular link, which is the property being protected. **A
+    BUILD ARTEFACT FIGURE IN THIS RECORD DESCRIBES A RUN, NOT A FILE**, and a later in-lane relink
+    is the normal way it stops matching. `strat-integration-reviewer` raised this as an
+    observation and did not gate on it; its verdict and the lane its one finding belongs to are
+    stated where they are owned, and are deliberately not restated here.
+  - **AN INSTRUMENT LIED SILENTLY AND ONLY A CONTROL CAUGHT IT.** `Get-Item` on the DLL through
+    the PowerShell tool printed NOTHING -- no object and no error -- for a file that exists, which
+    reads exactly like "the binary was never produced" and would have contradicted the
+    coordinator's baseline. `ls -la` over the directory, with a total-entry count as the control,
+    returned the file at precisely the coordinator's figures. **A NULL RESULT FROM A STAT IS NOT AN
+    ABSENCE UNTIL THE INSTRUMENT HAS BEEN SHOWN ABLE TO SPEAK**, and this project has paid for that
+    shape before.
+  - **WHAT IS THEREFORE PROVED AND WHAT IS NOT.** PROVED: these bytes compile, the reflected
+    header parses, every dependent translation unit in `StratPlay` including the test lane's
+    agrees with the new signature, and the module links and is on disk. NOT PROVED: **no suite was
+    run -- deliberately, it is the test author's and it is owed after this signature lands** -- and
+    nothing has been observed at runtime. The playtest observation that produced the defect has no
+    clause behind it, which is why the suite was green with it live.
+  - **WHAT WAS NOT DONE.** No `Tests/` file, no `Content/` asset, no `Source/StratRules/` and no
+    `Data/` was touched, and no re-vendor request is filed -- the rules module was correct
+    throughout and `bIsGuidedMarked` is doing exactly what it was designed to do. The stale
+    `BP_StratBoardActor` / `BP_StratUnitActor` comment names and `GuidedMarkerZOffset`'s occlusion
+    were left alone on the coordinator's instruction; both are known and filed.
+  - **DEBT: NOBODY HAS SEEN THE MARKER CLEAR.** The tree links now, and that moves nothing about
+    this debt -- the fix is still a flag change no eye has been on.
+    **DISCHARGED WHEN** a human plays §2.11.6-B past the window's close with this in the tree and
+    reports the marker going out with the ring -- injected input never reaches `UPlayerInput` on
+    this project, so no agent can take that observation. OWNED: coordinator, to schedule.
+  - **[DISCHARGED 2026-08-24. A HUMAN PLAYED IT AND THE MARKER WENT OUT WITH THE RING. THE DEBT
+    TEXT ABOVE IS KEPT DELIBERATELY]** -- it is the record that this fix shipped unobserved, and
+    of how long it stayed that way. The player ran the guided opening to completion and reports
+    the marker clearing WITH the ring, and additionally that the guidance STRIP disappeared in the
+    same frame: all three surfaces dark together, which is §2.11.6's sentence in full rather than
+    the half this lane owed.
+    **WHAT THE LOG PROVES AND WHAT THE EYE PROVES ARE DIFFERENT, AND ONLY ONE OF THEM IS AN
+    INSTRUMENT.** `Saved/Logs/Stratocracy.log` carries `Guided opening complete on turn 3: every
+    beat retired.` at `[2026.08.24-15.57.47:040]` and `[2026.08.24-15.58.38:000]`, re-measured
+    here rather than restated -- and a THIRD at `[2026.08.24-15.23.54:477]`, also after this
+    lane's 10:22 link and the test lane's 10:40 relink, so every one of them ran against a binary
+    containing this change. That line is emitted on the ALL-BEATS-RETIRED branch, one of the three
+    places `bActive` goes false, so the log proves the sessions REACHED the instant the fourth
+    operand acts on. **IT DOES NOT PROVE WHAT WAS ON SCREEN.** The three surfaces going dark
+    together is the player's observation and nothing in this tree can corroborate it:
+    `IsGuidedMarkerVisible` reports the visible FLAG and not pixels, exactly as its own block says,
+    so **THIS DEBT IS DISCHARGED BY A HUMAN AND NOT BY A CLAUSE**, and no clause can be written
+    that would discharge it.
+    **THIS MAKES NO CLAUSE STRONGER THAN IT WAS.** The three clauses covering the marker remain
+    pinned against a test-side instrument rather than against the production writer, because
+    breaking the real subject would have needed an out-of-lane edit into this lane's files. That
+    limit is `tests.md`'s and is unchanged by anything here; a playtest is not a gate, and a
+    discharged debt is not a regression net. **WHAT IS STILL TRUE: nothing headless fails if this
+    fourth operand is deleted tomorrow.**
+  - **[CORRECTED 2026-08-24, SAME DAY, AFTER A COORDINATOR MEASUREMENT. THE TWO SENTENCES THAT
+    CLOSE THE BULLET ABOVE ARE FALSE, AND THE SECOND OF THEM IS THE ONE THIS LANE'S OWN REPORT
+    ASKED THE REVIEWER TO LOOK AT.]** They said:
+    RETRACTED> "The three clauses covering the marker remain pinned against a test-side
+    RETRACTED>  instrument rather than against the production writer, because breaking the real
+    RETRACTED>  subject would have needed an out-of-lane edit into this lane's files."
+    RETRACTED> "WHAT IS STILL TRUE: nothing headless fails if this fourth operand is deleted
+    RETRACTED>  tomorrow."
+    **THE CLAUSES READ THE PRODUCTION WRITER, AND THE MEASUREMENT WAS RE-TAKEN IN THIS TREE
+    RATHER THAN ACCEPTED ON REPORT.**
+    `Stratocracy.StratPlay.T-UI-02.GuidedMarkerClearsWhenGuidanceDeactivates` calls
+    `Match.Subsystem->ApplyView(Dark)` -- the REAL `UStratMatchSubsystem`, which is the sole
+    caller of `AStratUnitActor::ApplyUnitView` -- and reads the result through the fixture's
+    `LitMarkerIds`, whose whole body is `Actor->IsGuidedMarkerVisible()` over the live actors that
+    call reconciled. Before asserting anything it pins as FATAL premises that in the dark frame
+    `Marked->bIsGuidedMarked && Marked->Side == Dark.ViewingSide` is STILL TRUE, that
+    `Guidance.bActive` is the only field that moved, and that the seat and the unit count did not.
+    Then it asserts `StillLit.Num() == 0`. **So deleting the fourth operand leaves the two
+    match-constant operands the clause has just asserted true, the marker stays lit, and that
+    closing `TestEqual` goes RED.** It also lights the marker in frame one as a positive control,
+    so it is not passing vacuously. **SOMETHING HEADLESS DOES FAIL. THE RETRACTED SENTENCE STATES
+    THE OPPOSITE OF THE TREE.**
+    **THE CONFLATION, NAMED, BECAUSE IT IS THE REUSABLE PART.** `strat-test-author` reported that
+    its FALSIFIABILITY MUTATION lived in a test-side helper -- it reinstated the pre-fix predicate
+    in the INSTRUMENT because breaking the real subject would have meant editing this lane's
+    files, which its lane forbids. That is a fact about HOW IT PROVED THE CLAUSES CAN FAIL. This
+    lane read it as a fact about WHAT THE CLAUSES READ. **A PROOF OF FALSIFIABILITY THAT ROUTES
+    AROUND THE SUBJECT SAYS NOTHING ABOUT WHERE THE SUBJECT IS**, and merging the two understated
+    this project's own coverage in the record -- the rarer direction, and no safer for it, because
+    a future reader deletes an operand the record told them nothing guards.
+    **BOTH SENTENCES ARE RETRACTED AND NOT ONLY THE CONCLUSION.** The premise sat two lines above
+    the conclusion and would have been left standing by a fix aimed at the headline alone; this
+    project has a recorded entry for exactly that half-done shape and this is not another one.
+    **WHAT SURVIVES UNCHANGED, AND IT IS THE PART THAT WAS ACTUALLY MEASURED:** no clause gates
+    THE MARKER REACHED THE SCREEN. `IsGuidedMarkerVisible` reports the visible FLAG and not
+    pixels, so the pixel question is human-only and this debt really was discharged by a human
+    rather than by a clause. **THE OVER-CLAIM WAS EXTENDING THAT FROM PIXELS TO THE OPERAND
+    ITSELF.** The flag is gated; the pixels are not; those were never the same claim.
+
 - **2026-08-23, `strat-gameplay-engineer`: THE OVERLAY-COUNT CLAIM IS SWEPT OUT OF THE TREE BY
   CLAIM SHAPE, AND THE SWEEP FOUND ONE THE REVIEWER DID NOT.** Comment-only; no signature, no
   behaviour and no `UPROPERTY` moved. Build green, suite green. `global.md` owns the count.

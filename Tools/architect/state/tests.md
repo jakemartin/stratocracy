@@ -12,6 +12,119 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **THE MARKER NOW HAS A GATE ON THE DIRECTION IT LATCHED IN, AND THE EXISTING CLAUSE THAT WENT
+  RED WAS REPAIRED AT ITS PREMISE RATHER THAN WEAKENED.** Three clauses appended to
+  `Source/StratPlay/Tests/StratGuidedOpeningVisuals.cpp`, all under the pre-existing `T-UI-02`,
+  none minted here: `GuidedMarkerClearsWhenGuidanceDeactivates`,
+  `GuidedMarkerAndObjectiveRingClearInTheSameFrame`, `GuidedMarkerGoesOutAfterSkipGuidance`.
+  **Clause delta +3**, by macro census set-difference over
+  `^IMPLEMENT_SIMPLE_AUTOMATION_TEST` — exactly those three names added, none renamed, none
+  removed. Unstaged; staging is the user's call. The live suite figure is in
+  `Tools/architect/state/global.md` and is not restated here.
+  - **THE HOLE, AND IT IS THE ONE THIS LANE MOST NEEDS TO GENERALISE FROM.** Every marker
+    assertion in that file ran inside a frame where guidance was ACTIVE. `ApplyUnitView` set the
+    marker from `View.bIsGuidedMarked && View.Side == ViewingSide`, and **both operands are
+    match-constant** — `bIsGuidedMarked` is the rules module's derivation off `placement` and is
+    deliberately, permanently so, since beat 1a's content is that the marked Infantry MOVES. So
+    the conjunction could never go false once true, the marker latched on, and a human found it
+    at the keyboard while the suite stayed green.
+    - **THE PREVIOUS CLAUSE DID ASSERT BOTH DIRECTIONS AND THE WRITER DID WRITE BOTH DIRECTIONS.
+      Both were true while the defect was live.** What was missing was not an `else` and not a
+      negative subject: it was **a frame in which the writer's own input could be false**.
+      **BOTH DIRECTIONS OVER AN OPERAND SET THAT CONTAINS NO FALSE IS ONE DIRECTION**, and that
+      sentence generalises past this bug — the same shape as the "unobservable by combination"
+      finding, arrived at from the other side.
+  - **WHAT EACH OF THE THREE PINS, AND THEY ARE NOT THREE READINGS OF ONE THING.**
+    - `GuidedMarkerClearsWhenGuidanceDeactivates` — **WHICH FIELD.** Two frames of one model
+      separated by exactly one field (`Guidance.bActive`), and **in the dark frame the two OLD
+      operands are asserted STILL TRUE**: unit 3 still carries `bIsGuidedMarked` and is still on
+      the viewing side. That is what makes this clause red on precisely the tree that shipped
+      rather than on any tree where the marker happens to be dark. Nothing else in the suite has
+      that property. The lit frame is the control: a marker that never lit reads dark for free.
+    - `GuidedMarkerAndObjectiveRingClearInTheSameFrame` — **TWO SURFACES OUT OF ONE `ApplyView`.**
+      §2.11.6's *"the objective ring … and the turn-1a unit marker clear in the same frame as the
+      strip"* was prose in three files and a gate in none. Both surfaces are lit first — the
+      ring's control forced by the mute-instrument trap, `GiveTheBoardAnOverlayMesh` — then one
+      call, then both read. A marker that outlives the ring **by one refresh** is exactly what the
+      playtest reported, and only the conjunction catches it.
+    - `GuidedMarkerGoesOutAfterSkipGuidance` — **THE PRODUCTION ROUTE, writing no model field at
+      all.** `FStratGuidedOpening::SkipGuidance` claimed this mechanism in a comment for a tree in
+      which nothing implemented it (that comment now carries a `[STAMPED 2026-08-24]` retraction
+      by the engine lane). It also asserts `bIsGuidedMarked` **survives** the skip, so a green
+      cannot mean the mark was collaterally dropped — a rules-side regression would otherwise
+      wear this clause's green as cover.
+  - **A NAME WAS MOVED OFF THE ONE PROPOSED.** `GuidedMarkerReturnsNothingAfterSkipGuidance` →
+    `GuidedMarkerGoesOutAfterSkipGuidance`. "Returns nothing" reads as a claim about a return
+    value and `SkipGuidance` returns `void`. The id did not move.
+  - **THE ONE PLACE THESE COMPUTE AN INPUT, AND WHY THAT IS NOT A COMPUTED EXPECTATION.** The
+    first two make the dark frame by copying the applied model and assigning
+    `Guidance.bActive = false`. That is an **input**, on the standing frame three's `ViewingSide`
+    edit already set. The **expectation** — no marker anywhere, the overlay empty — is read off
+    the actors and off the board and is nowhere typed. **The third clause does not even do that:**
+    it drives `SkipGuidance` and asserts the module dropped the bit itself, which is what stops
+    all three from silently measuring a bool this lane wrote.
+  - **A REGRESSION IN AN EXISTING CLAUSE, DIAGNOSED AS A MISSING PREMISE AND REPAIRED WITHOUT
+    MOVING AN ASSERTION.** `T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex` failed on six
+    assertions at `reportCreatedOn 2026.08.24-14.34.09` — *"exactly one marker is lit on the whole
+    board, on unit 3' to be 1, but it was 0"*. **Re-run on identical bytes first and it failed
+    identically**, so not the known 1-in-4 flake. Cause: that clause builds its model with
+    `BuildViewModel` and **never armed a guided opening**, so `Model.Guidance` was
+    default-constructed and `ApplyUnitView`'s new first operand was false in every frame. **The
+    code was right and the clause's fixture was incomplete.** Repaired by arming a real
+    `FStratGuidedOpening` on the subsystem's own bridge, asserting `bActive` true as an explicit
+    fatal premise, and re-decorating the model rebuilt after the move (`BuildViewModel`
+    default-constructs the block, so a rebuild silently drops it). `Observe` is deliberately not
+    re-run on the rebuilt model — it advances beats and that clause is not about a beat machine.
+    **Not one assertion was removed, relaxed or renamed; three properties (A), (B), (C) are
+    untouched.**
+    - **THE SHAPE WORTH KEEPING: a clause can depend on a premise it never states, and the day
+      that premise stops being true by default the clause reddens on a correct tree.** This one
+      depended on "guidance is running" for a year without saying so, because until 2026-08-24
+      nothing read that bit. The premise is now asserted, so a `DecorateViewModel` that stopped
+      publishing it reddens the clause **at the premise** instead of emptying it silently.
+  - **FALSIFIABILITY: ONE MUTATION, THE PRE-FIX PREDICATE EXACTLY, ALL SIX READ SITES AT ONCE.**
+    Production source is not this lane's to touch even temporarily — the brief asked for the real
+    subject to be broken and **that is refused as out-of-lane**, recorded below under what is
+    blocked. `MutantPreFixLitMarkerIds` answered as an actor driven by
+    `bIsGuidedMarked && Side == ViewingSide` over the model last applied, which is byte-for-byte
+    what `ApplyUnitView` did that morning. Result: **exactly the three new clauses reddened and no
+    others** (`reportCreatedOn 2026.08.24-14.39.44`), and **each reddened at its terminal
+    assertion rather than at a guard clause** — the distinction that made an earlier MF1 attempt
+    on this file worthless. Messages: *"with guidance no longer running NO turn-1a marker is
+    showing anywhere on the board … reads 3 here"*, *"after `Skip guidance` … (still lit: 3)"*,
+    and — the one that shows the mutation reached past both controls —
+    *"BOTH SURFACES CLEARED IN THE SAME FRAME: ring 1 -> 0, markers lit 1 -> 1"*, i.e. the ring's
+    control read 1 and cleared correctly while the marker survived, which is the human's report
+    reproduced in a clause. **The repaired existing clause stayed GREEN under the mutation**,
+    because it reads `IsGuidedMarkerVisible()` directly rather than through the mutated helper —
+    an unplanned control on the mutation's own blast radius. Shipped bytes restored from a copy
+    held OUTSIDE the repo and proved identical by `git hash-object` —
+    `b3f9eda156150861c58a63c2df6916d7b5f3a8eb`, before and after — never `git checkout --`, which
+    rewrites LF to CRLF under `core.autocrlf=true`.
+  - **A RECORD-VS-TREE DISAGREEMENT, CORRECTED HERE.** The entry further down this file states
+    *"The new `StratGuidedOpeningVisuals.cpp` is CRLF in the worktree, matching its neighbours in
+    that directory."* **It is LF** — measured `tr -cd '\r' | wc -c` → 0 over 1767 lines, and
+    `git diff --numstat` reported **+690 / -0** across this pass, additions only, which is what
+    says no whole-file conversion happened. **[STAMPED 2026-08-24]** The older sentence stays as
+    written for its own pass; this is the correction. Note `grep` cannot see a CR on this box, so
+    `tr`/`wc` is the instrument.
+  - **WHAT THESE THREE DO NOT PIN.**
+    - **THAT ANYTHING IS ON SCREEN.** `IsGuidedMarkerVisible` returns `GuidedMarker->IsVisible()`
+      and `USceneComponent::IsVisible` consults `bHiddenInGame` and the visible flag and **not**
+      the static mesh — so it answers TRUE for a marked unit whose marker has no mesh and draws
+      nothing. **All three clauses are about the FLAG falling, and their prose says so in as many
+      words** so a future reader cannot over-read them. `SM_GuidedMarker` and
+      `MI_Marker_Guided` are the content lane's and still have no gate under them from here.
+    - **THE STRIP.** `FStratGuidanceView` reaches a UMG widget `StratPlay` cannot construct
+      headlessly, so "the same frame as the strip" is pinned for the two surfaces named beside
+      the strip and not for the strip itself.
+    - **THE OTHER TWO ROUTES OUT OF THE WINDOW** — the turn-4 close and the all-beats-retired
+      branch. Both set `bActive = false` in the same statement group, so the consequence is
+      covered for any route; only `SkipGuidance`'s **trigger** is pinned.
+    - **THE RING IS NOT ASKED ABOUT IN THE SKIP CLAUSE.** It assigns no `OverlayMesh`, so every
+      overlay accessor there is MUTE and would read 0 whatever happened. Saying so is cheaper
+      than an assertion that cannot fail.
+
 - **THE MARKER CLAUSE WAS RESHAPED TO PIN THE 2026-08-23 USER RULING, AND IT GAINED A THIRD
   FRAME THAT PINS SOMETHING NOTHING IN THE TREE COULD SEE BEFORE.** One clause updated, none
   added: `Stratocracy.StratPlay.T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex` in

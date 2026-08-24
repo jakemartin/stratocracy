@@ -95,7 +95,8 @@ void AStratUnitActor::BeginPlay()
 	}
 }
 
-void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation, int32 ViewingSide)
+void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation, int32 ViewingSide,
+                                    bool bGuidanceActive)
 {
 	// THE ID FIRST, because everything else is a description of THIS unit and a mismatch
 	// here means the caller reconciled against the wrong actor. Overwritten rather than
@@ -153,10 +154,10 @@ void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& W
 	// which is the conflation that header warns about by name.
 	SetActorLocation(WorldLocation + FVector(0.0, 0.0, static_cast<double>(BodyZOffset)));
 
-	// §2.11.6-B's turn-1a marker. A PASS-THROUGH OF TWO PUBLISHED FIELDS ANDed -- no
+	// §2.11.6-B's turn-1a marker. A PASS-THROUGH OF THREE PUBLISHED FIELDS ANDed -- no
 	// comparison against a scenario hex, no lookup, no arithmetic. See the declaration of
 	// `GuidedMarker` on why a hex-keyed derivation would unmark the unit at the moment the
-	// mark is needed, and on the 2026-08-23 user ruling that added the second operand.
+	// mark is needed, and on the two rulings that added the second and third operands.
 	//
 	// THE SIDE TEST IS THE RULING AND IT IS NOT AN OPTIMISATION. The shipped scenario authors
 	// a `guidedOpening` for BOTH seats, so two units carry `bIsGuidedMarked` at once; without
@@ -165,15 +166,34 @@ void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& W
 	// model `View` came from -- not `UStratMatchSubsystem::GetViewingSide`, which would be a
 	// second input into what should be on screen.
 	//
+	// [CORRECTED 2026-08-24, AFTER A HUMAN PLAYTEST, BY THE LANE THAT WROTE THE DEFECT.] The
+	// two operands above are BOTH CONSTANT FOR THE WHOLE MATCH -- `bIsGuidedMarked` is the
+	// rules module's derivation off `placement`, which is exactly why it never moves, and
+	// `View.Side` and `ViewingSide` are fixed. So the conjunction could never go false once
+	// true and THE MARKER STAYED LIT FOR THE REST OF THE MATCH. Observed at the keyboard: the
+	// objective ring cleared and the Infantry's marker did not. The paragraph below was
+	// already in this file when that happened, and it was satisfied -- the WRITE ran in both
+	// directions on every call, over an operand set that had no false in it. **BOTH
+	// DIRECTIONS IS A PROPERTY OF THE OPERANDS AND NOT ONLY OF THE WRITER**, which is the
+	// lesson this line cost, and it is why `bGuidanceActive` is now the first operand.
+	//
+	// `bGuidanceActive` IS `FStratViewModel::Guidance.bActive` -- THE SAME BIT THE STRIP AND
+	// THE RING RIDE, AND NOT "BEAT 1a RETIRED". §2.11.6 says the ring "and the turn-1a unit
+	// marker clear in the same frame as the strip", and the strip IS `bActive`. Every one of
+	// `FStratGuidedOpening`'s three writers of `bHasObjective = false` -- `SkipGuidance`, the
+	// turn-4 window close, and the all-beats-retired branch -- sets `bActive = false` in the
+	// same statement group, and `DecorateViewModel` assigns the guidance block whole, so the
+	// ring going out already proved `bActive` went out. Keying the marker on the same bit
+	// makes "the same frame" structural for the marker too rather than a promise: one value,
+	// one `ApplyView`, three surfaces.
+	//
 	// SET UNCONDITIONALLY IN BOTH DIRECTIONS, on every call, like every other line in this
 	// function. A writer that only ever SHOWS is a writer whose hide can be missed on one
 	// path -- and for this bit that means a permanent marker on a unit §2.11.6's window
-	// closed on. `FStratGuidedOpening::PublishLocks` records the same rule for the lock set,
-	// and it is what makes "the marker clears in the same frame as the strip" structural:
-	// both ride the one `ApplyView` that pushed the strip.
+	// closed on. `FStratGuidedOpening::PublishLocks` records the same rule for the lock set.
 	if (GuidedMarker != nullptr)
 	{
-		GuidedMarker->SetVisibility(View.bIsGuidedMarked && View.Side == ViewingSide);
+		GuidedMarker->SetVisibility(bGuidanceActive && View.bIsGuidedMarked && View.Side == ViewingSide);
 	}
 }
 

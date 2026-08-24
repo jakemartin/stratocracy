@@ -686,6 +686,46 @@ bool FStratGuidedMarkerFollowsTheMarkedBitTest::RunTest(const FString& /*Paramet
 		return false;
 	}
 
+	// ---- guidance is ARMED, which this clause used to leave implicit --------
+	// ADDED 2026-08-24, AND IT IS A MISSING PREMISE RATHER THAN A CONCESSION. `ApplyUnitView`
+	// gained `FStratViewModel::Guidance.bActive` as its FIRST operand that morning, closing the
+	// latch a human playtest found. This clause built its model with `BuildViewModel` and never
+	// armed a guided opening, so `Model.Guidance` was default-constructed and `bActive` was
+	// FALSE in every frame -- and the six positive assertions below went red on a tree that is
+	// correct. `Stratocracy.StratPlay.T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex`
+	// failed at `reportCreatedOn 2026.08.24-14.34.09` with *"exactly one marker is lit on the
+	// whole board, on unit 3' to be 1, but it was 0"*.
+	//
+	// NOT ONE ASSERTION MOVED AND NOTHING WAS RELAXED. What is added is the premise the clause
+	// always depended on and never stated: guidance is RUNNING while the marker is expected to
+	// show. The three properties (A), (B) and (C) above are untouched, and the arming is done
+	// the way the ring clause does it -- a real `FStratGuidedOpening` on the subsystem's own
+	// bridge writing the whole block through `DecorateViewModel`, with no guidance field typed
+	// out here. The bit is then ASSERTED true, so a future `DecorateViewModel` that stopped
+	// publishing it reddens this clause at a premise instead of silently emptying it.
+	//
+	// WHETHER THE MARKER GOES OUT WHEN THAT BIT FALLS IS DELIBERATELY NOT THIS CLAUSE'S SUBJECT.
+	// Three clauses at the end of this file own that direction.
+	const int32            GuidedSide = Bridge->SideToMove();
+	FStratGuidedOpening    Guidance;
+	FStratSelectionMachine Machine;
+	Guidance.Begin(*Bridge, GuidedSide, /*bSuppressed*/ false);
+	if (!TestTrue(TEXT("the shipped scenario arms a guided opening for the seat to move"),
+			Guidance.IsActive()))
+	{
+		return false;
+	}
+	Guidance.Observe(Model, Machine);
+	Guidance.DecorateViewModel(Model);
+	if (!TestTrue(
+			TEXT("guidance is RUNNING in the frames this clause expects a marker in -- "
+			     "`ApplyUnitView`'s first operand is `FStratViewModel::Guidance.bActive`, so "
+			     "without this premise every positive assertion below is red on a correct tree"),
+			Model.Guidance.bActive))
+	{
+		return false;
+	}
+
 	// ---- the three populations, enumerated off the model --------------------
 	FMarkerCensus Census;
 	Census.TakeFrom(Model);
@@ -887,6 +927,19 @@ bool FStratGuidedMarkerFollowsTheMarkedBitTest::RunTest(const FString& /*Paramet
 		return false;
 	}
 
+	// THE REBUILT MODEL IS DECORATED TOO. `BuildViewModel` default-constructs the guidance
+	// block, so a rebuild drops `bActive` back to false and frames two and three would run
+	// with guidance apparently stopped. `Observe` is deliberately NOT re-run: it advances
+	// beats, and this clause is about the marker's operands rather than about a beat machine
+	// -- `DecorateViewModel` republishes the same still-active block and changes nothing else.
+	Guidance.DecorateViewModel(AfterModel);
+	if (!TestTrue(TEXT("guidance is still running after the move, which frames two and three "
+	                   "both depend on"),
+			AfterModel.Guidance.bActive))
+	{
+		return false;
+	}
+
 	const FStratUnitView* const After = UnitById(AfterModel, MarkedId);
 	if (!TestNotNull(TEXT("the marked unit survived its own move"), After))
 	{
@@ -1072,6 +1125,643 @@ bool FStratGuidedMarkerFollowsTheMarkedBitTest::RunTest(const FString& /*Paramet
 			     "count of two is what a removed filter reads"),
 			EnemyMarkedId),
 		SawLitSwapped, 1);
+
+	return true;
+}
+
+// ===========================================================================
+// THE MARKER'S OTHER DIRECTION -- THREE CLAUSES ADDED 2026-08-24, AND THE HOLE
+// THEY CLOSE IS THE ONE A HUMAN PLAYTEST FOUND AND THIS SUITE DID NOT.
+//
+// WHAT WAS UNMEASURED. Every marker assertion in this file above ran inside a frame where
+// guidance was ACTIVE. `AStratUnitActor::ApplyUnitView` set the marker from
+// `View.bIsGuidedMarked && View.Side == ViewingSide` -- and BOTH OPERANDS ARE CONSTANT FOR THE
+// WHOLE MATCH. `bIsGuidedMarked` is the rules module's derivation off `placement`, deliberately
+// and permanently so, because beat 1a's whole content is that the marked Infantry MOVES; `Side`
+// and `ViewingSide` do not move either. So the conjunction could never go false once true, the
+// marker LATCHED ON, and it stayed lit for the rest of the match with the ring already dark
+// beside it. Nothing anywhere asserted the marker goes OUT, so the suite stayed green over a
+// defect that was on screen.
+//
+// THE LESSON THAT OUTLIVES THE DEFECT, and it is why these three exist rather than one. The
+// clause above DID assert both directions -- a lit unit and a dark unit in the same frame -- and
+// `ApplyUnitView` DID write the visibility unconditionally in both directions on every call.
+// Both of those were true while the bug was live. **BOTH DIRECTIONS OVER AN OPERAND SET THAT
+// CONTAINS NO FALSE IS ONE DIRECTION.** What was missing was not an `else`, it was a frame in
+// which the writer's own input could be false.
+//
+// WHAT EACH OF THE THREE IS FOR, AND THEY ARE NOT THREE READINGS OF ONE THING.
+//   - `GuidedMarkerClearsWhenGuidanceDeactivates` pins WHICH FIELD. One field of one model
+//     moves, and in the dark frame the OTHER TWO OPERANDS ARE ASSERTED STILL TRUE -- so the
+//     pre-fix conjunction still evaluates true there, and this clause is red on exactly the
+//     tree that shipped.
+//   - `GuidedMarkerAndObjectiveRingClearInTheSameFrame` pins the TWO SURFACES TOGETHER out of
+//     ONE `ApplyView` call. That is SS2.11.6's "clear in the same frame as the strip", which
+//     until now was asserted in prose in three files and pinned in none.
+//   - `GuidedMarkerGoesOutAfterSkipGuidance` pins the PRODUCTION ROUTE. It writes no model field
+//     at all: `FStratGuidedOpening::SkipGuidance` carried a comment claiming this mechanism for
+//     a tree that did not implement it, and that comment now carries a `[STAMPED 2026-08-24]`
+//     retraction. A sentence in one file about what another file does is a claim; this is the
+//     clause that makes it a measurement.
+//
+// THE NAME. The engineer proposed `GuidedMarkerReturnsNothingAfterSkipGuidance` for the third.
+// Renamed to `GuidedMarkerGoesOutAfterSkipGuidance` -- "returns nothing" reads as a claim about
+// a return value, and `SkipGuidance` returns `void`. Nothing else moved; the id stays `T-UI-02`.
+//
+// THE INSTRUMENT LIMIT, RESTATED HERE BECAUSE THESE THREE ARE THE CLAUSES MOST LIKELY TO BE
+// OVER-READ. `IsGuidedMarkerVisible` reports the component's VISIBLE FLAG. It returns
+// `GuidedMarker->IsVisible()`, and `USceneComponent::IsVisible` consults `bHiddenInGame` and the
+// visible flag and NOT the static mesh -- so it answers TRUE for a marked unit whose marker has
+// no mesh and draws nothing at all. **NONE OF THESE THREE CLAUSES SAYS ANYTHING ABOUT PIXELS.**
+// What they say is that the flag falls when guidance stops. The mesh and the material are
+// Blueprint defaults and are the content lane's; nothing headless can gate them.
+//
+// WHY A HAND-WRITTEN `bActive` IS FIXTURE CONSTRUCTION AND NOT A COMPUTED EXPECTATION. In the
+// first two clauses the deactivated frame is made by copying the applied model and assigning
+// `Guidance.bActive = false` and nothing else. That is an INPUT, on the same standing as frame
+// three's `ViewingSide` edit above and the models `StratMatchReconcile.cpp` edits. The
+// EXPECTATION -- the marker is out, the ring is empty -- is read off the actor and off the board
+// and is nowhere typed. The third clause does not even do that much: it drives the module.
+// ===========================================================================
+
+namespace StratGuidedOpeningVisuals
+{
+	/**
+	 * A live match on the shipped scenario, with the four handles a marker clause needs.
+	 *
+	 * Lifted verbatim out of the two clauses above rather than invented -- same config, same
+	 * world scope, same order -- because three more copies of that preamble is three more
+	 * places a fixture premise can drift from the clause it serves.
+	 */
+	struct FLiveMatch
+	{
+		FTestWorldScope       Scope;
+		UStratMatchSubsystem* Subsystem = nullptr;
+		FStratBridge*         Bridge    = nullptr;
+		AStratBoardActor*     Board     = nullptr;
+
+		bool Start(FString& OutError)
+		{
+			if (Scope.World == nullptr)
+			{
+				OutError = TEXT("no transient world was created");
+				return false;
+			}
+
+			Subsystem = Scope.World->GetSubsystem<UStratMatchSubsystem>();
+			if (Subsystem == nullptr)
+			{
+				OutError = TEXT("the world has no match subsystem");
+				return false;
+			}
+
+			FStratMatchConfig Config;
+			if (!MakeConfig(Config, OutError))
+			{
+				return false;
+			}
+
+			FString StartReason;
+			Subsystem->StartMatch(Config, StartReason);
+			if (!Subsystem->IsMatchLive())
+			{
+				OutError = StartReason;
+				return false;
+			}
+
+			Bridge = Subsystem->GetBridge();
+			if (Bridge == nullptr)
+			{
+				OutError = TEXT("a live match owns no bridge");
+				return false;
+			}
+
+			Board = Subsystem->GetBoard();
+			if (Board == nullptr)
+			{
+				OutError = TEXT("the subsystem spawned no board");
+				return false;
+			}
+			return true;
+		}
+	};
+
+	/**
+	 * Every unit actor in the world whose turn-1a marker is showing, by unit id.
+	 *
+	 * A BOARD-WIDE CENSUS AND NOT A PREDICATE ON ONE ACTOR, which is what makes "the marker
+	 * went out" a statement about the BOARD rather than about the one unit a clause remembered
+	 * to look at. A writer that hid the marked Infantry and left a marker standing on some
+	 * other actor reads as 1 here, not as 0, and the clause names the offender in its message.
+	 */
+	static int32 LitMarkerIds(UWorld* World, TArray<int32>& OutIds)
+	{
+		OutIds.Reset();
+
+		TArray<AStratUnitActor*> Actors;
+		LiveUnitActors(World, Actors);
+		for (AStratUnitActor* const Actor : Actors)
+		{
+			if (Actor->IsGuidedMarkerVisible())
+			{
+				OutIds.Add(Actor->GetUnitId());
+			}
+		}
+		return OutIds.Num();
+	}
+
+	/** `TArray<int32>` as "3, 7", so a red run names what it found rather than only a count. */
+	static FString IdsAsText(const TArray<int32>& Ids)
+	{
+		if (Ids.Num() == 0)
+		{
+			return TEXT("none");
+		}
+
+		FString Text;
+		for (int32 Index = 0; Index < Ids.Num(); ++Index)
+		{
+			if (Index > 0)
+			{
+				Text += TEXT(", ");
+			}
+			Text += FString::FromInt(Ids[Index]);
+		}
+		return Text;
+	}
+
+	/**
+	 * Arms a real `FStratGuidedOpening` on a live match's own bridge and lets it write the
+	 * whole guidance block into `Model`.
+	 *
+	 * NOT ONE GUIDANCE FIELD IS TYPED OUT BY A CALLER. Same posture as the ring clause above:
+	 * the block is the module's, written through `DecorateViewModel` exactly as
+	 * `AStratPlayerController` has it written in the running game.
+	 */
+	static bool ArmGuidance(FLiveMatch& Match, FStratGuidedOpening& Guidance,
+		FStratSelectionMachine& Machine, FStratViewModel& Model, FString& OutError)
+	{
+		if (!Match.Subsystem->BuildViewModel(Model, OutError))
+		{
+			return false;
+		}
+
+		Guidance.Begin(*Match.Bridge, Match.Bridge->SideToMove(), /*bSuppressed*/ false);
+		if (!Guidance.IsActive())
+		{
+			OutError = TEXT("the shipped scenario armed no guided opening for the seat to move");
+			return false;
+		}
+
+		Guidance.Observe(Model, Machine);
+		Guidance.DecorateViewModel(Model);
+		if (!Model.Guidance.bActive)
+		{
+			OutError = TEXT("DecorateViewModel published an inactive guidance block");
+			return false;
+		}
+		return true;
+	}
+}
+
+// ---------------------------------------------------------------------------
+// THE TURN-1a MARKER GOES OUT WHEN GUIDANCE STOPS RUNNING -- AND THE TWO OPERANDS THAT USED TO
+// BE THE WHOLE CONDITION ARE ASSERTED STILL TRUE IN THE FRAME WHERE IT IS OUT.
+//
+// THAT SECOND HALF IS THE CLAUSE. Without it this is a clause that could be satisfied by the
+// rules module having quietly dropped `bIsGuidedMarked`, or by the seat having changed -- either
+// of which would put the marker out for a reason SS2.11.6 does not want and would take beat 1a's
+// mark with it. With it, the dark frame is one in which `View.bIsGuidedMarked` is TRUE and
+// `View.Side == FStratViewModel::ViewingSide` is TRUE, so the pre-2026-08-24 expression
+// evaluates TRUE there and the shipped tree of that morning reads this assertion as red. It is
+// the only clause in the tree with that property.
+//
+// EXACTLY ONE FIELD SEPARATES THE TWO FRAMES. The dark model is a COPY of the lit one with
+// `Guidance.bActive` assigned false and nothing else touched -- every unit, every hex, every
+// `bIsGuidedMarked` bit, `ViewingSide` itself. That is asserted rather than arranged and hoped
+// for: the marked unit's view is re-read out of the DARK model and its two old operands are
+// checked there.
+//
+// THE LIT FRAME IS THE CONTROL AND IT IS NOT DECORATION. A marker that never lit at all reads
+// dark in the second frame and would pass a clause that only looked at the second frame. Having
+// shown exactly one lit marker on this same board in this same clause is what gives the zero its
+// meaning -- the same standing the ring clause above records for its own mute-instrument trap.
+//
+// WHAT THIS DOES NOT PIN: that anything is on screen. See the block above; the accessor reports
+// a FLAG. And it does not pin WHY `bActive` fell -- that is
+// `GuidedMarkerGoesOutAfterSkipGuidance` below, which drives the module instead of writing the
+// field.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidedMarkerClearsWhenGuidanceDeactivatesTest,
+	"Stratocracy.StratPlay.T-UI-02.GuidedMarkerClearsWhenGuidanceDeactivates",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidedMarkerClearsWhenGuidanceDeactivatesTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidedOpeningVisuals;
+
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FLiveMatch Match;
+	FString    Error;
+	if (!TestTrue(TEXT("a live match starts on the shipped scenario"), Match.Start(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	FStratViewModel        Lit;
+	FStratGuidedOpening    Guidance;
+	FStratSelectionMachine Machine;
+	if (!TestTrue(TEXT("a real guided opening writes the whole guidance block"),
+			ArmGuidance(Match, Guidance, Machine, Lit, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// ---- the fixture premise: the seat being viewed is the guided seat -------
+	// Asserted rather than assumed of the config, which sets `FirstSide` and `ViewingSide`
+	// independently. Without it the marked-on-the-viewing-side population below can be empty
+	// and every assertion in this clause goes vacuous.
+	if (!TestEqual(TEXT("the viewing seat is the seat guidance was armed for"),
+			Lit.ViewingSide, Match.Bridge->SideToMove()))
+	{
+		return false;
+	}
+
+	FMarkerCensus Census;
+	Census.TakeFrom(Lit);
+	if (!TestEqual(
+			TEXT("the viewing seat has exactly one marked Infantry to watch go dark"),
+			Census.MarkedOnViewingSide.Num(), 1))
+	{
+		return false;
+	}
+	const int32 MarkedId = Census.MarkedOnViewingSide[0];
+
+	// ---- frame one: guidance running. THE CONTROL ---------------------------
+	Match.Subsystem->ApplyView(Lit);
+
+	TArray<int32> LitIds;
+	LitMarkerIds(Match.Scope.World, LitIds);
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("WITH GUIDANCE RUNNING the viewing seat's marked Infantry, unit %d, wears the "
+				     "turn-1a marker -- this is the control, and without it the dark frame below "
+				     "would pass over a marker that never lit at all (lit: %s)"),
+				MarkedId, *IdsAsText(LitIds)),
+			LitIds.Contains(MarkedId)))
+	{
+		return false;
+	}
+	TestEqual(
+		*FString::Printf(TEXT("and it is the only marker lit on the board (lit: %s)"),
+			*IdsAsText(LitIds)),
+		LitIds.Num(), 1);
+
+	// ---- frame two: ONE FIELD MOVES -----------------------------------------
+	FStratViewModel Dark = Lit;
+	Dark.Guidance.bActive = false;
+
+	// THE ASSERTION THIS WHOLE CLAUSE EXISTS FOR. In the frame where the marker must be out,
+	// the two operands that WERE the entire condition are still true. A tree that reads only
+	// those two cannot produce a dark marker here, which is exactly the tree that shipped on
+	// the morning of 2026-08-24 and exactly what the human at the keyboard saw.
+	const FStratUnitView* const Marked = UnitById(Dark, MarkedId);
+	if (!TestNotNull(TEXT("the marked unit survives into the deactivated model"), Marked))
+	{
+		return false;
+	}
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("IN THE DEACTIVATED FRAME the old operands are BOTH STILL TRUE: unit %d still "
+				     "carries `bIsGuidedMarked` (the rules module derives it off `placement`, which "
+				     "does not move) and is still on the viewing side %d. So "
+				     "`bIsGuidedMarked && Side == ViewingSide` -- the whole condition before "
+				     "2026-08-24 -- evaluates TRUE right here"),
+				MarkedId, Dark.ViewingSide),
+			Marked->bIsGuidedMarked && Marked->Side == Dark.ViewingSide))
+	{
+		return false;
+	}
+	if (!TestFalse(TEXT("and the ONE field that moved is `Guidance.bActive`"),
+			Dark.Guidance.bActive))
+	{
+		return false;
+	}
+	if (!TestEqual(TEXT("nothing else moved: the viewing side is the same seat it was"),
+			Dark.ViewingSide, Lit.ViewingSide))
+	{
+		return false;
+	}
+	if (!TestEqual(TEXT("and the same units are in the model"), Dark.Units.Num(), Lit.Units.Num()))
+	{
+		return false;
+	}
+
+	Match.Subsystem->ApplyView(Dark);
+
+	TArray<int32> StillLit;
+	LitMarkerIds(Match.Scope.World, StillLit);
+	TestEqual(
+		*FString::Printf(
+			TEXT("SS2.11.6: with guidance no longer running NO turn-1a marker is showing anywhere "
+			     "on the board. A marker keyed only on `bIsGuidedMarked && Side == ViewingSide` "
+			     "LATCHES ON -- both operands are match-constant -- and reads %s here"),
+			*IdsAsText(StillLit)),
+		StillLit.Num(), 0);
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// ONE `ApplyView` TAKES BOTH SURFACES DOWN -- SS2.11.6's "the objective ring ... and the turn-1a
+// unit marker clear in the same frame as the strip", WHICH UNTIL NOW WAS PROSE IN THREE FILES
+// AND A GATE IN NONE.
+//
+// WHAT "THE SAME FRAME" MEANS HERE AND WHAT IT DOES NOT. It means: between the frame in which
+// both surfaces are up and the frame in which both are down there is exactly ONE
+// `UStratMatchSubsystem::ApplyView` call, and both are read after it. It does NOT mean anything
+// about the STRIP -- `FStratGuidanceView` reaches a UMG widget this module cannot construct
+// headlessly, and no clause here observes it. What is pinned is the two surfaces the sentence
+// names beside the strip, driven off the one bool the strip is driven off.
+//
+// WHY THIS IS NOT A SECOND READING OF THE CLAUSE ABOVE. That one passes on a tree where the ring
+// is broken, and this one passes on a tree where the ring and the marker fall together one
+// refresh LATE. Together they say: the marker falls on `bActive`, and it falls BESIDE the ring
+// rather than after it. Losing either half of the AND loses a real defect -- a marker that
+// outlives the ring by one frame is precisely what a human sees as "the ring cleared and the
+// marker did not", which is the report that started this.
+//
+// BOTH SURFACES ARE LIT FIRST, AND THAT IS TWO CONTROLS RATHER THAN ONE. The ring's is forced by
+// the instrument: `AStratBoardActor::FillOverlay` returns early and silently when the overlay
+// component has no static mesh, so on a fixture with no Blueprint defaults every overlay
+// accessor reads 0 forever and "the ring is dark" could never go red.
+// `GiveTheBoardAnOverlayMesh` is what gives it a voice -- the measurement
+// `StratGuidanceInputGates.cpp` took first -- and having read 1 on this same board in this same
+// clause is what makes the 0 a measurement. The marker's control is the plain one: a marker that
+// never lit reads dark for free.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidedMarkerAndRingClearTogetherTest,
+	"Stratocracy.StratPlay.T-UI-02.GuidedMarkerAndObjectiveRingClearInTheSameFrame",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidedMarkerAndRingClearTogetherTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidedOpeningVisuals;
+
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FLiveMatch Match;
+	FString    Error;
+	if (!TestTrue(TEXT("a live match starts on the shipped scenario"), Match.Start(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// ---- the ring's instrument is given a voice before it is trusted --------
+	if (!TestTrue(TEXT("the board is given an overlay mesh, without which every overlay accessor "
+	                   "reads 0 for every input forever and the dark half could not go red"),
+			GiveTheBoardAnOverlayMesh(Match.Board, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	FStratViewModel        Lit;
+	FStratGuidedOpening    Guidance;
+	FStratSelectionMachine Machine;
+	if (!TestTrue(TEXT("a real guided opening writes the whole guidance block"),
+			ArmGuidance(Match, Guidance, Machine, Lit, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	if (!TestTrue(TEXT("and it published an objective ring, without which this clause has only "
+	                   "one surface to watch"),
+			Lit.Guidance.bHasObjectiveRing))
+	{
+		return false;
+	}
+	if (!TestEqual(TEXT("the viewing seat is the seat guidance was armed for"),
+			Lit.ViewingSide, Match.Bridge->SideToMove()))
+	{
+		return false;
+	}
+
+	FMarkerCensus Census;
+	Census.TakeFrom(Lit);
+	if (!TestEqual(TEXT("the viewing seat has exactly one marked Infantry to watch go dark"),
+			Census.MarkedOnViewingSide.Num(), 1))
+	{
+		return false;
+	}
+	const int32 MarkedId = Census.MarkedOnViewingSide[0];
+
+	// ---- frame one: BOTH SURFACES UP ----------------------------------------
+	Match.Subsystem->ApplyView(Lit);
+
+	TArray<int32> LitIds;
+	LitMarkerIds(Match.Scope.World, LitIds);
+
+	const int32 RingWhileRunning    = Match.Board->GetObjectiveOverlayCount();
+	const bool  bMarkerWhileRunning = LitIds.Contains(MarkedId);
+
+	if (!TestEqual(
+			*FString::Printf(
+				TEXT("CONTROL, SURFACE ONE: with guidance running the objective ring is lit at the "
+				     "hex the guidance block named, axial %s"),
+				*Lit.Guidance.ObjectiveHex.ToString()),
+			RingWhileRunning, 1))
+	{
+		return false;
+	}
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("CONTROL, SURFACE TWO: and unit %d wears the turn-1a marker in that same frame "
+				     "(lit: %s). Both surfaces are up, which is what makes the single call below a "
+				     "measurement of both going down"),
+				MarkedId, *IdsAsText(LitIds)),
+			bMarkerWhileRunning))
+	{
+		return false;
+	}
+
+	// ---- ONE CALL. Between these two readings there is exactly one `ApplyView`.
+	FStratViewModel Dark = Lit;
+	Dark.Guidance.bActive = false;
+
+	Match.Subsystem->ApplyView(Dark);
+
+	const int32   RingAfter = Match.Board->GetObjectiveOverlayCount();
+	TArray<int32> StillLit;
+	LitMarkerIds(Match.Scope.World, StillLit);
+
+	TestEqual(
+		TEXT("SS2.11.6, SURFACE ONE: one `ApplyView` with an inactive guidance block leaves the "
+		     "objective overlay EMPTY"),
+		RingAfter, 0);
+	TestEqual(
+		*FString::Printf(
+			TEXT("SS2.11.6, SURFACE TWO, OUT OF THE SAME SINGLE `ApplyView`: no turn-1a marker is "
+			     "showing anywhere on the board either (still lit: %s). A marker that outlives the "
+			     "ring by even one refresh is what the 2026-08-24 playtest reported -- the ring "
+			     "cleared and the marker did not"),
+			*IdsAsText(StillLit)),
+		StillLit.Num(), 0);
+
+	// The conjunction stated as one fact, so a reader of a red run sees which half survived
+	// rather than two separate numbers to correlate.
+	TestTrue(
+		*FString::Printf(
+			TEXT("BOTH SURFACES CLEARED IN THE SAME FRAME: ring %d -> %d, markers lit %d -> %d, "
+			     "with one `ApplyView` between the two readings"),
+			RingWhileRunning, RingAfter, LitIds.Num(), StillLit.Num()),
+		RingAfter == 0 && StillLit.Num() == 0);
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// SS2.11.6's `Skip guidance` CONTROL PUTS THE MARKER OUT -- DRIVEN THROUGH THE MODULE, WITH NO
+// MODEL FIELD WRITTEN BY THIS CLAUSE AT ALL.
+//
+// WHY THIS IS WORTH A THIRD CLAUSE. The two above assign `Guidance.bActive = false` themselves,
+// which is fixture construction and is honest, but it means neither would notice a
+// `SkipGuidance` that stopped dropping `bActive` -- they would go on measuring a bool they wrote
+// themselves. This one calls `SkipGuidance` and `DecorateViewModel` and then reads the board, so
+// the whole chain is the module's: the player's control, the block it publishes, the argument
+// `UStratMatchSubsystem::ApplyView` forwards, and the visibility the actor sets.
+//
+// AND BECAUSE THE COMMENT WAS A CLAIM RATHER THAN A SPECIFICATION.
+// `FStratGuidedOpening::SkipGuidance` has said since it was written that "the marker clears
+// because that same call publishes `bActive` false and the marker is drawn only while guidance
+// runs" -- a sentence about what ANOTHER file does, written for a tree in which no file did it.
+// It now carries a `[STAMPED 2026-08-24]` note recording that it was false for a day. THIS IS
+// THE CLAUSE THAT WOULD HAVE CAUGHT IT, and the general shape is worth more than this instance:
+// a file asserting a second file's behaviour in prose has no gate under it until someone writes
+// one.
+//
+// THE PREMISE IS ASSERTED AND IS FATAL. `SkipGuidance` returns early if guidance is not active,
+// so a fixture in which it was never armed would exercise nothing while reading exactly like a
+// pass. The clause requires an ACTIVE block and a LIT marker first, then requires the block to
+// have gone inactive as a result of the call, and only then reads the board.
+//
+// AND THE MARK ITSELF IS REQUIRED TO SURVIVE. `bIsGuidedMarked` is asserted still true after the
+// skip, which is what says the marker went out because guidance stopped rather than because beat
+// 1a's mark was collaterally dropped -- the second of those would be a rules-side regression
+// wearing this clause's green as cover.
+//
+// WHAT IT DOES NOT PIN. That the marker is on screen (the accessor is a flag -- see the block
+// above). The other two routes out of the window: the turn-4 close and the all-beats-retired
+// branch. Both set `bActive = false` in the same statement group as `bHasObjective`, so the
+// clauses above cover the CONSEQUENCE for any route; only this one route has its trigger pinned.
+// THE RING IS NOT ASKED ABOUT HERE: this clause assigns no `OverlayMesh`, so every overlay
+// accessor is MUTE and would read 0 whatever happened. Saying so is cheaper than an assertion
+// that cannot fail; the ring's gate is the clause above.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratGuidedMarkerGoesOutAfterSkipGuidanceTest,
+	"Stratocracy.StratPlay.T-UI-02.GuidedMarkerGoesOutAfterSkipGuidance",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratGuidedMarkerGoesOutAfterSkipGuidanceTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratGuidedOpeningVisuals;
+
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FLiveMatch Match;
+	FString    Error;
+	if (!TestTrue(TEXT("a live match starts on the shipped scenario"), Match.Start(Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	FStratViewModel        Model;
+	FStratGuidedOpening    Guidance;
+	FStratSelectionMachine Machine;
+	if (!TestTrue(TEXT("a real guided opening writes the whole guidance block"),
+			ArmGuidance(Match, Guidance, Machine, Model, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	if (!TestEqual(TEXT("the viewing seat is the seat guidance was armed for"),
+			Model.ViewingSide, Match.Bridge->SideToMove()))
+	{
+		return false;
+	}
+
+	FMarkerCensus Census;
+	Census.TakeFrom(Model);
+	if (!TestEqual(TEXT("the viewing seat has exactly one marked Infantry to watch go dark"),
+			Census.MarkedOnViewingSide.Num(), 1))
+	{
+		return false;
+	}
+	const int32 MarkedId = Census.MarkedOnViewingSide[0];
+
+	// ---- the premise: guidance is running and the marker is up --------------
+	Match.Subsystem->ApplyView(Model);
+
+	TArray<int32> LitIds;
+	LitMarkerIds(Match.Scope.World, LitIds);
+	if (!TestTrue(
+			*FString::Printf(
+				TEXT("BEFORE THE SKIP guidance is running and unit %d wears the turn-1a marker "
+				     "(lit: %s). `SkipGuidance` returns early on an inactive opening, so without "
+				     "this premise the call below would do nothing and read exactly like a pass"),
+				MarkedId, *IdsAsText(LitIds)),
+			Guidance.IsActive() && LitIds.Contains(MarkedId)))
+	{
+		return false;
+	}
+
+	// ---- the player's own control, and nothing else -------------------------
+	Guidance.SkipGuidance();
+	Guidance.DecorateViewModel(Model);
+
+	if (!TestFalse(
+			TEXT("`SkipGuidance` dropped `bActive` in the block it published -- asserted because "
+			     "this clause writes no model field of its own and would otherwise be measuring a "
+			     "call that did nothing"),
+			Model.Guidance.bActive))
+	{
+		return false;
+	}
+
+	const FStratUnitView* const Marked = UnitById(Model, MarkedId);
+	if (!TestNotNull(TEXT("the marked unit survives the skip"), Marked))
+	{
+		return false;
+	}
+	TestTrue(
+		*FString::Printf(
+			TEXT("and the RULES MODULE still marks unit %d after the skip -- the marker must go "
+			     "out because guidance stopped, not because the mark was dropped with it"),
+			MarkedId),
+		Marked->bIsGuidedMarked);
+
+	Match.Subsystem->ApplyView(Model);
+
+	TArray<int32> StillLit;
+	LitMarkerIds(Match.Scope.World, StillLit);
+	TestEqual(
+		*FString::Printf(
+			TEXT("SS2.11.6: after `Skip guidance` NO turn-1a marker is showing anywhere on the "
+			     "board (still lit: %s). This is the sentence `FStratGuidedOpening::SkipGuidance` "
+			     "asserted about `AStratUnitActor` for a day before anything implemented it"),
+			*IdsAsText(StillLit)),
+		StillLit.Num(), 0);
 
 	return true;
 }

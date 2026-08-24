@@ -108,15 +108,30 @@ public:
 	 * was refused for exactly that sentence -- reading it here would let the screen disagree
 	 * with the model it was reconciled from. Only the marker reads it; see `GuidedMarker`.
 	 *
-	 * @param View           the model's entry for this unit. Its `UnitId` becomes this
-	 *                       actor's, and the two are never allowed to disagree.
-	 * @param WorldLocation  from the board actor, for `View.Hex`.
-	 * @param ViewingSide    `FStratViewModel::ViewingSide` off the SAME model `View` came
-	 *                       from. A value that is no side at all -- `INDEX_NONE` -- shows no
-	 *                       marker, which is the safe direction and is not a sentinel: no
-	 *                       real side equals it, so nothing is collapsed.
+	 * THE GUIDANCE-ACTIVE BIT IS PASSED IN FOR THE SAME REASON AND BY THE SAME PRECEDENT,
+	 * ADDED 2026-08-24. `FStratViewModel::Guidance.bActive` off the same model, not
+	 * `UStratMatchSubsystem`'s `FStratGuidedOpening` asked directly -- an actor that queried
+	 * the guidance machine would be drawing from the model PLUS a live object, and could show
+	 * a marker for a window the model it was handed says is closed. It is a BOOL and not the
+	 * `FStratGuidanceView` itself, deliberately: handing this class the whole struct would put
+	 * `ObjectiveHex` within reach of a marker writer, which is precisely the hex-keyed
+	 * derivation `GuidedMarker`'s block forbids by name. What it cannot see, it cannot use.
+	 *
+	 * @param View            the model's entry for this unit. Its `UnitId` becomes this
+	 *                        actor's, and the two are never allowed to disagree.
+	 * @param WorldLocation   from the board actor, for `View.Hex`.
+	 * @param ViewingSide     `FStratViewModel::ViewingSide` off the SAME model `View` came
+	 *                        from. A value that is no side at all -- `INDEX_NONE` -- shows no
+	 *                        marker, which is the safe direction and is not a sentinel: no
+	 *                        real side equals it, so nothing is collapsed.
+	 * @param bGuidanceActive `FStratViewModel::Guidance.bActive` off that same model. False
+	 *                        shows no marker on any unit, which is §2.11.6's own sentence
+	 *                        ("the turn-1a unit marker clear[s] in the same frame as the
+	 *                        strip") and is the only operand of the three that can ever go
+	 *                        false mid-match.
 	 */
-	void ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation, int32 ViewingSide);
+	void ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation, int32 ViewingSide,
+	                   bool bGuidanceActive);
 
 	/**
 	 * Which unit this actor stands for. `FStratUnitView::UnitId`, and the key
@@ -186,12 +201,34 @@ protected:
 	 * has published the fact since phase 2 -- `FStratUnitView::bIsGuidedMarked` -- and this
 	 * actor was already handed it on every refresh and threw it away.
 	 *
-	 * ITS VISIBILITY IS A PASS-THROUGH OF TWO PUBLISHED FIELDS ANDed, AND NEITHER IS
-	 * DERIVED. `ApplyUnitView` sets it from `View.bIsGuidedMarked && View.Side ==
-	 * ViewingSide` and from nothing else. THE COUNT WAS ONE UNTIL 2026-08-23 and this block
-	 * said so:
+	 * ITS VISIBILITY IS A PASS-THROUGH OF THREE PUBLISHED FIELDS ANDed, AND NONE IS
+	 * DERIVED. `ApplyUnitView` sets it from `bGuidanceActive && View.bIsGuidedMarked &&
+	 * View.Side == ViewingSide` and from nothing else. THE COUNT WAS ONE UNTIL 2026-08-23 and
+	 * TWO UNTIL 2026-08-24; this block said so, in that order:
 	 * RETRACTED> "ITS VISIBILITY IS A PASS-THROUGH OF ONE PUBLISHED FIELD ... `ApplyUnitView`
 	 * RETRACTED>  sets it from `View.bIsGuidedMarked` and from nothing else."
+	 * RETRACTED> "ITS VISIBILITY IS A PASS-THROUGH OF TWO PUBLISHED FIELDS ANDed ...
+	 * RETRACTED>  `ApplyUnitView` sets it from `View.bIsGuidedMarked && View.Side ==
+	 * RETRACTED>  ViewingSide` and from nothing else."
+	 *
+	 * THE THIRD FIELD IS A DEFECT FOUND IN A HUMAN PLAYTEST, AND IT IS THE ONLY OPERAND THAT
+	 * CAN EVER MOVE. Added 2026-08-24, `FStratViewModel::Guidance.bActive`. With only the
+	 * first two, EVERY OPERAND WAS CONSTANT FOR THE WHOLE MATCH -- `bIsGuidedMarked` is
+	 * derived off `placement` and therefore deliberately never moves, and both sides are
+	 * fixed -- so the conjunction could not go false once true and the marker stayed lit
+	 * after §2.11.6's window closed. The player saw the objective ring clear with the
+	 * Infantry's marker still on. **THE BOTH-DIRECTIONS DISCIPLINE HAD BEEN APPLIED TO THE
+	 * WRITE AND NOT TO THE OPERAND SET**, which is how a correctly-written unconditional
+	 * writer produced a latch; that is the durable finding, not the missing bit.
+	 *
+	 * `bActive` AND NOT "BEAT 1a RETIRED", AND THE GDD PICKED IT. §2.11.6 says the ring "and
+	 * the turn-1a unit marker clear in the same frame as the strip", and the strip is
+	 * `bActive`. It is also what makes the ring and the marker structurally simultaneous:
+	 * `FStratGuidedOpening` writes `bHasObjective = false` in exactly three places and all
+	 * three set `bActive = false` beside it, and `DecorateViewModel` publishes the guidance
+	 * block whole -- so a frame in which the ring is out is a frame in which `bActive` is
+	 * out, and now a frame in which no marker draws.
+	 *
 	 * THE SECOND FIELD IS A USER RULING AND NOT A READING. `Data/ferrum_crossing.json`
 	 * authors a `guidedOpening` for BOTH seats, so TWO units carry `bIsGuidedMarked` at once
 	 * -- measured by `strat-test-author`, who saw unit 3 (side 0) and unit 7 (side 1) both
@@ -199,8 +236,10 @@ protected:
 	 * seat's Infantry on the player's screen. The user ruled it out: a marker that says
 	 * "select this" pointing at a unit the player cannot select is confusing.
 	 *
-	 * IT IS STILL A PASS-THROUGH AND THE RULING DID NOT COST THAT. Both operands are fields
-	 * this actor was handed off one model; nothing is computed, nothing is looked up, and no
+	 * IT IS STILL A PASS-THROUGH AND NEITHER THE RULING NOR THE 2026-08-24 FIX COST THAT. All
+	 * three operands are fields this actor was handed off ONE model -- `View.bIsGuidedMarked`
+	 * and `View.Side` on the unit entry, `ViewingSide` and `bGuidanceActive` off the model
+	 * that entry came from; nothing is computed, nothing is looked up, and no
 	 * hex is compared. IN PARTICULAR IT IS NEVER RE-DERIVED FROM A HEX COMPARISON against
 	 * `guidedOpening.infantry`: the rules module derives that flag off `placement`, and
 	 * `StratGuidedOpening.h` records why -- beat 1a's entire content is that the marked
@@ -210,7 +249,10 @@ protected:
 	 *
 	 * IT ADDS NO STATE THE MODEL DOES NOT HOLD. The header block's sharpest constraint is
 	 * intact: nothing here is a bit an actor owns. Component visibility is a rendering of
-	 * two fields of the applied model, overwritten totally on every `ApplyUnitView`, and
+	 * fields of the applied model -- COUNT-FREE ON PURPOSE, because this block has now had to
+	 * move that number twice and the invariant was never the count; it is that every operand
+	 * comes off ONE model and none is remembered -- overwritten totally on every
+	 * `ApplyUnitView`, and
 	 * `T-INT-05`'s "rebuild the screen from the view model alone" stays true by construction
 	 * -- WHICH IS PRECISELY WHY THE VIEWING SIDE COMES FROM `FStratViewModel::ViewingSide`
 	 * AND NOT FROM `UStratMatchSubsystem::GetViewingSide`. The subsystem's member is the same

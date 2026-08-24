@@ -27,6 +27,265 @@
 
 ## NEXT
 
+- **THE OBJECTIVE RING AND THE TURN-1a MARKER ARE ON THE SCREEN, AND EACH WAS IDENTIFIED BY BEING
+  REMOVED RATHER THAN BY MATCHING A SHAPE.** 2026-08-23, written by `strat-editor-builder` -- the
+  first entry this lane has written here since the tool-surface condition began -- over
+  `mcp__unreal-editor-direct__execute_script`, which was present from the session's first call.
+  Log stamps below read `2026.08.24-02.5x` / `-03.0x` because logs are UTC and this straddles local
+  midnight; both dates are right, do not reconcile them. `global.md` carries what this does for the
+  section; this file states no count and no verdict.
+  - **WHAT WAS CREATED, three assets, all verified by read-back after save:**
+    `/Game/StratArt/Materials/MI_Overlay_Objective` (parent `M_Translucent`, the same parent
+    `MI_Overlay_Reach` and `MI_Overlay_Target` carry -- read off those two rather than guessed),
+    `/Game/StratArt/Materials/MI_Marker_Guided` (same parent, so ring and marker are ONE guidance
+    channel and cannot drift apart in hue), and `/Game/StratArt/Meshes/SM_GuidedMarker`, a
+    duplicate of `/Engine/BasicShapes/Cone` -- 100 uu tall, 100 uu across, apex up, centred on its
+    origin. Duplicating an engine basic shape is this project's existing practice, not a new one:
+    `BP_StratUnit.FallbackMesh` has been `/Engine/BasicShapes/Cylinder` since phase 5.
+  - **WHAT WAS SET, ON WHICH BLUEPRINT, AND THE NAMES ARE `BP_StratBoard` AND `BP_StratUnit`.**
+    `BP_StratBoard.ObjectiveMaterial` -> `MI_Overlay_Objective`. `BP_StratUnit.GuidedMarkerMesh` ->
+    `SM_GuidedMarker` and `BP_StratUnit.GuidedMarkerMaterial` -> `MI_Marker_Guided`. Both compiled
+    clean and saved. Read back afterwards, `ReachMaterial`, `TargetMaterial`, `OverlayMesh`,
+    `OverlayZOffset` (3.0), `HexSize` (200.0), `GuidedMarkerZOffset` (150.0, a real C++ default and
+    never part of this work), `FallbackMesh` and `BodyZOffset` (50.0) are all unchanged.
+  - **THE RING NEEDED NO MESH, AND THIS RECORD SAID IT DID -- CORRECTED WHERE IT WAS WRITTEN.**
+    `ObjectiveOverlay` is a `UHierarchicalInstancedStaticMeshComponent` instancing the SHARED
+    `OverlayMesh`; `StratBoardActor.h` states it as "One mesh, three components, three materials",
+    and `OverlayMesh` was already `SM_HexOverlay`. So the ring is a MATERIAL ONLY and the marker is
+    the only new mesh. The three older bullets that said "the ring and marker meshes" and that
+    named `BP_StratBoardActor` / `BP_StratUnitActor` are corrected in place, including the one that
+    ASSIGNS the work rather than only the ones that record it.
+  - **THE POSITIVE CONTROL FOR THE RING: IT WAS REMOVED AND THE FRAME CHANGED IN EXACTLY ONE
+    PLACE.** The objective hex is a Factory, so the ring sits on an orange tile and "a coloured hex
+    among coloured hexes" would have been an inference. `playtest_console("ke BP_StratBoard_C_0
+    ClearObjective")` was issued mid-PIE and the next `playtest_observe` differed from the previous
+    one at that hex ALONE, which reverted to the plain Factory tile every other Factory shows.
+    Nothing else in the frame moved. `ke` reaching a live PIE actor is this record's own prior
+    finding, used rather than rediscovered.
+  - **THE POSITIVE CONTROL FOR THE MARKER: A REAL A/B THROUGH TWO PIE SESSIONS, BECAUSE NO
+    `UFUNCTION` CAN HIDE IT.** `AStratUnitActor` exposes no callable that clears the marker, so the
+    remove-and-recapture trick used on the ring is unavailable. Instead: PIE stopped,
+    `GuidedMarkerMesh` set to `None` and COMPILED BUT NOT SAVED, PIE restarted. The control frame
+    shows the marked unit as a plain body identical to its four neighbours, and `LogStratPlay`
+    carries `has no GuidedMarkerMesh set` -- absent from every run either side of it. The mesh was
+    then restored, compiled, SAVED and read back, and the marker returned to the same unit in the
+    same place. Present -> absent -> present, on the same instrument.
+  - **AND THE MARKER IS ON THE RIGHT UNIT, MEASURED RATHER THAN EYEBALLED.**
+    `GetAll StaticMeshComponent bVisible Name=GuidedMarker` returns ten lines: exactly ONE is
+    `True`, `BP_StratUnit_C_2`, and `GetAll StratUnitActor UnitId` gives that actor `UnitId = 3` --
+    which is the side-0 marked Infantry `strat-test-author` independently measured, with side 1's
+    unit 7 marked in the same frame and correctly NOT shown. The `View.Side == ViewingSide` filter
+    is therefore observed working on a screen, not only in a suite. `GetAll ... GuidedMarkerMesh`
+    shows `SM_GuidedMarker` on all ten live actors, so the Blueprint default reaches the spawned
+    actor and not merely the CDO.
+  - **THE COLOUR WAS CHOSEN TWICE, AND THE FIRST CHOICE WAS WRONG ON EVIDENCE FROM THE SCREEN.**
+    Both assets shipped first at amber `(1.00, 0.78, 0.08)`, picked to sit clear of reach-blue
+    `(0.02, 0.30, 0.95)` and target-red `(0.95, 0.05, 0.03)`. The capture showed why that is not
+    enough: the ring is always on a FACTORY, and `MI_Terrain_Factory` is orange, so amber-on-orange
+    read as a slightly-brighter factory. Both were moved to violet `(0.80, 0.10, 0.95)` -- ring
+    alpha 0.85, marker alpha 0.95 -- and the re-capture shows both unmistakably, distinct from
+    reach, target, factory orange, terrain green and both side colours. **A palette that clears the
+    other OVERLAYS can still collide with the TERRAIN under the one hex it will always be on.**
+  - **THE SAVE SLOT WAS MEASURED CLEAN, WITH THE INSTRUMENT CONTROLLED FIRST**, because this
+    record's own trap says an unarmed guided opening is indistinguishable from the defect.
+    `Saved/SaveGames/` exists and `StratocracyMatch.sav` does not; positive controls in the same
+    call reported `Config/DefaultEngine.ini` at 4331 bytes and `Saved/Logs/Stratocracy.log` at
+    640364 bytes, so the instrument can see a file that is there. All four PIE runs logged
+    `Guided opening armed for side 0: objective hex (2, 7), window turns 1-4.` and none logged
+    `Guided opening suppressed`. Nothing was moved and nothing needs restoring.
+  - **WHAT THIS DOES NOT REACH, and the accessor cannot help.** `IsGuidedMarkerVisible` reports a
+    FLAG, not pixels, and its own block says there is no headless gate on "the marker is actually
+    visible to a player" -- so nothing above is claimed off it. What was observed is BEAT 1a and
+    the beat-2 ring as they stand AT MATCH START, which needs no input. Beat 2 actually retiring
+    when the Infantry reaches the ringed Factory, the ring clearing in the same frame as the strip,
+    and the marker following the unit as it moves are all unobserved: injected input still never
+    reaches `UPlayerInput` here, so they need a human at the keyboard. No section is closed by this
+    entry.
+  - **[STAMPED 2026-08-24: ALL THREE OF THOSE ITEMS ARE NOW WITNESSED -- BUT ONE HALF-CLAUSE
+    INSIDE THEM IS NOT, AND A NEW GAP OPENED WHERE THE PLAYTEST CLOSED THE OLD ONE.** A human
+    played the shipped scenario at the keyboard after the bullet above was written, so the input
+    the injector could not deliver was delivered by a player. Twice, in two separate runs, the
+    engine log carries `Guided beat 2 retired on turn 3: the ringed objective (2, 7) was taken
+    by side 0 (pip=false, held=true).` then `Guided beat 3 retired on turn 3: a unit spawned.`
+    and `Guided opening complete on turn 3: every beat retired.` -- so BEAT 2 ACTUALLY RETIRING
+    WHEN THE INFANTRY REACHES THE RINGED FACTORY IS OBSERVED, on its second arm. The player
+    confirmed on the screen that THE RING CLEARED, and confirmed separately that THE MARKER
+    FOLLOWED THE INFANTRY AS IT MOVED. Those three are retracted from the unobserved list.
+    **WHAT IS STILL NOT OBSERVED, and it must not ride along on the item that contains it:** the
+    second item above says the ring clears *in the same frame as the strip*, and nobody has
+    reported watching the guidance strip disappear in that frame. Only the ring half was
+    witnessed. That half-clause is not pinned headlessly either -- `strat-test-author` reports
+    `FStratGuidanceView` reaches a UMG widget `StratPlay` cannot construct in a test -- so it
+    has no gate on either instrument.
+    **AND NOBODY HAS SEEN THE MARKER CLEAR.** This playtest is what found it: the marker latched
+    on for the whole match. `AStratUnitActor::ApplyUnitView` now ANDs `Model.Guidance.bActive`
+    ahead of the two match-constant operands, which is green in the suite and unobserved on a
+    screen. So this stamp does NOT close the playtest gap -- it MOVES it. Reading it as "the
+    guided opening is now witnessed end to end" would be wrong.
+    `global.md` carries what this evidence does for the section; this file states no count and
+    no verdict. THE TRAP, worth carrying forward: this same sentence was stamped in `global.md`,
+    where the EVIDENCE sits, a full pass before it was stamped here, where the WORK IS ASSIGNED
+    -- and left standing here it would have sent the next reader to schedule a playtest for
+    observations already taken. **A retraction that reaches the file holding the evidence has
+    not reached the file holding the handoff.**]**
+  - **[STAMPED 2026-08-24, LATER THE SAME DAY: THE LAST TWO THINGS THE STAMP ABOVE HELD OPEN ARE
+    NOW WITNESSED -- BY EYE, AND THE SUITE STILL CANNOT GATE THEM.** A human ran the guided
+    opening to completion twice more and watched the moment it ends. THE MARKER WENT OUT WITH
+    THE RING, and THE GUIDANCE STRIP DISAPPEARED IN THE SAME FRAME -- all three surfaces going
+    dark together, not the ring alone. So `AND NOBODY HAS SEEN THE MARKER CLEAR` above is
+    retired: the `Model.Guidance.bActive` AND in `AStratUnitActor::ApplyUnitView` is now
+    observed working on a screen and not only green in the suite. And the `in the same frame as
+    the strip` half-clause of the original bullet, which the stamp above correctly broke out as
+    its own limit, is witnessed too.
+    **WHICH INSTRUMENT CARRIES WHICH CLAIM, because they are not the same instrument.** The LOG
+    carries only that both runs REACHED the instant `bActive` falls:
+    `[2026.08.24-15.57.47:040] Guided opening complete on turn 3: every beat retired.` and
+    `[2026.08.24-15.58.38:000] Guided opening complete on turn 3: every beat retired.` -- two
+    separate runs, and that branch is one of the three where `bActive` falls, which is the exact
+    frame the fix acts on. THE THREE SURFACES GOING DARK TOGETHER IS THE HUMAN AT THE KEYBOARD,
+    and that is the only instrument that can see it -- nothing in this tree corroborates it.
+    **AND NO HEADLESS GATE BECAME POSSIBLE.** `IsGuidedMarkerVisible` still reports the visible
+    FLAG and not pixels, exactly as the bullet at the top of this entry says, so no clause
+    covers any of this and none was added. What changed is that the only instrument that could
+    ever see it was used -- not that the suite grew a way to see it. Reading this as "now
+    covered by a clause" would be wrong.
+    `global.md` carries what this evidence does for the section; this file states no count and
+    no verdict. The original bullet and the stamp above it are both left exactly as written --
+    each was correct when written, an hour ago, and neither is reworded here.]**
+  - **NEW MEASURED LIMITS OF THE NeoStack Lua API, all 2026-08-23, each with a control:**
+    - **`write_file` WRITES UTF-16LE WITH A BOM IN EVERY TEXT MODE, INCLUDING `encoding="utf8"`.**
+      A 30-byte ASCII-plus-em-dash string landed as 58 bytes on disk; `encoding="utf8"` and
+      `encoding="ansi"` gave the identical 58. It reports `bytes_written` as the SOURCE length, so
+      the return value cannot see it. Round-tripping this file through `write_file` would have
+      converted a 43914-byte tracked Markdown file to UTF-16 while every read still looked right.
+      **The only byte-exact route is `encoding="binary"`, which takes BASE64** -- verified by
+      writing the same 30-byte string and reading back 30 bytes.
+    - **`read_file` SILENTLY STRIPS CR AND SILENTLY TRUNCATES AT 500 LINES.** This file is CRLF on
+      disk; the returned content had zero CR, and the difference showed up only as 43403 returned
+      against 43914 on disk. The default `limit` is 500 even when `total_lines` reports 512, and
+      the truncated read reports the FULL total. An unguarded read-modify-write would have deleted
+      the last twelve lines of this file and rewritten every line ending.
+    - **BASE64-ENCODING A WHOLE FILE IN ONE SCRIPT TRIPS `Script exceeded instruction limit`.**
+      44445 bytes encoded fine; 58070 aborted. Stash the text in a scratch file between calls and
+      write the target in chunks with `{append=true}`, on 3-byte boundaries so the base64 pieces
+      concatenate without interior padding.
+    - **`read_file` RETURNS NOTHING FOR `Saved/Logs/Stratocracy.log`** -- `total_lines = 0`, empty
+      content -- while the same file reads 640364 bytes through `file_info` and
+      `playtest_log_contains` reads its lines fine. The editor holds it open. Read the log through
+      `playtest_log_contains`, never `read_file`.
+    - **`playtest_log_contains` RETURNS THE FIRST MATCH IN THE WHOLE FILE, so an asset name matches
+      its own `Saving Package:` line from an hour earlier.** Searching `SM_GuidedMarker` "found" a
+      save log line, not the `GetAll` output. Anchor on a string only the answer can produce --
+      `BP_StratUnit_C_2.GuidedMarkerMesh` -- rather than on the value being looked for.
+    - **EACH `execute_script` CALL IS A FRESH LUA STATE: `_G` DOES NOT PERSIST BETWEEN CALLS.** A
+      `playtest_log_marker()` stashed in `_G` came back `nil` in the next call, and
+      `playtest_log_contains(t, {since=nil})` does NOT error -- it silently searches the whole log.
+      A scoped assertion split across two calls is an unscoped one that looks scoped. Take the
+      marker and the assertions in ONE script.
+    - **`list_files` CANNOT SEE `Saved/`.** `Saved/Logs` and `Saved/SaveGames` both return 0 items
+      with `pattern="*"`, while `Config` returns 6 and `Source/StratPlay` returns 23 in the same
+      call, and a genuinely absent directory errors with `directory not found`. So 0 items from
+      `list_files` does NOT mean empty. **And `list_files` resolves a relative path against
+      `project_dir()` while `file_info` resolves it against the ENGINE's `Binaries/Win64`** -- the
+      same relative string names two different files. Pass `file_info` an absolute path.
+    - **`geometry_create()` IS ABSENT** despite `help('LevelDesign')` naming it, so there is no
+      procedural static-mesh route; `duplicate_asset` from `/Engine/BasicShapes` is the way.
+      `screenshot({focus_actor=...})` cannot see a PIE actor either -- `Actor not found` for a name
+      `GetAll` had just printed -- because it looks in the editor world.
+  - **MORE MEASURED LIMITS OF THE SAME API, and these are 2026-08-24, NOT the 2026-08-23 batch
+    above -- a separate day, recorded here because this is where the next lane will look.**
+    - **`read_file` AT `encoding="binary"` SILENTLY IGNORES `offset` AND `length`, and returns
+      the WHOLE file.** Measured by asking for `{encoding="binary", offset=0, length=12}` on
+      this file and getting the entire 79172-character base64 back, which blew the tool-result
+      token cap instead of returning 12 bytes. **This does NOT contradict the 500-line
+      truncation recorded above: that is a TEXT-MODE behaviour, and binary is all-or-nothing.**
+      The two are easy to confuse, and together they decide how a lane slices a large file --
+      text mode hands you a truncated read that LOOKS complete, binary hands you everything or
+      nothing. The working route is to take the whole base64 once and slice it inside Lua with
+      `string.sub` on 4-character boundaries, which are 3-byte boundaries.
+    - **`help("file")` CLOSES THE SOCKET**, returning `The socket connection was closed
+      unexpectedly`, presumably on output size. So `help()` is NOT a safe probe for that
+      domain -- which matters because it is the obvious first move for a lane trying to
+      discover this API, and it costs a dead connection rather than an error message. The file
+      functions were found by trial instead: `file_info`, `read_file` and `write_file`
+      exercised directly against a scratch path, and `_G` scanned for a base64 helper, which
+      found NONE -- the encoder and decoder used in this pass are hand-rolled in Lua.
+  - **FOR OTHER LANES, neither blocking.** (1) `StratBoardActor.h` and `StratUnitActor.h` each name
+    `BP_StratBoardActor` / `BP_StratUnitActor` in the comment on the very property the content lane
+    fills; those assets do not exist and the names are `BP_StratBoard` / `BP_StratUnit`. It is a
+    comment, so nothing is broken, but it is the sentence a future builder would follow. OWNED:
+    `strat-gameplay-engineer`; the content lane cannot edit `Source/`. (2) The marker sits directly
+    above the body and at this camera pitch it OCCLUDES the unit it names rather than pointing at
+    it. `GuidedMarkerZOffset` is a C++ default of 150.0 and was left alone; moving the marker
+    beside the unit is a C++ default change or a new offset property, not a content edit.
+
+- **WRITTEN BY THE COORDINATOR UNDER THE HEADER'S FALLBACK CONDITION. Fifth occurrence, and the
+  SECOND one today (2026-08-23) -- the entry immediately below is the fourth.** `execute_script` was
+  again absent from the session's tool surface: a `select:` lookup for
+  `mcp__unreal-editor-direct__execute_script` and a bare keyword lookup for `execute_script` both
+  answered `No matching deferred tools found`. **Control, per obligation (1):** the same lookup in
+  the same round served `mcp__NeoStack_Connect__unreal_status` and
+  `mcp__NeoStack_Connect__list_unreal_projects`, both of which loaded and answered. The instrument
+  speaks; the tool is not there.
+  **[SUPERSEDED 2026-08-23, LATER THE SAME DAY, BY THE ENTRY AT THE TOP OF THIS SECTION -- the
+  first one `strat-editor-builder` has written here since the condition began. WHAT IS SUPERSEDED
+  IS THE IMPLIED STATE OF THE LANE, "there is no route to the editor", AND NOTHING ELSE: every
+  measurement below was correct when made and stands. AND THE DIAGNOSIS BELOW IS NOW CONFIRMED
+  RATHER THAN MERELY RETIRED, WHICH IS WORTH MORE THAN THE ENTRY IT RETIRES. It predicts that
+  starting the session with the editor already running is the whole fix. That is exactly what was
+  done and exactly what happened: the editor was up before this session began, PID 81704 on port
+  9315, `mcp__unreal-editor-direct__execute_script` was on the tool surface, `project_dir()`
+  round-tripped `E:/MultiAgent/Stratocracy/` on the first call, and the lane created assets,
+  compiled, saved and ran four PIE sessions without touching `NeoStack_Connect` once. THE
+  FALLBACK CONDITION WAS NOT MET THIS SESSION and the coordinator did not write this file.]**
+  - **THE CAUSE IS SESSION-STARTUP ORDERING, NOT THE PROXY LATCH, AND IT NEEDS NO DECISION FROM
+    ANYONE.** `unreal-editor-direct` is registered correctly, and has been all along -- globally in
+    `~/.claude.json`, type `http`, url `http://127.0.0.1:9315/mcp`, which is the exact endpoint the
+    editor serves. It was missing from this session because **the editor was closed when the session
+    started**: at the session's first probe the editor PID then recorded in `runtimes.json` was gone,
+    port 9315 refused TCP, and no `UnrealEditor` process existed at all. The MCP client dialled a
+    dead port at launch, that server failed, and a failed server is not retried mid-session. Opening
+    the editor afterwards repairs the endpoint but cannot repopulate a tool surface that was fixed at
+    launch. **The fix is to start the session with the editor already running**, and it is the whole
+    fix.
+  - **THE EDITOR ITSELF SERVES THE TOOL -- measured directly over HTTP, bypassing both proxies.**
+    With the editor reopened (PID 81704; port 9315 listening and owned by that PID; process confirmed
+    present), a JSON-RPC `initialize` against `http://127.0.0.1:9315/mcp` returned 200 with
+    `serverInfo.name` = `unreal-editor`, version `1.0.0-r4254`, and `tools/list` returned exactly one
+    tool -- `execute_script` -- carrying the full Lua surface, `CreateAsset`, `WidgetBlueprint`,
+    `Playtest` and `Screenshot` among its domains. The lane's route exists and is healthy. Only this
+    session cannot see it.
+  - **THE LATCH IS REAL AND WAS REPRODUCED IN THE SAME ROUND, BUT IT IS NOT THIS.**
+    `list_unreal_projects` answered `Active editors: - Stratocracy: E:/MultiAgent/Stratocracy/` while
+    `unreal_status`, reading the same file in the same round, reported that no active editors were
+    found. That is the recorded disagreement inside `NeoStack_Connect`, and it reproduces. But
+    `execute_script` is served by a DIFFERENT server, `unreal-editor-direct`, which was never latched
+    -- it was simply not up. The two faults were conflated because they present identically to the
+    lane: no route to the editor. Only today's condition was measured; the four earlier occurrences
+    are not re-litigated here.
+  - **NOTHING WAS BUILT, PROBED IN-EDITOR, OR CLAIMED.** No Lua executed, no asset created, no
+    compile, no save, no PIE, no screenshot. `strat-editor-builder` was not dispatched at all: without
+    `execute_script`, and holding no Bash, it has no route and could only have stopped and reported.
+    The HTTP probes above were the coordinator's own and read the server's tool list -- they touched
+    no asset.
+  - **THE SAVE SLOT IS CLEAN.** `Saved/SaveGames/` is empty, so there is no `StratocracyMatch.sav` to
+    clear ahead of the next playtest. The only copy on the box is a backup inside an unrelated
+    session's scratchpad, which the game never reads.
+  - **WHAT IS STILL OWED IS UNCHANGED BY THIS PASS:** the ring and marker meshes and material
+    instances, and the Blueprint defaults filling `ObjectiveMaterial`, `GuidedMarkerMesh` and
+    `GuidedMarkerMaterial`, exactly as the entry below records them.
+    **[CORRECTED AND DISCHARGED 2026-08-23 by `strat-editor-builder`, which built them. TWO
+    ERRORS, BOTH INHERITED FROM THE ENTRY THIS ONE POINTS AT, AND BOTH CORRECTED THERE TOO.
+    (1) THE RING NEEDS NO MESH. `StratBoardActor.h` measures it: `ObjectiveOverlay` is a
+    `UHierarchicalInstancedStaticMeshComponent` instancing the SHARED `OverlayMesh` -- "One mesh,
+    three components, three materials" -- and `OverlayMesh` was already `SM_HexOverlay`. The ring
+    is a MATERIAL ONLY. Only the marker needed a new mesh, so "the ring and marker meshes" names
+    one artifact that never existed. (2) THE BLUEPRINTS ARE `BP_StratBoard` AND `BP_StratUnit`,
+    not `BP_StratBoardActor` / `BP_StratUnitActor`; `find_assets("/Game/StratPlay")` returns six
+    assets and neither of those names is among them. All three defaults are now set, and the
+    ring and the marker have both been seen in PIE -- see the entry at the top of this section.]**
+
+
 - **WRITTEN BY THE COORDINATOR UNDER THE HEADER'S FALLBACK CONDITION, WHICH IS MET FOR THE FOURTH
   CONSECUTIVE DAY (2026-08-21, -22, -23, and this pass).** `execute_script` was again absent from
   `strat-editor-builder`'s tool surface; its NeoStack surface was exactly `unreal_status` and
@@ -37,6 +296,13 @@
   not a worktree -- while `unreal_status` in the same round reported that no active editors were
   found in `runtimes.json`. That is the recorded proxy latch, not a closed editor, and the
   disagreement is INSIDE the proxy between two of its own tools.
+  - **[SUPERSEDED 2026-08-23, LATER THE SAME DAY, BY THE ENTRY AT THE TOP OF THIS SECTION. The
+    dilemma below -- "either the proxy gets fixed or the lane's route gets redefined" -- rests on
+    the premise that the latch is why `execute_script` is absent. That premise is FALSE. The tool
+    comes from `unreal-editor-direct`, a different server, which is registered correctly and was
+    merely not up at session start. Neither branch of the dilemma is needed; starting the session
+    with the editor already running is the whole fix. Stamped rather than deleted because the
+    measurement was correct when made.]**
   - **THE STANDING-CONDITION QUESTION IS NOW OVERDUE AND IS THE USER'S TO SETTLE.** The header was
     amended on 2026-08-23 after three consecutive days; this is the fourth, and a fallback invoked
     every single time a lane runs is not a fallback. Either the proxy gets fixed or the lane's
@@ -45,6 +311,7 @@
 - **THE MARKER AND THE RING CANNOT BE BUILT IN THE CONTENT LANE AT ALL, AND RESTORING EDITOR ACCESS
   WOULD NOT CHANGE THAT. Measured 2026-08-23 by `strat-editor-builder`, re-verified independently
   by the coordinator before recording.**
+  This is the more important half of this pass and it is independent of the latch above.
   **[SUPERSEDED 2026-08-23, LATER THE SAME DAY, BY THE COMMIT THIS ENTRY IS COMMITTED IN. The two
   C++ seams this bullet says do not exist WERE BUILT by `strat-gameplay-engineer` in the same
   change: `AStratBoardActor::ObjectiveOverlay` is a third constructor subobject with
@@ -58,10 +325,27 @@
   `GuidedMarkerZOffset`, is a numeric carrying a real default and is NOT part of this claim; an
   earlier draft of this bullet said "all four ship UNSET", which named a different set than was
   measured.) The
-  meshes, the material instances and the Blueprint defaults on `BP_StratBoardActor` /
-  `BP_StratUnitActor` are still owed, and nobody has seen a ring or a marker on a screen. The
-  blocker moved from "no seam" to "no assets"; it did not lift.]** This is the more important half of this pass and it is
-  independent of the latch above.
+  marker mesh, the material instances and the Blueprint defaults on `BP_StratBoard` /
+  `BP_StratUnit` are still owed, and nobody has seen a ring or a marker on a screen. The
+  blocker moved from "no seam" to "no assets"; it did not lift.]**
+  **[TWO CORRECTIONS AND ONE DISCHARGE, 2026-08-23, by `strat-editor-builder`. The sentence above
+  used to read `meshes, the material instances and the Blueprint defaults on
+  BP_StratBoardActor / BP_StratUnitActor`. BOTH HALVES WERE WRONG. There is only ONE new mesh,
+  the marker's: the ring instances the shared `OverlayMesh`, per `StratBoardActor.h`'s "One mesh,
+  three components, three materials", so it is a material only. And the Blueprints on disk are
+  `BP_StratBoard` and `BP_StratUnit` -- the `...Actor` names appear nowhere in `/Game/StratPlay`.
+  AND THE BLOCKER HAS NOW LIFTED: the three defaults are set, compiled and saved, and both the
+  ring and the marker were observed in PIE with a positive control each.]**
+  **[NESTING REPAIRED 2026-08-24, by `strat-editor-builder`, on the user's report. Nothing above
+  was deleted and no measurement was withdrawn. The stamp before this one was written INSIDE the
+  SUPERSEDED stamp's brackets, which left that stamp's `]**` stranded alone on its own line and
+  split the bullet's own closing sentence -- "This is the more important half of this pass and it
+  is independent of the latch above." -- off from the headline it belongs to. Both stamps now
+  close in place and read as siblings, and that sentence has been moved back to the top of this
+  bullet, where its "this" has a subject again. THE TRAP, worth carrying forward: stamping a
+  correction INSIDE an already-bracketed block leaves one dangling closer, `strat_banner_sweep.py`
+  does not catch it, and the four `**` toggles render the whole block wrong. Stamp a correction as
+  a SIBLING block after the one it corrects and let it say "the stamp above"; never nest one.]**
   - **THE STRUCTS ARE REFLECTED; NOTHING HANDS A BLUEPRINT AN INSTANCE.** `FStratUnitView::
     bIsGuidedMarked`, `FStratGuidanceView::bHasObjectiveRing`, `ObjectiveHex` and `bActive` are all
     `UPROPERTY(BlueprintReadOnly)` in `StratViewModel.h`. But `UStratMatchSubsystem` reflects 21
@@ -88,7 +372,12 @@
     the correct call and is recorded as such.
   - **WHAT THE CONTENT LANE WILL OWN once the seams exist:** the ring and marker meshes and
     material instances under `Content/`, and the Blueprint defaults assigning them on
-    `BP_StratBoardActor` and `BP_StratUnitActor`. Blocked until then. The two seams proposed to
+    `BP_StratBoardActor` and `BP_StratUnitActor`. Blocked until then.
+    **[CORRECTED AND DONE 2026-08-23 by `strat-editor-builder`. This is the sentence that ASSIGNS
+    the work, so the correction has to reach it and not only the evidence above. There is ONE new
+    mesh, not two -- the ring instances the shared `OverlayMesh` and is a material only -- and the
+    Blueprints are `BP_StratBoard` and `BP_StratUnit`. Built and saved:
+    `MI_Overlay_Objective`, `MI_Marker_Guided`, `SM_GuidedMarker`, and the three defaults.]** The two seams proposed to
     `strat-gameplay-engineer` are recorded in `global.md`'s `## NEXT`, not restated here.
   Measured with a control -- the same keyword lookup returned `unreal_status` and
   `list_unreal_projects`, so the instrument could speak; independently the editor's own endpoint

@@ -11,6 +11,144 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-24 (A HUMAN PLAYTEST FOUND A LATCHED MARKER, AND THE RECORD IT SAT IN WAS
+REPAIRED. This block exists partly because
+`content.md` now carries an entry dated 2026-08-24 and this banner may not be older than any date
+in the set -- not because a milestone moved. Written by the `coordinator`.
+WHAT WAS FIXED. A stamp written on 2026-08-23 had been placed INSIDE an already-bracketed
+`[SUPERSEDED ...]` block in `content.md`, which left that block's closer stranded alone on a line
+24 lines below the text it closes and made the four `**` toggles render the whole passage wrong.
+`strat-editor-builder` repaired it in its own file -- the coordinator fallback was NOT invoked,
+because `execute_script` was present in the session's tool surface. It un-nested rather than
+deleted: the outer closer moved onto its own last sentence, the bullet's stranded closing sentence
+moved back under the headline it belongs to, and a `[NESTING REPAIRED 2026-08-24]` stamp records
+the trap. `content.md` carries the detail and this banner does not restate it.
+THE TRAP, because the sweep does not catch it: stamping a correction INSIDE an already-bracketed
+block leaves a dangling closer. Stamp a correction as a SIBLING after the block it corrects and let
+it say "the stamp above"; never nest one.
+THE WRITE ROUTE WAS THE HAZARD, NOT THE EDIT. The content lane holds no Bash and no Write tool, so
+its only route into a 58 KB CRLF record file is the NeoStack Lua file API -- whose `write_file`
+emits UTF-16LE with a BOM even at `encoding="utf8"` while reporting the SOURCE length as
+`bytes_written`, and whose `read_file` silently strips CR and silently truncates at 500 lines out
+of 670 while reporting the full total. The splice was done inside Lua over base64 at
+`encoding="binary"`, with the untouched head and tail carried as literal base64 substrings rather
+than re-encoded. The coordinator re-measured the result independently of the lane's report and got
+the same four figures the lane gave: 59378 bytes, 678 lines, 678 CR, 678 LF, first byte `0x23` and
+no BOM, and zero matches for a lone closer alone on its own line anywhere in the file.
+THE HUMAN PLAYTEST HAPPENED, AND IT FOUND A DEFECT THE SUITE COULD NOT HAVE SEEN. Beat 2 retired
+LIVE on the shipped scenario, twice in two runs, on its SECOND arm -- `pip=false, held=true` --
+which is the arm `4ee36dd` was written for and which nothing had ever observed running. The
+objective ring cleared with it. THE TURN-1a MARKER DID NOT, and it never would have: the player
+would have carried it for the rest of the match.
+THE CAUSE WAS A CONJUNCTION WITH NO FALSE IN IT. `AStratUnitActor::ApplyUnitView` set the marker
+from `View.bIsGuidedMarked && View.Side == ViewingSide`, and BOTH operands are constant for the
+whole match -- `bIsGuidedMarked` is the rules module's derivation off `placement` and not off
+`hex`, deliberately and permanently, because beat 1a's whole content is that the marked Infantry
+MOVES. So the expression could never go false once true. The writer set it in both directions on
+every refresh, exactly as its own comment demanded; the discipline was applied to the WRITE and
+never to the OPERAND SET. That shape is worth more here than the instance.
+THE FIX IS THE GDD'S OWN GATE. Sec 2.11.6 says the ring "and the turn-1a unit marker clear in the
+same frame as the strip", and the strip IS `FStratGuidanceView::bActive`, so the missing operand
+was `Model.Guidance.bActive` -- not "beat 1a retired", which would clear the mark one beat early.
+`strat-gameplay-engineer` landed it as a fourth parameter `bool bGuidanceActive` and REFUSED the
+`FStratGuidanceView&` shape that was the other candidate: the struct puts `ObjectiveHex` within
+reach of the marker writer, which is the hex-keyed derivation that writer's own block forbids by
+name. What the class cannot see it cannot use. `engine.md` carries the detail.
+TWO FALSE SENTENCES WENT WITH IT, AND THE COORDINATOR'S DIAGNOSIS FOUND ONLY ONE. `SkipGuidance`
+asserted in its body that "the marker is drawn only while guidance runs" -- a mechanism no code
+implemented -- and its DECLARATION in `StratGuidedOpening.h` implied `bIsGuidedMarked` falls with
+`bActive`, which it does not and must not. The lane found the second and said so. A brief that
+names one instance of a wrong belief does not bound how many copies the tree holds.
+WHY THE SUITE STAYED GREEN THROUGH ALL OF IT. The one clause on the marker measured it only inside
+a frame where guidance was ACTIVE; nothing anywhere asserted it goes OUT. **The suite is now
+201/201**, every entry Success, zero failed and zero notRun. The delta is +3 and nothing was
+removed, measured by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/`
+and re-derived by the coordinator independently of the lane's report. `Saved/SaveGames/` was
+enumerated empty before and after the run.
+AND ONE PREVIOUSLY-GREEN CLAUSE WENT RED, CORRECTLY. `GuidedMarkerFollowsTheMarkedBitAndNotTheHex`
+never armed a guided opening, so the new operand was false throughout it and six assertions fell.
+The lane confirmed the failure on identical bytes before diagnosing, repaired the missing PREMISE
+rather than the assertions, and moved none of them. A clause that passes because its subject was
+never switched on is a clause that was measuring its fixture.
+FALSIFIABILITY WAS MEASURED AND ITS LIMIT WAS REPORTED BY THE LANE ITSELF. The pre-fix predicate
+was reinstated in the instrument and reddened exactly the three new clauses and no others, each at
+its TERMINAL assertion, with the ring reading `1 -> 0` while the markers read `1 -> 1` in the same
+frame -- the human's report reproduced inside a clause. The shipped bytes were restored from a copy
+held outside the repo and proved identical by `git hash-object`, never by `git checkout --`. THE
+LIMIT: breaking the REAL subject would have meant editing `StratUnitActor.cpp`, which that lane may
+not touch even temporarily, so the mutation lives in the test's own helper and these clauses are
+pinned against an instrument rather than against the production writer. Filed, not resolved.
+WHAT IS STILL NOT CLAIMED. NOBODY HAS SEEN THE MARKER CLEAR. The fix is green in the suite and
+unobserved on a screen, and the limit that made the first playtest necessary still applies --
+injected input never reaches `UPlayerInput`, so no agent can take that observation.
+`IsGuidedMarkerVisible` reports the visible FLAG and not pixels, so no headless clause can ever
+close it. Nothing in this pass is committed. The standing `VERDICT: PASS` describes a tree without
+any of it, and the narrow re-gate is owed.
+**[SUPERSEDED 2026-08-24, LATER THE SAME DAY, BY A SECOND HUMAN PLAYTEST -- ITS TWO OBSERVATION
+CLAIMS ONLY. The player ran the guided opening to completion twice more and watched the instant it
+ends: THE MARKER WENT OUT WITH THE RING, and THE GUIDANCE STRIP DISAPPEARED IN THE SAME FRAME. So
+the fourth operand is observed in flight and not merely green in a suite, and Sec 2.11.6's "clear
+in the same frame as the strip" is witnessed for all three surfaces at once. THE LOG AND THE EYE
+PROVE DIFFERENT HALVES OF THAT, and the distinction is the point: the coordinator measured
+`Guided opening complete on turn 3: every beat retired.` at 15.57.47 and 15.58.38 UTC, which
+proves the runs REACHED the instant `bActive` falls -- the all-beats-retired branch, one of the
+three that drops it. The three surfaces going dark together is the player's eye, and nothing in
+this tree can corroborate that half. WHAT SURVIVES UNCHANGED, and must not be swept up:
+`IsGuidedMarkerVisible` reports the visible FLAG and not pixels, so the suite still cannot gate
+any of this and no clause became possible -- what changed is that the only instrument that could
+ever see it was used. The three clauses stay pinned against a test-side instrument rather than the
+production writer, per `tests.md`. And the two NON-observation sentences of the paragraph above
+still stand exactly as written: nothing is committed, and the re-gate is owed.]**
+**[BOTH SENTENCES IN THIS FILE ABOUT WHAT THE CLAUSES READ ARE RETRACTED, 2026-08-24, by the
+`coordinator`, on a `strat-integration-reviewer` finding. THIS FILE ASSERTED THE FALSE CLAIM TWICE,
+AND ONE OF THEM WAS WRITTEN IN THIS SAME PASS -- paragraphs after dispatching another lane to
+retract it from ITS file. The originals stand above; both are quoted here so the retraction is
+greppable from either.
+RETRACTED> "the mutation lives in the test's own helper and these clauses are pinned against an
+instrument rather than against the production writer. Filed, not resolved."
+RETRACTED> "The three clauses stay pinned against a test-side instrument rather than the production
+writer, per `tests.md`."
+THE CLAUSES READ THE PRODUCTION WRITER. `GuidedMarkerClearsWhenGuidanceDeactivates` calls
+`Match.Subsystem->ApplyView(Dark)` -- the real subsystem, and the sole caller of
+`AStratUnitActor::ApplyUnitView` -- then reads markers through `LitMarkerIds`, whose body is
+`Actor->IsGuidedMarkerVisible()` over the live reconciled actors. It pins as FATAL premises that
+`bIsGuidedMarked && Side == ViewingSide` is STILL TRUE in the dark frame and that
+`Guidance.bActive` is the only field that moved, then asserts no marker is lit. Frame one asserts
+the marker IS lit and is the ONLY one lit, so the dark frame cannot pass vacuously. Delete the
+fourth operand and that clause goes RED. The debt this file filed as "not resolved" does not exist.
+THE CITATION WAS WRONG TOO, AND THAT IS THE WORSE HALF. `tests.md` was named as the source and
+does not make the claim: it scopes the limit to the MUTATION -- each broken predicate simulated by
+SUBSTITUTING THE INSTRUMENT -- which is how falsifiability was PROVED, not what the clauses READ.
+That file is clean. The citation attributed this file's own conflation to the one lane that never
+made it, which is how a wrong claim acquires a source and stops being questioned.
+WHAT SURVIVES, NARROWED THE WAY `engine.md` NARROWED IT: no clause gates THE MARKER REACHED THE
+SCREEN, because `IsGuidedMarkerVisible` reports the visible FLAG and not pixels. The flag is
+gated; the pixels are not; those were never the same claim, and the over-claim was extending the
+second onto the first.
+THE SHAPE, AND THIS IS ITS THIRD INSTANCE IN ONE SESSION: a retraction that reaches one file has
+not reached the others, and the file most likely to re-assert a withdrawn claim is the one whose
+author dispatched the withdrawal. Measured alongside it: a flat `grep` for either sentence above
+returns ZERO, because both wrap across lines -- so a claim search that does not flatten whitespace
+reads a STANDING FALSE CLAIM as absent, which is the direction that matters.]**
+**[SUPERSEDED 2026-08-24, LATER THE SAME DAY, BY "WHAT IS STILL NOT CLAIMED" ABOVE. The human
+playtest this paragraph says has not happened HAS happened, and it is what found the marker
+defect. Stamped rather than deleted: it was true when written, and the six-path figure is the
+tree it described.
+WHAT IS NOT CLAIMED HERE. No human has played the guided opening to beat 2 with the ring and
+the marker in the tree; beat 2 retiring at the ringed Factory, the ring clearing in the same frame as
+the strip, and the marker following a moving unit are all still UNOBSERVED, and injected input
+still never reaches `UPlayerInput`. Nothing in this pass or the one below it is committed -- six
+paths stand uncommitted in the working tree. The standing `VERDICT: PASS` describes a tree without
+any of it, so the narrow re-gate the block below owes is owed by this block too.]**
+ONE OBSERVATION, FILED RATHER THAN FIXED. The block below cites `reportCreatedOn
+2026.08.23-22.37.25` as its own run, but `Saved/AutomationReport/index.json` on disk is
+`2026.08.23-23.48.14`, mtime 2026-08-23 19:48 local -- a later run that overwrote the earlier
+report. The counts agree and no figure is false; what is gone is the artifact the block points at.
+The sweep pins the report IT reads, but nothing pins a banner's CITATION to that report, so this is
+the shape of its own check 4 one level up. For whoever next runs the suite: cite the run on disk.
+RESOLVED FOR THIS PASS, and this is the citation: the live figure above is the run
+`reportCreatedOn 2026.08.24-14.41.49`, which IS the report on disk.)
+
 _Last run 2026-08-23 (A MATCH THAT ENDS NOW ENDS THE GAME. The most serious thing open on this
 project is fixed, linked, executed and pinned. The delegation `IStratAiTurnPort`'s header made --
 "whether this side should be playing at all is decided before `RunTurn` is called, by the subsystem
@@ -25,7 +163,7 @@ post-conclusion refusal as an ordinary end instead of a fault. Four source files
 THE CALL THAT SHAPED IT WAS A REFUSAL. `IsMatchOver()` was NOT added to `IStratAiTurnPort` -- that
 interface's own header forbids a runner that decides, and adding it would have obliged every test
 double in a lane the engineer may not edit to grow an arm before the tree would build at all.
-**THE SUITE IS NOW 198/198.** Zero non-Success, zero `succeededWithWarnings` and zero `notRun`
+**THE SUITE WAS 198/198 AT THAT PASS.** Zero non-Success, zero `succeededWithWarnings` and zero `notRun`
 across all 198 entries, every one `Success`. The delta is +4 and nothing was removed, measured by
 set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/`, column-0 anchored, and
 re-derived by the coordinator independently of the lane reports rather than copied from them. The

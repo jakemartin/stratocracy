@@ -144,6 +144,19 @@ void FStratGuidedOpening::SkipGuidance()
 	// clear in the same frame as the strip". The ring clears because `bHasObjective` is what
 	// `DecorateViewModel` publishes it from; the marker clears because that same call
 	// publishes `bActive` false and the marker is drawn only while guidance runs.
+	//
+	// [STAMPED 2026-08-24. THE SECOND CLAUSE ABOVE WAS FALSE FOR A DAY AND IS TRUE NOW.]
+	// Nothing implemented "the marker is drawn only while guidance runs" when that sentence
+	// was written: `AStratUnitActor::ApplyUnitView` set the marker from
+	// `View.bIsGuidedMarked && View.Side == ViewingSide`, both of them match-constant, so the
+	// marker LATCHED ON and survived every route out of the window including this one. Found
+	// in a human playtest on 2026-08-24 -- the ring cleared, the marker did not -- and fixed
+	// by giving that writer `FStratViewModel::Guidance.bActive`, which is the very bit this
+	// function drops. The sentence is left standing rather than rewritten because it is now
+	// an accurate description of the tree, and because a reader should see that it described
+	// an intended mechanism before it described an implemented one. **A SENTENCE IN THIS FILE
+	// ASSERTING WHAT ANOTHER FILE DOES IS A CLAIM, NOT A SPECIFICATION**, and this one went
+	// unmeasured for a day because it read like the latter.
 	bHasObjective = false;
 
 	// THE LOCKS ARE NOT CLEARED HERE. `Observe` is the single writer of the lock set and it

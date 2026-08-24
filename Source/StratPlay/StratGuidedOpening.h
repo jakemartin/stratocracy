@@ -302,10 +302,20 @@ public:
 	 * opening's board state with it — the objective ring and the turn-1a unit marker clear in
 	 * the same frame as the strip."
 	 *
-	 * IN THE SAME FRAME IS STRUCTURAL HERE AND NOT A PROMISE. The ring, the strip and the
-	 * beat all read one `bActive`, and the marker reads `bIsGuidedMarked` on a model the very
-	 * next `DecorateViewModel` writes with `bActive` false. There is no second frame in which
-	 * one could survive the other.
+	 * IN THE SAME FRAME IS STRUCTURAL HERE AND NOT A PROMISE. The ring, the strip, the beat
+	 * AND the turn-1a marker all read one `bActive`.
+	 * [CORRECTED 2026-08-24 AFTER A HUMAN PLAYTEST. The marker did NOT read it, and this
+	 * sentence said it did not need to:]
+	 * RETRACTED> "... and the marker reads `bIsGuidedMarked` on a model the very next
+	 * RETRACTED>  `DecorateViewModel` writes with `bActive` false. There is no second frame
+	 * RETRACTED>  in which one could survive the other."
+	 * `bIsGuidedMarked` is the rules module's derivation off `placement` and DOES NOT MOVE
+	 * when guidance stops -- that is deliberate and must stay so, since beat 1a's content is
+	 * that the marked Infantry moves. So writing `bActive` false changed nothing the marker
+	 * looked at, and the marker survived every route out of the window. Fixed by handing
+	 * `FStratViewModel::Guidance.bActive` to `AStratUnitActor::ApplyUnitView`; "there is no
+	 * second frame in which one could survive the other" is true now, of one bool rather than
+	 * of two that were assumed to fall together.
 	 *
 	 * IT DOES NOT CLEAR THE LOCKS BY ITSELF. `Observe` does, on the next refresh, from the
 	 * same single place that sets them; a second clear here would be a second writer of the

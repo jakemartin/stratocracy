@@ -566,7 +566,14 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 		// model is a second input, and T-INT-05 would then be about two things". Passing
 		// `ViewingSide` here would make the marker a function of the model PLUS a member,
 		// and a stale member would put the mark on the wrong seat with a green build.
-		(*Existing)->ApplyUnitView(View, Where, Model.ViewingSide);
+		//
+		// AND THE GUIDANCE-ACTIVE BIT COMES OFF THAT SAME MODEL, ADDED 2026-08-24. It is the
+		// value the ring is driven from thirty lines below and the value the strip is pushed
+		// from below that -- read ONCE per refresh from one `FStratViewModel`, so §2.11.6's
+		// "the ring and the turn-1a unit marker clear in the same frame as the strip" is a
+		// property of this function's structure rather than of three surfaces agreeing. This
+		// function still decides nothing: it forwards two fields it already holds.
+		(*Existing)->ApplyUnitView(View, Where, Model.ViewingSide, Model.Guidance.bActive);
 	}
 
 	// DESTROY WHAT THE MODEL NO LONGER CARRIES. `FStratViewModel::Units` is "every LIVING
@@ -610,8 +617,15 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// second driver. What changed on 2026-08-23 is that this function now also hands over
 	// `Model.ViewingSide`, for the user ruling that filters the marker to the viewing seat;
 	// this sentence previously said this function knew "nothing about either", which is no
-	// longer exact. It supplies an argument; it still decides nothing and calls nothing
+	// longer exact. It supplies arguments; it still decides nothing and calls nothing
 	// marker-shaped.
+	//
+	// [AMENDED 2026-08-24.] It now hands over `Model.Guidance.bActive` as well -- THE SAME
+	// FIELD THE `if` DIRECTLY BELOW READS FOR THE RING. That is the point rather than a
+	// coincidence: with the marker keyed on it, the ring's `else` branch and the marker's
+	// hide are two readings of one bool inside one `ApplyView`, so neither can outlive the
+	// other. Before this, the marker's operands were all match-constant and it never cleared
+	// at all -- found in a human playtest, not by any clause.
 	if (Board != nullptr)
 	{
 		if (Model.Guidance.bActive && Model.Guidance.bHasObjectiveRing)

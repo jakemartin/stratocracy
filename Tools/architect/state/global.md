@@ -11,6 +11,65 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-24 (THE CANDIDATE BACKLOG WAS RENDERING FOUR ENTRIES WRONG, AND TWO OF THEM
+BACKWARDS. Written by the `coordinator`, whose file this is. A record-only pass: no test and no
+source file was touched.
+NO SUITE FIGURE MOVES AND NONE IS CLAIMED HERE. The live figure is the one the block below cites
+and it is unchanged; the macro census and the automation report agree on it, and nothing in this
+pass could have moved either.
+WHAT WAS FOUND. `buildlist_query` is DISCHARGED and its entry argues at length that it is blocked;
+`production_widget` inherits that dead blocker; `presentation_statelessness` renders "(actionable)"
+while FORTY-THREE T-INT-05 clauses already run; and `bridge_event_list` renders "(actionable)"
+while the rules module defines no event type at all and Sec 4.9 forbids the bridge synthesizing
+one. **THE CREW GAP OVER THE VENDORED COMMIT IS NOW ZERO** -- `rulesCommit` is `cae01e3`, which is
+crew HEAD -- re-derived with `git rev-list --count` rather than decremented from the nineteen this
+file recorded, for the reason every earlier banner gives when its own count moved.
+**[SUPERSEDED THE SAME EVENING BY THIS SESSION'S OWN NEXT COMMIT, AND THE DIRECTION MATTERS:
+THE GAP IS ONE, AND IT IS THE FIRST GAP IN THIS RECORD THAT ACTUALLY OWES A RE-VENDOR.** The
+sentence above was true when written and was made false by `96d93ea` in the crew repo -- the
+`uiMatchResult` query -- committed minutes later by the same pass that wrote it. That is the
+standing trap about cross-repo counts, met head-on: **a gap figure is invalidated by your own
+next commit**, so it is the last thing to measure and the first thing to re-derive.
+WHAT CHANGES BESIDES THE NUMBER, and it is the half a bare count would have hidden. Every
+previous gap in this file was made of SPEC commits and this record leaned, correctly, on "no
+vendored file moved". **This one moved two of them**: `git diff --name-only cae01e37..HEAD --
+cpp_reference/` returns `Ui.h`, `Ui.good.cpp` and `test_ui.cpp`, and the first two ARE in the
+vendored set. So `Source/StratRules/` here is NO LONGER CURRENT, `rulesCommit` still reads
+`cae01e3`, and a re-vendor is now OWED rather than merely available. `test_ui.cpp` is not
+vendored -- it defines `main()`, which a UBT module cannot hold -- and `spec/` never was.
+NOTHING IS CLAIMED ABOUT THE UE SIDE ON THIS: no re-vendor has run and none is claimed.
+**AND `T-INT-01` WILL STAY GREEN THROUGH ALL OF IT, WHICH IS THE TRAP WORTH RECORDING.** An
+earlier draft of this very stamp said the vendored bytes are "one commit behind a header they
+must hash-match", which reads as though the gate would catch this. IT WILL NOT, and that is by
+design: `T-INT-01` checks identity against the `rulesCommit` the manifest RECORDS, not against
+crew HEAD. Measured with `git hash-object` on both vendored files, which applies the filters and
+so survives the CRLF/LF split a plain diff trips on: `Ui.h` and `Ui.good.cpp` hash-match
+`cae01e3` EXACTLY and differ from HEAD. So the vendored tree is perfectly faithful to the commit
+it names while being one commit stale, and **a green `T-INT-01` means "honestly vendored", never
+"current"**. Nothing in this repo can notice the difference; only a cross-repo count can, and
+that count is the thing this same stamp records getting invalidated by its own next commit.
+OWNED: the re-vendor step, before any lane builds on the new query.]** The entry at
+the bottom of `## NEXT` carries the detail and this banner does not restate it.
+THE SHAPE UNDERNEATH ALL FIVE, WHICH IS WORTH MORE THAN ANY ONE OF THEM. Every status in that
+backlog is COMPUTED from a probe rather than stored, which is the right design and is why the
+staleness was invisible: each probe still answers its own question correctly, and what had gone
+wrong was the SUBJECT it was pointed at or the word hung on its answer.
+`presentation_statelessness` has no probe of its own -- it borrows `scoreboard_widget` -- so the
+scorer can never see it as done no matter how many of its clauses land. **A DERIVED STATUS IS ONLY
+AS CORRECT AS THE SUBJECT ITS PROBE NAMES**, and a guard grading a neighbour's artifact goes inert
+on its own subject silently.
+AND A LANE REPORT'S FIGURE WAS WRONG BY MORE THAN A FACTOR OF TWO. An exploring agent reported
+"roughly 18" T-INT-05 clauses; set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over
+`Source/` returns FORTY-THREE. It changed no conclusion, because the conclusion only needed "many
+more than zero" -- but it is the second time this record has caught a count by re-deriving one it
+had been handed, and the cost of not re-deriving is not bounded by how wrong the figure happens to
+be.
+WHAT IS OWED AND NOT DONE HERE. `Tools/architect/candidates.py` and `scan.py` are
+`strat-data-steward`'s lane and this pass did not touch them; the rendered list above is corrected
+in place and the SCORER that produced it is not. Until it is repaired, the next run regenerates
+the same four wrong statuses. OWNED: `strat-data-steward`, and the repair must be shown falsifiable
+by breaking the real artifact rather than asserted.)
+
 _Last run 2026-08-24 (THE `Skip guidance` BUTTON IS BUILT -- THE ONE SURFACE SEC 2.11.6-B'S
 CLOSURE WAS RECORDED OVER. Written by the `coordinator`, under `content.md`'s fallback condition,
 with the tool-surface control that condition requires. `/Game/UI/WBP_DirectiveStrip` now carries a
@@ -2027,6 +2086,75 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   (upstream recommends all four), what factory state does to the answer (Q31), and whether the
   per-type population cap binds the player — and they await a Director ruling, not another
   filing.]
+- **CORRECTED 2026-08-24, coordinator -- FOUR OF THE CANDIDATE BACKLOG'S ENTRIES ABOVE RENDER A
+  STATUS THAT IS NO LONGER TRUE, AND TWO OF THEM RENDER IT BACKWARDS.** Stamped as a SIBLING after
+  the `buildlist_query` block rather than nested inside it, which is the dangling-closer trap
+  `content.md` records. Nothing above is deleted and no measurement is withdrawn. **This is a
+  record-only pass: no test and no source file was touched, no suite figure moves, and none is
+  claimed here** -- the live figure is the one this file's newest banner cites and it is unchanged.
+  - **`buildlist_query` IS DISCHARGED, and the entry above says the opposite at length.** That
+    block's correction was right when written and its blocker is now gone: the ruling is no longer
+    SPEC-ONLY. `uiBuildOptions` and `UiBuildOption` are DEFINED in the vendored
+    `Source/StratRules/Ui.h`, `FStratBridge::BuildOptions` routes the answer across the module
+    boundary, and `Source/StratBridge/Tests/StratBuildOptionRouting.cpp` pins the transport
+    against `strat::uiBuildOptions` over the bridge's own `MakeUiWorld()`. It landed upstream at
+    `cae01e3` on 2026-08-22 -- "The buildlist query exists now, and four comments that said it
+    could not are wrong".
+  - **AND THE RE-VENDOR THAT ENTRY ANTICIPATES HAS ALREADY HAPPENED.** `rulesCommit` has moved off
+    `cb8e12b`; `StratRules.manifest.json` records `cae01e3737ebc9e712814865908670cc314b3dfe`.
+    **[CORRECTED SAME EVENING -- THE GAP IS ONE AND A RE-VENDOR IS NOW OWED. The claim in
+    this bullet was true when written and this pass's own next commit (`96d93ea`, the
+    `uiMatchResult` query) falsified it. Two VENDORED files moved in that span -- `Ui.h`
+    and `Ui.good.cpp` -- so the "no vendored file moved, therefore no re-vendor pressure"
+    reasoning this record has leaned on for every earlier gap DOES NOT APPLY here. The
+    correction is stamped at BOTH sites, this one included, because this is the sentence a
+    lane reads as its task and a correction that reaches only the evidence has not been
+    made. See the banner for the detail.]**
+    **THE CREW GAP OVER THE VENDORED COMMIT IS NOW ZERO**, derived with
+    `git -C E:/MultiAgent/stratocracy-crew rev-list --count cae01e37..HEAD` rather than
+    decremented from the nineteen recorded above, for the same reason every earlier banner gives
+    when its own count moved. The vendored tree is not behind by one commit; it is AT upstream
+    HEAD, and that crew tree is clean.
+  - **SO `production_widget` IS UNBLOCKED.** Its rendered "(blocked on buildlist_query)" inherits
+    a blocker that no longer exists. What it is NOT is finished -- see the entry below on where
+    `WBP_ProductionMenu` actually stands against Sec 2.11.5 -- but nothing upstream stands in
+    front of it any more.
+  - **`presentation_statelessness` RENDERS "(actionable)" AND IS ESSENTIALLY DONE.** Its
+    `closes` is `["T-INT-05"]` and `candidates.py`'s `build()` drops any candidate whose every
+    `closes` ID is already asserted. **FORTY-THREE T-INT-05 clauses exist and run**, counted by
+    set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` and NOT by an
+    acceptance-ID grep, across `Source/StratUI/Tests/` and `Source/StratPlay/Tests/`. It survives
+    the drop only because it has **no probe of its own** -- it borrows `scoreboard_widget`, so the
+    scorer can never see it as done. **A GUARD THAT GRADES A NEIGHBOUR'S ARTIFACT INSTEAD OF ITS
+    OWN SUBJECT HAS GONE INERT ON THAT SUBJECT**, which is a failure this record has paid for
+    before, and it went inert silently.
+    - **A FIGURE FROM A LANE REPORT WAS WRONG BY MORE THAN A FACTOR OF TWO, AND RE-DERIVING IS
+      WHAT CAUGHT IT.** An exploring agent reported "roughly 18" of these clauses. The macro
+      census returns forty-three. The direction does not matter and the lesson is the one already
+      on the books: a count in a report is a claim, and the tree is the authority over it.
+  - **`bridge_event_list` RENDERS "(actionable)" AND IS NOT ACTIONABLE ON THIS SIDE AT ALL.** Its
+    probe is `FStratEvent` and answers NO correctly -- `grep -rn "FStratEvent" Source/`
+    returns ZERO. What is wrong is the word "actionable" hung on that NO. **THE RULES MODULE
+    DEFINES NO EVENT TYPE**, here or upstream, and Sec 4.9's own Determinism line reads "the
+    bridge never reorders, drops, or synthesizes events" -- so the bridge may not manufacture the
+    list it is missing. `StratBridge.h` says the same from this side: "The event list is ruled to
+    live headless, and no acceptance ID names it as its subject." It is blocked on upstream,
+    exactly as `buildlist_query` was, and it should render that way.
+  - **AND BENEATH IT SITS AN UNRECORDED CONFLICT THAT IS THE REAL BLOCKER.**
+    `UStratMatchSubsystem::ApplyView`'s stated rule is that presentation is RECONCILED, NOT
+    EVENTED, and `StratGuidanceWidget.h` and `StratScoreboardHUD.h` refuse queue and latch
+    semantics in as many words ("NOT A CATCH-UP QUEUE"). Sec 4.9 specifies an ordered event list,
+    which is a second delivery model alongside the reconcile. **NOBODY HAS RULED ON WHICH
+    GOVERNS**, and that ruling -- not a header change -- is what `bridge_event_list` is actually
+    waiting on. Filed for the Director in `decisions.md`; OWNED: `strat-data-steward` to file,
+    then the Director to rule. Nothing is built on it here and nothing should be.
+  - **WHY ALL FIVE ARE THE SAME DEFECT.** Every one of these entries renders a status the scorer
+    COMPUTES from a probe, and in each case the probe is sound while the classification hung on it
+    is stale or borrowed. **A STATUS THAT IS DERIVED IS NOT THEREBY CORRECT** -- it is only as
+    correct as the subject the probe was pointed at. Repairing `candidates.py` and `scan.py` is
+    OWNED: `strat-data-steward`, and the repair must be shown FALSIFIABLE by breaking the real
+    artifact and watching the probe go red, because a probe the scorer cannot parse passes exactly
+    like an inert one.
 - **Hot-seat milestone is COMPLETE (phase 6 closed 2026-08-13); see "Hot-seat milestone —
   COMPLETE" below.** The AI-opponent milestone is now current (phase C closed 2026-08-13; phase D
   — PIE playtest and a machine-repeatable AI-vs-AI gate — is next; see "## AI-opponent milestone"

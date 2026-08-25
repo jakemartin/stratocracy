@@ -99,16 +99,29 @@ _SUBJECTS: list[Candidate] = [
         closes=[],
         probe="buildlist_query",
         requires=[],
-        artifact="stratocracy-crew/cpp_reference/Ui.h (vendored -- outside this repo)",
-        gdd_basis=(
-            "§4.7 Stub 8: 'There is deliberately no third query: T-UI-04's buildlist has "
-            "no stated shape -- field or query -- and inventing one here would pre-empt a "
-            "Director ruling.'"
+        artifact=(
+            "Source/StratRules/Ui.h (vendored; RULED 2026-08-20 -- see "
+            "Tools/architect/state/decisions.md -- filed upstream at crew `4d36a16`, "
+            "IMPLEMENTED and VENDORED at `rulesCommit cae01e3...`, which is crew HEAD "
+            "with a re-derived gap of ZERO: `git -C stratocracy-crew rev-list --count "
+            "cae01e37..HEAD` -> 0)"
         ),
-        unruled=True,
-        unruled_reason=(
-            "shape unstated in the GDD by explicit decision, and the file is vendored "
-            "certified bytes in another repo -- T-INT-01 hash-matches it"
+        gdd_basis=(
+            "§4.7 Stub 8 ORIGINALLY read 'There is deliberately no third query: "
+            "T-UI-04's buildlist has no stated shape -- field or query -- and inventing "
+            "one here would pre-empt a Director ruling.' That sentence described a gap "
+            "this repo could not close and is now history, not the present tense: the "
+            "Director ruled a third `ui*` query on the unit table and the side's "
+            "`fameTotal`, the ruling was filed and landed upstream, and "
+            "`Source/StratRules/Ui.h` now declares `uiBuildOptions`/`UiBuildOption` "
+            "with `FStratBridge::BuildOptions` routing it "
+            "(`Source/StratBridge/StratBridge.h`) and "
+            "`Source/StratBridge/Tests/StratBuildOptionRouting.cpp` pinning the "
+            "transport across the module boundary. This candidate is BUILT, not "
+            "unruled -- it was left marked `unruled` after the shape it names had "
+            "already been ruled and vendored, which is why it rendered "
+            "'(actionable, excluded: ...)' at once, a contradiction no reader should "
+            "have to resolve."
         ),
     ),
     Candidate(
@@ -117,11 +130,27 @@ _SUBJECTS: list[Candidate] = [
         closes=[],
         probe="bridge_event_list",
         requires=[],
-        artifact="Source/StratBridge/",
+        artifact=(
+            "stratocracy-crew/cpp_reference/ (vendored -- outside this repo; the type "
+            "does not exist there either, so there is nothing to vendor yet)"
+        ),
         gdd_basis=(
             "StratBridge.h: 'NOT IN THIS ROUND: the ordered event list (§4.9 part 2's "
             "command in / events out) and the widgets... The event list is ruled to live "
             "headless, and no acceptance ID names it as its subject.'"
+        ),
+        unruled=True,
+        unruled_reason=(
+            "blocked on upstream, the same posture `buildlist_query` held before its "
+            "2026-08-20 ruling and vendor landed -- but with no ruling to wait on, only "
+            "an upstream author. `strat::FStratEvent` (or any event type) matches ZERO "
+            "times in this repo's `Source/` and ZERO times in "
+            "`stratocracy-crew`'s `cpp_reference/` -- the rules module defines no "
+            "event type at all, so there is no vendored contract for a bridge query to "
+            "route to. GDD §4.9's Determinism line reads 'the bridge never reorders, "
+            "drops, or synthesizes events', which forbids this repo from manufacturing "
+            "the list locally as a substitute. The artifact must be authored in "
+            "`cpp_reference/` upstream and re-vendored before this repo can act on it"
         ),
     ),
     Candidate(
@@ -143,7 +172,22 @@ _SUBJECTS: list[Candidate] = [
         key="presentation_statelessness",
         title="Presentation statelessness pass (rebuild widgets from the view model)",
         closes=["T-INT-05"],
-        probe="scoreboard_widget",   # it asserts OVER widgets; no widgets, nothing to assert
+        # FIXED 2026-08-24 -- this used to borrow `scoreboard_widget`'s probe, on the
+        # theory "no widgets exist yet, so nothing can be asserted over". That answers
+        # a DIFFERENT question (does a scoreboard widget CLASS exist), not this
+        # candidate's own subject (is presentation actually REBUILT from the current
+        # view model). Once a scoreboard widget landed, the borrowed probe flipped to
+        # True while `closes` (T-INT-05) had already been counted asserted the moment
+        # the FIRST T-INT-05 clause was written anywhere in the tree -- so
+        # `build()`'s `if exists and not open_ids: continue` silently dropped this
+        # candidate from every render, with 43 T-INT-05 clauses now in
+        # `Source/StratPlay/Tests/` and `Source/StratUI/Tests/` and this candidate
+        # never having been graded against a single one of them. The probe now reads
+        # `ApplyView` -- the mechanism `StratMatchSubsystem.h` itself names as the
+        # rebuild seam ("PRESENTATION IS RECONCILED, NOT EVENTED. `ApplyView` spawns,
+        # moves and destroys actors...") -- so this candidate's rendered status is
+        # finally produced by the thing it claims to close, not by a neighbour's.
+        probe="presentation_statelessness",
         # `scoreboard_host` is a REAL prerequisite and not a convenience. T-INT-05 asserts
         # that widgets can be REBUILT from the current view model after any event
         # sequence; that quantifies over a runtime path which builds them from the view
@@ -153,7 +197,8 @@ _SUBJECTS: list[Candidate] = [
         # something, which is the same reason the probes were.
         requires=["ui_module_exists", "gamestate_to_uiworld", "scoreboard_widget",
                   "scoreboard_host"],
-        artifact="Source/StratUI/Tests/",
+        artifact="Source/StratPlay/StratMatchSubsystem.h (ApplyView) + "
+                 "Source/StratPlay/Tests/, Source/StratUI/Tests/ (43 T-INT-05 clauses)",
         gdd_basis=(
             "§4.11 row 9: 'T-INT-05 did not run, and what it lacks is the real "
             "Stratocracy widgets it asserts over (§4.9).'"

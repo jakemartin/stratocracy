@@ -237,8 +237,14 @@ _PROBES: list[ProbeSpec] = [
     ),
     ProbeSpec(
         "buildlist_query",
-        "Does a buildlist query exist on the Ui.h contract (T-UI-04's data source)?",
-        r"\buiBuildlist\b|\bUiBuildEntry\b",
+        "Does a buildlist query exist on the Ui.h contract (T-UI-04's data source)? "
+        "Pattern corrected 2026-08-24: the prior `uiBuildlist`/`UiBuildEntry` names "
+        "were never the ones the Director ruled into existence at "
+        "`Tools/architect/state/decisions.md` 2026-08-20 -- the real, vendored, "
+        "routed symbols are `uiBuildOptions`/`UiBuildOption` (`Source/StratRules/Ui.h`, "
+        "`FStratBridge::BuildOptions` in `Source/StratBridge/StratBridge.h`), so the "
+        "old pattern could never answer YES about the artifact that actually landed.",
+        r"\buiBuildOptions\b|\bUiBuildOption\b",
         {".h", ".cpp"},
     ),
     ProbeSpec(
@@ -246,6 +252,25 @@ _PROBES: list[ProbeSpec] = [
         "Does the bridge expose the §4.9 ordered event list ('events out')?",
         r"\bFStratEvent\b",
         {".h"},
+    ),
+    ProbeSpec(
+        "presentation_statelessness",
+        "Does the match subsystem REBUILD presentation from the CURRENT view model "
+        "-- the mechanism T-INT-05's rebuild clauses actually assert over -- rather "
+        "than merely having a scoreboard widget CLASS, which is a different subject "
+        "this candidate used to borrow its probe from? `ApplyView` is the seam "
+        "`StratMatchSubsystem.h` itself names: 'PRESENTATION IS RECONCILED, NOT "
+        "EVENTED. `ApplyView` spawns, moves and destroys actors...'.",
+        _declares("ApplyView"),
+        {".h"},
+        # Scoped to StratPlay on purpose, on the same reasoning as
+        # `gamestate_to_uiworld`'s scoping note above: `ApplyView` is this project's
+        # own name and not a vendored one, so an unscoped probe would not currently
+        # false-positive on `Source/StratRules/` -- but pinning the scope states the
+        # question is about the ENGINE-SIDE rebuild path, not about the vendored
+        # contract, which is exactly the distinction this candidate's prior probe
+        # (borrowed from `scoreboard_widget`) failed to make.
+        within=r"^Source/StratPlay/",
     ),
     ProbeSpec(
         "ui_module_exists",

@@ -645,3 +645,82 @@
     verdict — see `state/global.md` for the live figure.]**
   - **This entry does not state a suite count or a phase verdict** — both stay in
     `state/global.md` only; see that file for the live figure.
+
+- **FILED, 2026-08-24, BY `strat-data-steward` — THREE QUESTIONS FOR A DIRECTOR RULING. Filed,
+  not acted on. Nobody should read landing these as a green light to build any of the three
+  answers below; each is a genuine fork and this repository does not get to pick.** Every claim
+  under each question was independently re-verified against the tree before being written down,
+  not taken from the dispatch that raised it -- and in two places the tree corrects the dispatch,
+  recorded inline rather than silently.
+
+  1. **Reconciled vs evented -- which governs, and if both, where is the seam?** §4.9 (grepped
+     directly, `Stratocracy_Prototype_GDD.md:2951-2953`) specifies "Command in / events out": an
+     **ordered, deterministic event list** -- `Moved(path)`, `Damaged`, `Destroyed`, `Captured`,
+     `Spawned`, `BuildWaiting`, `Repaired`, `IncomePaid`, `MatchEnded(tier)` -- with actors and
+     widgets animating "from events and the view-model only". This project's presentation layer is
+     built on the opposite posture, by explicit and repeated rule: `StratMatchSubsystem.h:37-38`
+     states "PRESENTATION IS RECONCILED, NOT EVENTED. `ApplyView` spawns, moves and destroys actors
+     to match `FStratViewModel` on every refresh, and there is no incremental path beside it";
+     `:691` restates it verbatim ("Reconciled, not evented"); `StratScoreboardHUD.h:453-460`
+     refuses queue and one-shot-latch semantics by name ("NOT A CATCH-UP QUEUE. It replays the
+     LATEST value and never a backlog... A one-shot latch was the alternative and was rejected");
+     and `StratGuidanceWidget.h:18-24` independently states the same property for the directive
+     strip ("the value is PUSHED here on the reconcile path, it is never PULLED... that is the same
+     property `UStratMatchSubsystem::ApplyView` is built on -- 'presentation is reconciled, not
+     evented'"). **One correction to how this question was raised, made because the tree outranks
+     the brief:** the dispatch that raised this question cited the refusal language
+     ("NOT A CATCH-UP QUEUE") as living in `StratGuidanceWidget.h`. It does not --
+     `grep -n "CATCH-UP" Source/StratUI/*.h` returns exactly one hit, in `StratScoreboardHUD.h`.
+     `StratGuidanceWidget.h` carries the *same principle* in its own words (quoted above) but not
+     that phrase. This is what `bridge_event_list` (`Tools/architect/candidates.py`, corrected
+     earlier in this pass) is actually waiting on: it cannot be built here at all while `§4.9`'s
+     event list has no vendored type to route (`strat::FStratEvent` matches zero times in this
+     repo and zero times in `stratocracy-crew`'s `cpp_reference/`), and the engine side has already
+     shipped, tested and repeatedly documented the opposite architecture. A ruling that says
+     "evented" would not just add a feature -- it would ask three files that currently argue their
+     design at length to be rewritten against their own stated reasoning.
+
+  2. **Displaced-build feedback -- does an accepted-but-displaced build owe the player feedback,
+     and if so where?** §2.11.5 (per the dispatch; not independently re-walked against the GDD
+     line number here, since the code-side half is the part this repo can measure) specifies a
+     boxed-in footer reading the per-factory `spawnBlocked`, and specifies nothing for
+     DISPLACEMENT -- the factory hex is occupied but a neighbour is free, and the unit spawns on
+     the neighbour silently. Verified directly: `strat::spawnHexesBlocked`, defined in
+     `Source/StratRules/Ui.good.cpp`, returns `false` the moment it finds ANY free
+     neighbour (`if (w.board.occupantAt(adj[i]) == OCCUPANT_NONE) return false;`, inside a loop
+     over every neighbour) -- so the displaced case reads byte-identically to "nothing was blocked
+     at all" through this one boolean, and `bSpawnBlocked` cannot carry the distinction because the
+     rules-side answer it mirrors never makes it. And `FStratFactoryView`
+     (`Source/StratUI/StratViewModel.h:369-401`) is confirmed a complete, field-for-field mirror of
+     `strat::UiFactoryView` -- `Hex`, `Owner`, `bHasBuiltThisTurn`, `bBuildWaiting`,
+     `bSpawnBlocked`, each doc-commented "Mirrors `UiFactoryView::...`" -- with no field of any
+     kind for "spawned somewhere other than the factory hex". Nothing on either side of the
+     boundary currently knows a displacement happened, let alone can surface it. Question: does
+     the player need a toast, a flash on the actual spawn hex, or is silent success (unit exists,
+     player finds it) the intended UX -- and if feedback is owed, does it belong to `T-UI-04`'s
+     query answer, a new snapshot field, or a transient (§4.9's "toasts" category, per
+     `Stratocracy_Prototype_GDD.md:595`, which already lists other transient event receipts with a
+     durable home)?
+
+  3. **`Capture{unit}`'s inert payload -- should the field be honoured, or should the format stop
+     carrying it?** Not a defect report; §4.10's grammar question. Verified:
+     `strat::applyCommand`'s `SaveCommandKind::Capture` arm, defined in
+     `Source/StratRules/Replay.good.cpp`, never reads `c.unitId` -- it builds a
+     `CaptureOccupant` vector from **every** `GameUnit` in `g.units` (not just the one the command
+     names) and calls `captureTick(g.economy, occ, c.side)`. This is not merely similar to but
+     **structurally identical** to the block `strat::openTurn` runs at every turn boundary,
+     defined in the same file (`strat::openTurn`'s own capture-tick block, same occupant-building loop over `g.units`, same
+     `captureTick(g.economy, occ, side)` call) -- confirmed by reading both blocks side by side,
+     not inferred from a name. A `Capture{unit}` command in a replay log therefore behaves exactly
+     as if it had been an `EndTurn`-adjacent no-op with respect to `c.unitId`: the side-wide tick
+     runs regardless of which unit, or whether any unit, was named. Question for the Director:
+     should `applyCommand`'s `Capture` arm start reading `c.unitId` (and what should it DO with it
+     -- restrict the tick to occupants of that one unit's hex? require it be the capturing unit?),
+     or should `SaveCommand`'s `Capture` variant drop the field it does not use, so the format does
+     not imply a selectivity the engine never honours? This is upstream-only either way -- vendored
+     bytes, not this repo's to change.
+
+  - **What this entry does NOT do.** No code, no `Config/`, no scorer file and no other record file
+    was touched to answer any of these three; nothing here is a recommendation, and none of the
+    three is acted on. This entry does not state a suite count or a phase verdict -- both stay in
+    `state/global.md` only.

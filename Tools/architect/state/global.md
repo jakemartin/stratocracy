@@ -11,6 +11,71 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-25 (WAVE 4 AND WAVE 5 LAND: SEC 2.11.5'S ROWS ARE BUILT AND ITS FOOTER HAS A
+ROUTE FOR THE FIRST TIME. The suite is now 218/218, every entry Success, zero failed and zero
+notRun. The delta is +5 and nothing was removed or renamed, measured by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` and RE-DERIVED BY THE `coordinator`
+independently of the lane report -- the macro census and the automation report agree at 218.
+THE REPORT IS NAMED RATHER THAN ALLUDED TO, on this file's own standing practice:
+`reportCreatedOn 2026.08.25-19.00.48`, `succeeded 218`, `failed 0`, `notRun 0`, run in THIS tree
+on the bytes as they now stand. The 213/213 below is SUPERSEDED BY THIS ENTRY and is history.
+Written by the `coordinator`, whose file this is.
+WHAT LANDED, CONTENT HALF (`strat-editor-builder`, editor open). `/Game/UI/WBP_ProductionMenu`
+now binds each `Row{N}Build`'s `IsEnabled` to `bAvailable` ALONE, prints `need N` off
+`FStratBuildOptionView::Shortfall` where it printed the literal word `false`, shows the module's
+own `Reason` in the status column, and greys an unaffordable row with `SetRenderOpacity` -- which
+does not affect hit testing, so a greyed row stays clickable and Q31 holds by a property of the
+node chosen rather than by intent. The two substitutions T-UI-03 exists to catch were ruled out by
+DERIVING THE SINK LIST of every `Break` output rather than by eye: `Affordable` reaches eight
+sinks and every one is a `Select.Index`, `Available` reaches four and every one is
+`SetIsEnabled`. `content.md` carries the detail.
+WHAT LANDED, ENGINE HALF (`strat-gameplay-engineer`, editor closed). `FStratBridge::
+FactorySpawnBlockedAt` and a `BlueprintPure` `UStratMatchSubsystem::IsOpenMenuFactorySpawnBlocked`,
+so `bSpawnBlocked` has a Blueprint route at all for the first time -- before this pass it had
+exactly two sites in `Source/` outside `Tests/`, its declaration and its one assignment, and NO
+READER. Build `Result: Succeeded`, exit 0, 51 actions. `BlueprintPure` was verified off the
+GENERATED FLAGS (`EFunctionFlags 0x54020401` in `StratMatchSubsystem.gen.cpp`) and not off the
+specifier typed, which is the difference between reading the intent and reading the artifact.
+THE CONSEQUENTIAL CALL WAS REJECTING BOTH ROUTES THE DISPATCH OFFERED, and it is recorded here
+because a later pass will be tempted by the cheap one. Reading `AppliedModel.Factories` is the
+WRONG CLOCK: `RefreshProductionMenu` queries the bridge live and writes only the rows, while
+`AppliedModel` is written only by `ApplyView`, and in `SubmitProductionChoice` an accepted build
+rebuilds the menu before the screen. The build that fills a factory's last free hex is exactly
+the build that flips this bit, so the divergence is on this footer's own path and not a corner.
+Re-querying per read was refused too -- a `BlueprintPure` on a footer's visibility runs per frame.
+The value is re-queried ON THE ROWS' OWN CLOCK and published in the same statement group, cleared
+beside them, so the footer and the rows are fresh together or stale together and CANNOT be
+observed disagreeing. That is structural rather than disciplinary, which is the whole reason it
+was worth the extra measurement.
+WHAT THE FIVE CLAUSES PIN (`strat-test-author`). That the footer copies the bridge rather than
+deriving; that it is false with no menu open, by two routes; that a refusal is not a yes; that a
+refusal survives a non-factory hex whose neighbourhood is FULL, so a fall-through to raw
+occupancy reddens; and that it rides the rows' clock across a build. Two mutation rounds, six
+mutations, all inside `Tests/`: exactly the five new clauses reddened, each at its TERMINAL
+assertion, and nothing else. Shipped bytes were restored from copies held outside the repo and
+proved identical by `git hash-object`, never by `git checkout --`, which this record has been
+bitten by before.
+TWO ACCEPTANCE IDS MOVED OFF THE ONES THE DISPATCH PROPOSED, and the lane was right both times.
+The dispatch said `T-UI-03`; four seam clauses went to `GATE-BUILDMENU`, which that file already
+covers in ten clauses and which is what a member written in the same statement group as
+`ProductionMenu` actually belongs to, and the bridge clause went to `T-UI-04` beside its sibling.
+NO NEW ACCEPTANCE ID WAS MINTED. My own dispatch prose was the wrong authority and the site was
+the right one -- the same shape as the `T-SAVE-05` correction two entries down.
+THREE THINGS THIS PASS DOES NOT CLAIM. (1) NO PHASE VERDICT: the reviewer gate has NOT run on
+this work, and nothing here is gated. (2) NOBODY HAS SEEN THE ROWS ON A SCREEN -- no greyed row,
+no `need N`, no refused BUILD click. No instrument here can fire a Slate click and injection
+never reaches this project's `UPlayerInput`, so that wants a HUMAN PIE pass, on a factory with an
+unaffordable row and once on a factory that has already built this turn. (3) THE FOOTER IS NOT
+BUILT: the accessor is reflected, correct and HAS NO CALLER, which is the `SkipGuidance` shape
+this record has already paid for once and is declared here rather than left to be found.
+DISCHARGED WHEN `WBP_ProductionMenu`'s footer binds it.
+TWO LIMITS THE TEST LANE DECLARED RATHER THAN PAPERED OVER. Which half keeps the closed-panel
+answer false cannot be separated from `Tests/` -- both routes to "closed" run the reset, so
+deleting either half reddens nothing, and the clause says in its own prose that it pins the
+guarantee and not which half delivers it. And clause 5's teeth depend on `SubmitProductionChoice`
+calling the refresh before the presentation; reverse that ordering and the clause goes QUIET
+rather than red. Pinning it directly would need a seam in production code.)
+
 _Last run 2026-08-25 (WAVE 2 LANDS: THE ENGINE CAN SAY WHO WON, AND TWELVE CLAUSES PIN IT. The
 suite is now 213/213, every entry Success, zero failed and zero notRun. The delta is +12 and
 nothing was removed, measured by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over

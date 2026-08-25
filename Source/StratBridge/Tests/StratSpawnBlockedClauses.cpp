@@ -770,3 +770,236 @@ bool FStratDisplacedSpawnLandsOnANeighbourTest::RunTest(const FString& /*Paramet
 	RemoveVariant(VariantPath);
 	return true;
 }
+
+// ---------------------------------------------------------------------------
+// `FactorySpawnBlockedAt` REFUSES A HEX THAT IS NOT A BUILD POINT -- INCLUDING ONE WHOSE
+// OWN NEIGHBOURHOOD IS FULL.
+//
+// WHY THIS ID AND NOT THE ONE PROPOSED. The dispatch asked for `T-UI-03`. The subject here is
+// `strat::UiFactoryView::spawnBlocked` at the bridge, which is exactly the subject of
+// `T-UI-04.ABoxedInFactoryReportsSpawnBlockedAndStillAcceptsTheBuild` at the top of this
+// file. Filing the refusal arm of one method under a second id would split ONE question
+// across two rows, which is the thing an id exists to prevent. Both ids pre-exist; neither is
+// minted, and `T-UI-03` remains what the scoreboard's no-arithmetic clauses carry.
+//
+// WHAT WOULD BE INVISIBLE WITHOUT THE SECOND SUBJECT, and it is the whole reason this clause
+// costs a board rather than a one-line call. The obvious wrong implementation of this method
+// is a fall-through to `strat::spawnHexesBlocked`, which is declared in `Ui.h`, answers about
+// ANY hex, and is occupancy-only. On an ORDINARY plains hex that mistake reports `false`, and
+// `false` is also what a correct refusal leaves in the out-parameter -- so a clause that asked
+// only about an empty corner of the board would pass on the defective implementation and on
+// the shipped one alike, telling nobody anything.
+//
+// SO THE SECOND SUBJECT IS A NON-FACTORY HEX ON WHICH `spawnHexesBlocked` READS TRUE. There
+// the two implementations diverge in both channels at once: the fall-through answers `Ok` with
+// `true`, and the shipped one refuses with `false`. That hex is not written down -- it is
+// FOUND, by asking the module about every hex of the projection until one answers true, on the
+// same boxed-in board the first clause of this file arranges. If the arrangement ever stops
+// producing one, this clause fails at that premise and says so, rather than quietly degrading
+// into the single-subject version that could not fail.
+//
+// WHERE EVERY EXPECTATION COMES FROM. The hex set is `UiSnapshot::hexes`; which of them are
+// build points is `UiSnapshot::factories`; whether a hex's neighbourhood is full is
+// `strat::spawnHexesBlocked` over `FStratBridge::MakeUiWorld()`. Nothing below walks a
+// neighbour, compares a coordinate it typed, or names a hex. The one thing this clause states
+// on its own authority is that a REFUSAL is the correct answer for a non-build-point hex, and
+// that is the declaration's own two-channel paragraph, not an inference.
+//
+// THE POSITIVE CONTROL IS IN THE SAME CLAUSE AND IS NOT DECORATION. "Refuses a non-factory
+// hex" is satisfied perfectly by a method that refuses everything, which would be a worse
+// regression than the one this clause closes. The boxed-in factory is asked first and must
+// answer `Ok` with `true`.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratFactorySpawnBlockedRefusesANonFactoryHexTest,
+	"Stratocracy.StratBridge.T-UI-04.FactorySpawnBlockedRefusesANonFactoryHex",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratFactorySpawnBlockedRefusesANonFactoryHexTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratSpawnBlockedClauses;
+
+	FString Text;
+	FString Error;
+	if (!TestTrue(TEXT("the shipped scenario is readable"),
+			LoadScenarioTextWithoutHash(Text, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// THE SAME THREE EDITS THE FIRST CLAUSE OF THIS FILE MAKES, and deliberately the same: a
+	// board with a fully-occupied cluster on it is what puts a non-factory hex with a full
+	// neighbourhood within reach at all.
+	const bool bEdited =
+		MovePlacement(Text, kSide0InfantryAt13, kSide0InfantryOnFactory, Error) &&
+		MovePlacement(Text, kSide1ArtilleryAt105, kSide1ArtilleryAt24,   Error) &&
+		MovePlacement(Text, kSide1ReconAt103,   kSide1ReconAt13,         Error);
+	if (!TestTrue(TEXT("the three boxing placements are applied"), bEdited))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	FString VariantPath;
+	if (!TestTrue(TEXT("the boxed-in variant is written under Saved/"),
+			WriteVariant(Text, TEXT("spawn_blocked_refusal.json"), VariantPath, Error)))
+	{
+		AddError(Error);
+		RemoveVariant(VariantPath);
+		return false;
+	}
+
+	{
+		FStratBridge Bridge;
+		if (!TestTrue(TEXT("the bridge seeds from the boxed-in variant"),
+				SeedBridgeFrom(Bridge, VariantPath, Error)))
+		{
+			AddError(Error);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		strat::UiSnapshot Snapshot;
+		const FStratResult Projected = Bridge.MakeUiSnapshot(Snapshot);
+		if (!TestTrue(TEXT("MakeUiSnapshot succeeds on the seeded variant"), Projected.bOk))
+		{
+			AddError(Projected.Reason);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		// ---- The positive control -----------------------------------------------
+		strat::UiFactoryView Factory;
+		if (!TestTrue(TEXT("the variant's factory is in the projection and side 0 holds it"),
+				FindTheFactory(Snapshot, kFirstSide, Factory, Error)))
+		{
+			AddError(Error);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		bool               bFactoryBlocked = false;
+		const FStratResult AtTheFactory =
+			Bridge.FactorySpawnBlockedAt(ToIntPoint(Factory.hex), bFactoryBlocked);
+		if (!TestTrue(
+				*FString::Printf(
+					TEXT("CONTROL: the method ANSWERS for a real build point at %s (it said '%s')"),
+					*Describe(Factory.hex), *AtTheFactory.Reason),
+				AtTheFactory.bOk))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+		if (!TestTrue(
+				TEXT("CONTROL: and that factory is boxed in, so the refusals below are measured "
+					"against a board on which a wrong answer would have been TRUE"),
+				bFactoryBlocked))
+		{
+			AddError(TEXT("the boxing arrangement did not box the factory in; the second "
+			              "subject below is unlikely to exist and this clause would be "
+			              "measuring only the easy half"));
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		// ---- The two subjects, both FOUND and neither written down ---------------
+		const strat::UiWorld World = Bridge.MakeUiWorld();
+
+		bool       bHaveOrdinary   = false;
+		bool       bHaveSurrounded = false;
+		strat::Hex Ordinary{};
+		strat::Hex Surrounded{};
+
+		for (const strat::UiHexView& HexView : Snapshot.hexes)
+		{
+			bool bIsBuildPoint = false;
+			for (const strat::UiFactoryView& F : Snapshot.factories)
+			{
+				if (strat::hexEqual(F.hex, HexView.hex))
+				{
+					bIsBuildPoint = true;
+					break;
+				}
+			}
+			if (bIsBuildPoint)
+			{
+				continue;
+			}
+
+			// THE MODULE DECIDES WHICH BUCKET THIS HEX IS IN. Nothing here counts a neighbour
+			// or reads an occupancy table.
+			if (strat::spawnHexesBlocked(World, HexView.hex))
+			{
+				if (!bHaveSurrounded)
+				{
+					Surrounded      = HexView.hex;
+					bHaveSurrounded = true;
+				}
+			}
+			else if (!bHaveOrdinary)
+			{
+				Ordinary      = HexView.hex;
+				bHaveOrdinary = true;
+			}
+		}
+
+		if (!TestTrue(TEXT("the board offers an ordinary non-factory hex to ask about"),
+				bHaveOrdinary))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+		if (!TestTrue(
+				TEXT("the board offers a non-factory hex whose own neighbourhood is FULL, which "
+					"is the subject that tells a refusal apart from a fall-through to "
+					"strat::spawnHexesBlocked"),
+				bHaveSurrounded))
+		{
+			AddError(TEXT("no non-factory hex on this variant reports spawnHexesBlocked true; "
+			              "the discriminating half of this clause is missing and the remaining "
+			              "half cannot fail on the defect it exists to catch"));
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		AddInfo(FString::Printf(
+			TEXT("subjects: ordinary non-factory hex %s (spawnHexesBlocked false), surrounded ")
+			TEXT("non-factory hex %s (spawnHexesBlocked TRUE)"),
+			*Describe(Ordinary), *Describe(Surrounded)));
+
+		// ---- Both are refused, and both leave the out-parameter false ------------
+		{
+			bool               bOut  = true;   // seeded TRUE so "cleared" is a measurement.
+			const FStratResult Asked = Bridge.FactorySpawnBlockedAt(ToIntPoint(Ordinary), bOut);
+			TestFalse(*FString::Printf(
+					TEXT("an ordinary non-factory hex %s is REFUSED, not answered about"),
+					*Describe(Ordinary)),
+				Asked.bOk);
+			TestFalse(TEXT("and the refusal says something"), Asked.Reason.IsEmpty());
+			TestFalse(
+				TEXT("and the out-parameter is cleared, so a caller that ignored the result "
+					"cannot draw a boxed-in footer off it"),
+				bOut);
+		}
+
+		{
+			bool               bOut  = true;
+			const FStratResult Asked = Bridge.FactorySpawnBlockedAt(ToIntPoint(Surrounded), bOut);
+			// THE ASSERTION THIS CLAUSE IS FOR. `strat::spawnHexesBlocked` reads TRUE at this
+			// hex -- measured above, in this run, on this board -- so an implementation that
+			// fell through to it would answer Ok/true here. A refusal is the only answer that
+			// tells the two apart.
+			TestFalse(*FString::Printf(
+					TEXT("a non-factory hex whose neighbourhood is FULL, %s, is still REFUSED: ")
+					TEXT("strat::spawnHexesBlocked reads true there and a build point it is not"),
+					*Describe(Surrounded)),
+				Asked.bOk);
+			TestFalse(TEXT("and that refusal says something too"), Asked.Reason.IsEmpty());
+			TestFalse(TEXT("and the out-parameter is FALSE and not the occupancy answer"), bOut);
+		}
+	}
+
+	RemoveVariant(VariantPath);
+	return true;
+}

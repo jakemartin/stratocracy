@@ -12,6 +12,151 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **WAVE 5: §2.11.5's BOXED-IN FOOTER FACT NOW HAS A GATE, AND FOUR OF THE FIVE CLAUSES ARE
+  ABOUT THE CLOCK IT RIDES RATHER THAN THE VALUE IT CARRIES.** Five clauses, no new files: four
+  appended to `Source/StratPlay/Tests/StratProductionMenuSeam.cpp` under `GATE-BUILDMENU`, one
+  appended to `Source/StratBridge/Tests/StratSpawnBlockedClauses.cpp` under `T-UI-04`. Both ids
+  pre-existing; **none minted**. **Clause delta +5**, by set-difference on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` (never by an acceptance-ID grep,
+  which has undercounted 8 as 5 in this repo): exactly five names added, none renamed, none
+  removed. Both files LF before and after, `git diff --numstat` **+958 / -0** and **+233 / -0**,
+  additions only. Unstaged; staging is the user's call. The live suite figure is in
+  `Tools/architect/state/global.md` and is not restated here.
+  - **THE SUBJECT.** `UStratMatchSubsystem::IsOpenMenuFactorySpawnBlocked()`, the private
+    `bProductionMenuSpawnBlocked` that `RefreshProductionMenu` publishes beside the rows and
+    `CloseProductionMenu` clears beside them, and `FStratBridge::FactorySpawnBlockedAt`
+    underneath both.
+  - **BOTH ACCEPTANCE IDs WERE MOVED OFF THE ONES PROPOSED, AND BOTH MOVES ARE THE SAME
+    ARGUMENT: DO NOT SPLIT ONE SUBJECT ACROSS TWO ROWS.** The dispatch proposed `T-UI-03` for
+    all five.
+    - **THE FOUR SEAM CLAUSES ARE `GATE-BUILDMENU`'s.** They are about a member written in the
+      SAME STATEMENT GROUP as `ProductionMenu` and `ProductionMenuHex`, and those two are that
+      file's subject under `GATE-BUILDMENU` in ten existing clauses. The file's own header
+      block already argues the rest and needed no help: `T-UI-04` is an IN-EDITOR claim about a
+      widget BINDING, nothing in the file constructs a widget or touches Slate, and
+      `GATE-BUILDMENU` is this project's id for §2.11.5 TRANSPORT. **No clause in that file may
+      be read as moving `T-UI-04`'s ledger, and these four do not.**
+    - **THE BRIDGE CLAUSE IS `T-UI-04`'s**, beside
+      `T-UI-04.ABoxedInFactoryReportsSpawnBlockedAndStillAcceptsTheBuild` at the top of the same
+      file. Filing the REFUSAL arm of one method under a second id splits one question in half.
+  - **WHAT EACH PINS, AND THEY ARE NOT FIVE READINGS OF ONE BOOL.**
+    - `GATE-BUILDMENU.OpenMenuSpawnBlockedMatchesTheBridge` — **TWO FACTORIES, TWO ANSWERS,
+      ONE FIXTURE.** A menu at side 0's boxed-in factory must read TRUE and a menu at a factory
+      side 0 does NOT hold must read FALSE, each against `FactorySpawnBlockedAt` asked freshly
+      for `ProductionMenuHex` in the same frame. **The expectation is handed the PUBLISHED hex,
+      not the hex the clause asked for**, so a refresh pairing one factory's rows with another
+      factory's footer reddens here instead of surviving as two separately-correct members. The
+      third assertion — that the two menus reported DIFFERENT facts — is what no constant
+      accessor can satisfy.
+    - `GATE-BUILDMENU.SpawnBlockedFalseWhileNoMenuIsOpen` — three observations over **two
+      routes to "closed"**: never-refreshed, `CloseProductionMenu`, and a reseed (which runs
+      `TearDownPresentation`). Every false is preceded by a TRUE on the same subsystem, asserted
+      fatally, so none of them is a mute instrument reading zero.
+    - `GATE-BUILDMENU.SpawnBlockedFalseOnANonBuildPointMenu` — **A REFUSAL IS NOT A YES.** The
+      menu is opened at the boxed-in factory FIRST so the published bool is true, and only then
+      moved to a hex no factory claims; a refresh that published the footer only on the query's
+      success branch leaves the previous TRUE standing and reddens. The refusal itself is
+      asserted, not assumed.
+    - `GATE-BUILDMENU.SpawnBlockedRidesTheRowsClockAcrossABuild` — **THE ONE THAT CATCHES AN
+      `AppliedModel` RE-SOURCE, and it can only catch it because of an ORDERING.**
+      `SubmitProductionChoice` calls `RefreshProductionMenu` BEFORE `RefreshPresentation`, so at
+      the instant the footer is published the applied model still describes the PRE-BUILD board
+      — where this factory is not boxed in. That pre-build value is captured, printed, and
+      quoted in the terminal assertion's own message, so the failure names the defect rather
+      than reporting a bool. If that ordering is ever reversed, **this clause stops being able
+      to see the defect while staying green**, and that is the sentence to re-read before
+      touching `SubmitProductionChoice`.
+    - `T-UI-04.FactorySpawnBlockedRefusesANonFactoryHex` — **TWO SUBJECTS, AND ONLY THE SECOND
+      DISCRIMINATES.** The obvious wrong implementation is a fall-through to
+      `strat::spawnHexesBlocked`, which answers about ANY hex and is occupancy-only. On an
+      ordinary empty hex it reports `false`, **which is also what a correct refusal leaves in
+      the out-parameter** — so a clause asking only about an empty corner passes on the defect
+      and on the shipped code alike. The second subject is a NON-FACTORY hex on which
+      `spawnHexesBlocked` reads TRUE; there the two diverge in both channels. **That hex is
+      FOUND, not written down** — every hex of the projection is asked until one answers true,
+      and the run reports it as `axial(-2,4)=offset[0,4]`. If the arrangement ever stops
+      producing one, the clause fails at that premise instead of degrading into the version that
+      could not fail. A positive control on the real factory is in the same clause, because
+      "refuses a non-factory hex" is satisfied perfectly by a method that refuses everything.
+  - **THE HALF THAT COULD NOT BE SEPARATED, AND IT IS A FINDING RATHER THAN AN OMISSION.** The
+    closed-panel answer is false TWICE OVER — `CloseProductionMenu` resets the bool and
+    `IsOpenMenuFactorySpawnBlocked` ANDs `IsProductionMenuOpen()` on top. The dispatch asked for
+    arrangements telling which half is load-bearing. **MEASURED: no such arrangement exists from
+    `Tests/`.** Both routes to "closed" run the reset (`StartMatch` reaches it through
+    `TearDownPresentation`), so **there is no reachable state in which the bool is stale-true
+    with the rows empty** — deleting either half reddens nothing. The clause therefore pins the
+    GUARANTEE and says in its own prose that it does not pin which half delivers it, so no
+    reader can over-read it. Separating them needs a seam this lane may not add; see BLOCKED
+    below.
+  - **WHERE EVERY EXPECTATION CAME FROM.** All five read the module on both sides. The subject
+    is always the accessor (or the bridge method); the expectation is always
+    `FStratBridge::FactorySpawnBlockedAt` on the SAME bridge in the SAME frame, or
+    `strat::spawnHexesBlocked` over `FStratBridge::MakeUiWorld()`. **No bool is written down,
+    no hex is named and no neighbour is walked in any of the five.** Which hexes are factories,
+    which side holds them and which hex is not a factory are read off `FStratViewModel` and
+    `strat::UiSnapshot`.
+  - **THE SHIPPED BOARD MAKES EVERY ONE OF THESE VACUOUS, WHICH IS WHY FOUR OF THEM COST A
+    SCENARIO VARIANT.** `Data/ferrum_crossing.json` leaves side 0's factory hex FREE, so
+    `spawnBlocked` is false there and a clause written against the shipped board measures
+    `false == false`. Each clause writes a variant under `Saved/StratTests/` — never under
+    `Data/`, which is vendored and hash-gated — and deletes it on the way out. Two boards:
+    **boxed in** (three placements moved: side 0's Infantry onto its own factory hex, side 1's
+    Artillery and Recon onto the two remaining free neighbours) and **nearly boxed in** (the
+    same minus the Artillery, leaving exactly ONE free hex for the build to take). The shipped
+    scenario already surrounds that factory with five of side 0's own units, which is the only
+    reason a two-line and a three-line edit are enough.
+    - **THE PLACEMENT STRINGS ARE NOW IN TWO FILES IN TWO MODULES.** They were
+      `StratSpawnBlockedClauses.cpp`'s; the StratPlay file restates them rather than sharing a
+      header, because a shared header between two test files in two modules is a third thing to
+      keep true. **Both copies carry the T-SCN-07 and T-SCN-11 reasons for why those particular
+      units move** — a scenario variant is validated as hard as the shipped file, and the first
+      arrangement that used a side-1 INFANTRY was refused outright.
+  - **FALSIFIABILITY: TWO ROUNDS, SIX MUTATIONS, ALL INSIDE `Tests/`.** Production source is not
+    this lane's to touch even temporarily; each broken design was simulated by substituting the
+    instrument, the technique `StratMatchConclusion.cpp` and `StratGuidedOpeningVisuals.cpp`
+    both record.
+    - **ROUND 1** — the accessor reports openness alone (clause 1); a STICKY footer with neither
+      the reset nor the conjunct (clauses 2 and 3); the footer taken from the pre-build applied
+      model (clause 5); `FactorySpawnBlockedAt` replaced by a fall-through to
+      `strat::spawnHexesBlocked` (clause 4). Result: **exactly the five new clauses reddened and
+      no others** (`reportCreatedOn 2026.08.25-18.56.51`), **each at its terminal assertion and
+      none at a guard** — the distinction that made an earlier attempt on another file
+      worthless. Messages included *"the footer for the unheld factory equals the bridge's own
+      answer (accessor 1, bridge 0)"*, *"and the footer fact goes with it"*, *"a non-factory hex
+      whose neighbourhood is FULL, axial(-2,4)=offset[0,4], is still REFUSED"*, and — the one
+      that shows the mutation reached the defect this pass exists for — *"the footer fact moved
+      false -> true inside the SAME SubmitProductionChoice … would have published the pre-build
+      value (0) here"*.
+    - **ROUND 2** — clause 1's other direction only, the accessor a constant `false`.
+      **Exactly clause 1 reddened** (`2026.08.25-18.58.54`), on the assertions round 1 left
+      green: *"(accessor 0, bridge 1)"* and *"on this board that shared answer is TRUE"*. **The
+      two rounds redden disjoint assertion sets inside that clause**, sharing only the
+      "two menus reported DIFFERENT facts" line — which is what says it tells the two failure
+      modes apart rather than merely noticing something is wrong.
+    - Shipped bytes restored from copies held OUTSIDE the repo and proved identical by
+      `git hash-object` — `228afdc03f7a0002fd1d39f1c142090222a23b54` (seam) and
+      `0f75bbac9382c9b2bd544f64dd5f7813f858b109` (spawn-blocked), before and after both rounds —
+      never `git checkout --`, which rewrites LF to CRLF under `core.autocrlf=true`.
+  - **WHAT THESE FIVE DO NOT PIN, and it is a real list rather than a hedge.**
+    - **THAT ANYTHING IS ON SCREEN.** `WBP_ProductionMenu` binds `IsOpenMenuFactorySpawnBlocked`
+      and nothing here constructs a widget or touches Slate. The footer's actual appearance is
+      the content lane's and has **no gate under it from here**.
+    - **WHICH HEX THE BUILT UNIT LANDED ON**, in clause 5. That needs an adjacency answer,
+      `strat::neighbors` is `LNK2019` in `StratPlay`, and
+      `T-UI-05.ADisplacedSpawnLandsOnANeighbourAndSpawnBlockedStaysFalse` owns it.
+    - **THE DISPLACEMENT CASE, STILL.** The entry above records it and it is unchanged by this
+      pass: `spawnHexesBlocked` is occupancy-only and is FALSE under displacement, so a footer
+      bound to this accessor still says nothing about the case that produced the original
+      complaint. **These five clauses gate the footer; they do not widen it.**
+    - **WHICH HALF KEEPS THE CLOSED-PANEL ANSWER FALSE**, above.
+    - **THAT `SubmitProductionChoice` KEEPS ITS ORDERING.** Clause 5's teeth depend on
+      `RefreshProductionMenu` running before `RefreshPresentation`, and **nothing asserts that
+      ordering directly** — reverse it and the clause goes quiet rather than red.
+  - **BLOCKED, AND NOT WORKED AROUND.** Making the reset in `CloseProductionMenu` independently
+    observable would need either a non-reflected read of `bProductionMenuSpawnBlocked` on
+    `UStratMatchSubsystem`, or a route that empties the rows without calling
+    `CloseProductionMenu`. Both are production-source changes and this lane made neither.
+
 - **WAVE 2's TEST HALF: WHO WON, THE SPAWN-BLOCKED ASYMMETRY, THE CAPTURE VERB, AND THE
   HAND-OVER DESYNC.** Twelve clauses across five new files, all under acceptance IDs the GDD
   already owns — **none minted**. **Clause delta +12**, by set-difference on

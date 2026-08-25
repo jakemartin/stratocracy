@@ -27,6 +27,230 @@
 
 ## NEXT
 
+- **SEC 2.11.5'S BOXED-IN FOOTER IS BUILT ON `/Game/UI/WBP_ProductionMenu`, AND THE T-UI-03
+  SINK LISTS THE GATE COULD NOT VERIFY ARE NOW RE-DERIVED FROM A SECOND INDEPENDENT READ.**
+  2026-08-25, written by `strat-editor-builder` over
+  `mcp__unreal-editor-direct__execute_script`, which was on the tool surface from this
+  session's FIRST call -- **THE FALLBACK CONDITION IN THIS FILE'S HEADER WAS NOT MET and the
+  coordinator did not write this entry.** `print(project_dir())` answered
+  `E:/MultiAgent/Stratocracy/` before anything was touched, so this is the integration tree and
+  not a worktree. `playtest_status()` reported `has_pie_world=false, playing=false` BEFORE any
+  `open_asset`, which is this file's own recorded precondition for reading a Widget Blueprint.
+  - **THE RELINK WAS WITNESSED RATHER THAN ASSUMED, and the witness is the new verb's own
+    tooltip.** The editor's binaries are newer than the previous session's.
+    `class_methods("/Script/StratPlay.StratMatchSubsystem")` returns 21 entries and one of them
+    is `IsOpenMenuFactorySpawnBlocked`, `returns=Bool`, `category=Stratocracy|Production`,
+    carrying the multi-paragraph tooltip that matches `StratMatchSubsystem.h` on disk verbatim,
+    its `TRUE IS NOT A REASON TO GREY A BUILD BUTTON, AND Q31 IS WHY` paragraph included. A
+    function absent from the old binary cannot be reflected off it, so its presence IS the
+    relink. The NATIVE class path was used; this file already records that the BP class path
+    answers 0 entries with an `[OK]` and proves nothing.
+  - **ONE ASSET MOVED: `/Game/UI/WBP_ProductionMenu`**, parent `UserWidget` from `/Script/UMG`
+    -- an engine class, read off `bp.parent_class` rather than assumed, so the "which module
+    declares the C++ parent" pre-flight has no Stratocracy module to get wrong here. The verb it
+    now calls is declared in `Source/StratPlay/StratMatchSubsystem.h`, module **`StratPlay`**,
+    verified by that file's path in the tree AND by `class_methods` on
+    `/Script/StratPlay.StratMatchSubsystem` answering. `PaintRows` went 122 -> 126 nodes and
+    164 -> 169 connections; the widget count went 35 -> 36. `EventGraph`'s 70 nodes are
+    untouched, and so is every other widget.
+  - **WHAT WAS ADDED: ONE WIDGET AND FOUR NODES.** `FooterText`, a `TextBlock`, appended as the
+    FOURTH child of `Stack` (after `TitleText`, `StatusText`, `Grid`), `is_variable=true`,
+    Roboto Regular 12, amber `(0.98, 0.75, 0.18)`, slot padding `Top=8`, `HAlign_Left`. The name
+    was checked disjoint BEFORE creation -- `find_widgets("FooterText")` returned 0 and the
+    Blueprint reports 0 member variables -- which is this file's own recorded collision trap,
+    used rather than rediscovered. In `PaintRows`, appended to the exec tail:
+    `IsOpenMenuFactorySpawnBlocked` -> `Select.Index`; `Select.Return Value` ->
+    `SetText.In Text`; `Get FooterText` -> `SetText.Target`; and the previous terminal
+    `SetRenderOpacity.then` -> `SetText.execute`. It rides the rows' clock because it is inside
+    the rows' own function, which is the property the C++ block says it designed for.
+  - **THE SWAP IS THE TEXT, NOT THE VISIBILITY, AND AN API MEASUREMENT DECIDED IT.** Sec 2.11.5
+    specifies the sentence and not the mechanism, so this was a real choice. Visibility-swapping
+    was the first design, because `Collapsed` costs zero layout, and it was ABANDONED ON A
+    MEASUREMENT: **`configure_widget` CANNOT SET `Visibility` AT ALL.** `Collapsed`, `Hidden`,
+    `SelfHitTestInvisible` and `ESlateVisibility::Collapsed` each returned `no changes applied`
+    and each read back `Visible`. **The control is `MinDesiredWidth` on the SAME widget in the
+    SAME call style, which applied and read back `120.000000`** -- so the refusal is a property
+    of that property and not of the call. `bp:set_property("FooterText", {Visibility=...})`
+    returned `false` and there is no global `set`. A visibility swap would therefore have
+    shipped a footer whose DESIGN-TIME default is `Visible` WITH THE SENTENCE IN IT: a wrong
+    positive claim on screen for any frame before the first `PaintRows`, and permanently in the
+    asset preview. The text swap has no such window -- the design-time `Text` is EMPTY and the
+    sentence exists only as the `True` literal on the Select, so nothing can paint it until the
+    boolean is actually true.
+    **WHAT IT COSTS, stated rather than glossed:** an always-`Visible` empty `TextBlock` still
+    reserves its line box, so an unblocked menu carries roughly one blank text line plus 8px of
+    padding under the grid. That is the price of the API limit above and it is cosmetic. If
+    `Visibility` ever becomes settable, the visibility swap is the better shape.
+  - **THE SENTENCE IS BYTE-EXACT, CHECKED AS BYTES.** The `True` literal reads
+    `Boxed in — build waits for a free hex.` at 40 bytes, and bytes 10-12 are
+    `226,128,148` -- U+2014 EM DASH in UTF-8, not a hyphen and not an en dash. The `False`
+    literal is the empty string, 0 bytes. Round-tripped through `get_pin` and compared to the
+    source string for EQUALITY, not eyeballed.
+  - **Q31 IS SATISFIED STRUCTURALLY, AND IT WAS DERIVED RATHER THAN ASSERTED.**
+    `IsOpenMenuFactorySpawnBlocked` reaches **EXACTLY ONE** sink in the whole graph and it is
+    `Select.Index` on the footer's Select; that Select's only output goes to the footer's
+    `SetText.In Text`. Walked independently, every `SetIsEnabled.In Is Enabled` in the graph is
+    fed by `Break Strat Build Option View.Available` and by nothing else -- four of them, with
+    the four `Row{N}Build` getters on the `Target` pins. So the boolean is not ANDed into
+    anything, touches no `IsEnabled`, and the Build buttons stay enabled while the footer shows.
+    That is what the 2026-08-22 Q31 ruling requires, and it is a property of the derived edge
+    list rather than a hope.
+  - **THE GATE'S UNGATED SELF-REPORT IS NOW REPRODUCED, AND IT AGREES.** The reviewer proved
+    from the package bytes that no arithmetic, comparison or boolean-conjunction node exists in
+    this asset, but the name table gives names and not edges, so the earlier sink derivation was
+    recorded as a lane self-report nobody had re-run. Re-derived here from a FRESH `read_graph`,
+    walking every connection leaving a `Break` node: `Affordable` -> 8 sinks, every one
+    `Select.Index`; `Available` -> 4, every one `SetIsEnabled.In Is Enabled`; `Shortfall` -> 4,
+    every one `To String (Integer).In Int`; `Reason` -> 4, every one `SetText (Text).In Text`;
+    `Cost Fame` -> 4 `To Text (Integer).Value`; `Id` -> 4 `To Text (Name).In Name`. **EVERY
+    COUNT MATCHES THE EARLIER MEASUREMENT EXACTLY; NOTHING DISAGREES**, so that claim no longer
+    rests on a single unreproduced read. A full node census sums to 126 with no `Add`,
+    `Subtract`, `Greater`, `Less`, `Equal`, `Boolean AND`/`OR` or `To Text (Boolean)` node of
+    any kind.
+  - **A `To Text (Boolean)` NODE WAS SILENTLY CREATED DURING THIS PASS AND WAS CAUGHT BY THE
+    CENSUS RATHER THAN BY EYE -- and it is the exact defect class this asset was cleaned of.**
+    An attempt to spawn the `Select` by dragging off the boolean auto-connected it to
+    **`Option 0`, an OPTION pin, rather than to `Index`**. That resolved the Select's value type
+    to `bool`, and the follow-up `connect(Return Value -> In Text)` reported `-> with
+    conversion` and inserted a `To Text (Boolean)`. Shipped, the footer would have read `true` /
+    `false`. **`connect` returning `true` is therefore NOT evidence of a clean wire: read its
+    `direct` vs `with conversion` suffix, and re-census the graph after any auto-connect.** Both
+    discarded Selects and the conversion node were deleted and the final census reports
+    `To Text (Boolean)` at ZERO. Note also that `add_node`'s auto-connect picks the first
+    COMPATIBLE pin, and on a wildcard Select a bool matches an option before it matches `Index`.
+  - **COMPILED, VERIFIED, SAVED, IN THAT ORDER.** `read_log("compile", {asset=...})` reads back
+    `UpToDate, 0 errors, 0 warnings`. The exec chain walks **41** steps from the entry --
+    17 `SetText`, 4 `SetIsEnabled`, 20 `SetRenderOpacity` -- terminating on the footer's
+    `SetText`, and NO node in the graph is unlinked. `save()` returned `saved`. A
+    `screenshot({mode="asset"})` of the design-time preview shows the four headers and the
+    placeholder rows with the footer PRESENT AND EMPTY, which is exactly the unblocked state;
+    the preview CANNOT show the sentence, because `PaintRows` runs at runtime and the preview
+    never calls it. That image is evidence about the empty state and about nothing else.
+  - **WHAT THIS DOES NOT REACH, and it is the same last link every surface in this file has
+    needed.** Nobody has seen the sentence on a screen. No instrument here can fire a Slate
+    click and injection still never reaches this project's `UPlayerInput`, so the run that would
+    show it is a HUMAN one: open the production menu on a factory whose own hex and all six
+    neighbours are occupied, confirm the sentence appears, and confirm IN THE SAME FRAME that
+    the BUILD buttons on that menu are still clickable -- the second half is the Q31 half and it
+    is the one a structural argument cannot close. Confirm too that it clears when the menu
+    moves to an unblocked factory. Nothing above is claimed as observed at runtime.
+  - **FOUR MEASURED API FACTS, all 2026-08-25. TWO OF THEM CORRECT ENTRIES ALREADY IN THIS
+    FILE, and the corrections are stated here because this is where the next lane will look.**
+    (1) **CORRECTION TO THIS FILE'S `UK2Node_Select` NOTE.** The recorded rule is that the
+    option pins rename to `True`/`False` "the moment a bool reaches `Index`". That is half
+    right, and the missing half decides the outcome: **the rename happens only if the option
+    pins are still WILDCARD when `Index` is connected.** Wire the output first -- which this
+    file elsewhere recommends, for the separate and still-correct reason that a Select whose
+    options are only literals stays wildcard and will not compile -- and the pins resolve to
+    `text` but keep the generic names `Option 0` / `Option 1` FOREVER, surviving `bp:refresh()`
+    and a clean compile. Measured both ways in this pass, on two nodes. **The order that
+    satisfies both constraints is `Index` FIRST, then `Return Value` into a typed pin.** Done
+    that way the pins are born `False` / `True` and the output wire reports `direct`.
+    (2) **CORRECTION TO THIS FILE'S "THERE IS NO PIN INSPECTION CALL AT ALL".** `get_pin`,
+    `set_pin` and `reset_pin` all exist, under `help("SetPin")`. `get_pin` returns a pin's
+    DEFAULT VALUE, so the old note is right that nothing LISTS pins by return value -- but
+    **`get_pin` with a deliberately bogus pin name prints the full listing in its FAILURE
+    message**: names, types and directions, e.g. `Available: False (in, text), True (in, text),
+    Index (in, bool), Return Value (out, text)`. That is the pin inspector this file says does
+    not exist, reached through an error rather than a return, and it was used throughout this
+    pass. `read_graph` still returns no pins, so that half of the old note stands.
+    (3) **`Option 0` IS `False` AND `Option 1` IS `True` ON A BOOL SELECT, measured off an
+    EXISTING node rather than reasoned about.** The rows' opacity Select reads `True = 1`,
+    `False = 0.4`, `Option 0 = 0.4`, `Option 1 = 1` -- so `get_pin` accepts both the display
+    name and the positional alias for the same pin, and index 0 is the FALSE slot. This is what
+    lets a Select that failed to rename still be wired correctly instead of guessed at.
+    (4) **`configure_widget` TAKES SLOT PROPERTIES ONLY THROUGH A NESTED `slot = {}` TABLE.**
+    `{slot_Padding=...}` and a bare `{Padding=...}` both warn `property not found or not
+    editable on widget` and apply nothing; `{slot={Padding=..., HorizontalAlignment=...}}`
+    reported 3 changes and read back. The flat forms fail LOUDLY, which is the good case, but
+    the warning names the property rather than the shape and reads as "this widget has no
+    padding".
+  `global.md` carries what any of this does for the section; this file states no count and no
+  verdict.  
+
+
+- **SEC 2.11.5'S ROWS NOW SAY `need N` AND GREY THEMSELVES, AND `IsEnabled` IS WIRED TO
+  `bAvailable` ALONE.** 2026-08-25, written by `strat-editor-builder` over
+  `mcp__unreal-editor-direct__execute_script`, which was on the tool surface from this session's
+  FIRST call -- **THE FALLBACK CONDITION IN THIS FILE'S HEADER WAS NOT MET and the coordinator
+  did not write this entry.** `print(project_dir())` answered `E:/MultiAgent/Stratocracy/`
+  before anything was touched, so this is the integration tree and not a worktree.
+  `playtest_status()` reported `has_pie_world=false, playing=false` BEFORE any `open_asset`,
+  which is this file's own recorded precondition for reading a Widget Blueprint at all.
+  - **ONE ASSET MOVED: `/Game/UI/WBP_ProductionMenu`**, parent `UserWidget` from `/Script/UMG`
+    -- an engine class, so the "which module declares the C++ parent" pre-flight has no
+    Stratocracy module to get wrong here; read off `widget_info().parent_class` rather than
+    assumed. `PaintRows` went 62 -> 122 nodes and 76 -> 164 connections. The widget tree, all
+    35 widgets and the `EventGraph` are untouched but for two column headers.
+  - **THE MENU HAS NO PROPERTY BINDINGS AND NO MEMBER VARIABLES -- IT PAINTS IMPERATIVELY, and
+    that decided the shape of this work.** `list_bindings()` returns 0 and the Blueprint reports
+    0 variables; every cell is a `SetText` inside the `PaintRows` function graph, driven off
+    `Get StratMatchSubsystem -> Get ProductionMenu -> Get (a copy) -> Break Strat Build Option
+    View`, four times over with a literal row index. So `IsEnabled` was set with `SetIsEnabled`
+    in that same exec chain rather than with `add_binding`: there is no variable for a binding
+    function to read, and minting one would have put row state in the widget. **This is why the
+    `pure=true`-plus-exec-wire rule this file spent four sessions on did not apply** -- nothing
+    added here is a binding function.
+  - **WHAT EACH ROW NOW READS, one field per drawn thing and no arithmetic anywhere:**
+    `Row{N}Build.SetIsEnabled` <- `Break{N}.Available` AND NOTHING ELSE. `Row{N}Afford` <- a
+    `Select` on `Break{N}.Affordable`: True -> the empty Text default, False ->
+    `Append("need ", To String (Integer)(Break{N}.Shortfall))` through `To Text (String)`.
+    `Row{N}Avail` <- `Break{N}.Reason` directly -- the module's own words, empty when
+    `bAvailable` is true, which is what that field's block says it is for. Greying is
+    `SetRenderOpacity` on all five of `Row{N}Name/Cost/Afford/Avail/Build`, fed by a SECOND
+    `Select` on `Break{N}.Affordable` (True 1.0, False 0.4). Render opacity does not affect hit
+    testing, so a greyed row stays clickable -- which is what Q31 needs and is a property of
+    the node chosen, not a hope.
+  - **THE TWO SUBSTITUTIONS T-UI-03 EXISTS TO CATCH WERE CHECKED BY DERIVING THE SINK LIST, NOT
+    BY EYE.** A fresh `read_graph` was walked for every connection leaving a `Break` node.
+    `Affordable` reaches EXACTLY eight sinks and every one is a `Select.Index`; `Available`
+    reaches EXACTLY four and every one is `SetIsEnabled.In Is Enabled`; `Shortfall` reaches only
+    `To String (Integer).In Int`; `Reason` reaches only four `SetText.In Text`. So nothing greys
+    off `Shortfall > 0`, nothing ANDs the two booleans, and no `IsEnabled` reads `Affordable`.
+    Per-row pairing was checked the same way and by HANDLE rather than by canvas position: row
+    N's break node feeds row N's widgets, on all four rows.
+  - **THE `true`/`false` TEXT IS GONE BY COUNT, NOT BY INSPECTION.** All eight
+    `To Text (Boolean)` nodes were deleted and a fresh read reports ZERO remaining. The exec
+    chain walks 40 steps from the entry -- 16 `SetText`, 4 `SetIsEnabled`, 20
+    `SetRenderOpacity` -- and no node in the graph is unlinked. Two headers followed the data
+    they label: `AFFORD` -> `SHORTFALL`, `FACTORY` -> `STATUS`.
+  - **COMPILED AND SAVED.** `read_log("compile", ...)` read back `UpToDate, 0 errors,
+    0 warnings` after the change and `save()` returned `saved`. A `screenshot({mode="asset"})`
+    of the design-time preview shows the new headers over the four placeholder rows; the
+    preview CANNOT show `need N`, because `PaintRows` runs at runtime and the preview never
+    calls it. That screenshot is evidence about the headers and about nothing else.
+  - **WHAT THIS DOES NOT REACH, and it is the same last link every surface in this file has
+    needed.** Nobody has seen a greyed row, a `need N` string, or a BUILD button refusing a
+    click. No instrument here can fire a Slate click and injection still never reaches this
+    project's `UPlayerInput`, so the run that would show it is a HUMAN one: open the production
+    menu on a factory whose buildlist holds at least one row this side cannot afford, and at
+    least once on a factory that has already built this turn. Nothing above is claimed as
+    observed on a screen.
+  - **THE FOOTER HALF OF 2a-iii WAS NOT BUILT, AND THE MEASUREMENT SAYS IT CANNOT BE BUILT HERE.**
+    Sec 2.11.5's boxed-in footer wants `FStratFactoryView::bSpawnBlocked`. It sits on
+    `FStratFactoryView`, reachable only through `FStratViewModel::Factories`, and
+    `UStratMatchSubsystem::GetViewModel` is deliberately NOT a `UFUNCTION` -- its own
+    declaration states that UHT will not take a reference return. No other header puts an
+    `FStratFactoryView` on a Blueprint surface, so there is no Lua or Blueprint route to that
+    boolean. It needs a C++ accessor first. OWNED: `strat-gameplay-engineer`; the content lane
+    cannot edit `Source/`. This lane's own probing AGREES with the brief that assigned it.
+  - **THREE MEASURED API FACTS, all 2026-08-25 and none of them recorded here before.**
+    (1) `UK2Node_Select` spawns with option pins named `Option 0` / `Option 1` and RENAMES them
+    to `True` / `False` the moment a bool reaches `Index`, so `connect(..., "False")` works only
+    after that connection exists; and the node's VALUE type resolves from whatever is wired to
+    an option or to the return, so a Select whose options are only literals stays wildcard and
+    will not compile. Wire the output first, set the literals second.
+    (2) The delete function is `delete_node`; `remove_node` does not exist. And there is NO pin
+    inspection call at all -- `node_info`, `get_node`, `list_pins`, `node_pins`, `describe_node`
+    and `get_pins` are every one of them `nil`, checked in a single call as its own control, so
+    `add_node`'s returned `pins_in` / `pins_out` is the only pin listing available and it is a
+    snapshot from spawn time. `read_graph` returns nodes and connections and no pins.
+    (3) Lua's `io` AND `os` are both absent from this sandbox. So the UTF-16 `write_file` trap
+    recorded above has no standard-library escape hatch; the base64 route is the only one, and
+    this entry was spliced into this file with it at byte offset 2021.
+  `global.md` carries what any of this does for the section; this file states no count and no
+  verdict.
+ 
 - **THE `Skip guidance` BUTTON EXISTS AND IS PAINTED ON THE STRIP -- THE ONE SURFACE
   Sec 2.11.6-B's closure was recorded OVER.** 2026-08-24. `global.md` carries what this does for
   that `OWNED:` line; this file states no count and no verdict.

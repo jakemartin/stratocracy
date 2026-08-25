@@ -13,6 +13,134 @@
 
 ## NEXT
 
+- **2026-08-25, `strat-gameplay-engineer`: §2.11.5'S BOXED-IN FOOTER HAS A BLUEPRINT ROUTE, AND
+  THE ROUTE WAS CHOSEN BY MEASURING TWO CLOCKS RATHER THAN BY PICKING A SIGNATURE.** Three new
+  symbols across `StratBridge` and `StratPlay`, plus two prose corrections my own insertion made
+  necessary. No `Tests/`, no `Content/`, no `Source/StratRules/`, no `Data/`. No suite count and
+  no verdict is stated here -- `global.md` owns both, and NO SUITE WAS RUN THIS PASS.
+  - **THE GAP, MEASURED BEFORE IT WAS CLOSED.** `grep -rn "bSpawnBlocked" Source/` outside
+    `Tests/` returned exactly TWO sites: the declaration in `StratViewModel.h` and the single
+    assignment in `StratViewModel.cpp`. Nothing read it. The field sits on `FStratFactoryView`,
+    reachable only through `FStratViewModel::Factories`, and `UStratMatchSubsystem::GetViewModel`
+    is deliberately not a `UFUNCTION`. So a correct, gated, T-UI-05-pinned field had no player
+    behind it -- the same shape as `SkipGuidance` having no caller, and the check that finds it
+    is the ROUTE and not the mechanism.
+  - **THE TWO CLOCKS ARE REAL AND THEY DIVERGE ON THE ONE SEQUENCE THIS FOOTER IS ABOUT.**
+    `RefreshProductionMenu` fills `ProductionMenu` from a LIVE bridge query and writes nothing
+    else; `Factories` lives on `AppliedModel`, which `ApplyView` alone writes and whose own
+    comment calls it "a record, never an input". They are independent by construction. Three
+    findings, re-derived in this tree rather than reasoned from the shape:
+    - **REACHABLE DIVERGENCE.** In `SubmitProductionChoice` an accepted build rebuilds the MENU
+      first and the SCREEN second, and a failed `RefreshPresentation` returns with the rows
+      fresh and `AppliedModel` untouched -- a case that function's own block already states
+      ("A `false` RETURN AFTER AN ACCEPTED COMMAND IS POSSIBLE"). `RunAiTurnsNow` has the same
+      shape. **THE BUILD THAT FILLS THE FACTORY'S LAST FREE HEX IS EXACTLY THE BUILD THAT FLIPS
+      THIS BIT**, so the divergence is not on an exotic path, it is on the subject's own path.
+    - **`AppliedModel` IS "WHAT WAS DRAWN" AND NOT "WHAT THE RULES SAY".** `ApplyView` is public
+      and takes the model as its argument on purpose; a caller may apply a hand-built one, and
+      `Source/StratPlay/Tests/` does. A footer sourced there would be a function of the last
+      argument somebody passed.
+    - **AND IT CANNOT ANSWER AT ALL ON A STATE THE MENU REACHES.** A refresh aimed at a hex that
+      is not a build point SUCCEEDS -- `IsProductionMenuOpen`'s block says so -- and
+      `Snapshot.factories` holds only factory objectives, so `AppliedModel.Factories` has no
+      entry for `ProductionMenuHex` in that state. This one is decisive independently of the
+      clocks and would have held even if they could not diverge.
+  - **THE SHAPE THAT LANDED IS NEITHER OF THE TWO THE BRIEF OFFERED, AND THAT IS THE
+    CONSEQUENTIAL CALL.** Not "read the applied model" (wrong clock) and not "re-query on every
+    read" (right answer, wrong cost -- a `BlueprintPure` bound to a footer's visibility runs per
+    frame). It is **re-query ON THE ROWS' OWN CLOCK and publish the answer beside them**:
+    `RefreshProductionMenu` asks `FStratBridge::FactorySpawnBlockedAt` in the same call, from the
+    same bridge, and assigns the result in the same statement group that assigns the rows and the
+    hex; `CloseProductionMenu` clears all three together. **THE FOOTER AND THE ROWS ARE THEREFORE
+    FRESH TOGETHER OR STALE TOGETHER AND CANNOT DISAGREE** -- structurally, not by discipline --
+    which is the property the brief asked for, and the snapshot build is paid once per menu
+    refresh instead of once per frame.
+  - **IT IS NOT THE `bSeeded`-SHAPED MIRROR THIS CLASS REFUSES, AND THE TEST IS THE ONE THAT RULE
+    STATES.** A mirror is refused when it CAN disagree with what it mirrors. There is no other
+    source for this value in the subsystem, and the three members move as one -- which is
+    `ProductionMenuHex`'s existing relationship to the rows, not `bSeeded`'s to the bridge. The
+    member is deliberately **not** a `UPROPERTY` and not public: `IsOpenMenuFactorySpawnBlocked`
+    ANDs `IsProductionMenuOpen()` in, so publishing the raw bool beside it would be two Blueprint
+    surfaces for one fact and only one of them correct.
+  - **`FStratBridge::FactorySpawnBlockedAt` PROJECTS A WHOLE SNAPSHOT TO READ ONE BOOL, AND THAT
+    IS FORCED RATHER THAN CHOSEN.** `strat::spawnHexesBlocked` is declared in `Ui.h` and would
+    answer the occupancy half in a bounded handful of lookups -- but it answers it about ANY hex,
+    so alone it would report "boxed in" for a hex that is not a build point. The predicate that
+    decides build-point-ness, `isFactoryObjective`, is in an **anonymous namespace** in
+    `Ui.good.cpp` and is declared in no header (measured: zero hits over `Source/StratRules/*.h`),
+    so `buildUiSnapshot`'s `factories` vector is the only sanctioned way to learn which hexes are
+    factories. Re-deriving `capturable && isSpawnPoint` in the bridge was the other shape and was
+    killed on one argument: it puts a second author on a rules predicate.
+  - **"NOT A BUILD POINT" RIDES THE REFUSAL CHANNEL HERE WHERE IT RIDES THE ANSWER CHANNEL IN
+    `BuildOptions`, AND THE ASYMMETRY IS THE POINT.** A buildlist for a non-factory hex is a real
+    answer -- one row per §2.4 row, each `available` false with the module's own reason, which
+    is what §2.11.5 draws. "Is this factory boxed in" has NO answer for a hex that is not a
+    factory: `false` reads as "there is room", `true` as "it is full", and both are sentences
+    about something that does not exist. The accessor therefore answers **false** there, and
+    false when no menu is open, and both are stated as decisions rather than as fallbacks.
+  - **THE FOOTER SWAPS AND THE BUILD BUTTONS STAY ENABLED, WHICH IS Q31 AND NOT THIS LANE'S
+    TASTE.** Ruled 2026-08-22, restated at the field in `Ui.h`: a player MAY queue into a
+    boxed-in factory, `buildWaiting` is the mechanism, and `uiBuildOptions` must not fold
+    `spawnBlocked` into availability. The accessor's block says outright that ANDing this into a
+    button's `bIsEnabled` would re-decide widget-side a question the rules module declined to
+    fold in.
+  - **A REFUSAL FROM THE NEW QUERY IS NOT LOGGED, AND THAT IS A DECISION.** Two refusals are
+    reachable past a successful menu build: "not a build point", which is an ordinary keypress
+    over a non-factory hex and would make a `Warning` per press out of a surface already
+    explaining itself in the module's words; and the corrupt-`defIndex` case `MakeUiSnapshot`
+    guards, which is a real fault and is already loud in a better place, because `BuildViewModel`
+    goes through the same projection and the board has stopped rebuilding. Both fall back to
+    `false`, the direction that claims nothing. Written down here because a swallowed refusal
+    that is never declared is indistinguishable from one nobody thought about.
+  - **TWO PROSE CORRECTIONS MY OWN INSERTION MADE NECESSARY, BOTH FOUND BEFORE THE FINAL BUILD.**
+    - **A CARDINAL OF MINE THAT WAS A BOUND STATED AS AN EXACT COUNT.** "would answer the
+      occupancy half in seven lookups" -- `spawnHexesBlocked` early-returns on the first free
+      hex, so seven is a MAXIMUM. Reworded to a bound over a set the rules module defines
+      (`HEX_DIRECTIONS`), which is the distinction this record already draws between a cardinal
+      over a defined set and one over an undefined one.
+    - **AND I LANDED A METHOD INSIDE A SECTION THAT THREE DATED READINGS RANGE OVER.**
+      `StratBridge.h`'s façade banner recites SIX / SEVEN / SEVENTEEN as the evidence that the
+      SCOPE, not the number, was the defect. `FactorySpawnBlockedAt` went into
+      `// ---- Rules queries`, so the SIX reading now yields seven and the SEVEN reading eight;
+      the SEVENTEEN reading did NOT move, because my signature names no `strat::` type.
+      **STAMPED, NOT REFRESHED** -- refreshing them would turn a dated derivation back into the
+      standing census that block exists to refuse, and the argument they support is unharmed by
+      the tree moving. That the three readings moved by different amounts is itself the cleanest
+      demonstration available that they were never counting one set.
+  - **`BlueprintPure` WAS VERIFIED OFF THE GENERATED FLAGS AND NOT OFF THE SPECIFIER I TYPED.**
+    `Intermediate/.../StratMatchSubsystem.gen.cpp` emits `IsOpenMenuFactorySpawnBlocked` with
+    `EFunctionFlags 0x54020401`, which carries `FUNC_BlueprintPure` (`0x10000000`),
+    `FUNC_BlueprintCallable` (`0x04000000`), `FUNC_Const` (`0x00020000`) and `FUNC_Native`. The
+    exec thunk and the `NativeFunctionLookup` entry are both present, so the verb exists on the
+    reflected class and not merely in a header UHT might have skipped.
+  - **CRLF WAS MEASURED PER FILE AND PRESERVED, WITH A NUMSTAT CONTROL.** All four edited sources
+    are CRLF; edits went in through a byte-level insert with a unique-anchor assertion, never
+    `sed`. CR deltas equal added-line counts on every file (`StratBridge.h` 1092 -> 1165 with
+    `git diff --numstat` reading `75 2`; `StratBridge.cpp` 1577 -> 1619 / `42 0`;
+    `StratMatchSubsystem.h` 1574 -> 1670 / `96 0`; `StratMatchSubsystem.cpp` 1800 -> 1842 /
+    `44 2`), so no file was rewritten whole. `grep` cannot see a CR on this box; counted with
+    `tr -cd '\r' | wc -c`.
+  - **BUILD: GREEN, MEASURED AFTER THE LAST EDIT.** `Build.bat StratocracyEditor Win64
+    Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex` from the
+    Bash tool in the integration tree -> `Result: Succeeded`, `REAL_EXIT=0`, 51 actions,
+    235.13 s. `Module.StratPlay.gen.cpp` and `Module.StratBridge.gen.cpp` both compiled, so UHT
+    parsed the changed headers. The editor was closed and re-verified absent in the same command
+    (`tasklist | grep -ci "UnrealEditor.exe"` -> 0), with `explorer.exe` as the control that the
+    instrument can speak. NO `-NoHotReloadFromIDE` was needed. THIS IS THE FINAL BUILD; an
+    earlier run in this pass was 58 actions / 263.01 s and is superseded rather than deleted,
+    because it is the run that first proved the new `UCLASS` surface parses.
+  - **DEBT: NOTHING BINDS IT YET, AND NOTHING HEADLESS FAILS IF I DELETE IT TOMORROW.** The
+    accessor exists, is reflected, and has no caller -- which is precisely the shape this record
+    was corrected for on `SkipGuidance`, so it is declared rather than left to be found.
+    **DISCHARGED WHEN** `WBP_ProductionMenu`'s footer binds to it (`strat-editor-builder`) and a
+    clause pins it (`strat-test-author`). **OWNED: coordinator, to sequence.**
+  - **DEBT: `FStratFactoryView::bBuildWaiting` AND `bHasBuiltThisTurn` STILL HAVE NO BLUEPRINT
+    ROUTE, AND THIS PASS DELIBERATELY DID NOT GIVE THEM ONE.** §2.11.5's boxed-in footer is one
+    sentence about one field; `bBuildWaiting` is a different sentence ("a build is queued here")
+    and `Ui.h` names the case that separates them. Adding all three now would have been three
+    accessors written for one measured requirement. **DISCHARGED WHEN** a GDD section names the
+    surface that draws them.
+
 - **2026-08-25, `strat-gameplay-engineer`: THE WINNER NOW REACHES ENGINE CODE, THE PRODUCTION
   MENU CAN NAME A SHORTFALL, AND THREE DEFERRALS WERE RETIRED BECAUSE THEIR PREMISES WERE
   FALSE.** Six changes across `StratBridge`, `StratUI` and `StratPlay`; one of them is a defect

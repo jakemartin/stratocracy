@@ -851,8 +851,33 @@ bool UStratMatchSubsystem::RefreshProductionMenu(FIntPoint FactoryHex, FString& 
 		return false;
 	}
 
-	ProductionMenu    = MoveTemp(Built);
-	ProductionMenuHex = FactoryHex;
+	// §2.11.5'S FOOTER FACT, ASKED HERE SO THAT IT RIDES THE ROWS' CLOCK. Same bridge,
+	// same call, same frame as the rows above it -- which is the whole reason this is not
+	// read off `AppliedModel.Factories` later. `IsOpenMenuFactorySpawnBlocked`'s block
+	// carries the three findings that rejected that route.
+	//
+	// ASKED BEFORE THE MOVE AND ASSIGNED AFTER IT, so the three members still change
+	// together or not at all. `RefreshProductionMenu`'s all-or-nothing contract is about
+	// the ROWS and is untouched by this: a refusal from `StratBuildProductionMenu` above
+	// has already returned, and a refusal from THIS query is not a refused menu.
+	bool bBlocked = false;
+	const bool bBlockedKnown = Live->FactorySpawnBlockedAt(FactoryHex, bBlocked).bOk;
+
+	ProductionMenu              = MoveTemp(Built);
+	ProductionMenuHex           = FactoryHex;
+	bProductionMenuSpawnBlocked = bBlockedKnown && bBlocked;
+
+	// A REFUSAL HERE IS NOT LOGGED, AND THAT IS A DECISION RATHER THAN AN OVERSIGHT. Two
+	// refusals are reachable past a successful menu build, and neither wants a warning:
+	//   - "NOT A BUILD POINT", which is the ordinary case and not a fault at all -- a
+	//     player pressed the menu key over a hex that is not a factory, the rows say so in
+	//     the module's own words, and a `Warning` per keypress would be noise on top of a
+	//     surface that is already explaining itself.
+	//   - THE CORRUPT-`defIndex` CASE `MakeUiSnapshot` guards, which is a real fault and is
+	//     already loud somewhere better: `BuildViewModel` goes through the same projection,
+	//     so the board itself has stopped rebuilding and `RefreshPresentation` is reporting
+	//     it by name.
+	// The fallback is `false` on both, which is the direction that claims nothing.
 	return true;
 }
 
@@ -982,6 +1007,23 @@ void UStratMatchSubsystem::CloseProductionMenu()
 	// beside `UnitActors`: a value left behind an emptied container reads like live state to
 	// anyone who consults it without consulting the container first.
 	ProductionMenuHex = FIntPoint(0, 0);
+
+	// AND SO DOES §2.11.5'S FOOTER FACT, for the same reason and in the same statement
+	// group. `IsOpenMenuFactorySpawnBlocked` also ANDs `IsProductionMenuOpen()` in, so the
+	// closed-panel answer is false twice over -- deliberately, because that accessor's
+	// guarantee must survive a future writer that clears the rows and forgets this line.
+	bProductionMenuSpawnBlocked = false;
+}
+
+bool UStratMatchSubsystem::IsOpenMenuFactorySpawnBlocked() const
+{
+	// THE OPENNESS TEST IS PART OF THE ANSWER AND NOT A GUARD IN FRONT OF IT, which is why
+	// it is one expression and not an early return. `bProductionMenuSpawnBlocked` describes
+	// the factory `ProductionMenu` is for; with no menu open there is no such factory, and
+	// "no factory is boxed in" is the honest reading of that state rather than a fallback
+	// for it. Reading the rows for the openness half keeps this on the same authority
+	// `IsProductionMenuOpen` uses, so the two can never disagree about whether a menu is up.
+	return IsProductionMenuOpen() && bProductionMenuSpawnBlocked;
 }
 
 AStratUnitActor* UStratMatchSubsystem::FindUnitActor(int32 UnitId) const

@@ -89,7 +89,10 @@
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "HAL/PlatformFileManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "UObject/UObjectGlobals.h"
 
 #include "StratBoardActor.h"
@@ -1652,5 +1655,960 @@ bool FStratProductionMenuSubmitDuringAnAiTurnTest::RunTest(const FString& /*Para
 	TestFalse(TEXT("this file's save slot is left behind on neither end"),
 		UGameplayStatics::DoesSaveGameExist(kSlotName, /*UserIndex*/ 0));
 
+	return true;
+}
+
+// ===========================================================================
+// §2.11.5's BOXED-IN FOOTER FACT ON THE SEAM -- `UStratMatchSubsystem::
+// IsOpenMenuFactorySpawnBlocked` and the private bool `RefreshProductionMenu` publishes
+// beside the rows.
+//
+// WHY `GATE-BUILDMENU` AND NOT THE `T-UI-03` THE DISPATCH PROPOSED. The four clauses below
+// are about a member of `UStratMatchSubsystem` that is written in the SAME STATEMENT GROUP as
+// `ProductionMenu` and `ProductionMenuHex` and cleared beside them, and those two are this
+// file's subject under `GATE-BUILDMENU` in ten existing clauses. Filing the third member of
+// one statement group under a different id would split one seam across two rows. The file's
+// own header block already argues the rest of it: `T-UI-04` is an IN-EDITOR claim about a
+// widget BINDING, nothing here constructs a widget or touches Slate, and `GATE-BUILDMENU` is
+// the id this project already carries for §2.11.5 TRANSPORT. That reasoning applies to the
+// footer exactly as it applies to the rows. `GATE-BUILDMENU` pre-exists; nothing is minted.
+//
+// THE REFUSAL ARM OF `FStratBridge::FactorySpawnBlockedAt` IS NOT HERE, and the split is the
+// same one the file header already draws. Telling a refusal apart from a fall-through to raw
+// occupancy needs `strat::spawnHexesBlocked`, a `strat::` free function that is `LNK2019` in
+// this module. That clause is
+// `Stratocracy.StratBridge.T-UI-04.FactorySpawnBlockedRefusesANonFactoryHex`, in
+// `Source/StratBridge/Tests/StratSpawnBlockedClauses.cpp`.
+//
+// THE DESIGN THESE CLAUSES EXIST TO HOLD IN PLACE. The footer fact is re-queried on the ROWS'
+// OWN CLOCK -- same bridge, same call, same frame -- rather than read from
+// `AppliedModel.Factories`, which is a record of what was last DRAWN and carries no entry at
+// all for a menu opened on a non-build-point hex. A future pass re-sourcing the footer from
+// `FStratFactoryView::bSpawnBlocked` is exactly what these clauses must catch, and
+// `SubmitProductionChoice` is where they can: it calls `RefreshProductionMenu` BEFORE
+// `RefreshPresentation`, so at the moment the footer is published the applied model still
+// describes the PRE-BUILD board. `SpawnBlockedRidesTheRowsClockAcrossABuild` is built on that
+// ordering and says so where it uses it.
+//
+// WHERE EVERY EXPECTATION COMES FROM. The subject is always
+// `IsOpenMenuFactorySpawnBlocked()`. The expectation is always
+// `FStratBridge::FactorySpawnBlockedAt` asked of the SAME bridge in the SAME frame -- the
+// exact call `RefreshProductionMenu` makes -- and never a bool written down here. Which hexes
+// are factories, which side holds them, and which hex is not a factory at all are read off
+// `FStratViewModel`. No hex is named and no neighbour is walked anywhere below.
+//
+// THE BOARDS ARE ARRANGED, NOT SELECTED. `Data/ferrum_crossing.json` leaves side 0's factory
+// hex free, so on the shipped board the footer fact is false and every clause below would be
+// measuring `false == false`. Each clause therefore writes a variant of the shipped scenario
+// under `Saved/StratTests/` -- never under `Data/`, which is vendored and hash-gated -- moving
+// placements and nothing else, and deletes it on the way out. The placement strings and the
+// two scenario-validator rules that constrain them are `StratSpawnBlockedClauses.cpp`'s
+// measurement; they are restated here because that file is in another module and a shared
+// header for two test files would be a third thing to keep true.
+// ===========================================================================
+namespace StratProductionMenuSeam
+{
+	static FString ShippedScenarioPath()
+	{
+		return FPaths::Combine(FPaths::ProjectDir(), TEXT("Data"), TEXT("ferrum_crossing.json"));
+	}
+
+	/** One placement line of the shipped scenario, rewritten to a different hex. Located
+	 *  CASE-SENSITIVELY and checked for before it is made, so a re-authored scenario fails
+	 *  loudly instead of silently producing a variant identical to the shipped file -- which
+	 *  would leave every clause below green and measuring nothing. */
+	static bool MovePlacement(FString& Text, const TCHAR* From, const TCHAR* To, FString& OutError)
+	{
+		if (Text.Find(From, ESearchCase::CaseSensitive) == INDEX_NONE)
+		{
+			OutError = FString::Printf(
+				TEXT("ferrum_crossing.json no longer carries the placement '%s'; this file's "
+					"board arrangement is stale and the clause would measure the shipped board"),
+				From);
+			return false;
+		}
+		Text = Text.Replace(From, To, ESearchCase::CaseSensitive);
+		return true;
+	}
+
+	/** The shipped scenario with its declared `scenarioHash` dropped, ready to be edited. The
+	 *  hash is optional and DERIVED, so dropping the line says "recompute from content" rather
+	 *  than authoring a number for edited bytes. */
+	static bool LoadScenarioTextWithoutHash(FString& OutText, FString& OutError)
+	{
+		if (!FFileHelper::LoadFileToString(OutText, *ShippedScenarioPath()))
+		{
+			OutError = FString::Printf(TEXT("ferrum_crossing.json unreadable at %s"),
+				*ShippedScenarioPath());
+			return false;
+		}
+
+		const int32 KeyAt = OutText.Find(TEXT("\"scenarioHash\""), ESearchCase::CaseSensitive);
+		if (KeyAt == INDEX_NONE)
+		{
+			OutError = TEXT("ferrum_crossing.json does not carry a 'scenarioHash' member to drop");
+			return false;
+		}
+		const int32 LineEnd = OutText.Find(TEXT("\n"), ESearchCase::CaseSensitive,
+			ESearchDir::FromStart, KeyAt);
+		if (LineEnd == INDEX_NONE)
+		{
+			OutError = TEXT("the 'scenarioHash' member is on the file's last line; this helper "
+			                "expects it to be followed by a newline");
+			return false;
+		}
+		OutText.RemoveAt(KeyAt, (LineEnd + 1) - KeyAt);
+		return true;
+	}
+
+	static bool WriteVariant(const FString& Text, const TCHAR* FileName,
+	                         FString& OutPath, FString& OutError)
+	{
+		OutPath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("StratTests"), FileName);
+
+		// `SaveStringToFile` does not build a missing tree, and a first run on a clean
+		// checkout has no `Saved/StratTests/`.
+		IPlatformFile& Files = FPlatformFileManager::Get().GetPlatformFile();
+		Files.CreateDirectoryTree(*FPaths::GetPath(OutPath));
+
+		if (!FFileHelper::SaveStringToFile(Text, *OutPath))
+		{
+			OutError = FString::Printf(TEXT("could not write the variant scenario to %s"), *OutPath);
+			return false;
+		}
+		return true;
+	}
+
+	static void RemoveVariant(const FString& Path)
+	{
+		IPlatformFile& Files = FPlatformFileManager::Get().GetPlatformFile();
+		if (!Path.IsEmpty() && Files.FileExists(*Path))
+		{
+			Files.DeleteFile(*Path);
+		}
+	}
+
+	// The placement edits, named once so all four clauses share one board vocabulary.
+	//
+	//   THE FACTORY-HEX EDIT puts one of side 0's Infantry ON its own factory hex, so the
+	//   factory hex itself is occupied. The shipped scenario already surrounds that factory
+	//   with five of side 0's own units, so this single edit leaves exactly TWO free hexes in
+	//   the factory's own neighbourhood.
+	//   THE TWO BOXING EDITS bring two of side 1's units onto those two, so that the factory
+	//   hex and EVERY in-bounds neighbour are occupied.
+	//
+	// NEITHER SIDE'S GUIDED-OPENING INFANTRY IS MOVED. T-SCN-07 requires one `guidedOpening`
+	// entry per side naming a hex that holds that side's Infantry, so moving a named unit
+	// makes the variant unloadable for a reason that has nothing to do with spawning.
+	//
+	// AND NO SIDE-1 INFANTRY IS MOVED AT ALL, WHICH IS A MEASUREMENT AND NOT A PREFERENCE --
+	// `StratSpawnBlockedClauses.cpp`'s, made when the scenario validator refused a side-1
+	// Infantry near the middle of the board under T-SCN-11 ("side 0's guided lane is
+	// contested"). §2.11.6-B's lane rule is about INFANTRY routes, so the boxing units are
+	// side 1's Artillery and Recon, which are invisible to it.
+	static const TCHAR* const kSide0InfantryAtOne3 =
+		TEXT("{\"side\": 0, \"unitId\": \"Infantry\", \"hex\": [1, 3], \"isFlag\": false}");
+	static const TCHAR* const kSide0InfantryOnFactory =
+		TEXT("{\"side\": 0, \"unitId\": \"Infantry\", \"hex\": [1, 4], \"isFlag\": false}");
+
+	static const TCHAR* const kSide1ArtilleryHome =
+		TEXT("{\"side\": 1, \"unitId\": \"Artillery\", \"hex\": [10, 5], \"isFlag\": false}");
+	static const TCHAR* const kSide1ArtilleryBoxing =
+		TEXT("{\"side\": 1, \"unitId\": \"Artillery\", \"hex\": [2, 4], \"isFlag\": false}");
+
+	static const TCHAR* const kSide1ReconHome =
+		TEXT("{\"side\": 1, \"unitId\": \"Recon\", \"hex\": [10, 3], \"isFlag\": false}");
+	static const TCHAR* const kSide1ReconBoxing =
+		TEXT("{\"side\": 1, \"unitId\": \"Recon\", \"hex\": [1, 3], \"isFlag\": false}");
+
+	/**
+	 * The board on which side 0's factory is BOXED IN: its hex and every in-bounds neighbour
+	 * occupied.
+	 *
+	 * NOTHING HERE ASSERTS THAT IT WORKED, and that is deliberate: every clause that uses this
+	 * board asks the BRIDGE whether the factory is boxed in, fatally, before it measures
+	 * anything else. A helper that decided the question would be the second author of it.
+	 */
+	static bool WriteBoxedInVariant(const TCHAR* FileName, FString& OutPath, FString& OutError)
+	{
+		FString Text;
+		if (!LoadScenarioTextWithoutHash(Text, OutError))
+		{
+			return false;
+		}
+		if (!MovePlacement(Text, kSide0InfantryAtOne3,  kSide0InfantryOnFactory, OutError) ||
+			!MovePlacement(Text, kSide1ArtilleryHome,   kSide1ArtilleryBoxing,   OutError) ||
+			!MovePlacement(Text, kSide1ReconHome,       kSide1ReconBoxing,       OutError))
+		{
+			return false;
+		}
+		return WriteVariant(Text, FileName, OutPath, OutError);
+	}
+
+	/**
+	 * The board on which side 0's factory has EXACTLY ONE free hex left in its neighbourhood:
+	 * the factory-hex edit and ONE of the two boxing edits, so the Artillery's hex stays free.
+	 *
+	 * WHICH FREE HEX IT IS IS NEVER NAMED. What the clause using this board needs is only that
+	 * the factory reads NOT blocked before a build and blocked after one, and both readings
+	 * come from the bridge.
+	 */
+	static bool WriteNearlyBoxedInVariant(const TCHAR* FileName, FString& OutPath, FString& OutError)
+	{
+		FString Text;
+		if (!LoadScenarioTextWithoutHash(Text, OutError))
+		{
+			return false;
+		}
+		if (!MovePlacement(Text, kSide0InfantryAtOne3, kSide0InfantryOnFactory, OutError) ||
+			!MovePlacement(Text, kSide1ReconHome,      kSide1ReconBoxing,       OutError))
+		{
+			return false;
+		}
+		return WriteVariant(Text, FileName, OutPath, OutError);
+	}
+
+	/** `MakeConfig`, pointed at a variant scenario. `ResolveScenarioPath` passes an absolute
+	 *  path through unchanged, which is what lets a clause seed from `Saved/`. */
+	static bool MakeConfigOn(const FString& AbsoluteScenarioPath, FStratMatchConfig& Out,
+	                         FString& OutError)
+	{
+		if (!MakeConfig(Out, OutError))
+		{
+			return false;
+		}
+		Out.ScenarioFile = AbsoluteScenarioPath;
+		return true;
+	}
+
+	/** A factory the given side does NOT hold. Enumerated from the model; the shipped scenario
+	 *  has several, and which one is returned is not this clause's business. */
+	static bool FindFactoryNotOwnedBy(const FStratViewModel& Model, int32 Side, FIntPoint& OutHex)
+	{
+		for (const FStratFactoryView& Factory : Model.Factories)
+		{
+			if (Factory.Owner != Side)
+			{
+				OutHex = Factory.Hex;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** `FStratFactoryView::bSpawnBlocked` as the APPLIED MODEL carries it -- the route the
+	 *  design rejected, read here so a clause can measure that the footer did not come from
+	 *  it. Returns false when the applied model has no entry for that hex, which is itself one
+	 *  of the three findings that rejected the route. */
+	static bool AppliedModelSaysSpawnBlocked(const FStratViewModel& Applied, FIntPoint Hex,
+	                                         bool& bOutFound)
+	{
+		bOutFound = false;
+		for (const FStratFactoryView& Factory : Applied.Factories)
+		{
+			if (Factory.Hex == Hex)
+			{
+				bOutFound = true;
+				return Factory.bSpawnBlocked;
+			}
+		}
+		return false;
+	}
+}
+
+// ---------------------------------------------------------------------------
+// The open menu's footer fact equals `FStratBridge::FactorySpawnBlockedAt` asked freshly for
+// `ProductionMenuHex` in the same frame. IT COPIES; IT DOES NOT DERIVE.
+//
+// TWO FACTORIES, TWO ANSWERS, ONE FIXTURE, AND THE PAIR IS THE CLAUSE. A menu opened at side
+// 0's boxed-in factory must report TRUE and a menu opened at a factory side 0 does not hold --
+// which is still a factory, so the bridge still ANSWERS about it -- must report FALSE, both
+// against the bridge's own answer for the hex the subsystem says the menu is for. Either half
+// alone is satisfied by an accessor that returns a constant; the pair is not.
+//
+// THE HEX HANDED TO THE EXPECTATION IS `ProductionMenuHex` AND NOT THE HEX THE CLAUSE ASKED
+// FOR. That is the brief's wording and it is worth more than the alternative: it makes the
+// comparison say "the published footer describes the published hex", so a refresh that
+// published one factory's rows beside another factory's footer reddens here rather than
+// surviving as two separately-correct members.
+//
+// A MENU AT A FACTORY THE VIEWING SIDE DOES NOT HOLD IS NOT A REFUSAL, and that is the code's
+// own answer rather than this clause's assumption: `FStratBridge::BuildOptions` sends "this
+// side does not hold it" out on `available`, which
+// `GATE-BUILDMENU.ANonFactoryHexOpensAnUnavailableMenuAndIsNotRefused` already pins one hex
+// class over. The footer query is a different question and is not side-filtered at all --
+// `MakeUiSnapshot`'s `factories` vector holds every factory on the board.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratOpenMenuSpawnBlockedMatchesTheBridgeTest,
+	"Stratocracy.StratPlay.GATE-BUILDMENU.OpenMenuSpawnBlockedMatchesTheBridge",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratOpenMenuSpawnBlockedMatchesTheBridgeTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratProductionMenuSeam;
+
+	ExpectTheTileMeshWarning(*this);
+
+	FString VariantPath;
+	FString Error;
+	if (!TestTrue(TEXT("the boxed-in variant is written under Saved/"),
+			WriteBoxedInVariant(TEXT("menu_footer_boxed_in.json"), VariantPath, Error)))
+	{
+		AddError(Error);
+		RemoveVariant(VariantPath);
+		return false;
+	}
+
+	{
+		FStratMatchConfig Config;
+		if (!TestTrue(TEXT("the match config assembles on the variant"),
+				MakeConfigOn(VariantPath, Config, Error)))
+		{
+			AddError(Error);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FSeamHarness H;
+		if (!H.Arm(*this, Config))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FStratViewModel Model;
+		FString         BuildError;
+		if (!TestTrue(TEXT("the view model builds on the variant"),
+				H.Subsystem->BuildViewModel(Model, BuildError)))
+		{
+			AddError(BuildError);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FIntPoint HeldHex;
+		if (!TestTrue(TEXT("the variant still gives the viewing side a factory to shop at"),
+				FindHeldFactory(Model, Model.ViewingSide, HeldHex)))
+		{
+			AddError(TEXT("no factory in the view model is owned by the viewing side; this "
+			              "clause has no case to measure and must not pass"));
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FIntPoint OtherHex;
+		if (!TestTrue(TEXT("the variant carries a factory the viewing side does NOT hold"),
+				FindFactoryNotOwnedBy(Model, Model.ViewingSide, OtherHex)))
+		{
+			AddError(TEXT("every factory in the view model is the viewing side's; this clause "
+			              "cannot measure two different answers and must not pass"));
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		// ---- The premise: the arrangement really boxed the held factory in --------
+		// FATAL, AND ASKED OF THE BRIDGE. Without it every assertion below is
+		// `false == false` and the clause is green on an accessor that returns a constant.
+		{
+			bool               bArranged = false;
+			const FStratResult Asked     = H.Bridge->FactorySpawnBlockedAt(HeldHex, bArranged);
+			if (!TestTrue(*FString::Printf(
+						TEXT("PREMISE: the bridge answers about the held factory (%d, %d): '%s'"),
+						HeldHex.X, HeldHex.Y, *Asked.Reason),
+					Asked.bOk))
+			{
+				RemoveVariant(VariantPath);
+				return false;
+			}
+			if (!TestTrue(*FString::Printf(
+						TEXT("PREMISE: the variant boxed the held factory (%d, %d) in, so the ")
+						TEXT("clause below is not measuring false against false"),
+						HeldHex.X, HeldHex.Y),
+					bArranged))
+			{
+				AddError(TEXT("the boxing arrangement did not box the factory in"));
+				RemoveVariant(VariantPath);
+				return false;
+			}
+		}
+
+		// ---- Subject A: the menu is open at the boxed-in factory -------------------
+		bool bAccessorAtHeld = false;
+		{
+			FString RefreshReason;
+			if (!TestTrue(*FString::Printf(TEXT("the menu opens at the held factory (%d, %d)"),
+						HeldHex.X, HeldHex.Y),
+					H.Subsystem->RefreshProductionMenu(HeldHex, RefreshReason)))
+			{
+				AddError(RefreshReason);
+				RemoveVariant(VariantPath);
+				return false;
+			}
+
+			bool               bFresh = false;
+			const FStratResult Fresh  =
+				H.Bridge->FactorySpawnBlockedAt(H.Subsystem->ProductionMenuHex, bFresh);
+			TestTrue(*FString::Printf(
+					TEXT("the bridge answers about the PUBLISHED hex (%d, %d): '%s'"),
+					H.Subsystem->ProductionMenuHex.X, H.Subsystem->ProductionMenuHex.Y,
+					*Fresh.Reason),
+				Fresh.bOk);
+
+			bAccessorAtHeld = H.Subsystem->IsOpenMenuFactorySpawnBlocked();
+			TestTrue(
+				*FString::Printf(
+					TEXT("the open menu's footer fact equals the bridge asked freshly for the ")
+					TEXT("published hex in the same frame (accessor %d, bridge %d)"),
+					bAccessorAtHeld ? 1 : 0, bFresh ? 1 : 0),
+				bAccessorAtHeld == bFresh);
+			TestTrue(TEXT("and on this board that shared answer is TRUE"), bAccessorAtHeld);
+		}
+
+		// ---- Subject B: the menu is open at a factory this side does not hold ------
+		bool bAccessorAtOther = true;
+		{
+			FString RefreshReason;
+			if (!TestTrue(*FString::Printf(
+						TEXT("the menu opens at the unheld factory (%d, %d) rather than being ")
+						TEXT("refused"),
+						OtherHex.X, OtherHex.Y),
+					H.Subsystem->RefreshProductionMenu(OtherHex, RefreshReason)))
+			{
+				AddError(RefreshReason);
+				RemoveVariant(VariantPath);
+				return false;
+			}
+
+			bool               bFresh = false;
+			const FStratResult Fresh  =
+				H.Bridge->FactorySpawnBlockedAt(H.Subsystem->ProductionMenuHex, bFresh);
+			TestTrue(*FString::Printf(
+					TEXT("the bridge answers about the unheld factory too, unfiltered by side ")
+					TEXT("(%d, %d): '%s'"),
+					H.Subsystem->ProductionMenuHex.X, H.Subsystem->ProductionMenuHex.Y,
+					*Fresh.Reason),
+				Fresh.bOk);
+
+			bAccessorAtOther = H.Subsystem->IsOpenMenuFactorySpawnBlocked();
+			TestTrue(
+				*FString::Printf(
+					TEXT("the footer for the unheld factory equals the bridge's own answer ")
+					TEXT("(accessor %d, bridge %d)"),
+					bAccessorAtOther ? 1 : 0, bFresh ? 1 : 0),
+				bAccessorAtOther == bFresh);
+			TestFalse(TEXT("and on this board that shared answer is FALSE"), bAccessorAtOther);
+		}
+
+		// ---- What kills a constant ------------------------------------------------
+		TestTrue(
+			TEXT("the two menus in this clause reported DIFFERENT footer facts, so no accessor "
+				"returning a constant can satisfy it"),
+			bAccessorAtHeld != bAccessorAtOther);
+	}
+
+	RemoveVariant(VariantPath);
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// With no menu open the footer fact is FALSE -- before any refresh, after a close, and after
+// a reseed.
+//
+// TWO ARRANGEMENTS, BECAUSE THERE ARE TWO ROUTES TO "CLOSED" AND THEY RUN DIFFERENT CODE.
+// `CloseProductionMenu` is one; `TearDownPresentation`, which a second `StartMatch` runs, is
+// the other. The second one exists in this file already as
+// `GATE-BUILDMENU.AMenuDoesNotSurviveAReseed` for the rows, and the footer must not be the one
+// member of that statement group a reseed forgets.
+//
+// AND THE HALF THIS CLAUSE HONESTLY CANNOT SEPARATE, STATED RATHER THAN IMPLIED. The shipped
+// answer is false TWICE OVER: `CloseProductionMenu` resets the published bool, and
+// `IsOpenMenuFactorySpawnBlocked` ANDs `IsProductionMenuOpen()` in on top of it. The dispatch
+// asked for arrangements that tell which half is load-bearing, and MEASURED HERE, NO SUCH
+// ARRANGEMENT EXISTS FROM `Tests/`: both routes to "closed" run the reset, so there is no
+// reachable state in which the bool is stale-true with the rows empty. Deleting the conjunct
+// therefore reddens nothing below, and deleting the reset reddens nothing below either --
+// which is exactly the redundancy the code's own comment claims ("the closed-panel answer is
+// false twice over -- deliberately, because that accessor's guarantee must survive a future
+// writer that clears the rows and forgets this line"). What this clause pins is the guarantee;
+// it does not pin which half delivers it, and a reader must not read it as though it did.
+// Separating them would need a seam this lane may not add -- see the note filed in
+// `Tools/architect/state/tests.md`.
+//
+// EVERY "FALSE" HERE IS PRECEDED BY A TRUE ON THE SAME SUBSYSTEM. A clause that only ever
+// observed false would be satisfied by an accessor that never reports anything, and this
+// suite has been bitten by a mute instrument before. The boxed-in board makes the true
+// reachable, and it is asserted fatally each time before the close that must undo it.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratSpawnBlockedFalseWhileNoMenuIsOpenTest,
+	"Stratocracy.StratPlay.GATE-BUILDMENU.SpawnBlockedFalseWhileNoMenuIsOpen",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratSpawnBlockedFalseWhileNoMenuIsOpenTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratProductionMenuSeam;
+
+	ExpectTheTileMeshWarning(*this);
+
+	FString VariantPath;
+	FString Error;
+	if (!TestTrue(TEXT("the boxed-in variant is written under Saved/"),
+			WriteBoxedInVariant(TEXT("menu_footer_closed.json"), VariantPath, Error)))
+	{
+		AddError(Error);
+		RemoveVariant(VariantPath);
+		return false;
+	}
+
+	{
+		FStratMatchConfig Config;
+		if (!TestTrue(TEXT("the match config assembles on the variant"),
+				MakeConfigOn(VariantPath, Config, Error)))
+		{
+			AddError(Error);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FSeamHarness H;
+		if (!H.Arm(*this, Config))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		// ---- Arrangement 0: a fresh match, before any refresh ---------------------
+		TestFalse(TEXT("a fresh match has no production menu open"),
+			H.Subsystem->IsProductionMenuOpen());
+		TestFalse(
+			TEXT("and before any refresh the footer fact claims nothing about any factory"),
+			H.Subsystem->IsOpenMenuFactorySpawnBlocked());
+
+		FStratViewModel Model;
+		FString         BuildError;
+		if (!TestTrue(TEXT("the view model builds on the variant"),
+				H.Subsystem->BuildViewModel(Model, BuildError)))
+		{
+			AddError(BuildError);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FIntPoint HeldHex;
+		if (!TestTrue(TEXT("the variant still gives the viewing side a factory to shop at"),
+				FindHeldFactory(Model, Model.ViewingSide, HeldHex)))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		// ---- Arrangement 1: opened at a boxed-in factory, then CLOSED --------------
+		{
+			FString RefreshReason;
+			if (!TestTrue(TEXT("the menu opens at the boxed-in factory"),
+					H.Subsystem->RefreshProductionMenu(HeldHex, RefreshReason)))
+			{
+				AddError(RefreshReason);
+				RemoveVariant(VariantPath);
+				return false;
+			}
+			if (!TestTrue(
+					TEXT("PREMISE: the open menu's footer fact is TRUE, so the false below is "
+						"something being undone rather than something never set"),
+					H.Subsystem->IsOpenMenuFactorySpawnBlocked()))
+			{
+				AddError(TEXT("the boxing arrangement did not box the factory in"));
+				RemoveVariant(VariantPath);
+				return false;
+			}
+
+			H.Subsystem->CloseProductionMenu();
+
+			TestFalse(TEXT("CloseProductionMenu takes the menu down"),
+				H.Subsystem->IsProductionMenuOpen());
+			TestFalse(TEXT("and the footer fact goes with it"),
+				H.Subsystem->IsOpenMenuFactorySpawnBlocked());
+		}
+
+		// ---- Arrangement 2: opened again, then the match is RESEEDED ---------------
+		// A DIFFERENT ROUTE TO CLOSED. `StartMatch` runs `TearDownPresentation`, which clears
+		// the menu; a reseed that took the rows down and left the footer standing would be
+		// invisible to arrangement 1 and is exactly what this half is for.
+		{
+			FString RefreshReason;
+			if (!TestTrue(TEXT("the menu opens at the boxed-in factory a second time"),
+					H.Subsystem->RefreshProductionMenu(HeldHex, RefreshReason)))
+			{
+				AddError(RefreshReason);
+				RemoveVariant(VariantPath);
+				return false;
+			}
+			if (!TestTrue(
+					TEXT("PREMISE: the footer fact is TRUE again before the reseed"),
+					H.Subsystem->IsOpenMenuFactorySpawnBlocked()))
+			{
+				RemoveVariant(VariantPath);
+				return false;
+			}
+
+			FString RestartReason;
+			H.Subsystem->StartMatch(Config, RestartReason);
+			if (!TestTrue(TEXT("the reseeded match is live whatever StartMatch returned"),
+					H.Subsystem->IsMatchLive()))
+			{
+				AddError(RestartReason);
+				RemoveVariant(VariantPath);
+				return false;
+			}
+
+			TestFalse(TEXT("a reseed leaves no menu open"), H.Subsystem->IsProductionMenuOpen());
+			TestFalse(
+				TEXT("and no footer fact standing either, so the third member of that statement "
+					"group is not the one the reseed forgets"),
+				H.Subsystem->IsOpenMenuFactorySpawnBlocked());
+		}
+	}
+
+	RemoveVariant(VariantPath);
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// A menu opened on a hex that is not a build point reports the footer fact FALSE -- and the
+// menu OPENS. A REFUSAL IS NOT A YES.
+//
+// THE CODE PATH THIS IS ABOUT. `RefreshProductionMenu` does not pre-check the hex, so a
+// non-factory hex comes back as a full menu with every row `bAvailable` false --
+// `GATE-BUILDMENU.ANonFactoryHexOpensAnUnavailableMenuAndIsNotRefused` pins that half already
+// and this clause asserts it again only as its own premise. What is NEW is what the footer
+// does on that path: `FStratBridge::FactorySpawnBlockedAt` REFUSES a hex that is not a build
+// point, `RefreshProductionMenu` reads only `.bOk` off that refusal, and the published bool
+// must therefore be false rather than the refusal's out-parameter being trusted or the
+// previous factory's answer being left standing.
+//
+// THE ORDER IS THE TEETH. The menu is opened at the BOXED-IN factory first, so the published
+// bool is TRUE, and only then moved to the non-factory hex. A refresh that forgot to publish
+// the footer at all -- or that published it only on the success branch of the query -- leaves
+// the previous factory's TRUE behind and reddens here. Asked cold, on a fresh match, this
+// clause would read false for free and could not fail.
+//
+// AND THE REFUSAL IS ASSERTED, NOT ASSUMED. `FactorySpawnBlockedAt` is asked about the same
+// hex in the same frame and is required to refuse, so a tree in which a non-factory hex became
+// answerable turns this clause red at the premise rather than leaving it silently measuring a
+// different code path than the one its prose describes.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratSpawnBlockedFalseOnANonBuildPointMenuTest,
+	"Stratocracy.StratPlay.GATE-BUILDMENU.SpawnBlockedFalseOnANonBuildPointMenu",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratSpawnBlockedFalseOnANonBuildPointMenuTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratProductionMenuSeam;
+
+	ExpectTheTileMeshWarning(*this);
+
+	FString VariantPath;
+	FString Error;
+	if (!TestTrue(TEXT("the boxed-in variant is written under Saved/"),
+			WriteBoxedInVariant(TEXT("menu_footer_non_build_point.json"), VariantPath, Error)))
+	{
+		AddError(Error);
+		RemoveVariant(VariantPath);
+		return false;
+	}
+
+	{
+		FStratMatchConfig Config;
+		if (!TestTrue(TEXT("the match config assembles on the variant"),
+				MakeConfigOn(VariantPath, Config, Error)))
+		{
+			AddError(Error);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FSeamHarness H;
+		if (!H.Arm(*this, Config))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FStratViewModel Model;
+		FString         BuildError;
+		if (!TestTrue(TEXT("the view model builds on the variant"),
+				H.Subsystem->BuildViewModel(Model, BuildError)))
+		{
+			AddError(BuildError);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FIntPoint HeldHex;
+		FIntPoint NonFactoryHex;
+		if (!TestTrue(TEXT("the variant still gives the viewing side a factory to shop at"),
+				FindHeldFactory(Model, Model.ViewingSide, HeldHex)) ||
+			!TestTrue(TEXT("the board carries a hex that no factory claims"),
+				FindNonFactoryHex(Model, NonFactoryHex)))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		// ---- The premise: publish a TRUE that the move must undo -------------------
+		{
+			FString RefreshReason;
+			if (!TestTrue(TEXT("the menu opens at the boxed-in factory first"),
+					H.Subsystem->RefreshProductionMenu(HeldHex, RefreshReason)))
+			{
+				AddError(RefreshReason);
+				RemoveVariant(VariantPath);
+				return false;
+			}
+			if (!TestTrue(
+					TEXT("PREMISE: the footer fact is TRUE at the boxed-in factory, so the "
+						"false below is a value being replaced rather than never written"),
+					H.Subsystem->IsOpenMenuFactorySpawnBlocked()))
+			{
+				AddError(TEXT("the boxing arrangement did not box the factory in"));
+				RemoveVariant(VariantPath);
+				return false;
+			}
+		}
+
+		// ---- The premise the clause is written around: the bridge REFUSES here ------
+		{
+			bool               bOut  = false;
+			const FStratResult Asked = H.Bridge->FactorySpawnBlockedAt(NonFactoryHex, bOut);
+			TestFalse(*FString::Printf(
+					TEXT("PREMISE: the bridge refuses the non-build-point hex (%d, %d): '%s'"),
+					NonFactoryHex.X, NonFactoryHex.Y, *Asked.Reason),
+				Asked.bOk);
+		}
+
+		// ---- The menu moves to the non-build-point hex ------------------------------
+		FString RefreshReason;
+		if (!TestTrue(*FString::Printf(
+					TEXT("a refresh at the non-build-point hex (%d, %d) SUCCEEDS: '%s'"),
+					NonFactoryHex.X, NonFactoryHex.Y, *RefreshReason),
+				H.Subsystem->RefreshProductionMenu(NonFactoryHex, RefreshReason)))
+		{
+			AddError(RefreshReason);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		TestTrue(TEXT("and the menu is OPEN on it"), H.Subsystem->IsProductionMenuOpen());
+		TestEqual(TEXT("published at the hex that was asked for"),
+			H.Subsystem->ProductionMenuHex, NonFactoryHex);
+		TestTrue(TEXT("with rows to show"), H.Subsystem->ProductionMenu.Num() > 0);
+		for (const FStratBuildOptionView& Row : H.Subsystem->ProductionMenu)
+		{
+			TestFalse(*FString::Printf(
+					TEXT("row '%s' of a non-build-point menu is unavailable, in the module's ")
+					TEXT("own words ('%s')"),
+					*Row.Id.ToString(), *Row.Reason.ToString()),
+				Row.bAvailable);
+		}
+
+		// ---- The clause -------------------------------------------------------------
+		TestFalse(
+			TEXT("and the footer fact is FALSE: the bridge REFUSED the question, and a refusal "
+				"is not a yes -- nor is the boxed-in factory's TRUE left standing behind it"),
+			H.Subsystem->IsOpenMenuFactorySpawnBlocked());
+	}
+
+	RemoveVariant(VariantPath);
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// The footer fact RIDES THE ROWS' CLOCK: a build that fills the factory's last free hex moves
+// it inside the SAME `SubmitProductionChoice` that rebuilt the rows.
+//
+// THIS IS THE CLAUSE THAT REDDENS IF THE FOOTER IS EVER RE-SOURCED FROM `AppliedModel`, and
+// the reason it can be is an ordering rather than an argument. `SubmitProductionChoice` calls
+// `RefreshProductionMenu` FIRST and `RefreshPresentation` SECOND, so at the instant the footer
+// is published the applied model still describes the PRE-BUILD board -- where this factory is
+// NOT boxed in. An implementation reading `FStratFactoryView::bSpawnBlocked` out of
+// `AppliedModel.Factories` there publishes false and fails the terminal assertion below.
+//
+// THE PRE-BUILD APPLIED-MODEL VALUE IS CAPTURED AND PRINTED, so the failure names the defect
+// instead of merely reporting a bool. It is captured as an OBSERVATION and is never used as an
+// expectation: the expectation on both sides of the build is `FStratBridge::
+// FactorySpawnBlockedAt` asked freshly of the same bridge in the same frame.
+//
+// THE BOARD IS ARRANGED SO THAT THE BUILD ITSELF IS WHAT FILLS THE LAST HEX. Side 0's factory
+// hex is occupied and all but one of its in-bounds neighbours are, so §2.7 places the built
+// unit on the one that is left. Both readings -- not blocked before, blocked after -- come
+// from the bridge, and the FIRST is fatal: a board that was already boxed in would make the
+// "after" reading true for free and the clause would be measuring nothing.
+//
+// WHAT IT DELIBERATELY DOES NOT PIN. Which hex the unit landed on. That needs an adjacency
+// answer, `strat::neighbors` is `LNK2019` in this module, and
+// `T-UI-05.ADisplacedSpawnLandsOnANeighbourAndSpawnBlockedStaysFalse` in StratBridge owns it.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratSpawnBlockedRidesTheRowsClockTest,
+	"Stratocracy.StratPlay.GATE-BUILDMENU.SpawnBlockedRidesTheRowsClockAcrossABuild",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratSpawnBlockedRidesTheRowsClockTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratProductionMenuSeam;
+
+	ExpectTheTileMeshWarning(*this);
+
+	FString VariantPath;
+	FString Error;
+	if (!TestTrue(TEXT("the nearly-boxed-in variant is written under Saved/"),
+			WriteNearlyBoxedInVariant(TEXT("menu_footer_last_hex.json"), VariantPath, Error)))
+	{
+		AddError(Error);
+		RemoveVariant(VariantPath);
+		return false;
+	}
+
+	{
+		FStratMatchConfig Config;
+		if (!TestTrue(TEXT("the match config assembles on the variant"),
+				MakeConfigOn(VariantPath, Config, Error)))
+		{
+			AddError(Error);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FSeamHarness H;
+		if (!H.Arm(*this, Config))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FStratViewModel Model;
+		FString         BuildError;
+		if (!TestTrue(TEXT("the view model builds on the variant"),
+				H.Subsystem->BuildViewModel(Model, BuildError)))
+		{
+			AddError(BuildError);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FIntPoint HeldHex;
+		if (!TestTrue(TEXT("the variant still gives the viewing side a factory to shop at"),
+				FindHeldFactory(Model, Model.ViewingSide, HeldHex)))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		// ---- Before: the menu opens and the factory is NOT boxed in ----------------
+		FString RefreshReason;
+		if (!TestTrue(TEXT("the menu opens at the held factory"),
+				H.Subsystem->RefreshProductionMenu(HeldHex, RefreshReason)))
+		{
+			AddError(RefreshReason);
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		{
+			bool               bFreshBefore = false;
+			const FStratResult Fresh =
+				H.Bridge->FactorySpawnBlockedAt(H.Subsystem->ProductionMenuHex, bFreshBefore);
+			if (!TestTrue(*FString::Printf(TEXT("the bridge answers before the build: '%s'"),
+						*Fresh.Reason),
+					Fresh.bOk))
+			{
+				RemoveVariant(VariantPath);
+				return false;
+			}
+			const bool bAccessorBefore = H.Subsystem->IsOpenMenuFactorySpawnBlocked();
+			TestTrue(*FString::Printf(
+					TEXT("before the build the footer equals the bridge (accessor %d, bridge %d)"),
+					bAccessorBefore ? 1 : 0, bFreshBefore ? 1 : 0),
+				bAccessorBefore == bFreshBefore);
+			if (!TestFalse(
+					TEXT("PREMISE: the factory is NOT boxed in yet -- one free hex is left, and "
+						"the build below is what takes it. A board already boxed in would make "
+						"the assertion after the build true for free"),
+					bAccessorBefore))
+			{
+				AddError(TEXT("the nearly-boxed arrangement left no free hex, or left more than "
+				              "one; either way this clause measures nothing"));
+				RemoveVariant(VariantPath);
+				return false;
+			}
+		}
+
+		// ---- The observation the terminal assertion is contrasted against -----------
+		bool       bFoundInApplied = false;
+		const bool bAppliedBefore  =
+			AppliedModelSaysSpawnBlocked(H.Subsystem->GetViewModel(), HeldHex, bFoundInApplied);
+		AddInfo(FString::Printf(
+			TEXT("the PRE-BUILD applied model says spawnBlocked=%d for (%d, %d) (entry found: ")
+			TEXT("%d). This is the value a footer re-sourced from AppliedModel would publish ")
+			TEXT("inside SubmitProductionChoice, because RefreshProductionMenu runs before ")
+			TEXT("RefreshPresentation."),
+			bAppliedBefore ? 1 : 0, HeldHex.X, HeldHex.Y, bFoundInApplied ? 1 : 0));
+
+		// ---- The build --------------------------------------------------------------
+		int32 DefIndex = INDEX_NONE;
+		if (!TestTrue(TEXT("the module offers a row that is both affordable and available"),
+				FindABuildableRow(H.Subsystem->ProductionMenu, DefIndex)))
+		{
+			RemoveVariant(VariantPath);
+			return false;
+		}
+
+		FString SubmitReason;
+		if (!TestTrue(*FString::Printf(TEXT("the build is accepted: '%s'"), *SubmitReason),
+				H.Subsystem->SubmitProductionChoice(DefIndex, SubmitReason)))
+		{
+			AddError(SubmitReason);
+		}
+
+		// ---- After: the SAME call moved it ------------------------------------------
+		bool               bFreshAfter = false;
+		const FStratResult FreshAfter  =
+			H.Bridge->FactorySpawnBlockedAt(H.Subsystem->ProductionMenuHex, bFreshAfter);
+		TestTrue(*FString::Printf(TEXT("the bridge answers after the build: '%s'"),
+				*FreshAfter.Reason),
+			FreshAfter.bOk);
+
+		const bool bAccessorAfter = H.Subsystem->IsOpenMenuFactorySpawnBlocked();
+
+		TestTrue(TEXT("the menu is still open on the same factory after the rebuild"),
+			H.Subsystem->IsProductionMenuOpen() &&
+				H.Subsystem->ProductionMenuHex == HeldHex);
+
+		TestTrue(*FString::Printf(
+				TEXT("after the build the footer still equals the bridge asked freshly ")
+				TEXT("(accessor %d, bridge %d)"),
+				bAccessorAfter ? 1 : 0, bFreshAfter ? 1 : 0),
+			bAccessorAfter == bFreshAfter);
+
+		// THE TERMINAL ASSERTION. The build consumed the factory's last free hex, so the
+		// factory is boxed in NOW -- and the rebuild that `SubmitProductionChoice` performed
+		// is the only thing that could have said so.
+		TestTrue(
+			*FString::Printf(
+				TEXT("the footer fact moved false -> true inside the SAME ")
+				TEXT("SubmitProductionChoice that rebuilt the rows. A footer re-sourced from ")
+				TEXT("AppliedModel.Factories would have published the pre-build value (%d) ")
+				TEXT("here, because RefreshProductionMenu runs before RefreshPresentation"),
+				bAppliedBefore ? 1 : 0),
+			bAccessorAfter);
+
+		DeleteOurSlot();
+		TestFalse(TEXT("this file's save slot is left behind on neither end"),
+			UGameplayStatics::DoesSaveGameExist(kSlotName, /*UserIndex*/ 0));
+	}
+
+	RemoveVariant(VariantPath);
 	return true;
 }

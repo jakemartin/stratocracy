@@ -662,6 +662,65 @@ public:
 	// is the caller's read of `Tier`, exactly as `FStratMatchView::bHasResult` is.
 	FStratResult MatchResult(strat::UiMatchResult& OutResult) const;
 
+	// §2.11.5's boxed-in footer, for ONE factory: is every hex at or adjacent to
+	// it occupied, so that a build submitted here waits for a hex rather than
+	// spawning? This is `strat::UiFactoryView::spawnBlocked` for that factory,
+	// COPIED and never recomputed -- the module DECLARES the field derived and
+	// derives it from `strat::spawnHexesBlocked`, which mirrors `resolveBuilds`
+	// exactly and is occupancy-only.
+	//
+	// WHAT GAP IT CLOSES. The field has existed since the projection did and had no
+	// route to a screen. It is reachable only through `MakeUiSnapshot`'s `factories`
+	// vector -- which `StratPlay` cannot walk, because it may not spell a `strat::`
+	// type -- or through `FStratViewModel::Factories`, which reaches a caller only as
+	// `UStratMatchSubsystem::AppliedModel`, A RECORD OF WHAT WAS LAST DRAWN and on a
+	// different clock from the production menu's live rows. The clock measurement that
+	// rejected that second route is recorded at
+	// `UStratMatchSubsystem::IsOpenMenuFactorySpawnBlocked`.
+	//
+	// ENGINE-TYPED WITH NO `strat::Hex` TWIN, WHICH IS THE OPPOSITE CALL FROM
+	// `MatchResult` DIRECTLY ABOVE AND IS MADE ON THE SAME ARGUMENT. `MatchResult` has
+	// no engine-typed mirror because its consumer is `StratUI`, which MAY name a
+	// vendored type. This method's consumer is `UStratMatchSubsystem`, in `StratPlay`,
+	// which may not -- and which is already holding the menu's hex as an `FIntPoint`.
+	// A typed twin would be a second translation of one value with no caller for it.
+	// If `StratUI` ever needs this without an `FIntPoint` in hand it gains a twin, and
+	// this paragraph gains a name.
+	//
+	// IT PROJECTS A WHOLE SNAPSHOT TO READ ONE BOOL, AND THAT IS FORCED RATHER THAN
+	// CHOSEN. `strat::spawnHexesBlocked` is declared in `Ui.h` and would answer the
+	// occupancy half in at most seven occupancy lookups -- the factory hex and its
+	// `strat::HEX_DIRECTIONS` neighbours, early-returning on the first free one, so the
+	// number is a bound over a set the rules module defines rather than a count of
+	// anything here -- but it answers it about ANY hex, factory or
+	// not, so on its own it would report "boxed in" for a hex that is not a build
+	// point at all. The predicate that decides build-point-ness, `isFactoryObjective`,
+	// sits in an ANONYMOUS NAMESPACE in `Ui.good.cpp` and is declared in no header
+	// (measured 2026-08-25: zero hits over `Source/StratRules/*.h`), so the only
+	// sanctioned way to learn WHICH hexes are factories is `buildUiSnapshot`'s
+	// `factories` vector. Re-deriving `capturable && isSpawnPoint` here would put a
+	// second author on a rules predicate, which is the drift this class exists to
+	// prevent. The cost is bounded by the board and is paid once per menu refresh
+	// rather than once per frame -- the caller's block says how that is arranged.
+	//
+	// TWO CHANNELS, AS `Forecast` AND `BuildOptions` HAVE THEM -- AND "NOT A BUILD
+	// POINT" RIDES THE REFUSAL CHANNEL HERE WHERE IT RIDES THE ANSWER CHANNEL IN
+	// `BuildOptions`. The divergence is deliberate and is about what the two questions
+	// MEAN. A buildlist for a non-build-point hex is a real answer: one row per
+	// §2.4 row, each `available` false carrying the module's own reason, which is
+	// exactly what §2.11.5 draws. "Is this factory boxed in" has NO answer for a
+	// hex that is not a factory -- `false` reads as "there is room" and `true` as "it
+	// is full", and both are sentences about something that does not exist.
+	//
+	// COMPUTES NOTHING. Not the occupancy, not the adjacency, not the build-point
+	// test. `bOutSpawnBlocked` is a copy of one `UiFactoryView` field, and the hex
+	// match is `strat::hexEqual` rather than a comparison written here.
+	//
+	// @param FactoryHex        X = q, Y = r -- the encoding the whole façade uses.
+	// @param bOutSpawnBlocked  set false on every refusal, so a caller that ignores
+	//                          the result never draws a boxed-in footer off one.
+	FStratResult FactorySpawnBlockedAt(FIntPoint FactoryHex, bool& bOutSpawnBlocked) const;
+
 	// ---- The engine-typed façade -----------------------------------------
 	// EVERY METHOD IN THIS SECTION SAYS, IN `int32` AND `FIntPoint`, EXACTLY WHAT THE TYPED
 	// METHOD OF THE SAME SUBJECT SAYS -- EXCEPT `Turn()` AND `SideToMove()`, WHICH MIRROR
@@ -681,8 +740,22 @@ public:
 	// answers: SIX (the two sections above this banner, less `MakeUiWorld`), SEVEN (those
 	// sections, since `MakeUiWorld` returns `strat::UiWorld` and is public -- see "PRIVATE,
 	// WHERE `MakeUiWorld` IS PUBLIC" further down this file) and SEVENTEEN (every method in
-	// the class whose signature names a `strat::` type). TWO CAREFUL READERS HAD TO DISAGREE
-	// BEFORE ANYONE COULD SEE THAT THE SCOPE, NOT THE NUMBER, WAS THE DEFECT. A cardinal in
+	// the class whose signature names a `strat::` type).
+	//
+	// [STAMPED 2026-08-25, LATER THE SAME DAY, BY THE PASS THAT ADDED
+	// `FactorySpawnBlockedAt`. THE THREE FIGURES ABOVE DESCRIBE THIS HEADER AS IT STOOD
+	// WHEN THEY WERE DERIVED AND TWO OF THEM NO LONGER RECOUNT.] They are kept because they
+	// are the EVIDENCE for the sentence that follows -- that the scope, not the number, was
+	// the defect -- and that argument is unharmed by the tree moving; refreshing them to
+	// match would turn a dated derivation back into the standing census this block exists to
+	// refuse. What moved, said plainly so nobody re-derives it as a finding:
+	// `FactorySpawnBlockedAt` was added to `// ---- Rules queries`, so the SIX reading now
+	// yields seven and the SEVEN reading eight. THE SEVENTEEN READING DID NOT MOVE, because
+	// that method's signature names no `strat::` type -- which is itself the cleanest
+	// demonstration available that the three readings were never counting one set.
+	//
+	// TWO CAREFUL READERS HAD TO DISAGREE BEFORE ANYONE COULD SEE THAT THE SCOPE, NOT THE
+	// NUMBER, WAS THE DEFECT. A cardinal in
 	// prose goes stale silently and cannot be checked without first settling a convention
 	// nobody wrote down; a NAMED exception is checkable by a reader standing in one place,
 	// which is why the sentence above names `Turn()` and `SideToMove()` instead of counting.

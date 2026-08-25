@@ -1000,6 +1000,48 @@ FStratResult FStratBridge::MatchResult(strat::UiMatchResult& OutResult) const
 	return FStratResult::Ok();
 }
 
+FStratResult FStratBridge::FactorySpawnBlockedAt(FIntPoint FactoryHex, bool& bOutSpawnBlocked) const
+{
+	// Cleared up front, exactly as `Forecast`, `BuildOptions` and `MatchResult` clear
+	// theirs: a refusal must not leave the caller holding the PREVIOUS factory's answer
+	// and drawing a boxed-in footer off it. False rather than true, because false is the
+	// value that claims nothing.
+	bOutSpawnBlocked = false;
+
+	// THE SNAPSHOT IS THE ONLY SANCTIONED ROUTE TO THE FACTORY SET, per the declaration:
+	// `isFactoryObjective` is file-local to `Ui.good.cpp`. Going through `MakeUiSnapshot`
+	// rather than `strat::buildUiSnapshot` directly also inherits its two refusals --
+	// "definitions are not loaded" and "no scenario is loaded" -- in that method's own
+	// words, so this file states neither of them a second time.
+	strat::UiSnapshot Snapshot;
+	const FStratResult Projected = MakeUiSnapshot(Snapshot);
+	if (!Projected.bOk)
+	{
+		return Projected;
+	}
+
+	const strat::Hex Wanted{FactoryHex.X, FactoryHex.Y};
+
+	// The one loop this method exists for. It SELECTS; it does not derive. `spawnBlocked`
+	// is the module's own field on the entry the module itself built for this hex.
+	for (const strat::UiFactoryView& Factory : Snapshot.factories)
+	{
+		if (strat::hexEqual(Factory.hex, Wanted))
+		{
+			bOutSpawnBlocked = Factory.spawnBlocked;
+			return FStratResult::Ok();
+		}
+	}
+
+	// NOT AN ANSWER, AND THE DECLARATION SAYS WHY IT IS NOT ONE. `Snapshot.factories`
+	// holds every factory on the board -- it is not filtered by side -- so a miss here
+	// means the hex is not a build point at all, and neither `true` nor `false` is a
+	// truthful thing to say about a factory that does not exist.
+	return FStratResult::Fail(FString::Printf(
+		TEXT("(%d, %d) is not a build point, so it has no spawn-blocked state"),
+		FactoryHex.X, FactoryHex.Y));
+}
+
 // ---------------------------------------------------------------------------
 // Recorded log -> §4.10 save (row 10 part (a)).
 // ---------------------------------------------------------------------------

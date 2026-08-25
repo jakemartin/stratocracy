@@ -969,6 +969,75 @@ public:
 	bool IsProductionMenuOpen() const { return !ProductionMenu.IsEmpty(); }
 
 	/**
+	 * §2.11.5's boxed-in footer, as ONE boolean about the OPEN menu's factory: is
+	 * every hex at or adjacent to it occupied, so a build submitted here waits?
+	 *
+	 * TRUE IS NOT A REASON TO GREY A BUILD BUTTON, AND Q31 IS WHY. Ruled 2026-08-22:
+	 * a player MAY queue into a boxed-in factory, and `buildWaiting` is the mechanism
+	 * -- the same one the AI path already uses. `Ui.h` states at the field that this
+	 * value is INFORMATIONAL and that `uiBuildOptions` must not fold it into
+	 * availability. So the footer swaps and the Build buttons STAY ENABLED. A binding
+	 * that ANDed this into a button's `bIsEnabled` would re-decide, widget-side, a
+	 * question the rules module deliberately declined to fold in.
+	 *
+	 * IT IS ON THE ROWS' CLOCK BY CONSTRUCTION, AND THAT IS THE WHOLE OF THE DESIGN
+	 * HERE. `RefreshProductionMenu` asks the bridge for this in the same call, from the
+	 * same `FStratBridge`, and publishes it in the same all-or-nothing move that
+	 * publishes `ProductionMenu` and `ProductionMenuHex`; `CloseProductionMenu` clears
+	 * it beside them. So the footer and the rows above it are fresh together or stale
+	 * together, and CANNOT DISAGREE -- which is the property a footer needs, because a
+	 * footer contradicting the rows it sits under is a defect and not a cosmetic lag.
+	 *
+	 * IT IS DELIBERATELY NOT READ OFF `AppliedModel.Factories`, AND THE CLOCKS WERE
+	 * MEASURED RATHER THAN ASSUMED. That array carries this exact field, and reading it
+	 * would have cost nothing. It was rejected on three findings, in this tree:
+	 *   - `AppliedModel` IS WRITTEN ONLY BY `ApplyView` and `RefreshProductionMenu`
+	 *     writes nothing else, so the two are independent by construction rather than
+	 *     merely usually in step.
+	 *   - THE DIVERGENCE IS REACHABLE ON THE SEQUENCE THIS FOOTER IS ABOUT. In
+	 *     `SubmitProductionChoice` an accepted build rebuilds the MENU first and the
+	 *     SCREEN second, and a failed `RefreshPresentation` leaves the rows fresh with
+	 *     `AppliedModel` untouched -- a case that function's own block states rather
+	 *     than designs away ("A `false` RETURN AFTER AN ACCEPTED COMMAND IS
+	 *     POSSIBLE"). `RunAiTurnsNow` has the same shape. The build that just filled
+	 *     the factory's last free hex is precisely the build that flips this bit.
+	 *   - `AppliedModel` IS "WHAT WAS DRAWN" AND NOT "WHAT THE RULES SAY". `ApplyView`
+	 *     is public and takes the model as its argument on purpose, so a caller may
+	 *     apply a hand-built one; `GetViewModel`'s own block calls the cache "a record,
+	 *     never an input". A footer sourced there would be a function of the last
+	 *     argument somebody passed.
+	 * A fourth finding decided the shape even where the clocks agree: a menu opened on
+	 * a hex that is NOT a build point succeeds (see `IsProductionMenuOpen`), and
+	 * `AppliedModel.Factories` then holds no entry for `ProductionMenuHex` at all, so
+	 * the applied model cannot answer that reachable state even in principle.
+	 *
+	 * FALSE WHEN NO MENU IS OPEN, AND THE OPENNESS TEST IS PART OF THE ANSWER RATHER
+	 * THAN A GUARD IN FRONT OF IT -- see the .cpp. A `BlueprintPure` cannot refuse, and
+	 * of the two values available `false` is the one that claims nothing: it means "do
+	 * not show the boxed-in footer", which is what a closed panel wants. `true` would
+	 * be a positive claim about a factory nobody is looking at.
+	 *
+	 * FALSE WHEN THE OPEN MENU'S HEX IS NOT A BUILD POINT, for the same reason one
+	 * layer down. `FStratBridge::FactorySpawnBlockedAt` REFUSES that question rather
+	 * than answering it, and a refusal is not a yes. What the player sees in that state
+	 * is the rows, every one of them `bAvailable` false carrying the rules module's own
+	 * reason, which is the sentence §2.11.5 wants there and is not this one.
+	 *
+	 * IT SEARCHES NOTHING AND COMPARES NO HEX. The widget is handed one boolean about
+	 * the factory whose menu is open. Binding a footer to `Factories` and letting the
+	 * widget find its own entry would put a hex comparison in a Blueprint, which is
+	 * T-UI-03's forbidden widget-side derivation wearing a different hat.
+	 *
+	 * WHAT IT DOES NOT SAY: whether anything is QUEUED here. That is `bBuildWaiting`,
+	 * a different field for a different sentence, and `strat::UiFactoryView`'s own
+	 * block names the case that separates them -- a boxed-in factory with nothing
+	 * queued has this true and that false. `bBuildWaiting` has no Blueprint route yet
+	 * and this pass deliberately does not give it one.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Production")
+	bool IsOpenMenuFactorySpawnBlocked() const;
+
+	/**
 	 * Sec 2.11.5's rows for the open factory, IN THE ORDER THE RULES MODULE RETURNED THEM.
 	 *
 	 * THE ONE THING A WIDGET BINDS TO. `BlueprintReadOnly` and never writable FROM A
@@ -1507,6 +1576,33 @@ private:
 	 */
 	UPROPERTY(Transient)
 	TMap<int32, TObjectPtr<AStratUnitActor>> UnitActors;
+
+	/**
+	 * §2.11.5's boxed-in fact for the factory `ProductionMenu` is for. Read through
+	 * `IsOpenMenuFactorySpawnBlocked`, which is the only reader and the only Blueprint
+	 * surface this value has.
+	 *
+	 * MEANINGLESS WHILE `IsProductionMenuOpen()` IS FALSE, exactly as `ProductionMenuHex`
+	 * is, and written and cleared by the same pair of functions in the same statements --
+	 * `RefreshProductionMenu` fills all three together, `CloseProductionMenu` clears all
+	 * three together. That is what makes it a value ON the rows' clock rather than a
+	 * mirror that can drift from them.
+	 *
+	 * NOT A `UPROPERTY`, AND NOT PUBLIC, WHICH IS THE DIFFERENCE FROM THE TWO MEMBERS IT
+	 * RIDES WITH. `ProductionMenu` and `ProductionMenuHex` are `BlueprintReadOnly` so a
+	 * widget can bind to them; this one is deliberately not, because a widget reading it
+	 * WITHOUT the openness test would draw a boxed-in footer over a closed panel. The
+	 * accessor ANDs `IsProductionMenuOpen()` in, so publishing the raw bool beside it
+	 * would be two Blueprint surfaces for one fact and only one of them correct.
+	 *
+	 * IT IS NOT THE `bSeeded`-SHAPED MIRROR THIS CLASS REFUSES ELSEWHERE, and the test is
+	 * the one that rule states: a mirror is refused when it CAN disagree with the thing it
+	 * mirrors. There is no other source for this value in this object -- `AppliedModel`
+	 * is a record of what was drawn and is explicitly not one, see the accessor -- and the
+	 * three members move as one. This is `ProductionMenuHex`'s relationship to the rows,
+	 * not `bSeeded`'s to the bridge.
+	 */
+	bool bProductionMenuSpawnBlocked = false;
 
 	/** What `ApplyView` last drew. See `GetViewModel`: a record, never an input. */
 	UPROPERTY(Transient)

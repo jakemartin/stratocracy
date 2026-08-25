@@ -66,11 +66,30 @@
 //   controller that bound camera axes would put the camera's input two objects away from
 //   the camera. Phase 3 shipped the pawn without Enhanced Input and nothing in phase 4's
 //   exit criterion moves it.
-// - THE HOT-SEAT HAND-OVER SCREEN. `UStratMatchSubsystem::SetViewingSide` exists and is
-//   deliberately NOT bound to a key here. §2.11's hand-over is a screen with a confirmation
-//   on it -- who is looking matters -- and a key that silently flipped the viewing side
-//   would let either player see the other's board at any time. The affordance is UI work
-//   that no phase of this milestone owns.
+// - THE HOT-SEAT HAND-OVER KEY, STILL UNBOUND -- BUT NOT FOR THE REASON THIS BULLET USED
+//   TO GIVE, AND THE PREMISE IS CORRECTED IN PLACE RATHER THAN DELETED. It used to read:
+//   RETRACTED> "THE HOT-SEAT HAND-OVER SCREEN. `UStratMatchSubsystem::SetViewingSide`
+//   RETRACTED>  exists and is deliberately NOT bound to a key here. §2.11's hand-over is a
+//   RETRACTED>  screen with a confirmation on it -- who is looking matters -- and a key
+//   RETRACTED>  that silently flipped the viewing side would let either player see the
+//   RETRACTED>  other's board at any time. The affordance is UI work that no phase of this
+//   RETRACTED>  milestone owns."
+//   THE CITATION WAS FALSE. The GDD specifies no hand-over screen and no confirmation on
+//   one. Measured against `E:\MultiAgent\stratocracy-content\Stratocracy_Prototype_GDD.md`
+//   on 2026-08-25: four case-insensitive hits for hot-seat across the whole document, all
+//   four in stretch-feature context (§1.5's resolved question 4 -- "2-player hotseat: in
+//   scope or cut? RESOLVED: stretch only, off the critical path (§2.10)" -- plus the §2.10
+//   scope table's STRETCH row and two pacing asides); ZERO hits for "hand-over", "handover"
+//   or "pass the device"; and §2.11.5 states the prototype's complete screen list in as many
+//   words -- "That is the complete screen list for the prototype: title/menu, briefing,
+//   match, result." NO HAND-OVER SCREEN IS OWED. Recorded here so the next reader does not
+//   re-derive the deferral from the same wrong citation and schedule a screen nobody asked
+//   for.
+//   THE HALF THAT SURVIVES IS THE WHOLE REASON THE KEY STAYS UNBOUND: a key that silently
+//   flipped the viewing side would let either player see the other's board at any time.
+//   That is a property of the BINDING and needs no screen behind it, so it does not expire
+//   with the citation. If hot-seat is ever taken off the stretch list, whatever surface
+//   drives the swap has to make the swap deliberate and visible; a bare keypress cannot.
 // - CAPTURE and BUILD, AND THIS BULLET IS RETRACTED IN PLACE FOR BUILD AND ONLY FOR BUILD.
 //   It used to read:
 //   RETRACTED> "CAPTURE and BUILD. See `FStratSelectionMachine`'s own deferral list;
@@ -82,8 +101,24 @@
 //   shape so that a primary click keeps meaning select / move / attack and
 //   `FStratSelectionMachine` needs no BUILD arm; that struct is untouched by this change and
 //   its own deferral bullet carries the same retraction.
-//   `SubmitCapture` STILL HAS NO AFFORDANCE AND NO ENGINE CALLER. Nothing here covers it and
-//   its half of the original bullet stands unretracted.
+//   AND THE CAPTURE HALF IS NOW RETRACTED TOO, ON EVIDENCE. It used to read "`SubmitCapture`
+//   STILL HAS NO AFFORDANCE AND NO ENGINE CALLER. Nothing here covers it and its half of the
+//   original bullet stands unretracted" -- carried as an unanswered affordance question.
+//   IT IS ANSWERED, AND THE ANSWER IS THAT NOTHING IS OWED. `SubmitCapture` still has no
+//   engine caller and must not acquire one; the three measurements are in
+//   `UStratMatchSubsystem`'s own header block and in short:
+//     (a) {S}2.11 rules a capture verb out in as many words -- "Capture and build need no
+//         extra verbs. Capture is by presence ... a progress pip appears, NO BUTTON." So
+//         this class owes no binding, not even a deferred one.
+//     (b) the method is {S}4.10 SAVE-FORMAT TRANSPORT and is kept for that: `strat::
+//         SaveCommandKind` is pinned at the five, and two `Source/StratBridge/Tests/` files
+//         dispatch `SubmitCapture` in log replay.
+//     (c) `strat::captureTick` is NOT IDEMPOTENT -- it does `turnsHeld += 1` per call and
+//         `applyCommand`'s Capture arm never reads `c.unitId` -- so a key bound to it would
+//         let a player advance a capture once per press. That is the reason never to wire
+//         one, and it is a stronger statement than "no phase owns it".
+//   RETRACTED IN PLACE, because a reader who remembers this as owed work needs to see the
+//   withdrawal and not a silent absence.
 
 // - AND THE HEX THE MENU OPENS FOR IS THE ONE UNDER THE CURSOR, NOT A SELECTED ONE, BECAUSE
 //   NOTHING IN THIS PROJECT SELECTS A HEX. The ruling was phrased "the currently selected

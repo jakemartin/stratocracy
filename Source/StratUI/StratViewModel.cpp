@@ -16,15 +16,69 @@
 //      vendored sources carry no `_API` macro. Every entry point below is a method on
 //      `FStratBridge`, which is the only thing UnrealEditor-StratBridge.dll exports.
 //
-//   3. The three static_asserts. `strat::OWNER_NEUTRAL`, `strat::SIDE_COUNT` and the
-//      `strat::ResultTier` enumerators are compile-time constants reachable only here.
-//      Reading one is not the cross-module call the constraint above forbids -- nothing
-//      is emitted and no symbol has to be exported for it to link.
+//   3. The static_asserts -- THREE. THE CHECK THAT CONFIRMS IT IS ANCHORED TO START OF
+//      LINE PLUS ANY RUN OF WHITESPACE, and both halves of that anchor are load-bearing:
+//
+//          grep -c '^[[:space:]]*static_assert' Source/StratUI/StratViewModel.cpp   -> 3
+//
+//      THE ANCHOR EXCLUDES PROSE: a comment line begins with `/`, which is not whitespace,
+//      so no sentence in this block can match however often it names the token. That is
+//      what keeps this census out of the set it is counting.
+//      THE `*` MAKES IT DEPTH-BLIND, and it is not decoration. An earlier form of this
+//      check used `^[[:space:]]` with no `*`, matching EXACTLY ONE whitespace character.
+//      It returned 3 only because all three statements happen to sit at namespace scope at
+//      one tab; one added inside a function body, a nested namespace or a class would sit
+//      deeper and would NOT have matched, and the census would have UNDER-reported in
+//      silence. That is the same failure class as (a) below, just rarer -- so the check is
+//      now indifferent to indentation as well as to prose.
+//
+//      AN UNANCHORED SEARCH IS NOT A SUBSTITUTE AND ITS ANSWER IS NOT EVEN STABLE, because
+//      the prose below NAMES the token several times. Measured on this file, not predicted:
+//      an unanchored search for the bare token returns EIGHT today, and it returns whatever
+//      the surrounding prose happens to spell tomorrow. The anchored form returns THREE and
+//      moves only when a statement is added or removed, which is the property a census
+//      needs.
+//
+//      THIS BLOCK HAS NOW BEEN WRONG ABOUT ITS OWN NUMBER TWICE, BY TWO DIFFERENT
+//      MECHANISMS, and both are recorded because a reader who has seen one will not
+//      recognise the other:
+//        (a) It said FOUR, having counted PINNED SUBJECTS rather than statements -- a
+//            count invalidated by the change that wrote it. Corrected 2026-08-25.
+//        (b) The correction said THREE and prescribed an unanchored search for the token
+//            it had just quoted, so the census sentence became a member of its own
+//            subject and the prescribed check returned FOUR against a stated THREE.
+//            A CENSUS THAT QUOTES ITS OWN SEARCH TOKEN JOINS THE SET IT IS COUNTING.
+//            Corrected the same day. The neighbouring failure in this repo is the one
+//            where a `BP_` prefix nested inside `WBP_` inflated a census by 19.
+//
+//      Two mechanisms pin the five subjects below, and they are separated because only
+//      one of them is an assert statement:
+//        - PINNED BY `static_assert`, three of them: `strat::OWNER_NEUTRAL == INDEX_NONE`,
+//          `sizeof(UiSnapshot::side)/sizeof(UiSideView) == strat::SIDE_COUNT`, and
+//          `strat::SIDE_NONE == INDEX_NONE` (added 2026-08-25 with
+//          `FStratMatchResultView::Winner`).
+//        - PINNED BY AN EXHAUSTIVE SWITCH WITH NO `default:` LABEL, two of them: the
+//          `strat::ResultTier` enumerators in `ResultTierOf` and the `strat::ResultCause`
+//          enumerators in `ResultCauseOf`. An enum's MEMBERSHIP cannot be asserted at
+//          compile time the way a constant's VALUE can, which is why the mechanism differs
+//          -- see "WHY THE MAPPINGS ARE SWITCHES AND ASSERTS RATHER THAN CASTS" below.
+//      All five subjects are compile-time facts about vendored declarations, reachable only
+//      here. Reading one is not the cross-module call the constraint above forbids --
+//      nothing is emitted and no symbol has to be exported for it to link.
 //
 // THE BINDING RULE, restated here because this is the file where it can be broken:
 // every number written into `FStratViewModel` is EQUAL TO ONE FIELD of
 // `strat::UiSnapshot`, copied with no transformation beyond a width cast. There is no
-// `+`, no `-`, no `/` and no `.size()` over a snapshot vector below. The one thing that
+// `+`, no `-`, no `/` and no `.size()` over a snapshot vector in `StratBuildViewModel`.
+//
+// THAT SENTENCE USED TO END "below" AND IT IS CORRECTED RATHER THAN DROPPED. As of
+// 2026-08-25 there is ONE subtraction in this file and it is not in the view model's
+// builder: `StratBuildProductionMenu` computes `FStratBuildOptionView::Shortfall` as
+// `CostFame - FameTotal`, because §2.11.5 requires an unaffordable row to print
+// `need N` and T-UI-03 forbids the widget doing the subtraction. It is DECLARED derived
+// on the field, it is clamped at zero, and it is never consulted to decide whether a row
+// is affordable -- `UiBuildOption::affordable` remains the only authority on that, so the
+// screen's greying still turns on the module's comparison and not on this file's. The one thing that
 // is not a copy is the pair of `FName` lookups, which read a definition row's `id` at an
 // index the snapshot supplies; that is a table read and it is justified on the fields
 // themselves in the header.
@@ -94,6 +148,29 @@ namespace
 		return EStratResultTier::InProgress;
 	}
 
+	/**
+	 * §2.8's cause, mapped exhaustively, on `ResultTierOf`'s reasoning exactly.
+	 *
+	 * No `default:` label here either, and it matters more on this enum than on the tier:
+	 * §2.8 has three win conditions and two draw conditions and upstream has already
+	 * added one (`Domination`) since the tier enum was written. A `default` would compile
+	 * the next one silently into whatever this returned for it.
+	 */
+	EStratResultCause ResultCauseOf(strat::ResultCause Cause)
+	{
+		switch (Cause)
+		{
+		case strat::ResultCause::None:           return EStratResultCause::None;
+		case strat::ResultCause::FlagDestroyed:  return EStratResultCause::FlagDestroyed;
+		case strat::ResultCause::Domination:     return EStratResultCause::Domination;
+		case strat::ResultCause::AttritionLead:  return EStratResultCause::AttritionLead;
+		case strat::ResultCause::PassivityGuard: return EStratResultCause::PassivityGuard;
+		case strat::ResultCause::AllKeysTied:    return EStratResultCause::AllKeysTied;
+		}
+
+		return EStratResultCause::None;
+	}
+
 	// The mirror on `FStratHexView::Owner` / `FStratFactoryView::Owner` claims that
 	// `strat::OWNER_NEUTRAL` and `INDEX_NONE` are the same number, so the copy is exact
 	// rather than a re-encoding. The two constants are declared in different
@@ -109,6 +186,15 @@ namespace
 	// is a compile failure here rather than a silently short `Sides` array.
 	static_assert(sizeof(strat::UiSnapshot::side) / sizeof(strat::UiSideView) == strat::SIDE_COUNT,
 		"UiSnapshot::side must have SIDE_COUNT entries for Sides to be indexable by side");
+
+	// `FStratMatchResultView::Winner` claims that `strat::SIDE_NONE` and `INDEX_NONE` are
+	// the same number, so "nobody won" survives the copy without being re-encoded. Checked
+	// rather than trusted, exactly as `OWNER_NEUTRAL` above is and for the same reason --
+	// the two constants are declared in different repositories. If this fires, the fix is a
+	// mapping beside `ResultCauseOf` and NOT a widened comment: a `Winner` that silently
+	// meant -1 upstream and 0 here would name a real side as the victor.
+	static_assert(strat::SIDE_NONE == INDEX_NONE,
+		"strat::SIDE_NONE must equal INDEX_NONE for FStratMatchResultView::Winner to be an exact mirror");
 }
 
 bool StratBuildViewModel(
@@ -331,6 +417,42 @@ bool StratBuildProductionMenu(
 		return false;
 	}
 
+	// THE SECOND READ, AND IT EXISTS FOR ONE FIELD. §2.11.5 requires an unaffordable row
+	// to name its shortfall (`need 50`), `UiBuildOption` carries no such field, and T-UI-03
+	// forbids the widget subtracting. So the purse is read here, from the SAME bridge in
+	// the SAME frame as the prices above -- the two calls are separated by nothing that can
+	// mutate a const bridge, which is what makes `Shortfall` and `bAffordable` answers about
+	// one board state rather than two.
+	//
+	// THE SNAPSHOT AND NOT `FStratViewModel`. Taking a built model as a parameter would
+	// have let a CALLER supply the purse, and a caller that can supply the purse can supply
+	// the wrong one; the failure would present as a menu priced for the other player, which
+	// in a hot-seat game is the leak this file is otherwise careful about. The signature is
+	// unchanged for that reason as much as for its callers.
+	strat::UiSnapshot Snapshot;
+	const FStratResult SnapshotResult = Bridge.MakeUiSnapshot(Snapshot);
+	if (!SnapshotResult.bOk)
+	{
+		// Unreachable behind a successful `BuildOptions`, which refuses on the same two
+		// preconditions. Refused rather than defaulted anyway: a zero purse here would
+		// print `need <full price>` on every row of a menu that was otherwise correct.
+		OutFailureReason = SnapshotResult.Reason;
+		return false;
+	}
+
+	// Range-checked by `FStratBridge::BuildOptions` against `strat::SIDE_COUNT` before it
+	// answered, and the array is SIDE_COUNT long by the static_assert at the top of this
+	// file. Re-checked anyway, because the alternative to a redundant branch is an
+	// out-of-bounds read reachable only through a future change to either.
+	const int32 SideCount = static_cast<int32>(UE_ARRAY_COUNT(Snapshot.side));
+	if (Side < 0 || Side >= SideCount)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("Side %d is outside the snapshot's %d sides."), Side, SideCount);
+		return false;
+	}
+	const int32 FameTotal = static_cast<int32>(Snapshot.side[Side].fameTotal);
+
 	// ALL-OR-NOTHING: built into a local and moved across on the last line, so a
 	// refusal above leaves the caller's menu exactly as it found it.
 	TArray<FStratBuildOptionView> Built;
@@ -346,6 +468,18 @@ bool StratBuildProductionMenu(
 		// one module rather than removed, and it would be able to disagree.
 		OptionView.bAffordable = Source.affordable;
 		OptionView.bAvailable  = Source.available;
+		// THE ONE PIECE OF ARITHMETIC IN THIS FILE, and the field's own block records why it
+		// is here rather than upstream beside `affordable`, and what discharges it.
+		//
+		// `affordable` DECIDES, THE SUBTRACTION ONLY DESCRIBES. Zero whenever the module
+		// says the row is affordable -- never `Max(0, Cost - Fame)` alone -- so the two
+		// values cannot disagree about WHETHER the row can be bought even if they were ever
+		// to disagree about by how much. The clamp on the other branch is the same
+		// discipline pointed the other way: a negative shortfall is not a thing {S}2.11.5 can
+		// draw, and printing `need -25` would be this file inventing a state.
+		OptionView.Shortfall   = Source.affordable
+			? 0
+			: FMath::Max(0, OptionView.CostFame - FameTotal);
 		// Copied whole and never composed: nothing here appends a price, a hint or a
 		// unit name to the sentence the module wrote.
 		OptionView.Reason      = Source.reason.empty()
@@ -356,5 +490,49 @@ bool StratBuildProductionMenu(
 	}
 
 	OutOptions = MoveTemp(Built);
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// §2.8 -- the result, whole.
+// ---------------------------------------------------------------------------
+
+bool StratBuildMatchResult(
+	const FStratBridge&    Bridge,
+	FStratMatchResultView& OutResult,
+	FString&               OutFailureReason)
+{
+	// Cleared up front so a success cannot leave a previous call's refusal sitting in the
+	// caller's string.
+	OutFailureReason.Reset();
+
+	// The ONE read, and it is the bridge's answer whole. NAMING `strat::UiMatchResult` is
+	// legal in this .cpp and never in the header beside it; CALLING `strat::uiMatchResult`
+	// from this module is not legal at all -- the `LNK2019` this pair's header block
+	// records.
+	strat::UiMatchResult Result;
+	const FStratResult Asked = Bridge.MatchResult(Result);
+	if (!Asked.bOk)
+	{
+		// The bridge's own words. Its declaration records why an unseeded bridge is refused
+		// here and answered InProgress upstream, and there is nothing to soften: a result
+		// screen must not be told "no winner yet" by a bridge that holds no match.
+		OutFailureReason = Asked.Reason;
+		return false;
+	}
+
+	// ALL-OR-NOTHING: filled into a local and assigned on the last line.
+	FStratMatchResultView Built;
+	// THROUGH `ResultTierOf`, THE SAME MAPPING `StratBuildViewModel` USES. A second switch
+	// over `strat::ResultTier` in this file would be a second author of §2.8's tier names
+	// and could disagree with the one the scoreboard was drawn from.
+	Built.Tier         = ResultTierOf(Result.tier);
+	Built.Cause        = ResultCauseOf(Result.cause);
+	// COPIED, NEVER DERIVED FROM `sideToMove`, and the static_assert above is what makes
+	// the copy exact rather than a re-encoding of "nobody".
+	Built.Winner       = static_cast<int32>(Result.winner);
+	Built.DecidedByKey = static_cast<int32>(Result.decidedByKey);
+
+	OutResult = Built;
 	return true;
 }

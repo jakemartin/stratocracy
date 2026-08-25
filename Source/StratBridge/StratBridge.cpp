@@ -972,6 +972,34 @@ FStratResult FStratBridge::BuildOptions(int32 Side, const strat::Hex& FactoryHex
 	return FStratResult::Ok();
 }
 
+FStratResult FStratBridge::MatchResult(strat::UiMatchResult& OutResult) const
+{
+	// Cleared up front, exactly as `Forecast` and `BuildOptions` reset theirs: a refusal
+	// must not leave the caller holding the PREVIOUS match's verdict and drawing a
+	// victory screen off it.
+	OutResult = strat::UiMatchResult();
+
+	if (!bDefinitionsLoaded)
+	{
+		return FStratResult::Fail(TEXT("definitions are not loaded"));
+	}
+	if (!bSeeded)
+	{
+		// The one place this method is not a pass-through, and the declaration records
+		// why: `uiMatchResult` answers a world with no turn InProgress/SIDE_NONE, which
+		// is indistinguishable from a live match that has not ended. `IsSeeded()` exists
+		// here, so the two are told apart here.
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	// The one line this method exists for. Whether the match has ended, who won, why,
+	// and which §2.8 key decided it are all `TurnState::result`'s own fields, mirrored
+	// by the module and copied by nothing in between.
+	OutResult = strat::uiMatchResult(MakeUiWorld());
+
+	return FStratResult::Ok();
+}
+
 // ---------------------------------------------------------------------------
 // Recorded log -> §4.10 save (row 10 part (a)).
 // ---------------------------------------------------------------------------

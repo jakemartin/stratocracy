@@ -77,9 +77,31 @@
 //   Move, Attack and EndTurn are still reached through `FStratSelectionMachine` and
 //   `StratSubmitSelectionCommand` from `AStratPlayerController`, which is where a CLICK ON
 //   THE BOARD belongs; a menu pick has no board click and no selection state to advance,
-//   which is why it does not travel that path. Capture still has no engine caller at all.
+//   which is why it does not travel that path.
+//   AND THE CAPTURE HALF IS NOW RETRACTED TOO, ON EVIDENCE RATHER THAN ON A SCHEDULE. It
+//   used to read "Capture still has no engine caller at all", carried as owed work. It has
+//   no engine caller and IS OWED NOTHING; three measurements against the tree say so and
+//   the finding replaces the deferral:
+//     (a) NO AFFORDANCE IS OWED, BY DESIGN. §2.11 states it: "Capture and build need no
+//         extra verbs. Capture is by presence (§2.7: an Infantry that ends its move on a
+//         capturable tile begins capturing -- a progress pip appears, no button)."
+//         `strat::AiCommandKind` is `{Build, Move, Attack, EndTurn}` for the same reason.
+//         The GDD is split -- §4.7 Stub 4 and §4.9/§4.10 list `Capture{unit}` among the five
+//         submittable commands -- and the rules module already resolved the split toward
+//         §2.11. So this is not an unanswered affordance question; it is an answered one.
+//     (b) THE METHOD IS SAVE-FORMAT TRANSPORT AND IS KEPT FOR THAT. `strat::SaveCommandKind`
+//         is pinned at §4.10's five, and `Source/StratBridge/Tests/StratBridgeRestoreParity.
+//         cpp` and `StratBridgeSaveRecording.cpp` both dispatch `SubmitCapture` in log
+//         replay. Deleting it would break replay of any log carrying a `Capture` entry.
+//     (c) `strat::captureTick` IS NOT IDEMPOTENT, and this is the reason never to wire one.
+//         Its progress arm is `prog->turnsHeld += 1` per call, and `applyCommand`'s Capture
+//         arm calls it with the whole board's occupants -- never reading `c.unitId` at all.
+//         N mid-turn submissions therefore advance a capture N turns' worth inside one
+//         turn. On the shipped scenario (`captureTurns = 1`) that is masked. An affordance
+//         bound to it would ship a cheat.
 //   RETRACTED IN PLACE rather than deleted, because a reader who remembers the old claim
-//   needs to see WHICH HALF of it was withdrawn.
+//   needs to see WHICH HALF of it was withdrawn -- and both halves now have been, for two
+//   different reasons.
 // - Turn hand-over. §2.11's hot-seat swap changes the viewing side, and `SetViewingSide`
 //   below does exactly that and nothing more -- it submits no EndTurn, because whose screen
 //   this is and whose turn it is are different questions (`StratScoreboardHUD.h` on the same
@@ -436,10 +458,24 @@ struct FStratMatchConfig
 // above, wearing the fix's colours.
 //
 // NOT IN THESE, with reasons:
-// - WHO WON. `strat::UiMatchView` carries `turn`, `turnCap`, `sideToMove`, `hasResult` and
-//   `resultTier` and NO winning side; `strat::MatchResult::winner` lives on `TurnState` and
-//   reaches no projection. A victory SCREEN needs it and this pass does not supply it -- see
-//   `engine.md` for the debt and the two routes that could discharge it.
+// - WHO WON -- RETIRED 2026-08-25, AND STAMPED IN PLACE RATHER THAN DELETED so that a reader
+//   who remembers the debt can see which half was withdrawn. It used to read, whole:
+//   RETRACTED> "WHO WON. `strat::UiMatchView` carries `turn`, `turnCap`, `sideToMove`,
+//   RETRACTED>  `hasResult` and `resultTier` and NO winning side; `strat::MatchResult::
+//   RETRACTED>  winner` lives on `TurnState` and reaches no projection. A victory SCREEN
+//   RETRACTED>  needs it and this pass does not supply it -- see `engine.md` for the debt
+//   RETRACTED>  and the two routes that could discharge it."
+//   Neither of those two routes was taken. A THIRD one was, and it is the one the project
+//   had already paid for once: upstream added `strat::uiMatchResult` as a FOURTH `ui*` query
+//   beside `uiReachable`, `uiForecast` and `uiBuildOptions`, so no snapshot field moved, no
+//   field-count constant moved, no `uiFieldContract()` row moved, and no T-UI-05 consumer
+//   carries anything new. `FStratBridge::MatchResult` routes it, `FStratMatchResultView`
+//   reflects it, and `GetMatchResult` below is this class's reader.
+//   THE HALF THAT SURVIVES IS ABOUT THESE TWO FREE FUNCTIONS AND ONLY THEM: `UiMatchView`
+//   still carries no winning side, so `StratMatchIsConcluded` and `StratMatchAcceptsCommands`
+//   still cannot name one and still must not try. They answer WHETHER, off the model the
+//   screen was drawn from; WHO is a query against the bridge and takes a different route on
+//   purpose -- see `FStratMatchResultView`'s block on why it is not a view-model field.
 // - THE TRANSITION'S SIDE EFFECTS. Clearing the pacing timer and logging the conclusion once
 //   are `UStratMatchSubsystem::ConcludeMatchIfEnded`'s, because they are acts on an object.
 //   A predicate that also did something would be unusable from the two callers that only want
@@ -737,9 +773,29 @@ public:
 	 * from here, and `StratScoreboardHUD.h` is explicit that conflating them is the bug the
 	 * split exists so nobody has to commit.
 	 *
-	 * ON A FAILED REBUILD THE SIDE HAS STILL CHANGED, matching `AStratScoreboardHUD::
-	 * SetViewingSide` exactly: rolling back would make a hand-over silently stay with the
-	 * previous player, which is the one outcome a hot-seat game must not produce quietly.
+	 * TWO FAILURE MODES, AND THEY ARE DISTINGUISHED BY WHERE THE ASSIGNMENT SITS RATHER THAN
+	 * BY A COMMENT. This paragraph used to state only the second of them, and the code
+	 * conflated them; corrected 2026-08-25.
+	 *
+	 *   - A REFUSED SIDE CHANGES NOTHING, ANYWHERE. The range check runs BEFORE the
+	 *     assignment, so an out-of-range hand-over leaves this class's `ViewingSide` and the
+	 *     HUD's exactly as it found them. The old order assigned first and then forwarded, so
+	 *     a side the HUD REJECTED was left held here -- and every later refresh then failed
+	 *     inside `StratBuildViewModel` with a reason that named the builder rather than the
+	 *     hand-over. That was the defect, and it was reachable from Blueprint and the console
+	 *     the whole time.
+	 *   - ON A FAILED REBUILD THE SIDE HAS STILL CHANGED, matching `AStratScoreboardHUD::
+	 *     SetViewingSide` exactly and unchanged from the original claim: rolling back would
+	 *     make a hand-over silently stay with the previous player, which is the one outcome a
+	 *     hot-seat game must not produce quietly. The rebuild runs AFTER the assignment,
+	 *     which is what makes that property structural instead of documented.
+	 *
+	 * STILL NO RANGE CHECK OF ITS OWN, and that is unchanged: a constant named here would be
+	 * a third authority that can disagree with the two that already own the check. What moved
+	 * is only WHEN the existing authority is consulted. With a HUD it is the HUD's check; with
+	 * NO HUD -- a legitimate configuration, and one no check covered before -- it is
+	 * `StratBuildViewModel`'s own, asked as a trial build at the candidate side before
+	 * anything is committed. The .cpp states which branch is which.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Match")
 	bool SetViewingSide(int32 InViewingSide, FString& OutFailureReason);
@@ -915,9 +971,26 @@ public:
 	/**
 	 * Sec 2.11.5's rows for the open factory, IN THE ORDER THE RULES MODULE RETURNED THEM.
 	 *
-	 * THE ONE THING A WIDGET BINDS TO. `BlueprintReadOnly` and never writable: there is
-	 * exactly one writer, `RefreshProductionMenu`, and a menu a Blueprint could also write is
-	 * a menu with two authors and no way to tell which one the player is looking at.
+	 * THE ONE THING A WIDGET BINDS TO. `BlueprintReadOnly` and never writable FROM A
+	 * BLUEPRINT, which is the claim that carries the reason -- a menu a Blueprint could also
+	 * write is a menu with two authors and no way to tell which one the player is looking at.
+	 *
+	 * THE SENTENCE USED TO SAY "there is exactly one writer, `RefreshProductionMenu`", AND
+	 * THAT IS NOW FALSE OF THE TREE. Stamped rather than deleted, because the reason it was
+	 * written for is untouched and only the unqualified quantifier went stale. What is
+	 * actually true, measured 2026-08-25:
+	 *   - IN SHIPPING CODE the count is right and the writers are two halves of one pair, both
+	 *     in this class's .cpp: `RefreshProductionMenu` fills the rows and the hex together,
+	 *     and `CloseProductionMenu` clears them together. Nothing else in `Source/` outside
+	 *     `Tests/` assigns either member.
+	 *   - IN AUTOMATION `Source/StratPlay/Tests/StratProductionMenuSeam.cpp` assigns both
+	 *     members directly, to re-plant a menu a deliberate reseed had cleared so that a
+	 *     clause can measure what a REFUSAL does to it. It is C++ in this module and
+	 *     `BlueprintReadOnly` does not hold it out; the plant is declared at its own site and
+	 *     is exactly the access this specifier was never meant to prevent.
+	 * SO THE INVARIANT A WIDGET AUTHOR MAY RELY ON IS THE ONE ABOUT BLUEPRINTS, not the one
+	 * about the total number of writers. A future reader who needs "one writer" to be true
+	 * should read it as "one writer reachable from anything the player can touch".
 	 *
 	 * NOTHING IN A ROW MAY BE RECOMPUTED, COMBINED OR RE-DERIVED. `bAffordable` and
 	 * `bAvailable` are separate answers deliberately -- "you are still saving for this" and
@@ -1170,12 +1243,50 @@ public:
 	 * rather than a fresh query, so it answers "what was drawn" the way `GetViewModel` does.
 	 * A victory surface reads `ResultTier` from here.
 	 *
-	 * IT DOES NOT CARRY WHO WON, and that is a gap rather than a design: `strat::UiMatchView`
-	 * has no winning side to mirror. See the block above the free functions at the top of
-	 * this file.
+	 * IT DOES NOT CARRY WHO WON, AND THAT IS NOW A DESIGN RATHER THAN A GAP. The sentence
+	 * used to end "...and that is a gap rather than a design: `strat::UiMatchView` has no
+	 * winning side to mirror", and it is STAMPED rather than deleted because the first half
+	 * is still true and only the verdict on it moved. `UiMatchView` still has no winning side
+	 * and this struct still mirrors it faithfully; what changed on 2026-08-25 is that
+	 * `GetMatchResult` below now answers WHO, through a separate upstream query, for the
+	 * reason `FStratMatchResultView` records -- putting the winner on the view model would
+	 * have moved T-UI-05's field enumeration to hold a value one screen reads.
+	 *
+	 * SO THE TWO READERS ANSWER DIFFERENT QUESTIONS AND A CALLER MUST NOT SUBSTITUTE ONE.
+	 * This one is a projection of what was DRAWN and cannot fail; `GetMatchResult` is a live
+	 * query against the bridge and can be refused.
 	 */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Match")
 	FStratMatchView GetConcludedMatchView() const;
+
+	/**
+	 * §2.8's result WHOLE -- tier, cause, THE WINNING SIDE, and the tiebreak key a capped
+	 * match was decided on. What §2.11.4's end-of-match screen reads.
+	 *
+	 * A LIVE QUERY AND NOT A PROJECTION OF `AppliedModel`, which is the one way it differs
+	 * from `GetConcludedMatchView` above and the reason it has a refusal channel at all. The
+	 * winner is not on the view model and deliberately never will be -- see
+	 * `FStratMatchResultView` -- so there is nothing cached here to read, and this asks the
+	 * bridge. `StratBuildMatchResult` is the whole of the implementation; this class adds no
+	 * policy, no caching and no interpretation.
+	 *
+	 * IT DOES NOT REQUIRE THE MATCH TO HAVE ENDED and refuses over no such thing. An
+	 * in-progress match answers `true` with tier `InProgress` and `Winner == INDEX_NONE`,
+	 * which is upstream's own convention. A caller that wants "is it over" asks
+	 * `IsMatchConcluded()`, which reads the model the screen was drawn from; asking this and
+	 * testing `Tier` instead would be a SECOND answer to that question, built at a second
+	 * instant, and this class's standing rule is against exactly that.
+	 *
+	 * ALL-OR-NOTHING: a refusal leaves `OutResult` as the caller brought it. `false` means
+	 * there is no bridge, no definitions or no seed -- never "nobody has won yet".
+	 *
+	 * THE WINNER IS A `strat` SIDE INDEX AND NOT A FACTION. §2.11.4's result line is
+	 * faction-voiced, and choosing the voice means comparing `Winner` against
+	 * `GetViewingSide()`. That comparison belongs to the screen that draws the line; this
+	 * class supplies both numbers and draws no conclusion from them.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Match")
+	bool GetMatchResult(FStratMatchResultView& OutResult, FString& OutFailureReason);
 
 	// ---- §2.9's opponent -------------------------------------------------
 	// THIS CLASS DRIVES THE AI AND DOES NOT IMPLEMENT IT. Every command comes from

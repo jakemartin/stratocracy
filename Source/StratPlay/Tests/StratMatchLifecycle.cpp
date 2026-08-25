@@ -537,12 +537,20 @@ bool FStratMatchStartMatchRefusalLeavesNoBridgeTest::RunTest(const FString& /*Pa
 // `Stratocracy.StratUI.T-UI-03.SetViewingSideSwapsColumnsWithoutMutatingState`; this clause
 // is about the subsystem, and it is written so the return value means what it says.
 //
-// THE REFUSED HAND-OVER IS MEASURED TOO, and it is the interesting half: an out-of-range
-// side is refused by the model builder, `SetViewingSide` returns false -- and the stored
-// side has STILL MOVED, which the class documents deliberately ("rolling back would make a
-// hot-seat hand-over silently stay with the previous player"). That documented behaviour is
-// asserted as documented behaviour. What must not move, on the refused path exactly as on
-// the accepted one, is the rules module's state.
+// THE REFUSED HAND-OVER IS MEASURED TOO, and it is the interesting half.
+//
+// **[CORRECTED 2026-08-25, AND THE SENTENCE IT REPLACES IS KEPT AT THE ASSERTION ITSELF.**
+// This paragraph used to read that an out-of-range side is refused "and the stored side has
+// STILL MOVED, which the class documents deliberately". The class's documented no-rollback is
+// about a FAILED REBUILD; this block drives a FAILED RANGE CHECK, and the code used to treat
+// the two the same way. It no longer does, so what is asserted here now is that a refused
+// out-of-range hand-over leaves the stored side exactly where it was. The surviving half --
+// a failed rebuild still hands over -- is pinned by
+// `Stratocracy.StratPlay.T-UI-03.ARefusedViewingSideLeavesBothMembersUnchanged`, which can
+// drive it because it spawns a HUD and this clause deliberately does not.]**
+//
+// What must not move, on the refused path exactly as on the accepted one, is the rules
+// module's state.
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratMatchSetViewingSideMutatesNoStateTest,
@@ -650,6 +658,11 @@ bool FStratMatchSetViewingSideMutatesNoStateTest::RunTest(const FString& /*Param
 
 	// ---- A refused hand-over is not a move either --------------------------
 	{
+		// READ, NOT ASSUMED. The loop above left the subsystem on the last side it handed over
+		// to; the assertion below is that a REFUSAL leaves it exactly there, and restating
+		// which side that is would make this clause assert its own arithmetic.
+		const int32 StoredBefore = Subsystem->GetViewingSide();
+
 		FString Reason;
 		TestFalse(*FString::Printf(TEXT("a hand-over to side %d is refused"), SideCount),
 			Subsystem->SetViewingSide(SideCount, Reason));
@@ -660,11 +673,37 @@ bool FStratMatchSetViewingSideMutatesNoStateTest::RunTest(const FString& /*Param
 		TestEqual(TEXT("a refused hand-over submitted no command"),
 			RecordedCount(*Bridge), LogBefore);
 
-		// DOCUMENTED, AND ASSERTED AS DOCUMENTED. The class states that the side has still
-		// changed on a failed rebuild, "because rolling back would make a hot-seat hand-over
-		// silently stay with the previous player". Pinned so that a later change to that
-		// decision is a conversation rather than a surprise.
-		TestEqual(TEXT("the side moved even though the rebuild refused, exactly as documented"),
+		// THE PARAGRAPH THIS REPLACES IS KEPT RATHER THAN DELETED, because the conversation it
+		// asked for happened. It read:
+		//
+		//   RETRACTED> "DOCUMENTED, AND ASSERTED AS DOCUMENTED. The class states that the side
+		//   RETRACTED>  has still changed on a failed rebuild ... Pinned so that a later change
+		//   RETRACTED>  to that decision is a conversation rather than a surprise."
+		//   RETRACTED>  TestEqual(..., Subsystem->GetViewingSide(), SideCount);
+		//
+		// **[CORRECTED 2026-08-25. The sentence it quoted is still true and this clause was
+		// applying it to the wrong failure.** `UStratMatchSubsystem::SetViewingSide`'s
+		// no-rollback is about a FAILED REBUILD -- the presentation could not be rebuilt for a
+		// side that is perfectly legal -- and this block drives a FAILED RANGE CHECK, which is
+		// a different thing that the code used to treat the same way. It no longer does: every
+		// refusal now runs BEFORE the assignment and the rebuild, the one failure that
+		// deliberately does not roll back, runs after it. So a refused OUT-OF-RANGE hand-over
+		// leaves this member exactly where it was, and the old expectation of `SideCount` was
+		// pinning the defect.
+		//
+		// THE HALF THAT SURVIVES IS NOT DROPPED, IT MOVED. "A failed rebuild still hands over"
+		// is pinned by `Stratocracy.StratPlay.T-UI-03.
+		// ARefusedViewingSideLeavesBothMembersUnchanged` in
+		// `StratViewingSideHandoverClauses.cpp`, which drives an IN-RANGE side into a fixture
+		// with no scoreboard widget -- the rebuild refuses, `SetViewingSide` returns false, and
+		// both members have still moved. That clause reads BOTH members, which is what this one
+		// structurally could not do: it spawns no HUD on purpose.]**
+		TestEqual(
+			TEXT("a refused OUT-OF-RANGE hand-over left the stored side exactly as it was -- "
+				"the no-rollback rule is about a failed REBUILD, not a failed range check"),
+			Subsystem->GetViewingSide(), StoredBefore);
+		TestNotEqual(
+			*FString::Printf(TEXT("and the refused value %d was not stored"), SideCount),
 			Subsystem->GetViewingSide(), SideCount);
 	}
 

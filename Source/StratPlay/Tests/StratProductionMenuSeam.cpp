@@ -635,15 +635,43 @@ bool FStratProductionMenuNonFactoryHexTest::RunTest(const FString& /*Parameters*
 // hex beside it, and a hex written before the call could move on a call that produced no rows.
 //
 // THE REFUSAL IS MANUFACTURED FROM THE VIEWING SIDE AND NOT FROM THE HEX, and that is forced
-// rather than chosen -- see this file's header block. `SetViewingSide` is deliberately not
-// range-checked and deliberately does not roll back, both stated in its own declaration, so
-// it is the one lever that makes `FStratBridge::BuildOptions` refuse on a live match. THE
-// OUT-OF-RANGE SIDE IS `Model.Sides.Num()`, read off the module; no side count is written
-// down in this file.
+// rather than chosen -- see this file's header block. A hex is not a refusal channel at all:
+// `FStratBridge::BuildOptions` does not pre-check the factory hex, so a non-build-point hex
+// comes back as a FULL MENU with every row unavailable. The side is the only lever.
 //
-// `SetViewingSide` RETURNING FALSE IS EXPECTED here and is reported, never asserted: it fails
-// at the presentation rebuild for exactly the reason this clause wants, and asserting its
-// return would be asserting the rebuild.
+// **[THE LEVER CHANGED ON 2026-08-25 AND THE OLD ONE IS RECORDED HERE RATHER THAN DELETED,
+// because a reader who remembers it needs to see why it stopped working.** It read:
+//
+//   RETRACTED> "`SetViewingSide` is deliberately not range-checked and deliberately does not
+//   RETRACTED>  roll back, both stated in its own declaration, so it is the one lever that
+//   RETRACTED>  makes `FStratBridge::BuildOptions` refuse on a live match."
+//
+// That was true and is not true now. `UStratMatchSubsystem::SetViewingSide` range-checks
+// BEFORE it assigns, so an out-of-range hand-over is refused with the member untouched and
+// the next refresh SUCCEEDS -- which is the fix, and which left this clause red because its
+// lever, not its subject, had been removed. THE SUBJECT IS UNCHANGED AND NOTHING BELOW IS
+// RELAXED: the same two members, the same builder-produced rows, the same all-or-nothing
+// assertion.
+//
+// THE REPLACEMENT LEVER IS THE ONE PATH THAT STILL PUTS AN OUT-OF-RANGE SIDE INTO A LIVE
+// MATCH, and it is a real one rather than a contrivance: `FStratMatchConfig::ViewingSide` is
+// assigned by `StartMatch` WITHOUT a range check, deliberately -- the class's own comment
+// says the check belongs to `StratBuildViewModel`, "nearer the data it indexes than any
+// constant this file could name" -- so a Blueprint default can still produce this state. The
+// clause therefore builds its menu on a correctly configured match, RESTARTS on a config
+// whose `ViewingSide` is `Model.Sides.Num()`, and puts the rows it built back where the
+// reseed cleared them.
+//
+// THE PLANTED ROWS ARE THE BUILDER'S OWN, taken from `RefreshProductionMenu` on the first
+// match and never authored here. What is planted is only WHERE they sit, because a reseed
+// clears the two members by design (`GATE-BUILDMENU.AMenuDoesNotSurviveAReseed` pins that)
+// and this clause is about what a REFUSAL does to them, not about what a reseed does.
+//
+// `SetViewingSide` IS NO LONGER USED AS THE LEVER, so nothing here reports its return
+// value.]**
+//
+// THE OUT-OF-RANGE SIDE IS `Model.Sides.Num()`, read off the module; no side count is written
+// down in this file.
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratProductionMenuRefusedRefreshIsAllOrNothingTest,
@@ -701,12 +729,6 @@ bool FStratProductionMenuRefusedRefreshIsAllOrNothingTest::RunTest(const FString
 		return false;
 	}
 
-	// The one lever that makes the builder refuse on a live match. The side comes from the
-	// model's own side list.
-	const int32 OutOfRangeSide = Model.Sides.Num();
-	FString     SideReason;
-	const bool  bSideAccepted = H.Subsystem->SetViewingSide(OutOfRangeSide, SideReason);
-
 	FIntPoint OtherHex = FactoryHex;
 	for (const FStratFactoryView& Factory : Model.Factories)
 	{
@@ -717,17 +739,57 @@ bool FStratProductionMenuRefusedRefreshIsAllOrNothingTest::RunTest(const FString
 		}
 	}
 
+	// ---- The lever: a live match whose viewing side is outside the board ----
+	// `StartMatch` assigns `Config.ViewingSide` without a range check, deliberately, so this
+	// is the state a Blueprint default can still produce. The side comes from the model's own
+	// side list; no count is written down.
+	const int32 OutOfRangeSide = Model.Sides.Num();
+	{
+		FStratMatchConfig Skewed = Config;
+		Skewed.ViewingSide = OutOfRangeSide;
+
+		// THE SKEWED MATCH LOGS ITS OWN REASON AT WARNING LEVEL, and that line is DECLARED
+		// rather than tolerated: `StartMatch` seeds correctly and then reports that the
+		// presentation could not be drawn for side N, which is exactly the documented
+		// presentation split and exactly the state this clause is arranging. Undeclared it
+		// leaves the clause reporting SuccessWithWarnings, which reads as a defect nobody
+		// looked at.
+		AddExpectedMessagePlain(TEXT("is outside the snapshot's"), ELogVerbosity::Warning,
+			EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+		// NO SECOND `ExpectTheTileMeshWarning` HERE, and the omission is measured rather than
+		// an oversight: the declaration at the top of this clause is `Contains` with
+		// `Occurrences 0`, which means "at least one" and matches every occurrence in the run.
+		// A second declaration asks for its own separate occurrence and fails the clause with
+		// "Expected suppressed log message ... did not occur" -- measured 2026-08-25.
+		FString RestartReason;
+		H.Subsystem->StartMatch(Skewed, RestartReason);
+		if (!TestTrue(TEXT("a match with an out-of-range viewing side is still LIVE"),
+				H.Subsystem->IsMatchLive()))
+		{
+			AddError(RestartReason);
+			return false;
+		}
+		if (!TestEqual(
+				*FString::Printf(TEXT("and it is holding the out-of-range side %d"),
+					OutOfRangeSide),
+				H.Subsystem->GetViewingSide(), OutOfRangeSide))
+		{
+			return false;
+		}
+
+		// The reseed cleared both members by design. The rows put back are the ones the
+		// builder produced above; only their PLACE is planted, because what this clause
+		// measures is what a refusal does to them.
+		H.Subsystem->ProductionMenu    = RowsBefore;
+		H.Subsystem->ProductionMenuHex = HexBefore;
+	}
+
 	FString RefusedReason;
 	const bool bRefreshed = H.Subsystem->RefreshProductionMenu(OtherHex, RefusedReason);
 
-	// Restore before asserting, so a failing assertion cannot leave the subsystem in a state
-	// the teardown would complain about.
-	FString RestoreReason;
-	H.Subsystem->SetViewingSide(Model.ViewingSide, RestoreReason);
-
 	if (!TestFalse(*FString::Printf(
-				TEXT("a refresh for side %d is refused (SetViewingSide returned %d: '%s')"),
-				OutOfRangeSide, bSideAccepted ? 1 : 0, *SideReason),
+				TEXT("a refresh for the out-of-range side %d is refused"), OutOfRangeSide),
 			bRefreshed))
 	{
 		AddError(TEXT("no refusal was produced, so the all-or-nothing property below was never ")

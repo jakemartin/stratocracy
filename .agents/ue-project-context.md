@@ -220,8 +220,8 @@ checked against." Recorded here on 2026-08-14, verified against `Config/DefaultE
 
 | Path | Why | If you need a change |
 |---|---|---|
-| `Source/StratRules/**` | Vendored certified bytes from `E:\MultiAgent\stratocracy-crew`, hash-gated by `T-INT-01` at `rulesCommit cb8e12b` | Fix upstream in `stratocracy-crew`, re-vendor, update the manifest. File the request; do not hand-edit. |
-| `Data/**` | Vendored, hash-gated by `GATE-DATA-VENDOR` at `dataCommit c2f5860` | Same escalation path. |
+| `Source/StratRules/**` | Vendored certified bytes from `E:\MultiAgent\stratocracy-crew`, hash-gated by `T-INT-01` at the `rulesCommit` recorded in `Source/StratRules/StratRules.manifest.json`, WHICH IS THE AUTHORITY -- `96d93ea` as of 2026-08-25, and this line named `cb8e12b` through two re-vendors before that. A commit written into prose goes stale on the next re-vendor and nothing recomputes it, so read the manifest rather than this sentence | Fix upstream in `stratocracy-crew`, re-vendor, update the manifest. File the request; do not hand-edit. |
+| `Data/**` | Vendored, hash-gated by `GATE-DATA-VENDOR` at the `dataCommit` recorded in `Data/StratData.manifest.json`, WHICH IS THE AUTHORITY -- `c2f5860` as of 2026-08-25. That figure is CURRENT, and it is rewritten anyway: the row above went stale through two re-vendors while reading exactly as confidently as this one, so a quoted commit that happens to be right is the same defect not yet triggered | Same escalation path. |
 
 A hand-edit to either breaks a gate that exists precisely to catch it. `.claude/settings.json`
 denies writes to both.

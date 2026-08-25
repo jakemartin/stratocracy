@@ -13,6 +13,225 @@
 
 ## NEXT
 
+- **2026-08-25, `strat-gameplay-engineer`: THE WINNER NOW REACHES ENGINE CODE, THE PRODUCTION
+  MENU CAN NAME A SHORTFALL, AND THREE DEFERRALS WERE RETIRED BECAUSE THEIR PREMISES WERE
+  FALSE.** Six changes across `StratBridge`, `StratUI` and `StratPlay`; one of them is a defect
+  fix and the rest are new surface plus stamped retractions. No suite count and no verdict is
+  stated here -- `global.md` owns both.
+  - **`FStratBridge::MatchResult` ROUTES THE FOURTH `ui*` QUERY.** Upstream `96d93ea` added
+    `strat::UiMatchResult` / `strat::uiMatchResult` to the vendored `Ui.h` as a QUERY beside
+    `uiReachable`, `uiForecast` and `uiBuildOptions` -- not as a `UiSnapshot` field. So
+    `kUiSnapshotFieldCount`, `kUiMirrorFieldCount`, `kUiDerivedFieldCount`, the transcribed
+    `uiFieldContract()` table and `uiEnumerateSnapshot` are all UNMOVED, and no T-UI-05 consumer
+    carries anything new. `MakeUiSnapshot` is untouched. The bridge method takes an out-parameter
+    in `BuildOptions`'s shape, and it has ONE channel rather than two, because `uiMatchResult`
+    holds no legality the rules could decline.
+  - **IT REFUSES AN UNSEEDED BRIDGE WHERE UPSTREAM ANSWERS ONE, AND THAT IS THE ONLY DIVERGENCE.**
+    `Ui.h` rules that a world with no `turn` reports InProgress / SIDE_NONE, because a missing
+    input and an unfinished match are the same thing to a caller that cannot tell them apart.
+    `FStratBridge` HAS `IsSeeded()` and can, so it refuses -- a result screen handed "no winner
+    yet" by a bridge that never loaded a match would wait forever on a match that does not exist.
+  - **`FStratMatchResultView` AND `EStratResultCause` IN `StratViewModel.h`.** The cause enum is
+    ordinal-pinned to `strat::ResultCause` and mapped by an exhaustive switch (`ResultCauseOf`)
+    beside `ResultTierOf`, with no `default:` label, so a cause added upstream is a compile
+    failure in a file anybody may fix. `Winner` is `INDEX_NONE` on a draw and while in progress,
+    and a fourth `static_assert` -- `strat::SIDE_NONE == INDEX_NONE` -- makes that a copy rather
+    than a re-encoding. `StratBuildMatchResult` is the projection, and
+    `UStratMatchSubsystem::GetMatchResult` is the reader beside `GetConcludedMatchView`.
+  - **NO PARITY CLAUSE IS OWED FOR IT, AND THE ABSENCE IS THE POINT.** `StratViewModelParity.cpp`
+    walks `FStratViewModel` against a snapshot the same bridge projected; this struct is outside
+    that walk because it mirrors nothing IN the snapshot. What has to be pinned instead is the
+    ROUTING -- the bridge asked and this asked, on one bridge in one frame.
+  - **`FStratBuildOptionView::Shortfall` IS THE FIRST DERIVED NUMBER AT THAT BOUNDARY, AND THE
+    PLAN'S PREMISE FOR IT WAS WRONG.** The plan said "the same boundary already computes derived
+    values". It does not: `StratViewModel.h`'s header block claimed "NO ARITHMETIC, ANYWHERE" and
+    `StratBuildViewModel` contains no `+`, `-`, `/` or `.size()` over a snapshot vector. That
+    claim is now NARROWED IN PLACE in three headers rather than quietly falsified -- it still
+    holds for `FStratViewModel` and everything reachable from it, and there is exactly one
+    exception, in a struct that is not part of the model. `{S}2.11.5` requires `need N` on an
+    unaffordable row and T-UI-03 forbids the widget subtracting, so it lands here.
+    `UiBuildOption::affordable` remains the sole authority on WHETHER a row can be bought;
+    `Shortfall` is forced to 0 whenever it is true and clamped at 0 otherwise, so the two cannot
+    disagree about the greying even if they disagreed about the number. **DISCHARGED WHEN**
+    upstream adds `shortfallFame` to `UiBuildOption`, at which point the field becomes an
+    ordinary mirror and the subtraction is DELETED rather than moved.
+  - **`UStratMatchSubsystem::SetViewingSide` HAD A REAL DESYNC AND IT IS FIXED BY THE ORDER OF THE
+    LINES, NOT BY A COMMENT.** `AStratScoreboardHUD::SetViewingSide` range-checks BEFORE
+    assigning; the subsystem assigned FIRST and then forwarded, returning `false` on the HUD's
+    refusal without reaching `RefreshPresentation`. So a refused out-of-range hand-over left the
+    subsystem holding a side the HUD had rejected, and every later refresh failed inside
+    `StratBuildViewModel` naming the builder rather than the hand-over. Every refusal now sits
+    ABOVE the assignment and the rebuild sits BELOW it, which is what distinguishes the two
+    failure modes structurally. The deliberate no-rollback ON A FAILED REBUILD is unchanged and
+    its reason is unchanged.
+  - **THE NULL-HUD PATH WAS UNCHECKED AND IS NOW DECIDED EXPLICITLY.** With no HUD, nothing
+    range-checked the side at all -- a HUD-less subsystem is a legitimate configuration and it
+    used to adopt any `int32`. It now runs a TRIAL BUILD at the candidate side through
+    `StratBuildViewModel` -- the same authority `RefreshPresentation` reaches, asked for the
+    PROPOSED side rather than the held one -- and discards the model. No new constant and no
+    third range check: the two existing authorities are still the only ones, and only WHEN they
+    are consulted moved. With no HUD **and** no bridge there is no authority in existence to ask,
+    so the assignment stands and `RefreshPresentation` reports "there is no bridge", which is a
+    rebuild failure and not a refused side; that fall-through is stated in the code.
+  - **THREE PROSE CLAIMS OF MY OWN WENT FALSE IN THE SAME PASS THAT WROTE THEM, FOUND BY THE
+    WAVE 3 REVIEWER GATE AND CORRECTED IN PLACE 2026-08-25.** All three are the same class as
+    the "NO ARITHMETIC, ANYWHERE" claim above -- a COUNT or an unqualified QUANTIFIER that the
+    change itself invalidated -- which is the pattern worth carrying forward, not the three
+    instances.
+    - **A CENSUS THAT COUNTED THE WRONG THING.** `StratViewModel.cpp`'s header block said
+      "The static_asserts -- FOUR since 2026-08-25". The file has THREE `static_assert(`
+      statements (HEAD had two; I added `strat::SIDE_NONE == INDEX_NONE`). The block then
+      listed four SUBJECTS, and the fourth -- the `ResultTier` / `ResultCause` enumerators --
+      is real but is pinned by a DIFFERENT MECHANISM: an exhaustive switch with no `default:`
+      label. So the sentence conflated a count of asserts with a count of pinned subjects. It
+      now states three asserts and two switches, names each, and says why an enum's
+      MEMBERSHIP cannot be `static_assert`ed the way a constant's VALUE can.
+      `StratViewModel.h`'s narrowing paragraph disagreed with the .cpp about the same objects
+      and now defers to the .cpp block as the authority.
+    - **AND THE CORRECTION REINTRODUCED THE DEFECT ONE LEVEL UP -- A DIFFERENT MECHANISM,
+      WORTH ITS OWN LINE.** The fixed sentence read "the number is stated because this list
+      is the census and a reader will count `static_assert(` to check it". It named the exact
+      token it told the reader to search for, so the sentence became a member of its own
+      subject: `grep -c "static_assert(" Source/StratUI/StratViewModel.cpp` returned **4**
+      against a stated THREE -- three statements plus the census sentence. Found by the Wave 3
+      reviewer, measured before acting on it.
+      **THE GENERAL SHAPE, AND IT IS NOT THE SAME LESSON AS THE BULLET ABOVE: A CENSUS THAT
+      QUOTES ITS OWN SEARCH TOKEN JOINS THE SET IT IS COUNTING.** The bullet above is a count
+      invalidated by the change that wrote it; this one is a count invalidated by the sentence
+      that states it, and no amount of re-counting the subjects would have caught it. The
+      repo's neighbouring instance is prefix nesting -- `BP_` inside `WBP_` inflating a census
+      by 19 -- which is the same failure with two tokens instead of one.
+      **THE FIX IS AN ANCHOR THAT PROSE STRUCTURALLY CANNOT SATISFY**, not a reworded
+      sentence. The block now prescribes `grep -c '^[[:space:]]static_assert'`, which a
+      comment line cannot match because a comment line begins with `/`. Two figures in that
+      block are stated and both were measured on the file as it now stands: the anchored form
+      returns **3** (equal to the stated count) and an unanchored search for the bare token
+      returns **8**, because the prose names the token five more times -- which is exactly why
+      the unanchored form is not a census at all.
+      **THE ONLY CHECK THAT WOULD HAVE CAUGHT EITHER OF THESE IS RUNNING THE COUNT THE
+      SENTENCE ITSELF PRESCRIBES, ON THE FILE AS EDITED, BEFORE REPORTING.** Reading the
+      sentence and re-counting the subjects passed twice. That is the practice this entry is
+      really recording.
+    - **AND THE ANCHOR WAS ONE CHARACTER SHORT OF IMMUNE -- A THIRD MECHANISM, FOUND BY THE
+      RE-GATE AND MEASURED BEFORE ACTING.** The prescribed check was
+      `grep -c '^[[:space:]]static_assert'`, which matches EXACTLY ONE whitespace character.
+      It returned 3, but only because all three statements happen to sit at namespace scope
+      at one tab: one added inside a function body, a nested namespace or a class would sit
+      deeper and would NOT have matched, and the census would have UNDER-reported silently.
+      The check is now `grep -c '^[[:space:]]*static_assert'` -- still unable to match a
+      comment line, because `/` is not whitespace, and now indifferent to depth. Verified on
+      the file as edited: **returns 3**, equal to the stated count, matching the same three
+      statements. Build after the change: `Result: Succeeded`, exit 0.
+      **THE PATTERN ACROSS ALL THREE IS THE POINT.** (a) counted the wrong subject, (b)
+      quoted its own search token, (c) over-constrained the anchor. Each fix was sound and
+      each introduced the next, which is why "a census is correct" is not a property a
+      single reading establishes -- only running the prescribed check on the edited file
+      does, and that is now the third time it was the only thing that would have.
+
+    - **HELD, NOT FIXED: `StratBridge.h`'s FACADE BANNER, BECAUSE MY COUNT DISAGREES WITH THE
+      REVIEWER'S AND A CONFIDENTLY WRONG NUMBER IS WORSE THAN AN UNCHECKABLE ONE.** The
+      re-gate asked me to replace the banner's cardinals with NAMED methods -- the right
+      instruction -- but supplied a figure I cannot reproduce, and the brief's own rule is to
+      settle it before editing. Re-derived against the header, not taken from the relay:
+      - **AGREED, and it confirms the sentence is wrong today.** The facade section declares
+        **SEVEN** methods -- `Turn`, `SideToMove`, `ReachableHexes`, `AttackTargetHexes`,
+        `SubmitMoveToHex`, `SubmitAttackAtHex`, `SubmitBuildAtHex` -- of which **FIVE**
+        forward to a typed method beside them. `Turn()` and `SideToMove()` forward to
+        nothing: both read `GameState.turn` directly in the .cpp. So the banner's inherited
+        "The six methods below" and its "each one forwards to the typed method beside it"
+        cannot both describe the same set. **THAT AMBIGUITY IS PRE-EXISTING AND NOT MINE**;
+        I preserved it when I corrected the other half of the sentence.
+      - **DISPUTED.** The relay says the methods above the banner naming a `strat::` type
+        number SIX. I count **SEVEN** in the two sections immediately above it (`// ---- View
+        model` and `// ---- Rules queries`): `MakeUiWorld`, `MakeUiSnapshot`,
+        `CheckSnapshotFidelity`, `Reachable`, `Forecast`, `BuildOptions`, `MatchResult`.
+        `MakeUiWorld` returns `strat::UiWorld`, sits above the banner, and is public -- the
+        class has one `public:` and one `private:` and every declaration in that band is on
+        the public side. And under the OTHER available reading of "above the banner" -- the
+        whole class -- the answer is neither six nor seven but **17**, because `Submit`,
+        `SubmitMove`, `SubmitAttack`, `SubmitBuild`, `ReplayLog`, `RecordedLog`, `State`,
+        `UnitDefs`, `Tables` and `ScenarioData` all name a `strat::` type too.
+      **SO THE REAL DEFECT IS NOT THE CARDINAL, IT IS THAT "ABOVE" HAS NO DEFINED SCOPE** --
+      which is exactly why two careful readers got two different numbers, and why guessing a
+      band in order to name its members would bake my guess into the header. **WHAT IS OWED:**
+      a ruling on which set the sentence means, then a rewrite that NAMES those methods and
+      states no cardinal at all. The substantive half stands either way and is untouched:
+      `MatchResult` needs no `int32`/`FIntPoint` mirror because its consumer is `StratUI`,
+      which MAY name a `strat::` type, and `StratBuildMatchResult` hands `StratPlay` a struct
+      naming nothing vendored. **OWNED: coordinator, to settle the scope.**
+      - **SETTLED AND LANDED 2026-08-25. The coordinator re-derived rather than adjudicating
+        between two reports, confirmed SEVEN, and cited the header's own prose -- "PRIVATE,
+        WHERE `MakeUiWorld` IS PUBLIC" -- which settles the public/private half from inside
+        the file.** THE RULING WENT PAST THE NUMBER: the sentence stops depending on "above"
+        at all, because picking a band would have left the next reader re-deriving that
+        choice from a sentence that still did not state it. It now describes THIS SECTION and
+        its forwarding relation -- well-defined without a scope convention and checkable by a
+        reader standing in one place -- and NAMES `Turn()` and `SideToMove()` as the two that
+        mirror nothing, with no cardinal for either section.
+      - **THE CORRECTION HAD TO REACH THREE SENTENCES, NOT ONE, AND I FOUND THE THIRD.** The
+        coordinator named two: the banner, and "THEY ADD NO POLICY. Each one forwards to the
+        typed method beside it..." -- the second mattering more because it states a GUARANTEE
+        rather than a count, so a reader is likelier to rely on it, and a fix reaching only
+        the banner leaves the false claim standing where it does work. `Turn()` and
+        `SideToMove()` refute it the same way: they forward to nothing, convert nothing, and
+        cannot refuse at all, so "every refusal is the typed method's" is VACUOUS for them
+        rather than true. **THE THIRD WAS "OUT OF LINE, DELIBERATELY, all six"** -- the
+        section declares seven, and every one of them is out of line, established by
+        inspection (no declaration in the section carries a body) rather than by counting.
+        Its stated reason -- an inline body would instantiate the caller's TU over
+        `strat::Hex` -- does NOT reach `Turn()`/`SideToMove()`, which name no vendored type;
+        that is now said, so a reader does not take the argument as covering a case it does
+        not. Three cardinals in one block, all removed.
+      - **TWO CARDINALS IN THE SECTION WERE CHECKED AND DELIBERATELY LEFT ALONE**, because
+        both name a set the tree defines: "The five `Submit*` methods" (the section banner is
+        "Typed commands (§4.9's five, and no others)", and `strat::SaveCommandKind` is pinned
+        at five) and "§2.9's AI emits Build as one of its four kinds" (`strat::AiCommandKind`
+        is `{Build, Move, Attack, EndTurn}`). A cardinal over a DEFINED set is checkable; the
+        defect is a cardinal over an undefined one.
+
+    - **MECHANISM (d), AND IT IS THE ONE THAT BREAKS THE PATTERN OF THE OTHER THREE: A
+      QUANTIFIER OVER A SET THE SENTENCE NEVER DEFINES.** (a) counted the wrong subject,
+      (b) quoted its own search token, (c) over-constrained the anchor -- and **each of those
+      three was findable by ONE reader running ONE check.** (d) was not findable that way at
+      all: every reader who ran a count got a self-consistent answer, and the answers differed
+      only because each had silently supplied a different scope. It surfaced solely because
+      two readers compared results and a third reading (17) showed the disagreement was not a
+      tie to be broken. **SO THE PRACTICE THAT CATCHES (a)-(c) -- run the check the sentence
+      prescribes -- CANNOT CATCH (d).** What catches (d) is refusing to write a cardinal whose
+      set the sentence does not name, and, when one is disputed, holding the edit rather than
+      picking the likelier number. Holding was the right call here on the coordinator's own
+      verdict: a confidently wrong list baked into the header would have been worse than the
+      uncheckable number it replaced.
+    - **A BANNER OFF BY ONE BECAUSE OF MY OWN INSERTION.** `StratBridge.h`'s engine-typed
+      facade read "The six methods below say exactly what the five above say"; `MatchResult`
+      was inserted immediately above it, so a reader counting finds seven. Corrected, AND the
+      asymmetry is now stated rather than left to look like an omission: `MatchResult` needs
+      no `int32`/`FIntPoint` mirror because its consumer is `StratUI`, which MAY name a
+      `strat::` type, and `StratBuildMatchResult` hands `StratPlay` a struct that names
+      nothing vendored. A seventh mirror would be a second translation of one value.
+    - **AN UNQUALIFIED "EXACTLY ONE WRITER" THAT AUTOMATION HAD ALREADY FALSIFIED.**
+      `UStratMatchSubsystem::ProductionMenu`'s block said "there is exactly one writer,
+      `RefreshProductionMenu`". `Source/StratPlay/Tests/StratProductionMenuSeam.cpp` assigns
+      both `ProductionMenu` and `ProductionMenuHex` directly, to re-plant a menu a deliberate
+      reseed cleared. Nothing is broken -- `BlueprintReadOnly` never held C++ in this module
+      out, the plant is declared at its own site, and the REASON the block gives is about
+      Blueprints and still holds. Stamped: shipping writers are `RefreshProductionMenu` and
+      `CloseProductionMenu`, and the invariant a widget author may rely on is the one about
+      Blueprints, not a total writer count. **CHECKED AND CLEAR WHILE I WAS THERE:** that
+      file's out-of-range viewing side is arranged through `StartMatch` -- which assigns
+      `Config.ViewingSide` without a range check, deliberately and by its own comment -- and
+      NOT through `SetViewingSide`, so the 4b reordering does not touch it.
+  - **BUILD: GREEN, MEASURED AFTER THE LAST EDIT.** `Build.bat StratocracyEditor Win64
+    Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex
+    -NoHotReloadFromIDE` from the Bash tool in the integration tree -> `Result: Succeeded`,
+    exit 0, 64 actions, 317.62 s. The editor was closed for it. THIS IS THE FINAL BUILD, run
+    after the three prose corrections above; the earlier one in this pass was 59 actions /
+    289.55 s and is superseded rather than deleted, because the action count moved for a
+    reason that is not mine -- `strat-test-author` landed five new clause files in the same
+    tree between the two runs, and a reader comparing the numbers should not read that as
+    engine code growing. No suite figure is stated here; `global.md` owns it, and the clauses
+    are `strat-test-author`'s.
+
 - **2026-08-24, `strat-gameplay-engineer`: THREE COMMENTS NAMED BLUEPRINTS THAT DO NOT EXIST, IN
   THE SENTENCES THAT ASSIGN THE WORK TO THE CONTENT LANE. COMMENT-ONLY; NO DECLARATION, SIGNATURE
   OR EXECUTABLE LINE MOVED.** Four name instances across `StratBoardActor.h`, `StratUnitActor.h`
@@ -906,6 +1125,22 @@
     `E:\MultiAgent\stratocracy-crew` and a re-vendor. **DISCHARGED WHEN** a victory surface is
     actually specified — until then a screen can say a match ended and its tier, which is the
     transition this pass owed.
+  - **THAT DEBT IS DISCHARGED 2026-08-25, BY A ROUTE IT DID NOT CONSIDER, AND IS STAMPED IN PLACE
+    RATHER THAN DELETED.** Both stated discharge conditions were met and neither named route was
+    taken. (i) A victory surface IS specified: §2.11.4's end-of-match screen gives the tier, the
+    three scoreboard rows in order, and a FACTION-VOICED result line -- and the faction is chosen
+    by WHO WON, so the winner is load-bearing for the specified screen rather than decorative.
+    (ii) The route taken is a THIRD one the filing did not weigh: upstream added
+    `strat::uiMatchResult` as a fourth `ui*` QUERY, on the precedent `uiBuildOptions` set. It
+    costs neither of the two prices the filing objected to -- no view-model field that mirrors
+    nothing, and no move to `kUiSnapshotFieldCount` / `kUiMirrorFieldCount` /
+    `kUiDerivedFieldCount` / `uiFieldContract()` / `uiEnumerateSnapshot`. `FStratBridge::
+    MatchResult`, `FStratMatchResultView`, `StratBuildMatchResult` and
+    `UStratMatchSubsystem::GetMatchResult` are the engine half; the clauses are
+    `strat-test-author`'s and are named in the 2026-08-25 entry at the top of this file.
+    **WHAT IS NOT DISCHARGED:** nothing engine-side ASSERTS a winner yet. Until T-TURN-02 /
+    T-TURN-04 / T-TURN-05 clauses exist -- and until at least one of them arranges
+    `winner != sideToMove` -- a wrong derivation would pass every clause that does exist.
 
 - **`HexSize` on `AStratBoardActor`** is centre-to-centre spacing for a pointy-top layout, the
   only axial→world constant in the project; must be matched to whatever tile mesh phase 5 picks.
@@ -921,9 +1156,41 @@
   command list is literally move → attack, wait, end turn; which hex offers a capture and how
   the player is told is an unanswered UI question. The applier's `switch` will need one new arm.
   (Phase 4 deferral, carried forward.)
+  - **RETIRED 2026-08-25: NOTHING IS OWED, AND THE LAST SENTENCE WAS WRONG.** The affordance
+    question is not unanswered -- §2.11 answers it in the negative: "Capture and build need no
+    extra verbs. Capture is by presence (§2.7 ... a progress pip appears, NO BUTTON)."
+    `strat::AiCommandKind` is `{Build, Move, Attack, EndTurn}` for the same reason. And the
+    applier's `switch` will NEVER need an arm: `FStratBridge::SubmitCapture` is §4.10
+    SAVE-FORMAT TRANSPORT, kept because `strat::SaveCommandKind` is pinned at the five and
+    `Source/StratBridge/Tests/StratBridgeRestoreParity.cpp` and `StratBridgeSaveRecording.cpp`
+    dispatch it in log replay. The reason never to wire an affordance is stronger than "no phase
+    owns it": `strat::captureTick` is NOT IDEMPOTENT -- `prog->turnsHeld += 1` per call, and
+    `applyCommand`'s Capture arm builds occupants from the whole board and never reads
+    `c.unitId`, so the command is not even unit-specific. N submissions in one turn advance a
+    capture N turns' worth; on the shipped scenario (`captureTurns = 1`) that is masked. Stamped
+    into `StratPlayerController.h`, `StratSelectionMachine.h` and `StratMatchSubsystem.h`.
+    **WHAT MAKES THIS FALSIFIABLE RATHER THAN ASSERTED** is a clause nobody has written:
+    `TwoCaptureCommandsInOneTurnAdvanceHoldingTwice`. Named for `strat-test-author`.
 - **The hot-seat hand-over key is deliberately unbound.** `SetViewingSide` on a keypress would
   let either player see the other's board at any time; the confirmation screen is UI work no
   phase owns. (Phase 4 deferral, carried forward.)
+  - **THE KEY STAYS UNBOUND AND THE SECOND CLAUSE IS RETRACTED 2026-08-25: THERE IS NO
+    CONFIRMATION SCREEN AND NONE IS OWED.** The GDD specifies no hand-over screen. Measured
+    against `E:\MultiAgent\stratocracy-content\Stratocracy_Prototype_GDD.md`: four
+    case-insensitive hits for hot-seat in the whole document, all four in stretch-feature
+    context (§1.5's resolved question 4 -- "2-player hotseat: in scope or cut? RESOLVED: stretch
+    only, off the critical path (§2.10)" -- the §2.10 scope table's STRETCH row, and two pacing
+    asides); ZERO hits for "hand-over", "handover" or "pass the device"; and §2.11.5 states the
+    complete prototype screen list -- "title/menu, briefing, match, result". So "UI work no phase
+    owns" described work that does not exist, and a later reader following the citation would
+    have scheduled a screen nobody asked for.
+    **THE HALF THAT SURVIVES IS THE WHOLE REASON THE KEY IS UNBOUND** and it needs no screen
+    behind it: a key that silently flipped the viewing side would let either player see the
+    other's board at any time. If hot-seat ever comes off the stretch list, whatever drives the
+    swap must make it deliberate and visible; a bare keypress cannot. Stamped into
+    `StratPlayerController.h`'s "NOT IN THIS ROUND" block.
+    **A REAL DEFECT WAS SITTING BESIDE IT AND IS FIXED** -- the `ViewingSide` desync between this
+    class and `AStratScoreboardHUD`. See the 2026-08-25 entry at the top of this file.
 - **`SetLockedThisTurn` has a writer and no shipping caller** (§2.11.6 guided opening is out of
   milestone), so `bLockedThisTurn` is false in every running path. Its clause calls the setter
   itself and discloses in four places that it pins machine behaviour, not that any shipping path

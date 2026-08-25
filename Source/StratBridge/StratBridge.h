@@ -617,9 +617,86 @@ public:
 	FStratResult BuildOptions(int32 Side, const strat::Hex& FactoryHex,
 	                          std::vector<strat::UiBuildOption>& OutOptions) const;
 
+	// §2.8's result WHOLE, as `strat::uiMatchResult` returns it: the tier, the cause,
+	// the WINNING SIDE and the §2.8 key a capped match was decided on. Routed here for
+	// the reason the three queries above are -- the symbol carries no `_API` macro.
+	//
+	// WHAT GAP IT CLOSES, and it is a projection loss rather than a missing rule.
+	// `MakeUiSnapshot`'s `UiMatchView` carries `resultTier` and drops `winner`, `cause`
+	// and `decidedByKey`, so before this method existed every consumer downstream of the
+	// projection could say *Decisive* and could not say FOR WHOM. T-TURN-02 grades a flag
+	// kill "Decisive win for the KILLER" and T-TURN-04 decides a capped match on a NAMED
+	// criterion; neither second half was assertable outside the rules module at all.
+	//
+	// `sideToMove` IS NOT A STAND-IN FOR `winner`, and this is the trap this method
+	// exists to keep shut. Upstream states it at the field: the two agree on a flag kill
+	// only because the killer happened to be the side to move, and they disagree at the
+	// cap, where the match ends at a turn boundary. A caller deriving one from the other
+	// is right in the common case and silently wrong in the case a tiebreak decides.
+	//
+	// A FOURTH `ui*` QUERY AND NOT A SNAPSHOT FIELD, which is upstream's ruling and not
+	// this file's preference -- `Ui.h` states it at the declaration. Every `UiSnapshot`
+	// field is pinned by T-UI-05's enumeration, so a `winner` there would move
+	// `kUiSnapshotFieldCount`, `kUiMirrorFieldCount`, `kUiDerivedFieldCount`, the
+	// transcribed `uiFieldContract()` table and `uiEnumerateSnapshot`, and every consumer
+	// of the snapshot would carry that move to hold a value only §2.11.4's end-of-match
+	// screen reads. `MakeUiSnapshot` is untouched by this method, and that is the point.
+	//
+	// ONE CHANNEL AND NOT TWO, which is the difference from `Forecast` and `BuildOptions`
+	// and is stated because those two sit directly above it. There is no question here
+	// the rules can DECLINE: `uiMatchResult` is a pure mirror of `TurnState::result` with
+	// no legality anywhere in it, so `FStratResult` carries only whether the bridge could
+	// be ASKED. Nothing on the returned struct is a refusal wearing an answer's clothes.
+	//
+	// AN UNSEEDED BRIDGE IS REFUSED, AND UPSTREAM ANSWERS THE SAME CASE. `Ui.h` rules
+	// that a world with no `turn` reports the default -- InProgress, SIDE_NONE -- because
+	// the only safe thing a caller can do with a missing input and an unfinished match is
+	// the same thing. That ruling is right where it is made and wrong here: this class
+	// HAS `IsSeeded()` and can tell the two apart, and a victory screen handed "no result
+	// yet" by a bridge that was never loaded would wait forever on a match that does not
+	// exist. The divergence is deliberate and is the only place this method is not a
+	// straight pass-through.
+	//
+	// COMPUTES NOTHING. Not the tier, not the winner, not the tiebreak key, and it does
+	// not consult `hasResult` to decide whether the other fields are meaningful -- that
+	// is the caller's read of `Tier`, exactly as `FStratMatchView::bHasResult` is.
+	FStratResult MatchResult(strat::UiMatchResult& OutResult) const;
+
 	// ---- The engine-typed façade -----------------------------------------
-	// The six methods below say exactly what the five above say, in `int32` and
-	// `FIntPoint`, and they exist for one reason: `StratPlay` NAMES NO `strat::`
+	// EVERY METHOD IN THIS SECTION SAYS, IN `int32` AND `FIntPoint`, EXACTLY WHAT THE TYPED
+	// METHOD OF THE SAME SUBJECT SAYS -- EXCEPT `Turn()` AND `SideToMove()`, WHICH MIRROR
+	// NOTHING. Those two read `GameState.turn` directly (`return GameState.turn.turnNumber;`
+	// and `return GameState.turn.activeSide;`) and have no typed counterpart anywhere in this
+	// class. They live here because a caller of these methods needs them, not because
+	// anything was translated for them.
+	//
+	// NO COUNT IS STATED FOR EITHER SECTION, AND THE ABSENCE IS THE CORRECTION RATHER THAN AN
+	// OMISSION. This sentence has been wrong twice, and the second time was its own fix:
+	// RETRACTED> "The six methods below say exactly what the five above say, in `int32` and
+	// RETRACTED>  `FIntPoint`"
+	// RETRACTED> "The six methods below say exactly what SIX OF THE SEVEN above say, in
+	// RETRACTED>  `int32` and `FIntPoint`"   (2026-08-25, itself replacing the line above)
+	// BOTH DEPENDED ON THE WORD "ABOVE", WHICH THIS HEADER NEVER DEFINES, and the ambiguity is
+	// not academic -- three readings were derived on 2026-08-25 and they give different
+	// answers: SIX (the two sections above this banner, less `MakeUiWorld`), SEVEN (those
+	// sections, since `MakeUiWorld` returns `strat::UiWorld` and is public -- see "PRIVATE,
+	// WHERE `MakeUiWorld` IS PUBLIC" further down this file) and SEVENTEEN (every method in
+	// the class whose signature names a `strat::` type). TWO CAREFUL READERS HAD TO DISAGREE
+	// BEFORE ANYONE COULD SEE THAT THE SCOPE, NOT THE NUMBER, WAS THE DEFECT. A cardinal in
+	// prose goes stale silently and cannot be checked without first settling a convention
+	// nobody wrote down; a NAMED exception is checkable by a reader standing in one place,
+	// which is why the sentence above names `Turn()` and `SideToMove()` instead of counting.
+	//
+	// `MatchResult` HAS NO MIRROR HERE AND NEEDS NONE, AND THAT IS DELIBERATE RATHER THAN AN
+	// OMISSION. The mirrors exist because `StratPlay` cannot spell a `strat::` type to
+	// call the typed form -- but `MatchResult`'s consumer is `StratUI`, which MAY name one
+	// (`StratViewModel.cpp` names `strat::UiSnapshot` and `strat::UiBuildOption` already),
+	// and its projection `StratBuildMatchResult` hands `StratPlay` an `FStratMatchResultView`
+	// that names nothing vendored. So the translation happens once, in `StratUI`, and a
+	// mirror here would be a second one. If a gameplay-side caller ever needs the result
+	// WITHOUT going through the view model, it gets a mirror and this paragraph gains a name.
+	//
+	// The mirrors exist for one reason: `StratPlay` NAMES NO `strat::`
 	// TYPE. That is not a style rule it could bend -- `StratPlay.Build.cs` and
 	// `StratMatchSubsystem.h` both state it, and the actor headers that would
 	// otherwise carry such a type are parsed by UHT, which must never see the
@@ -637,16 +714,35 @@ public:
 	// `FStratHexView::Hex` and `FStratUnitView::Hex` already carry, so a gameplay
 	// caller passes the view model's own value straight back in.
 	//
-	// THEY ADD NO POLICY. Each one forwards to the typed method beside it and
+	// THEY ADD NO POLICY. Each one THAT HAS a typed method beside it forwards to it and
 	// converts the container; every refusal is the typed method's, in its words.
-	// The one exception is documented on `AttackTargetHexes`, and it is an
-	// enumeration rather than a rule.
+	// The one exception to the no-policy rule is documented on `AttackTargetHexes`,
+	// and it is an enumeration rather than a rule.
 	//
-	// OUT OF LINE, DELIBERATELY, all six. An inline body here would force the
-	// caller's translation unit to instantiate over `strat::Hex` and defeat the
-	// whole point; it would also hide them from the link line, which is how the
-	// 4 x LNK2019 measured on `StratPlay` stayed invisible until a real caller
-	// existed (`StratPlay.Build.cs`).
+	// `Turn()` AND `SideToMove()` ARE OUTSIDE THAT GUARANTEE, and the qualifier above exists
+	// for them. They forward to nothing and convert nothing -- they read `GameState.turn`
+	// directly -- so "every refusal is the typed method's" is VACUOUS for them rather than
+	// true: they cannot refuse at all, and both return 0 on an unseeded bridge, which their
+	// own declaration is explicit is not a sentinel.
+	// THIS SENTENCE READ "Each one forwards to the typed method beside it" WITH NO QUALIFIER,
+	// and it is corrected here as well as in the banner deliberately: it states a GUARANTEE
+	// rather than a count, so a reader is likelier to rely on it, and a correction that
+	// reached only the banner would have left the false claim standing exactly where it does
+	// work.
+	//
+	// OUT OF LINE, DELIBERATELY, AND WITHOUT EXCEPTION IN THIS SECTION -- established by
+	// inspection (no declaration here carries a body) rather than by a count. THE CARDINAL IS
+	// GONE FROM THIS SENTENCE TOO: it read "all six" and this section declares seven, so it
+	// was a THIRD instance of the same defect inside one block.
+	// An inline body would force the caller's translation unit to instantiate over
+	// `strat::Hex` and defeat the whole point; it would also hide the method from the link
+	// line, which is how the 4 x LNK2019 measured on `StratPlay` stayed invisible until a
+	// real caller existed (`StratPlay.Build.cs`).
+	//
+	// THAT REASON DOES NOT REACH `Turn()` AND `SideToMove()`, which name no vendored type and
+	// could have been inline without instantiating anything. They are out of line anyway, and
+	// nothing in this block depends on why -- stated so that a reader does not take the
+	// instantiation argument as covering a case it does not.
 
 	// §4.10's `{turn, side}` stamp, readable before a command is submitted.
 	//

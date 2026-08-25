@@ -102,9 +102,11 @@ _SUBJECTS: list[Candidate] = [
         artifact=(
             "Source/StratRules/Ui.h (vendored; RULED 2026-08-20 -- see "
             "Tools/architect/state/decisions.md -- filed upstream at crew `4d36a16`, "
-            "IMPLEMENTED and VENDORED at `rulesCommit cae01e3...`, which is crew HEAD "
+            "IMPLEMENTED and VENDORED at `rulesCommit 96d93ea...`, which is crew HEAD "
             "with a re-derived gap of ZERO: `git -C stratocracy-crew rev-list --count "
-            "cae01e37..HEAD` -> 0)"
+            "96d93ea..HEAD` -> 0. The commit named here was `cae01e3` until the "
+            "2026-08-25 re-vendor moved it; a commit written into reference prose "
+            "goes stale on the next re-vendor and nothing recomputes it.)"
         ),
         gdd_basis=(
             "§4.7 Stub 8 ORIGINALLY read 'There is deliberately no third query: "

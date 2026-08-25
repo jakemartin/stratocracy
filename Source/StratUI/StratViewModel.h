@@ -52,7 +52,18 @@
 // file's "AT MOST ONE IS EVER NON-NULL" ownership block instead -- a paragraph that
 // mentions neither `C4150` nor `TUniquePtr`.)
 //
-// NO ARITHMETIC, ANYWHERE, and one lookup that is not arithmetic. Every number below is
+// NO ARITHMETIC, ANYWHERE, and one lookup that is not arithmetic. NARROWED 2026-08-25 AND
+// NOT DELETED, because the claim is still true of the thing it is about and a reader who
+// remembers the absolute needs to see which half moved: it holds for `FStratViewModel` and
+// every struct reachable from it, and there is now EXACTLY ONE exception, in a struct that
+// is not part of the model at all. `FStratBuildOptionView::Shortfall` is
+// `CostFame - FameTotal`, computed in `StratBuildProductionMenu`, and its own block states
+// why §2.11.5's `need N` had to land one layer below the widget and what discharges it.
+// The narrowing touches NOTHING ELSE in this pair: the three `static_assert`s -- one of
+// which (`strat::SIDE_NONE == INDEX_NONE`) was added by the same pass -- and the two
+// exhaustive mapping switches are unaffected, and the .cpp's own census block is the
+// authority on both counts. Every number below
+// is
 // EQUAL TO ONE FIELD of `strat::UiSnapshot`, copied across with no transformation
 // beyond a width cast -- the same binding rule `StratScoreboardWidget.h` states, held
 // one layer lower. The single addition is `TerrainId` / `DefId`: the definition row's
@@ -140,6 +151,37 @@ enum class EStratResultTier : uint8
 	Draw       UMETA(DisplayName = "Draw"),
 	Marginal   UMETA(DisplayName = "Marginal"),
 	Decisive   UMETA(DisplayName = "Decisive")
+};
+
+/**
+ * WHY a match ended. Mirrors `strat::ResultCause`, enumerator for enumerator.
+ *
+ * PINNED BY ORDINAL TO THE VENDORED ENUM, exactly as `EStratResultTier` above is, and
+ * mapped by an exhaustive switch in the .cpp rather than by a cast -- so a cause added
+ * upstream is a compile failure in a file that can be fixed instead of a silent renumber.
+ * `strat::ResultCause` is `{ None, FlagDestroyed, Domination, AttritionLead,
+ * PassivityGuard, AllKeysTied }` and these six are it, in that order and with those names.
+ *
+ * `None` IS THE NULL AND IS NOT A SEVENTH STATE. Upstream spells it "still in progress",
+ * and it is also what a capped match reports when no key was ever evaluated. A surface
+ * must read the TIER to know whether a match ended; this says why, once one has.
+ *
+ * IT IS NOT A STRING AND MUST NOT BECOME ONE HERE. `strat::causeName` exists and is
+ * deliberately not routed: §2.11.4's result line is FACTION-VOICED copy chosen by who
+ * won, so the words belong to the screen and the cause belongs to the rules. A mapping to
+ * player-facing text goes beside `ResultTierOf` when the GDD writes those strings, and
+ * this enum is that mapping's INPUT rather than its output -- the same debt
+ * `FStratBuildOptionView::Reason` carries and for the same reason.
+ */
+UENUM(BlueprintType)
+enum class EStratResultCause : uint8
+{
+	None           UMETA(DisplayName = "None"),
+	FlagDestroyed  UMETA(DisplayName = "Flag Destroyed"),
+	Domination     UMETA(DisplayName = "Domination"),
+	AttritionLead  UMETA(DisplayName = "Attrition Lead"),
+	PassivityGuard UMETA(DisplayName = "Passivity Guard"),
+	AllKeysTied    UMETA(DisplayName = "All Keys Tied")
 };
 
 /**
@@ -445,6 +487,42 @@ struct FStratBuildOptionView
 	bool bAffordable = false;
 
 	/**
+	 * How much more Fame this side needs before it can pay for this row. Zero whenever
+	 * `bAffordable` is true.
+	 *
+	 * THE ONE DERIVED NUMBER IN THIS PAIR, AND IT IS DECLARED DERIVED RATHER THAN
+	 * DISGUISED AS A MIRROR. Every other field on every other struct in this header is
+	 * EQUAL TO ONE `strat::UiSnapshot` or `strat::UiBuildOption` field, copied across with
+	 * no transformation beyond a width cast; this one is `CostFame - FameTotal`, computed
+	 * in `StratBuildProductionMenu`. The header block's "NO ARITHMETIC, ANYWHERE" claim is
+	 * therefore NARROWED HERE rather than left standing falsely: it holds for
+	 * `FStratViewModel` and everything reachable from it, and this struct -- a query
+	 * answered on demand, never a field of the model -- now carries exactly one exception.
+	 *
+	 * WHY IT IS HERE AND NOT IN THE WIDGET. §2.11.5 requires an unaffordable row to stay
+	 * visible, stay priced, and NAME THE SHORTFALL (`need 50`). That sentence is arithmetic
+	 * and T-UI-03 forbids a widget performing it. Somebody one layer below the screen has
+	 * to, and this is the lowest layer that can see both the price and the purse.
+	 *
+	 * WHY IT IS NOT UPSTREAM, WHICH IS WHERE `bAffordable` LIVES. `UiBuildOption` carries
+	 * `costFame` and `affordable` and no shortfall, and `affordable` is module-side
+	 * PRECISELY so that T-UI-03 has something to bind to. By that precedent the shortfall
+	 * belongs beside it. It is here instead because it is PRESENTATION COPY'S INPUT and not
+	 * a rules fact: no rule reads it, no §4.10 command carries it, and no §2.8 outcome
+	 * turns on it. A DEBT RIDES WITH THAT CALL and is written down rather than owned
+	 * quietly -- **DISCHARGED WHEN** an upstream pass adds `shortfallFame` to
+	 * `UiBuildOption`, at which point this field becomes an ordinary mirror and the
+	 * subtraction in `StratBuildProductionMenu` is DELETED rather than moved.
+	 *
+	 * `bAffordable` IS THE AUTHORITY AND THIS IS NEVER READ TO DERIVE IT. A widget greys a
+	 * row off `bAffordable` and prints `need N` off this; asking `Shortfall > 0` instead
+	 * would make the screen's greying depend on this file's subtraction rather than on the
+	 * module's comparison, which is the substitution T-UI-03 exists to catch.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Production")
+	int32 Shortfall = 0;
+
+	/**
 	 * This factory will take a build right now. Mirrors `UiBuildOption::available`.
 	 *
 	 * A SEPARATE FIELD FROM `bAffordable`, AND NOT AN AND OF IT. "This factory has
@@ -549,6 +627,81 @@ struct FStratMatchView
 	/** §2.8's tier. Mirrors `UiMatchView::resultTier`; `InProgress` is the null. */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	EStratResultTier ResultTier = EStratResultTier::InProgress;
+};
+
+/**
+ * §2.8's result WHOLE -- the three fields `FStratMatchView` drops. Mirrors
+ * `strat::UiMatchResult` field for field.
+ *
+ * IT IS NOT A FIELD OF `FStratViewModel`, AND THAT IS THE SAME DECISION MADE THREE TIMES
+ * DOWN THE STACK rather than a fresh one here. Upstream declared `uiMatchResult` a QUERY
+ * and not a `UiSnapshot` field, because every snapshot field is pinned by T-UI-05's
+ * enumeration; `FStratBridge::MatchResult` routes it as a query for the same reason; and
+ * hanging it off the view model here would put four values only §2.11.4's end-of-match
+ * screen reads inside a value that is rebuilt on every refresh, for every consumer.
+ * `StratBuildMatchResult` answers it on demand instead, exactly as
+ * `StratBuildProductionMenu` does, and `FStratViewModel` does not grow.
+ *
+ * SO IT NEEDS NO PARITY CLAUSE, and that absence is load-bearing rather than an
+ * oversight. `StratViewModelParity.cpp` walks `FStratViewModel` against a snapshot the
+ * same bridge projected; this struct is outside that walk because it mirrors nothing IN
+ * the snapshot. What pins it instead is the ROUTING -- a clause asks the bridge and asks
+ * this, on the same bridge in the same frame, and compares.
+ *
+ * IT DOES NOT CARRY `bHasResult`. `FStratMatchView` does, read from the module rather
+ * than inferred, and a second copy here could disagree with it. `Tier == InProgress` is
+ * upstream's own null and is what this struct offers; a surface that needs the boolean
+ * reads the view model's, which is the one the screen was drawn from.
+ */
+USTRUCT(BlueprintType)
+struct FStratMatchResultView
+{
+	GENERATED_BODY()
+
+	/** §2.8's tier. Mirrors `UiMatchResult::tier` -- the same value
+	 *  `FStratMatchView::ResultTier` carries, through the same `ResultTierOf` mapping and
+	 *  no other, so the two cannot spell one tier two ways. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Result")
+	EStratResultTier Tier = EStratResultTier::InProgress;
+
+	/** Why the match ended. Mirrors `UiMatchResult::cause`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Result")
+	EStratResultCause Cause = EStratResultCause::None;
+
+	/**
+	 * The winning `strat` side, or `INDEX_NONE` on a draw AND while in progress. Mirrors
+	 * `UiMatchResult::winner`, convention included.
+	 *
+	 * `INDEX_NONE` AND NOT A SEPARATE FLAG, because `strat::SIDE_NONE` IS -1 -- and the
+	 * two constants are CHECKED equal in the .cpp rather than assumed, the same treatment
+	 * `strat::OWNER_NEUTRAL` gets on the owner fields and for the same reason: they are
+	 * declared in two repositories, one vendored and one engine.
+	 *
+	 * IT IS NOT `FStratMatchView::SideToMove` AND MUST NEVER BE DERIVED FROM IT. The two
+	 * agree on a flag kill only because the killer happened to be the side to move, and
+	 * disagree at the turn cap, where the match ends at a boundary. This field exists
+	 * because that derivation is right in the common case and silently wrong in exactly
+	 * the case a tiebreak decides -- see `FStratBridge::MatchResult`.
+	 *
+	 * IT IS NOT `FStratViewModel::ViewingSide` EITHER. Who won is the rules module's
+	 * answer about the match; whose screen this is is the caller's statement. §2.11.4's
+	 * faction-voiced result line is chosen by comparing them, and that comparison belongs
+	 * to the screen that draws it.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Result")
+	int32 Winner = INDEX_NONE;
+
+	/**
+	 * Which §2.8 tiebreak key decided a capped match: 1, 2 or 3; 0 when no tiebreak was
+	 * evaluated. Mirrors `UiMatchResult::decidedByKey`.
+	 *
+	 * A NUMBER AND NOT AN ENUM, deliberately. §2.8 numbers the keys and T-TURN-04 grades
+	 * "the criterion that differed" by that number; naming them here would be this file
+	 * authoring a vocabulary the GDD has not written, and the mapping to Fame / objectives
+	 * / surviving HP would then have two spellings.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Result")
+	int32 DecidedByKey = 0;
 };
 
 /**
@@ -818,3 +971,31 @@ STRATUI_API bool StratBuildProductionMenu(
 	FIntPoint                      FactoryHex,
 	TArray<FStratBuildOptionView>& OutOptions,
 	FString&                       OutFailureReason);
+
+/**
+ * §2.8's result WHOLE, in engine types. The projection §2.11.4's end-of-match screen
+ * needs and the one `StratBuildViewModel` structurally cannot supply.
+ *
+ * A SEPARATE ENTRY POINT, for `StratBuildProductionMenu`'s reason exactly: it is a query
+ * one surface asks and not state every consumer of the view model should carry. See
+ * `FStratMatchResultView`'s own block for the three places that decision has now been
+ * made in a row.
+ *
+ * ALL-OR-NOTHING, as both functions above are. It fills a local and assigns on the last
+ * line, so a refusal leaves the caller's value exactly as it found it -- which matters
+ * more here than anywhere else in this file: a result screen blanked by a transient
+ * refusal would announce a match still in progress.
+ *
+ * REFUSES ON AN UNSEEDED BRIDGE rather than answering InProgress, forwarding
+ * `FStratBridge::MatchResult`'s own words. That method's declaration records why it
+ * diverges from upstream on exactly this case.
+ *
+ * IT DOES NOT CHECK WHETHER THE MATCH HAS ENDED and never refuses over it. An
+ * in-progress match is a legitimate answer -- tier `InProgress`, winner `INDEX_NONE` --
+ * and a caller that wants the boolean reads `FStratMatchView::bHasResult` off the model
+ * the screen was drawn from.
+ */
+STRATUI_API bool StratBuildMatchResult(
+	const FStratBridge&    Bridge,
+	FStratMatchResultView& OutResult,
+	FString&               OutFailureReason);

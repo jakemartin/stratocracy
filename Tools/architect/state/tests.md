@@ -12,6 +12,148 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **WAVE 2's TEST HALF: WHO WON, THE SPAWN-BLOCKED ASYMMETRY, THE CAPTURE VERB, AND THE
+  HAND-OVER DESYNC.** Twelve clauses across five new files, all under acceptance IDs the GDD
+  already owns — **none minted**. **Clause delta +12**, by set-difference on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` (never by an acceptance-ID grep,
+  which has undercounted 8 as 5 in this repo): exactly twelve names added, none renamed, none
+  removed. Unstaged; staging is the user's call. The live suite figure is in
+  `Tools/architect/state/global.md` and is not restated here.
+  - **THE FILES.** `Source/StratBridge/Tests/StratMatchResultClauses.cpp` (T-TURN-02, -04,
+    -05), `Source/StratBridge/Tests/StratSpawnBlockedClauses.cpp` (T-UI-04, T-UI-05),
+    `Source/StratBridge/Tests/StratCaptureCommandClauses.cpp` (T-FAME-05),
+    `Source/StratUI/Tests/StratMatchResultRouting.cpp` (two T-UI-05, two T-UI-03),
+    `Source/StratPlay/Tests/StratViewingSideHandoverClauses.cpp` (two T-UI-03).
+  - **THE ONE CLAUSE THE WHOLE OF ITEM 1 TURNS ON, AND WHAT IT ARRANGES.**
+    `T-TURN-04.CappedMatchNamesTheKeyThatDiffered` is the only clause in this suite where
+    **`winner != sideToMove`**. It is arranged rather than lucky: the cap resolves at a ROUND
+    BOUNDARY, so `activeSide` is whichever side CLOSED the round — the last side in the
+    alternation, never `firstSide` — and the arrangement makes side 0 (`kFirstSide`) lead
+    Sec 2.8's comparison. Both numbers are then read from the module on one world in one frame
+    — the winner from `uiMatchResult`, the side to move from `buildUiSnapshot` — and
+    asserted unequal. **Without it every who-won clause passes against a `sideToMove`
+    derivation**, and the projection loss item 1 exists to close stays open under a green
+    suite. A flag kill cannot supply it: there `sideToMove` IS the winner, because the killer
+    was to move.
+  - **TWO LEVELS, AND THE SPLIT IS A LIMIT WORTH KNOWING RATHER THAN A CONVENIENCE.**
+    - `T-TURN-05.MutualPassivityIsADrawWithNoWinner` runs the **whole engine chain on a bridge
+      that genuinely concluded** — a `turnCap: 1` variant of the shipped scenario written
+      under `Saved/StratTests/`, two `SubmitEndTurn` calls, then `FStratBridge::MatchResult` on
+      the state those commands produced. No `TurnState` is touched by the test on that path.
+    - **`T-TURN-02` AND `T-TURN-04` DO NOT EXERCISE `FStratBridge::MatchResult`'s OWN BODY**,
+      and that is stated in the file rather than implied. `FStratBridge` exposes no writer for
+      `strat::GameState`, this lane may not add one, and neither a flag kill nor a pre-cap KILL
+      is reachable in the two commands a headless clause can afford. So they take the bridge's
+      live `TurnState` through `MakeUiWorld()`, COPY it, hand the copy to the module's own
+      graders (`checkImmediate` / `beginTurn` / `endTurn`) with a `BoardSnapshot` built from
+      the bridge's own projection, and read the result back through `strat::uiMatchResult`
+      — the exact function the bridge method calls. `StratMatchResultRouting.cpp` covers
+      the bridge method and the T-TURN-05 clause drives it on a concluded match, so the chain
+      is covered end to end across three clauses and by no single one.
+  - **WHY `T-FAME-05` AND NOT THE PROPOSED `T-SAVE-05` FOR THE CAPTURE CLAUSE.** Both IDs exist
+    in the GDD; the proposed one is about a different thing. T-SAVE-05's GDD text is "no
+    partial load: a log with an illegal command at index k is refused whole; the pre-load state
+    survives". T-FAME-05's is the capture line — "completes after N turns of HOLDING (N = 1
+    on the shipped scenario, per-scenario data); progress is tile-held and RESETS TO ZERO..."
+    — and `turnsHeld` is the counter this clause is about. **Read the SITE, not the hit
+    count.**
+  - **AND THE CAPTURE CLAUSE COULD NOT BE WRITTEN AT THE BRIDGE, WHICH IS ITSELF THE FINDING.**
+    `captureTurns` is hardcoded to **1** by the seeding path (`seedFromScenario`, and the
+    reseed in `Replay.good.cpp`), and the scenario schema carries **no key** for it. At N = 1
+    the FIRST tick completes the capture, flips the owner and CLEARS the progress record, so
+    **`turnsHeld` never reads 2 on any board this engine can seed** — the masking the
+    filing predicted, measured. So the clause is in two halves: the non-idempotence itself at
+    the module, on a hand-built `strat::EconomyState` with `captureTurns` above 1 and a
+    ONE-TICK CONTROL beside the two-tick state (without which "2 after two ticks" is satisfied
+    by a counter that jumps to 2 on the first); and, through the shipped bridge, that **two
+    `SubmitCapture` calls in one turn are both accepted and both recorded** — the Capture
+    arm consults neither T-TURN-10's per-factory allowance nor T-TURN-01's act flag. Either
+    half alone is quotable and misleading.
+  - **THE SPAWN-BLOCKED CLAUSES LIVE IN `StratBridge/Tests` AND NOT BESIDE THE SEAM CLAUSES,
+    and the reason is the expectation rather than the subject.** "The unit landed on a
+    NEIGHBOUR" needs an adjacency answer. `strat::neighbors(factoryHex, bounds, out)` IS that
+    answer — the same walk `spawnHexesBlocked` and `resolveBuilds` both do — and it is
+    a `strat::` free function, `LNK2019` in any other module. Written in `StratPlay` the clause
+    would have had to carry a hex formula, which is the one thing this suite refuses.
+    - **WHAT THEY PIN THAT NOTHING PINNED BEFORE.**
+      `FStratProductionMenuBuildReconcilesTheBoardTest` asserts actor-id SET EQUALITY plus one,
+      **which a neighbour spawn satisfies exactly as well as a factory-hex spawn**, so
+      displacement was invisible to it. It does NOT pass silently on a boxed-in build — its
+      COVERAGE guard bails out — so it was left alone.
+    - **THE ASYMMETRY, NOW A MEASUREMENT.** `strat::spawnHexesBlocked` is OCCUPANCY-ONLY and is
+      true only when the factory hex AND every in-bounds neighbour are occupied. Under
+      displacement it is **false**, and
+      `T-UI-05.ADisplacedSpawnLandsOnANeighbourAndSpawnBlockedStaysFalse` asserts it stays
+      false across the build. **A Sec 2.11.5 footer bound to `bSpawnBlocked` therefore says
+      nothing at all about the case that produced the original complaint.** Recorded here so no
+      later pass re-derives it and no later widget is built against the wrong belief.
+    - **TWO SCENARIO-VALIDATOR RULES BIT THE FIXTURES AND BOTH ARE WRITTEN INTO THE FILES.**
+      Handing side 0 a second FACTORY is refused outright — "side 0 owns 2 factories at
+      start; exactly one home factory is required (Sec 2.7)" — so the T-TURN-05 variant
+      hands over a neutral TOWN instead. And moving a side-1 **Infantry** near the middle of
+      the board contested side 0's guided lane under T-SCN-11 ("(1,5) -> (5,7) is contested: 5
+      against 5"), so the boxing units are side 1's **Artillery and Recon**, which Sec 2.11.6-B's
+      lane rule cannot see. **A scenario variant is validated as hard as the shipped file.**
+  - **THE HAND-OVER CLAUSES, AND WHY THE EXISTING T-UI-03 CLAUSE COULD NOT HAVE CAUGHT THE
+    DESYNC.** `Stratocracy.StratUI.T-UI-03.SetViewingSideRefusesOutOfRange` reads the HUD's
+    member alone, and **the HUD's half was never wrong** — it range-checked before
+    assigning throughout the life of the bug. That clause was green the whole time.
+    `T-UI-03.ARefusedViewingSideLeavesBothMembersUnchanged` reads **both**, and the second read
+    is the entire difference.
+    - **BOTH FAILURE MODES RETURN FALSE AND THE ONLY OBSERVABLE THAT TELLS THEM APART IS
+      WHETHER THE MEMBERS MOVED.** A headless fixture can have no scoreboard WIDGET
+      (`UStratScoreboardWidget` is `Abstract`), so `RefreshScoreboard` refuses and an IN-RANGE
+      hand-over returns false while both members HAVE moved — the deliberate no-rollback on
+      a failed rebuild. An out-of-range one returns false with neither member moved. The clause
+      drives both in sequence and that ordering is load-bearing, not stylistic.
+    - **THE NULL-HUD BRANCH HAD NO AUTHORITY AND NO TEST AT ALL BEFORE THIS PASS.**
+      `T-UI-03.ARefusedViewingSideWithNoHudLeavesTheSubsystemUnchanged` covers the engineer's
+      new discarded trial build through `StratBuildViewModel` at the candidate side, in BOTH
+      directions — an in-range side is still accepted, without which "refuses" is satisfied
+      by a method that refuses everything, which would be a worse regression than the one it
+      closes.
+  - **TWO PRE-EXISTING CLAUSES WERE ALREADY RED ON THE TREE THIS LANE RECEIVED, BOTH CAUSED BY
+    THE ENGINE HALF, AND BOTH WERE CORRECTED AT THEIR PREMISE RATHER THAN WEAKENED.** Neither
+    was caused by anything in this pass — the five new files are additions.
+    1. `Stratocracy.StratPlay.T-UI-03.SetViewingSideMutatesNoState` (`StratMatchLifecycle.cpp`)
+       asserted that a refused OUT-OF-RANGE hand-over left the subsystem holding the refused
+       side, quoting the class's no-rollback sentence. **That sentence is about a failed REBUILD
+       and the clause was applying it to a failed RANGE CHECK** — the same conflation the
+       code made and the fix removed. The clause was pinning the defect. Its own comment had
+       asked in writing for "a conversation rather than a surprise" if the decision moved; this
+       is that conversation. The surviving half moved to the new hand-over clause, which spawns
+       a HUD and can drive it; this one deliberately does not.
+    2. `Stratocracy.StratPlay.GATE-BUILDMENU.ARefusedRefreshLeavesTheOpenMenuAndItsHexIntact`
+       lost its **LEVER, not its subject**. It made `RefreshProductionMenu` refuse by putting
+       an out-of-range side into a live match through `SetViewingSide`, which now refuses
+       before assigning. **The replacement lever is `FStratMatchConfig::ViewingSide`, which
+       `StartMatch` assigns WITHOUT a range check** — deliberately, per that class's own
+       comment — so the state is still reachable from a Blueprint default. The clause now
+       builds its rows on a correct match, restarts on a skewed config, and puts the builder's
+       own rows back where the reseed cleared them. **Nothing in it was relaxed.**
+       - **THERE IS NOW NO OTHER REFUSAL CHANNEL INTO `RefreshProductionMenu` FROM A LIVE,
+         SEEDED MATCH.** `FStratBridge::BuildOptions` refuses only on definitions, seeding and
+         the side; a non-factory hex is a full menu with every row unavailable, not a refusal.
+         If `StartMatch` ever range-checks `Config.ViewingSide`, this clause becomes unwritable
+         and that is a finding to raise rather than a clause to delete.
+  - **AN INSTRUMENT TRAP, MEASURED THIS PASS AND WORTH THE NEXT AUTHOR'S TIME.** A SECOND
+    `AddExpectedMessagePlain(..., Contains, Occurrences 0)` for a line the clause already
+    declared **fails the clause** with "Expected suppressed log message ... did not occur":
+    `Occurrences 0` means "at least one" and the first declaration consumes every match, so the
+    second is left waiting for an occurrence that will never come. One declaration per line per
+    clause.
+  - **WHERE EVERY EXPECTATION CAME FROM, AND THE ONE PLACE IT DID NOT.** All twelve read the
+    module on both sides of every comparison, except
+    `T-UI-03.UnaffordableRowNamesTheExactShortfall`, which computes `CostFame - FameTotal`.
+    **That is the one acceptable case and the reason is structural: no module-side value
+    exists.** `strat::UiBuildOption` carries `costFame` and `affordable` and NO shortfall
+    — which is precisely why `FStratBuildOptionView::Shortfall` was added, and its
+    declaration already records the debt as **discharged when** upstream adds `shortfallFame`.
+    Both operands are still the module's; what this lane supplies is one minus sign, and it is
+    named in the file's header. Both shortfall clauses are keyed off **`bAffordable`, never off
+    `Shortfall > 0`** — asking the derived field to decide which rows to check would make
+    the clause agree with itself by construction.
+
 - **THE MARKER NOW HAS A GATE ON THE DIRECTION IT LATCHED IN, AND THE EXISTING CLAUSE THAT WENT
   RED WAS REPAIRED AT ITS PREMISE RATHER THAN WEAKENED.** Three clauses appended to
   `Source/StratPlay/Tests/StratGuidedOpeningVisuals.cpp`, all under the pre-existing `T-UI-02`,
@@ -546,6 +688,35 @@
     - **WHO WON.** `strat::UiMatchView` carries no winning side and `strat::MatchResult::winner`
       reaches no projection, so nothing here can assert one. A victory SCREEN has no gate under
       it and cannot get one until that value is projected — `engine.md` carries the debt.
+      - **RETIRED 2026-08-25 BY THE ENGINE HALF OF WAVE 2, AND STAMPED RATHER THAN DELETED.
+        HALF the premise above is now false and half of it survives, which is why the bullet
+        stays.** Upstream `96d93ea` — the `rulesCommit` now recorded in
+        `Source/StratRules/StratRules.manifest.json` — added `strat::uiMatchResult` as a
+        FOURTH `ui*` QUERY beside `uiReachable`, `uiForecast` and `uiBuildOptions`, and NOT as
+        a `UiSnapshot` field. Verified against the tree rather than taken from the handoff:
+        `git diff` of `Source/StratRules/Ui.h` and `Ui.good.cpp` is **additions only**, and no
+        `kUi*FieldCount` constant, no `uiFieldContract()` row and no `uiEnumerateSnapshot`
+        emit line moved. `FStratBridge::MatchResult` routes it, `FStratMatchResultView`
+        reflects it with `EStratResultCause` ordinal-pinned to `strat::ResultCause` exactly as
+        `EStratResultTier` is pinned to `strat::ResultTier`, and
+        `UStratMatchSubsystem::GetMatchResult` is this engine's reader.
+        - **THE HALF THAT SURVIVES UNCHANGED IS THE SNAPSHOT HALF.** `strat::UiMatchView`
+          still carries `turn`, `turnCap`, `sideToMove`, `hasResult`, `resultTier` and NO
+          winning side, and `FStratMatchView` still faithfully mirrors that. Only the claim
+          that *nothing downstream can name a winner* is withdrawn.
+        - **WHAT THIS FILE OWED IS NOW PAID, and the sentence is updated rather than left
+          saying work is outstanding that has been done.** The debt was clauses against
+          T-TURN-02, T-TURN-04 and T-TURN-05, with at least one arranging
+          `winner != sideToMove`. All three landed in
+          `Source/StratBridge/Tests/StratMatchResultClauses.cpp`, and
+          `T-TURN-04.CappedMatchNamesTheKeyThatDiffered` is the one that arranges the
+          inequality — see the pass entry at the top of this file for how, and for what the
+          three do and do not reach.
+        - **`FStratMatchResultView` IS DELIBERATELY OUTSIDE `StratViewModelParity.cpp`'s WALK**
+          because it mirrors nothing IN the snapshot and is not a field of `FStratViewModel`.
+          There is therefore no parity clause to write and its absence is not a gap. What
+          needed pinning was the ROUTING — one bridge, one frame, all four fields — and
+          `Stratocracy.StratUI.T-UI-05.MatchResultViewRoutesTheBridgeAnswer` is it.
     - **THE CONTROLLER-SIDE GATES.** `AStratPlayerController::HandleSelectionEvent`,
       `ToggleProductionMenu`'s open branch and `SubmitProductionChoice` all now call
       `StratMatchAcceptsPlayerCommands`, and **not one of those three CALL SITES is pinned

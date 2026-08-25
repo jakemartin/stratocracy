@@ -726,22 +726,35 @@ bool UStratMatchSubsystem::SetViewingSide(int32 InViewingSide, FString& OutFailu
 {
 	OutFailureReason.Reset();
 
-	// NOT RANGE-CHECKED HERE. `StratBuildViewModel` checks it against the snapshot's own
-	// side count and `AStratScoreboardHUD::SetViewingSide` checks it against
-	// `strat::SIDE_COUNT` -- both sit nearer the data they index than any constant this
-	// file could name without the forbidden include. A third check here would be a third
-	// authority that can disagree with the other two.
+	// STILL NOT RANGE-CHECKED HERE, and that half is unchanged. `StratBuildViewModel`
+	// checks it against the snapshot's own side count and `AStratScoreboardHUD::
+	// SetViewingSide` checks it against `strat::SIDE_COUNT` -- both sit nearer the data
+	// they index than any constant this file could name without the forbidden include. A
+	// third check here would be a third authority that can disagree with the other two.
 	//
-	// THE ASSIGNMENT HAPPENS FIRST AND IS NOT ROLLED BACK ON A FAILED REBUILD, matching
-	// `AStratScoreboardHUD::SetViewingSide` exactly and for the reason its declaration
-	// gives: rolling back would make a hot-seat hand-over silently stay with the previous
-	// player, which is the one outcome this game must not produce quietly.
-	ViewingSide = InViewingSide;
+	// WHAT DID CHANGE (2026-08-25) IS WHEN AN EXISTING AUTHORITY IS CONSULTED, and this
+	// paragraph is stamped rather than deleted because the claim it replaces was HALF right.
+	// It used to read:
+	// RETRACTED> "THE ASSIGNMENT HAPPENS FIRST AND IS NOT ROLLED BACK ON A FAILED REBUILD,
+	// RETRACTED>  matching `AStratScoreboardHUD::SetViewingSide` exactly..."
+	// The reason it gave is sound and survives below, but it is about a FAILED REBUILD and
+	// the code applied it to a FAILED RANGE CHECK as well. `AStratScoreboardHUD::
+	// SetViewingSide` does NOT match: it range-checks BEFORE assigning, so a refused call
+	// changes nothing there. This one assigned first, so a refused out-of-range hand-over
+	// left this class holding a side the HUD had rejected -- and every later refresh then
+	// failed inside `StratBuildViewModel` naming the builder rather than the hand-over.
+	//
+	// THE TWO FAILURE MODES ARE NOW SPLIT BY THE ORDER OF THE LINES BELOW, which is the only
+	// way a reader can be sure of them: every REFUSAL is above the assignment, and the
+	// rebuild -- the one failure that deliberately does NOT roll back -- is below it.
 
+	// ---- Refusal, before any mutation --------------------------------------
 	// The HUD keeps its own viewing side -- it is a separate projection with a separate
-	// column layout -- so it is told rather than inferred. Its refusal is the range check,
-	// forwarded in its own words.
-	if (AStratScoreboardHUD* const HUD = FindScoreboardHUD())
+	// column layout -- so it is told rather than inferred, and its refusal IS the range
+	// check, forwarded in its own words. Told BEFORE this class commits, so that on a
+	// refusal neither member moved.
+	AStratScoreboardHUD* const HUD = FindScoreboardHUD();
+	if (HUD != nullptr)
 	{
 		FString HudReason;
 		if (!HUD->SetViewingSide(InViewingSide, HudReason))
@@ -750,6 +763,48 @@ bool UStratMatchSubsystem::SetViewingSide(int32 InViewingSide, FString& OutFailu
 			return false;
 		}
 	}
+	else if (const FStratBridge* const Live = Bridge.Get())
+	{
+		// WITH NO HUD, NOTHING RANGE-CHECKED THE SIDE AT ALL -- and that was true before this
+		// change too, silently. A HUD-less subsystem is a legitimate configuration (every
+		// fixture with no actors in its world is one), and it used to adopt any `int32`
+		// handed to it and discover the problem on the next refresh, or never.
+		//
+		// A TRIAL BUILD AT THE CANDIDATE SIDE, AND NOT A NEW CONSTANT. This asks
+		// `StratBuildViewModel` -- the SAME authority `RefreshPresentation` would reach a few
+		// lines further down -- for the side being proposed rather than for the one this
+		// class currently holds, which is the whole trick: it gets the check without
+		// committing to the value. The model built here is DISCARDED and never applied; the
+		// one the screen gets is built by `RefreshPresentation` below, after the assignment,
+		// so nothing on screen comes from this probe.
+		//
+		// IT REFUSES ON ANY BUILD FAILURE AND NOT ONLY ON AN OUT-OF-RANGE SIDE, which is
+		// deliberate and is the conservative direction: if the model cannot be built for the
+		// proposed side, adopting the side would put this class into a state whose only
+		// observable consequence is a refresh that fails afterwards. Refusing here says so
+		// once, in the builder's own words, with both members untouched.
+		FStratViewModel Probe;
+		FString ProbeReason;
+		if (!StratBuildViewModel(*Live, InViewingSide, Probe, ProbeReason))
+		{
+			OutFailureReason = FString::Printf(
+				TEXT("no scoreboard is present and side %d does not build: %s"),
+				InViewingSide, *ProbeReason);
+			return false;
+		}
+	}
+	// NO HUD AND NO BRIDGE FALLS THROUGH ON PURPOSE. There is no authority in existence to
+	// ask, and inventing one here is exactly the third check refused above. The assignment
+	// stands and `RefreshPresentation` reports "there is no bridge" -- which is the true
+	// reason, and is a REBUILD failure rather than a refused side.
+
+	// ---- Commit, then rebuild ----------------------------------------------
+	// ON A FAILED REBUILD THE SIDE HAS STILL CHANGED, matching `AStratScoreboardHUD::
+	// SetViewingSide` exactly and for the reason its declaration gives: rolling back would
+	// make a hot-seat hand-over silently stay with the previous player, which is the one
+	// outcome this game must not produce quietly. Everything that could refuse the side has
+	// already run.
+	ViewingSide = InViewingSide;
 
 	return RefreshPresentation(OutFailureReason);
 }
@@ -1372,6 +1427,33 @@ FStratMatchView UStratMatchSubsystem::GetConcludedMatchView() const
 	// Before any `ApplyView` this is a default-constructed view whose `bHasResult` is false,
 	// which is the right answer to "what result was shown" when none was.
 	return AppliedModel.Match;
+}
+
+bool UStratMatchSubsystem::GetMatchResult(FStratMatchResultView& OutResult,
+                                          FString&               OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	const FStratBridge* const Live = Bridge.Get();
+	if (Live == nullptr)
+	{
+		// NAMED HERE rather than left to arrive as some later refusal, on
+		// `RefreshProductionMenu`'s reasoning: "there is no match" and "the match has no
+		// result yet" send the next reader to different files, and a result screen must
+		// never be told the second when the first is true.
+		OutFailureReason = TEXT("there is no live match to read a result from");
+		return false;
+	}
+
+	// A FRESH QUERY AND NOT `AppliedModel`, which is the whole difference from
+	// `GetConcludedMatchView` above. The winner is not on the view model and is not going to
+	// be; there is therefore nothing cached to project, and this is the only honest shape.
+	// The declaration records the trade that buys.
+	//
+	// ALL-OR-NOTHING IS `StratBuildMatchResult`'S and is not re-implemented here: it assigns
+	// on its last line, so a refusal leaves the caller's value untouched and this function
+	// has nothing of its own to roll back.
+	return StratBuildMatchResult(*Live, OutResult, OutFailureReason);
 }
 
 void UStratMatchSubsystem::ConcludeMatchIfEnded(const FStratViewModel& Model)

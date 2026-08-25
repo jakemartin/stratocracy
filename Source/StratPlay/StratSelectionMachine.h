@@ -66,11 +66,35 @@
 // declares no reflected type either, so UHT does not parse it at all.
 //
 // NOT IN THIS ROUND, with reasons:
-// - CAPTURE. `FStratBridge::SubmitCapture` exists and this machine never emits it. The
-//   phase list is literally "click-to-select -> move -> attack, wait, end turn", and a
-//   capture affordance is a §2.7 interaction with its own affordance question (which hex
-//   offers it, and how the player is told) that no phase has answered. Recorded as a
-//   deferral rather than guessed at; the applier's `switch` will need one new arm.
+// - CAPTURE, AND THIS BULLET IS RETRACTED IN PLACE. It used to read:
+//   RETRACTED> "CAPTURE. `FStratBridge::SubmitCapture` exists and this machine never emits
+//   RETRACTED>  it. The phase list is literally 'click-to-select -> move -> attack, wait,
+//   RETRACTED>  end turn', and a capture affordance is a §2.7 interaction with its own
+//   RETRACTED>  affordance question (which hex offers it, and how the player is told) that
+//   RETRACTED>  no phase has answered. Recorded as a deferral rather than guessed at; the
+//   RETRACTED>  applier's `switch` will need one new arm."
+//   THE LAST SENTENCE IS THE ONE THAT HAD TO GO. `StratSubmitSelectionCommand`'s `switch`
+//   WILL NEVER NEED A CAPTURE ARM, and this machine will never gain a `Capture` command --
+//   not as a deferral, but as a finding. Three measurements, made 2026-08-25:
+//     (a) §2.11 answers the affordance question the old bullet called unanswered, in the
+//         negative: "Capture and build need no extra verbs. Capture is by presence (§2.7:
+//         an Infantry that ends its move on a capturable tile begins capturing -- a
+//         progress pip appears, NO BUTTON)." There is no hex that offers it and no player
+//         to tell, because capture is a consequence of a MOVE this machine already emits.
+//         `strat::AiCommandKind` is `{Build, Move, Attack, EndTurn}` for the same reason.
+//     (b) `FStratBridge::SubmitCapture` is §4.10 SAVE-FORMAT TRANSPORT and is kept for
+//         that alone. `strat::SaveCommandKind` is pinned at the five, and
+//         `Source/StratBridge/Tests/StratBridgeRestoreParity.cpp` and
+//         `StratBridgeSaveRecording.cpp` dispatch it in log replay. It is not dead code and
+//         it is not this struct's business.
+//     (c) `strat::captureTick` IS NOT IDEMPOTENT. Its progress arm is `prog->turnsHeld += 1`
+//         per call, and `applyCommand`'s Capture arm builds occupants from the whole board
+//         and never reads `c.unitId`. So a `Capture` command is not even unit-specific, and
+//         two of them in one turn advance a capture two turns' worth. An arm added here
+//         would be an arm that ships a cheat.
+//   THE HALF THAT SURVIVES: this machine never emits `Capture`, and now it never will.
+//   Stamped rather than deleted, matching the BUILD bullet below, because a reader who
+//   remembers this as owed work needs to see WHICH HALF was withdrawn.
 // - BUILD, AND THIS BULLET IS RETRACTED IN PLACE. It used to read:
 //   RETRACTED> "BUILD. §2.11.5's production menu is explicitly out of the hot-seat
 //   RETRACTED>  milestone."

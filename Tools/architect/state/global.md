@@ -11,6 +11,73 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-25 (WAVE 2 LANDS: THE ENGINE CAN SAY WHO WON, AND TWELVE CLAUSES PIN IT. The
+suite is now 213/213, every entry Success, zero failed and zero notRun. The delta is +12 and
+nothing was removed, measured by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over
+`Source/` and RE-DERIVED BY THE `coordinator` independently of both lane reports -- the macro
+census and the automation report agree at 213. THE REPORT IS NAMED RATHER THAN ALLUDED TO,
+because this file already carries an observation about a banner whose cited report disagreed
+with the one on disk: `reportCreatedOn 2026.08.25-17.21.56`, `succeeded 213`, `failed 0`,
+`notRun 0`, and it is a run performed on the tree as it now stands. It is the THIRD run of
+this figure and the citation was rewritten twice to follow it: the test lane's own
+`16.20.20`, then `17.03.21`, then this one. Each rewrite was cheaper than the alternative,
+which is a banner citing a report older than the tree it describes -- the exact defect this
+file already carries an observation about. The two rounds of prose corrections between the
+second run and this one were comment-only, and re-running is how that was ESTABLISHED
+rather than assumed; the count did not move and none was expected to. Re-running was how the intervening
+comment-only rounds were established as comment-only, rather than assumed.
+Written by the `coordinator`, whose file this is.
+WHAT LANDED. Engine half (`strat-gameplay-engineer`): `FStratBridge::MatchResult` routing
+`strat::uiMatchResult`, `FStratMatchResultView` with `EStratResultCause` ordinal-pinned to
+`strat::ResultCause`, `UStratMatchSubsystem::GetMatchResult`, `FStratBuildOptionView::Shortfall`,
+the three `SubmitCapture` retractions, the hot-seat premise correction, and the `ViewingSide`
+desync fix. Test half (`strat-test-author`): twelve clauses across T-TURN-02/04/05, T-UI-03/04/05
+and T-FAME-05. `engine.md` and `tests.md` carry the detail and this banner does not restate it.
+THE ONE CLAUSE THE ITEM TURNED ON WAS WRITTEN, and it is worth naming because the item closes
+falsely without it. `CappedMatchNamesTheKeyThatDiffered` deliberately arranges `winner !=
+sideToMove` -- reading the winner from `strat::uiMatchResult` and the side to move from
+`strat::buildUiSnapshot` on the same world in the same frame. Without it every who-won clause
+would pass against a `sideToMove` derivation, which is right on a flag kill and wrong at the cap,
+and the gap this whole item exists to close would have stayed open under a green suite.
+TWO PREVIOUSLY-GREEN CLAUSES WENT RED AND WERE CORRECTED AT THEIR PREMISE, NOT WEAKENED.
+`SetViewingSideMutatesNoState` was PINNING THE DEFECT -- it asserted that a refused out-of-range
+hand-over left the subsystem holding the refused side, quoting a no-rollback sentence that is
+about a failed REBUILD and applying it to a failed RANGE CHECK. That is the exact conflation the
+fix removed. `ARefusedRefreshLeavesTheOpenMenuAndItsHexIntact` lost its LEVER, not its subject:
+it reached a refusal through `SetViewingSide`, which now refuses before assigning; its replacement
+lever is `FStratMatchConfig::ViewingSide`, which `StartMatch` assigns unchecked by design.
+A RED CLAUSE THAT IS PINNING A DEFECT IS THE ONE CASE WHERE GOING RED IS THE CORRECT OUTCOME, and
+telling it apart from a regression takes reading its premise rather than its verdict.
+AN ACCEPTANCE ID IN THE ENGINE HALF'S HANDOFF WAS WRONG AND WAS CAUGHT BY READING THE SITE.
+The capture clause was proposed under `T-SAVE-05`, which EXISTS -- it is the no-partial-load
+rule -- and is not about capture at all. It went under `T-FAME-05`, whose text names the holding
+counter the clause measures. A proposed identifier greps exactly like a defined one; only the site
+tells them apart, and a hit count never would have.
+NO NEW ACCEPTANCE ID WAS MINTED and no phase verdict is stated here. Wave 3 is the reviewer gate
+and it has not run; nothing in this pass is gated.)
+
+_Last run 2026-08-25 (THE OWED RE-VENDOR IS DONE. `rulesCommit` MOVES `cae01e3` -> `96d93ea`,
+AND `T-INT-01` AND `T-INT-04` BOTH PASS OVER THE NEW BYTES. Written by the `coordinator`. A
+vendor-and-record pass: no test and no gameplay source file was touched, NO SUITE FIGURE MOVES AND
+NONE IS CLAIMED HERE.
+WHAT MOVED. `sync_stratrules.py` was run in the crew repo and vendored 24 sources plus
+`StratRules.Build.cs` from `96d93ea`. Exactly three files under `Source/StratRules/` changed --
+`Ui.h`, `Ui.good.cpp` and `StratRules.manifest.json` -- which is the set the 2026-08-24 banner
+predicted, re-derived here from `git status` rather than carried over from that prediction.
+`strat::UiMatchResult` and `strat::uiMatchResult` are DECLARED in the vendored `Ui.h` now, so the
+bridge and projection work that waited on them is unblocked.
+THE GATE RAN TWICE AND ONLY THE SECOND RUN GRADED BOTH CLAUSES, which is the reusable half. From a
+plain shell `run.py --integration` returns PASS on `T-INT-01`, SKIP on `T-INT-04` -- no compiler on
+PATH -- and exits 2, a verdict of "did not run" and not a pass. Re-run under `vcvars64.bat` it
+returns INTEGRATION GATE PASS on both and exits 0. That is this box's standing condition rather
+than a new finding, and a run without vcvars asserts nothing about engine independence. The
+compile half matters here beyond ritual: it is the only thing that has read the new vendored bytes
+through a compiler, since no UE build has run in this pass.
+THE CREW GAP OVER THE VENDORED COMMIT IS ZERO AGAIN, derived with `rev-list --count 96d93ea..HEAD`
+in the crew repo at the moment this was written, with that working tree clean and `main` still
+ahead of its origin by two unpushed commits. A gap figure is invalidated by the next crew commit,
+which this record has now been bitten by once and states again rather than trusting.)
+
 _Last run 2026-08-24 (THE CANDIDATE BACKLOG WAS RENDERING FOUR ENTRIES WRONG, AND TWO OF THEM
 BACKWARDS. Written by the `coordinator`, whose file this is. A record-only pass: no test and no
 source file was touched.
@@ -48,7 +115,12 @@ so survives the CRLF/LF split a plain diff trips on: `Ui.h` and `Ui.good.cpp` ha
 it names while being one commit stale, and **a green `T-INT-01` means "honestly vendored", never
 "current"**. Nothing in this repo can notice the difference; only a cross-repo count can, and
 that count is the thing this same stamp records getting invalidated by its own next commit.
-OWNED: the re-vendor step, before any lane builds on the new query.]** The entry at
+OWNED: the re-vendor step, before any lane builds on the new query.]**
+**[DISCHARGED 2026-08-25 by the `coordinator` -- THE RE-VENDOR RAN. `rulesCommit` is
+`96d93ea`, both moved files are vendored, and `T-INT-01` passes over the new bytes with
+`T-INT-04` beside it under vcvars. Stamped here as well as at the `## NEXT` site, because
+this is the sentence that assigns the work and a correction reaching only the evidence has
+not been made. This file's newest banner carries the run.]** The entry at
 the bottom of `## NEXT` carries the detail and this banner does not restate it.
 THE SHAPE UNDERNEATH ALL FIVE, WHICH IS WORTH MORE THAN ANY ONE OF THEM. Every status in that
 backlog is COMPUTED from a probe rather than stored, which is the right design and is why the
@@ -208,8 +280,13 @@ implemented -- and its DECLARATION in `StratGuidedOpening.h` implied `bIsGuidedM
 `bActive`, which it does not and must not. The lane found the second and said so. A brief that
 names one instance of a wrong belief does not bound how many copies the tree holds.
 WHY THE SUITE STAYED GREEN THROUGH ALL OF IT. The one clause on the marker measured it only inside
-a frame where guidance was ACTIVE; nothing anywhere asserted it goes OUT. **The suite is now
-201/201**, every entry Success, zero failed and zero notRun. The delta is +3 and nothing was
+a frame where guidance was ACTIVE; nothing anywhere asserted it goes OUT. **The suite at that time was 201/201**, every entry Success, zero failed and zero
+notRun. [SUPERSEDED 2026-08-25 BY WAVE 2 -- the live figure is the one this file's
+newest banner carries, and it is 213. The sentence above was true when written and is
+stamped rather than deleted. The tense word is placed hard against the figure on
+purpose: this record's sweep reads `was` as a supersession marker only when nothing --
+not even a bold marker -- sits between it and the number, and positional supersession
+alone has hidden a live figure here before.] The delta is +3 and nothing was
 removed, measured by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/`
 and re-derived by the coordinator independently of the lane's report. `Saved/SaveGames/` was
 enumerated empty before and after the run.
@@ -2164,6 +2241,13 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     decremented from the nineteen recorded above, for the same reason every earlier banner gives
     when its own count moved. The vendored tree is not behind by one commit; it is AT upstream
     HEAD, and that crew tree is clean.
+    **[RE-STAMPED 2026-08-25, coordinator -- BOTH READINGS ABOVE ARE HISTORY AND THE OWED WORK
+    IS DONE.** The re-vendor ran: `rulesCommit` is `96d93ea`, the vendored `Ui.h` and
+    `Ui.good.cpp` carry the `uiMatchResult` query, and the gap over the vendored commit is ZERO
+    again -- re-derived with `rev-list --count 96d93ea..HEAD`, not decremented from the ONE
+    stamped above. **`T-INT-01` PASSES OVER THE NEW BYTES AND IS NOT WHAT DISCHARGES THIS**: it
+    would have passed over the stale ones too, for the reason the bracket above gives. What
+    discharges it is that the manifest now RECORDS crew HEAD. The banner carries the run.]**
   - **SO `production_widget` IS UNBLOCKED.** Its rendered "(blocked on buildlist_query)" inherits
     a blocker that no longer exists. What it is NOT is finished -- see the entry below on where
     `WBP_ProductionMenu` actually stands against Sec 2.11.5 -- but nothing upstream stands in

@@ -11,6 +11,57 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-25 (SEC 2.11.5 CLOSES ON A HUMAN PLAYTEST, AND THE PLAYTEST CORRECTED THE
+COORDINATOR. Written by the `coordinator`. An evidence-and-record pass: no source file, no test
+and no asset was touched.
+The suite is now 218/218, every entry Success, zero failed and zero
+notRun. NO SUITE FIGURE MOVED IN THIS PASS AND NO RUN WAS PERFORMED FOR IT: the figure is
+carried forward from the entry below, over the same automation report that entry names, and
+nothing under `Source/` was touched here. It is restated rather than
+left below because this file's live count lives in its TOPMOST entry -- an unrestated figure
+reads as superseded to `strat_banner_sweep.py`, which is how this entry first failed the sweep.
+WHAT A PERSON SAW, which is the standing of this evidence and not a tool reading. The greyed
+unaffordable row, the `need N` shortfall, the BUILD buttons dead once the factory had built, the
+footer reading `Boxed in -- build waits for a free hex.`, AND THE Q31 HALF -- that the BUILD
+buttons stay clickable while that footer shows. That last one is the half no structural argument
+could close and no instrument here could reach; it is now closed by eye, which is the same
+standing Sec 2.11.6-B was closed on.
+THE USER'S CONSTRUCTION DIFFERED FROM THE ONE I GAVE THEM, AND THEIRS WAS THE CORRECT ONE. My
+checklist said to move the newly built Infantry OFF the factory hex onto its free neighbour --
+which EMPTIES THE ONE HEX THAT MUST BE OCCUPIED and makes the state unreachable by construction.
+They found it directly: six adjacent hexes occupied with the centre free produced NO footer; they
+then ended the round, built a second Infantry so the centre was occupied too, and the message
+appeared.
+THE RULE SAYS SO AND I COULD HAVE READ IT FIRST. `strat::spawnHexesBlocked` in the vendored
+`Ui.good.cpp` returns FALSE when the factory hex itself is unoccupied, BEFORE it examines a single
+neighbour -- the factory hex is where the spawner places first, so a free centre means there is
+somewhere to build however full the ring is. **A boxed-in factory needs SEVEN hexes filled, the
+centre included.** Stated in its own sentence because it cost a round here and reads like an
+off-by-one when it is not one.
+WHAT THE DEFECT ACTUALLY WAS, since it matters for how the next checklist gets written. Every
+DISPATCH in this pass said "its own hex AND all six neighbours" and was right; only the
+USER-FACING step list contradicted it, and nothing cross-checks those two against each other. The
+spec was correct in the place a gate reads and wrong in the place a human acts, which is the
+worse way round. Same family as the correction that must reach the handoff sentence.
+THE INSTRUMENT PASS THAT PRECEDED IT confirmed the data path in a live match before the editor
+crashed on PIE teardown: four rows on the real factory, `Shortfall` equal to price minus live Fame
+at TWO Fame values across four prices, the live PIE widget tree carrying `need 200`/`need 100`/
+`need 50`, render opacity 0.4 on exactly the unaffordable rows, and `bAffordable` and `bAvailable`
+observed DISAGREEING IN BOTH DIRECTIONS. `content.md` carries that detail and this banner does not
+restate it.
+THE CRASH COST NOTHING AND MY FIRST ATTRIBUTION OF IT WAS WRONG. `Assertion failed: false
+[PlayLevel.cpp:553]`, the `TransBuffer` holding the PIE `GameInstance` at teardown. I attributed it
+to a Widget Blueprint asset editor left open from an earlier pass and stated that more firmly than
+the evidence carried; the proximate trigger was an injected `Escape` stopping PIE. The assert chain
+is the same either way and the distinction is between a hypothesis and a measurement. Zero
+`Saving Package` lines in the whole log, `git status` clean, commit `3b22b44` intact.
+ONE CONTROL WORTH KEEPING. Fifteen injected keys produced ZERO game-side effect, but `Escape` WAS
+delivered and stopped PIE. So injection reaches the EDITOR and never the game's Enhanced Input --
+which is sharper than "injection does not work" and is what makes the zero mean something.
+NO PHASE VERDICT IS STATED HERE. Two gates returned `VERDICT: PASS` on the CODE earlier today and
+`3b22b44` carries it; this entry adds observation, not a re-gate. What remains open on item 2 is
+2b, displacement feedback, which is in no GDD section and is filed for a ruling.)
+
 _Last run 2026-08-25 (WAVE 4 AND WAVE 5 LAND: SEC 2.11.5'S ROWS ARE BUILT AND ITS FOOTER HAS A
 ROUTE FOR THE FIRST TIME. The suite is now 218/218, every entry Success, zero failed and zero
 notRun. The delta is +5 and nothing was removed or renamed, measured by set-difference on

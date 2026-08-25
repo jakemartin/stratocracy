@@ -27,6 +27,132 @@
 
 ## NEXT
 
+- **SEC 2.11.5'S PRODUCTION MENU HAS NOW BEEN SEEN WORKING BY A PERSON -- AND THE PLAYTEST
+  CORRECTED THE INSTRUCTIONS IT WAS RUN FROM, NOT THE GAME.** 2026-08-25, written by
+  `strat-editor-builder` over `mcp__unreal-editor-direct__execute_script`, which was on the tool
+  surface from this session's FIRST call -- **THE FALLBACK CONDITION IN THIS FILE'S HEADER WAS NOT
+  MET and the coordinator did not write this entry.** `print(project_dir())` answered
+  `E:/MultiAgent/Stratocracy/` before anything else, so this is the integration tree and not a
+  worktree. **THIS IS A RECORD PASS AND NO ASSET WAS TOUCHED:** no `open_asset`, no PIE, no
+  compile, no save. The editor was live only to serve `write_file`, and this entry was spliced in
+  with this file's own recorded `encoding="binary"` base64 route at byte offset 2021.
+  - **THE BOXED-IN FOOTER IS CONFIRMED ON A SCREEN, BY THE USER, AND THE STATE TOOK TWO ATTEMPTS
+    TO REACH.** Reported verbatim: "I ran the order and everything worked properly. There was a
+    difference in how I got it to work. In step 4, I moved all units off of the factory hex so
+    that it was empty. Selecting the production menu on a factory hex with all 6 adjacent hexes
+    occupied did not produce the boxed in footer. For the next step I ended the round and during
+    my turn I built another infantry unit so that the factory hex was occupied along with the 6
+    adjacent hexes. That produced the boxed in message."
+  - **THE GAME WAS RIGHT AND THE USER-FACING CHECKLIST WAS WRONG, AND THE RULE SAYS SO.**
+    `spawnHexesBlocked`, in the vendored `Source/StratRules/Ui.good.cpp`, OPENS with a
+    return-false when the factory hex ITSELF is unoccupied, before it reads a single neighbour.
+    The spawner places on the factory hex first, so a free centre means there is somewhere to
+    build no matter how full the ring is. Cited BY SYMBOL deliberately -- the doc-citation gate
+    refuses live vendored line citations, and a line number in a vendored file is invalidated by
+    the next re-vendor anyway. The coordinator's step 4 told the user to move the newly-built
+    Infantry OFF the factory hex onto its free neighbour, which empties the one hex that must be
+    occupied and so makes the target state unreachable BY CONSTRUCTION. Every dispatch said
+    "its own hex AND all six neighbours"; only the user-facing checklist contradicted it, and the
+    checklist is what the human actually followed.
+    **SO, PLAINLY, AND IT EARNS ITS OWN SENTENCE: SIX NEIGHBOURS OCCUPIED WITH A FREE CENTRE IS
+    NOT BOXED IN. Anyone constructing this state needs SEVEN hexes filled, the centre included.**
+    That is the trap that cost a round here, and it will cost the next lane the same round if it
+    is not read before the checklist is rewritten.
+  - **WHAT THE HUMAN PASS CLOSES -- AND IT IS A PERSON AT A SCREEN, NOT AN INSTRUMENT IN THIS
+    TREE.** The user reports everything worked properly: the greyed row, the `need N` string, the
+    BUILD buttons enabled on available rows and disabled on unavailable ones, the footer sentence
+    appearing, AND the Q31 half -- that the BUILD buttons stay CLICKABLE while the footer shows.
+    The previous entry named that last half as the one a structural argument cannot close; it is
+    now observed. **None of this is an instrument reading and none of it is claimed as one.** No
+    tool in this tree can fire a Slate click, so a human observation is the only evidence this
+    class of claim will ever have -- the same standing this file gave the objective ring, the
+    turn-1a marker and the `Skip guidance` button, and for the same measured reason.
+  - **THE DATA PATH BEHIND ALL OF THAT WAS MEASURED LIVE IN THE PREVIOUS PASS, AND THAT PASS'S
+    WRITE-UP DIED WITH THE EDITOR.** The measurements below are that session's, reproduced here
+    because the crash landed before they could be recorded; nothing in this bullet group was
+    re-run today and nothing in it is a fresh reading.
+    - **`RefreshProductionMenu` ON SIDE 0'S FACTORY -- authored `[1,4]`, which reads as axial
+      `(-1,4)` live, the same hex printed in two coordinate systems -- RETURNED FOUR ROWS, one
+      per Sec 2.4 row.**
+    - **`Shortfall` IS PRICE MINUS LIVE FAME, CONFIRMED AT TWO FAME VALUES ACROSS FOUR PRICES.**
+      At `FameTotal=200`, Tank at `300` gave `Shortfall=100`. After the build dropped side 0 to
+      `100`, Tank / Artillery / Recon gave `200` / `100` / `50`. TWO Fame values is what makes
+      this a subtraction observed rather than a constant that happened to match once.
+    - **THE LIVE PIE WIDGET TREE CARRIED THE STRINGS:** `Row1Afford="need 200"`,
+      `Row2Afford="need 100"`, `Row3Afford="need 50"`, and `Row0Afford` EMPTY. The affordable row
+      draws no shortfall at all, which is the Select's `True` branch reaching the screen.
+    - **OPACITY AND ENABLED TRACK DIFFERENT FIELDS, READ SEPARATELY, WHICH IS THE WHOLE POINT OF
+      THE SPLIT.** `RenderOpacity` 1.0 on affordable rows and 0.4 on unaffordable ones;
+      `bIsEnabled` tracking `bAvailable` ALONE.
+    - **`bAffordable` AND `bAvailable` WERE OBSERVED DISAGREEING IN BOTH DIRECTIONS**, which is
+      what turns the previous entry's derived sink lists from a structural argument into a live
+      measurement: Tank unaffordable-but-available, and then Infantry affordable-but-unavailable
+      carrying `Reason="that factory has already taken its build this turn"`.
+  - **[RESOLVED 2026-08-25 -- MEASURED FALSE BY A PIXEL SAMPLE OF THE IMAGE ITSELF; THIS FILE'S OWN
+    SINK LIST WAS RIGHT AND THE EYES WERE WRONG. Nothing in this bullet is deleted or reworded --
+    the sub-bullets at its end carry the measurement and the correction. STAMPED 2026-08-25.]**
+    **`ScreenShot00065.png` SHOWS THE MENU PAINTED AND LEGIBLE, AND A SECOND READER LOOKED AT
+    IT.** The coordinator viewed the image independently and confirms the Tank row is visibly
+    dimmer across its name, its cost and its shortfall. **AND IT ALSO CONFIRMS SOMETHING THAT
+    DOES NOT SIT FLUSH WITH THIS FILE'S OWN RECORD, SO IT IS RECORDED RATHER THAN GLOSSED:** that
+    row's BUILD button is drawn at the SAME brightness as the other three, while the entry below
+    records `SetRenderOpacity` being applied to all FIVE of `Row{N}Name/Cost/Afford/Avail/Build`
+    off the same `Affordable` Select. A filled `Button` may simply not read as dimmed the way
+    text does at 0.4, or its style may not carry render opacity to the eye -- **neither
+    explanation was measured, and this entry claims neither.** It is cosmetic and it cuts in the
+    safe direction for Q31 (an affordance that stays legible is not a disabled-looking one), so
+    nothing is being changed for it. It is logged here so the next reader meets it as an open
+    observation instead of rediscovering it as a contradiction.
+    - **WHAT SETTLED IT: A DIRECT PIXEL SAMPLE OF THE SAME PNG, AND IT REFUTES BOTH VISUAL
+      READINGS.** The coordinator measured `ScreenShot00065.png` with Pillow -- greyscale, mean
+      and max over a 45x20 box on each row's BUILD button and a 180x20 box on each row name:
+
+      | Row | BUILD mean | BUILD max | Row-name max |
+      | --- | --- | --- | --- |
+      | Infantry | 173.1 | 255 | 245 |
+      | Tank | 115.9 | 173 | 141 |
+      | Artillery | 173.1 | 255 | 245 |
+      | Recon | 178.7 | 255 | 245 |
+
+      **THE TANK BUILD BUTTON IS DIMMED** -- max 173 against 255 on all three of the others, with
+      its mean down by a third -- so the `SetRenderOpacity` sink list recorded above reaches
+      `Row{N}Build` on the screen exactly as this file said it did.
+    - **THE FALSE PREMISE CAME FROM THE COORDINATOR, NOT FROM THIS LANE, AND THAT IS THE MORE
+      USEFUL HALF OF THE LESSON.** The "same brightness" reading was the coordinator's own
+      eyeball reading of a DOWNSCALED view of the image, and it was then repeated to
+      `strat-editor-builder` in the dispatch that produced the bullet above. The entry INHERITED
+      a false premise from its dispatch rather than generating one. What this lane did right was
+      to log the conflict with its own measured sink list as OPEN and explain neither side away
+      -- had it reasoned the contradiction shut, there would have been nothing left to settle.
+    - **A MEAN-AND-MAX PIXEL SAMPLE BEAT TWO INDEPENDENT VISUAL READINGS OF THE SAME IMAGE.**
+      Both readings were of the same PNG, both were by a reader looking for exactly this thing,
+      and both were wrong in the same direction. When a claim is about what an image SHOWS,
+      sample the image -- a screenshot viewed is not a screenshot measured.
+    - **WHAT THE MEASUREMENT RAISES THAT THE OPEN OBSERVATION DID NOT -- FILED FOR A DIRECTOR
+      RULING, NOT AS A DEFECT AND NOT AS A FIX FOR THIS ASSET.** An unaffordable row's BUILD
+      button is dimmed to the same `0.4` as the rest of its row while remaining FULLY ENABLED AND
+      CLICKABLE, because render opacity does not affect hit testing. **So the button LOOKS
+      disabled and is not.** That is a Sec 2.11.5 legibility question and it belongs to the
+      Director; this lane changes nothing in `/Game/UI/WBP_ProductionMenu` for it and proposes no
+      fix. **Q31 IS UNTOUCHED BY IT:** Q31 is about `bAvailable` driving `IsEnabled`, a different
+      field read separately, and the player confirmed the click works.
+  - **THE CRASH WAS A TEARDOWN ASSERT AND NO PACKAGE WAS EVER AT RISK.** `Assertion failed:
+    false [PlayLevel.cpp:553]`, with `TransBuffer` holding the PIE `GameInstance`, at teardown
+    after an injected `Escape` stopped PIE. The whole log carries ZERO `Saving Package` lines, so
+    nothing was mid-write when it went down. It cost this lane a write-up, not an asset -- which
+    is why the pass above is a record pass and touches nothing.
+  - **THE INJECTION FINDING IS SHARPENED BY A CONTROL, AND IT IS NOT "INJECTION DOES NOT WORK".**
+    In that same session fifteen injected keys produced ZERO game-side effect -- and `Escape` WAS
+    delivered, and it STOPPED PIE. So **injection REACHES THE EDITOR and never reaches this
+    project's Enhanced Input.** The `Escape` is the control that makes the fifteen a measurement
+    about the game's input path rather than about a dead injector; without it the zero was
+    equally consistent with an injector that does nothing at all. Everywhere this file says
+    "injection never reaches this project's `UPlayerInput`", read it with that control attached.
+    Those entries were right and none of them is withdrawn -- what changes is that the boundary
+    now has a measured location instead of being a blanket.
+  `global.md` carries what any of this does for the section; this file states no count and no
+  verdict. 
+
 - **SEC 2.11.5'S BOXED-IN FOOTER IS BUILT ON `/Game/UI/WBP_ProductionMenu`, AND THE T-UI-03
   SINK LISTS THE GATE COULD NOT VERIFY ARE NOW RE-DERIVED FROM A SECOND INDEPENDENT READ.**
   2026-08-25, written by `strat-editor-builder` over

@@ -204,8 +204,16 @@ _PARAGRAPH_STAMP_MARKERS: tuple[str, ...] = (
 # the two verbs owns it -- the marker version stamped BOTH and would have passed a banner
 # whose live number was false. The self-test fixture `_BANNER_MIXED` is that exact shape and
 # caught it. Read the words immediately before the figure instead.
-_PRECEDING_STAMPED_RE = re.compile(r"(?:\bwas|\bwere|\bstood at|\bhad been)\s*$", re.I)
-_PRECEDING_LIVE_RE = re.compile(r"(?:\bis now|\bnow|\bcurrently)\s*$", re.I)
+# AND THE MARKUP SITS BETWEEN THE VERB AND THE FIGURE, so the anchor has to reach across it.
+# `suite was **107/107**` puts `**` between `was` and the number, and a `\s*$` anchor does not
+# span it: the verb was never seen, the claim fell through to the default, and the default is
+# LIVE. Every `was **N/N**` in the real record happens to carry an explicit stamp -- a
+# `[STAMPED ...]` or a `reportCreatedOn` -- which outranks the verb anyway, so the whole record
+# masked this and the `_CLEAN` and `_BANNER_MIXED` fixtures masked it too. Found 2026-08-22 by
+# writing a fixture whose banner is stamped by ITS VERB ALONE, which nothing had ever done.
+_TENSE_MARKUP = r"[\s*_]*$"
+_PRECEDING_STAMPED_RE = re.compile(r"(?:\bwas|\bwere|\bstood at|\bhad been)" + _TENSE_MARKUP, re.I)
+_PRECEDING_LIVE_RE = re.compile(r"(?:\bis now|\bnow|\bcurrently)" + _TENSE_MARKUP, re.I)
 
 # WHERE A CLAIM LIVES DECIDES WHETHER IT IS LIVE, and this is the document's own
 # convention rather than a convenience. `state.md` is a banner plus `## NEXT`
@@ -244,6 +252,34 @@ _SUITE_CLAIM_RE = re.compile(r"(?<![\d/.-])(\d{1,4})/(\d{1,4})(?![\d/-])(?!\.\d)
 _QUOTED_FIGURE_RE = re.compile(
     "said|says|saying|read |reads |reading|claim|shape|editing|planting|planted|"
     "wrongly|stale|defect|would have|reported", re.I)
+
+# HOW FAR UPSTREAM A REPORTING VERB REACHES, and this exclusion is the widest hole this
+# script has ever had. Measured 2026-08-22 by planting `The suite is now 161/161 on this
+# tree.` at each of the 766 non-blank lines of `global.md`'s `## NEXT` in turn: at 132 of
+# them the claim was not merely called stamped, it was NEVER COLLECTED -- `continue` drops
+# it before it reaches the live/stamped call -- and the sweep printed `SWEEP CLEAN`, exit 0.
+# Every one of the 132 was this exclusion firing, on `read `, `claim`, `reads `, `shape`,
+# `reading`, `defect`, `stale`, `says`, `reported`, `would have` or `said`. Those are words
+# this record uses constantly, so the guard's coverage of its own subject was decided by the
+# vocabulary of whatever sentence happened to sit upstream.
+# It also explains a divergence that looks like a markup rule and is not: at two of those
+# sites `THE SUITE **IS NOW 161/161**` was seen while `The suite is now 161/161` was missed.
+# The bold form is two characters longer before the figure, which pushed the reporting verb
+# past the cut. Nothing about bold is load-bearing -- `_SUITE_CLAIM_RE` has matched a bare
+# `N/N` since 2026-08-20 and `_UNBOLDED` fixes that. It was this window's edge, twice.
+_QUOTE_WINDOW = 120
+
+# A REPORTING VERB QUOTES THE FIGURE IN ITS OWN SENTENCE, NOT THE ONE AFTER IT. "The proxy's
+# Reason string describes a read it never performed. The suite is now 161/161." is two
+# sentences: the first is an honest account, the second is a live assertion, and only a raw
+# character count confuses them. So the quoting window stops at the last sentence boundary
+# inside it. The boundary has to be recognised in THIS document's prose, where a full stop is
+# far more often part of `2.11.6-B`, `global.md` or `2026.08.14-21.47.35` than the end of a
+# sentence -- so a break is a `.`, `!` or `?`, optionally closing a bold run, followed by
+# whitespace and something that starts a sentence. A version-number dot is followed by a
+# digit and a filename dot by a lowercase letter, so neither is read as a break.
+_SENTENCE_BREAK_RE = re.compile(
+    r"""[.!?][*"'\)\]]{0,3}\s+(?=(?:\*\*|["'`(\[])?[A-Z])""")
 
 _SUBJECT_WINDOW = 110
 
@@ -324,6 +360,43 @@ def is_stamped(paragraph: str) -> bool:
     return any(re.search(m, paragraph) for m in _PARAGRAPH_STAMP_MARKERS)
 
 
+def in_code_span(para: str, at: int) -> str | None:
+    """The backtick span containing the figure at `at`, or None if it sits in prose.
+
+    A code span is a VERBATIM QUOTE and outranks everything, including an explicit live
+    tense: this record's own entries quote the banner's exact text, backticks and asterisks
+    and all, when describing what the banner said. The predecessor of this function tested
+    only the single character before the figure, which caught `` `107/107` `` and missed
+    `` `THE SUITE **IS NOW 160/160**` `` -- the character before that figure is an asterisk.
+    Measured 2026-08-22: with the live tense given precedence over the reporting-verb
+    exclusion, that quoted line in `global.md` was collected as a SECOND live claim. It
+    agreed with the banner by luck, so the sweep stayed green while carrying a claim it had
+    misread. Backticks are counted within the figure's own LINE, so an unclosed span cannot
+    swallow the rest of the paragraph.
+    """
+    line_start = para.rfind("\n", 0, at) + 1
+    line_end = para.find("\n", at)
+    line_end = len(para) if line_end == -1 else line_end
+    if para.count("`", line_start, at) % 2 == 0:
+        return None
+    open_at = para.rfind("`", line_start, at)
+    close_at = para.find("`", at, line_end)
+    return para[open_at:(close_at + 1) if close_at != -1 else line_end]
+
+
+def quoting_window(para: str, at: int) -> str:
+    """The text a reporting verb would have to sit in to make the figure at `at` a quote.
+
+    `_QUOTE_WINDOW` characters back, then truncated at the last sentence boundary in that
+    span, for the reason `_SENTENCE_BREAK_RE` records.
+    """
+    window = para[max(0, at - _QUOTE_WINDOW):at]
+    cut = 0
+    for mm in _SENTENCE_BREAK_RE.finditer(window):
+        cut = mm.end()
+    return window[cut:]
+
+
 def section_of(text: str, line_no: int) -> str:
     """The `## ` heading a line sits under, or "BANNER" above the first one."""
     heading = "BANNER"
@@ -335,9 +408,30 @@ def section_of(text: str, line_no: int) -> str:
     return heading
 
 
+def current_banner_end(text: str) -> int:
+    """The line at which the CURRENT banner stops, i.e. where the superseded ones begin.
+
+    THE BANNER REGION IS A STACK OF BANNERS, NEWEST FIRST, and treating all of it as one live
+    block is a `section_of` artefact rather than a reading of the document. `global.md` has no
+    heading until `## BUILT` on line 625, so `section_of` calls its first 624 lines "BANNER" --
+    but those lines are eleven successive `_Last run` blocks, each of which was the banner on
+    its day and each of which was true then. `check_banner_date` already reads only the FIRST
+    `_Last run` as the current one; this is the same rule applied to the figures underneath it.
+    Measured 2026-08-22: `suite is now **104/104**` on line 550, written 2026-08-14 inside the
+    fourth-oldest banner, was collected as the file's live claim and superseded the real one on
+    line 41 -- because the existing narrative rule keeps the LAST banner figure, which is right
+    within one `_Last run` sentence (it accretes "ALSO ..." segments in order) and exactly
+    backwards across a stack that grows upward. Both rules now apply, each to its own scope.
+    """
+    hits = [i for i, line in enumerate(text.splitlines(), start=1) if _BANNER_DATE_RE.search(line)]
+    return hits[1] if len(hits) > 1 else sys.maxsize
+
+
 def in_live_section(text: str, line_no: int) -> bool:
     sec = section_of(text, line_no)
-    return sec == "BANNER" or sec in _LIVE_SECTIONS
+    if sec == "BANNER":
+        return line_no < current_banner_end(text)
+    return sec in _LIVE_SECTIONS
 
 
 # ---------------------------------------------------------------------------
@@ -475,11 +569,19 @@ def _collect_suite_claims(label: str, text: str, result: SweepResult) -> None:
             # those would make the sweep fail on any honest account of a past miscount --
             # which would train a maintainer to stop running it. A reporting verb, or a
             # code span, marks the figure as quoted.
-            if _QUOTED_FIGURE_RE.search(para[max(0, m.start() - 120):m.start()]):
+            if in_code_span(para, m.start()) is not None:
                 continue
-            if para[max(0, m.start() - 1):m.start()] == "`":
-                continue
+            # AN EXPLICIT LIVE TENSE OUTRANKS THE EXCLUSION, and the ordering was the other
+            # way round until 2026-08-22. "is now" pressed against the figure is a deliberate
+            # assertion by the maintainer about the tree as it stands; a `reads` or a `claim`
+            # a hundred characters upstream is a sentence about something else. Letting the
+            # stray word win made the exclusion silently outrank the claim it was meant to
+            # spare. The exclusion still applies to every figure that does NOT assert itself,
+            # and a code span above outranks both -- a verbatim quote is nobody's assertion.
             before = para[max(0, m.start() - 40):m.start()]
+            asserts_live = _PRECEDING_LIVE_RE.search(before) is not None
+            if not asserts_live and _QUOTED_FIGURE_RE.search(quoting_window(para, m.start())):
+                continue
             window = para[max(0, m.start() - _STAMP_WINDOW):m.end() + _STAMP_WINDOW]
             # PRECEDENCE, and both orderings were wrong before this one. An EXPLICIT stamp
             # (a `[STAMPED ...]`, a `CORRECTION,`, or the entry's own `reportCreatedOn`)
@@ -578,6 +680,34 @@ def check_record_ownership(result: SweepResult) -> None:
             f"only {GLOBAL_DOC} may carry a LIVE suite count, but one appears in: {where} -- "
             f"link to the figure in {GLOBAL_DOC} instead of restating it, or stamp it as history",
         ))
+
+
+def check_live_count_present(result: SweepResult) -> None:
+    """A sweep of the owner file that finds NO live suite count has checked nothing.
+
+    This is the same shape as the empty-record refusal in `run_sweep`, at the other end of the
+    pipe. `check_suite_counts` compares live claims; with zero of them there is nothing to
+    compare, and every comparison below passes vacuously. Yet `global.md`'s banner always
+    carries the current figure -- that is what makes it the owner file -- so zero live claims
+    means either the banner lost its count or something upstream of the comparison swallowed
+    it. Measured 2026-08-22: the quoted-figure exclusion swallowed the real banner's own
+    `160/160` at 132 of 766 plant sites in `## NEXT`, and each time the script printed
+    `SWEEP CLEAN`, exit 0, having compared nothing. A guard that cannot find its subject has
+    to say so; silence is the one answer it must never give.
+    """
+    if GLOBAL_DOC not in result.docs:
+        return                                   # not sweeping the owner file; nothing to say
+    if any(c.live and c.doc == GLOBAL_DOC for c in result.suite_claims):
+        return
+    quoted = [c for c in result.suite_claims if c.doc == GLOBAL_DOC]
+    result.findings.append(Finding(
+        "LIVE COUNT MISSING",
+        f"{GLOBAL_DOC} carries no LIVE suite count ({len(quoted)} claim(s) there, all read as "
+        f"stamped or quoted), so every suite comparison in this run passed with nothing to "
+        f"compare. Either the banner has lost its figure, or the wording around it -- a "
+        f"reporting verb such as 'reads', 'claim' or 'defect' in the figure's own sentence -- "
+        f"is hiding it from this sweep. Run with --explain and reword, do not ignore this",
+    ))
 
 
 def check_item_states(docs: list[tuple[str, str]], result: SweepResult) -> None:
@@ -797,6 +927,7 @@ def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True
         result.notes.append("--no-tree: document checked against itself only")
 
     check_suite_counts(docs, result)
+    check_live_count_present(result)
     check_record_ownership(result)
     check_item_states(docs, result)
     check_banner_date(docs, result)
@@ -856,7 +987,8 @@ _Last run 2026-08-19 (suite is now **107/107**.)_
 
 _BAD_ITEM = """# Architect state
 
-_Last run 2026-08-19 (the content-independence half is NOT and is carried forward.)_
+_Last run 2026-08-19 (the content-independence half is NOT and is carried forward;
+suite is now **108/108**.)_
 
 ## NEXT
 
@@ -1018,6 +1150,99 @@ _Last run 2026-08-19 (the suite is now 108/108.)_
 - **A later bullet.** The suite is now 107/107.
 """
 
+# A REPORTING VERB IN THE SENTENCE BEFORE, WHICH USED TO SILENCE THE FIGURE COMPLETELY.
+# The quoted-figure exclusion looked 120 raw characters upstream, so `reads` in one sentence
+# swallowed the live claim in the next -- not called stamped, never collected at all, and the
+# script printed SWEEP CLEAN. Measured 2026-08-22 at 132 of 766 plant sites in the real
+# `global.md`. Both wordings below are ones this record actually uses, and the bullet is a
+# whole sentence away from the claim it was silencing.
+_VERB_PREVIOUS_SENTENCE = """# Architect state
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **A later bullet.** The proxy's own Reason string describes a read it never performed, so
+  the restart it recommends would have fixed nothing. The suite is now 107/107 on this tree.
+"""
+
+
+# ... and the same shape with the verb pressed right against the figure, in its OWN sentence,
+# which must still be exempt. This is the pair that proves the scoping rather than a blanket
+# loosening: one wording fails, its near-twin passes.
+_VERB_SAME_SENTENCE = """# Architect state
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **A defect recorded honestly.** The banner as it stood that morning reads 107/107, which is
+  the figure this pass corrected.
+"""
+
+
+# A VERBATIM QUOTE OF THE BANNER, BACKTICKS AND ASTERISKS AND ALL. This record quotes its own
+# banner text when describing what the banner said, and the figure inside that code span is
+# not a claim about anything. The exclusion used to test only the single character before the
+# figure, which is an asterisk here, not a backtick; giving the live tense precedence over the
+# reporting-verb exclusion then collected this line as a SECOND live claim. The quoted number
+# below deliberately DISAGREES with the banner, so reading it as live fails this fixture.
+_VERBATIM_QUOTE = """# Architect state
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **A correction, with the wording that caused it.** The banner that morning ended
+  `THE SUITE **IS NOW 107/107**` and the figure was never compared to anything.
+"""
+
+
+# ZERO LIVE CLAIMS IN THE OWNER FILE IS THE SILENT-PASS SHAPE ITSELF. Every suite comparison
+# in this document passes vacuously -- there is nothing to compare -- and before 2026-08-22
+# that printed SWEEP CLEAN, exit 0. The banner here has a figure, correctly stamped as the
+# previous pass's, and simply never states the current one.
+_NO_LIVE_COUNT = """# Architect state
+
+_Last run 2026-08-19 (suite was **107/107** at that pass, and the corpus is DISCHARGED.)_
+
+## NEXT
+
+- **A later bullet.** Nothing outstanding.
+"""
+
+
+# THE BANNER REGION IS A STACK OF BANNERS, NEWEST FIRST -- the real `global.md` carries eleven
+# `_Last run` blocks above its first heading, each true on its day. The pair below is the
+# falsifiability control for that rule in both directions: the older banner's figure must not
+# be read as current, and the CURRENT banner's figure must still be checked. If the rule ever
+# widens to "any banner figure is history", the second fixture goes green and says so.
+_BANNER_STACK = """# Architect state
+
+_Last run 2026-08-19 (suite is now **108/108**; the corpus is DISCHARGED.)_
+
+_Last run 2026-08-14 (a post-milestone note, not a phase: suite is now **104/104** after the
+grep-contract tightening landed.)_
+
+## NEXT
+
+- **A later bullet.** Suite **108/108**.
+"""
+
+
+_BANNER_STACK_STALE = """# Architect state
+
+_Last run 2026-08-19 (suite is now **107/107**; the corpus is DISCHARGED.)_
+
+_Last run 2026-08-14 (a post-milestone note, not a phase: suite is now **108/108** after the
+grep-contract tightening landed.)_
+
+## NEXT
+
+- **A later bullet.** Suite **108/108**.
+"""
+
+
 # THE SPLIT'S OWN NEW FAILURE MODE: two files, each internally coherent, contradicting each
 # other. A per-file sweep run six times prints clean six times.
 _SPLIT_DISAGREE = {
@@ -1090,7 +1315,7 @@ _Last run 2026-08-19 (suite is now **108/108**.)_
 _SPLIT_ITEM_CLASH = {
     "global.md": """# global
 
-_Last run 2026-08-19 (nothing to report.)_
+_Last run 2026-08-19 (suite is now **108/108**.)_
 
 ## NEXT
 
@@ -1108,7 +1333,7 @@ _Last run 2026-08-19 (nothing to report.)_
 _SPLIT_STALE_BANNER = {
     "global.md": """# global
 
-_Last run 2026-08-19 (nothing to report.)_
+_Last run 2026-08-19 (suite is now **108/108**.)_
 
 ## NEXT
 
@@ -1210,6 +1435,18 @@ def check_self_test() -> tuple[bool, str]:
         ("a pairing figure like 42/42 is NOT a suite claim", _PAIRING_FIGURES, True),
         ("a verdict about a NEIGHBOURING subject is not this item's", _CROSS_TALK, True),
         ("an honest account of a PAST miscount is not a live claim", _QUOTED_ACCOUNT, True),
+        # 2026-08-22: the quoted-figure exclusion reached a whole sentence upstream and
+        # dropped the claim before it was ever collected, the tense markers could not reach
+        # across a bold opener, and the banner region was read as one live block rather than
+        # as the stack of superseded banners it is. These six are those repairs.
+        ("a reporting verb in the PREVIOUS sentence does not silence a wrong live figure",
+         _VERB_PREVIOUS_SENTENCE, False),
+        ("a reporting verb in the figure's OWN sentence still exempts it", _VERB_SAME_SENTENCE, True),
+        ("a banner quoted VERBATIM inside a code span is not a live claim", _VERBATIM_QUOTE, True),
+        ("an owner file with NO live suite count at all FAILS", _NO_LIVE_COUNT, False),
+        ("a SUPERSEDED banner's own older figure PASSES", _BANNER_STACK, True),
+        ("a stale figure in the CURRENT banner still FAILS with older banners below it",
+         _BANNER_STACK_STALE, False),
         ("banner 107 vs bullet 108 FAILS", _BAD_SUITE, False),
         ("item called open and closed FAILS", _BAD_ITEM, False),
         ("banner older than its entries FAILS", _BAD_DATE, False),

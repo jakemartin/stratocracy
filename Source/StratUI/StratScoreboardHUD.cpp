@@ -66,6 +66,7 @@
 #include "StratScoreboardHUD.h"
 
 #include "StratGuidanceWidget.h"
+#include "StratMatchResultWidget.h"
 
 #include "StratScoreboardWidget.h"
 #include "StratUI.h"
@@ -286,6 +287,24 @@ void AStratScoreboardHUD::BeginPlay()
 			TEXT("No production menu requested: no ProductionMenuWidgetClass is set on this HUD's Blueprint defaults."));
 	}
 
+	// Sec 2.11.4'S END-OF-MATCH SCREEN IS REPORTED HERE AND CREATED NOWHERE NEAR HERE, on the
+	// production menu's split exactly and for its stated reason: the class is checked at
+	// `BeginPlay` so that "no verdict surface was configured" is a line in the session log
+	// beside the other three widgets', because otherwise the only witness would be a refusal
+	// at the moment the match ended -- which is a moment nobody is reading the log during and
+	// which happens at most once per session. The WIDGET is created on demand by
+	// `ShowMatchResult`, because the screen is about a verdict that does not exist yet.
+	//
+	// IT SITS BEFORE THE SCOREBOARD'S EARLY RETURNS for `CreateGuidanceWidget`'s stated
+	// reason: an unset `ScoreboardWidgetClass` is a statement about Sec 2.11.4's PANEL and
+	// must not silently make Sec 2.11.4's SCREEN conditional on it. LOG AND NOT WARNING, and
+	// `LastFailureReason` is not touched -- that member answers "why is there no scoreboard".
+	if (MatchResultWidgetClass == nullptr)
+	{
+		UE_LOG(LogStratUI, Log,
+			TEXT("No end-of-match screen requested: no MatchResultWidgetClass is set on this HUD's Blueprint defaults."));
+	}
+
 	if (ScoreboardWidgetClass == nullptr)
 	{
 		// LEGITIMATE CONFIGURATION, NOT A FAILURE -- the header says so about this
@@ -370,6 +389,12 @@ void AStratScoreboardHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	// map. `CloseProductionMenuWidget` is written to be safe with none up, which is why this
 	// is one unguarded call rather than a third copy of the pattern above.
 	CloseProductionMenuWidget();
+
+	// Sec 2.11.4's end-of-match screen goes down the same way and, like the menu, may
+	// legitimately never have come up: most sessions end before a verdict exists.
+	// `HideMatchResult` is written to be safe with none up, which is why this is one
+	// unguarded call rather than a fourth copy of the pattern above.
+	HideMatchResult();
 
 	// TWO MEMBERS, TWO DIFFERENT ACTS, and the asymmetry is the whole content of the
 	// ownership split recorded in the header block.
@@ -855,6 +880,134 @@ void AStratScoreboardHUD::CloseProductionMenuWidget()
 	// second act on its second object -- see the header. A HUD that reached into the match
 	// subsystem to clear a menu would be the first line of this class becoming a thing that
 	// runs matches.
+}
+
+bool AStratScoreboardHUD::ShowMatchResult(FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	FStratBridge* const Live = GetBridge();
+	if (Live == nullptr)
+	{
+		// THE ROOT REASON IS FORWARDED WHEN THERE IS ONE, on `RefreshScoreboard`'s reasoning:
+		// a caller told only "there is no bridge" would have to go find the BeginPlay log to
+		// learn that DT_Units was unassigned, and that sentence already exists.
+		OutFailureReason = LastFailureReason.IsEmpty()
+			? TEXT("there is no bridge: this HUD's setup has not run")
+			: LastFailureReason;
+		return false;
+	}
+
+	if (MatchResultWidgetClass == nullptr)
+	{
+		// A CONFIGURATION AND NOT A FAULT -- `BeginPlay` has already said so once at Log. It is
+		// still a refusal HERE, on `OpenProductionMenuWidget`'s reasoning: reaching this
+		// function means something asked for the screen and did not get one, and a caller told
+		// nothing would have no way to tell that from a screen that came up.
+		OutFailureReason = TEXT("no MatchResultWidgetClass is set on this HUD's Blueprint defaults");
+		return false;
+	}
+
+	// THE MODEL IS BUILT BEFORE THE WIDGET IS TOUCHED, and the order is the whole of this
+	// function's all-or-nothing property. A build refused after a fresh widget had been put on
+	// screen would leave an EMPTY verdict up -- a default-constructed model reads as a draw-less,
+	// tier-less screen -- and Sec 2.11.4 is the one surface where showing nothing and showing
+	// the wrong thing are the same failure. Refusing here leaves whatever was up untouched.
+	//
+	// IT READS `ViewingSide` FOR THE COLUMNS AND NOTHING ELSE. The faction-voiced line is chosen
+	// inside `StratBuildMatchResultModel` from the WINNER; see `StratMatchResultWidget.h`.
+	FStratMatchResultModel Built;
+	if (!StratBuildMatchResultModel(*Live, ViewingSide, Built, OutFailureReason))
+	{
+		return false;
+	}
+
+	// A STALE WIDGET IS DROPPED RATHER THAN REUSED, on `OpenProductionMenuWidget`'s reasoning:
+	// a WBP that ran an intro animation in `Construct` would not run it again, and a screen
+	// shown for a second match would be missing whatever its first `Construct` did once.
+	HideMatchResult();
+
+	if (!CreateMatchResultWidget(OutFailureReason))
+	{
+		return false;
+	}
+
+	// PUSHED IMMEDIATELY, WHICH IS THE ONE PLACE THIS DIVERGES FROM `CreateGuidanceWidget`.
+	// That function deliberately does not push, because the value it wants does not exist until
+	// a match is running. This one has the value in hand -- it was built four lines up, before
+	// anything went on screen -- so there is no window in which the screen is up and blank, and
+	// therefore no need for a `DeliverLatestGuidance` equivalent. That is the whole reason the
+	// build comes first.
+	MatchResultScreen->PushMatchResult(Built);
+
+	return true;
+}
+
+void AStratScoreboardHUD::HideMatchResult()
+{
+	if (MatchResultScreen == nullptr)
+	{
+		return;
+	}
+
+	// `RemoveFromParent` on a widget that is not in the viewport is an engine no-op, so this
+	// needs no `IsInViewport` guard and deliberately does not have one --
+	// `CloseProductionMenuWidget`'s sentence, and the same reason: a guard would make the
+	// pointer-clear conditional on the state this function exists to leave behind.
+	MatchResultScreen->RemoveFromParent();
+	MatchResultScreen = nullptr;
+
+	// NOTHING IS SAID TO `UStratMatchSubsystem` HERE, and in particular
+	// `bMatchConclusionAnnounced` is not cleared. Taking the screen down is not un-concluding
+	// the match; a HUD that could reopen play by dismissing a widget would be a second
+	// authority on Sec 2.8, which that latch's own block refuses.
+}
+
+bool AStratScoreboardHUD::IsMatchResultWidgetOpen() const
+{
+	// BOTH HALVES ASKED, for `IsProductionMenuWidgetOpen`'s stated reason: a widget that took
+	// itself off the viewport leaves the pointer non-null, and a cached bool could disagree
+	// with the screen.
+	return MatchResultScreen != nullptr && MatchResultScreen->IsInViewport();
+}
+
+bool AStratScoreboardHUD::CreateMatchResultWidget(FString& OutFailureReason)
+{
+	// Same shape as `CreateScoreboardWidget`, `CreateGuidanceWidget` and
+	// `CreateProductionMenuWidget`, deliberately, so that a reader who has understood one has
+	// understood all four. Unset is handled by `ShowMatchResult` above and reported at
+	// `BeginPlay`; reaching here with it null means someone called this directly, and that IS
+	// an error.
+	if (MatchResultWidgetClass == nullptr)
+	{
+		OutFailureReason = TEXT("MatchResultWidgetClass is unset");
+		return false;
+	}
+
+	APlayerController* const OwningPlayer = GetOwningPlayerController();
+	if (OwningPlayer == nullptr)
+	{
+		OutFailureReason = TEXT("this HUD has no owning player controller to parent the end-of-match screen to");
+		return false;
+	}
+
+	UStratMatchResultWidget* const Created =
+		CreateWidget<UStratMatchResultWidget>(OwningPlayer, MatchResultWidgetClass);
+	if (Created == nullptr)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("CreateWidget returned null for MatchResultWidgetClass '%s'"),
+			*GetNameSafe(MatchResultWidgetClass));
+		return false;
+	}
+
+	Created->AddToViewport(MatchResultZOrder);
+
+	// Assigned only after it is on screen, so `MatchResultScreen != nullptr` and "there is a
+	// screen" never disagree -- the sentence the other three creators carry.
+	MatchResultScreen = Created;
+
+	return true;
 }
 
 bool AStratScoreboardHUD::CreateProductionMenuWidget(FString& OutFailureReason)

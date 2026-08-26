@@ -27,6 +27,111 @@
 
 ## NEXT
 
+- **SEC 2.11.4'S END-OF-MATCH SCREEN EXISTS, AND IT WAS SEEN DRAWING A REAL VERDICT OVER A REAL
+  MATCH.** 2026-08-25. `WBP_MatchResult` is NEW and `BP_StratScoreboardHUD` gained one
+  Blueprint default; nothing else under `Content/` moved.
+  - **TWO AUTHORITIES, AND THEY ARE NOT THE SAME ONE. CORRECTED AFTER A `VERDICT: BLOCK`.** This
+    entry first cited this file's header for the whole pass, and the header does not reach that
+    far -- it says in terms that the fallback "licenses writing this file only -- it is not a
+    general licence to act in the content lane". Separated, then. **The ASSET WORK was done by
+    the `coordinator` on the USER'S EXPLICIT INSTRUCTION**, given after they were shown that
+    testing before the merge required exactly this and that it departs from the topology's
+    `Content/` rule. **THIS ENTRY WAS WRITTEN BY THE `coordinator` AS THIS FILE'S FALLBACK
+    WRITER**, under the header's fallback condition, whose absence was measured with the control
+    the header demands -- named here because the header's second obligation is to say so in the
+    entry, and because the correction above deleted the sentence that first discharged it. The
+    file write and the asset work now each name their actor. Neither authority covers the other half, and
+    the first draft of this entry read as though one did.
+    **CARRIED FOR A RULING:** this is at least the fourth recurrence of the fallback condition,
+    and the header was already amended once on 2026-08-23 for exactly that reason. A clause that
+    has to be stretched every pass has stopped describing practice -- and the thing practice now
+    needs a word for is not the file write, it is who may drive the editor when the lane's own
+    agent cannot reach it.
+  - **THE FALLBACK CONDITION, MEASURED WITH ITS CONTROL.** A `ToolSearch` naming all three of
+    `mcp__unreal-editor-direct__execute_script`, `mcp__NeoStack_Connect__execute_script` and
+    `mcp__NeoStack_Connect__unreal_status` returned **only `unreal_status`** -- so the lookup
+    demonstrably serves the tools that exist and neither `execute_script` is on this session's
+    tool surface. `strat-editor-builder` holds the NeoStack tools and no Bash, so it had no
+    route to the editor at all.
+  - **THE PROXY WAS LATCHED SHUT WHILE THE EDITOR WAS FINE, AND THE TWO PROXY TOOLS DISAGREED
+    WITH EACH OTHER.** `mcp__NeoStack_Connect__list_unreal_projects` answered `Stratocracy:
+    E:/MultiAgent/Strat-wt/slot-1/` while `unreal_status`, reading the SAME
+    `C:/Users/me/AppData/Local/NeoStackAI/runtimes.json`, answered "No active NeoStackAI editors
+    were found". `runtimes.json` itself carried a fresh heartbeat, `editorPid 99748`, and the
+    endpoint URL. Another instance of the latch living in the PROXY alone.
+  - **THE EDITOR'S OWN MCP ENDPOINT ANSWERS OVER PLAIN HTTP, AND THE PORT IS PER-INSTANCE.**
+    JSON-RPC `initialize` / `notifications/initialized` / `tools/call` against the URL
+    `runtimes.json` publishes returned `serverInfo unreal-editor 1.0.0-r4254` and a `tools/list`
+    of exactly one tool, `execute_script`. **The port was 9316, NOT the 9315 this record has
+    seen before** -- a second editor instance binds the next free port, so a probe that pins
+    9315 will report a healthy editor as absent. Take the port from `runtimes.json`, never from
+    memory.
+  - **THE EDITOR WAS OPENED ON THE `slot-1` WORKTREE AND NOT ON THE INTEGRATION TREE**, on the
+    user's explicit instruction, because `UStratMatchResultWidget` exists only on
+    `feat/match-result-screen` and an asset cannot derive from a class the tree has never
+    compiled. `print(project_dir())` answered `E:/MultiAgent/Strat-wt/slot-1/` from INSIDE the
+    editor, which is the control that matters. This is a deliberate departure from the
+    "`Content/` is touched on the integration tree only" rule and is safe only because no other
+    lane was running: `BP_StratScoreboardHUD.uasset` is a binary edit on a branch, and a
+    concurrent edit to it elsewhere would be lost silently rather than conflict.
+  - **WHAT THE ASSET IS.** `/Game/UI/WBP_MatchResult`, reparented to
+    `/Script/StratUI.StratMatchResultWidget` -- 18 widgets, one `EventGraph`, `0 errors, 0
+    warnings`. `OnMatchResultRefreshed` breaks the pushed model and drives **eleven** `SetText`
+    calls on one exec chain: the tier word, the faction line, and three rows x (label, YOU,
+    ENEMY). **NO ARITHMETIC AND NO FORMATTING NODE ANYWHERE IN IT** -- `FStratScoreboardRow`
+    already carries `Label`, `YouText` and `EnemyText` as `FText`, so the graph reads fields and
+    assigns them. The live panel's own `WBP_Scoreboard` graph uses `Format Text` nodes for the
+    same rows; this one does not need to, which is worth knowing before anyone "fixes" the
+    asymmetry.
+  - **PINS WERE LOCATED BY TYPE, NOT BY TYPED-IN NAME**, and that is the reusable part. The
+    Blueprint display names carry inserted spaces -- `Tier Text`, `In Text`, `Strat Match Result
+    Model`, and a `Get Row0Label` node whose output pin is named `Row 0Label` -- and a guessed
+    literal that misses does not error, it leaves a pin unconnected and compiles green. Walking
+    `pins_in`/`pins_out` for the first pin of the wanted TYPE wired 11 of 11 on the first run.
+  - **NO IN-EDITOR CAPTURE PATH COMPOSITES UMG, AND THE LIVE SCOREBOARD IS THE CONTROL THAT
+    PROVES IT.** `playtest_observe`, `screenshot({mode="asset"})` and `screenshot({mode=
+    "active"})` all returned the 3D scene with NO widget in it -- and `WBP_Scoreboard`, which a
+    human has watched draw during play, was equally absent from every one of them. So the
+    instrument is blind, not the widget. **`playtest_console("shot showui")` DOES capture it**,
+    writing `Saved/Screenshots/WindowsEditor/ScreenShot00000.png` -- the whole editor window,
+    UMG included. `HighResShot`, with or without a `ShowUI` argument, does NOT.
+  - **WHAT WAS ON SCREEN**, from that capture, over a live AI-vs-AI match on Ferrum Crossing
+    that ended `STRAT-MATCH concluded turn=6 turnCap=20 sideToMove=1 tier=Decisive`: the word
+    `Decisive`; beneath it `Their flag is down. We hold the ground. That's the whole report.`;
+    then `Destroyed 75 / 775`, `Objectives 2/8 / 6/8`, `Unit HP 49 / 115` under YOU and ENEMY --
+    with the live scoreboard still visible top-left showing `TURN 6 / 20` and the same three
+    numbers. Sec 2.11.4's "the verdict is always a restatement of what was on screen all match"
+    is therefore visible in one frame, both surfaces at once.
+  - **THE VOICE WAS THE WINNER'S AND THE VIEWER LOST, WHICH IS THE WHOLE POINT OF THE CLAUSE.**
+    `GetAll StratMatchResultWidget Model` on the live instance:
+    `Winner=1, ViewingSide=0, bViewerWon=False, bViewerLost=True, WinnerFaction=Vanguard`,
+    `Cause=FlagDestroyed`. The Directorate seat was shown the VANGUARD's victory line. Had the
+    line been chosen from `ViewingSide`, this exact match would have printed the Directorate's
+    line to the side that just lost.
+  - **ALL ELEVEN TEXT BLOCKS WERE READ ON THE LIVE INSTANCE, NOT INFERRED FROM THE MODEL.**
+    `GetAll TextBlock Text Name=<n>` for each: `TierText=Decisive`, `ResultLineText=Their flag is
+    down...`, `Row0Label=Destroyed / 75 / 775`, `Row1Label=Objectives / 2-of-8 / 6-of-8`,
+    `Row2Label=Unit HP / 49 / 115`. The same sweep also returned the on-disk asset defaults
+    (`Row 0`, `0`) and the editor-preview instances under `/Engine/Transient.World_51`, both
+    correctly untouched -- which is how one tells a graph that RAN from a widget that merely
+    exists.
+  - **THE HUD'S REFUSAL PATH IS SILENT WHEN THERE IS NO HUD**, and that is worth carrying.
+    `ConcludeMatchIfEnded` logs `No end-of-match screen this match: ...` only INSIDE
+    `if (FindScoreboardHUD())`; a null HUD logs nothing at all. So the absence of that warning
+    does NOT prove the screen was shown, and this pass did not rest on it -- `GetAll
+    StratScoreboardHUD MatchResultScreen` returned a live `WBP_MatchResult_C_0`, which does.
+  - **FOUR SMALLER API FACTS MEASURED THIS PASS**, each of which cost a round. `bp:read_graph`
+    does NOT exist -- graph nodes are `bp.graphs[name].nodes`. `list_properties` entries key on
+    `.property` and `.value`, NOT `.name`, and a loop over `.name` prints nothing while
+    reporting 149 properties found. `playtest_log_contains` returns `.ok` for "the call worked"
+    and `.found` for "the text was there", so a loop breaking on `.ok` reads a clean miss as a
+    hit -- it did, and it ended a 60-poll wait after 4 seconds. And
+    `Saved/AutomationReport/index.json` is **UTF-8 with a BOM**: a plain `json.load` throws
+    `Expecting value: line 1 column 1`.
+  - **PIE WAS STOPPED CLEANLY AND NOTHING WAS LOST.** `playtest_stop` -> `playing=false,
+    in_progress=false`, no `TransBuffer` assert, and `git status Content/` shows exactly the two
+    intended paths. No `open_asset` was called at any point while PIE was live.
+
 - **SEC 2.11.5'S PRODUCTION MENU HAS NOW BEEN SEEN WORKING BY A PERSON -- AND THE PLAYTEST
   CORRECTED THE INSTRUCTIONS IT WAS RUN FROM, NOT THE GAME.** 2026-08-25, written by
   `strat-editor-builder` over `mcp__unreal-editor-direct__execute_script`, which was on the tool

@@ -363,7 +363,9 @@ _SUITE_CLAIM_RE = re.compile(r"(?<![\d/.-])(\d{1,4})/(\d{1,4})(?![\d/-])(?!\.\d)
 # THE FIRST SHIPPED PATTERN NAMED FIVE WORD-FORMS ITS OWN REGEX COULD NOT ALL REACH, found in
 # review the same day. `\bcite\w*` requires an `e` immediately after `cit` before the `\w*`
 # takes over, so it matches `cite`, `cited` and `cites` but NOT `citing` or `citation(s)` -- there
-# is no `e` in either. Measured live: with the shipped `\bcite\w*`, the sentence "The suite count
+# is no `e` in either. Measured live at the time, against the THEN-shipped `\bcite\w*`
+# -- long since replaced, twice; see the two paragraphs below, and do not call any literal
+# spelling "the shipped pattern" again. The sentence "The suite count
 # in that citation gives 999/999 on this tree." is COLLECTED as a live claim and FAILS the sweep
 # (`SUITE COUNT AGREEMENT`, 225 vs 999); the same sentence with "cited" in place of "citation" is
 # exempted, `SWEEP CLEAN`. Widened here to reach the whole family the comment always promised,
@@ -1845,8 +1847,10 @@ _Last run 2026-08-19 (suite is now **108/108**.)_
 # any reason but the widened `cit` family, and carries no "is now"/"was" tense marker and no
 # explicit stamp, so nothing else exempts the wrong 107/107. Under the pre-widen `\bcite\w*` this
 # is a genuine gap: "citing" never matches, the 107/107 is collected as a LIVE claim, and the
-# sweep FAILS against the real banner's 108/108. Under the shipped `\bcit\w*` the same sentence
-# is recognised as an honest account and PASSES.
+# sweep FAILS against the real banner's 108/108. Under the SHIPPED `_QUOTED_FIGURE_RE`
+# -- named by its object rather than by a re-typed literal, because this comment has already
+# outlived two spellings of that pattern -- the same sentence is recognised as an honest
+# account and PASSES.
 _CITING_ACCOUNT = """# Architect state
 
 _Last run 2026-08-19 (suite is now **108/108**.)_
@@ -2231,7 +2235,8 @@ def check_self_test() -> tuple[bool, str]:
         ("an honest account of a PAST miscount is not a live claim", _QUOTED_ACCOUNT, True),
         # 2026-08-26, the gating repair: `citing` and `citation` have no `e` after `cit`, so
         # `\bcite\w*` never reached them though the comment above `_QUOTED_FIGURE_RE` named
-        # both. These PASS under the shipped `\bcit\w*` and would FAIL under the pre-widen
+        # both. These PASS under the SHIPPED `_QUOTED_FIGURE_RE` (named by object: the
+        # literal spelling has changed twice) and would FAIL under the pre-widen
         # `\bcite\w*` -- see the direct regex differential pin further down for the proof that
         # isolates the pattern change itself, independent of these fixtures' verdicts.
         ("an honest account using 'citing' (no `e` after `cit`) is not a live claim",

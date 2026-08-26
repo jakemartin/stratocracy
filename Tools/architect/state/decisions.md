@@ -724,3 +724,76 @@
     was touched to answer any of these three; nothing here is a recommendation, and none of the
     three is acted on. This entry does not state a suite count or a phase verdict -- both stay in
     `state/global.md` only.
+  - **[RULED, 2026-08-26, BY THE USER -- question 2 above (displaced-build feedback) is CLOSED,
+    OUT OF SCOPE, stamped in place per this file's own header rather than left to read as still
+    open.** It is specified in NO GDD section. The §2.11.5 behaviour that IS specified -- the
+    boxed-in footer with greyed rows and `need N` -- shipped and was confirmed on a human
+    playtest. Building an unspecified surface for displacement feedback would make the widget a
+    second author of the rules, and that is why the fork above is not this repo's to resolve by
+    building either branch.
+    **The corrected premise, recorded as part of the closure because it is the reason the item
+    existed at all and it was wrong.** The reported symptom that motivated this question was
+    DISPLACEMENT, and this entry's own paragraph above already measured that
+    `strat::spawnHexesBlocked` returns **FALSE** in exactly that case (`Source/StratRules/Ui.good.cpp`,
+    quoted above: `if (w.board.occupantAt(adj[i]) == OCCUPANT_NONE) return false;`, inside a loop
+    over every neighbour). A widget built on the proposal this question raised -- one reading
+    `bSpawnBlocked` to surface displacement -- would therefore have stayed silent on the very
+    symptom it was filed for. The filing could not have been served by its own proposal.
+    This stamp does not state a suite count or a phase verdict -- see `state/global.md` for the
+    live figure.]**
+
+- **RULED, 2026-08-26, BY THE USER -- does `FStratBuildOptionView::Shortfall` belong upstream?
+  DECLARED DEBT, ACT LATER.** `StratBuildProductionMenu` keeps computing the shortfall by
+  subtraction at the UI boundary rather than moving it into `strat::UiBuildOption`.
+  - **Why not now.** `bAffordable` is the authority and `Shortfall` is never read to derive it --
+    `Source/StratUI/Tests/StratMatchResultRouting.cpp` carries two clauses keyed off `bAffordable`
+    and states in terms that asking `Shortfall > 0` instead would be the wrong substitution. The
+    boundary arithmetic therefore carries no correctness risk today, and an upstream change would
+    cost a cross-repo change request plus a re-vendor for no behaviour gain.
+  - **The debt text is not duplicated here.** It already lives at the `Shortfall` field's own
+    declaration in `Source/StratUI/StratViewModel.h` -- link to it, do not restate it, and do not
+    edit that header; it is not this lane's to touch.
+  - **DISCHARGE CONDITION, stated precisely because it is the part that gets misremembered.** The
+    debt is discharged when an upstream pass adds a `shortfallFame` field to `strat::UiBuildOption`.
+    At that point `FStratBuildOptionView::Shortfall` becomes an ordinary mirror of that field, and
+    the subtraction currently living in `StratBuildProductionMenu` is **DELETED, not moved** -- the
+    widget stops computing anything and starts reading the upstream value directly. A re-vendor
+    that merely adds the field without deleting the local subtraction would leave two sources of
+    the same number and does not discharge this entry.
+  - This entry does not state a suite count or a phase verdict -- see `state/global.md` for the
+    live figure.
+
+- **RULED, 2026-08-26, BY THE USER -- `captureTurns` is hardcoded to 1 with no scenario key.
+  DECLARED DEBT, ACT LATER.** A scenario key needs an upstream schema change plus a re-vendor, and
+  nothing in the shipped scenario needs a value above 1.
+  - **The mechanism is not unpinned, which is why this can wait.**
+    `Source/StratBridge/Tests/StratCaptureCommandClauses.cpp` hand-seeds `captureTurns` above 1 and
+    names it a FIXTURE INPUT in its own terms ("`captureTurns` IS A FIXTURE INPUT AND IS
+    DELIBERATELY NOT 1"), so the value-above-1 path is already exercised by a test rather than
+    left silent. Link to that clause rather than restating its content.
+  - **The cost of staying at 1 is also already measured, not assumed.**
+    `Source/StratPlay/StratGuidedOpening.cpp` records that the arrival pip is UNOBSERVABLE at
+    `captureTurns = 1`: the pip is created and erased inside one `strat::captureTick`, so
+    `CaptureProgress` reads 0 in every snapshot and the arrival-pip arm cannot fire, leaving the
+    OR'd retirement condition to rely on its other arm in the shipped scenario. Link to that
+    comment rather than restating it.
+  - **Discharge condition.** A scenario-level `captureTurns` key requires an upstream schema
+    change to `data/scenario` (or equivalent) in `stratocracy-crew`, plus a re-vendor that moves
+    `Data/StratData.manifest.json`'s `dataCommit`. Until that lands, the hardcoded `1` stays, and
+    this entry stays open rather than closed.
+  - This entry does not state a suite count or a phase verdict -- see `state/global.md` for the
+    live figure.
+
+- **RULED, 2026-08-26, BY THE USER -- an unaffordable row's BUILD button dims to 0.4 with its row
+  while staying fully enabled. CLOSED, NOT A DEFECT.** It looks disabled and is not; that is
+  legibility, not behaviour.
+  - **Why.** §2.11.5 and the Q31 half both want the button live -- `Tools/architect/state/content.md`
+    records the `RenderOpacity` split (1.0 affordable, 0.4 unaffordable) as deliberate and
+    independent of `IsEnabled`, and records Q31 as SATISFIED STRUCTURALLY by the same derived
+    property: render opacity does not affect hit testing, so a greyed row stays clickable. Q31 was
+    deliberately built and confirmed on a human playtest, so disabling the button on top of the
+    dim would mean reopening a settled decision rather than fixing an oversight.
+  - **Untouched either way.** No code, no Blueprint default and no `Config/` file was changed to
+    record this ruling; the ruling closes the question, not a build task.
+  - This entry does not state a suite count or a phase verdict -- see `state/global.md` for the
+    live figure.

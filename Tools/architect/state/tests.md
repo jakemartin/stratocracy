@@ -208,15 +208,101 @@
       one" would then have been satisfied by refreshes that never happened. The clause reads the
       refusal REASON for the word `scoreboard` instead, which is what places the refusal
       downstream of the trigger.
-  - **THE NINE BANNED WORDS ARE THE ONE STATED LITERAL IN THIS SUITE'S §2.11.4 COVERAGE**, cited
-    to `kb/setting.md`'s "Banned register" bullet. `kb/setting.md` is **not in this repository** —
+  - **[DISCHARGED 2026-08-26 — THE VENDORING THIS BULLET NAMED AS PENDING HAS HAPPENED. EVERY
+    CLAUSE OF IT IS NOW FALSE: THE WORDS ARE NOT A LITERAL, THE FILE IS IN THIS REPOSITORY, AND
+    THE WORK IT ASSIGNS IS DONE. Kept rather than deleted, on this record's standing practice
+    that a superseded claim survives as a quotation under a stamp naming what discharged it.
+    It read:]**
+    *"THE NINE BANNED WORDS ARE THE ONE STATED LITERAL IN THIS SUITE'S §2.11.4 COVERAGE, cited
+    to `kb/setting.md`'s 'Banned register' bullet. `kb/setting.md` is not in this repository —
     it lives only in `E:\MultiAgent\stratocracy-content\kb\setting.md` — and a headless run may not
     reach outside the tree. Discharged by vendoring it beside the GDD snapshot, which is
-    `strat-data-steward`'s call and not this lane's.
-  - **`Tools/architect/gdd_snapshot/MANIFEST.md` IS STALE, AND IT IS NOT MINE TO FIX.** It records
-    `Bytes 446,133` and a sha256 taken 2026-08-11; the tracked file is **449,498 bytes** and
-    hashes identical to the live document. The manifest's own text says nothing gates it. Flagged
-    for `strat-data-steward` because two clauses now read that file.
+    `strat-data-steward`'s call and not this lane's."*
+    NOTE WHICH DIRECTION THIS ONE WENT STALE IN. It does not over-claim; it **under-claims**, and
+    an under-claiming status line is the more expensive kind, because a reader who believed it
+    would go and re-do a vendoring that already exists and re-open a lane question already
+    settled. That is why it is stamped and not simply left standing.
+    WHAT ACTUALLY HAPPENED. `strat-data-steward` vendored the setting document to
+    `Tools/architect/kb_snapshot/setting.md`, and
+    `Stratocracy.StratUI.T-UI-03.ResultLinesAreTheGddSamplesVerbatimAndInsideTheVoiceBudget` in
+    `Source/StratUI/Tests/StratMatchResultModelClauses.cpp` now **PARSES** the nine words out of
+    that file's own `- **Banned register:**` bullet at run time. Nothing about the register is
+    typed in the suite any more, which closes the failure this bullet was filed against: a guard
+    that types its own reference data goes inert on its own subject silently, and that reference
+    data can be WRONG rather than merely stale.
+    THE BULLET WRAPS, AND THAT IS THE PART A LATER READER WILL TRIP ON. The document writes the
+    list across **two lines** — `*destiny, glory,` ends line 23 and `honor, … doom*` is line 24 —
+    so a line-at-a-time reader sees two of the nine and reports success over the other seven.
+    `ReadBannedRegister` joins the continuation lines before cutting the italic span out, and its
+    anchors are deliberately **ASCII** (`words like *`), beginning AFTER the bullet's em dash, so
+    no assumption about how UE decodes a non-ASCII byte can quietly change what the clause pins.
+    WHAT THIS CLAUSE DOES **NOT** PIN. `Tools/architect/kb_snapshot/` is a **SNAPSHOT AND NOT A
+    SYNC** — its `MANIFEST.md` records that nothing hash-gates it against `stratocracy-content`,
+    that no `sync_*.py` stands behind it and that no acceptance ID asserts over it, exactly as
+    `gdd_snapshot/` is ungated and unlike `Source/StratRules/` and `Data/`. So the clause pins
+    the six result lines against the banned register **AS VENDORED HERE**. It does **not**
+    certify that the vendored copy still matches the document upstream; if `kb/setting.md` moves
+    on, this copy silently does not, and no clause in this suite will say so.
+    THE FALSIFIABILITY WAS MEASURED, NOT INFERRED, AND THE INSTRUCTION IT WAS RUN UNDER WAS
+    WRONG. The dispatch asked for a perturbation changing one banned word to something **absent
+    from the six result lines**. That cannot move the verdict **by construction**: the assertion
+    reads "no result line contains this word", and a word absent from all six satisfies it
+    exactly as `doom` did. Run anyway (`doom` → `quixotic`), the clause stayed green while the
+    info line reported `… sacred, quixotic` — so it is a **liveness control**, evidence the read
+    reaches the file, and it is **not** a falsifiability proof. Writing that distinction down is
+    the point: a probe the guard cannot fail passes exactly like an inert guard. The proof is the
+    second run, `doom` → `record` (a word present in four of the six lines), which flipped the
+    clause **Success → Fail** with four named errors. `setting.md` was restored byte-identical
+    after every perturbation — `git hash-object` `d8d2d0590f30f5d9153c8a12f77ed4763cae6c03`
+    before and after each, not "looks the same".
+    AND THE REFUSAL PATH FIRES, IN THREE SHAPES, EACH MEASURED RED. An unreadable input is not a
+    clean input, and a parser that yielded an empty set would make the whole assertion vacuous —
+    it would then pass over any result line at all. (i) The file moved aside: *"the vendored
+    kb/setting.md snapshot is unreadable at …"*. (ii) The italic span left unclosed (`doom*.`
+    → `doom.`): *"… italic span is not closed, so the list cannot be read whole"*, and that
+    error quotes the **joined** bullet, which is independent evidence the wrap handling ran.
+    (iii) A word dropped from the list: *"Expected … still lists nine words to be 9, but it was
+    8."* The count is asserted **before** the words are used, precisely so a short parse reddens
+    here rather than silently narrowing what the six lines are checked against.
+    WHY THE NUMBER NINE IS STILL TYPED, AND WHY THAT IS NOT THE OLD DEFECT. The nine *words* are
+    read; the *count* is a tripwire on the parse, not the reference data. A register the document
+    later grows will redden this clause deliberately and send a human back to `kb/setting.md`,
+    which is the intended behaviour and not a regression to a typed list.
+    No suite figure is restated here; the live one lives in `Tools/architect/state/global.md`.
+    The pass that carried this change is the one whose automation report is stamped
+    `2026.08.26-15.21.53`, and the clause-name set was verified identical before and after it —
+    none added, none removed, none renamed — by set-difference over
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST`, never an acceptance-ID grep.
+  - **[RETRACTED 2026-08-26 — THE MANIFEST WAS NEVER OUT OF DATE; THIS LANE'S READING OF THE FILE
+    SIZE WAS THE THING THAT WAS WRONG. Kept rather than deleted, on this record's standing
+    practice that a superseded claim survives as a quotation under a stamp naming what
+    discharged it. It read:]**
+    *"`Tools/architect/gdd_snapshot/MANIFEST.md` IS STALE, AND IT IS NOT MINE TO FIX. It records
+    `Bytes 446,133` and a sha256 taken 2026-08-11; the tracked file is 449,498 bytes and hashes
+    identical to the live document. The manifest's own text says nothing gates it. Flagged for
+    `strat-data-steward` because two clauses now read that file."*
+    BOTH HALVES ARE WITHDRAWN, AND WHAT REPLACES THEM IS THE MEASUREMENT RATHER THAN THE
+    CONCLUSION. Re-derived in `E:\MultiAgent\Stratocracy` on 2026-08-26, not taken from a brief:
+    the vendored `Stratocracy_Prototype_GDD.md` is **446,133 bytes** by `wc -c`, by `len()` over
+    the raw bytes in python, and by `git cat-file -s` on its `HEAD` blob — three readings that
+    share no code path. Its sha256 is
+    `bfa4f713ab1415cff4e0e0ef09d94f751ca727f7893bc0d44900d81248ed954c`, which is EXACTLY the hash
+    `MANIFEST.md` records, and the live document at
+    `E:\MultiAgent\stratocracy-content\Stratocracy_Prototype_GDD.md` hashes to that same value,
+    so the two are byte identical. The file carries **3,365 lines and ZERO carriage returns**,
+    and 446,133 + 3,365 = 449,498 — one added byte per line, which is precisely what a
+    **CRLF-applying reader** reports for a file of this shape. 449,498 was never the size of
+    anything on disk.
+    THE CONTROL, and it was run, because a count of zero proves nothing until the instrument is
+    shown able to speak: `printf 'a\r\nb\r\n' | tr -cd '\r' | wc -c` returns **2**, so the same
+    reading CAN see a carriage return; its silence over the snapshot is a reading, not a failure.
+    THE SECOND HALF GOES WITH THE FIRST: nothing is owed to `strat-data-steward` here, and a
+    reader who had acted on "not mine to fix" would have edited a correct manifest to match a
+    figure no file ever had. That is why this is stamped rather than left standing — a status
+    line that under-claims sends the next reader to redo settled work. `MANIFEST.md` now carries
+    this trap and the measuring command in its own text, so the next byte check has its control
+    inside the file it is checking. No suite figure is restated here; the live one lives in
+    `Tools/architect/state/global.md`.
 
 - **WAVE 5: §2.11.5's BOXED-IN FOOTER FACT NOW HAS A GATE, AND FOUR OF THE FIVE CLAUSES ARE
   ABOUT THE CLOCK IT RIDES RATHER THAN THE VALUE IT CARRIES.** Five clauses, no new files: four

@@ -13,6 +13,60 @@
 
 ## NEXT
 
+- **FIXED, 2026-08-26 -- two wrong measurements and one missing fixture in
+  `strat_banner_sweep.py`'s REPORT PROVENANCE docstring/fixtures, all found by
+  `strat-integration-reviewer` on the marker-split repair's own record.** (1) The docstring's
+  "~178 characters" figure for how close the mutated live-banner test landed to `_STAMP_WINDOW`
+  (220) matched no measured convention. Re-derived with ONE stated convention --
+  match.start()-to-match.start() using the check's own two regexes,
+  `_CITED_REPORT_STAMP_RE` to `_PROVENANCE_PATH_BRANCH_RE` -- and it is **91** for the mutated
+  live banner and **249** for `78ea508`'s real defect, at both sites the figure appeared (the
+  `_PROVENANCE_TREE_STAMP_MARKERS` comment and part (b)'s docstring). The old conclusion ("roughly
+  thirty characters of prose either way decided it") was also wrong and is corrected: 91 sits FAR
+  inside the 220 window (129 to spare) and 249 sits outside it (by 29) -- not a near miss in
+  either direction, so the one real defect this check exists to catch was flagged by MARGIN, not
+  by the window's design. (2) No fixture pinned that `_PROVENANCE_TREE_STAMP_MARKERS` still
+  honours an explicit `[STAMPED ...]` -- the two existing PASS fixtures both pass for a different
+  reason (`_GOOD_PROVENANCE_NEAR_CITATION` is true on the tree/branch facts; `_GOOD_PROVENANCE`
+  trips the quoted-figure exclusion on its own `"It read:"` first). Added
+  `_GOOD_PROVENANCE_TREE_STAMP_ONLY`: a WRONG tree/branch claim beside a genuine
+  `**[STAMPED ...]**`, no reporting verb, no `"It read:"` -- the stamp is the only thing that can
+  spare it. Proved directional by monkeypatching `_PROVENANCE_TREE_STAMP_MARKERS = ()` (honouring
+  no stamp at all) and re-running both fixtures outside `--self-test`: the new one FLIPS to FAIL
+  (`REPORT PROVENANCE`), `_GOOD_PROVENANCE` stays green either way, confirming the old fixture
+  never tested the stamp. `--self-test` -> `SELF-TEST: ALL FIXTURES CORRECT`, every pre-existing
+  fixture unchanged in verdict; full sweep over `Tools/architect/state/` -> `SWEEP CLEAN`, `echo
+  $?` on its own line -> `EXIT=0`. File is CRLF; CR == LF (2087 == 2087) after edit, and `git diff
+  --check` reports no line-ending errors. This entry does not change what the shipped check
+  DOES -- only the comments describing it and the fixture coverage proving it.
+- **VENDORED 2026-08-26 -- `Tools/architect/kb_snapshot/setting.md`, a new sibling of
+  `gdd_snapshot/`, so `StratMatchResultModelClauses.cpp` can READ the nine banned-register
+  words instead of typing them as a stated literal.** Source is
+  `E:\MultiAgent\stratocracy-content\kb\setting.md`; the vendored copy is byte-identical:
+  2,111 bytes, sha256 `8b1a6c85ff1152ef5345f20fb36d2cf7f3829266649132ca5c3ee08eb6a2ad71`, LF
+  line endings (0 CR over 40 lines, confirmed against a `printf 'a\r\nb\r\n'` control that
+  reads 2), `git hash-object` `d8d2d0590f30f5d9153c8a12f77ed4763cae6c03`. Full measurement and
+  the CRLF-trap discipline are in `Tools/architect/kb_snapshot/MANIFEST.md`, written in
+  `gdd_snapshot/MANIFEST.md`'s own shape: **this is a snapshot, not a sync** -- nothing
+  hash-gates it against the source, no `sync_*.py` runs behind it, no acceptance ID asserts
+  over it, and it is not part of the vendoring discipline `Source/StratRules/` and `Data/`
+  follow. Where the two disagree, the document in `stratocracy-content` is the real one.
+  **[STAMPED 2026-08-26, SAME PASS -- FALSE NOW. The rewrite this bullet called `strat-test-author`'s
+  and "not done yet" landed in this same uncommitted tree while this entry was being written. Kept
+  rather than deleted, on this record's standing practice. It read:]**
+  *"The clause rewrite that reads this file at run time is `strat-test-author`'s and is not
+  done yet -- this entry only vendors the reference data."*
+  **WHAT ACTUALLY HAPPENED.** `Stratocracy.StratUI.T-UI-03.ResultLinesAreTheGddSamplesVerbatimAndInsideTheVoiceBudget`
+  in `Source/StratUI/Tests/StratMatchResultModelClauses.cpp` now PARSES the nine banned-register
+  words out of this snapshot's own `- **Banned register:**` bullet at run time, wrap-aware (the
+  bullet's list wraps across two lines and the read joins the continuation before cutting the
+  italic span out), and refuses on a missing file, a missing bullet, an unclosed italic span, a
+  malformed token, or a parsed count other than nine. Nothing about the register is typed in the
+  suite any more. This entry still only vendors the reference data; the clause's own evidence
+  (falsifiability, the wrap trap, the refusal-path measurements) is `strat-test-author`'s and is
+  recorded in `Tools/architect/state/tests.md`, not restated here. Current suite status is in
+  `Tools/architect/state/global.md`, not restated here.
+
 - **Slice a growing log by content markers, never by EOF.** "To EOF" of a file a running editor is
   still appending to means "to whenever the cut happened to run," not a fixed boundary, and a
   line-number range into a rotating log is a fragile name even when stable at cut time (a

@@ -36,11 +36,12 @@
 //     PLAYING -- see `FAiDriver`. Nothing below plants a result.
 //   - THE ENUMERATOR SETS: `StaticEnum<>()`'s own walk, so a tier or cause added upstream is
 //     REQUIRED to be handled rather than silently unmentioned.
-//   - THE NINE BANNED WORDS: the one stated literal in this file. `kb/setting.md` supplies
-//     them and `kb/setting.md` is NOT in this repository -- it lives only in
-//     `E:\MultiAgent\stratocracy-content\kb\setting.md`, which no headless run may depend on.
-//     The list is therefore cited rather than read, and the change that would make it a read
-//     is named in this file's Blocked note below.
+//   - THE NINE BANNED WORDS: PARSED OUT OF `kb/setting.md` at runtime, from
+//     `Tools/architect/kb_snapshot/setting.md`, which is tracked in this repository. They are
+//     no longer typed here. `kb_snapshot/` is a SNAPSHOT AND NOT A SYNC -- nothing hash-gates
+//     it against `stratocracy-content`, exactly as `gdd_snapshot/` is not gated -- so the read
+//     pins the six lines against the register AS VENDORED, and does not certify that the
+//     vendored copy still matches the document upstream. See `ReadBannedRegister`.
 //
 // §2.8's KEYS 2 AND 3 ARE STILL UNREACHABLE THROUGH A MATCH, AND ARE NO LONGER UNPINNED.
 // [Stamped 2026-08-25. This block previously ended "It is not silently absent" and named the
@@ -462,20 +463,153 @@ namespace StratMatchResultModel
 	}
 
 	/**
-	 * `kb/setting.md`'s banned register. THE ONE STATED LITERAL IN THIS FILE.
+	 * The tracked copy of `kb/setting.md`.
 	 *
-	 * `kb/setting.md` is not in this repository -- it lives only in
-	 * `E:\MultiAgent\stratocracy-content\kb\setting.md`, whose "Banned register" bullet reads
-	 * "avoid melodrama and fantasy filler -- words like *destiny, glory, honor, legend, forever,
-	 * epic, heroic, sacred, doom*." A headless run may not reach outside the repository, so
-	 * these nine are CITED rather than read, and the change that would make them a read
-	 * (vendoring `kb/setting.md` beside the GDD snapshot) is recorded in
-	 * `Tools/architect/state/tests.md` rather than made here.
+	 * WHERE THE BANNED REGISTER COMES FROM, AND WHAT THAT DOES NOT PROMISE. The nine words are
+	 * `kb/setting.md`'s own "Banned register" bullet, READ at run time out of
+	 * `Tools/architect/kb_snapshot/setting.md`. That file is a SNAPSHOT AND NOT A SYNC:
+	 * `Tools/architect/kb_snapshot/MANIFEST.md` records that nothing hash-gates it against
+	 * `stratocracy-content`'s copy, that no `sync_*.py` stands behind it and that no acceptance
+	 * ID asserts over it -- unlike `Source/StratRules/` and `Data/`, and exactly like
+	 * `gdd_snapshot/`. So this clause pins the six result lines against the register AS
+	 * VENDORED HERE; it does NOT certify that the vendored copy still agrees with the document
+	 * upstream, and if `kb/setting.md` moves on this copy silently does not.
+	 *
+	 * WHAT IT DOES BUY. The words are no longer typed into this file. A guard that types its
+	 * own reference data goes inert on its own subject silently, and that reference data can be
+	 * WRONG rather than merely stale -- a transcription slip here would have exempted a word
+	 * the document bans, with every clause still green.
 	 */
-	static const TCHAR* const kBannedRegister[] = {
-		TEXT("destiny"), TEXT("glory"), TEXT("honor"), TEXT("legend"), TEXT("forever"),
-		TEXT("epic"), TEXT("heroic"), TEXT("sacred"), TEXT("doom")
-	};
+	static FString SettingPath()
+	{
+		return FPaths::Combine(FPaths::ProjectDir(), TEXT("Tools"), TEXT("architect"),
+			TEXT("kb_snapshot"), TEXT("setting.md"));
+	}
+
+	/**
+	 * `kb/setting.md`'s banned register, PARSED, and REFUSING rather than passing on any input
+	 * it cannot read.
+	 *
+	 * THE BULLET WRAPS, WHICH IS THE WHOLE DIFFICULTY. The document writes it as
+	 *
+	 *     - **Banned register:** avoid melodrama and fantasy filler -- words like *destiny, glory,
+	 *       honor, legend, forever, epic, heroic, sacred, doom*.
+	 *
+	 * so a line-at-a-time reader sees TWO of the nine and would leave the other seven unpinned
+	 * while still reporting success. The continuation lines are joined onto the bullet before
+	 * the italic span is cut out, and an unterminated span is a failure rather than a short
+	 * list. A wrapped phrase has bitten this repository before.
+	 *
+	 * THE ANCHORS ARE DELIBERATELY ASCII. The bullet's dash is an em dash (U+2014); the parse
+	 * begins AFTER it, at `words like *`, so no assumption about how the reader decodes a
+	 * non-ASCII byte can quietly change what this clause pins.
+	 *
+	 * EVERY FAILURE IS A REFUSAL. Missing file, empty file, missing bullet, unopened or
+	 * unclosed italic span, an empty token, or a token that is not a single word each return
+	 * false with a reason, and the caller turns that into a RED clause. A parser that yielded
+	 * an empty set on bad input would make the assertion VACUOUS -- it would then pass over any
+	 * result line whatsoever, which is precisely the inertness this read exists to remove. An
+	 * unreadable input is not a clean input.
+	 */
+	static bool ReadBannedRegister(TArray<FString>& Out, FString& OutError)
+	{
+		Out.Reset();
+
+		TArray<FString> Lines;
+		if (!FFileHelper::LoadFileToStringArray(Lines, *SettingPath()))
+		{
+			OutError = FString::Printf(
+				TEXT("the vendored kb/setting.md snapshot is unreadable at %s"), *SettingPath());
+			return false;
+		}
+		if (Lines.Num() == 0)
+		{
+			OutError = FString::Printf(
+				TEXT("the vendored kb/setting.md snapshot is empty at %s"), *SettingPath());
+			return false;
+		}
+
+		const int32 At = FindLineStartingWith(Lines, FString(TEXT("- **Banned register:**")));
+		if (At == INDEX_NONE)
+		{
+			OutError = FString::Printf(
+				TEXT("kb/setting.md no longer carries a '- **Banned register:**' bullet (%s)"),
+				*SettingPath());
+			return false;
+		}
+
+		// Join the bullet with its continuation lines. A continuation is a non-blank line that
+		// opens neither a new bullet nor a heading; the join stops at the first line that does,
+		// at the end of the file, or as soon as the italic span has closed.
+		const FString Anchor = TEXT("words like *");
+		FString       Bullet = Lines[At];
+		for (int32 I = At + 1; I < Lines.Num(); ++I)
+		{
+			const int32 Opens = Bullet.Find(*Anchor, ESearchCase::CaseSensitive);
+			if (Opens != INDEX_NONE
+				&& Bullet.Find(TEXT("*"), ESearchCase::CaseSensitive, ESearchDir::FromStart,
+					Opens + Anchor.Len()) != INDEX_NONE)
+			{
+				break;
+			}
+
+			const FString Next = Lines[I].TrimStartAndEnd();
+			if (Next.IsEmpty()
+				|| Next.StartsWith(TEXT("-"), ESearchCase::CaseSensitive)
+				|| Next.StartsWith(TEXT("#"), ESearchCase::CaseSensitive))
+			{
+				break;
+			}
+			Bullet += TEXT(" ");
+			Bullet += Next;
+		}
+
+		const int32 Opens = Bullet.Find(*Anchor, ESearchCase::CaseSensitive);
+		if (Opens == INDEX_NONE)
+		{
+			OutError = FString::Printf(
+				TEXT("kb/setting.md's banned-register bullet no longer opens its list with "
+				     "'words like *': '%s'"), *Bullet);
+			return false;
+		}
+
+		const int32 From   = Opens + Anchor.Len();
+		const int32 Closes = Bullet.Find(TEXT("*"), ESearchCase::CaseSensitive,
+			ESearchDir::FromStart, From);
+		if (Closes == INDEX_NONE || Closes <= From)
+		{
+			OutError = FString::Printf(
+				TEXT("kb/setting.md's banned-register italic span is not closed, so the list "
+				     "cannot be read whole: '%s'"), *Bullet);
+			return false;
+		}
+
+		const FString Span = Bullet.Mid(From, Closes - From);
+
+		TArray<FString> Tokens;
+		Span.ParseIntoArray(Tokens, TEXT(","), /*InCullEmpty=*/false);
+		for (const FString& Token : Tokens)
+		{
+			const FString Word = Token.TrimStartAndEnd();
+			if (Word.IsEmpty() || Word.Contains(TEXT(" "), ESearchCase::CaseSensitive))
+			{
+				OutError = FString::Printf(
+					TEXT("kb/setting.md's banned register carries a token that is not a single "
+					     "word ('%s'), in span '%s'"), *Word, *Span);
+				return false;
+			}
+			Out.Add(Word);
+		}
+
+		if (Out.Num() == 0)
+		{
+			OutError = FString::Printf(
+				TEXT("kb/setting.md's banned-register span parsed to no words at all: '%s'"),
+				*Span);
+			return false;
+		}
+		return true;
+	}
 
 	/** Every enumerator `EStratResultTier` declares, off `StaticEnum` and never listed here. */
 	static TArray<EStratResultTier> AllTiers()
@@ -684,9 +818,13 @@ bool FStratResultRowsAreTheScoreboardModelTest::RunTest(const FString& /*Paramet
 //
 // THE BUDGET IS PARSED TOO. `<= 30 words` is §2.11.4's own sentence and 30 is never typed here.
 //
-// THE NINE BANNED WORDS ARE THE ONE LITERAL. `kb/setting.md` is not in this repository; see
-// `kBannedRegister`'s block, which cites the bullet and names the change that would make it a
-// read.
+// THE NINE BANNED WORDS ARE PARSED TOO, AND ARE NO LONGER TYPED HERE. They come out of
+// `Tools/architect/kb_snapshot/setting.md`'s own "Banned register" bullet at run time -- a
+// bullet that WRAPS, so the read joins its continuation line before cutting the list out. That
+// snapshot is a snapshot and NOT a sync: nothing hash-gates it against `stratocracy-content`,
+// so this clause pins the six lines against the register as vendored, not against the upstream
+// document. Every way the read can fail is a REFUSAL, and the parsed count is asserted before
+// the words are used -- see `ReadBannedRegister`.
 //
 // CASE SENSITIVE THROUGHOUT. `TestEqual` on two `FString`s is not, so the comparisons below are
 // `FString::Equals(..., ESearchCase::CaseSensitive)` reported through `TestTrue`. Without that,
@@ -726,6 +864,31 @@ bool FStratResultLinesAreTheGddSamplesTest::RunTest(const FString& /*Parameters*
 	}
 	AddInfo(FString::Printf(TEXT("§2.11.4's stated budget, read out of the document: %d words"),
 		WordBudget));
+
+	TArray<FString> BannedRegister;
+	if (!TestTrue(TEXT("kb/setting.md's banned register reads out of the vendored snapshot"),
+			ReadBannedRegister(BannedRegister, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// THE COUNT IS ASSERTED BEFORE THE WORDS ARE USED. The nine words themselves are read and
+	// not typed; this number is a tripwire on the PARSE. A span that came back short -- or a
+	// register the document has since grown -- reddens HERE and sends a reader back to
+	// `kb/setting.md`, instead of silently narrowing what the six result lines are checked
+	// against. A shorter list would still be green on every line, which is the exact failure
+	// this whole read exists to remove.
+	if (!TestEqual(TEXT("kb/setting.md's banned-register bullet still lists nine words"),
+			BannedRegister.Num(), 9))
+	{
+		AddError(FString::Printf(TEXT("what the parse returned instead: '%s' (from %s)"),
+			*FString::Join(BannedRegister, TEXT(", ")), *SettingPath()));
+		return false;
+	}
+	AddInfo(FString::Printf(
+		TEXT("kb/setting.md's banned register, read out of the vendored snapshot: %s"),
+		*FString::Join(BannedRegister, TEXT(", "))));
 
 	// ---- The six, each against the bullet that names its case ------------------
 	struct FCase
@@ -779,12 +942,16 @@ bool FStratResultLinesAreTheGddSamplesTest::RunTest(const FString& /*Parameters*
 				C.What, Words, WordBudget),
 			Words <= WordBudget && Words > 0);
 
-		// ---- kb/setting.md's banned register ------------------------------------
-		for (const TCHAR* const Banned : kBannedRegister)
+		// ---- kb/setting.md's banned register, as parsed above -------------------
+		// The MATCH stays case-insensitive on purpose: `Glory` is the banned word too, and an
+		// instrument that only saw the document's own lower-case spelling would let the defect
+		// vanish before the claim saw it. Only the assertions that compare against the GDD's
+		// own text are case-sensitive.
+		for (const FString& Banned : BannedRegister)
 		{
 			TestFalse(*FString::Printf(
 					TEXT("'%s' does not reach for kb/setting.md's banned register ('%s'): '%s'"),
-					C.What, Banned, *Line),
+					C.What, *Banned, *Line),
 				Line.Contains(Banned, ESearchCase::IgnoreCase));
 		}
 	}

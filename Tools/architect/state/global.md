@@ -11,6 +11,379 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-26 (NINE GOVERNANCE ITEMS CLOSE AND NOT ONE OF THEM WAS GAMEPLAY: A GUARD
+LEARNS TO READ PROVENANCE, A CLAUSE STOPS TYPING ITS OWN REFERENCE DATA, A LANE RULE GETS THE
+WORD IT HAS BEEN MISSING FOR FOUR PASSES, AND A FINDING THIS RECORD CARRIED IN TWO PLACES TURNS
+OUT TO HAVE BEEN THE INSTRUMENT'S FAULT. Written by the `coordinator`, whose file this is.
+**THE SUITE COUNT DID NOT MOVE, AND THAT IS THE INTENDED RESULT RATHER THAN AN OMISSION**: the
+suite is now **225/225**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings. Today's only clause change REWROTE an existing clause and minted nothing,
+so the clause NAME SET IS IDENTICAL across HEAD, the worktree and the report -- 225 on all three
+sides, set-difference empty in every direction, computed by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` and never by an acceptance-ID grep. THE REPORT THAT CERTIFIES
+THE LIVE FIGURE IS THIS TREE'S: `reportCreatedOn 2026.08.26-15.21.53`, `succeeded 225`,
+`failed 0`, `notRun 0`, run in `E:/MultiAgent/Stratocracy` on branch `master`. THAT STAMP IS UTC
+AND THIS ENTRY'S DATE IS LOCAL, which is why they can name different days.
+THE SWEEP CAN NOW SEE A PROVENANCE SENTENCE, WHICH IS THE ITEM `78ea508` FILED AGAINST ITSELF.
+`strat_banner_sweep.py` gains a fifth check, REPORT PROVENANCE, in two parts: (a) an unstamped
+`reportCreatedOn` cited in the live banner must be the report the sweep actually opened, and (b)
+an unstamped sentence saying a figure was PRODUCED in a named path on a named branch must name
+the tree the sweep is running in. Both sides are DERIVED -- the repo root from the script's own
+location, the branch from `git rev-parse` -- and neither is typed, so the same guard is correct
+in a lane tree and in `master` for opposite reasons. FALSIFIABILITY WAS MEASURED WITH OLD CODE ON
+BOTH SIDES, RE-RUN INDEPENDENTLY BY THE `coordinator`, AND THEN PARTLY REFUTED BY THE GATE -- the
+corrected statement is the one that stands, AND IT IS THE ONE FURTHER DOWN THIS SEGMENT rather
+than this sentence -- the discriminating control is the PRE-REPAIR build, not the `HEAD` build,
+for the reason given there, and nothing in this paragraph should be read as claiming otherwise.
+What was run here: over `d6492c9`'s real defective bytes with `--no-tree`, the `HEAD` build
+printed `SWEEP CLEAN` at exit 0 and the new build failed at exit 1 naming the defect. THAT PAIR
+IS DOCUMENT-ONLY BY NECESSITY -- with the tree check active it is not discriminating at all, and
+the first draft of this paragraph wrongly said it was: the `HEAD` build exits 1 there too, on
+`SUITE COUNT AGREEMENT`, because those bytes claim 224/224 against a tree now at 225, which has
+nothing to do with provenance. The check's falsifiability is
+unaffected; the overclaim was in how it was reported.
+THE TRAP THAT PRODUCED THE OVERCLAIM IS WORTH MORE THAN THE OVERCLAIM. The `coordinator` extracted
+`HEAD:Tools/architect/strat_banner_sweep.py` to a SCRATCH PATH and ran it there, which is the right
+way to keep old code on both sides -- but `_REPO` is derived from the SCRIPT'S OWN LOCATION, two
+directories above it, so the extracted copy looked for `Saved/AutomationReport/` and `Source/`
+under the scratch directory rather than under the repo, found neither,
+skipped both tree checks and printed `SWEEP CLEAN` HAVING COMPARED NOTHING AGAINST THE TREE. That
+is this repo's own recorded "a guard that cannot find its subject prints clean" shape, reproduced
+by the very control meant to prove a guard can fail. **HOW TO REPEAT IT WITHOUT MANUFACTURING AN
+INERT CONTROL, and the first draft of this instruction was itself insufficient -- the reviewer
+measured that too.** `--no-tree` ALONE IS NOT ENOUGH: run from a scratch directory it still prints
+`SWEEP CLEAN` at exit 0, because part (b) also skips when `git rev-parse` fails outside a
+repository, so the flag removes one blind spot and leaves another. What actually works is running
+the REPO'S OWN script -- its location is what `_REPO` and the branch lookup both derive from --
+with the extracted documents passed as arguments, and `--no-tree` on both sides so the comparison
+is document-only.
+AND THE OLD SIDE NEEDS THE SAME TREATMENT, WHICH THE FIRST TWO DRAFTS OF THIS RECIPE BOTH MISSED.
+A differential has TWO builds, and "run the repo's own script" can only ever be the new one --
+so as written this recipe could not produce its own control, and the only route it left was the
+scratch-path shape it had just warned against. `_REPO` is `join(_HERE, pardir, pardir)`, so THE
+OLD BUILD MUST LIVE UNDER `<repo>/Tools/<any-dir>/` TO DERIVE THE REPO AT ALL. MEASURED, not
+supposed: the pre-repair build written to `Tools/_oldbuild_probe/` derived
+`E:\MultiAgent\Stratocracy`, printed `SWEEP CLEAN` at exit 0 over the mutated banner, and the
+shipped script exited 1 on the same bytes -- a discriminating pair at last, with no `rev-parse`
+skip note on either side. The probe directory was removed afterwards.
+AND CHOOSE AN OLD BUILD THAT CONTAINS THE SUBJECT. `HEAD` does not: it has ZERO occurrences of
+`check_report_provenance`. Construct the control by copying the CURRENT script and reverting the
+ONE line under test -- old enough to differ, new enough to contain the subject.
+AND READ THE RUN'S OWN NOTES RATHER THAN ONLY ITS VERDICT LINE: every one of these skips
+announces itself in the notes, and every wrong conclusion drawn today came from reading the
+verdict and not the notes above it. `--self-test` reports ALL FIXTURES CORRECT.
+THE CHECK CAUGHT REAL DRIFT ON ITS FIRST DAY, and it was ours: the banner segment below cited
+`reportCreatedOn 2026.08.26-03.40.42` while the report on disk had moved to `-15.21.53`, because
+the suite was re-run mid-pass. That citation is now history by position, superseded by this
+segment, and no live claim rests on it.
+THE GATE FOUND THE CHECK INERT ON ITS OWN PRIMARY SUBJECT, AND THAT HOLE IS NOW CLOSED. Part (b)
+shared `is_stamped`'s general marker set, which counts a nearby `reportCreatedOn` citation as a
+stamp. That is the right signal for part (a), whose subject IS a report citation, and the wrong
+one for a tree-and-branch claim -- so the citation was LAUNDERING an adjacent bad claim. The
+reviewer measured it by mutating this very banner's `run in ... on branch ...` to name a foreign
+lane tree AND adding the `produced` verb: `SWEEP CLEAN`, exit 0.
+**[THREE CLAIMS IN THE FIRST DRAFT OF THIS PARAGRAPH WERE WRONG AND THE GATE BLOCKED ON ALL
+THREE. Corrected in place below rather than appended, because a correction that only ADDS leaves
+both readings standing -- a lesson this same banner has now supplied twice in one day. What the
+draft said: that the sentence sat "roughly 178 characters" from its citation, that "roughly
+thirty characters of prose either way" decided the outcome, and that the `HEAD` build was the
+control that witnessed the repair.]**
+THE DISTANCE FIGURE DEPENDS ENTIRELY ON WHERE YOU ANCHOR, AND 178 MATCHED NO CONVENTION.
+THE ONE CONVENTION STATED AND REPRODUCED IS `match.start()` TO `match.start()` ON THE CHECK'S OWN
+TWO REGEXES, and it is now written into the script beside the figures so the next reader cannot
+repeat this: the mutated live banner measures **91** characters from its citation, and
+`78ea508`'s real defect measures **249**, against a 220-character window. The reviewer and
+`strat-data-steward` derived that pair independently and agree exactly; a `coordinator` reading
+anchored on the literal sentence instead came out about a dozen characters lower and IS NOT
+RESTATED HERE, because a figure one lane could not reproduce does not belong in the record as a
+measurement. What every anchor agrees on is the part that matters: the live banner sat FAR INSIDE
+the exemption window -- 129 characters to spare -- and `78ea508`'s defect sat OUTSIDE it, by 29.
+So the "near miss" framing was false in both directions: the hole was not marginal, and the one
+real defect this check was built for was flagged by MARGIN rather than by design. That is a worse
+finding than the draft's, not a milder one.
+THE CONTROL NAMED IN THE DRAFT WAS TRUE AND EVIDENTIALLY EMPTY, WHICH IS THE SUBTLER FAILURE.
+`git show HEAD:Tools/architect/strat_banner_sweep.py` contains **ZERO** occurrences of
+`check_report_provenance` -- check 5 is entirely uncommitted, so the `HEAD` build has no
+provenance check in it at all. It prints `SWEEP CLEAN` over the mutant because it cannot look,
+not because a marker set laundered anything, and the word "still" asserted a continuity that
+never existed. THE DISCRIMINATING CONTROL IS THE PRE-REPAIR BUILD -- check 5 present, general
+marker set -- and the reviewer ran it: `SWEEP CLEAN` at exit 0 over the mutant, against the
+repaired build's exit 1 on the provenance sentence itself. (The first draft cited a LINE NUMBER
+here; it named a scratch mutant of an earlier draft and identifies nothing now -- this file's own
+recorded rule is to cite the sentence, never a `file:NNN` written during the diff that moves it.)
+This is the same class of overclaim retracted a few
+lines above, and the lesson is narrower than "use old code on both sides": THE CONTROL MUST BE OLD
+ENOUGH TO DIFFER AND NEW ENOUGH TO CONTAIN THE SUBJECT.
+Part (b) now has its OWN marker set, supersession annotations only, with the `reportCreatedOn`
+marker dropped; PART (a) IS UNCHANGED. **[STAMPED 2026-08-26 -- THE BEHAVIOURAL PROOF OFFERED
+HERE NO LONGER REPRODUCES, AND THE THING THAT DESTROYED IT WAS THIS PARAGRAPH'S OWN FILE GROWING.
+It read: "that was PROVED BY BEHAVIOUR, not by reading the call site -- the reviewer built a
+leaked variant passing the narrow markers into part (a) as well and it FAILS on this file's
+legitimate historical citation of `reportCreatedOn 2026.08.26-03.40.42`, where the shipped build
+passes." TRUE WHEN WRITTEN. Then today's segment was prepended, `current_banner_end` moved PAST the
+citation the proof rested on, leaving that subject BELOW the live banner, where part (a) skips it
+under BOTH builds before any marker is consulted. **[AND THIS STAMP'S OWN FIRST DRAFT NAMED TWO
+LINE NUMBERS FOR THAT BOUNDARY AND SUBJECT; BOTH WERE STALE BEFORE THE GATE READ THEM, invalidated
+by prose added to this same segment after the stamp was written -- the stamp's own meta-lesson
+happening to the stamp, within the hour. The figures are removed rather than refreshed: a line
+number in a file that is still growing is the one citation this record's own rule forbids, and
+refreshing it would only reset the clock on the same defect.]** The conclusion is unchanged and
+does not depend on the numbers: the subject sits below the live banner and is skipped. The
+`-03.40.42` citations still INSIDE the banner cannot discriminate either -- not merely because
+they sit in stamped blocks, but because EVERY citation in this segment does, which is the deeper
+defect recorded below. The differential is gone and is stamped rather than replaced, because
+manufacturing a fresh subject to rescue a claim is how a proof becomes a formality -- and a fresh
+subject built today would be exempted by the same paragraph, giving a green differential over an
+inert check. (That was written while part (a) WAS inert; it has since been repaired, and the
+differential is reconstructible again -- see the account below.)
+WHAT STILL STANDS: part (a)'s call site passes the FULL marker set and part (b)'s passes the
+narrow one -- that is inspection, and it is now the only evidence offered. THE SEVENTH INSTANCE,
+and the one worth carrying: the six before it were undone by CODE. This one was undone by PROSE
+ADDED TO THE VERY FILE THAT SUPPLIED THE TEST SUBJECT. A record that measures itself moves its own
+subject every time it grows.]**
+THE FIXTURE COVERAGE GAP WAS REAL AND IS NOW CLOSED, AND THE PARAGRAPH THAT USED TO SIT HERE
+SAID OTHERWISE FOR ONE GATE TOO LONG. **[CORRECTION, 2026-08-26: the draft here said the missing
+fixture was "filed rather than claimed". It was BUILT in the same pass, and this sentence was
+left standing beside its own correction -- the fifth rewrite of this banner today and the exact
+failure mode the fourth was written to hunt. The correction reached `data.md` and the script and
+not this file. Rewritten in place rather than appended.]**
+THE GAP, AS MEASURED. Neither of the first two new fixtures was a genuinely STAMPED provenance
+sentence: `_GOOD_PROVENANCE_NEAR_CITATION` is a TRUE tree claim, and the pre-existing
+`_GOOD_PROVENANCE` passed for a reason its stamp did not supply. **[CORRECTION, 2026-08-26: this
+paragraph first blamed the fixture's own `"It read:"` for tripping the quoted-figure exclusion.
+THAT CAUSE IS FALSE and the true one is worse. `_QUOTED_FIGURE_RE` alternates on `read ` WITH A
+TRAILING SPACE and cannot match `read:` at all -- verified directly. Corrected in place.]**
+THE REAL CAUSE WAS A FUNCTIONAL DEFECT IN THE CHECK, NOT A QUIRK OF THE FIXTURE, AND IT IS THE
+MOST SERIOUS THING THIS PASS FOUND. `_PROVENANCE_PATH_BRANCH_RE` carried the LITERAL `on branch`,
+which is not wrap-aware, and `_GOOD_PROVENANCE` WRAPS EXACTLY THERE. So the regex found **ZERO**
+matches in that fixture: part (b) never saw the sentence, never reached the marker set, never
+reached the exclusion, never reached anything. The fixture was a VACUOUS PASS -- green for
+grading nothing -- and the self-test case reading "the same tree/branch sentence, stamped, ...
+PASSES" was passing because nothing was graded.
+WHY THAT IS A GUARD DEFECT AND NOT A FIXTURE DEFECT. This record's banner prose wraps at about 95
+columns, so A REAL LIVE PROVENANCE CLAIM COULD BE HIDDEN FROM THE GUARD BY ORDINARY TYPOGRAPHY --
+nothing about it would look wrong, and the sweep would print `SWEEP CLEAN`.
+`_BAD_PROVENANCE_NEAR_CITATION` fired only by LUCK: its wrap falls AFTER `branch`, where the
+existing `\s*` absorbs it. A guard defeated by where a line happens to break is not a guard.
+Found by `strat-integration-reviewer` on the fifth gate of the day, confirmed independently by
+the `coordinator` -- 0 matches before, 1 after -- and FIXED: the pattern is now `on\s+branch`,
+`_GOOD_PROVENANCE` is no longer vacuous, and `_BAD_PROVENANCE_TREE_WRAPPED` pins the wrapped
+shape directionally, failing on the fixed build and passing on the pre-fix one. The same
+literal-space defect was found and fixed in `_QUOTED_FIGURE_RE`'s `would have`.
+AND THE FIX ITSELF IS NOW PINNED, WHICH MATTERS MORE THAN THE FIX. `check_self_test` carries a
+pattern-level regression asserting that the shipped regex matches a wrapped `on\nbranch` sentence
+while the literal pre-fix pattern does not, ON THE IDENTICAL TEXT. Its falsifiability was
+MEASURED by the `coordinator`, not argued: reverting the one regex to the literal `on branch`
+turns `--self-test` red at exit 1. Anyone who re-introduces the defect breaks the build, which is
+the difference between a bug that was fixed and a bug that cannot come back.
+WHAT CLOSED IT. `_GOOD_PROVENANCE_TREE_STAMP_ONLY` -- a wrong-tree provenance sentence carrying a
+real stamp and NO reporting verb, so the stamp is the only thing that can spare it. The reviewer
+re-ran the directional pair rather than accepting it: under an over-fire build honouring no stamp
+at all, the new fixture FAILED while `_GOOD_PROVENANCE` stayed green -- the same run that proved
+the old fixture was testing nothing.
+**[STAMPED 2026-08-26: THE SENTENCE ABOVE DESCRIBES THE TREE AS IT STOOD BEFORE THE WRAP FIX AND
+IS NO LONGER THE CURRENT BEHAVIOUR. Re-measured by the `coordinator` after the regex was made
+wrap-tolerant: BOTH fixtures now exit 0 on the shipped build and exit 1 under over-fire.
+`_GOOD_PROVENANCE` staying green was the SYMPTOM of the vacuity, so closing the vacuity had to
+change it -- its flipping is the confirmation that it is now genuinely stamp-dependent, not a
+regression.]**
+THIS BANNER HAS REPEATEDLY ASSERTED SOMETHING A LATER FIX IN THE SAME PASS MADE FALSE, and the
+PATTERN is worth more than any single instance of it. **[The first draft here carried a RUNNING
+COUNT -- "the sixth time today". More instances were found after it was written, so the count was
+stale on arrival, which is the very defect it was describing. A running tally in prose is itself
+a claim that goes stale; it is removed rather than incremented, because incrementing it just
+re-arms the same trap.
+AND THE RULE NEEDS THE DISTINCTION IT FIRST OMITTED, because as first written it forbade something
+this segment then did twice and the gate was right to say so. A RUNNING CARDINAL -- "the Nth time
+so far" -- is a claim about a set that is still growing, and every new member falsifies it. AN
+ORDINAL NAMING ONE INSTANCE -- "the seventh instance", meaning THAT one -- is a label on a fixed
+thing and stays true however many follow it. The cardinal is removed; the ordinals stay, and are
+what the entries below use.]** Each claim was TRUE WHEN WRITTEN and was invalidated by work that came
+after it, in the same uncommitted tree, often within the hour. A record written DURING a pass is
+not describing a finished thing, and every measurement in it is implicitly stamped with the tree
+that produced it. That is precisely what check 5 exists to catch for REPORTS -- and nothing
+catches it for PROSE.
+THE SHARPEST INSTANCE IS NOT A STALE SENTENCE AT ALL: THIS SEGMENT'S OWN ACCRETING STAMPS TURNED
+CHECK 5 PART (a) OFF OVER THE DOCUMENT IT GOVERNS. Found by `strat-integration-reviewer` on the
+seventh gate, reproduced independently by the `coordinator` with a control before anything was
+changed. Falsifying the live banner's OWN certifying `reportCreatedOn` gave `SWEEP CLEAN` at exit
+0; the IDENTICAL mutation applied to `HEAD`'s banner, run by the SAME shipped script, exited 1. So
+the check could fire yesterday and could not fire today, and the only thing that changed was this
+paragraph.
+THE MECHANISM, AND IT INDICTS THE SCOPE RATHER THAN THE PROSE. Part (a) scoped to the whole
+PARAGRAPH, and this segment is ONE unbroken paragraph carrying several `[STAMPED` markers, several
+`CORRECTION,` markers and many separate `reportCreatedOn` citations -- counts deliberately not
+given, for the reason stamped below. Masking the citation under test still left other markers to
+exempt it, and narrowing to the provenance marker set would not have helped:
+`[STAMPED` and `CORRECTION,` live in both. **THE GUARD WAS DISABLED BY THE ACT OF DOCUMENTING ITS
+OWN REPAIR** -- every correction written today added a stamp marker to this paragraph and widened
+the exemption a little further. A guard scoped to "the whole paragraph", in a record whose standing
+convention is STAMP AND NEVER DELETE, will always go inert as its subject accretes stamps. That is
+not a paragraph that grew too long; it is a scope that cannot survive this record's own practice.
+The script's own docstring had asserted the fallback was safe because the entry carried "exactly ONE
+`reportCreatedOn`" -- true of `78ea508`'s entry, false of this one, and now stamped as such.
+HOW IT WAS FIXED, AND THE CHOICE THAT NEARLY WENT WRONG. Part (a) now takes a 400-character window,
+sized from two measurements rather than picked. That alone left the real record RED at one site --
+an honest sentence saying the segment below CITED a superseded stamp -- and `strat-data-steward`
+ESCALATED rather than widen the window to swallow it or bracket the prose to silence it. Both of
+those would have been the wrong repair, and the second is indistinguishable from editing the record
+to make the guard pass. THE ACTUAL DEFECT WAS AN ASYMMETRY: check 1 has always exempted a figure
+that is REPORTED rather than ASSERTED, on the recorded reasoning that failing an honest account of a
+past miscount trains a maintainer to stop running the sweep -- and part (a) did not apply it, while
+needing it MORE, since its subject IS a report citation and a record documenting its own drift is
+made of sentences quoting stale stamps.
+AND THE EXEMPTION NEARLY SHIPPED VACUOUS, WHICH IS THE MORNING'S DEFECT ATTEMPTING A THIRD RUN.
+`_QUOTED_FIGURE_RE` contained no `cite`-family verb at all. The flagged sentence was exempted by the
+word `reading` sitting in a NEIGHBOURING clause -- green for a reason the sentence never supplied,
+and one paragraph's edit away from flipping. The citation family was added to the exclusion so the
+exemption fires on the actual reporting verb -- see below for the pattern finally chosen and why it
+is wider than the first attempt -- and the isolation differential was run BOTH ways: with `cited`
+removed and
+`reading` left in place the site FIRES AGAIN, which proves `cited` is doing the work. A prediction
+of the `coordinator`'s was refuted in the process -- `reading` never reached the citation anyway,
+because `quoting_window` cuts at the sentence boundary between them, so the mechanism is STRICTER
+than the raw distance suggested. The steward reported the measurement instead of confirming the
+guess. The same pass found and removed an accidental `cited` inside the new fixture's own filler,
+which would have made the pin for this very defect vacuous.
+WHAT IS PINNED NOW, ALL MEASURED IN THIS TREE BY BOTH THE STEWARD AND THE `coordinator`:
+falsifying the live banner's certifying stamp EXITS 1; the unmodified record sweeps CLEAN at exit 0;
+removing `cited` re-arms the finding; `HEAD`'s control still exits 1; and `--self-test` is green
+with every prior verdict unchanged. `_BAD_PROVENANCE_LONG_PARAGRAPH` fails on the fixed build and
+passes on the paragraph-scoped one, so the scope defect cannot silently return.
+THE EXCLUSION'S PATTERN IS AN EXPLICIT ALTERNATION OVER THE SIX CITATION INFLECTIONS, AND GETTING
+THERE TOOK THREE TRIES, EACH ONE CORRECTING THE LAST BY MEASUREMENT. First `cite\w*`, which the
+gate measured CANNOT reach `citing` or `citation` -- forms at least as natural as `cited` beside a
+stale stamp. Then the open `cit` prefix, which reached them but also reached any word starting
+those three letters. **THAT ONE WAS ACCEPTED FOR A DAY AS A "FORWARD RISK", AND THE GATE PROVED IT
+WAS NOT FORWARD AT ALL: THE PARAGRAPH WRITTEN HERE TO DOCUMENT THE RISK HAD ITSELF PUT TWO SUCH
+WORDS INTO THIS FILE, falsifying the very census that justified accepting it. The re-measure
+trigger written into that comment had already fired, silently, in the commit that authored it.**
+Nothing broke -- both words landed outside any figure's quoting window -- but a reader checking the
+premise would have found it false and been unable to tell a drifting guard from a growing record.
+THE TIGHTENING WAS FREE, WHICH IS WHY ACCEPTING THE TRADE WAS THE WRONG CALL AND NOT MERELY AN
+UNLUCKY ONE. **THE BYTE-IDENTITY CLAIM IS ABOUT THE RECORD, AND THE FIRST DRAFT EXTENDED IT TO THE
+SELF-TEST AS WELL, WHICH IS FALSE AND CONTRADICTED A SENTENCE TEN LINES BELOW IT.** Corrected in
+place. On the RECORD -- all six `state/` files, `--explain --no-tree`, files passed explicitly --
+the alternation and the open prefix classify BYTE-IDENTICALLY: 29 claims both sides, zero
+reclassifications, derived three times over by `strat-data-steward`, the gate and the
+`coordinator`. On the SELF-TEST they deliberately DIFFER, and that difference is the entire point
+of the pin: swapping the alternation for the open prefix turns `--self-test` red at exit 1. Saying
+both corpora were identical asserted the pin could not tell the patterns apart -- which is to say
+it asserted the vacuity this pass had just repaired. Six inflections of one lemma is a CLOSED SET;
+a three-letter prefix is an open word class, and it reaches none of the unrelated `cit`-initial
+words. This segment's own rule says a repairable bug never belongs on a limits list, and this was
+repairable by an alternation.
+AND THE MEASUREMENT THAT CAUGHT THE CONTRADICTION NEARLY LIED THE OTHER WAY -- THE LOCATION TRAP
+AGAIN, AND IT CAUGHT THE `coordinator` A SECOND TIME AFTER THE `coordinator` HAD RECORDED IT.
+**[A RUNNING CARDINAL STOOD HERE -- "for the fourth time today" -- AND IS REMOVED UNDER THIS
+SEGMENT'S OWN RULE, which it sat seventy-six lines below and broke. It was both stale-by-growth
+and UNDERIVABLE: nothing in this record enumerates the occurrences, so no reader could check it,
+which this segment elsewhere calls the worse half. The recurrence is what matters and it is stated
+without a tally.]** Checking
+the record half with a mutated copy of the script placed under `Tools/architect/_v/` reported
+`DIFFERS` -- because `STATE_DIR` derives from the SCRIPT'S OWN DIRECTORY, so the copy swept
+`Tools/architect/_v/state/`, found nothing, and printed `Banner sweep: NOTHING` with ZERO claims.
+The comparison was a full sweep against an empty one. Passing the six files explicitly gives the
+byte-identical result above. A probe of this script that is not told which files to read will
+answer confidently about a corpus it never opened, and the verdict line alone will not say so.
+AND THE PIN FOR IT WAS VACUOUS ON ARRIVAL -- THE FOURTH SUCH FIXTURE TODAY. The regression meant to
+hold the pattern in place hand-typed BOTH patterns as fresh literals, so reverting the shipped
+regex did not move it: it asserted a copy of its own subject rather than the subject. Rewritten to
+assert against the live `_QUOTED_FIGURE_RE` object, and its falsifiability MEASURED by the
+`coordinator` rather than argued -- reverting to the open prefix now turns `--self-test` red at
+exit 1. THE COMMENT BESIDE IT NO LONGER *DEPENDS* ON ANYTHING ABOUT THE RECORD'S VOCABULARY, which
+is the accurate word and not the one first written here: it still MENTIONS the record in passing,
+and the gate was right that "claims nothing" over-stated it. What matters is that its argument now
+rests on what the PATTERN covers -- a fact about the code, which no one can falsify by writing a
+word into the record. That is the whole lesson of the last three gates in one line: a claim about a
+growing document goes stale; a claim about the code does not.
+AND THE FIX WAS PROVED AGAINST THE EXACT ACT THAT KILLED ITS PREDECESSOR, which is the only test
+that really settles it. Writing the account above grew this segment well past the size and marker
+density that switched the OLD scope off -- more of every marker that mattered, in the same single
+paragraph -- and the falsified-certifying-stamp mutation STILL EXITS 1 while the unmodified record
+STILL SWEEPS CLEAN at exit 0. Documenting the repair no longer disables the thing repaired, and
+that -- not the window size -- is what says the scope is right this time.
+**[NO FIGURES ARE GIVEN FOR THAT SIZE, DELIBERATELY, AND THE FIRST DRAFT GAVE FIVE OF THEM. Every
+one was off by one before the gate read it, because writing the sentence containing them added the
+markers it was counting. That is the NINTH instance of the day's pattern, sitting inside the
+account of the eighth, and predicted before it was found. A COUNT OF A GROWING THING, WRITTEN
+INSIDE THAT THING, IS STALE THE MOMENT IT IS WRITTEN -- and refreshing it only resets the clock, so
+the figures are removed rather than corrected. Anyone who wants them can derive them; the sweep
+does exactly that on every run, which is the point of having a guard instead of a sentence.]** `data.md` holds the steward's own evidence and
+this banner does not restate it. The hole had survived an entire green self-test because not one
+fixture in it put a bad tree-claim next to a legitimate citation. **[A FIXTURE COUNT STOOD HERE
+AND IS REMOVED, NOT REFRESHED: the gate could not reconcile it with any instrument -- the build
+that carried the hole prints a different number than the current one, and neither matches what
+was written. It was unverifiable rather than merely stale, which is worse, and the same rule
+applies as to every other count in this segment.]**
+WHERE `178` PROBABLY CAME FROM, offered as the reviewer's hypothesis and not as a measurement of
+mine: by the same convention, `78ea508`'s FIXED bytes put the tree sentence about 177 characters
+from the nearest citation. If that is right, the retracted figure was a reading of the REPAIRED
+record rather than the defective one -- not a bad anchor on the right text, but the right anchor
+on the wrong text, which is the harder mistake to notice.
+WHAT THE NEW CHECK STILL CANNOT SEE, MEASURED AND NOT SUPPOSED. Three synthetic fixtures sharing
+one `produced` qualifier were run: naming BOTH a wrong path and a wrong branch fails as intended,
+but a claim naming ONLY a path, with no `on branch` clause present at all, and one naming ONLY a
+branch, with no path, each returned `SWEEP CLEAN` at exit 0. (That is CLAUSE-ABSENT, not
+clause-wrong: a wrong path beside a right branch DOES fail, and so does the reverse.) Part (b) is
+blind to a one-sided provenance claim by construction, and to any provenance sentence not phrased
+with the word `produced`. A MISSING REPORT IS FATAL NOWHERE -- `check_report_identity` returns
+early when there is no report at all, so the sweep prints `SWEEP CLEAN` at exit 0 with nothing to
+verify against; part (a) now at least NAMES that gap in its notes rather than skipping in silence.
+Leaving the exit code alone there is the `coordinator`'s call, deliberately, so that two checks do
+not disagree about the same condition; the standing gap predates this pass and remains open.
+THE WRAP BLINDNESS IS NOT ON THIS LIST BECAUSE IT WAS FIXED RATHER THAN DOCUMENTED, and that is
+the distinction this list has to keep: a limit belongs here only when it is a CONSTRUCTION limit.
+A REPAIRABLE BUG NEVER BELONGS ON IT -- putting one here converts a defect into a documented
+feature, which is how a guard stops getting fixed. That does not mean such a thing goes unrecorded:
+it gets its own adjacent paragraph, named as a bug and as either repaired or owed, exactly as the
+wrap defect does above.
+THE REST OF THAT DEFECT CLASS IS NOW MEASURED AND CLOSED, and the answer is better than "filed".
+`strat-data-steward` flagged rather than silently skipped `_PRECEDING_STAMPED_RE` (`stood at`,
+`had been`) and `_PRECEDING_LIVE_RE` (`is now`), which carry the same literal spaces and feed
+checks 1 to 3 -- the SUITE COUNT, the thing this sweep was originally built for. The reviewer then
+audited every `re.compile` and every marker literal in the file and MEASURED each, planting a
+wrong live figure under a correct banner: `is now` fails as it should and `is\nnow` STILL fails,
+because a bare `\bnow` alternative catches it and the default is live anyway; `stood\nat` and
+`had\nbeen` fail too -- a wrap there makes a STAMPED claim read as LIVE, which is over-strict and
+never a miss; and `_Last\nrun` fails CLOSED with an explicit refusal that freshness cannot be
+checked. **NO LIVE SUITE CLAIM CAN HIDE BEHIND A WRAP.**
+THE PRINCIPLE THAT SEPARATES THE ONE REAL DEFECT FROM ITS LOOK-ALIKES, and it is the part to
+remember: `_PROVENANCE_PATH_BRANCH_RE` was THE ONLY literal-space regex in this file where a
+non-match means SKIP THIS CLAIM. Every other one falls through to a strict default or refuses
+outright. A literal space is dangerous exactly where failing to match means saying nothing.
+TWO OF THE COORDINATOR'S OWN DESIGN INSTRUCTIONS WERE WRONG AND WERE
+CORRECTED BY MEASUREMENT, WHICH IS WORTH RECORDING BECAUSE BOTH WOULD HAVE SHIPPED A GUARD THAT
+PASSES LIKE AN INERT ONE: reusing `in_code_span` would have made part (a) PERMANENTLY BLIND,
+since every `reportCreatedOn` citation in this record -- right and wrong alike, `78ea508`'s
+defect included -- is written in backticks and would have been exempted as a verbatim quote
+before the comparison ran; and scoping to `## NEXT` raised 21 false positives on ordinary dated
+bullets that legitimately cite the report current at their own pass.
+THE NINE BANNED WORDS ARE NO LONGER TYPED ANYWHERE IN THE SUITE. `kb/setting.md` is vendored to
+`Tools/architect/kb_snapshot/setting.md` -- byte-identical to source by sha256 and
+`git hash-object`, a SNAPSHOT AND NOT A SYNC exactly as `gdd_snapshot/` is -- and T-UI-03's
+banned-register clause PARSES the nine out of that file's own bullet at run time, wrap-aware,
+refusing on a missing file, a missing bullet, an unclosed italic span, a malformed token or a
+parsed count other than nine. All three refusal shapes were measured RED, and the clause flipped
+Success -> Fail on one edited word in the document. A perturbation to a word ABSENT from the six
+result lines was run too and left the verdict green BY CONSTRUCTION -- it is a LIVENESS CONTROL
+and not a falsifiability proof, and the distinction is recorded because a probe the guard cannot
+fail passes exactly like a guard that is not there.
+A LANE RULE FINALLY HAS THE WORD IT WAS MISSING. `CLAUDE.md`'s crew section now carries an
+EDITOR-DRIVER CLAUSE naming the `coordinator` as the driver when `execute_script` is absent, with
+two obligations mirroring the file-write clause's own. `content.md`'s header keeps its own clause
+UNCHANGED and points at it. Writing that file and driving the editor were always two permissions
+and only one was ever granted; three consecutive gates turned on that wording while the asset it
+governed was clean from the first read.
+A FINDING THIS RECORD CARRIED IN TWO PLACES WAS FALSE, AND THE INSTRUMENT WAS THE DEFECT.
+`gdd_snapshot/MANIFEST.md` was never stale. The retraction and its measurement sit at the entry
+below and in `tests.md`; `MANIFEST.md` now carries the CRLF trap and its control in its own text.
+THE FOUR RULINGS CARRIED SINCE 2026-08-25 ARE ALL ANSWERED and recorded in `decisions.md`:
+`Shortfall` and `captureTurns` stay DECLARED DEBTS with their discharge conditions written down,
+displacement feedback is CLOSED as out of scope on a corrected premise, and the dimmed-but-live
+BUILD button is CLOSED as legibility rather than a defect. None of the four was agent work.
+NOT COMMITTED. Staging and the commit are the user's call.)_
+
 _Last run 2026-08-25 (THE LATCH BECOMES A PIN: SEC 2.8'S KEYS 2 AND 3 NOW TRAVEL THE REAL
 COMPOSITION PATH, AND A PRIVATE DUPLICATE SWITCH IS NOW RED. Written by the `coordinator`, whose
 file this is. **THE SUITE COUNT DID NOT MOVE AND THAT IS THE HEADLINE, NOT AN OMISSION**: the
@@ -198,6 +571,11 @@ WHY THIS ONE GOT THROUGH, WHICH IS THE PART WORTH CARRYING. `strat_banner_sweep.
 FIGURE and the REPORT IDENTITY -- it has nothing that compares an entry's claim about WHICH TREE
 produced the report against the tree it is running in. A stale provenance sentence is invisible
 to it by construction, and this one also carried a live imperative to redo work already done.
+**[NO LONGER TRUE, STAMPED 2026-08-26: this paragraph is written in the present tense and the
+tense is now wrong. The guard clause filed here WAS BUILT -- `strat_banner_sweep.py` gained check
+5, REPORT PROVENANCE, and a provenance sentence naming a foreign tree is no longer invisible to
+it. See the topmost banner segment, which also records the hole that check shipped with and the
+repair. Kept rather than deleted, because this paragraph is what named the gap.]**
 Filed for `strat-data-steward` as a guard clause. The 218/218 in the entry below WAS the live
 figure at that pass and is SUPERSEDED BY THIS ENTRY.
 Written by the `coordinator`, whose file this is.
@@ -268,8 +646,25 @@ key-to-criterion switch that was then inline in `StratBuildMatchResultModel` -- 
 words are a STATED LITERAL in the clause and not a read, because that file lives only in
 `E:/MultiAgent/stratocracy-content` and a headless run may not reach outside the tree; discharged
 by vendoring it beside the GDD snapshot, which is `strat-data-steward`'s call. (3)
-`Tools/architect/gdd_snapshot/MANIFEST.md` is STALE -- it records 446,133 bytes against a tracked
-file of 449,498, and two clauses now read that file. Steward's lane, flagged and not fixed.
+**[RETRACTED 2026-08-26 -- THE MANIFEST WAS NEVER STALE, AND THE INSTRUMENT THAT MEASURED IT WAS
+THE THING THAT WAS WRONG. Kept rather than deleted, on this file's standing practice. It read:]**
+*"`Tools/architect/gdd_snapshot/MANIFEST.md` is STALE -- it records 446,133 bytes against a
+tracked file of 449,498, and two clauses now read that file. Steward's lane, flagged and not
+fixed."* BOTH HALVES ARE WITHDRAWN, AND THE MEASUREMENT IS GIVEN HERE RATHER THAN THE CONCLUSION.
+Re-derived in this tree: the vendored `Stratocracy_Prototype_GDD.md` is 446,133 bytes by `wc -c`,
+by `len()` over the raw bytes, and by `git cat-file -s` on its `HEAD` blob -- three readings that
+do not share a code path. Its sha256 is
+`bfa4f713ab1415cff4e0e0ef09d94f751ca727f7893bc0d44900d81248ed954c`, which is EXACTLY the hash the
+manifest records, and the live document in `E:/MultiAgent/stratocracy-content` is byte identical
+to it. The file carries 3,365 lines and ZERO carriage returns, and 446,133 + 3,365 = 449,498 --
+one added byte per line, which is precisely what a CRLF-applying reader reports for a file this
+size. THE CONTROL, because a count of zero proves nothing until the instrument is shown able to
+speak: the same `tr -cd` reading counted 2 carriage returns in a known 6-byte CRLF file, so its
+silence over the snapshot is a reading and not a failure. 449,498 was never the size of anything
+on disk. The "flagged and not fixed" half is withdrawn with the rest: NOTHING IS OWED TO
+`strat-data-steward` HERE, and a reader who had acted on it would have edited a correct manifest
+to match a figure no file ever had. `MANIFEST.md` now carries this trap and the measuring command
+in its own text, so the next byte check has its control inside the file it is checking.
 THE GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, and it is stamped here rather than
 promised. `strat-integration-reviewer` read the UNCOMMITTED working tree -- 13 files, code,
 clauses and all three record files together -- and re-derived every figure this entry states

@@ -53,3 +53,23 @@ writer** when `execute_script` is absent from the session's tool surface, becaus
 tool `strat-editor-builder` has no route to the editor and cannot write anything. The condition
 and the two obligations that ride with it are stated in that file's own header, which is the
 authority. No other record file has a fallback writer.
+
+**Writing `content.md` and driving the editor are two different permissions, and until
+2026-08-26 only one of them was granted.** The fallback above licenses the FILE WRITE — its own
+header says so in terms — and it kept being cited for the ASSET WORK as well, because the same
+absent tool causes both. Three consecutive `strat-integration-reviewer` gates turned on that
+wording while the asset it governed was clean from the first read. So the second permission is
+now stated here, where lanes are defined, rather than inferred from a record file's header:
+
+> **The editor-driver clause.** When `execute_script` is absent from the session's tool surface,
+> the `coordinator` may drive the live editor to do content-lane work — author and edit assets,
+> set Blueprint defaults, run PIE — because `strat-editor-builder` holds the NeoStack tools and
+> no Bash and has no route to the editor at all. **Two obligations ride with it, and they mirror
+> the file-write clause's own.** (1) **Measure the absence with a control before invoking it.**
+> An absent tool name proves nothing alone; show the same lookup returning the tools that ARE
+> served. (2) **Attribute the acting and the writing separately in the record entry.** This
+> clause covers the driving; the `content.md` header covers the file write; neither covers the
+> other half, and naming one actor while leaving the other unnamed is itself a finding.
+
+Nothing here widens the lane rule for a session where the editor IS reachable — when
+`strat-editor-builder` can work at all, `Content/` is its lane and only its lane.

@@ -57,6 +57,19 @@ WHAT IT CHECKS, and each is falsifiable by `--self-test`:
      any test-defining `.cpp` file on disk; either failure is a hard FAIL, never a warning,
      because a sweep that cannot identify its evidence has not verified anything.
 
+  5. REPORT PROVENANCE. Check 4 pins WHICH RUN the trusted report is; it says nothing about
+     an entry's own PROSE CLAIM about which run or which tree produced a figure. 78ea508 fixed
+     a `global.md` entry that cited `reportCreatedOn 2026.08.26-00.28.42` as certifying the
+     live figure while, unstamped, it also said the figure was produced in
+     `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/match-result-screen` and that the suite
+     "must be RE-RUN in the integration tree" -- a suite that had already run. So, WITHIN
+     `global.md` only -- the one file condition 3 of the split already makes the owner of every
+     live fact about the current run -- (a) every unstamped, unquoted `reportCreatedOn <stamp>`
+     cited there must equal `result.report_created_on_raw`, the stamp of the report this sweep
+     actually opened; and (b) an unstamped, unquoted sentence saying a figure or report was
+     PRODUCED in a named filesystem path on a named branch must name THIS tree -- `_REPO` and
+     `git rev-parse --abbrev-ref HEAD`, both derived from the running process, never typed.
+
 THE LIVE-VERSUS-STAMPED DISTINCTION IS THIS SCRIPT'S ONE PIECE OF JUDGEMENT, AND IT IS A
 HEURISTIC -- SAID PLAINLY BECAUSE A READER WHO THINKS IT IS EXACT WILL TRUST A PASS TOO FAR.
 `state.md`'s convention is that an older claim STAYS, stamped with its own item, and only the
@@ -86,6 +99,18 @@ truth of every sentence in the narrative behind it. It also cannot read prose: i
 shapes near a declared item's name, and `--explain` prints its call on every claim precisely
 so a human can overrule it.
 
+CHECK 5's OWN BLIND SPOT IS THE SAME SHAPE, MEASURED RATHER THAN SUPPOSED. Part (b) only fires
+on the COMBINED phrase "produced ... `<path>` on branch `<branch>`" -- both halves, in one
+regex, together. Measured 2026-08-26 with three fixtures sharing one "produced" qualifier: one
+naming both a wrong path AND a wrong branch (control), one naming ONLY the wrong path with no
+"on branch" clause at all, one naming ONLY a wrong branch with no path. The control FAILED with
+one REPORT PROVENANCE finding, exactly as designed; BOTH single-sided fixtures returned
+`SWEEP CLEAN`, exit 0, zero REPORT PROVENANCE findings -- a path-only or branch-only provenance
+claim is invisible to this check by construction, the same way check 1 cannot see a figure that
+never says what it is counting. It is also blind to a tree/branch pair that IS this one but for
+the wrong reason (a coincidental rename), and to any provenance claim not phrased with the word
+"produced".
+
 USAGE
     python Tools/architect/strat_banner_sweep.py                  # sweep state/, exit 0/1
     python Tools/architect/strat_banner_sweep.py state/tests.md   # one file (labelled global.md)
@@ -101,6 +126,7 @@ import io
 import json
 import os
 import re
+import subprocess
 import sys
 from dataclasses import dataclass, field
 
@@ -198,6 +224,32 @@ _PARAGRAPH_STAMP_MARKERS: tuple[str, ...] = (
     r"reportCreatedOn\s+\d{4}\.\d{2}\.\d{2}",
 )
 
+# REPORT PROVENANCE PART (b)'S OWN MARKER SET -- GENUINE SUPERSESSION ONLY, NOT A NEARBY
+# CITATION. `_PARAGRAPH_STAMP_MARKERS` above includes a bare `reportCreatedOn <date>` because
+# for a SUITE FIGURE (part (a)'s subject, and every other check's), a report citation sitting
+# near the figure is exactly what marks it historical -- "suite was 107/107 (`reportCreatedOn
+# ...`)" is the record's own idiom for quoting an old pass. A tree/branch PROVENANCE CLAIM is a
+# different subject: the live banner's own `reportCreatedOn` citation for TODAY'S report sits a
+# short, unremarkable distance from its own "run in `<repo>` on branch `<branch>`" sentence --
+# that is simply how the real banner is written, not a supersession -- so reusing the same
+# marker made `is_stamped` exempt a bad tree/branch claim merely for standing near ANY
+# `reportCreatedOn`, current or not. Measured 2026-08-26: replacing the real banner's own
+# `run in \`E:/MultiAgent/Stratocracy\` on branch \`master\`` with a foreign lane path and the
+# word "produced" -- otherwise touching nothing -- still printed `SWEEP CLEAN`, exit 0, because
+# that edit landed 91 characters from the banner's own `reportCreatedOn` citation
+# (match.start()-to-match.start(), `_CITED_REPORT_STAMP_RE` to `_PROVENANCE_PATH_BRANCH_RE`) --
+# FAR inside `_STAMP_WINDOW` (220), not a near miss, so the bare-citation marker reached it with
+# more than a hundred characters to spare. This set drops that marker: only an explicit
+# supersession annotation stamps a tree/branch claim, never a bare date citation sitting nearby.
+_PROVENANCE_TREE_STAMP_MARKERS: tuple[str, ...] = (
+    r"\[STAMPED",
+    r"\[BANNER CORRECTED",
+    r"\*\*CORRECTED",
+    r"\*\*CORRECTION",
+    r"CORRECTED,",
+    r"CORRECTION,",
+)
+
 # TENSE BINDS TO WHAT IT PRECEDES, and this replaced a generic "was **N/N**" marker that
 # lived in the list above. A corrected banner says "suite **was** 107/107 at that pass and
 # **is now** 108/108" inside ONE sentence, and no window around a figure can tell which of
@@ -215,6 +267,21 @@ _TENSE_MARKUP = r"[\s*_]*$"
 _PRECEDING_STAMPED_RE = re.compile(r"(?:\bwas|\bwere|\bstood at|\bhad been)" + _TENSE_MARKUP, re.I)
 _PRECEDING_LIVE_RE = re.compile(r"(?:\bis now|\bnow|\bcurrently)" + _TENSE_MARKUP, re.I)
 
+# A LITERAL SPACE IN A MULTI-WORD PHRASE IS ONLY SAFE WHEN A MISS FALLS THROUGH TO SOMETHING
+# STRICT. `stood at` and `had been` above, and `is now` in `_PRECEDING_LIVE_RE`, each carry a
+# literal space that a line wrap defeats exactly like `on branch` once did (measured
+# 2026-08-26: `is now` wrapped as `is\nnow` still fails to match, and so do `stood\nat` and
+# `had\nbeen`) -- but a miss here just falls through to the OTHER regex or to the tense
+# default, and that default is LIVE, the strict reading. So a wrapped `was **107/107**`
+# degrades to being read as a live claim, never the reverse: over-strict, never a missed
+# finding. `_BANNER_DATE_RE`'s `_Last run ` is the same shape again, and a miss there is
+# refused outright (`run_sweep` raises rather than assumes a document with no discoverable
+# banner date is clean). `_PROVENANCE_PATH_BRANCH_RE`'s `on branch` was the ONE regex in this
+# file where a miss meant SKIP THIS CLAIM ENTIRELY -- part (b) never collected the sentence,
+# so a real live provenance claim wrapped there was invisible rather than merely misread. That
+# is what made it a functional defect and not a conservative edge. Before adding a literal
+# space to a new regex here, name which of the two failure modes a miss produces.
+
 # WHERE A CLAIM LIVES DECIDES WHETHER IT IS LIVE, and this is the document's own
 # convention rather than a convenience. `state.md` is a banner plus `## NEXT`
 # (current state) followed by milestone sections (the record of a closed phase).
@@ -228,6 +295,22 @@ _LIVE_SECTIONS: tuple[str, ...] = ("## NEXT", "## BUILT", "## DECISIONS")
 # Wide enough to catch a stamp attached to the claim, narrow enough that a stamp
 # on a NEIGHBOURING claim in the same paragraph does not launder this one.
 _STAMP_WINDOW = 220
+
+# CHECK 5 PART (a)'S OWN WINDOW, ADDED 2026-08-26 to replace a whole-paragraph scope that went
+# inert on the live banner the same day it grew a fourth `reportCreatedOn` citation. See
+# `check_report_provenance`'s docstring and part (a)'s own call site for the measurement:
+# `78ea508`'s two citations sit 234 characters apart start-to-start (needs >=234, missed by
+# `_STAMP_WINDOW`'s 220 by 14) and the live 2026-08-26 banner's `[STAMPED ...]`-bracketed
+# re-quote of an old stamp sits 371 characters from that bracket, start-to-start (needs >=371).
+# 400 covers both with margin. NOT EVERY LEGITIMATE CITATION IN THAT SAME LIVE BANNER FITS THIS
+# WINDOW: one `reportCreatedOn 2026.08.26-03.40.42` re-quote there sits ~3,738 characters from
+# the nearest `[STAMPED ...]`/`CORRECTION,` marker, exempted only by prose ("that citation is
+# now history by position, superseded by this segment") with no bracket nearby -- a window wide
+# enough to reach it would be wide enough to reopen the whole-paragraph blind spot this fix
+# exists to close. That citation is a known, reported gap under this window, not a silently
+# accepted one -- see the steward's report dated 2026-08-26 for the measurement and the
+# recommendation that it is a scope call for the record's own maintainer, not this script.
+_PROVENANCE_CITATION_WINDOW = 400
 
 # BOLD IS NOT PART OF THE CLAIM, and assuming it was made this check blind to the very
 # figure it exists to police: the corrected banner reads "**is now 108/108**", with the
@@ -249,9 +332,65 @@ _SUITE_CLAIM_RE = re.compile(r"(?<![\d/.-])(\d{1,4})/(\d{1,4})(?![\d/-])(?!\.\d)
 # What makes an `N/N` a SUITE claim rather than any other pair of equal numbers.
 # How close a verdict word must sit to an item's own name to count as a claim ABOUT it.
 # Reporting verbs that mark a nearby figure as QUOTED evidence rather than a live claim.
+# `cite`/`cited`/`cites`/`citing`/`citation`/`citations` ADDED 2026-08-26, when part (a) of
+# REPORT PROVENANCE started using this same list via `quoting_window` and immediately found the
+# gap: a `reportCreatedOn` citation is part (a)'s own subject, so "cited" is the single most
+# likely reporting verb to appear next to one -- more likely than any word already in this list,
+# which was built for suite figures -- and its absence was invisible until something finally
+# searched for it. Measured on the real live `global.md`: "the banner segment below cited
+# `reportCreatedOn 2026.08.26-03.40.42` while the report on disk had moved to `-15.21.53`" is an
+# honest account of a past drift, structurally identical to `_QUOTED_ACCOUNT` below, and without
+# this addition it was flagged as a live provenance defect.
+#
+# PROVED LOAD-BEARING BY BOTH SIDES OF A DIFFERENTIAL ON THE REAL SENTENCE, not merely added and
+# assumed -- and the differential landed the OPPOSITE way from a first, cruder measurement, which
+# is the part worth keeping. A raw 220-character look-back finds an unrelated "reading" (from
+# "every wrong conclusion drawn today came from reading the verdict") 187 characters upstream of
+# the citation, in a SEPARATE sentence -- and reading `quoting_window`'s OWN scope, not that raw
+# distance, is what this check actually uses: it stops at the nearest sentence boundary, and that
+# boundary sits between "reading"'s sentence and "cited"'s. Two scratch mutations of the real
+# banner prove which one is load-bearing: with "reading" replaced by a neutral word and "cited"
+# left untouched, the citation is STILL exempted (`SWEEP CLEAN`) -- isolating "cited" as
+# sufficient on its own. With "cited" replaced by a neutral word and "reading" left untouched,
+# the SAME citation is NO LONGER exempted (`SWEEP FAILED`, `REPORT PROVENANCE`) -- "reading"
+# never reached it, because `quoting_window`'s sentence cut had already excluded it before this
+# addition existed. So there is no hidden looseness here to flag: the sentence-scoped window is
+# stricter than a raw character count would suggest, and "cited" is the whole reason this
+# citation is exempted, not a coincidence of "reading" sitting nearby. `check_self_test` pins the
+# same real sentence failing with the four new words removed, so the addition itself is provably
+# load-bearing independent of this differential.
+#
+# THE FIRST SHIPPED PATTERN NAMED FIVE WORD-FORMS ITS OWN REGEX COULD NOT ALL REACH, found in
+# review the same day. `\bcite\w*` requires an `e` immediately after `cit` before the `\w*`
+# takes over, so it matches `cite`, `cited` and `cites` but NOT `citing` or `citation(s)` -- there
+# is no `e` in either. Measured live: with the shipped `\bcite\w*`, the sentence "The suite count
+# in that citation gives 999/999 on this tree." is COLLECTED as a live claim and FAILS the sweep
+# (`SUITE COUNT AGREEMENT`, 225 vs 999); the same sentence with "cited" in place of "citation" is
+# exempted, `SWEEP CLEAN`. Widened here to reach the whole family the comment always promised,
+# rather than narrowing the comment to the forms the old pattern actually reached -- `citation`
+# is at least as natural a way to report a stale figure as `cited` is ("that citation is now
+# history" is this record's own idiom; `global.md` had already written it), so under-exempting
+# it is a live false-positive risk, not a safe default.
+#
+# THE FIRST WIDENING SHIPPED AS `\bcit\w*`, AN OPEN WORD CLASS, AND THAT WAS ITSELF A DEFECT:
+# it also matches any OTHER word starting `cit-` (`cities`, `citizen`, `citadel`, `citizenry`,
+# ...), so it went on to falsify its own justifying comment the same day it shipped -- the
+# comment claimed the record's vocabulary contained no such word, and a later paragraph
+# documenting exactly this risk then wrote `cities` and `citizen` into `global.md`, which a
+# claim about a growing document cannot survive. Tightened here to the closed alternation
+# `\bcit(?:e|es|ed|ing|ation|ations)\b`: this is a fact about the PATTERN, not about the
+# record's current text, so it cannot be falsified by anyone editing `global.md` -- the six
+# forms are the whole of the `cite`/`citation` family this exemption is for, and the pattern
+# has no `\w*` tail left to reach past a word boundary into `cities`, `citizen`, `citadel` or
+# `citizenry`. Measured, not assumed: `\bcite\w*` vs `\bcit(?:e|es|ed|ing|ation|ations)\b` give
+# byte-identical output on the full sweep (`--explain --no-tree`) run against the real
+# `Tools/architect/state/*.md` files -- because every actual `cit`-initial word in that record is
+# one of the six forms below the alternation reaches, so tightening away from the open class
+# costs nothing on this tree today. If that ever changes, the differential above is the one to
+# re-run -- but the comment no longer depends on it staying true.
 _QUOTED_FIGURE_RE = re.compile(
-    "said|says|saying|read |reads |reading|claim|shape|editing|planting|planted|"
-    "wrongly|stale|defect|would have|reported", re.I)
+    r"said|says|saying|read |reads |reading|claim|shape|editing|planting|planted|"
+    r"wrongly|stale|defect|would\s+have|reported|\bcit(?:e|es|ed|ing|ation|ations)\b", re.I)
 
 # HOW FAR UPSTREAM A REPORTING VERB REACHES, and this exclusion is the widest hole this
 # script has ever had. Measured 2026-08-22 by planting `The suite is now 161/161 on this
@@ -287,6 +426,45 @@ _SUITE_QUALIFIER_RE = re.compile("suite|succeeded|tests", re.I)
 
 _BANNER_DATE_RE = re.compile(r"_Last run (\d{4})-(\d{2})-(\d{2})")
 _ANY_DATE_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
+
+# ---------------------------------------------------------------------------
+# REPORT PROVENANCE (check 5). Two independent sub-checks, both born from the SAME commit:
+# 78ea508 fixed a `global.md` entry that named THIS tree's report as certifying the live
+# figure while, eight lines below, an unstamped paragraph asserted the opposite -- that the
+# figure was the LANE tree's, produced in `E:/MultiAgent/Strat-wt/slot-1` on branch
+# `feat/match-result-screen`, and that the suite "must be RE-RUN in the integration tree after
+# the merge." That suite had already run. Check 4 (REPORT IDENTITY) grades the `N/N` figure and
+# the artifact's own timestamp; it has nothing that reads an entry's PROSE claim about which
+# run or which tree produced it. A stale provenance sentence was invisible to this sweep by
+# construction until now.
+_CITED_REPORT_STAMP_RE = re.compile(
+    r"reportCreatedOn\s+(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})")
+
+# `[A-Za-z]:[\\/]` is this project's own path shape (`E:/...`), matched rather than typed --
+# the DRIVE LETTER is never fixed to `E`, so the check does not silently assume its own box.
+#
+# THE LITERAL SPACE IN `on branch` WAS THE HOLE. This record's own prose wraps at ~95
+# columns, and `_GOOD_PROVENANCE` (below) wraps exactly between those two words -- "on\nbranch"
+# -- so the literal single space never matched and this regex found ZERO matches in that
+# fixture. Part (b) never saw the sentence at all: not exempted, not flagged, never reached.
+# `_GOOD_PROVENANCE` was therefore a VACUOUS pass for part (b), proved 2026-08-26 by an
+# over-fire build (`markers=()`, honouring no stamp): the shipped fixture still PASSED under
+# over-fire, where the same text with the wrap removed correctly FAILED. `\s*` already
+# tolerates any run of whitespace around the backticks; the fix makes the space BETWEEN
+# "on" and "branch" the same kind of tolerant gap, `\s+`, so a wrap between those two words no
+# longer hides a live claim from this check.
+_PROVENANCE_PATH_BRANCH_RE = re.compile(
+    r"`([A-Za-z]:[\\/][^`]+)`\s*on\s+branch\s*`([^`]+)`", re.I)
+
+# THE SHAPE MUST SAY SOMETHING WAS *PRODUCED* THERE, NOT MERELY MENTION A WORKTREE. Without
+# this qualifier the check flagged `engine.md`'s own honest build note -- "Built in worktree
+# `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/match-result-screen`, off `194de95`" -- which
+# is a true, permanent statement of WHERE THE C++ WAS WRITTEN and is not a claim about which
+# tree backs a live figure or report at all. Measured 2026-08-26 against the real
+# `Tools/architect/state/engine.md`: without the qualifier this fired there; with it, it does
+# not, because "Built in worktree" never says anything was PRODUCED.
+_PROVENANCE_PRODUCED_RE = re.compile(r"\bproduced\b", re.I)
+_PROVENANCE_QUALIFIER_WINDOW = 150
 
 
 # ---------------------------------------------------------------------------
@@ -356,8 +534,8 @@ def paragraphs_with_lines(text: str) -> list[tuple[int, str]]:
     return [(s, "\n".join(b)) for s, b in blocks if "\n".join(b).strip()]
 
 
-def is_stamped(paragraph: str) -> bool:
-    return any(re.search(m, paragraph) for m in _PARAGRAPH_STAMP_MARKERS)
+def is_stamped(paragraph: str, markers: tuple[str, ...] = _PARAGRAPH_STAMP_MARKERS) -> bool:
+    return any(re.search(m, paragraph) for m in markers)
 
 
 def in_code_span(para: str, at: int) -> str | None:
@@ -869,6 +1047,261 @@ def check_banner_date(docs: list[tuple[str, str]], result: SweepResult) -> None:
         ))
 
 
+def _mask_span(text: str, start: int, end: int) -> str:
+    """`text` with `[start:end)` blanked to spaces, SAME LENGTH, so a stampedness test run
+    against the result cannot self-match the very citation being judged.
+
+    Every `reportCreatedOn <stamp>` occurrence IS one of `_PARAGRAPH_STAMP_MARKERS` -- that
+    marker exists so a suite figure sitting NEAR a report identity reads as historical. Reused
+    unmasked against a reportCreatedOn citation itself, `is_stamped` would call EVERY citation
+    stamped, right or wrong, because the citation always matches its own marker. Masking only
+    the matched span keeps every OTHER stamp and every other marker in the paragraph visible.
+    """
+    return text[:start] + (" " * (end - start)) + text[end:]
+
+
+def _current_branch(repo: str = _REPO) -> "str | None":
+    """`git rev-parse --abbrev-ref HEAD`, run in the tree this script is IN, never typed.
+
+    A guard that types the branch or path it is comparing against goes inert on that exact
+    subject the day the branch is renamed or the repo is cloned somewhere else -- the shape
+    this project has already paid for twice. `_REPO` is likewise derived from `__file__`, not
+    written here as a literal.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "-C", repo, "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True, text=True, timeout=10,
+        )
+    except Exception:                                          # pragma: no cover
+        return None
+    if proc.returncode != 0:
+        return None
+    branch = proc.stdout.strip()
+    return branch or None
+
+
+def _normalize_fs_path(p: str) -> str:
+    """Case-insensitive, slash-insensitive path comparison, for a record that writes the same
+    tree as both `E:/MultiAgent/Stratocracy` and (occasionally) backslashed."""
+    return os.path.normcase(os.path.normpath(p.replace("\\", "/")))
+
+
+def check_report_provenance(docs: list[tuple[str, str]], result: SweepResult) -> None:
+    """Check 5. Two independent parts, per the docstring's REPORT PROVENANCE section.
+
+    (a) A CITED REPORT STAMP MUST BE THE REPORT THE SWEEP READ. Every unstamped, unquoted
+    `reportCreatedOn <stamp>` in the swept set must equal `result.report_created_on_raw`.
+
+    **[STAMPED 2026-08-26 -- THE PARAGRAPH-WIDE SCOPE BELOW WAS ITSELF A DEFECT, FOUND THE SAME
+    DAY IT SHIPPED, AND THE SENTENCE THAT FOLLOWS THIS ONE IS THE FALSE PREMISE THAT CAUSED IT.
+    Kept rather than deleted, because the record's own convention is that an old claim stays,
+    stamped, and because the failure mode is the lesson: "the defective entry carries exactly
+    ONE `reportCreatedOn` in that whole block" was TRUE of `78ea508`'s entry on the day it was
+    written and became FALSE as the SAME banner paragraph grew across a single day's corrections.
+    Measured against the live `global.md` banner segment on 2026-08-26: a single long paragraph,
+    with no blank line inside it, carrying several `reportCreatedOn` citations and several
+    `[STAMPED`/`CORRECTION,` markers -- the exact counts are not stated here because this is a
+    paragraph the record keeps growing by its own stamp-in-place convention, so any count typed
+    into this comment goes stale the next time someone corrects a claim in it; re-measure live
+    rather than trust a figure quoted here. Falsifying the paragraph's OWN certifying citation --
+    the live banner's `reportCreatedOn 2026.08.26-15.21.53` -- to any other value and sweeping
+    the mutated copy printed `SWEEP CLEAN`, exit 0: `is_stamped` on the whole paragraph (even
+    with the mutated span itself masked) still matched one of the other three citations, or the
+    `[STAMPED`/`CORRECTION,` markers, and called the mutation stamped. The control that proves
+    the check was not simply broken -- the same mutation applied to `git show
+    HEAD:Tools/architect/state/global.md`, `78ea508`'s own shorter, single-citation entry, run
+    through the SAME shipped script -- exited 1. So the paragraph-wide fallback did not merely
+    have a narrow miss; it goes inert BY THE ACT OF THIS RECORD DOING WHAT IT ALWAYS DOES --
+    stamping a correction in place rather than deleting the sentence it replaces. Every correction
+    written into a growing banner paragraph ADDS a stamp marker to it, and each one widens the
+    exemption `is_stamped` grants to every OTHER citation in that same paragraph, including a
+    live one that has nothing to do with any of them. A guard whose scope is "the whole
+    paragraph" cannot survive a record whose convention is "stamp, never delete", because the
+    record is designed to grow exactly the way that defeats it. THE FIX gives part (a) a window,
+    the way part (b) already has one -- see below.]**
+
+    (b) A NAMED TREE MUST BE THIS TREE. A live sentence asserting a figure or report was
+    PRODUCED in a named filesystem path on a named branch must agree with the tree this sweep
+    is actually running in, derived from `_REPO` and `_current_branch()` -- never typed. Scope
+    here IS the `_STAMP_WINDOW` window, not the whole paragraph, and deliberately so: unlike
+    part (a), the claim being judged is never itself a `reportCreatedOn` citation, so the
+    self-match problem does not apply, and the SAME giant paragraph that makes whole-paragraph
+    scope safe for (a) makes it UNSAFE for (b) -- the defective entry's own wrong
+    `reportCreatedOn 2026.08.26-00.28.42` sits in the identical unbroken block as its
+    `produced in ... slot-1` sentence, so a whole-paragraph read would have let that ONE wrong
+    stamp silently exempt the tree claim too.
+
+    PART (b) NO LONGER READS THE SAME MARKER SET AS EVERY OTHER CHECK, AND THIS WAS ALSO
+    MEASURED RATHER THAN ASSUMED. The window originally used `is_stamped` unmodified, whose
+    `_PARAGRAPH_STAMP_MARKERS` includes a bare `reportCreatedOn <date>` -- correct for a SUITE
+    FIGURE, where a nearby report citation is this record's own idiom for quoting an old pass,
+    but wrong for a tree/branch claim: the LIVE banner's own citation of TODAY's report sits an
+    unremarkable, un-superseded distance from its own "run in `<repo>` on branch `<branch>`"
+    sentence, because that is simply how the real banner narrates its own current pass. Measured
+    2026-08-26 by replacing the real banner's "run in `E:/MultiAgent/Stratocracy` on branch
+    `master`" with a foreign lane path and the word "produced," touching nothing else: the edit
+    landed 91 characters from the banner's own `reportCreatedOn` (match.start()-to-match.start(),
+    `_CITED_REPORT_STAMP_RE` to `_PROVENANCE_PATH_BRANCH_RE`) -- FAR inside `_STAMP_WINDOW`
+    (220), not a near miss -- and the sweep printed `SWEEP CLEAN` at exit 0 -- blind on exactly
+    the ground its own subject is most likely to stand. `78ea508`'s own real defect sat OUTSIDE
+    that window, at 249 characters by the same measure, so the one live defect this check was
+    built to catch was flagged by MARGIN rather than by the window's design: a claim landing a
+    little closer to 220 in either direction would have let the window's width decide the
+    outcome, not any correct distinction between an own-current citation and a stale one. Part
+    (b) now checks the window against
+    `_PROVENANCE_TREE_STAMP_MARKERS`, which drops the bare `reportCreatedOn` marker and keeps
+    only an explicit supersession annotation (`[STAMPED ...]`, `CORRECTION,`, and the like). The
+    fixed record's own tree sentence is still exempted, because it sits beside an actual
+    `[STAMPED ...]` block, not merely beside a date; the defective record's tree sentence, which
+    has no such annotation, is now flagged where it previously was not. Part (a) is unchanged --
+    it still reads a cited `reportCreatedOn` against the one the sweep opened, and still uses the
+    full marker set, because for THAT subject a bare citation legitimately is the stamp.
+
+    NEITHER PART USES `in_code_span`, AND THIS WAS MEASURED RATHER THAN ASSUMED. This record
+    writes EVERY `reportCreatedOn` citation and every path in backticks as ordinary markdown
+    code formatting -- including 78ea508's own defect, which reads `` `reportCreatedOn
+    2026.08.26-00.28.42` ``. Wiring `in_code_span` into part (a), as the brief that named this
+    check first specified, was tried and run against the real `d6492c9` bytes with the live
+    report on disk as ground truth: EVERY citation in the document, right and wrong alike, sits
+    inside backticks, so `in_code_span` treated the defect itself as a verbatim quote and
+    exempted it -- the check never reached the comparison at all. Dropped from both parts, for
+    the same reason: a backtick here is formatting, not a claim that the text is quoted
+    history, and treating it as one would exempt nearly everything.
+
+    BOTH PARTS ARE SCOPED TO `GLOBAL_DOC`, AND THIS TOO WAS MEASURED RATHER THAN ASSUMED FIRST.
+    Run unscoped against the real `Tools/architect/state/` as it stands, this fires repeatedly --
+    on ordinary dated bullets in `engine.md`, `data.md`, `tests.md` and `decisions.md` quoting
+    the report THEY checked at THEIR OWN pass, which is not a claim about the tree's current
+    live figure at all. (A fire count is not quoted here: it is a count of the live record, and
+    the record grows, so a number typed into this comment is stale the next time an entry is
+    added -- re-run the unscoped variant against the live tree if the figure itself matters.)
+    `check_record_ownership` already draws this exact line for suite
+    counts: only `global.md` may state a LIVE fact about the current run; every other file's
+    entries are about the work that file's own agent did, not about which report backs the
+    figure a reader should trust today. A `reportCreatedOn` or a build-location sentence
+    outside `global.md` is evidence for a local claim, not a provenance assertion this check has
+    any business grading -- so it is not graded.
+
+    WITHIN `global.md`, BOTH PARTS ARE ALSO SCOPED TO THE CURRENT BANNER SEGMENT ONLY --
+    `section_of(...) == "BANNER"` and above `current_banner_end`, NOT the blanket
+    `in_live_section` every other check in this file uses. That distinction was forced by a
+    real measurement, not chosen up front: `in_live_section` treats the WHOLE of `## NEXT` as
+    live, on the documented ground that after the split there is nowhere else for a live claim
+    to hide. That is correct for a suite figure, which this file states directly about the
+    CURRENT tree in exactly one place. It is wrong for a `reportCreatedOn` citation, because
+    `## NEXT` in this file is a long run of individually DATED, per-pass narrative bullets, and
+    every one of them legitimately cites the report that was current WHEN IT WAS WRITTEN --
+    that is simply how this record narrates history, and it is not a claim about today's
+    report. Run with `in_live_section` in place of the banner-segment scope, part (a) fires on
+    exactly that shape, against real dated entries weeks old -- again a count of the live
+    record, not stated here for the same reason as above: it moves every time an old dated
+    entry is added, so re-measure rather than trust a number left in this comment. Scoped to the
+    current banner segment instead, it stops firing on those and still finds the one that matters: the CURRENT
+    banner's own `reportCreatedOn` citation falling behind the report actually on disk, which
+    is a live drift this record can genuinely fall into between two passes of concurrent
+    editing -- see the report for the measurement that told the two apart.
+    """
+    # (a)
+    if not result.report_created_on_raw:
+        # UNCONDITIONAL NOTE, MIRRORING PART (b)'S SHAPE BELOW. `result.report_created_on_raw`
+        # is None whenever no report was found, the report was unreadable, or its own
+        # `reportCreatedOn` field was absent -- `read_report_timestamps`'s note already says
+        # which. Without a note NAMED to this check, that silence read as "checked and clean"
+        # rather than "could not check": a scratch run pointed at a nonexistent report printed
+        # `SWEEP CLEAN` at exit 0 having compared no cited stamp against anything, and the
+        # coordinator briefly reported that as a real result while proving this very check's
+        # falsifiability. This does not change the exit code: `check_report_identity` (check 4)
+        # returns early whenever `result.report_count is None`, so a MISSING report is fatal
+        # NOWHERE, not merely "governed" elsewhere -- check 4 has already decided NOT fatal, and
+        # this check does not get a second opinion on that.
+        result.notes.append(
+            "REPORT PROVENANCE part (a): no reportCreatedOn to compare against -- cited-stamp "
+            "citations not checked this run")
+    else:
+        for label, text in docs:
+            if label != GLOBAL_DOC:
+                continue
+            for start, para in paragraphs_with_lines(text):
+                for m in _CITED_REPORT_STAMP_RE.finditer(para):
+                    stamp = m.group(1)
+                    if stamp == result.report_created_on_raw:
+                        continue
+                    line_no = start + para[:m.start()].count("\n")
+                    if not (section_of(text, line_no) == "BANNER"
+                            and line_no < current_banner_end(text)):
+                        continue          # a dated pass's own report, not the live declaration
+                    if _QUOTED_FIGURE_RE.search(quoting_window(para, m.start())):
+                        continue
+                    # PART (a)'S OWN WINDOW, NOT THE WHOLE PARAGRAPH -- see this function's
+                    # docstring for the 2026-08-26 inertness this replaces. `_PROVENANCE_CITATION_
+                    # WINDOW` (400) is sized from two measurements, not guessed: `78ea508`'s own
+                    # fix needs >=234 (its two citations sit 234 characters apart start-to-start,
+                    # and a 220-character reach missed the marker's own leading text by 14), and
+                    # the live 2026-08-26 banner's own `[STAMPED ...]`-bracketed re-quote of
+                    # `reportCreatedOn 2026.08.26-03.40.42` sits 371 characters from that bracket,
+                    # start-to-start -- so 220 (this file's general `_STAMP_WINDOW`) covers
+                    # neither and 400 covers both with margin. The self-match problem `_mask_span`
+                    # exists for is unchanged by windowing: the slice is taken first and the
+                    # citation's own span is masked WITHIN it, so a lone citation can never
+                    # exempt itself by matching its own `reportCreatedOn` text.
+                    ws = max(0, m.start() - _PROVENANCE_CITATION_WINDOW)
+                    we = min(len(para), m.end() + _PROVENANCE_CITATION_WINDOW)
+                    window = _mask_span(para[ws:we], m.start() - ws, m.end() - ws)
+                    if is_stamped(window):
+                        continue
+                    result.findings.append(Finding(
+                        "REPORT PROVENANCE",
+                        f"{label}:{line_no}: cites `reportCreatedOn {stamp}`, but the report "
+                        f"this sweep actually opened is `reportCreatedOn "
+                        f"{result.report_created_on_raw}` -- an unstamped, unquoted citation of "
+                        f"a DIFFERENT run is a stale claim about which report backs a live "
+                        f"figure. Stamp it (`[STAMPED ...]` or similar), quote it as history, "
+                        f"or correct it if it is meant to be current.",
+                    ))
+
+    # (b)
+    branch = _current_branch()
+    if branch is None:
+        result.notes.append(
+            f"REPORT PROVENANCE: `git rev-parse --abbrev-ref HEAD` failed at {_REPO} -- "
+            f"named-tree citations not checked this run")
+    else:
+        for label, text in docs:
+            if label != GLOBAL_DOC:
+                continue
+            for start, para in paragraphs_with_lines(text):
+                for m in _PROVENANCE_PATH_BRANCH_RE.finditer(para):
+                    qualifier = para[max(0, m.start() - _PROVENANCE_QUALIFIER_WINDOW):m.start()]
+                    if not _PROVENANCE_PRODUCED_RE.search(qualifier):
+                        continue  # not a claim about where a figure/report was PRODUCED
+                    line_no = start + para[:m.start()].count("\n")
+                    if not (section_of(text, line_no) == "BANNER"
+                            and line_no < current_banner_end(text)):
+                        continue          # a dated pass's own note, not the live declaration
+                    if _QUOTED_FIGURE_RE.search(quoting_window(para, m.start())):
+                        continue
+                    window = para[max(0, m.start() - _STAMP_WINDOW):m.end() + _STAMP_WINDOW]
+                    # PART (b)'S OWN MARKER SET, NOT THE GENERAL ONE -- see
+                    # `_PROVENANCE_TREE_STAMP_MARKERS`'s own comment for the 2026-08-26 hole
+                    # this closes: a nearby `reportCreatedOn` citation is not a supersession of
+                    # a tree/branch claim, only an explicit stamp is.
+                    if is_stamped(window, markers=_PROVENANCE_TREE_STAMP_MARKERS):
+                        continue
+                    cited_path, cited_branch = m.group(1), m.group(2).strip()
+                    if (_normalize_fs_path(cited_path) == _normalize_fs_path(_REPO)
+                            and cited_branch == branch):
+                        continue
+                    result.findings.append(Finding(
+                        "REPORT PROVENANCE",
+                        f"{label}:{line_no}: an unstamped, unquoted sentence says a figure or "
+                        f"report was produced in `{cited_path}` on branch `{cited_branch}`, but "
+                        f"this sweep is running in `{_REPO}` on branch `{branch}` -- exactly "
+                        f"78ea508's defect. Stamp it or quote it if it describes a past pass, "
+                        f"or correct it if it is meant to be a live claim about this tree.",
+                    ))
+
+
 # ---------------------------------------------------------------------------
 def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True,
               report_path: str = REPORT_JSON, source_dir: str = SOURCE_DIR) -> SweepResult:
@@ -933,6 +1366,10 @@ def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True
     check_banner_date(docs, result)
     if check_tree:
         check_report_identity(result)
+    # UNCONDITIONAL: part (a) self-gates on `result.report_created_on_raw` (None when
+    # `check_tree` is False, so it silently has nothing to compare), and part (b) needs no
+    # tree artifact at all -- only the record text and this process's own git branch.
+    check_report_provenance(docs, result)
     return result
 
 
@@ -1064,6 +1501,248 @@ _Last run 2026-08-19 (suite is now **108/108**.)_
   **107/107** (`succeeded 107 / failed 0`, `reportCreatedOn 2026.08.14-21.47.35`).
 """
 
+# REPORT PROVENANCE, part (a). BOTH PARTS ARE SCOPED TO THE CURRENT BANNER SEGMENT, NOT TO
+# `## NEXT` -- a real `## NEXT` bullet is a dated per-pass narrative entry allowed to cite ITS
+# OWN contemporary report, and only the banner asserts what backs today's figure -- so the
+# citation under test sits INSIDE the `_Last run (...)` parenthetical, exactly where 78ea508's
+# defect lived. Sentence-final comma on purpose, varying punctuation from the fixtures below.
+# Exercised against a SCRATCH report by `check_provenance_self_test`, not by the plain
+# `check_self_test` list, because part (a) has nothing to compare against without one.
+# A BLANK LINE SPLITS THE BANNER INTO TWO PARAGRAPHS ON PURPOSE, BOTH STILL INSIDE THE BANNER
+# REGION (section_of only starts a new section at "## "). The suite figure sits ALONE in its
+# own paragraph so this record's OWN suite-count stamping rule -- a `reportCreatedOn` sitting
+# near a figure reads that figure as historical -- cannot reach across and swallow it; the
+# provenance citation under test lives in the second paragraph, on its own.
+_BAD_PROVENANCE_STAMP = """# global
+
+_Last run 2026-08-26 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+THIS PASS'S OWN CERTIFYING REPORT IS NAMED HERE, UNSTAMPED: `reportCreatedOn
+2026.08.26-00.28.42`, and the figure above rests on it.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# The identical stale stamp, this time inside a `[STAMPED ...]` supersession block alongside
+# the correct one -- the record's own convention that an old claim is kept, not deleted. Also
+# carries the tree/branch half of part (b) in the same paragraph, and ends on a bare full stop
+# right after the word "history", the sentence-final shape this sweep has been blind to
+# before. Must NOT be flagged on either count.
+_GOOD_PROVENANCE = """# global
+
+_Last run 2026-08-26 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+THE REPORT THAT CERTIFIES THE LIVE FIGURE IS THIS TREE'S: `reportCreatedOn
+2026.08.26-01.30.10`. **[STAMPED 2026-08-26 -- the lane tree's own figure, superseded by the
+merge.]** It read: the certifying figure was produced in `E:/MultiAgent/Strat-wt/slot-1` on
+branch `feat/match-result-screen`, and the earlier pass's own report was `reportCreatedOn
+2026.08.26-00.28.42`, which is now history.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# THE 2026-08-26 PARAGRAPH-WIDE-INERTNESS DEFECT ITSELF, PINNED AS A FIXTURE. A single unbroken
+# paragraph -- no blank line -- carrying an unstamped, WRONG `reportCreatedOn` citation far from
+# every stamp marker in it (over 400 characters of plain filler prose on both sides, carrying no
+# reporting verb and no bracket), plus TWO genuine `[STAMPED ...]`/`CORRECTION,` markers
+# elsewhere in that SAME paragraph, about something else entirely. Under the pre-fix, whole-
+# paragraph scope (`is_stamped` over the entire paragraph with only the citation's own span
+# masked) the two unrelated markers exempt the bad citation anyway, because the scope was never
+# "near this claim", it was "anywhere in this block" -- exactly the shape that went inert on the
+# live 2026-08-26 banner as it accreted stamps across a single day. Under the shipped windowed
+# scope (`_PROVENANCE_CITATION_WINDOW`, 400) neither marker is reachable from the citation, so
+# this correctly FAILS. `check_self_test` below pins BOTH directions: the shipped build fails on
+# this text, and the pre-fix `is_stamped`-over-the-whole-paragraph call, run directly against the
+# same paragraph without reconstructing a whole second build, would have passed it.
+_BAD_PROVENANCE_LONG_PARAGRAPH = """# global
+
+_Last run 2026-08-26 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+**[STAMPED 2026-08-26 -- an entirely unrelated earlier correction about the pairing corpus,
+kept here for history and touching nothing about which report backs today's figure.]** This
+entry narrates an ordinary pass of work on the record, listing which files changed and why, in
+plain prose that names no bracketed marker of its own, simply carrying the account forward one
+sentence after another so that a later reader can follow the day without consulting anything
+else. This entry narrates an ordinary pass of work on the record, listing which files changed
+and why, in plain prose that names no bracketed marker of its own, simply carrying the account
+forward one sentence after another so that a later reader can follow the day without consulting
+anything else. THE CERTIFYING REPORT FOR TODAY'S FIGURE CARRIES `reportCreatedOn
+2026.08.26-00.28.42`, standing here with no stamp of its own and nothing marking it superseded.
+This entry narrates an ordinary pass of work on the record, listing which files changed and why,
+in plain prose that names no bracketed marker of its own, simply carrying the account forward
+one sentence after another so that a later reader can follow the day without consulting
+anything else. This entry narrates an ordinary pass of work on the record, listing which files
+changed and why, in plain prose that names no bracketed marker of its own, simply carrying the
+account forward one sentence after another so that a later reader can follow the day without
+consulting anything else. **CORRECTION, 2026-08-26: a second, equally unrelated correction
+about the scoreboard widget, kept here for history and touching nothing about which report
+backs today's figure.**
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# THE EXEMPTION ITSELF, PINNED AS A FIXTURE. An honest account of a past drift -- unstamped,
+# unbracketed -- reporting that an EARLIER segment cited a since-superseded stamp, using "cited"
+# and nothing else to mark it as an account rather than an assertion. Structurally the real
+# `global.md:76` sentence, condensed. Without the `cite`-family addition to `_QUOTED_FIGURE_RE`
+# this was flagged as a live provenance defect; with it, `check_self_test` below confirms it
+# PASSES, and a direct regex differential -- the shipped pattern against a reconstruction of the
+# one before this addition, on the identical `quoting_window` text -- proves the addition is
+# what makes the difference, not a coincidence of some other word in this fixture.
+_CITED_ACCOUNT_PROVENANCE = """# global
+
+_Last run 2026-08-26 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+An earlier segment of this banner cited `reportCreatedOn 2026.08.26-00.28.42` before the suite
+was re-run mid-pass; that citation is now history and no live claim rests on it.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# REPORT PROVENANCE, part (b). Unstamped, unquoted, and ends the sentence with a bare full
+# stop directly against the closing backtick -- no space, no comma -- the exact spot a trailing
+# lookahead has missed a figure before. `_REPO`/the branch are NEVER typed here as the
+# "expected" value; the check derives them itself, so this fixture only has to be WRONG, which
+# `E:/MultiAgent/Strat-wt/slot-1` on `feat/match-result-screen` always is on this box.
+_BAD_PROVENANCE_TREE = """# Architect state
+
+_Last run 2026-08-26 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+THE CERTIFYING FIGURE WAS PRODUCED IN `E:/MultiAgent/Strat-wt/slot-1` ON BRANCH
+`feat/match-result-screen`, unstamped.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# THE HOLE ITSELF, MEASURED 2026-08-26 ON A SCRATCH COPY OF THE REAL BANNER: a bad tree/branch
+# claim standing near a LEGITIMATE, current `reportCreatedOn` citation for the pass it is
+# genuinely part of -- no `[STAMPED ...]`, no `CORRECTION,`, nothing marking either sentence as
+# superseded. Before the marker split, `_PARAGRAPH_STAMP_MARKERS`'s bare `reportCreatedOn
+# \d{4}\.\d{2}\.\d{2}` matched the citation and `is_stamped(window)` called the WHOLE window
+# stamped, laundering the bad tree/branch claim sitting inside it; `SWEEP CLEAN`, exit 0. Written
+# to read like real banner prose rather than test prose -- a suite figure, a macro-census
+# cross-check, an ordinary comma-joined sentence -- and ending the tree/branch clause on a bare
+# sentence-final full stop, the shape this sweep has been blind to before on a different check.
+_BAD_PROVENANCE_NEAR_CITATION = """# global
+
+_Last run 2026-08-26 (THE SUITE HOLDS AT **225/225**, every entry Success, zero failed and zero
+notRun, unmoved since the prior pass.)_
+
+THE REPORT BEHIND THIS FIGURE CARRIES `reportCreatedOn 2026.08.26-15.21.53`, matching the macro
+census on this box exactly, and it was produced in `E:/MultiAgent/Strat-wt/slot-1` on branch
+`feat/match-result-screen`.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# THE CLEAN COUNTERPART, PROVING THE REPAIR DOES NOT SIMPLY INVERT THE BUG: the SAME shape --
+# a genuine `reportCreatedOn` citation standing an unremarkable distance from a tree/branch
+# sentence -- but the tree/branch sentence names THIS tree and branch, derived by the check
+# itself rather than typed here, so it is correct on whichever box runs the self-test. A
+# provenance sentence beside a live citation must still PASS when it is simply true.
+_GOOD_PROVENANCE_NEAR_CITATION = """# global
+
+_Last run 2026-08-26 (THE SUITE HOLDS AT **225/225**, every entry Success, zero failed and zero
+notRun, unmoved since the prior pass.)_
+
+THE REPORT BEHIND THIS FIGURE CARRIES `reportCreatedOn 2026.08.26-15.21.53`, matching the macro
+census on this box exactly, and it was produced in `{repo}` on branch `{branch}`.
+
+## NEXT
+
+- **Nothing else here.**
+""".format(repo=_REPO.replace("\\", "/"), branch=_current_branch() or "master")
+
+# A SECOND [STAMPED]-ONLY FIXTURE, ADDED 2026-08-26 AFTER THE REVIEWER'S FUNCTIONAL-DEFECT
+# FINDING: nothing in this suite pinned that `_PROVENANCE_TREE_STAMP_MARKERS` still honours a
+# genuine `[STAMPED ...]` annotation, because the two existing PASS fixtures both pass for a
+# DIFFERENT reason -- `_GOOD_PROVENANCE_NEAR_CITATION` is true on the tree/branch facts
+# themselves, and the pre-existing `_GOOD_PROVENANCE` passed VACUOUSLY: its own "on\nbranch"
+# wrap put the tree/branch sentence entirely outside `_PROVENANCE_PATH_BRANCH_RE`'s reach (fixed
+# above with `\s+`), so part (b) never even collected that sentence, let alone reached the
+# stamp check on it. (An earlier version of this comment credited the pass to the
+# quoted-figure exclusion tripping on `_GOOD_PROVENANCE`'s own `"It read:"` -- verified false:
+# `_QUOTED_FIGURE_RE` alternates on `read ` with a trailing space and cannot match `read:`.)
+# Proved with an over-fire build passing `markers=()` into part (b) -- honouring
+# NO stamp at all -- under which `_GOOD_PROVENANCE` still passed while this fixture correctly
+# flipped to FAIL. **[STAMPED 2026-08-26: THAT DIFFERENTIAL DESCRIBES THE TREE BEFORE THE
+# `on\s+branch` WRAP FIX AND IS NO LONGER THE SHIPPED BUILD'S BEHAVIOUR. Re-run against the
+# wrap-tolerant regex: under the SAME over-fire build, `_GOOD_PROVENANCE` and this fixture BOTH
+# FAIL. `_GOOD_PROVENANCE` staying green was the symptom of the vacuity the wrap fix closed --
+# closing it necessarily changed that reading, so `_GOOD_PROVENANCE` now genuinely pins the
+# stamp itself and is no longer distinguished from this fixture by an over-fire probe. This
+# fixture is kept anyway: it is still the only PASS fixture stamped with no reporting verb and
+# no "It read:" anywhere near it, which the differential above never established.]**
+# This one carries a WRONG tree/branch claim, a real `**[STAMPED ...]**` block,
+# and deliberately no reporting verb and no `"It read:"` anywhere near it, so the stamp is the
+# ONLY thing standing between it and a finding. Written to read like ordinary banner prose --
+# a suite figure, a macro-census cross-check, an explanatory stamp -- ending on a bare
+# sentence-final full stop after "that merge", the punctuation this sweep has been blind to
+# before on a different check.
+_GOOD_PROVENANCE_TREE_STAMP_ONLY = """# global
+
+_Last run 2026-08-26 (THE SUITE HOLDS AT **225/225**, every entry Success, zero failed and zero
+notRun, unmoved since the prior pass.)_
+
+THE REPORT BEHIND THIS FIGURE CARRIES `reportCreatedOn 2026.08.26-15.21.53`, matching the macro
+census on this box exactly. **[STAMPED 2026-08-26 -- the certifying number below belonged to the
+lane tree before the merge carried it into this one.]** The figure was produced in
+`E:/MultiAgent/Strat-wt/slot-1` on branch `feat/match-result-screen`, ahead of that merge.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+
+# THE WRAP-VACUITY HOLE ITSELF, AS A FIXTURE: a WRONG tree/branch claim, unstamped, with no
+# reporting verb and no marker anywhere near it -- exactly `_BAD_PROVENANCE_TREE`'s shape --
+# except this one wraps its "on branch" straight down the middle, "on\nbranch", the way this
+# record's own ~95-column prose wraps `_GOOD_PROVENANCE` above. Before the `\s+` fix this
+# defeated `_PROVENANCE_PATH_BRANCH_RE` outright: zero matches, so part (b) never saw the
+# sentence and the sweep PASSED it -- not because a stamp spared it, because the check never
+# ran on it at all. After the fix the regex reaches across the line break and this correctly
+# FAILS on the shipped build -- that direction is asserted mechanically, below, by the case
+# `"an unstamped WRONG tree/branch claim wrapped ... FAILS"`. The OTHER direction -- that this
+# same text PASSED on the pre-fix build, because the check never even reached it -- is not a
+# regression this file can run (nothing here reconstructs a second build), so it is a recorded
+# measurement instead: see `global.md`'s 2026-08-26 entry ("0 matches before, 1 after"). What
+# `check_self_test` DOES assert mechanically, immediately after the case list below, is the
+# narrower and more durable claim: the shipped `\s+`-tolerant regex matches this wrapped
+# sentence and the literal `on branch` pattern this project shipped before the fix does not,
+# on the identical text -- a real regression against anyone who reintroduces the literal,
+# without needing to stand up a whole pre-fix build to prove it.
+_BAD_PROVENANCE_TREE_WRAPPED = """# global
+
+_Last run 2026-08-26 (suite is now **225/225**, every entry Success, zero failed and zero
+notRun.)_
+
+THE CERTIFYING FIGURE WAS PRODUCED IN `E:/MultiAgent/Strat-wt/slot-1` ON
+BRANCH `feat/match-result-screen`, unstamped.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+
 _BANNER_NARRATIVE = """# Architect state
 
 _Last run 2026-08-19 (a pass: suite is now **104/104**. ALSO: suite is now **106/106**.
@@ -1096,6 +1775,15 @@ _Last run 2026-08-19 (suite **is now 107/107** as of today.)_
 
 
 # The gate's own corpus figures live in this document too, and they are not suite counts.
+# BOTH FIGURES MUST BE EXEMPTED BY THE QUALIFIER GAP ALONE, NOT BY A REPORTING VERB SITTING
+# NEARBY BY COINCIDENCE. The first-shipped filler read "the control corpus reads 68/68 the same
+# way" -- "reads" is one of `_QUOTED_FIGURE_RE`'s own reporting verbs, so `68/68` was exempted
+# for TWO independent reasons at once and the fixture never isolated which one was doing the
+# work. Measured 2026-08-26: neither `42/42` nor `68/68` ever reaches the reporting-verb check at
+# all -- both fail `_SUITE_QUALIFIER_RE` first (`suite|succeeded|tests` is not within 90
+# characters of either figure), so this coincidence was inert, not a live defect, in this
+# fixture's own shape. Reworded so the filler carries no reporting verb: this pins the qualifier
+# exclusion in isolation, and it stays green under both `\bcite\w*` and `\bcit\w*`.
 _PAIRING_FIGURES = """# Architect state
 
 _Last run 2026-08-19 (suite is now **108/108**.)_
@@ -1103,7 +1791,7 @@ _Last run 2026-08-19 (suite is now **108/108**.)_
 ## NEXT
 
 - **The corpus graded clean.** 42 applied attacks against 42 resolved, 42/42 with zero
-  mismatches; the control corpus reads 68/68 the same way.
+  mismatches; the control corpus stands at 68/68 the same way.
 """
 
 
@@ -1132,6 +1820,39 @@ _Last run 2026-08-19 (suite is now **108/108**.)_
 - **A defect recorded honestly.** The banner said the suite 107/107 while this same file said
   108, which is the shape the sweep now catches; editing the banner to `107/107` fails with
   `live suite claim(s) disagree with the tree (108)`.
+"""
+
+# THE GATING GAP: `citing` AND `citation` HAVE NO `e` AFTER `cit`, SO `\bcite\w*` NEVER REACHED
+# THEM. Deliberately avoids every OTHER word already in `_QUOTED_FIGURE_RE`
+# ("said"/"says"/"saying"/"read "/"reads "/"reading"/"claim"/"shape"/"editing"/"planting"/
+# "planted"/"wrongly"/"stale"/"defect"/"would have"/"reported") so this fixture cannot pass for
+# any reason but the widened `cit` family, and carries no "is now"/"was" tense marker and no
+# explicit stamp, so nothing else exempts the wrong 107/107. Under the pre-widen `\bcite\w*` this
+# is a genuine gap: "citing" never matches, the 107/107 is collected as a LIVE claim, and the
+# sweep FAILS against the real banner's 108/108. Under the shipped `\bcit\w*` the same sentence
+# is recognised as an honest account and PASSES.
+_CITING_ACCOUNT = """# Architect state
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **A note.** A citing of the earlier suite figure recorded it at 107/107, a count already
+  superseded by the total above.
+"""
+
+# THE SAME GAP, THE OTHER MISSING FORM. "citation" has no `e` after `cit` either, and this
+# fixture is the noun form where `_CITING_ACCOUNT` above is the gerund -- both word-shapes the
+# comment already promised and the pre-widen pattern could not reach. Same exclusion discipline:
+# no other reporting word from the list, no tense marker, no explicit stamp.
+_CITATION_ACCOUNT = """# Architect state
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **A note.** That citation of the earlier suite figure noted it at 107/107, a count already
+  superseded by the total above.
 """
 
 
@@ -1419,6 +2140,62 @@ def check_identity_self_test() -> tuple[bool, list[str]]:
     return ok, lines
 
 
+def check_provenance_self_test() -> tuple[bool, list[str]]:
+    """REPORT PROVENANCE part (a) fixtures, which need a real `report_created_on_raw` to
+    compare a cited stamp against -- built on a scratch report/source pair exactly as
+    `check_identity_self_test` is, never against the real `Saved/` or `Source/`.
+
+    Both fixtures cite `reportCreatedOn 2026.08.26-00.28.42`; the scratch report here is
+    stamped `2026.08.26-01.30.10`, matching the real 78ea508 fix, so the two are directly the
+    BAD and GOOD shapes of the same defect.
+    """
+    import tempfile
+    import time
+
+    lines: list[str] = []
+    ok = True
+
+    def run_case(name: str, body: str, want_pass: bool) -> None:
+        nonlocal ok
+        with tempfile.TemporaryDirectory() as d:
+            report_path = os.path.join(d, "index.json")
+            source_dir = os.path.join(d, "Source")
+            os.makedirs(source_dir)
+            state_dir = os.path.join(d, "state")
+            os.makedirs(state_dir)
+            base = time.time() - 100000
+            _write_fixture_report(report_path, 224, created_on="2026.08.26-01.30.10",
+                                   mtime=base + 200)
+            _write_fixture_source(os.path.join(source_dir, "T.cpp"), 224, mtime=base + 100)
+            gpath = os.path.join(state_dir, "global.md")
+            with io.open(gpath, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(body)
+            res = run_sweep(gpath, check_tree=True, report_path=report_path, source_dir=source_dir)
+        got_pass = res.passed
+        good = got_pass == want_pass
+        ok = ok and good
+        detail = "" if res.passed else " -- " + "; ".join(f.check for f in res.findings)
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] {name}: "
+                     f"expected {'PASS' if want_pass else 'FAIL'}, "
+                     f"got {'PASS' if got_pass else 'FAIL'}{detail}")
+
+    run_case("an unstamped citation of a DIFFERENT reportCreatedOn than the one the sweep "
+             "opened FAILS", _BAD_PROVENANCE_STAMP, False)
+    run_case("the same stale stamp inside a [STAMPED] supersession block PASSES",
+              _GOOD_PROVENANCE, True)
+    # 2026-08-26, the paragraph-wide-inertness fix: a wrong citation far from every marker in
+    # its own giant paragraph must still FAIL under the windowed scope, even though two
+    # unrelated stamp markers sit elsewhere in that same paragraph.
+    run_case("a wrong citation buried in a long paragraph, far from two UNRELATED stamp "
+             "markers elsewhere in it, still FAILS", _BAD_PROVENANCE_LONG_PARAGRAPH, False)
+    # 2026-08-26, the quoted-figure exclusion gap: an honest account naming an EARLIER citation
+    # as superseded, using "cited" and no bracket, must PASS -- this is the real
+    # `global.md:76` shape, condensed.
+    run_case("an honest account of a superseded citation, using the reporting verb 'cited', "
+             "PASSES", _CITED_ACCOUNT_PROVENANCE, True)
+    return ok, lines
+
+
 def check_self_test() -> tuple[bool, str]:
     import tempfile
 
@@ -1435,6 +2212,15 @@ def check_self_test() -> tuple[bool, str]:
         ("a pairing figure like 42/42 is NOT a suite claim", _PAIRING_FIGURES, True),
         ("a verdict about a NEIGHBOURING subject is not this item's", _CROSS_TALK, True),
         ("an honest account of a PAST miscount is not a live claim", _QUOTED_ACCOUNT, True),
+        # 2026-08-26, the gating repair: `citing` and `citation` have no `e` after `cit`, so
+        # `\bcite\w*` never reached them though the comment above `_QUOTED_FIGURE_RE` named
+        # both. These PASS under the shipped `\bcit\w*` and would FAIL under the pre-widen
+        # `\bcite\w*` -- see the direct regex differential pin further down for the proof that
+        # isolates the pattern change itself, independent of these fixtures' verdicts.
+        ("an honest account using 'citing' (no `e` after `cit`) is not a live claim",
+         _CITING_ACCOUNT, True),
+        ("an honest account using 'citation' (no `e` after `cit`) is not a live claim",
+         _CITATION_ACCOUNT, True),
         # 2026-08-22: the quoted-figure exclusion reached a whole sentence upstream and
         # dropped the claim before it was ever collected, the tense markers could not reach
         # across a bold opener, and the banner region was read as one live block rather than
@@ -1460,6 +2246,32 @@ def check_self_test() -> tuple[bool, str]:
         ("an owner file QUOTING a stamped older figure PASSES", _SPLIT_STAMPED_OK, True),
         ("an item called open in one file and closed in another FAILS", _SPLIT_ITEM_CLASH, False),
         ("a banner made stale by an entry in ANOTHER file FAILS", _SPLIT_STALE_BANNER, False),
+        # 2026-08-26, check 5: REPORT PROVENANCE. Part (b) needs no scratch report -- only this
+        # process's own git branch -- so it is exercised here; part (a) needs a real
+        # `reportCreatedOn` to compare against and is proved by `check_provenance_self_test`.
+        ("an unstamped sentence naming ANOTHER tree/branch as where a figure was produced "
+         "FAILS", _BAD_PROVENANCE_TREE, False),
+        ("the same tree/branch sentence, stamped, alongside a stamped stale reportCreatedOn, "
+         "PASSES", _GOOD_PROVENANCE, True),
+        # 2026-08-26, the marker-split repair: a bad tree/branch claim standing near a
+        # LEGITIMATE, unstamped reportCreatedOn citation for the pass it is genuinely part of.
+        # Before the split this passed (the bare citation stamped the whole window); it must
+        # FAIL now.
+        ("a bad tree/branch claim beside a genuine, unstamped reportCreatedOn citation FAILS",
+         _BAD_PROVENANCE_NEAR_CITATION, False),
+        ("the SAME shape with a TRUE tree/branch claim beside the citation still PASSES",
+         _GOOD_PROVENANCE_NEAR_CITATION, True),
+        # 2026-08-26, the missing fixture the reviewer filed: a WRONG tree/branch claim beside
+        # a genuine `**[STAMPED ...]**` annotation, with no reporting verb and no "It read:" to
+        # launder it any other way -- see `_GOOD_PROVENANCE_TREE_STAMP_ONLY`'s own comment for
+        # why neither existing PASS fixture pinned this.
+        ("a WRONG tree/branch claim beside a genuine [STAMPED ...] annotation PASSES on the "
+         "stamp alone", _GOOD_PROVENANCE_TREE_STAMP_ONLY, True),
+        # 2026-08-26, the reviewer's functional-defect finding: `_PROVENANCE_PATH_BRANCH_RE`'s
+        # literal "on branch" was not wrap-aware, so a wrong tree/branch claim wrapped exactly
+        # there was invisible to part (b) -- fixed to `on\s+branch` above.
+        ("an unstamped WRONG tree/branch claim wrapped between \"on\" and \"branch\" FAILS "
+         "now that the regex is wrap-tolerant", _BAD_PROVENANCE_TREE_WRAPPED, False),
     ]
     lines: list[str] = []
     ok = True
@@ -1489,6 +2301,104 @@ def check_self_test() -> tuple[bool, str]:
         lines.append(f"    [{'OK' if good else '**WRONG**'}] {name}: "
                      f"expected {'PASS' if want_pass else 'FAIL'}, "
                      f"got {'PASS' if got_pass else 'FAIL'}{detail}")
+
+    # THE WRAP FIX ITSELF, PINNED AGAINST THE REGEX DIRECTLY -- not only against the sweep's
+    # verdict on one fixture. The case above proves the SHIPPED `_PROVENANCE_PATH_BRANCH_RE`
+    # fails `_BAD_PROVENANCE_TREE_WRAPPED`; it says nothing about whether reintroducing the
+    # literal `on branch` this project shipped before 2026-08-26 would silently undo that,
+    # because nothing above ever runs the OLD pattern. This does, without reconstructing a
+    # whole second build: the shipped `\s+`-tolerant pattern must MATCH the wrapped sentence
+    # and the pre-fix literal pattern must NOT, on the identical text. A real regression
+    # against anyone who reintroduces the literal; the companion fact that the OLD build
+    # passed this text where it should have failed is a measurement recorded in `global.md`,
+    # not something reconstructable here.
+    _pre_fix_path_branch_re = re.compile(
+        r"`([A-Za-z]:[\\/][^`]+)`\s*on branch\s*`([^`]+)`", re.I)
+    _wrapped_sentence = "`E:/MultiAgent/Strat-wt/slot-1` ON\nBRANCH `feat/match-result-screen`"
+    now_matches = _PROVENANCE_PATH_BRANCH_RE.search(_wrapped_sentence) is not None
+    pre_fix_matches = _pre_fix_path_branch_re.search(_wrapped_sentence) is not None
+    good = now_matches and not pre_fix_matches
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] `_PROVENANCE_PATH_BRANCH_RE` matches "
+                 f"a wrapped \"on\\nbranch\" sentence while the literal pre-fix pattern does "
+                 f"not, on the identical text -- the regression that pins the wrap fix itself")
+
+    # THE PARAGRAPH-WIDE-INERTNESS FIX ITSELF, PINNED DIRECTLY AGAINST THE OLD AND NEW SCOPE --
+    # not only against the sweep's verdict on `_BAD_PROVENANCE_LONG_PARAGRAPH` above, the same
+    # way the wrap fix is pinned directly against its regex just above this block. The pre-fix
+    # scope was `is_stamped(_mask_span(para, m.start(), m.end()))` over the WHOLE paragraph; the
+    # shipped scope masks the same span but restricts `is_stamped` to
+    # `_PROVENANCE_CITATION_WINDOW` characters either side. Run both directly against the same
+    # fixture paragraph and the same citation match, without reconstructing a second build: the
+    # pre-fix call must return True (laundered by the two unrelated markers merely being
+    # SOMEWHERE in the paragraph) and the shipped call must return False (neither marker is
+    # within reach of the citation). This is the direct proof that closing measurement (1) did
+    # not merely add a coincidental finding elsewhere -- it is the specific mechanism, isolated.
+    _long_para = next(p for _s, p in paragraphs_with_lines(_BAD_PROVENANCE_LONG_PARAGRAPH)
+                      if "reportCreatedOn" in p)
+    _long_m = next(_CITED_REPORT_STAMP_RE.finditer(_long_para))
+    _pre_fix_stamped = is_stamped(_mask_span(_long_para, _long_m.start(), _long_m.end()))
+    _ws = max(0, _long_m.start() - _PROVENANCE_CITATION_WINDOW)
+    _we = min(len(_long_para), _long_m.end() + _PROVENANCE_CITATION_WINDOW)
+    _post_fix_stamped = is_stamped(
+        _mask_span(_long_para[_ws:_we], _long_m.start() - _ws, _long_m.end() - _ws))
+    good = _pre_fix_stamped and not _post_fix_stamped
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] the pre-fix whole-paragraph "
+                 f"`is_stamped` call launders the buried citation (True) while the shipped "
+                 f"windowed call does not (False), on the identical paragraph and match -- the "
+                 f"regression that pins the 2026-08-26 inertness fix itself")
+
+    # THE `cite`-FAMILY ADDITION TO `_QUOTED_FIGURE_RE`, PINNED DIRECTLY -- not only against
+    # `_CITED_ACCOUNT_PROVENANCE`'s verdict above. Extracted straight from the real
+    # `global.md:76` sentence ("the banner segment below cited `reportCreatedOn ...`"), this
+    # asserts the shipped pattern (with `cite`-family words) matches the `quoting_window` text
+    # and a reconstruction of the pattern WITHOUT them does not, on the identical text -- a real
+    # regression against anyone who removes the addition, the same shape as the wrap-fix and
+    # paragraph-wide-inertness pins just above.
+    _pre_addition_quoted_figure_re = re.compile(
+        r"said|says|saying|read |reads |reading|claim|shape|editing|planting|planted|"
+        r"wrongly|stale|defect|would\s+have|reported", re.I)
+    _cited_sentence = ("THE CHECK CAUGHT REAL DRIFT ON ITS FIRST DAY, and it was ours: the "
+                       "banner segment below cited\n`reportCreatedOn 2026.08.26-03.40.42`")
+    now_matches = _QUOTED_FIGURE_RE.search(_cited_sentence) is not None
+    pre_addition_matches = _pre_addition_quoted_figure_re.search(_cited_sentence) is not None
+    good = now_matches and not pre_addition_matches
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] `_QUOTED_FIGURE_RE` matches the real "
+                 f"'cited `reportCreatedOn ...`' sentence while the pre-addition pattern does "
+                 f"not, on the identical text -- the regression that pins the cite-family "
+                 f"addition itself")
+
+    # THE GATING WIDENING (`\bcite\w*` -> `\bcit(?:e|es|ed|ing|ation|ations)\b`) ITSELF, PINNED
+    # DIRECTLY ON BOTH FAILURE MODES IT HAS NOW HAD -- not only against `_CITING_ACCOUNT`'s and
+    # `_CITATION_ACCOUNT`'s verdicts above. `cite`/`cited`/`cites` all put an `e` immediately
+    # after `cit`, which is why the first-shipped pattern reached them; `citing` and
+    # `citation(s)` do not, and no amount of `\w*` recovers a character the pattern never
+    # anchored on -- that is the GAP the first widening closed. But the first widening shipped
+    # as the open class `\bcit\w*`, which OVER-reaches into `cities`/`citizen`/`citadel`/
+    # `citizenry` -- a second, opposite defect, found and closed 2026-08-26 by tightening to
+    # the closed six-form alternation. This asserts DIRECTLY AGAINST THE LIVE MODULE-LEVEL
+    # `_QUOTED_FIGURE_RE` OBJECT, not a re-typed literal -- a hand-typed copy of "the shipped
+    # pattern" is exactly how the previous version of this pin went on pinning `\bcit\w*` after
+    # the code had already moved past it, undetected until the next reviewer read the two side
+    # by side. Asserting against `_QUOTED_FIGURE_RE` itself means reverting the module-level
+    # pattern in EITHER direction, back to `\bcite\w*` or forward to the open `\bcit\w*`, is
+    # caught by this same fixture with no separate literal to keep in sync.
+    _pre_widen_cite_re = re.compile(r"\bcite\w*", re.I)
+    _gap_words = ("citing", "citation", "citations")
+    _over_reach_words = ("cities", "citizen", "citadel", "citizenry")
+    _pre_widen_hits = [w for w in _gap_words if _pre_widen_cite_re.search(w)]
+    _shipped_gap_hits = [w for w in _gap_words if _QUOTED_FIGURE_RE.search(w)]
+    _shipped_over_reach_hits = [w for w in _over_reach_words if _QUOTED_FIGURE_RE.search(w)]
+    good = (_shipped_gap_hits == list(_gap_words) and _pre_widen_hits == []
+            and _shipped_over_reach_hits == [])
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] the live `_QUOTED_FIGURE_RE` matches "
+                 f"all of {_gap_words} (closing the pre-widen `\\bcite\\w*` gap) and none of "
+                 f"{_over_reach_words} (closing the open-class `\\bcit\\w*` over-reach) -- "
+                 f"asserted against the module-level object itself, so the pin cannot go on "
+                 f"naming a pattern no longer shipped")
 
     # THE FILE LIST IS DERIVED, AND THAT IS ITSELF WORTH A FIXTURE. `discover_state_files` is
     # the thing standing between this sweep and the "checker types its own subject list" shape,
@@ -1521,6 +2431,11 @@ def check_self_test() -> tuple[bool, str]:
     ok = ok and identity_ok
     lines.append("    -- REPORT IDENTITY (pins the artifact to a point in time) --")
     lines.extend(identity_lines)
+
+    provenance_ok, provenance_lines = check_provenance_self_test()
+    ok = ok and provenance_ok
+    lines.append("    -- REPORT PROVENANCE part (a) (cited stamp vs the report actually read) --")
+    lines.extend(provenance_lines)
 
     return ok, "\n".join(lines)
 

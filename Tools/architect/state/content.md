@@ -17,6 +17,16 @@
 > naming the coordinator as its writer. No other lane may write this file, and the fallback
 > licenses writing this file only — it is not a general licence to act in the content lane.
 >
+> **WHERE THE OTHER PERMISSION LIVES, since 2026-08-26.** The sentence above is correct and is
+> not being widened: this clause has never licensed driving the editor, and three consecutive
+> `strat-integration-reviewer` gates turned on that exact distinction while the asset in question
+> was clean from the first read. The permission it kept being stretched to cover — who may drive
+> the live editor when `strat-editor-builder` cannot reach it — is now stated in `CLAUDE.md`'s
+> **The crew** section as the *editor-driver clause*, with its own two obligations, because it is
+> a lane rule and lane rules belong where lanes are defined. Cite THAT for the acting and THIS
+> for the file write; an entry that cites one authority for both halves is a finding. This
+> paragraph was added by the `coordinator` under the fallback condition, measured with its control.
+>
 > **Holds:** Assets, Blueprint defaults, PIE evidence, and the measured limits of the NeoStack Lua API.
 >
 > **One file owns each fact class.** Other files may *link* to a fact recorded here; they may not
@@ -40,13 +50,22 @@
     WRITER**, under the header's fallback condition, whose absence was measured with the control
     the header demands -- named here because the header's second obligation is to say so in the
     entry, and because the correction above deleted the sentence that first discharged it. The
-    file write and the asset work now each name their actor. Neither authority covers the other half, and
-    the first draft of this entry read as though one did.
-    **CARRIED FOR A RULING:** this is at least the fourth recurrence of the fallback condition,
-    and the header was already amended once on 2026-08-23 for exactly that reason. A clause that
-    has to be stretched every pass has stopped describing practice -- and the thing practice now
-    needs a word for is not the file write, it is who may drive the editor when the lane's own
-    agent cannot reach it.
+    file write and the asset work now each name their actor. Neither authority covers the other
+    half, and the first draft of this entry read as though one did.
+    **[THE RULING CARRIED HERE WAS MADE ON 2026-08-26 AND THIS ITEM IS DISCHARGED. Stamped rather
+    than deleted; the paragraph below is what was carried, and is kept because it is what named
+    the gap.]** It read: *"**CARRIED FOR A RULING:** this is at least the fourth recurrence of the
+    fallback condition, and the header was already amended once on 2026-08-23 for exactly that
+    reason. A clause that has to be stretched every pass has stopped describing practice -- and
+    the thing practice now needs a word for is not the file write, it is who may drive the editor
+    when the lane's own agent cannot reach it."* **The user ruled that practice now has that
+    word, and that it does not belong in this header.** `CLAUDE.md`'s **The crew** section carries
+    an *editor-driver clause* naming the `coordinator` as the driver when `execute_script` is
+    absent, under two obligations mirroring this header's own -- measure the absence with a
+    control, and attribute the acting and the writing separately. This header keeps its file-write
+    clause unchanged and points at that one; the two permissions are stated apart, which is what
+    three gates in a row were asking for. This stamp was written by the `coordinator` as this
+    file's fallback writer, the condition measured with its control on 2026-08-26.
   - **THE FALLBACK CONDITION, MEASURED WITH ITS CONTROL.** A `ToolSearch` naming all three of
     `mcp__unreal-editor-direct__execute_script`, `mcp__NeoStack_Connect__execute_script` and
     `mcp__NeoStack_Connect__unreal_status` returned **only `unreal_status`** -- so the lookup

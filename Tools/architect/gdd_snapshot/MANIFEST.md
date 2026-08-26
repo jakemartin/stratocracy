@@ -30,3 +30,19 @@ that fails when it goes stale.
 If the GDD moves on, this copy silently does not. Re-take it with a plain copy and
 update the hash above. Where the two disagree, **the document in `stratocracy-content`
 is the real one.**
+
+## Measure it this way, and mind the CRLF trap
+
+On 2026-08-26 this manifest was recorded as STALE in two places on the strength of a
+"tracked size" of **449,498 bytes**. No file on disk has ever been that size. The
+snapshot is 446,133 bytes with 3,365 lines and **zero carriage returns**, and
+446,133 + 3,365 = 449,498 exactly -- 449,498 is what a **CRLF-applying reader** reports
+for it, one added byte per line. The hash above was correct the whole time.
+
+So measure the bytes with a reader that cannot silently convert, and prove the same
+reading can SEE a carriage return before trusting a count of zero:
+
+    wc -c < Stratocracy_Prototype_GDD.md          # 446133
+    tr -cd '\r' < Stratocracy_Prototype_GDD.md | wc -c   # 0
+    printf 'a\r\nb\r\n' | tr -cd '\r' | wc -c     # 2  <- the control
+    sha256sum Stratocracy_Prototype_GDD.md        # must equal the hash above

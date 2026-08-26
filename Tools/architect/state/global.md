@@ -11,20 +11,38 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
-_Last run 2026-08-25 (ITEM 1e LANDS ITS ENGINE AND CLAUSE HALVES: SEC 2.11.4'S END-OF-MATCH
-SCREEN IS ROUTED AND PINNED, AND IS NOT YET REACHABLE BY A PLAYER. The suite is now 224/224,
+_Last run 2026-08-25 (ITEM 1e LANDS WHOLE AND IS MERGED: SEC 2.11.4'S END-OF-MATCH SCREEN IS
+ROUTED, PINNED, DRAWN AND REACHABLE BY A PLAYER. The suite is now 224/224,
 every entry Success, zero failed and zero notRun. The delta is +6 and nothing was removed or
 renamed, measured by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/`
 and RE-DERIVED BY THE `coordinator` independently of the lane report -- 218 on `master` at
 `194de95` and 224 in the lane tree, the macro census and the automation report agreeing at 224.
-THE REPORT IS NAMED RATHER THAN ALLUDED TO, on this file's own standing practice:
-`reportCreatedOn 2026.08.26-00.28.42`, `succeeded 224`, `failed 0`, `notRun 0`.
+THE REPORT IS NAMED RATHER THAN ALLUDED TO, on this file's own standing practice, and THE ONE
+THAT CERTIFIES THE LIVE FIGURE IS THIS TREE'S: `reportCreatedOn 2026.08.26-01.30.10`,
+`succeeded 224`, `failed 0`, `notRun 0`, `succeededWithWarnings 0`, run in
+`E:/MultiAgent/Stratocracy` AFTER the merge commit `d6492c9`, over the merged bytes.
+The lane tree's own earlier run -- `reportCreatedOn 2026.08.26-00.28.42`, same 224/0/0 -- is
+what the branch carried and is now history: a report is evidence about the tree that produced
+it, and the merge made a different tree.
 THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL, which is why they name different days.
-THE FIGURE IS THE LANE TREE'S AND NOT THE INTEGRATION TREE'S. It was produced in
+**[SUPERSEDED BY THE CORRECTION ABOVE, 2026-08-25 POST-MERGE. The paragraph that follows WAS
+true while this entry lived on the branch and is kept rather than deleted, on this file's
+standing practice, because it records why the figure was stated inside the lane branch at all.
+Its closing instruction IS ALREADY DISCHARGED -- the suite RAN in the integration tree at
+`reportCreatedOn 2026.08.26-01.30.10`, 224/0/0, after `d6492c9`. Do not act on it.]** It read:
+*"THE FIGURE IS THE LANE TREE'S AND NOT THE INTEGRATION TREE'S. It was produced in
 `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/match-result-screen`, and it is stated here
 inside that branch so the claim and the clauses it counts move into `master` in ONE commit. The
 suite must be RE-RUN in the integration tree after the merge, because the merge brings clauses
-into a tree whose newest report predates them. The 218/218 in the entry below WAS the live
+into a tree whose newest report predates them."* -- and that is exactly what happened: the sweep
+FAILED between the merge and the suite run, all three of `TREE DISAGREES WITH ITSELF`, `SUITE
+COUNT AGREEMENT` and `REPORT IDENTITY` firing, and the run cleared it.
+WHY THIS ONE GOT THROUGH, WHICH IS THE PART WORTH CARRYING. `strat_banner_sweep.py` returned
+`SWEEP CLEAN` over this entry while it contradicted itself, because the sweep grades the `N/N`
+FIGURE and the REPORT IDENTITY -- it has nothing that compares an entry's claim about WHICH TREE
+produced the report against the tree it is running in. A stale provenance sentence is invisible
+to it by construction, and this one also carried a live imperative to redo work already done.
+Filed for `strat-data-steward` as a guard clause. The 218/218 in the entry below WAS the live
 figure at that pass and is SUPERSEDED BY THIS ENTRY.
 Written by the `coordinator`, whose file this is.
 WHAT LANDED, ENGINE HALF (`strat-gameplay-engineer`, editor closed, slot-1). A new
@@ -72,8 +90,8 @@ itself calls and asserted they differ from the shipped answer on a board SEC 2.9
 played -- 156 commands, `Decisive`, `FlagDestroyed`, winner 1, key 0 -- so the witness is
 permanent rather than spent, and it is the one assertion that would speak up if the two faction
 voices ever stopped being distinguishable.
-SUPERSEDED WITHIN THIS PASS -- THE ASSET WAS BUILT AND THE SCREEN WAS SEEN DRAWING A REAL
-VERDICT. The paragraph that follows was written while it was still true and is kept because it
+SUPERSEDED WITHIN THIS PASS -- THE ASSET WAS BUILT, THE SCREEN WAS SEEN DRAWING A REAL VERDICT,
+AND ALL OF IT IS NOW MERGED AT `d6492c9`. The paragraph that follows was written while it was still true and is kept because it
 records what the C++ half does WITHOUT an asset, which is still the behaviour on any HUD that
 leaves `MatchResultWidgetClass` unset. `WBP_MatchResult` did not exist at that moment.
 Until it is authored and set on `MatchResultWidgetClass`, `ConcludeMatchIfEnded` logs at Warning

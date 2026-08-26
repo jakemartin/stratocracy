@@ -152,34 +152,19 @@ bool StratScoreCriterionForKey(int32 Key, EStratScoreCriterion& OutCriterion)
 	}
 }
 
-bool StratBuildMatchResultModel(const FStratBridge&     Bridge,
-                                int32                   ViewingSide,
-                                FStratMatchResultModel& OutModel,
-                                FString&                OutFailureReason)
+void StratComposeMatchResultModel(const FStratMatchResultView& Result,
+                                  const FStratScoreboardModel& Scoreboard,
+                                  int32                        ViewingSide,
+                                  FStratMatchResultModel&      OutModel)
 {
-	OutFailureReason.Reset();
-
 	FStratMatchResultModel Built;
 
-	// ---- §2.8's result whole -------------------------------------------------
-	// ASKED FIRST so that a refusal names the RESULT rather than the rows. Both builders
-	// refuse an unseeded bridge in the same words, so the order does not change what is
-	// said -- it changes which layer a reader goes looking at, and "there is no verdict" is
-	// the more specific of the two on this screen.
-	FStratMatchResultView Result;
-	if (!StratBuildMatchResult(Bridge, Result, OutFailureReason))
-	{
-		return false;
-	}
-
-	// ---- §2.11.4's three rows, from the LIVE PANEL'S OWN BUILDER --------------
-	// NOT COMPOSED HERE. See the header: "the same three rows in the same order" is
-	// expressed as identity with the scoreboard's model, not as agreement with it, so
-	// §2.8's tiebreak order has exactly one implementation on screen.
-	if (!StratBuildScoreboardModel(Bridge, ViewingSide, Built.Scoreboard, OutFailureReason))
-	{
-		return false;
-	}
+	// ---- §2.11.4's three rows, TAKEN WHOLE ------------------------------------
+	// NOT COMPOSED HERE and not composed by the caller either -- see the header: "the same
+	// three rows in the same order" is expressed as identity with the scoreboard's model,
+	// not as agreement with it, so §2.8's tiebreak order has exactly one implementation on
+	// screen. This function only carries it across.
+	Built.Scoreboard = Scoreboard;
 
 	// ---- Copies, with no transformation --------------------------------------
 	Built.Tier         = Result.Tier;
@@ -197,8 +182,8 @@ bool StratBuildMatchResultModel(const FStratBridge&     Bridge,
 	// nor in the WBP -- it is `StratScoreCriterionForKey`, a module-side seam a clause can call
 	// with all four classes of input. §2.8 numbers its keys 1, 2, 3 and `EStratScoreCriterion`
 	// numbers the same three criteria 0, 1, 2; a graph doing that subtraction is the widget-side
-	// arithmetic T-UI-03 forbids, and the switch that used to sit inline HERE was the same
-	// mapping with two of its three arms unreachable from any test. See that function's block.
+	// arithmetic T-UI-03 forbids, and the switch that used to sit inline in the bridge-taking
+	// builder was the same mapping with two of its three arms unreachable from any test.
 	//
 	// FALSE LEAVES `DecidedByCriterion` AT ITS DEFAULT, which is the same disposition the inline
 	// switch had for key 0: `bHasDecidedBy` is what says not to read the tag.
@@ -213,8 +198,54 @@ bool StratBuildMatchResultModel(const FStratBridge&     Bridge,
 	Built.bViewerWon  = (Result.Winner != INDEX_NONE && Result.Winner == ViewingSide);
 	Built.bViewerLost = (Result.Winner != INDEX_NONE && Result.Winner != ViewingSide);
 
-	// ALL-OR-NOTHING, ON THE LAST LINE. See the header block.
+	// ALL-OR-NOTHING, ON THE LAST LINE. See the header block. It matters as much here as in
+	// the bridge-taking builder even though nothing above can fail: the caller hands us the
+	// model it is going to show, and a half-filled one states a tier beside somebody else's
+	// rows.
 	OutModel = MoveTemp(Built);
+}
+
+bool StratBuildMatchResultModel(const FStratBridge&     Bridge,
+                                int32                   ViewingSide,
+                                FStratMatchResultModel& OutModel,
+                                FString&                OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	// ---- §2.8's result whole -------------------------------------------------
+	// ASKED FIRST so that a refusal names the RESULT rather than the rows. Both builders
+	// refuse an unseeded bridge in the same words, so the order does not change what is
+	// said -- it changes which layer a reader goes looking at, and "there is no verdict" is
+	// the more specific of the two on this screen.
+	FStratMatchResultView Result;
+	if (!StratBuildMatchResult(Bridge, Result, OutFailureReason))
+	{
+		return false;
+	}
+
+	// ---- §2.11.4's three rows, from the LIVE PANEL'S OWN BUILDER --------------
+	FStratScoreboardModel Board;
+	if (!StratBuildScoreboardModel(Bridge, ViewingSide, Board, OutFailureReason))
+	{
+		return false;
+	}
+
+	// ---- EVERYTHING ELSE IS `StratComposeMatchResultModel`'s, AND THAT IS THE POINT ----
+	// This function is now exactly "ask the bridge twice, then compose", and the composition
+	// -- every copy, every lookup, and the key-to-criterion tag -- lives in a function that
+	// takes VALUES. A clause can therefore hand-author an `FStratMatchResultView` carrying
+	// `DecidedByKey = 2` and drive the real composition with it, which no bridge this suite
+	// can build will ever produce: keys 2 and 3 need a capped match in which both sides
+	// fought to an EQUAL combat Fame. THAT IS THE WHOLE REASON THE SPLIT EXISTS. Before it,
+	// the tag for two of §2.8's three keys was reachable by a player and by no test.
+	//
+	// ALL-OR-NOTHING SURVIVES THE SPLIT AND IS NOW MORE LEGIBLY SO -- NOT STRONGER. The
+	// pre-image composed into a LOCAL too, so a refusing build never touched `OutModel` then
+	// either; the guarantee is unchanged. What improved is that a reader no longer has to
+	// notice that `Built` was a local: the composer's signature makes the wholesale assignment
+	// structural. Corrected on `strat-integration-reviewer`'s ruling 1 after this comment first
+	// claimed the contract had got stronger.
+	StratComposeMatchResultModel(Result, Board, ViewingSide, OutModel);
 	return true;
 }
 

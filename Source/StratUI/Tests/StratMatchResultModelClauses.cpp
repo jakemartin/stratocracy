@@ -1443,55 +1443,142 @@ bool FStratEveryTiebreakKeyReachesItsOwnCriterionTest::RunTest(const FString& /*
 		}
 	}
 
-	// ---- A LATCH, AND IT IS INERT TODAY. SAID PLAINLY BECAUSE IT LOOKS LIKE COVERAGE ------
-	// WHAT THIS BLOCK WOULD CATCH: `StratBuildMatchResultModel` keeping a private second copy
-	// of the switch instead of calling the seam. WHAT IT ACTUALLY CATCHES ON THE SHIPPED
-	// SCENARIO: nothing. The seeded opening carries `DecidedByKey == 0`, so the seam returns
-	// false and leaves `FromSeam` exactly as it was seeded -- both assertions below reduce to
-	// `x == x` and `false == false`, and a builder with a duplicate switch would pass them.
+	// ---- THE COMPOSED MODEL CARRIES THE RIGHT TAG FOR EVERY KEY -- NO LONGER A LATCH ----
+	// WHAT THIS BLOCK USED TO BE, SAID SO THE CHANGE IS LEGIBLE. It built the model over the
+	// seeded opening, where `DecidedByKey == 0`, and asserted the model's tag against the seam's
+	// answer for that key -- which meant `x == x` and `false == false`. It pinned nothing, and it
+	// claimed in its own comment to pin that the builder CALLS the seam. `strat-integration-
+	// reviewer` caught the tautology; the extraction below is what discharged it.
 	//
-	// IT IS KEPT RATHER THAN DELETED, AND KEPT HONEST RATHER THAN DESCRIBED AS A PIN. The
-	// moment any bridge this suite can build produces a non-zero key, these two lines become
-	// the assertion the comment above describes, with no edit. Until then the `AddInfo` below
-	// is what a reader sees, so the block cannot be mistaken for the thing it is waiting to be.
+	// AND THE PROPERTY IT CLAIMED WAS THE WRONG ONE. "The builder calls the seam rather than
+	// keeping a private copy" is an implementation-identity claim, and NO black-box clause can
+	// make it: a duplicate switch that is CORRECT is indistinguishable from a call, and a
+	// duplicate switch that is WRONG is caught by the output. What actually protects the screen
+	// is the OUTPUT -- the composed model's tag is right for every one of §2.8's keys -- and
+	// that is what is asserted here. It is strictly stronger than the claim it replaces.
 	//
-	// AND A BRIDGE IS NOT THE ONLY ROUTE -- SAID SO THAT NOBODY READS THIS AS "IMPOSSIBLE".
+	// HOW THE UNREACHABLE KEYS ARE REACHED: `StratComposeMatchResultModel` takes VALUES.
 	// `FStratMatchResultView` is a plain `USTRUCT` with a public defaulted `int32 DecidedByKey`,
-	// so a clause can hand-author one carrying key 2 with NO bridge in existence. What stands in
-	// the way is only that `StratBuildMatchResultModel` reaches for its result THROUGH the
-	// bridge: extract the key-to-tag step to take a `const FStratMatchResultView&` and the
-	// caller property is fully falsifiable. That is the same extract-a-seam move that made the
-	// mapping itself testable, one layer up. It was judged NOT WORTH IT THIS PASS -- another
-	// production change and another gate for a property whose subject is one line -- and it is
-	// filed rather than forgotten. NOT a wall; a cost that was weighed.
-	//
-	// THIS IS THE SAME SHAPE THE WHOLE CLAUSE EXISTS TO CLOSE, ONE LAYER UP -- an arm no
-	// fixture reaches, reading as covered. It was caught by `strat-integration-reviewer` on
-	// the gate for this very change, after the first version of this comment claimed the pin.
+	// so the view below is HAND-AUTHORED with key 2 and key 3 -- states no bridge this suite can
+	// build will ever report, since they need a capped match in which both sides fought to an
+	// EQUAL combat Fame. The scoreboard handed alongside is the LIVE builder's, so the
+	// expectation stays the module's own `Rows[N - 1].Criterion` and never a typed table.
 	{
-		FStratMatchResultModel Model;
-		FString                BuildReason;
-		if (TestTrue(TEXT("the verdict model builds over the seeded opening"),
-				StratBuildMatchResultModel(Bridge, kFirstSide, Model, BuildReason)))
+		for (int32 Key = 0; Key <= Board.Rows.Num(); ++Key)
 		{
-			EStratScoreCriterion FromSeam = Model.DecidedByCriterion;
-			const bool           SeamSays = StratScoreCriterionForKey(Model.DecidedByKey, FromSeam);
+			// A hand-authored §2.8 result. Only the key varies; the rest is a plausible capped
+			// match so nothing else on the model is nonsense while the tag is under test.
+			FStratMatchResultView Authored;
+			Authored.Tier         = (Key == 0) ? EStratResultTier::Draw : EStratResultTier::Marginal;
+			Authored.Cause        = (Key == 0) ? EStratResultCause::AllKeysTied
+			                                   : EStratResultCause::AttritionLead;
+			Authored.Winner       = (Key == 0) ? INDEX_NONE : kFirstSide;
+			Authored.DecidedByKey = Key;
 
-			AddInfo(Model.DecidedByKey == 0
-				? TEXT("the opening's key is 0, so the two assertions that follow are TAUTOLOGIES "
-				       "here and pin nothing -- see the block comment; they arm themselves the "
-				       "moment a non-zero key becomes reachable")
-				: TEXT("the opening carried a non-zero key, so the caller assertions below are "
-				       "live -- the block comment's 'inert today' no longer describes this run"));
+			FStratMatchResultModel Composed;
+			StratComposeMatchResultModel(Authored, Board, kFirstSide, Composed);
+
+			// THE KEY SURVIVES THE COMPOSITION UNCHANGED -- the header's "carried raw beside the
+			// tag, both set from one read of one field".
+			TestEqual(*FString::Printf(TEXT("the composed model carries key %d unchanged"), Key),
+				Composed.DecidedByKey, Key);
 
 			TestEqual(*FString::Printf(
-					TEXT("`bHasDecidedBy` is the seam's answer for key %d"), Model.DecidedByKey),
-				Model.bHasDecidedBy, SeamSays);
+					TEXT("`bHasDecidedBy` is true for key %d exactly when §2.8 evaluated one"), Key),
+				Composed.bHasDecidedBy, Key != 0);
+
+			if (Key == 0)
+			{
+				// The one arm a played match DOES reach, and the reason the flag exists rather
+				// than a sentinel criterion: the tag must stay at the model's own default, since
+				// every enumerator names a real row a display could accidentally mark.
+				const FStratMatchResultModel Untouched;
+				TestEqual(
+					TEXT("and key 0 leaves the criterion tag at the model's default, naming no row"),
+					static_cast<int32>(Composed.DecidedByCriterion),
+					static_cast<int32>(Untouched.DecidedByCriterion));
+				continue;
+			}
+
+			// THE PIN. The expectation is the live scoreboard builder's own row order, not a
+			// table written here: §2.11.4 orders those rows in §2.8's tiebreak order and §2.8
+			// numbers its keys from one.
+			//
+			// KEY 1'S COMPARISON ALONE IS THE WEAK ONE, SAID SO NOBODY LEANS ON THE WRONG HALF.
+			// `Rows[0].Criterion` is `CombatFame`, which is also `EStratScoreCriterion`'s zero and
+			// the model's own default -- so a composer that wrote NO criterion at all would pass
+			// this one line. What catches that composer is the `bHasDecidedBy` assertion in the
+			// same iteration, which it fails. Keys 2 and 3 have no such coincidence.
+			const EStratScoreCriterion Expected = Board.Rows[Key - 1].Criterion;
 
 			TestEqual(*FString::Printf(
-					TEXT("and the tag on the model is the seam's criterion for key %d"),
-					Model.DecidedByKey),
-				static_cast<int32>(Model.DecidedByCriterion), static_cast<int32>(FromSeam));
+					TEXT("§2.8's key %d reaches the SCREEN as criterion '%s' -- the row the "
+					     "scoreboard itself puts %d-th -- through the real composition path"),
+					Key, *CriterionName(Expected), Key),
+				static_cast<int32>(Composed.DecidedByCriterion), static_cast<int32>(Expected));
+		}
+
+		AddInfo(TEXT("keys 2 and 3 were driven through StratComposeMatchResultModel with a "
+		             "hand-authored FStratMatchResultView -- states no bridge this suite can build "
+		             "reports, which is why the composition was extracted from the bridge-taking "
+		             "builder"));
+	}
+
+	// ---- AND THE BRIDGE-TAKING BUILDER IS THE SAME COMPOSITION -----------------
+	// Without this the composer could be right and BYPASSED: `StratBuildMatchResultModel` could
+	// compose its own model and every assertion above would still be green. Both models are
+	// built from the same bridge in the same frame, so UE's reflection walk over
+	// `FStratMatchResultModel` is an IDENTITY comparison and not a field list -- a field added to
+	// that struct tomorrow is covered the moment it compiles.
+	//
+	// EXACTLY WHAT THIS FORECLOSES, AND THE QUALIFIER IS LOAD-BEARING: over EVERY FIELD, for the
+	// ONE STATE a bridge can produce. The seeded opening carries `DecidedByKey == 0`, so a
+	// bypassing builder that agreed here and diverged at key 2 would pass. That residue is
+	// irreducible by black-box means -- driving the BUILDER at key 2 needs the bridge to report
+	// key 2, which is the whole reason the composer was extracted -- and stating it is what keeps
+	// this block from becoming the next over-claimed assertion.
+	{
+		FStratMatchResultModel ViaBridge;
+		FString                BuildReason;
+		if (TestTrue(TEXT("the bridge-taking builder builds over the seeded opening"),
+				StratBuildMatchResultModel(Bridge, kFirstSide, ViaBridge, BuildReason)))
+		{
+			FStratMatchResultView Result;
+			FString               ResultReason;
+			if (TestTrue(TEXT("and §2.8's result projects on its own"),
+					StratBuildMatchResult(Bridge, Result, ResultReason)))
+			{
+				FStratMatchResultModel ViaComposer;
+				StratComposeMatchResultModel(Result, Board, kFirstSide, ViaComposer);
+
+				const UScriptStruct* const ModelStruct = FStratMatchResultModel::StaticStruct();
+
+				TestTrue(
+					TEXT("the bridge-taking builder's model IS the composer's, field for field, "
+					     "by UE's own reflection walk -- so on every state a bridge can reach, the "
+					     "composition has one implementation"),
+					ModelStruct->CompareScriptStruct(&ViaBridge, &ViaComposer, PPF_None));
+
+				// THE NEGATIVE CONTROL FOR THE COMPARISON ITSELF, on
+				// `StratSelectionMachineParity.cpp`'s precedent: if `CompareScriptStruct` reported
+				// equality for two models that genuinely differ, the clause above would be
+				// vacuous. The perturbation is the TAG -- the field this whole clause is about --
+				// and it is applied to a copy so neither model above is disturbed.
+				FStratMatchResultModel Perturbed = ViaComposer;
+				Perturbed.DecidedByCriterion = (ViaComposer.DecidedByCriterion
+						== EStratScoreCriterion::SurvivingHp)
+					? EStratScoreCriterion::CombatFame
+					: EStratScoreCriterion::SurvivingHp;
+
+				TestFalse(
+					TEXT("the comparison can SEE a difference in the criterion tag -- without this "
+					     "the identity above would be satisfied by a walk that compared nothing"),
+					ModelStruct->CompareScriptStruct(&ViaBridge, &Perturbed, PPF_None));
+			}
+			else
+			{
+				AddError(ResultReason);
+			}
 		}
 		else
 		{

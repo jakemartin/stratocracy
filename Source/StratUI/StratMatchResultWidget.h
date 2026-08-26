@@ -327,6 +327,38 @@ STRATUI_API bool StratBuildMatchResultModel(
 	FString&                OutFailureReason);
 
 /**
+ * The composition step, over VALUES. Every copy, every lookup and §2.8's key-to-criterion tag.
+ *
+ * WHY IT IS SEPARATE FROM THE BUILDER ABOVE, AND IT IS A TESTABILITY SEAM RATHER THAN A DESIGN
+ * PREFERENCE. `StratBuildMatchResultModel` reaches its `FStratMatchResultView` THROUGH the
+ * bridge, and no bridge this suite can build reports `decidedByKey` 2 or 3 -- those need a capped
+ * match in which both sides fought to an EQUAL combat Fame, where every game §2.9's AI plays on
+ * the shipped scenario ends `Decisive / FlagDestroyed` at key 0. So while the composition lived
+ * inside the builder, the tag for TWO OF §2.8's THREE KEYS was reachable by a player and by no
+ * test. `FStratMatchResultView` is a plain `USTRUCT` with a public defaulted `DecidedByKey`, so a
+ * clause can hand-author one and drive this function with it. THAT is what the split buys.
+ *
+ * IT TAKES THE SCOREBOARD RATHER THAN BUILDING IT, for the header block's reason: "the same three
+ * rows in the same order" is an IDENTITY with the live panel's model, so this function carries
+ * that model across and composes no row of its own.
+ *
+ * TOTAL AND INFALLIBLE -- no `bool`, no failure reason. Every input is already a value somebody
+ * else refused or produced; there is nothing left here that can be asked and declined. It still
+ * assigns `OutModel` wholesale on its last line, so a caller's model is never half-filled.
+ *
+ * @param Result       §2.8's result whole. Hand-authorable, which is the point.
+ * @param Scoreboard   §2.11.4's three rows, already built by `StratBuildScoreboardModel`.
+ * @param ViewingSide  which `strat` side is the "YOU" column -- NOT the winner. Copied onto the
+ *                     model and used for the two viewer comparisons; the row columns were
+ *                     already assigned when `Scoreboard` was built.
+ */
+STRATUI_API void StratComposeMatchResultModel(
+	const FStratMatchResultView& Result,
+	const FStratScoreboardModel& Scoreboard,
+	int32                        ViewingSide,
+	FStratMatchResultModel&      OutModel);
+
+/**
  * §2.11.4's end-of-match screen.
  *
  * Holds a built model and pushes it at Blueprint. It reads no `strat` type, chooses no

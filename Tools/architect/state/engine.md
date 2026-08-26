@@ -13,6 +13,36 @@
 
 ## NEXT
 
+- **2026-08-25 (second pass that day), WRITTEN BY THE `coordinator`, NOT BY
+  `strat-gameplay-engineer` -- declared, same as the entry below. THE COMPOSITION IS SPLIT OUT OF
+  THE BRIDGE-TAKING BUILDER SO THAT A TAG NO TEST COULD REACH BECOMES ONE A TEST DRIVES.**
+  Behaviour unchanged; this is a testability seam and is labelled as one in the header.
+  - **WHAT MOVED.** `STRATUI_API void StratComposeMatchResultModel(const FStratMatchResultView&,
+    const FStratScoreboardModel&, int32, FStratMatchResultModel&)` now holds every copy, every
+    lookup and §2.8's key-to-criterion tag. `StratBuildMatchResultModel` is reduced to two bridge
+    queries and one call: it asks `StratBuildMatchResult` for §2.8's result, asks
+    `StratBuildScoreboardModel` for §2.11.4's rows into a LOCAL, and hands both to the composer.
+  - **WHY IT IS A FUNCTION OVER VALUES.** The builder reaches its `FStratMatchResultView` THROUGH
+    the bridge, and no bridge this suite can build reports `decidedByKey` 2 or 3 — they need a
+    capped match in which both sides fought to an EQUAL combat Fame. `FStratMatchResultView` is a
+    plain `USTRUCT` with a public defaulted `int32 DecidedByKey`, so a clause can hand-author one
+    and drive the real composition. **That is the entire reason for the split** and the header
+    says so, so nobody later "simplifies" it back.
+  - **TOTAL AND INFALLIBLE.** `void`, no failure reason: every input is already a value somebody
+    else refused or produced. It still assigns `OutModel` wholesale on its last line.
+  - **ALL-OR-NOTHING SURVIVED AND IS MORE LEGIBLY SO — *NOT* STRONGER.** [Corrected 2026-08-25 on
+    `strat-integration-reviewer`'s ruling 1; this bullet first said "STRONGER" and gave a mechanism
+    that does not support it.] `Built.Scoreboard` **was already a local** in the pre-image, so a
+    refusing build never touched `OutModel` there either and the guarantee is unchanged. What
+    improved is legibility: the composer's signature makes the wholesale assignment structural
+    instead of something a reader has to notice.
+  - **ONE EXTRA COPY, ACCEPTED.** `FStratScoreboardModel` is copied into the model rather than
+    built in place. Three rows, once per match, on a screen that appears at the end of one.
+  - **BUILD.** `Result: Succeeded`, exit 0, twice — once for the extraction and once after the
+    mutation control was reverted. Editor CLOSED throughout. No `Content/`, no
+    `Source/StratRules/`, no `Data/`, no `.uproject`. No suite count and no verdict here;
+    `global.md` owns both.
+
 - **2026-08-25, WRITTEN BY THE `coordinator`, NOT BY `strat-gameplay-engineer`, AND THE DEPARTURE
   IS DECLARED RATHER THAN QUIET.** No subagent ran this pass. **A SEAM WAS ADDED SO THAT A
   CORRECT-BUT-UNTESTABLE MAPPING BECAME TESTABLE. Behaviour is unchanged -- deliberately, and

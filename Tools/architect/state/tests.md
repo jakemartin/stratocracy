@@ -12,6 +12,56 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-25 (second pass that day), WRITTEN BY THE `coordinator`, NOT BY `strat-test-author` --
+  declared, same as the entry below. THE LATCH IS A PIN, AND THE PROPERTY IT PINS IS NOT THE ONE
+  THE LATCH CLAIMED.** **NO CLAUSE WAS ADDED OR REMOVED** — the name set is byte-identical to
+  `04437fe`'s, 225 both sides, set-difference empty in both directions. One existing clause,
+  `EveryTiebreakKeyReachesTheScreenAsItsOwnCriterion`, got teeth. The live suite figure is in
+  `global.md` and is not restated here.
+  - **THE OLD BLOCK CLAIMED AN UNTESTABLE PROPERTY, AND THAT IS WORTH MORE THAN THE FIX.** It said
+    it pinned that the builder CALLS `StratScoreCriterionForKey` rather than keeping a private
+    copy. **No black-box clause can assert that**: a duplicate switch that is CORRECT is
+    indistinguishable from a call, and one that is WRONG is caught by the output. The clause now
+    asserts the OUTPUT — the composed model's tag is right for every one of §2.8's keys — which is
+    strictly stronger and is what actually protects the screen. *When a clause cannot be armed,
+    check whether the property was even expressible before extracting a seam to reach it.*
+  - **HOW THE UNREACHABLE KEYS ARE REACHED.** `StratComposeMatchResultModel` takes values, so the
+    clause HAND-AUTHORS an `FStratMatchResultView` for each of keys 0, 1, 2 and 3 and drives the
+    real composition. Keys 2 and 3 are states no bridge this suite can build reports. The
+    expectation is still `StratBuildScoreboardModel`'s own `Rows[N - 1].Criterion` on the seeded
+    bridge, never a typed table. Key 0 is asserted against a DEFAULT-CONSTRUCTED
+    `FStratMatchResultModel`'s tag rather than a named enumerator, so "left at the default" is
+    read off the struct instead of restated.
+  - **THE BRIDGE-TAKING BUILDER IS PINNED TO THE COMPOSER BY IDENTITY — OVER EVERY *FIELD*, FOR
+    THE ONE *STATE* A BRIDGE CAN PRODUCE.** [The qualifier was added 2026-08-25 on
+    `strat-integration-reviewer`'s ruling 4; this bullet first said flatly "so the composer cannot
+    be right and BYPASSED", which is over-broad by exactly that qualifier.] Via
+    `UScriptStruct::CompareScriptStruct` over `FStratMatchResultModel` — UE's own reflection walk,
+    on the `ResultScreenRowsAreTheScoreboardModelByIdentity` precedent — so a field added to that
+    struct tomorrow is covered on compile. But both models are built from the seeded opening, where
+    `DecidedByKey == 0`, so a bypassing builder that agreed there and diverged at key 2 would pass.
+    **That residue is irreducible by black-box means** — driving the BUILDER at key 2 needs the
+    bridge to report key 2 — and it is the same inexpressibility the bullet above describes.
+  - **AND THE COMPARISON IS SHOWN ABLE TO FAIL, WHICH IT WAS NOT WHEN FIRST WRITTEN.** The gate's
+    headline observation: the first mutation control planted the duplicate switch INSIDE the
+    composer, which makes both sides of the identity wrong *identically*, so that block stayed
+    green and nothing had ever demonstrated the walk could report `false`. Two things fixed it, on
+    `Source/StratPlay/Tests/StratSelectionMachineParity.cpp`'s precedent — a `TestFalse` over a
+    copy perturbed in the criterion tag, **and** the MIRROR mutation the gate asked for: a private
+    duplicate planted in `StratBuildMatchResultModel` instead, which reddened the identity
+    assertion alone and left the key loop green. 25 succeeded / 1 failed, the mirror image of the
+    first run.
+  - **KEY 1'S CRITERION COMPARISON ALONE IS THE WEAK ARM AND IS LABELLED AS SUCH IN THE CLAUSE.**
+    `Rows[0].Criterion` is `CombatFame`, which is also the enum's zero and the model's default, so
+    a composer writing NO criterion passes that one line; the `bHasDecidedBy` assertion in the same
+    iteration is what catches it. Keys 2 and 3 have no such coincidence.
+  - **FALSIFIABILITY MEASURED, AND THE MUTANT WAS THE DEFECT THE OLD LATCH NAMED.** A PRIVATE
+    DUPLICATE SWITCH was planted inside the composer, swapped on keys 2 and 3, **with the seam left
+    correct**. `Automation RunTests Stratocracy.StratUI.T-UI-03`: **25 succeeded, 1 failed**, both
+    errors from the composed-model block naming keys 2 and 3. **The seam's own key loop stayed
+    GREEN** — correctly, the seam being untouched — which is what shows the two blocks grade
+    different things rather than one grading twice. Reverted, blob `e5d6e3a` before and after.
+
 - **2026-08-25, WRITTEN BY THE `coordinator`, NOT BY `strat-test-author`, AND THE DEPARTURE IS
   DECLARED RATHER THAN QUIET.** No subagent ran this pass; the user asked for the fix directly and
   the two halves of it straddle the test lane and the engine lane, so one writer made both edits

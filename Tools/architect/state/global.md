@@ -11,9 +11,84 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-25 (THE LATCH BECOMES A PIN: SEC 2.8'S KEYS 2 AND 3 NOW TRAVEL THE REAL
+COMPOSITION PATH, AND A PRIVATE DUPLICATE SWITCH IS NOW RED. Written by the `coordinator`, whose
+file this is. **THE SUITE COUNT DID NOT MOVE AND THAT IS THE HEADLINE, NOT AN OMISSION**: the
+suite is **225/225**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings,
+and the clause NAME SET IS IDENTICAL to `04437fe`'s -- 225 names both sides, set-difference
+empty in both directions. No clause was added; ONE EXISTING CLAUSE GOT TEETH IT DID NOT HAVE.
+THE REPORT THAT CERTIFIES THE LIVE FIGURE IS THIS TREE'S: `reportCreatedOn 2026.08.26-03.40.42`,
+`succeeded 225`, `failed 0`, `notRun 0`, `succeededWithWarnings 0`, run in
+`E:/MultiAgent/Stratocracy` after the revert of the mutation described below. THAT STAMP IS UTC
+AND THIS ENTRY'S DATE IS LOCAL.
+WHAT WAS DISCHARGED. Carried debt item (a) from the entry below -- the extraction that would turn
+the labelled latch into a real pin. `StratComposeMatchResultModel(const FStratMatchResultView&,
+const FStratScoreboardModel&, int32, FStratMatchResultModel&)` is now `STRATUI_API` and holds every
+copy, every lookup and SEC 2.8's key-to-criterion tag. `StratBuildMatchResultModel` is reduced to
+"ask the bridge twice, then compose". Behaviour is unchanged and the clause that proves it is the
+reflection-walk identity described below.
+WHY THE SPLIT BUYS ANYTHING. The composer takes VALUES, and `FStratMatchResultView` is a plain
+`USTRUCT` with a public defaulted `int32 DecidedByKey` -- so a clause HAND-AUTHORS a view carrying
+key 2 and key 3 and drives the real composition with it. Those are states no bridge this suite can
+build will ever report: they need a capped match in which both sides fought to an EQUAL combat
+Fame. The tag for two of SEC 2.8's three keys was reachable by a player and by no test; it is now
+reachable by both.
+THE PROPERTY WAS RESTATED, NOT JUST ARMED, AND THIS IS THE PART WORTH READING. The old block
+claimed to pin that the builder CALLS the seam rather than keeping a private copy. That is an
+implementation-identity claim and NO black-box clause can make it -- a correct duplicate is
+indistinguishable from a call, and a wrong one is caught by the output. What the clause now
+asserts is the OUTPUT: the composed model's tag is right for every one of SEC 2.8's keys, and it
+is the claim that actually protects the screen. **THE QUALIFIER MATTERS AND WAS ADDED ON THE
+GATE'S RULING 3: that is strictly stronger than the ASSERTIONS it replaces -- two tautologies --
+but it does NOT subsume the PROPERTY the old block named, which remains unpinnable by any
+black-box clause. Both are true at once: the assertion was dead, AND the property was the wrong
+one to have chosen.**
+ALL-OR-NOTHING SURVIVED AND IS STRONGER. Both refusals happen before the compose call and the
+composer assigns wholesale on its last line, so a refusing build cannot have touched the caller's
+model at all.
+FALSIFIABILITY WAS MEASURED, AND THE MUTANT WAS CHOSEN TO BE THE DEFECT THE OLD LATCH CLAIMED TO
+CATCH. A PRIVATE DUPLICATE SWITCH was planted inside the composer, swapped on keys 2 and 3, WITH
+`StratScoreCriterionForKey` LEFT CORRECT. Rebuilt, and `Automation RunTests
+Stratocracy.StratUI.T-UI-03` run: **25 succeeded, 1 failed**, and the two errors are both from the
+composed-model block, naming key 2 and key 3 with the criterion each should have carried. The
+seam's own key loop stayed GREEN -- correctly, since the seam was untouched -- which is what shows
+the two blocks grade different things. Reverted, blob re-measured identical
+(`git hash-object` `e5d6e3a` before and after), rebuilt, full suite re-run.
+AND THAT CONTROL WAS NOT ENOUGH, WHICH THE GATE CAUGHT AND THIS RECORD WOULD NOT HAVE. A duplicate
+switch planted INSIDE the composer makes both operands of the builder-versus-composer identity
+comparison wrong IDENTICALLY, so that assertion stayed GREEN under it and nothing had ever shown
+the reflection walk able to report `false`. Two things now do: a `TestFalse` over a copy perturbed
+in the criterion tag, on `StratSelectionMachineParity.cpp`'s precedent, and THE MIRROR MUTATION --
+a private duplicate planted in `StratBuildMatchResultModel` instead, bypassing the composer, which
+reddened the identity assertion ALONE and left the key loop green. **25 succeeded, 1 failed**, the
+mirror image of the first run. Reverted, `e5d6e3a` before and after, rebuilt, full suite re-run;
+the report named above is that run.
+ITEM (b) IS STAMPED RATHER THAN DISCHARGED. It read that `strat_banner_sweep.py`'s hand-typed
+`TRACKED_ITEMS` was blind to the latch. THE LATCH NO LONGER EXISTS, so that subject is gone; the
+general point it rode on -- a guard whose reference data is typed by hand goes inert on its own
+subject silently -- is unchanged and stays `strat-data-steward`'s to weigh. Nothing is filed
+against it now.
+A TEMPORARY PRODUCTION MUTATION IS NO LONGER AN EXCEPTION IN THIS MILESTONE -- IT IS A STANDING
+CONDITION, WRITTEN OUT ON THE GATE'S OBSERVATION 2. It has now happened three times in two passes,
+and this record's own rule is that a repeated exception has stopped describing an exception.
+**THE CONDITION: only the `coordinator` may do it, never a lane agent** -- `strat-test-author`
+refused exactly this in wave 6 and was right, and that lane rule is untouched. **THE TRIGGER: a
+falsifiability control that cannot be built inside the clause**, which is the case precisely when
+the mutant's outputs are not reconstructible from functions the clause can already call. **THE
+EVIDENCE THAT MUST RIDE WITH IT, all four:** the mutant named in prose; the failing run quoted with
+its counts; `git hash-object` on the mutated file BEFORE and AFTER, shown equal; and a full suite
+re-run AFTER the revert, which is the report the banner then cites. Every instance so far carries
+all four. **AND THE MUTANT MUST EXERCISE THE ASSERTION IT IS OFFERED AS EVIDENCE FOR** -- the gate
+caught a control that did not: planting a duplicate switch inside the composer made both sides of
+the identity comparison wrong IDENTICALLY, so that block stayed green and had never been shown able
+to fail. The mirror mutation, in the BUILDER, is what exercised it.
+NOTHING IS COMMITTED. Three modified files, all under `Source/StratUI/`, plus the three record
+files; staging is the user's call.)
+
 _Last run 2026-08-25 (SEC 2.8'S TIEBREAK KEYS 2 AND 3 ARE PINNED, AND THE HOLE THE ITEM-1e
 ENTRY BELOW FILED FOR ANOTHER OWNER IS DISCHARGED. Written by the `coordinator`, whose file this
-is. The suite is now **225/225**, every entry Success, zero failed, zero notRun, zero
+is. The suite WAS **225/225** at that pass; SUPERSEDED 2026-08-25 by the entry above, which moved
+no count and strengthened the clause. It was every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings. The delta is **+1** and nothing was removed or renamed, measured by
 set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- 224 names at
 `a808e0b`, 225 in this tree, the one addition being
@@ -78,7 +153,9 @@ obstacle is that `StratBuildMatchResultModel` reaches for its result through the
 extracting the key-to-tag step to take a `const FStratMatchResultView&` makes the caller property
 fully falsifiable. AN UNMEASURED LIMITATION ASSERTED AS A RULE is its own defect class in this
 record, and this is an instance of it caught inside one session.
-FILED, NOT BUILT -- CARRIED DEBT, OWNED BY THE `coordinator`. (a) Extract
+FILED, NOT BUILT -- CARRIED DEBT, OWNED BY THE `coordinator`. **[(a) DISCHARGED 2026-08-25 by the
+entry above -- `StratComposeMatchResultModel` exists and the latch is now a pin. (b) STAMPED: its
+subject, the latch, no longer exists. Both are kept because they are what named the work.]** (a) Extract
 `StratBuildMatchResultModel`'s key-to-tag step to take a `const FStratMatchResultView&`, so the
 caller property stops being a latch and becomes a pin. Cost: one production change plus a gate;
 declined this pass because the property's subject is one line. (b) `strat_banner_sweep.py`'s

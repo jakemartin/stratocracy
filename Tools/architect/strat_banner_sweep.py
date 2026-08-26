@@ -590,16 +590,29 @@ def current_banner_end(text: str) -> int:
     """The line at which the CURRENT banner stops, i.e. where the superseded ones begin.
 
     THE BANNER REGION IS A STACK OF BANNERS, NEWEST FIRST, and treating all of it as one live
-    block is a `section_of` artefact rather than a reading of the document. `global.md` has no
-    heading until `## BUILT` on line 625, so `section_of` calls its first 624 lines "BANNER" --
-    but those lines are eleven successive `_Last run` blocks, each of which was the banner on
-    its day and each of which was true then. `check_banner_date` already reads only the FIRST
-    `_Last run` as the current one; this is the same rule applied to the figures underneath it.
-    Measured 2026-08-22: `suite is now **104/104**` on line 550, written 2026-08-14 inside the
-    fourth-oldest banner, was collected as the file's live claim and superseded the real one on
-    line 41 -- because the existing narrative rule keeps the LAST banner figure, which is right
-    within one `_Last run` sentence (it accretes "ALSO ..." segments in order) and exactly
-    backwards across a stack that grows upward. Both rules now apply, each to its own scope.
+    block is a `section_of` artefact rather than a reading of the document. `global.md` carries
+    no heading at all until `## BUILT`, so `section_of` calls every line above that heading
+    "BANNER" -- but that span is a run of successive `_Last run` blocks, each of which was the
+    banner on its day and each of which was true then. `check_banner_date` already reads only
+    the FIRST `_Last run` as the current one; this is the same rule applied to the figures
+    underneath it.
+
+    ANCHORED BY CONTENT, NOT BY LINE NUMBER, AND THAT IS A REPAIR RATHER THAN A STYLE CHOICE.
+    This paragraph shipped in 2026-08-22 wording that put `## BUILT` "on line 625", called the
+    span above it "the first 624 lines", and counted "eleven" successive `_Last run` blocks in
+    it. All three describe a document that only ever grows ABOVE them, so all three were stale
+    within days and none of them could be read as a pointer any more: re-measured 2026-08-26,
+    `## BUILT` sat on line 1977 and the stack was 22 blocks deep. Those two figures are stamped
+    with the day they were taken precisely because they will drift the same way -- what this
+    docstring points WITH from here on is quoted text, which survives the growth. The dated
+    measurement below keeps its own figures unchanged for the same reason: it is history.
+
+    Measured 2026-08-22: `suite is now **104/104**`, written 2026-08-14 inside the then
+    fourth-oldest banner, was collected as the file's live claim and superseded the real one in
+    the then-current banner -- because the existing narrative rule keeps the LAST banner
+    figure, which is right within one `_Last run` sentence (it accretes "ALSO ..." segments
+    in order) and exactly backwards across a stack that grows upward. Both rules now apply,
+    each to its own scope.
     """
     hits = [i for i, line in enumerate(text.splitlines(), start=1) if _BANNER_DATE_RE.search(line)]
     return hits[1] if len(hits) > 1 else sys.maxsize
@@ -1593,7 +1606,10 @@ backs today's figure.**
 # THE EXEMPTION ITSELF, PINNED AS A FIXTURE. An honest account of a past drift -- unstamped,
 # unbracketed -- reporting that an EARLIER segment cited a since-superseded stamp, using "cited"
 # and nothing else to mark it as an account rather than an assertion. Structurally the real
-# `global.md:76` sentence, condensed. Without the `cite`-family addition to `_QUOTED_FIGURE_RE`
+# `global.md` sentence opening `THE CHECK CAUGHT REAL DRIFT ON ITS FIRST DAY`, condensed --
+# quoted rather than cited by line, because that file grows above the sentence and the line
+# number this comment used to give (`global.md:76`) had already moved by one when it was read
+# back. Without the `cite`-family addition to `_QUOTED_FIGURE_RE`
 # this was flagged as a live provenance defect; with it, `check_self_test` below confirms it
 # PASSES, and a direct regex differential -- the shipped pattern against a reconstruction of the
 # one before this addition, on the identical `quoting_window` text -- proves the addition is
@@ -2190,7 +2206,8 @@ def check_provenance_self_test() -> tuple[bool, list[str]]:
              "markers elsewhere in it, still FAILS", _BAD_PROVENANCE_LONG_PARAGRAPH, False)
     # 2026-08-26, the quoted-figure exclusion gap: an honest account naming an EARLIER citation
     # as superseded, using "cited" and no bracket, must PASS -- this is the real
-    # `global.md:76` shape, condensed.
+    # `global.md` shape, condensed -- the sentence opening `THE CHECK CAUGHT REAL DRIFT ON ITS
+    # FIRST DAY`, quoted rather than cited by a line number that moves whenever that file grows.
     run_case("an honest account of a superseded citation, using the reporting verb 'cited', "
              "PASSES", _CITED_ACCOUNT_PROVENANCE, True)
     return ok, lines
@@ -2351,7 +2368,9 @@ def check_self_test() -> tuple[bool, str]:
 
     # THE `cite`-FAMILY ADDITION TO `_QUOTED_FIGURE_RE`, PINNED DIRECTLY -- not only against
     # `_CITED_ACCOUNT_PROVENANCE`'s verdict above. Extracted straight from the real
-    # `global.md:76` sentence ("the banner segment below cited `reportCreatedOn ...`"), this
+    # `global.md` sentence ("the banner segment below cited `reportCreatedOn ...`") -- the quote
+    # is the anchor, replacing a `global.md:76` line citation that growth had already moved off
+    # the sentence it named. This
     # asserts the shipped pattern (with `cite`-family words) matches the `quoting_window` text
     # and a reconstruction of the pattern WITHOUT them does not, on the identical text -- a real
     # regression against anyone who removes the addition, the same shape as the wrap-fix and

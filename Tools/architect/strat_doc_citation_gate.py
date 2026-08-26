@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Vendored line-number citations in DOCUMENTATION -- the half no guard was watching.
+"""Rot-prone line-number citations in DOCUMENTATION -- the half no guard was watching.
 
 WHY THIS EXISTS. `.github/workflows/banner-sweep.yml` and `Tools/architect/hooks/pre-commit`
 both refuse a citation like `Save.h:64` -- a line number into `Source/StratRules/`, which is
@@ -34,10 +34,38 @@ admits every one of the 21 historical accounts at exactly **258**. 300 is 258 pl
 is still far tighter than the enclosing bullet, which in this document routinely runs past 2,000
 characters.
 
+THE SUBJECT SET WAS ONE DIRECTORY WIDE, AND THAT WAS THE SAME DEFECT ONE LEVEL UP. Widened
+2026-08-26. Everything above is about `Source/StratRules/`, because a re-vendor moves those
+lines. But `Tools/architect/state/global.md` is a file that only ever GROWS ABOVE the line you
+just cited -- every entry is prepended or inserted, so a `global.md:76` is stale by the next
+entry, not by the next re-vendor, and it rots FASTER than any vendored citation this gate was
+built for. Nothing read one to notice. Measured the day the widening was written, six such
+citations existed and three were live and unguarded, one of them provably wrong: `global.md`
+told a reader to "see `.agents/ue-project-context.md:195` itself, which as of 2026-08-14 reads
+'93/93, combat-outcome phase 2'" -- that file has since grown to 354 lines and its line 195 is
+now a heading about the map-to-GameMode binding, with the count it promised at line 245.
+
+So the subject set is now BOTH, and neither half is typed: the vendored units are read off
+`Source/StratRules/`, and the record subjects are the basenames of THE VERY DOCUMENTS THIS GATE
+ALREADY GRADES. A new record file is covered the moment it appears, with no edit here -- and the
+subject set cannot drift away from the scanned set, because it IS the scanned set.
+
+AND THE SCAN REACHES THE TOOLING, NOT ONLY THE PROSE. The six citations that opened this
+widening did not all live in `.md`: four of them sat in `strat_banner_sweep.py`'s own comments,
+pointing into `global.md` to explain a fixture. A guard that reads the record's prose and not
+the record's tooling is the `Source/`-only shape again, one directory over. `CODE_ROOTS` below
+adds `Tools/architect/*.py`, under the same nested-repo and ignore filters, graded by the same
+rule.
+
 WHAT IT CANNOT CATCH, SAID PLAINLY. A live citation planted within 300 characters of citation
 vocabulary is allowed. That is the cost of the exemption and it is a real hole, not a theoretical
 one -- the same trade `strat_banner_sweep.py` makes for its stamp markers. What closes it is a
 reviewer reading the diff, which is what caught the original.
+
+NOT COVERED, SAID JUST AS PLAINLY: a document OUTSIDE these roots. A `Stratocracy_Prototype_GDD.md:400`
+or a `Source/StratPlay/Foo.cpp:12` in the record is not a subject here -- the first because the
+GDD is not in this repository, the second because the `Source/` guards own it. Both remain the
+reviewer's job.
 
     python Tools/architect/strat_doc_citation_gate.py              # gate, exit 0/1
     python Tools/architect/strat_doc_citation_gate.py --explain    # + every hit and its call
@@ -73,6 +101,15 @@ DOC_ROOTS = (
 # outright, with no exemption, and duplicating that with a weaker rule would be a downgrade.
 # `Tools/architect/state.md` is NOT here either -- it is frozen history, is not edited, and
 # its citations are the record of the defect this guard exists for.
+
+# THE TOOLING THAT WRITES ABOUT THE RECORD, GRADED BY THE SAME RULE. Declared separately from
+# `DOC_ROOTS` rather than folded into it, and the reason is `state.md`: this root is walked for
+# `.py` ONLY, so adding `Tools/architect` here does not drag the frozen `Tools/architect/state.md`
+# into the `.md` scan that `DOC_ROOTS` deliberately excludes it from. Two roots, two extensions,
+# one grading rule.
+CODE_ROOTS = (
+    os.path.join("Tools", "architect"),
+)
 
 _WINDOW = 300
 
@@ -173,17 +210,47 @@ def ignored_paths(repo: str, files: list[str]) -> tuple[set[str], str]:
 
 
 def scanned_files(repo: str = _REPO,
-                  roots: tuple[str, ...] = DOC_ROOTS) -> tuple[list[str], int, str]:
-    """The documents this gate actually grades: walked, minus what git ignores.
+                  roots: tuple[str, ...] = DOC_ROOTS,
+                  code_roots: tuple[str, ...] = CODE_ROOTS
+                  ) -> tuple[list[str], int, str]:
+    """The files this gate actually grades: walked, minus what git ignores.
 
     Returns (files, skipped_count, note). The count is surfaced in the gate's own output --
     a filter that removes files without saying how many is indistinguishable from a walk that
     never found them.
+
+    BOTH ROOT SETS GO THROUGH THE SAME TWO FILTERS. The `.py` files added 2026-08-26 are walked
+    with the same nested-repository prune and handed to the same `check-ignore` call as the
+    documents, in ONE list -- rather than filtered separately, which is how one of the two would
+    eventually stop being filtered at all without anyone noticing.
     """
-    walked = doc_files(repo, roots)          # already pruned at repository boundaries
+    walked = doc_files(repo, roots) + code_files(repo, code_roots)
     ignored, note = ignored_paths(repo, walked)
     kept = [f for f in walked if os.path.abspath(f) not in ignored]
     return kept, len(walked) - len(kept), note
+
+
+def record_units(files: list[str]) -> tuple[list[str], str]:
+    """The record documents that may be CITED, derived from the ones being GRADED.
+
+    THE SUBJECT SET IS THE SCANNED SET, and that identity is the whole point rather than a
+    convenience. `vendored_units` below reads its list off a directory because the alternation
+    it replaced had been typed and had silently omitted two units. The same trap is one step
+    subtler here: a typed list of record filenames would be correct on the day it was written
+    and would stop covering `global.md` the day someone renamed or split it. Taking the
+    basenames of the files this gate already walks makes the two sets incapable of disagreeing,
+    and covers a brand-new record file with no edit to this script.
+
+    AN EMPTY ANSWER IS A REFUSAL, NOT A QUIET PASS -- the same rule `vendored_units` follows.
+    A run that scanned only `.py` and no `.md` would derive no record subjects and would then
+    report `CLEAN` over every `global.md:NNN` in the tooling, which is the inert-guard shape
+    this project keeps finding.
+    """
+    names = sorted({os.path.basename(f) for f in files if f.endswith(".md")})
+    if not names:
+        return [], ("NO .md DOCUMENTS among the scanned files -- the record subject list is "
+                    "derived from them, so no record citation could be recognised")
+    return names, ""
 
 
 def vendored_units(vendored_dir: str = VENDORED_DIR) -> tuple[list[str], str]:
@@ -202,12 +269,33 @@ def vendored_units(vendored_dir: str = VENDORED_DIR) -> tuple[list[str], str]:
     return units, ""
 
 
-def citation_re(units: list[str]) -> re.Pattern:
+def citation_re(units: list[str], records: list[str] = ()) -> re.Pattern:
     # `.good.cpp` and `.buggy.cpp` are vendored too and rot identically. The CI step already
     # covers all three; a doc rule that covered only `.h` would be the weaker sibling, which is
     # this project's other recurring guard defect.
-    return re.compile(r"(?:%s)\.(?:h|good\.cpp|buggy\.cpp):[0-9]+(?:-[0-9]+)?"
-                      % "|".join(re.escape(u) for u in units))
+    vendored = (r"(?:%s)\.(?:h|good\.cpp|buggy\.cpp):[0-9]+(?:-[0-9]+)?"
+                % "|".join(re.escape(u) for u in units))
+    if not records:
+        return re.compile(vendored)
+    # THE LOOKBEHIND IS WHAT KEEPS A PATH PREFIX FROM HIDING THE SUBJECT AND A LONGER NAME FROM
+    # FAKING ONE. Record subjects are cited both bare (`global.md:76`) and with a path in front
+    # (`.agents/ue-project-context.md:195`), so the character before the name must be allowed to
+    # be a separator -- but NOT a word character, a dot or a hyphen, or `my-global.md:2` and
+    # `old.global.md:2` would both match `global.md:2` and be reported under the wrong subject.
+    record = (r"(?<![\w.\-])(?:%s):[0-9]+(?:-[0-9]+)?"
+              % "|".join(re.escape(r) for r in records))
+    return re.compile("(?:%s)|(?:%s)" % (vendored, record))
+
+
+def is_record_hit(hit: str) -> bool:
+    """Which half of the subject set a match came from, read off the MATCH, not a second list.
+
+    A parallel list of "which names are records" would be one more thing to keep in step with
+    `record_units`; the filename in the hit already says. Vendored units are `.h`/`.good.cpp`/
+    `.buggy.cpp` by construction and record subjects are `.md`, so the suffix before the colon
+    is decisive and cannot drift.
+    """
+    return hit.rsplit(":", 1)[0].endswith(".md")
 
 
 def _is_nested_repo(dirpath: str, repo: str) -> bool:
@@ -241,7 +329,7 @@ def _is_nested_repo(dirpath: str, repo: str) -> bool:
     return os.path.exists(os.path.join(dirpath, ".git"))
 
 
-def doc_files(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS) -> list[str]:
+def _walk_roots(repo: str, roots: tuple[str, ...], suffix: str) -> list[str]:
     out: list[str] = []
     for root in roots:
         full = os.path.join(repo, root)
@@ -255,13 +343,27 @@ def doc_files(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS) -> list[str
             dirs[:] = [d for d in dirs
                        if not _is_nested_repo(os.path.join(dirpath, d), repo)]
             for f in files:
-                if f.endswith(".md"):
+                if f.endswith(suffix):
                     out.append(os.path.join(dirpath, f))
     return sorted(out)
 
 
+def doc_files(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS) -> list[str]:
+    return _walk_roots(repo, roots, ".md")
+
+
+def code_files(repo: str = _REPO, roots: tuple[str, ...] = CODE_ROOTS) -> list[str]:
+    """The tooling graded alongside the prose.
+
+    ONE WALK, SHARED WITH `doc_files`, so the nested-repository prune cannot come to cover one
+    and not the other. A file named directly in a root is taken as-is exactly as `DOC_ROOTS`
+    already allows for `CLAUDE.md`, so a single script can be a root if that is ever wanted.
+    """
+    return _walk_roots(repo, roots, ".py")
+
+
 def scan_text(text: str, cite: re.Pattern) -> list[tuple[int, str, bool, str]]:
-    """(line_no, citation, exempt, snippet) for every vendored citation in one document."""
+    """(line_no, citation, exempt, snippet) for every rot-prone citation in one file."""
     hits = []
     for m in cite.finditer(text):
         window = text[max(0, m.start() - _WINDOW):m.end() + _WINDOW]
@@ -273,7 +375,8 @@ def scan_text(text: str, cite: re.Pattern) -> list[tuple[int, str, bool, str]]:
 
 
 def run(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS,
-        vendored_dir: str = VENDORED_DIR) -> tuple[int, list[str], list[str]]:
+        vendored_dir: str = VENDORED_DIR,
+        code_roots: tuple[str, ...] = CODE_ROOTS) -> tuple[int, list[str], list[str]]:
     """Returns (exit_code, failure_lines, note_lines)."""
     notes: list[str] = []
     fails: list[str] = []
@@ -286,15 +389,28 @@ def run(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS,
     notes.append(f"vendored units derived from {_rel(vendored_dir, repo)}: "
                  f"{'|'.join(units)}")
 
-    cite = citation_re(units)
-    files, skipped, filter_note = scanned_files(repo, roots)
+    files, skipped, filter_note = scanned_files(repo, roots, code_roots)
     if filter_note:
         notes.append(filter_note)
     if not files:
-        return 1, [f"[**NOTHING SCANNED**] no .md files found under {list(roots)} -- this gate "
-                   f"checked nothing at all."], notes
-    notes.append(f"documents scanned: {len(files)}"
-                 + (f" ({skipped} skipped as git-ignored)" if skipped else ""))
+        return 1, [f"[**NOTHING SCANNED**] no .md files found under {list(roots)} and no .py "
+                   f"under {list(code_roots)} -- this gate checked nothing at all."], notes
+
+    # THE RECORD SUBJECTS ARE DERIVED HERE, FROM THE SCANNED LIST ITSELF, so the ignore filter
+    # and the nested-repository prune apply to the subject set for free: a document this gate
+    # is not allowed to grade is also not a document it will name as a subject.
+    records, why_r = record_units(files)
+    if not records:
+        return 1, [f"[**NOTHING SCANNED**] {why_r} -- half this gate's subject set could not be "
+                   f"derived, so every record line citation in the tree would read as clean. "
+                   f"That is a broken guard, not a clean tree."], notes
+    notes.append(f"record subjects derived from the scanned documents: {'|'.join(records)}")
+
+    cite = citation_re(units, records)
+    docs_n = sum(1 for f in files if f.endswith(".md"))
+    notes.append(f"files scanned: {len(files)} ({docs_n} documents, {len(files) - docs_n} "
+                 f"tooling scripts)"
+                 + (f", {skipped} skipped as git-ignored" if skipped else ""))
 
     total = exempt_n = 0
     for path in files:
@@ -309,14 +425,28 @@ def run(repo: str = _REPO, roots: tuple[str, ...] = DOC_ROOTS,
             if exempt:
                 exempt_n += 1
                 continue
-            fails.append(
-                f"[**VENDORED LINE CITATION**] {rel}:{line_no}  `{text_hit}`\n"
-                f"    ...{snippet}...\n"
-                f"    A re-vendor moves that line and nothing reads a vendored line number to "
-                f"notice. Cite the SYMBOL instead -- the enclosing function, struct or comment "
-                f"block. If this is an account of a past citation rather than a live one, say so "
-                f"in words near it (\"cited\", \"citation\", \"CORRECTED\", ...) and it is allowed."
-            )
+            # THE TWO SUBJECTS ROT FOR DIFFERENT REASONS AND THE ADVICE DIFFERS, so the message
+            # is not shared. Telling someone to "cite the symbol instead" of `global.md:76` is
+            # advice they cannot follow; a record entry has headings and sentences, not symbols.
+            if is_record_hit(text_hit):
+                fails.append(
+                    f"[**RECORD LINE CITATION**] {rel}:{line_no}  `{text_hit}`\n"
+                    f"    ...{snippet}...\n"
+                    f"    That document GROWS ABOVE the line you named -- entries are prepended, "
+                    f"so the number moves with the next entry and nothing reads it to notice. "
+                    f"Quote the SENTENCE or name the HEADING instead. If this is an account of a "
+                    f"past citation rather than a live one, say so in words near it (\"cited\", "
+                    f"\"citation\", \"line number\", ...) and it is allowed."
+                )
+            else:
+                fails.append(
+                    f"[**VENDORED LINE CITATION**] {rel}:{line_no}  `{text_hit}`\n"
+                    f"    ...{snippet}...\n"
+                    f"    A re-vendor moves that line and nothing reads a vendored line number to "
+                    f"notice. Cite the SYMBOL instead -- the enclosing function, struct or comment "
+                    f"block. If this is an account of a past citation rather than a live one, say so "
+                    f"in words near it (\"cited\", \"citation\", \"CORRECTED\", ...) and it is allowed."
+                )
     notes.append(f"citations found: {total} ({exempt_n} read as historical, "
                  f"{total - exempt_n} as live)")
     return (1 if fails else 0), fails, notes
@@ -356,6 +486,47 @@ _CLEAN = """# A note
 **Units.** `strat::applyCommand`'s `SaveCommandKind::Build` arm bounds-checks and
 indexes with it. No line numbers here.
 """
+
+# THE RECORD HALF OF THE SUBJECT SET, added 2026-08-26 with the widening. Written to read like
+# the record's own prose rather than like a test plant, because this record's vocabulary is
+# dense in exactly the words the exemption fires on -- a plant phrased as a plant ("citation
+# test case") would be exempted by its own scaffolding and would prove nothing.
+_LIVE_RECORD = """# A note
+
+- **Where the suite figure lives.** The current count is stated once, in the banner, and
+  everything else links to it rather than restating it -- see `record.md:412` for the
+  wording the sweep grades.
+"""
+
+# The same shape in TOOLING rather than prose: a comment in a `.py` pointing into the record
+# to explain a fixture. This is the literal form of the four citations that opened the
+# widening, condensed.
+_LIVE_RECORD_IN_CODE = '''"""Sweep helper."""
+
+# The window below is sized from the real banner: the sentence at `record.md:412` is the
+# longest one this has to reach across without picking up the entry above it.
+_WINDOW = 220
+'''
+
+# An honest account of a record citation that HAS gone stale, using the exemption vocabulary
+# the failure message itself recommends. This is the shape the record is expected to write
+# once it has fixed one, and it must stay allowed or the gate refuses the record for telling
+# the truth about a defect.
+_HISTORICAL_RECORD = """# A note
+
+- **CORRECTED.** This bullet used to point a reader at `record.md:412` for the banner
+  wording. That citation rotted the moment the next entry was prepended above it -- a line
+  number into a file that grows upward is stale by the next pass -- so it now quotes the
+  sentence instead.
+"""
+
+# A vendored citation living in TOOLING, which the `Source/`-only guards do not scan either.
+_LIVE_VENDORED_IN_CODE = '''"""Sweep helper."""
+
+# The terrain-seeding loop this mirrors resolves by name (`Replay.good.cpp:299-308`), so the
+# fixture below has to spell the names out rather than index them.
+_NAMES = ("plain", "forest")
+'''
 
 
 def check_self_test() -> tuple[bool, str]:
@@ -490,12 +661,19 @@ def check_self_test() -> tuple[bool, str]:
     # THE CONTROL FOR BOTH OF THE ABOVE. The scanned tree has a `.git` of its own, and pruning
     # at the root would make this gate scan nothing while exiting 0. This fixture is the reason
     # `_is_nested_repo` takes `repo` as a parameter rather than assuming it.
+    #
+    # THE CITATION ON THE ASSERTION LINE BELOW IS `_LIVE`'S OWN, QUOTED BACK. It is a string
+    # this gate expects to find in its own output, not a pointer into the vendored tree, and it
+    # does not rot on a re-vendor -- the line it names lives in the fixture at the top of this
+    # file, not in `Replay.good.cpp`. Said here rather than left implicit because the widened
+    # scan reads this script, found this line, and was right to ask.
     if git_ok:
         with tempfile.TemporaryDirectory() as d:
             _mkdocs(d, **{"docs/live.md": _LIVE})
             _git(d, "init", "-q")
             _git(d, "add", "-A")
             code, fails, _ = run(d, ("docs",), os.path.join(d, "Source", "StratRules"))
+            # The citation quoted here is `_LIVE`'s own, expected back in this gate's output.
             good = (code == 1 and any("Replay.good.cpp:486-487" in f for f in fails))
             ok = ok and good
             lines.append(f"    [{'OK' if good else '**WRONG**'}] the SCANNED TREE'S OWN `.git` "
@@ -526,13 +704,129 @@ def check_self_test() -> tuple[bool, str]:
             lines.append(f"    [{'OK' if good else '**WRONG**'}] an UNIGNORED document beside "
                          f"an ignored one is still scanned")
 
+    # -----------------------------------------------------------------------------------
+    # THE WIDENED SUBJECT SET (2026-08-26). Every fixture below is stated in BOTH directions,
+    # because half of them could be satisfied by a pattern that simply matches more -- and a
+    # guard that matches more is not the same thing as a guard that matches the right thing.
+    def _run(d, roots=("docs",), code_roots=()):
+        return run(d, roots, os.path.join(d, "Source", "StratRules"), code_roots)
+
+    def _case(name, want_pass, d, **kw):
+        nonlocal ok
+        code, fails, _ = _run(d, **kw)
+        got_pass = (code == 0)
+        good = (got_pass == want_pass)
+        ok = ok and good
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] {name}: "
+                     f"expected {'PASS' if want_pass else 'FAIL'}, "
+                     f"got {'PASS' if got_pass else 'FAIL'}")
+        return fails
+
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"docs/record.md": _CLEAN, "docs/n.md": _LIVE_RECORD})
+        fails = _case("a LIVE citation into a RECORD document FAILS", False, d)
+        good = any("RECORD LINE CITATION" in f and "record.md:412" in f for f in fails)
+        ok = ok and good
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] ...and is reported as a RECORD "
+                     f"citation, with advice a record can actually follow")
+
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"docs/record.md": _CLEAN, "docs/n.md": _HISTORICAL_RECORD})
+        _case("an honest account of a ROTTED record citation PASSES", True, d)
+
+    # THE SUBJECT SET IS DERIVED, PROVED THE ONLY WAY IT CAN BE: the SAME citation text, in the
+    # same place, graded twice -- once with the cited document present and once without. If the
+    # subject list were typed, the second tree would fail exactly like the first.
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"docs/n.md": _LIVE_RECORD})
+        _case("a citation into a document that IS NOT in the scanned set is not a subject "
+              "(no `record.md` in this tree)", True, d)
+
+    # THE CODE SCAN, AND ITS OWN CONTROL. Same file, same bytes: declared as a code root it is
+    # graded, undeclared it is invisible. Without the second half, a fixture proving `.py` files
+    # fail proves only that SOMETHING failed.
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"docs/record.md": _CLEAN, "tools/sweep.py": _LIVE_RECORD_IN_CODE})
+        fails = _case("a LIVE record citation in a .py under a CODE ROOT FAILS", False, d,
+                      code_roots=("tools",))
+        good = any("tools/sweep.py" in f.replace("\\", "/") for f in fails)
+        ok = ok and good
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] ...and names the SCRIPT, not some "
+                     f"document that happens to be nearby")
+
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"docs/record.md": _CLEAN, "tools/sweep.py": _LIVE_RECORD_IN_CODE})
+        _case("the SAME .py with no code root declared is not scanned at all", True, d,
+              code_roots=())
+
+    # And the vendored half reaches the tooling too -- the `Source/`-only guards never looked
+    # here either, so a `.py` scan that graded records but not vendored units would be the same
+    # one-directory-wide defect in a new place.
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"docs/record.md": _CLEAN, "tools/sweep.py": _LIVE_VENDORED_IN_CODE})
+        fails = _case("a LIVE VENDORED citation in a .py under a code root FAILS", False, d,
+                      code_roots=("tools",))
+        good = any("VENDORED LINE CITATION" in f for f in fails)
+        ok = ok and good
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] ...and is reported as a VENDORED "
+                     f"citation, not misfiled as a record one")
+
+    # THE INERT SHAPE FOR THE NEW HALF, refused rather than passed: files were scanned, but no
+    # `.md` among them, so no record subject could be derived. A gate in that state would report
+    # CLEAN over every `record.md:NNN` in the tooling it DID read.
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"tools/sweep.py": _LIVE_RECORD_IN_CODE})
+        os.makedirs(os.path.join(d, "docs"), exist_ok=True)
+        code, fails, _ = _run(d, code_roots=("tools",))
+        good = (code == 1 and any("NOTHING SCANNED" in f for f in fails)
+                and not any("LINE CITATION" in f for f in fails))
+        ok = ok and good
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] a run with NO .md at all refuses -- "
+                     f"the record subject set is underivable, and it does NOT claim a citation")
+
+    # A LONGER NAME MUST NOT MATCH A SHORTER SUBJECT. `record.md` is a subject here; a citation
+    # into `old-record.md` or `my.record.md` is a DIFFERENT file, and reporting it under the
+    # wrong subject would be a fabricated finding.
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"docs/record.md": _CLEAN,
+                      "docs/n.md": "# A note\n\nSee `old-record.md:412` and `my.record.md:9`.\n"})
+        _case("a citation into a LONGER filename ending in a subject's name is not a subject",
+              True, d)
+
+    # ...and the control for that lookbehind, so it cannot be tightened into inertness: a
+    # citation with a PATH in front of it, which is how this record actually writes them, is
+    # still a subject.
+    with tempfile.TemporaryDirectory() as d:
+        _mkdocs(d, **{"docs/record.md": _CLEAN,
+                      "docs/n.md": "# A note\n\nThe banner wording is at "
+                                   "`Tools/architect/state/record.md:412`.\n"})
+        _case("a citation written with a PATH in front of the subject IS still caught",
+              False, d)
+
+    # `--print-scan-spec` IS A CONTRACT WITH THE PRE-COMMIT HOOK, so it is pinned like one. The
+    # hook stages exactly what this prints; a root that this gate walks but does not print is a
+    # root the hook never materialises, and the commit-time check quietly narrows to whatever
+    # remains. Asserted against the module constants themselves, not a typed expectation, so it
+    # cannot go on describing a root set that no longer ships.
+    spec = subprocess.run([sys.executable, os.path.abspath(__file__), "--print-scan-spec"],
+                          capture_output=True, text=True)
+    printed = {tuple(l.split("\t")) for l in spec.stdout.replace("\r", "").split("\n") if l}
+    wanted = ({("md", r.replace("\\", "/")) for r in DOC_ROOTS}
+              | {("py", r.replace("\\", "/")) for r in CODE_ROOTS})
+    good = (spec.returncode == 0 and printed == wanted)
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] `--print-scan-spec` names EVERY root "
+                 f"this gate walks, and no others: expected {sorted(wanted)}, "
+                 f"got {sorted(printed)}")
+
     return ok, "\n".join(lines)
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
-        description="Refuse vendored line-number citations in documentation, where the "
-                    "Source/-only guards do not look.")
+        description="Refuse rot-prone line-number citations -- into the vendored sources AND "
+                    "into the record's own growing documents -- in documentation and in the "
+                    "record's tooling, where the Source/-only guards do not look.")
     # --repo AND --vendored-dir EXIST SO THE PRE-COMMIT HOOK CAN OBEY ITS OWN RULE. That hook's
     # whole principle is that it checks the STAGED bytes and not the working tree, because
     # `git commit` records the index -- a partially-staged doc is a different document from the
@@ -549,12 +843,31 @@ def main(argv: list[str] | None = None) -> int:
                     help="Print every citation found and this gate's historical/live call.")
     ap.add_argument("--self-test", action="store_true",
                     help="Run the inline fixtures proving this gate can FAIL, and exit.")
+    # THE HOOK MUST NOT RETYPE THE ROOTS, and it did. `Tools/architect/hooks/pre-commit`
+    # materialises the STAGED files into a temp tree before calling this gate, and to do that it
+    # has to know what to materialise -- so it carried its own copy of `DOC_ROOTS`, filtered to
+    # `.md`. That copy was correct for as long as the two lists happened to agree, which is the
+    # same "guard types its own subject" shape this file argues against everywhere else, one
+    # process boundary away. It broke the moment `CODE_ROOTS` was added on 2026-08-26: the hook
+    # would have staged no `.py` at all, the gate would have found `.md` and derived its record
+    # subjects happily, and every record citation in the tooling would have passed the hook
+    # while failing CI. Asking the tool is the fix; the format is one `EXT<TAB>PATH` per line.
+    ap.add_argument("--print-scan-spec", action="store_true",
+                    help="Print the roots this gate walks, as EXT<TAB>PATH lines, so a caller "
+                         "that stages files for it need not keep its own copy of the list.")
     args = ap.parse_args(argv)
 
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")   # type: ignore[union-attr]
     except Exception:                                                # pragma: no cover
         pass
+
+    if args.print_scan_spec:
+        for root in DOC_ROOTS:
+            print("md\t" + root.replace("\\", "/"))
+        for root in CODE_ROOTS:
+            print("py\t" + root.replace("\\", "/"))
+        return 0
 
     if args.self_test:
         ok, report = check_self_test()
@@ -568,14 +881,20 @@ def main(argv: list[str] | None = None) -> int:
         print(f"  {n}")
     if args.explain:
         units, _ = vendored_units(args.vendored_dir)
-        if units:
-            cite = citation_re(units)
-            for path in scanned_files(args.repo)[0]:
+        scanned = scanned_files(args.repo)[0]
+        records, _ = record_units(scanned)
+        # BOTH HALVES OF THE SUBJECT SET, or `--explain` would quietly describe a narrower gate
+        # than the one that just ran -- and `--explain` is what a maintainer reads to decide
+        # whether the gate is looking where they think it is.
+        if units and records:
+            cite = citation_re(units, records)
+            for path in scanned:
                 text = io.open(path, encoding="utf-8", errors="replace").read()
                 rel = _rel(path, args.repo).replace("\\", "/")
                 for line_no, hit, exempt, snippet in scan_text(text, cite):
                     print(f"    {rel}:{line_no}  "
-                          f"{'historical' if exempt else 'LIVE      '}  {hit}")
+                          f"{'historical' if exempt else 'LIVE      '}  "
+                          f"{'record  ' if is_record_hit(hit) else 'vendored'}  {hit}")
     if fails:
         print("")
         for f in fails:
@@ -595,8 +914,17 @@ def main(argv: list[str] | None = None) -> int:
     # assert only the exit code.
     if code == 0:
         print("DOC CITATION GATE CLEAN")
-    elif any("VENDORED LINE CITATION" in f for f in fails):
-        print("DOC CITATION GATE FAILED -- a live vendored line citation is in the prose")
+    elif any("LINE CITATION" in f for f in fails):
+        kinds = []
+        if any("VENDORED LINE CITATION" in f for f in fails):
+            kinds.append("vendored")
+        if any("RECORD LINE CITATION" in f for f in fails):
+            kinds.append("record")
+        # NAMED RATHER THAN LUMPED, for the same reason the two failure messages differ: the
+        # reader's next action is different. A vendored citation is fixed by finding a symbol;
+        # a record citation is fixed by quoting a sentence.
+        print(f"DOC CITATION GATE FAILED -- a live {' and '.join(kinds)} line citation is in "
+              f"the prose or the tooling")
     else:
         print("DOC CITATION GATE FAILED -- it could not check what it was asked to check; "
               "see above. A check that did not run is not a check that passed.")

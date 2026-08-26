@@ -199,12 +199,41 @@ fi
 # down. The gate exempts a citation whose surrounding text is TALKING ABOUT a citation. Its
 # `--self-test` proves it still refuses a live one, and carries a fixture for the hole that
 # exemption leaves.
+#
+# THE ROOTS ARE ASKED FOR, NOT TYPED, AND THAT IS A 2026-08-26 REPAIR. This block used to carry
+# its own copy of the gate's `DOC_ROOTS`, hand-filtered to `.md`. It was correct only for as
+# long as the two lists happened to agree -- the same "guard types its own subject" defect this
+# tooling keeps finding, moved one process boundary away, where neither side's self-test can
+# see it. The gate's subject set was widened that day to cover `Tools/architect/*.py`, and this
+# hook would have staged not one of them: the temp tree would still have held documents, the
+# gate would still have derived its record subjects and exited 0, and every record line
+# citation in the tooling would have sailed through the hook and failed in CI. `--print-scan-spec`
+# is the gate answering for itself, one `EXT<TAB>PATH` line at a time.
 if [ -n "$PY" ] && [ -f "$DOCGATE" ]; then
-    DOC_INDEX=$(git ls-files --cached -- \
-                    "$REPO_ROOT/Tools/architect/state" \
-                    "$REPO_ROOT/.agents" \
-                    "$REPO_ROOT/.claude" \
-                    "$REPO_ROOT/CLAUDE.md" | grep -E '\.md$' || true)
+    # `tr -d '\r'` IS LOAD-BEARING ON THIS BOX, not defensive habit. A Windows Python prints
+    # `\r\n`, so without it `DOC_ROOT` ends in a carriage return, every `git ls-files` pathspec
+    # misses, `DOC_INDEX` comes back empty and the whole gate is skipped -- silently, at exit 0,
+    # on the branch below that treats "nothing staged" as "nothing to check". Measured the day
+    # this was written: the first build did exactly that, and only the widened gate's own
+    # refusal to derive a subject set from a `.md`-less temp tree turned the silence into a
+    # visible failure. That refusal is what caught it; do not remove either.
+    DOC_SPEC=$("$PY" "$DOCGATE" --print-scan-spec 2>/dev/null | tr -d '\r' || true)
+    if [ -z "$DOC_SPEC" ]; then
+        echo "COMMIT REFUSED: the doc-citation gate could not name the roots it scans"
+        echo "(--print-scan-spec produced nothing), so this hook cannot stage the right files"
+        echo "for it. A check that did not run is not a check that passed."
+        echo "Bypass deliberately with: git commit --no-verify"
+        exit 1
+    fi
+    DOC_INDEX=""
+    while IFS=$'\t' read -r DOC_EXT DOC_ROOT; do
+        [ -n "$DOC_ROOT" ] || continue
+        DOC_HITS=$(git ls-files --cached -- "$REPO_ROOT/$DOC_ROOT" \
+                       | grep -E "\.$DOC_EXT\$" || true)
+        [ -n "$DOC_HITS" ] || continue
+        DOC_INDEX="$DOC_INDEX$DOC_HITS"$'\n'
+    done <<< "$DOC_SPEC"
+    DOC_INDEX=$(printf '%s' "$DOC_INDEX" | grep -v '^$' || true)
     if [ -n "$DOC_INDEX" ]; then
         DOCDIR=$(mktemp -d) || { echo "COMMIT REFUSED: mktemp -d failed, so the doc-citation gate did not run."; exit 1; }
         DOC_READ_FAILED=""
@@ -229,13 +258,16 @@ if [ -n "$PY" ] && [ -f "$DOCGATE" ]; then
             echo "$DOC_OUT"
             echo ""
             echo "COMMIT REFUSED: the doc-citation gate refused this commit -- its own output is"
-            echo "above and says why. The usual reason is a live vendored line-number citation in"
-            echo "the STAGED prose; a non-zero exit for any OTHER reason (the gate crashed, or"
-            echo "found nothing to scan) is also a refusal, because a check that did not run is"
+            echo "above and says why. The usual reason is a live line-number citation in the"
+            echo "STAGED prose or tooling; a non-zero exit for any OTHER reason (the gate crashed,"
+            echo "or found nothing to scan) is also a refusal, because a check that did not run is"
             echo "not a check that passed. The first version of this message asserted a citation"
             echo "unconditionally and said so during a crash that had found none."
-            echo "Cite the SYMBOL -- the enclosing function, struct or comment block -- because a"
-            echo "re-vendor moves every vendored line at once and nothing reads one to notice."
+            echo "For a VENDORED citation, cite the SYMBOL -- the enclosing function, struct or"
+            echo "comment block -- because a re-vendor moves every vendored line at once and"
+            echo "nothing reads one to notice. For a RECORD citation (\`global.md:412\` and the"
+            echo "like), quote the SENTENCE or name the HEADING: that file grows above the line"
+            echo "you named, so the number moves with the next entry."
             echo "If it is an account of a PAST citation, say so in words near it."
             echo "Bypass deliberately with: git commit --no-verify"
             exit 1

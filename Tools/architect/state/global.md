@@ -2592,7 +2592,10 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     figure was swallowed. Either way nothing was checked, and the script says `SWEEP CLEAN`.
   - **Rewording proved it, both directions.** With "reads" in that sentence: 18 claims, 0 live,
     exit 0. With the single word changed to "measurements" and nothing else touched: 19 claims,
-    1 live, `global.md:19 LIVE 160/160`, exit 0. The banner in this commit is the second version.
+    1 live, and the sweep printed its own line number back: `global.md:19 LIVE 160/160`, exit 0.
+    (That figure is the sweep's OUTPUT quoted verbatim, not a citation this entry is making --
+    stated 2026-08-26, when the widened doc-citation gate began reading record line numbers and
+    reached this transcript.) The banner in this commit is the second version.
   - **Two repairs, and the second is the one that matters.** (1) Do not let the quoted-figure
     exclusion outrank an explicit live tense -- `is now` immediately before the figure is a
     deliberate assertion and should beat a stray `reads` 100 characters upstream. (2) **Refuse a
@@ -3132,18 +3135,29 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   below). Remaining out of scope, unchanged: production menu (§2.11.5), guided opening (§2.11.6),
   info panel, toasts, save-slot UI, move-undo.
 - **CORRECTED, 2026-08-14 — this bullet's own claim had itself gone stale and was repeated
-  uncritically.** It previously asserted "`.agents/ue-project-context.md:195` reads '51/51,
-  hot-seat phase 3'", true only at phase 4. The line has been rewritten by later phases since; a
+  uncritically.** It previously carried the citation "`.agents/ue-project-context.md:195` reads
+  '51/51, hot-seat phase 3'", true only at phase 4. The line has been rewritten by later phases since; a
   direct read on 2026-08-14, at the start of the combat-outcome milestone, found it instead reading
   "Last observed here: 86/86, AI-opponent phase B, 2026-08-13" — not the phase-4 text this bullet
   claimed — and that number was itself carried into a dispatch prompt before being checked, the
   same class of error this bullet exists to warn against. The `EnhancedInput` module-arrow gap this
   bullet also raised has not been independently re-checked and is left as an open question for
   `.agents/`'s owner. That file remains outside this steward's lane
-  (`.agents/` is not `Config/` or `Tools/architect/`); the line-195 count is now current — see the
-  new milestone's header above and `.agents/ue-project-context.md:195` itself, which as of
-  2026-08-14 reads "93/93, combat-outcome phase 2, 2026-08-14" (updated by the user, not this
-  steward).
+  (`.agents/` is not `Config/` or `Tools/architect/`); the count in that file is now current — see the
+  new milestone's header above and `.agents/ue-project-context.md`'s own `Last observed here:`
+  line, which as of 2026-08-14 read "93/93, combat-outcome phase 2, 2026-08-14" (updated by the
+  user, not this steward).
+  **[CORRECTED 2026-08-26 — this bullet's repair had itself rotted the same way, and it took a
+  widened guard to see it.]** The sentence above said "the line-195 count is now current — see
+  `.agents/ue-project-context.md:195` itself". It named a line number in a file that has grown
+  since, so the pointer went stale exactly as the citation this bullet was written to retract
+  did: measured 2026-08-26, that file is 354 lines and line 195 is the heading "The map →
+  GameMode binding is a single unguarded line in `Config/`", while the `Last observed here:`
+  line it meant to point at sits at 245 and reads "140/140, 2026-08-21". The pointer is now the
+  quoted `Last observed here:` anchor, which does not move. `strat_doc_citation_gate.py`'s
+  subject set was widened on 2026-08-26 to cover record documents and the record's own tooling;
+  this was one of three live record citations it found on its first run, and the only one of
+  the three that was wrong rather than merely quoted.
 - **Phase 6 risk, and the most consequential open item: the `STRAT-CMD` click-to-command gate
   is unclosed.** No `playtest_key` or `playtest_click` produced any `LogStratPlay` output.
   **Correction to this record, made in phase 6:** the original claim here — "total input

@@ -29,7 +29,7 @@ reviewer who has to go read its own criteria reads them selectively.
 git diff --stat -- Source/StratRules Data
 ```
 Must print nothing. Any output at all is an immediate `BLOCK` — these are certified bytes
-hash-gated at `rulesCommit cb8e12b` / `dataCommit c2f5860`, and the fix is upstream in
+hash-gated at the `rulesCommit` and `dataCommit` their own manifests record (`Source/StratRules/StratRules.manifest.json`, `Data/StratData.manifest.json`), WHICH ARE THE AUTHORITY -- `96d93ea` and `c2f5860` as of 2026-08-25; this line named `cb8e12b` through two re-vendors, so derive it rather than quoting it, and the fix is upstream in
 `E:\MultiAgent\stratocracy-crew` plus a re-vendor, never a local edit.
 
 **2. No `strat::` call outside the two permitted directories.**

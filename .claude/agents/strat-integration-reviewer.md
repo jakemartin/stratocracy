@@ -53,6 +53,7 @@ Measured: `C4150`, deletion of pointer to incomplete type, emitted from the gene
 StratRules  → Core
 Stratocracy → Core, CoreUObject, Engine, InputCore, EnhancedInput, …, StratRules
 StratBridge → Core, CoreUObject, Engine, Stratocracy
+              (+ PublicIncludePaths "StratRules" — an INCLUDE edge, NOT a module arrow)
 StratUI     → Core, CoreUObject, Engine, StratBridge  (+ private UMG, Slate, SlateCore)
 StratPlay   → Core, CoreUObject, Engine, StratUI      (+ private StratBridge, EnhancedInput)
 ```
@@ -62,12 +63,72 @@ were wrong for a whole milestone: `StratRules → (nothing)` where `StratRules.B
 `{ "Core" }`, and `StratPlay → StratUI (when it exists)` long after it existed. Reviewers
 reported the first as drift in `.agents/ue-project-context.md` — which was correct all along —
 and the false finding was carried forward across gates before anyone parsed the tree. Corrected
-2026-08-21 by parsing every `Source/*/*.Build.cs` with comments stripped. Do the same each gate
-and compare, rather than reading the arrows off this block.
+2026-08-21 by parsing every `Source/*/*.Build.cs` with comments stripped.
+
+**Derive from these three fields and no others.** "Parse the `.Build.cs` files" was the standing
+instruction for five days and it did not say WHICH fields, so two reviewers deriving honestly
+could disagree — which is how the `StratBridge` row below went stale without any gate noticing.
+The three that carry the graph, and what each one means here:
+
+| Field | Meaning | In the block above |
+|---|---|---|
+| `PublicDependencyModuleNames` | a link edge, re-exported to dependents | the bare arrow |
+| `PrivateDependencyModuleNames` | a link edge, NOT re-exported | `(+ private …)` |
+| `PublicIncludePaths` | a header search path — **not** an arrow | `(+ PublicIncludePaths …)` |
+
+Run this each gate and compare it against the block, row by row:
+```bash
+for f in Source/*/*.Build.cs; do
+  m=$(basename "$f" .Build.cs)
+  sed 's#//.*##' "$f" | tr '\n' ' ' |
+  grep -oE '(Public|Private)(DependencyModuleNames|IncludePaths)\.AddRange\([^)]*\)' |
+  while read -r line; do
+    vals=$(printf '%s' "$line" | grep -oE '"[A-Za-z0-9_/]+"' | tr -d '"' | paste -sd, -)
+    printf '%-12s %-30s %s\n' "$m" "${line%%.AddRange*}" "${vals:-(none)}"
+  done
+done
+```
+It prints 15 rows — three per module, five modules. **A module missing from that output is itself
+a finding**, not a module with no arrows: it means the extraction failed, and an empty result is
+the one thing this shape cannot distinguish from a clean one.
+
+**Then census the field set, because the three above are also a typed subject list:**
+```bash
+for f in Source/*/*.Build.cs; do sed 's#//.*##' "$f"; done |
+  grep -oE '[A-Za-z]+[[:space:]]*(\.AddRange|\.Add|=)' | sed 's/[[:space:]]*$//' | sort -u
+```
+Measured 2026-08-26, this prints exactly six: the three above plus `PCHUsage`, `bUseUnity`, and
+`ShadowVariableWarningLevel` — none of which touch the graph. **Any seventh name is a finding by
+its own existence**, whether or not you can tell what it does. `DynamicallyLoadedModuleNames`,
+`PrivateIncludePaths`, and `PublicSystemLibraries` are all real `ModuleRules` fields that would
+add an edge this table does not model, and a derivation pinned to three field names is blind to
+every one of them until this census says otherwise.
+
+Both commands were **extracted from this file and executed**, healthy path and mutant, on
+2026-08-26 — not read, and not inferred from a diff. Against the real tree they print 15 rows and
+6 fields, matching the two claims above. Against a disposable copy of `Source/`, adding
+`"StratRules"` to `StratBridge`'s `PublicDependencyModuleNames` moved it into the first command's
+output while leaving that module's `PublicIncludePaths` row unchanged — the two edges stayed
+distinguishable, which is the whole point of splitting them — and adding a
+`DynamicallyLoadedModuleNames` line surfaced a seventh name in the second. Extract and run them;
+do not retype them. The first draft of the census carried a literal backspace byte where the two
+characters backslash-b were meant, and it printed nothing at all — which is indistinguishable
+from a clean census, and was caught only by running the block instead of reading it.
 **`StratBridge → Stratocracy` is deliberate and correct** — the row structs bake
 `/Script/Stratocracy.UnitRow` into `DT_Units`. Do not report it as a layering violation; a
 report that does has bad ground truth, and the fix is this file and the context file, not the
 tree. **`StratUI` must not gain a `Stratocracy` dependency.** No cycle may appear.
+**`StratBridge` does NOT depend on the `StratRules` module, and must not start.** The row above
+carries `StratRules` in parentheses because `StratBridge.Build.cs` names it in
+`PublicIncludePaths` — a header search path, not a link edge — while the vendored `strat::`
+sources are compiled INTO this module as `Source/StratBridge/Vendored/*.strat.cpp`. That is the
+whole reason the module exists: the vendored sources carry no `_API` macro, so
+`UnrealEditor-StratRules.dll` exports exactly one symbol and any cross-module `strat::` call is
+`LNK2019` — measured 8×, and recorded in that file's own header block. So a derivation that
+reads `PublicIncludePaths` will see `StratRules` here and a derivation that reads only the
+dependency arrays will not; **neither disagreement is a finding.** Report drift only if the
+name moves INTO `PublicDependencyModuleNames` or `PrivateDependencyModuleNames`, or if the
+`Vendored/*.strat.cpp` set stops being compiled here.
 
 **6. New modules registered — unless they have no module object.**
 Any new `Source/<Module>/` directory carrying `IMPLEMENT_MODULE` must appear in

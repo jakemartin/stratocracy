@@ -36,7 +36,7 @@ Stratocracy ─┴──▶ StratBridge ──▶ StratUI ──▶ StratPlay
 |---|---|---|
 | `StratRules` | `Core` only | Vendored pure C++17 `namespace strat`. Zero engine deps. |
 | `Stratocracy` | Core, CoreUObject, Engine, InputCore, EnhancedInput, …, `StratRules` | Game module: UE template code + `StratData/` row structs and the import commandlet. |
-| `StratBridge` | Core, CoreUObject, Engine, **`Stratocracy`** | `FStratBridge` — the only code that knows both worlds. Owns the authoritative `strat::GameState`. |
+| `StratBridge` | Core, CoreUObject, Engine, **`Stratocracy`**; `StratRules` as a `PublicIncludePaths` entry only — an include edge, not a module dependency | `FStratBridge` — the only code that knows both worlds. Owns the authoritative `strat::GameState`. |
 | `StratUI` | Core, CoreUObject, Engine, `StratBridge`; private UMG/Slate/SlateCore | The UMG surface and the reflected view model. |
 | `StratPlay` | Core, CoreUObject, Engine, `StratUI` public; **`StratBridge`, `EnhancedInput` private** | Gameplay actors, camera, input, the match subsystem. |
 

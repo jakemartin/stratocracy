@@ -168,6 +168,27 @@
 // recorded above, and it is written down here for the same reason: a debt nobody wrote down
 // is indistinguishable from a decision.
 //
+// AND A THIRD SURFACE HAS NOW JOINED THEM: GDD Sec 2.11.4's END-OF-MATCH SCREEN.
+// `MatchResultWidgetClass`, `MatchResultZOrder`, `MatchResultScreen`, `ShowMatchResult`,
+// `HideMatchResult`, `IsMatchResultWidgetOpen` and `CreateMatchResultWidget` below. It is
+// here for the reason the guidance strip and the production menu are -- the module arrow,
+// measured once and restated rather than re-argued: `StratPlay.Build.cs` would have to name
+// `UMG`, `Slate` and `SlateCore` for `UStratMatchSubsystem` to create a widget, and StratUI
+// already declares all three. THE SAME CONDITION DISCHARGES IT: when a Sec 2.11 UI-layer
+// owner exists, these seven move there unchanged alongside the guidance seven, and
+// `ShowMatchResult` was given a signature that survives the move -- it touches no member of
+// this class except `GetBridge()`, `ViewingSide` and its own six, so relocating it is a cut
+// and paste plus one call-site edit in `UStratMatchSubsystem::ConcludeMatchIfEnded`.
+//
+// ITS LIFETIME IS THE ONE THING THAT IS NOT THE GUIDANCE STRIP'S. The strip is created at
+// `BeginPlay` and lives all match; this screen is created ON DEMAND when Sec 2.8 says the
+// match is over, on `CreateProductionMenuWidget`'s pattern rather than
+// `CreateGuidanceWidget`'s. `StratScoreboardWidget.h` named that difference in advance when
+// it refused to host this surface: the end-of-match screen "is a different surface with a
+// different lifetime, and its faction-voiced result line is the one place faction voice
+// appears". A screen created at `BeginPlay` and merely hidden would be a widget holding a
+// verdict for a match that had not produced one.
+//
 // AND ONE OF THOSE SEVEN IS A CACHE, WHICH THIS CLASS HAD DECLINED TO HOLD. Recorded here
 // because the refusal was explicit and the reversal must be too. `CreateGuidanceWidget` used
 // to end:
@@ -218,6 +239,7 @@
 class FStratBridge;
 class UDataTable;
 class UStratGuidanceWidget;
+class UStratMatchResultWidget;
 class UStratScoreboardWidget;
 class UUserWidget;
 
@@ -604,6 +626,52 @@ public:
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Production")
 	TObjectPtr<UUserWidget> ProductionMenu;
 
+	/**
+	 * GDD Sec 2.11.4: put the end-of-match screen up, built from the live bridge.
+	 *
+	 * ITS CALLER IS `UStratMatchSubsystem::ConcludeMatchIfEnded` AND ONCE PER MATCH IS THAT
+	 * FUNCTION'S PROPERTY, NOT THIS ONE'S. That function latches on
+	 * `bMatchConclusionAnnounced`, which `StartMatchInternal` clears, so a restart shows the
+	 * next match's screen and the same match cannot show two. THIS function is idempotent
+	 * rather than latched: called twice it replaces the widget and rebuilds the model, which
+	 * is what a console-driven or gate-driven caller needs and what a latch here would have
+	 * taken away. A second latch would also be a second authority on "has this match
+	 * concluded", and the subsystem's block on `bMatchConclusionAnnounced` is explicit that
+	 * every question about that is answered by asking the model.
+	 *
+	 * BLUEPRINTCALLABLE so the screen is reachable without a C++ dependency on this module --
+	 * `RefreshScoreboard`'s reasoning. A verb with no caller reads as built and is not; this
+	 * one has a C++ caller AND a reflected route.
+	 *
+	 * REFUSES RATHER THAN SHOWING AN EMPTY VERDICT, forwarding the refusing layer's own words
+	 * unchanged: no bridge, no `MatchResultWidgetClass`, or a build the projection declined.
+	 * IT DOES NOT CHECK WHETHER THE MATCH HAS ENDED and must not -- `StratBuildMatchResultModel`
+	 * does not either, and this class asking would be a HUD forming an opinion about Sec 2.8.
+	 * A caller that shows this screen mid-match gets a screen with an empty tier and an empty
+	 * line, which is the honest rendering of the answer it asked for.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Result")
+	bool ShowMatchResult(FString& OutFailureReason);
+
+	/** Takes the end-of-match screen down. `CloseProductionMenuWidget`'s shape exactly,
+	 *  including the absence of an `IsInViewport` guard and the silence towards
+	 *  `UStratMatchSubsystem` -- a HUD that cleared somebody elses match state would be the
+	 *  first line of this class becoming a thing that runs matches. A no-op when none is up. */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Result")
+	void HideMatchResult();
+
+	/** True when the end-of-match screen exists AND is in the viewport, for the reason
+	 *  `IsProductionMenuWidgetOpen` gives about its own pair: a widget that removed itself
+	 *  leaves the pointer non-null, and a cached bool could disagree with the screen. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Result")
+	bool IsMatchResultWidgetOpen() const;
+
+	/** The end-of-match screen, or null when none is up. Read-only for the reason
+	 *  `Scoreboard`, `GuidanceStrip` and `ProductionMenu` are: this HUD creates and owns it,
+	 *  and a second creator is a second lifetime to reason about. */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Result")
+	TObjectPtr<UStratMatchResultWidget> MatchResultScreen;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -760,6 +828,40 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Production")
 	int32 ProductionMenuZOrder = 20;
 
+	/**
+	 * The WBP_ asset deriving from `UStratMatchResultWidget` -- Sec 2.11.4's end-of-match
+	 * screen.
+	 *
+	 * A `TSubclassOf` set on a Blueprint default, never a `ConstructorHelpers` path literal,
+	 * for the reason the scoreboard's copy of this property gives.
+	 *
+	 * TYPED AS OUR OWN C++ BASE AND NOT AS `UUserWidget`, which is where it parts company with
+	 * `ProductionMenuWidgetClass` above -- and the parting is deliberate rather than
+	 * inconsistent. That property is a bare `UUserWidget` because nothing needs to call
+	 * anything on the menu, so the irreversible `/Script/Module.Class` bake was held open. This
+	 * one MUST be called: `ShowMatchResult` pushes a finished `FStratMatchResultModel` into it,
+	 * and Sec 2.11.4's verdict is the one value in this project that must have exactly one
+	 * author -- a widget Blueprint free to compose its own would be a second one. The bake is
+	 * paid for here on purpose and `StratMatchResultWidget.h` records that it is irreversible.
+	 *
+	 * UNSET IS A LEGITIMATE CONFIGURATION AND NOT AN ERROR, exactly as `GuidanceWidgetClass`
+	 * and `ProductionMenuWidgetClass` are: a session that wants the match playable with no
+	 * verdict surface leaves it empty, and `BeginPlay` says so once at Log rather than refusing
+	 * to finish setup. What it does NOT mean is that the result is unreachable --
+	 * `UStratMatchSubsystem::GetMatchResult` is reflected and a console or a gate can read the
+	 * winner with no widget in existence, and `ConcludeMatchIfEnded` still logs `STRAT-MATCH
+	 * concluded` either way.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Result")
+	TSubclassOf<UStratMatchResultWidget> MatchResultWidgetClass;
+
+	/** Viewport Z-order for the end-of-match screen. Defaults ABOVE `ProductionMenuZOrder`
+	 *  because Sec 2.11.4s verdict is the last thing drawn and everything else -- the panel,
+	 *  the strip, any menu left open when the flag fell -- is behind it. A property rather than
+	 *  a literal so the layering stays a designer's call. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Result")
+	int32 MatchResultZOrder = 30;
+
 	// ---- Setup steps, split so a failure names the step that refused --------
 	// Each returns false with the refusing layer's own reason rather than logging and
 	// swallowing it, so BeginPlay can record one reason in `LastFailureReason` and the
@@ -784,6 +886,13 @@ protected:
 	 *  holds the widget as a bare `UUserWidget`. The asset refreshes itself from its own
 	 *  `Construct`, reading `AStratPlayerController::GetProductionTargetHex`. */
 	bool CreateProductionMenuWidget(FString& OutFailureReason);
+
+	/** Creates the configured end-of-match screen and adds it to the viewport. Does NOT push a
+	 *  model into it -- `ShowMatchResult` builds one and pushes it immediately afterwards, so
+	 *  that "the screen could not be created" and "the verdict could not be projected" stay
+	 *  separate refusals with separate sentences, which is `CreateScoreboardWidget`'s stated
+	 *  reason for the same split. */
+	bool CreateMatchResultWidget(FString& OutFailureReason);
 
 private:
 	/**

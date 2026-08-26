@@ -13,6 +13,77 @@
 
 ## NEXT
 
+- **2026-08-25, `strat-gameplay-engineer`: SEC 2.11.4'S END-OF-MATCH SCREEN HAS A C++ HALF,
+  AND ITS THREE ROWS ARE THE LIVE SCOREBOARD'S OWN MODEL RATHER THAN A SECOND COPY OF SEC 2.8'S
+  ORDER.** Built in worktree `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/match-result-screen`,
+  off `194de95`. Two new files in `Source/StratUI/`, plus wiring on `AStratScoreboardHUD` and one
+  call site in `UStratMatchSubsystem`. No `Tests/`, no `Content/`, no `Source/StratRules/`, no
+  `Data/`. No suite count and no verdict is stated here -- `global.md` owns both, and NO SUITE
+  WAS RUN THIS PASS.
+  - **THE GAP, MEASURED BEFORE IT WAS CLOSED.** `FStratMatchResultView` was projected by
+    `StratBuildMatchResult`, routed by `UStratMatchSubsystem::GetMatchResult`, and READ BY
+    NOTHING: Sec 2.8 had a winner and no surface could say who it was. That is the
+    reflected-verb-with-no-caller shape again, one layer up -- the value was reachable and the
+    SCREEN was not.
+  - **THE LOAD-BEARING CALL: `FStratMatchResultModel` EMBEDS `FStratScoreboardModel` WHOLE.**
+    Sec 2.11.4 asks for "the same three rows in the same order", and the two available shapes
+    were (a) a private row array with its own labels and its own criteria-order walk, or (b) the
+    live panel's own builder called a second time on the same bridge. (a) was killed by what
+    Sec 2.11.4 exists for: revision Sec 1.5-#1 forbids the tiebreak being a hidden win condition,
+    and a verdict screen spelling that order a SECOND way would reopen the hiding place one layer
+    up. `StratBuildMatchResultModel` therefore calls `StratBuildScoreboardModel` and copies
+    nothing of the rows itself. The chevron debt `StratScoreboardWidget.h` already records --
+    delegate to the rules module when it exposes the comparison -- now covers this screen too,
+    for free, which is the second reason (b) won.
+  - **THE FACTION BINDING IS OURS AND IS LABELLED AS OURS.** Nothing in the GDD, `kb/setting.md`,
+    the scenario JSON or the vendored rules joins a `strat` side index to a faction. `SideFaction`
+    in `StratMatchResultWidget.h` pins side 0 -> Directorate, side 1 -> Vanguard on the user's
+    2026-08-25 ruling, matching that file's Faction A / Faction B ordering, and its block says in
+    as many words that it is a HARNESS PIN and not a rule -- `AStratScoreboardHUD::FirstSide`'s
+    treatment of who-moves-first, applied to the same species of undecided thing. IF THE GDD EVER
+    BINDS SIDES TO FACTIONS, THAT FUNCTION MUST DELEGATE AND NOT MERELY AGREE.
+  - **THE VOICE IS THE WINNER'S AND THE COLUMNS ARE THE VIEWER'S, AND THE TWO READS ARE
+    SEPARATED IN CODE.** `StratResultLineFor` takes `Winner` and never sees `ViewingSide`;
+    `ViewingSide` reaches only `StratBuildScoreboardModel`'s YOU/ENEMY assignment. They agree in
+    single-seat play and disagree on exactly the hot-seat turn where the loser is looking at the
+    screen, which is the one case a Vanguard line under a Directorate camera would be produced by.
+  - **THE SIX LINES ARE QUOTED, NOT COMPOSED, AND THE QUOTE WAS CHECKED MECHANICALLY.** A script
+    extracted the six backticked samples from GDD lines 677-683 and the `TEXT(...)` literals of
+    at least 20 characters from `StratMatchResultWidget.cpp`, and reported 6/6 exact matches with
+    an EMPTY set of cpp strings not drawn from the GDD. Longest line 15 words against
+    `kb/setting.md`'s <= 30 budget; zero hits for any of its nine banned-register words. The
+    header's own "longest of the six is 15 words" sentence is that measurement and not an estimate.
+  - **THE TRIGGER IS AN EDGE THAT ALREADY EXISTED.** `ConcludeMatchIfEnded` latches on
+    `bMatchConclusionAnnounced` and is the only place in the class a finished match is crossed
+    exactly once; `ShowMatchResult` hangs inside that latch, AFTER the `STRAT-MATCH concluded`
+    log line so a gate reading the transition never depends on an asset existing. TWO THINGS
+    WERE NEEDED FOR A RESTART AND NEITHER IMPLIES THE OTHER: `StartMatchInternal` already cleared
+    the bool, which removes nothing from the viewport, so it now also calls
+    `AStratScoreboardHUD::HideMatchResult`. The widget belongs to the HUD and outlives
+    `TearDownPresentation`, so without that call the last match's verdict would sit on top of the
+    new match's board.
+  - **ONE DIVERGENCE FROM THE PRODUCTION-MENU PRECEDENT, PAID FOR ON PURPOSE.**
+    `ProductionMenuWidgetClass` is a bare `TSubclassOf<UUserWidget>` to hold the
+    `/Script/Module.Class` bake open. `MatchResultWidgetClass` is typed as
+    `TSubclassOf<UStratMatchResultWidget>` and pays that bake now, because this class MUST be
+    called -- `ShowMatchResult` pushes a finished model in, and a WBP free to compose its own
+    verdict would be a second author of Sec 2.8's result. Recorded in both headers.
+  - **BUILD.** `Build.bat StratocracyEditor Win64 Development -waitmutex -NoHotReloadFromIDE
+    -MaxParallelActions=10` against the worktree's own `.uproject`; `Result: Succeeded`, process
+    exit 0, first attempt. The only warnings in the log are the two pre-existing C4456/C4457 in
+    vendored `Source/StratRules/Driver.good.cpp`; zero from the new or edited files.
+  - **WHAT IS NOT BUILT AND WHO OWNS IT.** `WBP_MatchResult` does not exist -- no `Content/` was
+    touched, which is `strat-editor-builder`'s lane, and until that asset exists and is set on the
+    HUD Blueprint's `MatchResultWidgetClass`, `ConcludeMatchIfEnded` logs
+    `No end-of-match screen this match: no MatchResultWidgetClass is set ...` at Warning and the
+    match still concludes correctly. The screen is therefore ROUTED but not yet REACHABLE by a
+    player, and that is the honest state of it.
+  - **NO COPY WAS INVENTED FOR `DecidedByKey`.** The model carries the key as a raw number AND as
+    an `EStratScoreCriterion` tag so the WBP can mark the deciding row with no arithmetic, and no
+    sentence naming the criterion, because the GDD has not written one --
+    `FStratMatchResultView::DecidedByKey`'s own refusal to name the keys, honoured rather than
+    worked around.
+
 - **2026-08-25, `strat-gameplay-engineer`: §2.11.5'S BOXED-IN FOOTER HAS A BLUEPRINT ROUTE, AND
   THE ROUTE WAS CHOSEN BY MEASURING TWO CLOCKS RATHER THAN BY PICKING A SIGNATURE.** Three new
   symbols across `StratBridge` and `StratPlay`, plus two prose corrections my own insertion made

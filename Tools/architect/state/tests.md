@@ -12,6 +12,91 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **WAVE 6: §2.11.4's END-OF-MATCH SCREEN. SIX CLAUSES, AND ONE OF THE TWO ACCEPTANCE IDs THE
+  DISPATCH PROPOSED DID NOT SURVIVE READING THE DOCUMENT.** Three new clause-bearing files:
+  `Source/StratUI/Tests/StratMatchResultModelClauses.cpp` (five clauses, `T-UI-03`) and
+  `Source/StratPlay/Tests/StratMatchResultTrigger.cpp` (one clause, `T-INT-05`), plus the UMG-free
+  seam pair `Source/StratUI/Tests/StratMatchResultHostDouble.h` / `StratMatchResultHostProbe.h` /
+  `.cpp`, which declare no clause. **Clause delta +6**, by set-difference on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` — never by an acceptance-ID grep, which
+  has undercounted 8 as 5 in this repo. **No id minted.** Unstaged; staging is the user's call.
+  The live suite figure is in `Tools/architect/state/global.md` and is not restated here.
+  - **`T-UI-03` HELD; `T-TURN-04` DID NOT, AND THE MISS WAS IN THE DOCUMENT RATHER THAN IN THE
+    CODE.** The engineer proposed `T-TURN-04` for the show-once / cleared-on-restart clause.
+    `T-TURN-04` is the GDD Invariants row "at the turn cap, the attrition tiebreak resolves in the
+    exact §2.8 order" — a rules-module property, already pinned in
+    `Source/StratBridge/Tests/StratMatchResultClauses.cpp`, saying nothing about a screen's
+    lifetime. Filing there would have made a grep for that row's coverage return a widget test.
+    It went to `T-INT-05` instead, beside `StratMatchConclusion.cpp`'s five clauses on the same
+    transition. `T-UI-03` was kept for the five model clauses on the precedent
+    `StratMatchResultRouting.cpp` already set for §2.11.5 — **not** on an assumption that §2.11.4
+    has an id of its own. It has none, and the whole 85-id set was walked to check.
+  - **WHAT EACH CLAUSE PINS. THE COLUMN THAT MATTERS IS WHERE THE EXPECTATION CAME FROM.**
+    - `ResultScreenRowsAreTheScoreboardModelByIdentity` — IDENTITY via
+      `UScriptStruct::CompareScriptStruct` over `FStratScoreboardModel`'s reflection walk, **not**
+      a hand-listed field comparison. That choice is the clause: a field added to that struct
+      tomorrow is covered the moment it compiles, where a hand list would go green on a builder
+      that composed the new field itself. The walk covered **8** reflected properties at this
+      pass. Both viewing sides, plus a negative control that the two sides' models DIFFER —
+      without it the identity holds equally over a builder that ignored `ViewingSide`.
+    - `ResultLinesAreTheGddSamplesVerbatimAndInsideTheVoiceBudget` — the six strings are **parsed
+      out of `Tools/architect/gdd_snapshot/Stratocracy_Prototype_GDD.md` at run time**, keyed by
+      §2.11.4's own bullet labels, and the ≤ 30-word budget is parsed out of the same paragraph.
+      A missing label FAILS rather than yielding a shorter list. The snapshot was measured
+      byte-identical (`git hash-object`, blob `de88390`) to the live document in
+      `stratocracy-content` at this pass.
+    - `ResultVoiceFollowsTheWinnerAndNotTheViewer` — needs a real winner and PLAYS for one:
+      §2.9's AI drives both sides on the bridge until §2.8 answers. Concluded at **156 commands,
+      Decisive / FlagDestroyed / winner 1** at this pass; deterministic by T-TURN-09.
+    - `ResultLineMappingIsTotalOverEveryTierCauseAndWinner` — **72** triples off `StaticEnum`'s
+      own walks, **42** of them with a line, and every non-empty answer is required to be one of
+      the GDD's six. Without that closure the totality clause is satisfied by returning "x".
+    - `DecidedByKeyReachesTheScreenAsACriterionAndNotAsArithmetic` — see the hole below.
+    - `MatchResultScreenIsAskedForOncePerMatchAndClearedOnRestart` — ONE clause on purpose. The
+      subject is the COMBINATION; either half alone passes against a broken implementation, and a
+      trigger unobservable except by combination is the §2.11.6-B beat-2 defect class.
+  - **WHAT THE KEY CLAUSE DOES NOT PIN, AND IT IS A REAL HOLE.** §2.8's keys **2 and 3** are
+    unreachable from any bridge this suite can build — they need a capped match in which both
+    sides fought to an EQUAL combat Fame. Every game §2.9's AI plays on the shipped scenario ends
+    `Decisive / FlagDestroyed` with `decidedByKey == 0`, so the clause measures the **key-0 arm
+    only** and states the shift as a relation (`Rows[DecidedByKey - 1].Criterion`) that fires only
+    if a key is ever non-zero. **Discharged by a module-side seam this lane may not add:** a
+    `STRATUI_API` free function exposing the key→criterion switch that currently lives inline in
+    `StratBuildMatchResultModel`. Until then a wrong mapping for keys 2 and 3 ships green.
+  - **THE MUTATION WITNESS IS IN THE CLAUSE, NOT IN A REPORT, AND THE LANE RULE IS WHY.** The
+    dispatch asked for a two-directional differential over a temporary edit to
+    `Source/StratUI/StratMatchResultWidget.cpp`. That file is outside this lane and the rule
+    admits no temporary edit, so the falsifiability proof was built **inside** the clause:
+    `StratResultLineFor(Tier, Cause, ViewingSide)` and `SideFaction(ViewingSide)` ARE the mutant's
+    two outputs — the substitution is one argument and the builder does nothing else to those
+    values — and the clause asserts they DIFFER from the shipped answer on this board. Measured at
+    this pass: the mutant would show seat 0 the Directorate's decisive line while the shipped code
+    shows the Vanguard's from both seats. **This is stronger than the temporary edit would have
+    been**: it is permanent, and it is the one line that would speak up if the two spellings ever
+    stopped being distinguishable — the only way those three assertions could go vacuous while
+    staying green.
+  - **INSTRUMENT CAVEATS, BOTH LOAD-BEARING.**
+    - `FTriggerLogCapture` filters on `STRAT-` **or** `No end-of-match screen this match`.
+      `ConcludeMatchIfEnded`'s screen refusal carries **no `STRAT-` prefix** — deliberately, that
+      prefix being reserved for fixed-field gate lines — so a capture copied unchanged from
+      `StratMatchConclusion.cpp` would have been silent about its own subject.
+    - The refresh loop **does not assert on `RefreshPresentation`'s return value.** With no
+      `ScoreboardWidgetClass` that function returns FALSE on every call even though `ApplyView`
+      ran every time, because the scoreboard step it refuses at runs AFTER `ApplyView`. Asserting
+      on the bool would have made five real refreshes look like five refusals, and "still exactly
+      one" would then have been satisfied by refreshes that never happened. The clause reads the
+      refusal REASON for the word `scoreboard` instead, which is what places the refusal
+      downstream of the trigger.
+  - **THE NINE BANNED WORDS ARE THE ONE STATED LITERAL IN THIS SUITE'S §2.11.4 COVERAGE**, cited
+    to `kb/setting.md`'s "Banned register" bullet. `kb/setting.md` is **not in this repository** —
+    it lives only in `E:\MultiAgent\stratocracy-content\kb\setting.md` — and a headless run may not
+    reach outside the tree. Discharged by vendoring it beside the GDD snapshot, which is
+    `strat-data-steward`'s call and not this lane's.
+  - **`Tools/architect/gdd_snapshot/MANIFEST.md` IS STALE, AND IT IS NOT MINE TO FIX.** It records
+    `Bytes 446,133` and a sha256 taken 2026-08-11; the tracked file is **449,498 bytes** and
+    hashes identical to the live document. The manifest's own text says nothing gates it. Flagged
+    for `strat-data-steward` because two clauses now read that file.
+
 - **WAVE 5: §2.11.5's BOXED-IN FOOTER FACT NOW HAS A GATE, AND FOUR OF THE FIVE CLAUSES ARE
   ABOUT THE CLOCK IT RIDES RATHER THAN THE VALUE IT CARRIES.** Five clauses, no new files: four
   appended to `Source/StratPlay/Tests/StratProductionMenuSeam.cpp` under `GATE-BUILDMENU`, one

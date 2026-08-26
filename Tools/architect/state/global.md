@@ -11,11 +11,162 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-25 (ITEM 1e LANDS ITS ENGINE AND CLAUSE HALVES: SEC 2.11.4'S END-OF-MATCH
+SCREEN IS ROUTED AND PINNED, AND IS NOT YET REACHABLE BY A PLAYER. The suite is now 224/224,
+every entry Success, zero failed and zero notRun. The delta is +6 and nothing was removed or
+renamed, measured by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/`
+and RE-DERIVED BY THE `coordinator` independently of the lane report -- 218 on `master` at
+`194de95` and 224 in the lane tree, the macro census and the automation report agreeing at 224.
+THE REPORT IS NAMED RATHER THAN ALLUDED TO, on this file's own standing practice:
+`reportCreatedOn 2026.08.26-00.28.42`, `succeeded 224`, `failed 0`, `notRun 0`.
+THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL, which is why they name different days.
+THE FIGURE IS THE LANE TREE'S AND NOT THE INTEGRATION TREE'S. It was produced in
+`E:/MultiAgent/Strat-wt/slot-1` on branch `feat/match-result-screen`, and it is stated here
+inside that branch so the claim and the clauses it counts move into `master` in ONE commit. The
+suite must be RE-RUN in the integration tree after the merge, because the merge brings clauses
+into a tree whose newest report predates them. The 218/218 in the entry below WAS the live
+figure at that pass and is SUPERSEDED BY THIS ENTRY.
+Written by the `coordinator`, whose file this is.
+WHAT LANDED, ENGINE HALF (`strat-gameplay-engineer`, editor closed, slot-1). A new
+`UStratMatchResultWidget` in `StratUI` with `FStratMatchResultModel`, `StratResultLineFor`,
+`StratResultTierTextFor`, `SideFaction` and `StratBuildMatchResultModel`; the
+`MatchResultWidgetClass` / `MatchResultZOrder` / `CreateMatchResultWidget` trio on
+`AStratScoreboardHUD` in the shape the guidance and production-menu ones already take; and the
+trigger inside `UStratMatchSubsystem::ConcludeMatchIfEnded`'s EXISTING `bMatchConclusionAnnounced`
+latch, with `StartMatchInternal` calling `HideMatchResult` so a restart clears the screen. Build
+`Result: Succeeded`, exit 0, 55.67 s, green on the first attempt, and the diff is purely additive
+-- 393 insertions and 0 deletions across five tracked files, plus two new ones.
+THE CONSEQUENTIAL CALL WAS EMBEDDING THE LIVE SCOREBOARD'S OWN MODEL WHOLE. `FStratMatchResultModel`
+carries `FStratScoreboardModel` and `StratBuildMatchResultModel` calls `StratBuildScoreboardModel`
+-- the same builder the live panel uses, on the same bridge and the same frame -- rather than
+composing three rows locally. SEC 2.11.4 exists because revision SEC 1.5-#1 forbids the tiebreak
+being a hidden win condition, so a verdict screen spelling SEC 2.8's order a SECOND way would
+reopen the hiding place one layer up. This makes "the same three rows in the same order" an
+IDENTITY rather than an agreement, and there is now exactly one implementation of that order on
+screen.
+THE SIDE-TO-FACTION BINDING IS OURS AND NOT THE GDD'S, ruled by the user this pass. Nothing in
+the GDD, the scenario JSON or the code binds a `strat` side index to a faction, so `SideFaction`
+pins side 0 to the Directorate and side 1 to the Vanguard, labelled in prose as a harness pin on
+`AStratScoreboardHUD::FirstSide`'s line and carrying the sentence that it must DELEGATE, not
+merely agree, if the GDD ever makes the binding itself.
+WHAT LANDED, CLAUSE HALF (`strat-test-author`, same tree, after the green build). Six clauses in
+`Source/StratUI/Tests/StratMatchResultModelClauses.cpp` (five) and
+`Source/StratPlay/Tests/StratMatchResultTrigger.cpp` (one), plus a UMG-free host double and probe
+on the `StratProductionMenuHostDouble`/`Probe` precedent. The rows-by-identity clause compares via
+`UScriptStruct::CompareScriptStruct` -- UE's own reflection walk, not a hand-listed field list, so
+a field added tomorrow is covered on compile -- and carries a negative control that the two
+seats' models must DIFFER. The six result lines are PARSED OUT OF THE GDD SNAPSHOT at run time,
+keyed by the document's own bullet labels, and the 30-word budget is parsed from the sentence that
+states it, so the clause does not retype the literal the code already holds.
+THE ACCEPTANCE ID THE ENGINEER PROPOSED WAS WRONG AND THE TEST-AUTHOR CAUGHT IT. `T-TURN-04` is a
+RULES property -- the tiebreak resolving in SEC 2.8's exact order -- and is already pinned in
+`Source/StratBridge/Tests/StratMatchResultClauses.cpp`. The trigger clause is filed under
+`T-INT-05` instead, beside `StratMatchConclusion.cpp`'s five on the same transition. All 85 GDD
+IDs were walked and NOTHING WAS MINTED; SEC 2.11.4 has no ID of its own.
+THE FALSIFIABILITY PROOF WAS BUILT INSIDE THE CLAUSE, AND THE DISPATCH THAT ASKED OTHERWISE WAS
+WRONG. The `coordinator` asked `strat-test-author` to mutate `StratMatchResultWidget.cpp`, run
+red, revert and run green. THAT FILE IS OUTSIDE ITS LANE and the rule admits no temporary edit;
+the agent refused, correctly, and a dispatch instruction is not consent to change that. It
+reconstructed the mutant's two outputs from the same two `STRATUI_API` functions the module
+itself calls and asserted they differ from the shipped answer on a board SEC 2.9's AI had just
+played -- 156 commands, `Decisive`, `FlagDestroyed`, winner 1, key 0 -- so the witness is
+permanent rather than spent, and it is the one assertion that would speak up if the two faction
+voices ever stopped being distinguishable.
+SUPERSEDED WITHIN THIS PASS -- THE ASSET WAS BUILT AND THE SCREEN WAS SEEN DRAWING A REAL
+VERDICT. The paragraph that follows was written while it was still true and is kept because it
+records what the C++ half does WITHOUT an asset, which is still the behaviour on any HUD that
+leaves `MatchResultWidgetClass` unset. `WBP_MatchResult` did not exist at that moment.
+Until it is authored and set on `MatchResultWidgetClass`, `ConcludeMatchIfEnded` logs at Warning
+that no end-of-match screen will be shown and the match still concludes correctly. The editor was
+CLOSED for this whole pass -- no `UnrealEditor` process, port 9315 refused -- which is the right
+condition for the two halves that landed and the blocking one for the half that did not. Note
+that `MatchResultWidgetClass` is typed to the concrete class rather than to a bare `UUserWidget`
+as `ProductionMenuWidgetClass` is, so the asset will bake `/Script/StratUI.StratMatchResultWidget`
+into itself irreversibly; that is deliberate, since a WBP free to compose its own verdict would be
+a second author of SEC 2.8's result.
+THREE THINGS ARE FILED FOR AN OWNER OTHER THAN THE LANE THAT FOUND THEM. (1) SEC 2.8's tiebreak
+keys 2 and 3 CANNOT BE PINNED today: every game the AI plays on the shipped scenario ends
+`Decisive`/`FlagDestroyed` with `decidedByKey == 0`, so a wrong mapping for keys 2 and 3 ships
+green. The seam named is a `STRATUI_API` free function exposing the key-to-criterion switch that
+is currently inline in `StratBuildMatchResultModel`. (2) `kb/setting.md`'s nine banned register
+words are a STATED LITERAL in the clause and not a read, because that file lives only in
+`E:/MultiAgent/stratocracy-content` and a headless run may not reach outside the tree; discharged
+by vendoring it beside the GDD snapshot, which is `strat-data-steward`'s call. (3)
+`Tools/architect/gdd_snapshot/MANIFEST.md` is STALE -- it records 446,133 bytes against a tracked
+file of 449,498, and two clauses now read that file. Steward's lane, flagged and not fixed.
+THE GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, and it is stamped here rather than
+promised. `strat-integration-reviewer` read the UNCOMMITTED working tree -- 13 files, code,
+clauses and all three record files together -- and re-derived every figure this entry states
+rather than taking it: macro census 218 on `master` and 224 in the lane, the report at 224/0/0
+opened `utf-8-sig`, the sweep clean at exit 0 with exactly one LIVE claim, and the module arrows
+PARSED OUT OF ALL FIVE `.Build.cs` FILES with comments stripped rather than read by eye. It
+confirmed the rows-by-identity claim structurally (there is no second implementation of SEC 2.8's
+order to diverge from), found no widget-side arithmetic, and confirmed all three of the items
+filed above for other owners.
+ONE NON-GATING OBSERVATION IS WORTH CARRYING. `StratMatchResultWidget.h` tells the reader that
+`Source/StratUI/StratUI.Build.cs` records the irreversible `/Script/StratUI.StratMatchResultWidget`
+bake; that file records the PRINCIPLE under the scoreboard widget's name and does not name this
+class, so the pointer governs but does not resolve by grep. Engineer's lane, to fold in the next
+time that file is opened for another reason.
+THIS VERDICT DESCRIBES THE LANE TREE AS IT STOOD BEFORE THE ASSET, AND NOT `master`. Two
+post-pass changes happened since that gate read the tree: this entry's own verdict stamp, and
+`WBP_MatchResult`. THE NARROW RE-GATE THEY OWED HAS NOW RUN AND IS DISCHARGED -- see the BLOCK
+below. STILL OWED AND NOT DISCHARGED BY ANYTHING HERE: after the merge lands, the suite must be
+re-run in the integration tree and the gate run again, because a `VERDICT: PASS` describes a tree
+and never a phase.
+THE ASSET HALF LANDED TOO, AND THE SCREEN WAS SEEN DRAWING A REAL VERDICT. `WBP_MatchResult`
+exists, `BP_StratScoreboardHUD.MatchResultWidgetClass` points at it, and a live AI-vs-AI match on
+Ferrum Crossing ended `STRAT-MATCH concluded turn=6 turnCap=20 sideToMove=1 tier=Decisive` with
+`Decisive`, the Vanguard's victory line, and `Destroyed 75/775`, `Objectives 2/8 6/8`,
+`Unit HP 49/115` on screen beside the live scoreboard's own `TURN 6 / 20`. **The viewer was side 0
+and LOST, and was shown the WINNER's faction line** -- the one comparison SEC 2.11.4 turns on,
+observed rather than argued. `content.md` carries the evidence, the eleven live `TextBlock` reads
+and the API measurements; this banner does not restate them.
+THE EDITOR WAS OPENED ON `slot-1` AND NOT ON THE INTEGRATION TREE, on the user's explicit
+instruction, because the asset cannot derive from a class the integration tree has never compiled.
+That is a deliberate departure from "`Content/` is touched on the integration tree only" and it is
+recorded rather than quietly taken: it is safe only because no other lane was running, since
+`BP_StratScoreboardHUD.uasset` is a binary edit on a branch and a concurrent edit elsewhere would
+be lost silently rather than conflict.
+THE RE-GATE RETURNED `VERDICT: BLOCK`, AND THE FINDING WAS AGAINST THE RECORD'S WORDING RATHER
+THAN THE TREE -- "nothing about the asset itself needs redoing", in the reviewer's words. Two
+authorities had been merged into one. `content.md`'s header licenses writing THAT FILE and says in
+terms that it "is not a general licence to act in the content lane"; authoring the asset and
+editing the HUD default IS acting in that lane. The asset work's authority is THE USER'S EXPLICIT
+INSTRUCTION, given after they were shown the departure it required; the fallback clause's authority
+covers only the file write, whose condition was measured with the control the header demands -- a
+lookup naming both `execute_script` tools and `unreal_status` returned only `unreal_status`, so
+`strat-editor-builder` had no route to the editor at all. Both entries have been corrected to keep
+the two apart. **A RULING IS CARRIED:** the fallback condition has now recurred at least four
+times and its header was already amended once, on 2026-08-23, for that same reason.
+WHAT THE RE-GATE CONFIRMED ON ITS OWN INSTRUMENTS. No `Source/` file changed after the earlier
+PASS -- derived from mtimes, the newest under `Source/` being `20:27:57` against the assets'
+`20:53:38` and `20:55:22`. `WBP_MatchResult` bakes `/Script/StratUI.StratMatchResultWidget`,
+carries NO `KismetMathLibrary`, NO `K2Node_FormatText`, NO `Conv_*`, NO branch or select node, and
+serializes `PropertyBindings` as **0** -- so T-UI-03 holds on the binding path as well as the graph
+path. `BP_StratScoreboardHUD.uasset` was string-diffed against its HEAD blob SMUDGED THROUGH
+`git lfs smudge`, since `git show` returns the 130-byte pointer: exactly one property added, and
+`MatchResultZOrder` appears in NEITHER version, which is how a reader knows it equals the C++
+default of 30.
+ONE THING THE RE-GATE DID NOT RUN, STATED AS `not run` RATHER THAN AS A PASS. It could not
+re-derive "11 of 11 pins connected" -- it holds no editor tool and `FEdGraphPin` links are
+index-encoded. Its own reading is that the live-PIE sweep is the better instrument anyway: an
+unconnected exec or text pin leaves the DESIGN-TIME DEFAULT in place, which is exactly the state
+observed on the instances that did not run, so eleven live values beside untouched defaults
+separates a graph that RAN from a widget that merely EXISTS.
+THE WORKTREE EDITOR WAS AGREED WITH, WITH ONE CAVEAT THIS BANNER OWES ITS READER. The reviewer
+would have ruled the same way -- the reparent target exists only on this branch, so authoring on
+the integration tree is not slower but impossible, and merging unproven C++ first would invert the
+evidence order this project runs on. The caveat: the safety of the binary edit to
+`BP_StratScoreboardHUD.uasset` rests on no other lane HAPPENING to run, not on any mechanism. There
+is no lock. **If `/strat-parallel` spins a second slot before this merges, that asset is a
+silent-loss hazard -- the merge goes first.**)
+
 _Last run 2026-08-25 (SEC 2.11.5 CLOSES ON A HUMAN PLAYTEST, AND THE PLAYTEST CORRECTED THE
 COORDINATOR. Written by the `coordinator`. An evidence-and-record pass: no source file, no test
 and no asset was touched.
-The suite is now 218/218, every entry Success, zero failed and zero
-notRun. NO SUITE FIGURE MOVED IN THIS PASS AND NO RUN WAS PERFORMED FOR IT: the figure is
+The suite WAS **218/218** at that pass, every entry Success, zero failed and
+zero notRun; SUPERSEDED 2026-08-25 by the 224/224 entry above. NO SUITE FIGURE MOVED IN THIS PASS AND NO RUN WAS PERFORMED FOR IT: the figure is
 carried forward from the entry below, over the same automation report that entry names, and
 nothing under `Source/` was touched here. It is restated rather than
 left below because this file's live count lives in its TOPMOST entry -- an unrestated figure

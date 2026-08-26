@@ -217,6 +217,20 @@ bool UStratMatchSubsystem::StartMatchInternal(const FStratMatchConfig& Config,
 	// see `ConcludeMatchIfEnded` and the member's declaration.
 	bMatchConclusionAnnounced = false;
 
+	// AND SEC 2.11.4'S VERDICT SCREEN COMES DOWN WITH IT. The latch above is what stops the
+	// screen being shown twice for one match; this is what stops the LAST match's screen still
+	// being on top of the new one's board. Both are needed and neither implies the other --
+	// clearing a bool removes nothing from the viewport, and the widget outlives
+	// `TearDownPresentation` because it belongs to the HUD rather than to this object.
+	//
+	// UNCONDITIONAL AND UNGUARDED, on `TearDownPresentation`'s stated reasoning: `HideMatchResult`
+	// is a no-op with no screen up, and a guard on "is this a restart" would be a second thing
+	// that can be wrong about which it is. Null HUD is the ordinary case on a first start.
+	if (AStratScoreboardHUD* const PriorHUD = FindScoreboardHUD())
+	{
+		PriorHUD->HideMatchResult();
+	}
+
 	// ---- The bridge. STEP ONE OF THE ORDERED SEQUENCE ----------------------
 	// Constructed here rather than in the constructor: a bridge that exists before its
 	// inputs have been checked is a bridge `GetBridge()` could hand out unseeded, and this
@@ -1530,6 +1544,40 @@ void UStratMatchSubsystem::ConcludeMatchIfEnded(const FStratViewModel& Model)
 		Model.Match.Turn, Model.Match.TurnCap, Model.Match.SideToMove,
 		*StaticEnum<EStratResultTier>()->GetNameStringByValue(
 			static_cast<int64>(Model.Match.ResultTier)));
+
+	// ---- GDD Sec 2.11.4's END-OF-MATCH SCREEN ------------------------------
+	// AFTER THE LOG LINE AND INSIDE THE LATCH, which places it exactly: the log records that
+	// the transition happened whether or not anything drew it, and the latch is what makes the
+	// screen appear once rather than on every refresh of a finished match. Sec 2.11.4 says the
+	// screen shows the verdict; it does not say the verdict stops existing when nobody
+	// configured a widget, and a gate reading `STRAT-MATCH concluded` must not depend on an
+	// asset.
+	//
+	// THROUGH THE HUD BECAUSE THE HUD OWNS THE WIDGET, and this module names no `UMG`, `Slate`
+	// or `SlateCore` -- the module-arrow reasoning `ApplyView`'s guidance block already states
+	// in full for `PushGuidance`. `ShowMatchResult` takes and returns only engine types.
+	//
+	// IT REBUILDS FROM THE BRIDGE RATHER THAN BEING HANDED `Model`, and that is deliberate.
+	// The winner is NOT on the view model and is not going to be --
+	// `FStratMatchResultView`'s own block records that decision made three times down the
+	// stack -- so there is nothing in `Model` to pass. `StratBuildMatchResultModel` asks the
+	// same live bridge this model was built from, on the same frame, which is the arrangement
+	// `GetMatchResult`'s declaration already describes for the reflected reader.
+	//
+	// REFUSALS ARE LOGGED AND NOT PROPAGATED, for this function's stated reason: reconciliation
+	// is not a request that can be declined, and an unset `MatchResultWidgetClass` is a
+	// configuration rather than a fault. Warning rather than Error because the match is over
+	// either way and every other surface is correct -- what is missing is the screen that says
+	// so, and the log line above already said it.
+	if (AStratScoreboardHUD* const HUD = FindScoreboardHUD())
+	{
+		FString ResultReason;
+		if (!HUD->ShowMatchResult(ResultReason))
+		{
+			UE_LOG(LogStratPlay, Warning,
+				TEXT("No end-of-match screen this match: %s"), *ResultReason);
+		}
+	}
 }
 
 bool UStratMatchSubsystem::SaveMatchToSlot(const FString& SlotName, FString& OutFailureReason)

@@ -1538,6 +1538,18 @@ private:
 	 *
 	 * VOID, FOR `ApplyView`'s STATED REASON: reconciliation is not a request that can be
 	 * declined.
+	 *
+	 * IT ALSO PUTS GDD Sec 2.11.4'S END-OF-MATCH SCREEN UP, through
+	 * `AStratScoreboardHUD::ShowMatchResult`, and that is the second thing the latch buys.
+	 * The screen is a one-shot surface about an event, so its trigger has to be an EDGE, and
+	 * this is the only edge in this class that a finished match crosses exactly once.
+	 * `StartMatchInternal` clears the latch AND takes any prior screen down, so a restart in
+	 * the same session gets its own verdict rather than inheriting the last one's.
+	 *
+	 * THE SCREEN'S REFUSALS DO NOT REACH THIS FUNCTION'S CALLER and are logged at Warning.
+	 * An unset `MatchResultWidgetClass` is a configuration -- that property's own block says
+	 * so -- and the `STRAT-MATCH concluded` line above is emitted either way, so a gate reading
+	 * the transition never depends on an asset existing.
 	 */
 	void ConcludeMatchIfEnded(const FStratViewModel& Model);
 

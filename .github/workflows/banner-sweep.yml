@@ -80,10 +80,19 @@ jobs:
       # It runs BEFORE the Source/ step deliberately: the docs are where the shape came back,
       # so that is the failure a red run should name first. `--self-test` proves it can fail,
       # and carries an explicit fixture for the hole its historical-account exemption leaves.
+      #
+      # THE STEP NAME BELOW USED TO SAY "into vendored headers, in the prose", AND BY 2026-08-26
+      # THAT WAS TWO-THIRDS WRONG. The gate's subject set was widened that day to cover the
+      # record's own growing documents -- `global.md` moves the line you cited by the NEXT entry,
+      # faster than any re-vendor -- and its scan was widened to `Tools/architect/*.py`, because
+      # four of the six citations that opened the fix lived in a comment rather than in prose. No
+      # workflow change was needed to get that coverage: this step passes no paths and the gate
+      # derives everything. A step name is the only part of a widening that does NOT update
+      # itself, which is exactly why it is the part that ends up lying about what ran.
       - name: doc citation gate self-test (prove the tool can fail)
         run: python Tools/architect/strat_doc_citation_gate.py --self-test
 
-      - name: no line-number citations into vendored headers, in the prose
+      - name: no rot-prone line citations in the prose or the tooling (vendored + record)
         run: python Tools/architect/strat_doc_citation_gate.py --explain
 
       # NO LINE-NUMBER CITATIONS INTO VENDORED HEADERS. A `Save.h:64` in a comment is correct
@@ -100,7 +109,11 @@ jobs:
       # is a guard that silently stops covering the next one added.
       #
       # Citations INSIDE Source/StratRules/ are the vendored files' own and are not our business.
-      - name: no line-number citations into vendored headers
+      # Named for the tree it walks, not just the shape it bans, so it cannot be confused with
+      # the doc-and-tooling gate above -- the two carried near-identical names and covered
+      # different halves of the repository, which is how a reader concludes one of them is
+      # redundant and deletes the wrong one.
+      - name: no line-number citations into vendored headers, under Source/
         run: |
           units=$(ls Source/StratRules/*.h | xargs -n1 basename | sed 's/\.h$//' | paste -sd'|' -)
           if [ -z "$units" ]; then echo "no vendored headers found -- refusing to pass vacuously"; exit 1; fi

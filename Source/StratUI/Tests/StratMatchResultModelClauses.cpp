@@ -42,13 +42,17 @@
 //     The list is therefore cited rather than read, and the change that would make it a read
 //     is named in this file's Blocked note below.
 //
-// THE ONE THING THIS FILE CANNOT REACH, STATED RATHER THAN LEFT AS A GAP. §2.8's keys 2 and 3
-// as a `decidedByKey` are not reachable from any bridge this suite can build: they need a
-// capped match in which both sides fought to an EQUAL combat Fame, which no arrangement short
-// of a hand-authored `GameState` produces. So `DecidedByKeyMapsToTheDecidingRow` pins the
-// SHIFT as a relation over whichever key the module actually produced, plus the key-0 case,
-// and the unreachable half is recorded in `Tools/architect/state/tests.md` with the module-side
-// change it would need. It is not silently absent.
+// §2.8's KEYS 2 AND 3 ARE STILL UNREACHABLE THROUGH A MATCH, AND ARE NO LONGER UNPINNED.
+// [Stamped 2026-08-25. This block previously ended "It is not silently absent" and named the
+// hole as OPEN; the module-side change it pointed at has landed and the sentence below replaces
+// that reading. The unreachability itself is unchanged and is not the part that was fixed.]
+// A `decidedByKey` of 2 or 3 needs a capped match in which both sides fought to an EQUAL combat
+// Fame, which no arrangement short of a hand-authored `GameState` produces, so no clause here
+// reaches those arms BY PLAYING. `StratScoreCriterionForKey` is the `STRATUI_API` seam that
+// makes the mapping callable directly, and `EveryTiebreakKeyReachesTheScreenAsItsOwnCriterion`
+// pins all three keys and every non-key through it. `DecidedByKeyMapsToTheDecidingRow` still
+// pins the shift END TO END over whichever key a played match produces -- the two clauses are
+// the reachable half and the callable half of one property, and neither replaces the other.
 //
 // EVERY STRING COMPARISON IS CASE SENSITIVE. `FString::operator==`, `FString::Contains` and
 // `TestEqual` ALL ignore case in UE 5.8, measured on this project, so an ordinary comparison of
@@ -1191,11 +1195,15 @@ bool FStratResultLineMappingIsTotalTest::RunTest(const FString& /*Parameters*/)
 // criterion is required to be `Rows[DecidedByKey - 1].Criterion`. Both operands are the module's
 // and the only thing this clause supplies is the statement that §2.8 counts from one.
 //
-// WHAT THIS CLAUSE DOES NOT PIN, AND IT IS STATED RATHER THAN LEFT AS A GAP. Keys 2 and 3 are
-// not reachable: they need a capped match in which both sides fought to an EQUAL combat Fame,
-// which no bridge this suite can build produces. The clause pins whichever key the module
-// actually produced plus the key-0 case, and `Tools/architect/state/tests.md` records the
-// module-side change that would make all three reachable.
+// WHAT THIS CLAUSE DOES NOT PIN, AND WHAT NOW DOES. [Stamped 2026-08-25: this block used to
+// end by naming the module-side change as OUTSTANDING. It has landed.] Keys 2 and 3 are still
+// not reachable BY PLAYING -- they need a capped match in which both sides fought to an EQUAL
+// combat Fame, which no bridge this suite can build produces -- so this clause still measures
+// the key-0 arm on the shipped scenario. The other two arms are pinned by
+// `EveryTiebreakKeyReachesTheScreenAsItsOwnCriterion` at the bottom of this file, which calls
+// `StratScoreCriterionForKey` directly. THIS CLAUSE IS THE END-TO-END ONE and is not made
+// redundant by it: it is the only place the key travels from the rules module, through
+// `StratBuildMatchResultModel`, onto the model a widget reads.
 //
 // KEY 0 IS THE COMMON CASE AND IS PINNED SEPARATELY. A flag kill ends a match without evaluating
 // a key at all, and `bHasDecidedBy` false is what tells the WBP not to highlight anything --
@@ -1300,7 +1308,194 @@ bool FStratDecidedByKeyMapsToTheDecidingRowTest::RunTest(const FString& /*Parame
 		else
 		{
 			AddInfo(TEXT("this game ended without a tiebreak, so only the key-0 arm was measured "
-			             "here; see Tools/architect/state/tests.md for what keys 2 and 3 would need"));
+			             "end to end here; keys 2 and 3 are pinned through StratScoreCriterionForKey "
+			             "by EveryTiebreakKeyReachesTheScreenAsItsOwnCriterion"));
+		}
+	}
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// T-UI-03 -- ALL THREE OF §2.8's KEYS REACH THE SCREEN AS THEIR OWN CRITERION.
+//
+// WHAT THIS CLOSES, AND IT WAS A REAL HOLE RATHER THAN A THEORETICAL ONE. The clause above
+// pins the shift over whichever key the module actually produced -- and on the shipped
+// scenario that key is always 0, because every game §2.9's AI plays there ends
+// `Decisive / FlagDestroyed`. Keys 2 and 3 need a capped match in which both sides fought to
+// an EQUAL combat Fame, which no bridge this suite can build produces. So a mapping that sent
+// key 2 to `SurvivingHp` and key 3 to `Objectives` SHIPPED GREEN: the screen would mark the
+// wrong row and every number on it would still be right.
+//
+// HOW IT IS CLOSED: BY CALLING THE MAPPING RATHER THAN BY REACHING IT THROUGH A MATCH.
+// `StratScoreCriterionForKey` is the `STRATUI_API` seam `Tools/architect/state/tests.md` named
+// as the discharge -- the switch that used to sit inline in `StratBuildMatchResultModel`, moved
+// out so that all four classes of input are reachable from a test. The module-side change and
+// this clause are the two halves of one fix; neither is worth anything alone.
+//
+// WHERE THE EXPECTATION COMES FROM, WHICH IS THE COLUMN THAT MATTERS. NOT a typed table of
+// three pairs -- that would be this file transcribing the switch it is grading, and it would
+// agree with a swapped mapping the moment somebody swapped both copies. The expectation is
+// `StratBuildScoreboardModel`'s OWN rows on the seeded bridge: §2.11.4 orders those rows in
+// §2.8's tiebreak order and §2.8 numbers its keys from one, so key N must name `Rows[N - 1]`.
+// Both operands are the module's and the only thing this clause supplies is "§2.8 counts from
+// one" -- the same statement, and the same two artifacts, the clause above relates.
+//
+// THE NON-KEYS ARE PINNED IN BOTH DIRECTIONS, and the second direction is the one that would
+// go quiet. `false` alone is half the contract: the function must also LEAVE `OutCriterion`
+// ALONE, because that is what lets the caller's default survive key 0 -- the common case, a
+// flag kill having evaluated no key at all. Every call below pre-loads the out-parameter with
+// a value the true answer is NOT, so "written when it should be" and "untouched when it should
+// not be" are both measured rather than assumed.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratEveryTiebreakKeyReachesItsOwnCriterionTest,
+	"Stratocracy.StratUI.T-UI-03.EveryTiebreakKeyReachesTheScreenAsItsOwnCriterion",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratEveryTiebreakKeyReachesItsOwnCriterionTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratMatchResultModel;
+
+	FStratBridge Bridge;
+	FString      Error;
+	if (!TestTrue(TEXT("the bridge seeds"), SeedBridge(Bridge, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// THE ROWS ARE THE EXPECTATION. Built by the live panel's own builder, on this bridge, in
+	// this frame -- §2.11.4's three §2.8 criteria in §2.8's order.
+	FStratScoreboardModel Board;
+	FString               Reason;
+	if (!TestTrue(TEXT("the scoreboard model builds, and its rows are §2.8's order"),
+			StratBuildScoreboardModel(Bridge, kFirstSide, Board, Reason)))
+	{
+		AddError(Reason);
+		return false;
+	}
+
+	if (!TestEqual(TEXT("§2.8 has three keys, so the scoreboard has three rows"),
+			Board.Rows.Num(), 3))
+	{
+		return false;
+	}
+
+	// ---- KEYS 1, 2 AND 3 -------------------------------------------------------
+	for (int32 Key = 1; Key <= Board.Rows.Num(); ++Key)
+	{
+		const EStratScoreCriterion Expected = Board.Rows[Key - 1].Criterion;
+
+		// Pre-loaded with the NEXT row's criterion, which is never this key's answer, so a
+		// function that returned true without writing would be caught here rather than
+		// coinciding with a default.
+		const EStratScoreCriterion Preloaded = Board.Rows[Key % Board.Rows.Num()].Criterion;
+		EStratScoreCriterion       Got       = Preloaded;
+
+		if (!TestTrue(*FString::Printf(TEXT("§2.8's key %d is a key the screen can name"), Key),
+				StratScoreCriterionForKey(Key, Got)))
+		{
+			continue;
+		}
+
+		TestEqual(*FString::Printf(
+				TEXT("§2.8's key %d reaches the screen as criterion '%s' -- the row the "
+				     "scoreboard itself puts %d-th -- so no WBP has to subtract one"),
+				Key, *CriterionName(Expected), Key),
+			static_cast<int32>(Got), static_cast<int32>(Expected));
+
+		// The pre-load is only a witness if it was something else to begin with; without this
+		// the assertion above would hold over a function that wrote nothing at all.
+		TestNotEqual(*FString::Printf(
+				TEXT("and the pre-loaded '%s' differed from it, so the write was measured"),
+				*CriterionName(Preloaded)),
+			static_cast<int32>(Preloaded), static_cast<int32>(Expected));
+	}
+
+	// ---- EVERY OTHER INPUT: false, AND THE OUT-PARAMETER UNTOUCHED --------------
+	// 0 is the common case and the rest are keys §2.8 does not have. They share one arm on
+	// purpose -- see the function's own block -- and they are asserted separately so that a
+	// mapping which special-cased 0 alone could not pass.
+	{
+		// `INDEX_NONE` is not listed separately: it IS -1.
+		const int32 NonKeys[] = { 0, -1, 4, TNumericLimits<int32>::Max(),
+		                          TNumericLimits<int32>::Min() };
+
+		for (const int32 Key : NonKeys)
+		{
+			// Every one of the three real criteria, so "untouched" is not measured against a
+			// single lucky value.
+			for (const FStratScoreboardRow& Witness : Board.Rows)
+			{
+				EStratScoreCriterion Got = Witness.Criterion;
+
+				TestFalse(*FString::Printf(
+						TEXT("%d is not one of §2.8's three keys"), Key),
+					StratScoreCriterionForKey(Key, Got));
+
+				TestEqual(*FString::Printf(
+						TEXT("and a refusal left the caller's '%s' untouched, which is what "
+						     "lets key 0 keep a default instead of naming a row"),
+						*CriterionName(Witness.Criterion)),
+					static_cast<int32>(Got), static_cast<int32>(Witness.Criterion));
+			}
+		}
+	}
+
+	// ---- A LATCH, AND IT IS INERT TODAY. SAID PLAINLY BECAUSE IT LOOKS LIKE COVERAGE ------
+	// WHAT THIS BLOCK WOULD CATCH: `StratBuildMatchResultModel` keeping a private second copy
+	// of the switch instead of calling the seam. WHAT IT ACTUALLY CATCHES ON THE SHIPPED
+	// SCENARIO: nothing. The seeded opening carries `DecidedByKey == 0`, so the seam returns
+	// false and leaves `FromSeam` exactly as it was seeded -- both assertions below reduce to
+	// `x == x` and `false == false`, and a builder with a duplicate switch would pass them.
+	//
+	// IT IS KEPT RATHER THAN DELETED, AND KEPT HONEST RATHER THAN DESCRIBED AS A PIN. The
+	// moment any bridge this suite can build produces a non-zero key, these two lines become
+	// the assertion the comment above describes, with no edit. Until then the `AddInfo` below
+	// is what a reader sees, so the block cannot be mistaken for the thing it is waiting to be.
+	//
+	// AND A BRIDGE IS NOT THE ONLY ROUTE -- SAID SO THAT NOBODY READS THIS AS "IMPOSSIBLE".
+	// `FStratMatchResultView` is a plain `USTRUCT` with a public defaulted `int32 DecidedByKey`,
+	// so a clause can hand-author one carrying key 2 with NO bridge in existence. What stands in
+	// the way is only that `StratBuildMatchResultModel` reaches for its result THROUGH the
+	// bridge: extract the key-to-tag step to take a `const FStratMatchResultView&` and the
+	// caller property is fully falsifiable. That is the same extract-a-seam move that made the
+	// mapping itself testable, one layer up. It was judged NOT WORTH IT THIS PASS -- another
+	// production change and another gate for a property whose subject is one line -- and it is
+	// filed rather than forgotten. NOT a wall; a cost that was weighed.
+	//
+	// THIS IS THE SAME SHAPE THE WHOLE CLAUSE EXISTS TO CLOSE, ONE LAYER UP -- an arm no
+	// fixture reaches, reading as covered. It was caught by `strat-integration-reviewer` on
+	// the gate for this very change, after the first version of this comment claimed the pin.
+	{
+		FStratMatchResultModel Model;
+		FString                BuildReason;
+		if (TestTrue(TEXT("the verdict model builds over the seeded opening"),
+				StratBuildMatchResultModel(Bridge, kFirstSide, Model, BuildReason)))
+		{
+			EStratScoreCriterion FromSeam = Model.DecidedByCriterion;
+			const bool           SeamSays = StratScoreCriterionForKey(Model.DecidedByKey, FromSeam);
+
+			AddInfo(Model.DecidedByKey == 0
+				? TEXT("the opening's key is 0, so the two assertions that follow are TAUTOLOGIES "
+				       "here and pin nothing -- see the block comment; they arm themselves the "
+				       "moment a non-zero key becomes reachable")
+				: TEXT("the opening carried a non-zero key, so the caller assertions below are "
+				       "live -- the block comment's 'inert today' no longer describes this run"));
+
+			TestEqual(*FString::Printf(
+					TEXT("`bHasDecidedBy` is the seam's answer for key %d"), Model.DecidedByKey),
+				Model.bHasDecidedBy, SeamSays);
+
+			TestEqual(*FString::Printf(
+					TEXT("and the tag on the model is the seam's criterion for key %d"),
+					Model.DecidedByKey),
+				static_cast<int32>(Model.DecidedByCriterion), static_cast<int32>(FromSeam));
+		}
+		else
+		{
+			AddError(BuildReason);
 		}
 	}
 

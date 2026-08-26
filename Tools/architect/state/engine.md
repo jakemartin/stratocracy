@@ -13,6 +13,37 @@
 
 ## NEXT
 
+- **2026-08-25, WRITTEN BY THE `coordinator`, NOT BY `strat-gameplay-engineer`, AND THE DEPARTURE
+  IS DECLARED RATHER THAN QUIET.** No subagent ran this pass. **A SEAM WAS ADDED SO THAT A
+  CORRECT-BUT-UNTESTABLE MAPPING BECAME TESTABLE. Behaviour is unchanged -- deliberately, and
+  that is the whole claim.**
+  - **WHAT MOVED.** `StratBuildMatchResultModel`'s inline `switch` over
+    `FStratMatchResultView::DecidedByKey` is now `STRATUI_API bool StratScoreCriterionForKey(int32
+    Key, EStratScoreCriterion& OutCriterion)`, declared in `Source/StratUI/StratMatchResultWidget.h`
+    beside `StratResultTierTextFor` and defined in the `.cpp` above the builder. The builder's
+    seven-line switch became one line: `Built.bHasDecidedBy =
+    StratScoreCriterionForKey(Result.DecidedByKey, Built.DecidedByCriterion);`.
+  - **WHY IT IS A FUNCTION AND NOT A `Key - 1`.** T-UI-03's reason one layer down: the shift is
+    arithmetic between two vocabularies that both already exist -- §2.8 numbers its keys 1/2/3 and
+    `EStratScoreCriterion` numbers the same three criteria 0/1/2 -- and a cast off an int would
+    turn every key §2.8 does not have into a real row of the scoreboard. The `switch` is total and
+    every enumerator of the target names a row a display could accidentally mark.
+  - **THE DISPOSITION OF `false` IS LOAD-BEARING AND IS UNCHANGED FROM THE INLINE SWITCH.**
+    `OutCriterion` is written ONLY on true, so the caller's own default survives key 0 -- the
+    common case, a flag kill having evaluated no key at all -- and `bHasDecidedBy` remains the
+    thing that says whether to read the tag. A sentinel enumerator was not added, for the reason
+    the header already gave.
+  - **BUILD.** `Result: Succeeded`, exit 0, 13.18 s, green on the first attempt. Adaptive unity
+    excluded `StratMatchResultWidget.cpp` and `StratMatchResultModelClauses.cpp` and rebuilt
+    `UnrealEditor-StratUI.dll`. Editor CLOSED for the whole pass -- no `UnrealEditor` process --
+    so no DLL write lock and no Live Coding mutex was in play. No `Content/`, no
+    `Source/StratRules/`, no `Data/`, no `.uproject` change. No suite count and no verdict is
+    stated here; `global.md` owns both.
+  - **THE MAPPING WAS NEVER WRONG.** Key 1 -> `CombatFame`, key 2 -> `Objectives`, key 3 ->
+    `SurvivingHp`, before and after, and the clause that now grades it derives that from
+    `StratBuildScoreboardModel`'s own rows rather than from a table. What was wrong was that no
+    test could reach two of the three arms. See `tests.md`.
+
 - **2026-08-25, `strat-gameplay-engineer`: SEC 2.11.4'S END-OF-MATCH SCREEN HAS A C++ HALF,
   AND ITS THREE ROWS ARE THE LIVE SCOREBOARD'S OWN MODEL RATHER THAN A SECOND COPY OF SEC 2.8'S
   ORDER.** Built in worktree `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/match-result-screen`,

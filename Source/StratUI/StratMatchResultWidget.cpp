@@ -129,6 +129,29 @@ FText StratResultTierTextFor(EStratResultTier Tier)
 	}
 }
 
+bool StratScoreCriterionForKey(int32 Key, EStratScoreCriterion& OutCriterion)
+{
+	switch (Key)
+	{
+	case 1:
+		OutCriterion = EStratScoreCriterion::CombatFame;
+		return true;
+	case 2:
+		OutCriterion = EStratScoreCriterion::Objectives;
+		return true;
+	case 3:
+		OutCriterion = EStratScoreCriterion::SurvivingHp;
+		return true;
+	default:
+		// 0 IS "NO TIEBREAK RAN" AND IS THE COMMON CASE, not an error: a flag kill ends a match
+		// without evaluating a key at all. Anything else is a key §2.8 does not have. Both
+		// arms leave `OutCriterion` untouched -- see the header on why the caller's default
+		// beats a sentinel, every enumerator of `EStratScoreCriterion` naming a real row a
+		// display could accidentally mark.
+		return false;
+	}
+}
+
 bool StratBuildMatchResultModel(const FStratBridge&     Bridge,
                                 int32                   ViewingSide,
                                 FStratMatchResultModel& OutModel,
@@ -170,31 +193,16 @@ bool StratBuildMatchResultModel(const FStratBridge&     Bridge,
 	Built.ResultLine    = StratResultLineFor(Result.Tier, Result.Cause, Result.Winner);
 	Built.WinnerFaction = SideFaction(Result.Winner);
 
-	// §2.8's key as a row tag. THE ONE INDEX SHIFT IN THIS FILE, and it is here rather than
-	// in the WBP precisely because it is arithmetic: §2.8 numbers its keys 1, 2, 3 and
-	// `EStratScoreCriterion` numbers the same three criteria 0, 1, 2. A graph doing this
-	// subtraction is the widget-side arithmetic T-UI-03 forbids; a `switch` doing it here is
-	// a mapping between two vocabularies that both already exist.
-	switch (Result.DecidedByKey)
-	{
-	case 1:
-		Built.bHasDecidedBy      = true;
-		Built.DecidedByCriterion = EStratScoreCriterion::CombatFame;
-		break;
-	case 2:
-		Built.bHasDecidedBy      = true;
-		Built.DecidedByCriterion = EStratScoreCriterion::Objectives;
-		break;
-	case 3:
-		Built.bHasDecidedBy      = true;
-		Built.DecidedByCriterion = EStratScoreCriterion::SurvivingHp;
-		break;
-	default:
-		// 0 IS "NO TIEBREAK RAN" AND IS THE COMMON CASE, not an error: a flag kill ends a
-		// match without evaluating a key at all. `DecidedByCriterion` is left at its default
-		// and `bHasDecidedBy` says not to read it.
-		break;
-	}
+	// §2.8's key as a row tag. THE ONE INDEX SHIFT ON THIS SCREEN, and it is neither here
+	// nor in the WBP -- it is `StratScoreCriterionForKey`, a module-side seam a clause can call
+	// with all four classes of input. §2.8 numbers its keys 1, 2, 3 and `EStratScoreCriterion`
+	// numbers the same three criteria 0, 1, 2; a graph doing that subtraction is the widget-side
+	// arithmetic T-UI-03 forbids, and the switch that used to sit inline HERE was the same
+	// mapping with two of its three arms unreachable from any test. See that function's block.
+	//
+	// FALSE LEAVES `DecidedByCriterion` AT ITS DEFAULT, which is the same disposition the inline
+	// switch had for key 0: `bHasDecidedBy` is what says not to read the tag.
+	Built.bHasDecidedBy = StratScoreCriterionForKey(Result.DecidedByKey, Built.DecidedByCriterion);
 
 	// ---- The three comparisons the model exists to have already made ----------
 	// `bIsDraw` IS READ OFF THE TIER AND NOT OFF `Winner == INDEX_NONE`. The two agree, and

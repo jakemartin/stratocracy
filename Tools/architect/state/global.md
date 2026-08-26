@@ -11,9 +11,88 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-25 (SEC 2.8'S TIEBREAK KEYS 2 AND 3 ARE PINNED, AND THE HOLE THE ITEM-1e
+ENTRY BELOW FILED FOR ANOTHER OWNER IS DISCHARGED. Written by the `coordinator`, whose file this
+is. The suite is now **225/225**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings. The delta is **+1** and nothing was removed or renamed, measured by
+set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` -- 224 names at
+`a808e0b`, 225 in this tree, the one addition being
+`Stratocracy.StratUI.T-UI-03.EveryTiebreakKeyReachesTheScreenAsItsOwnCriterion`. THE REPORT THAT
+CERTIFIES THE LIVE FIGURE IS THIS TREE'S AND IS NAMED RATHER THAN ALLUDED TO:
+`reportCreatedOn 2026.08.26-02.41.12`, `succeeded 225`, `failed 0`, `notRun 0`,
+`succeededWithWarnings 0`, run in `E:/MultiAgent/Stratocracy` over the working tree these edits
+produced. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL, which is why they name different
+days.
+WHAT WAS ACTUALLY WRONG, AND IT WAS A COVERAGE HOLE RATHER THAN A WRONG ANSWER. The mapping from
+SEC 2.8's key number to `EStratScoreCriterion` was CORRECT and was UNREACHABLE. It sat as a
+`switch` inline in `StratBuildMatchResultModel`, and keys 2 and 3 need a capped match in which
+both sides fought to an EQUAL combat Fame -- every game SEC 2.9's AI plays on the shipped
+scenario ends `Decisive`/`FlagDestroyed` with `decidedByKey == 0`. So a swapped mapping would
+have marked the wrong row on the verdict screen with every number on it still right, and would
+have shipped green. This is the reflected-verb-with-no-caller shape inverted: the CODE was
+reachable by a player and not by a test.
+THE FIX IS A SEAM PLUS A CLAUSE AND NEITHER HALF IS WORTH ANYTHING ALONE. `STRATUI_API bool
+StratScoreCriterionForKey(int32 Key, EStratScoreCriterion& OutCriterion)` in
+`Source/StratUI/StratMatchResultWidget.cpp` -- the same switch, moved out unchanged, exactly the
+discharge `tests.md` had named before it existed -- and one clause that calls it with all three
+keys and five non-keys. `StratBuildMatchResultModel` now has one line where it had a switch.
+**[CORRECTED 2026-08-25, same pass. This sentence continued "and the clause also pins that it
+CALLS the seam rather than keeping a second copy of it". IT DOES NOT.** The clause's third block
+runs over the seeded opening, where `DecidedByKey == 0`, so both of its assertions are
+tautologies and a builder with a private duplicate switch would pass them. It is kept as a latch
+that arms itself when a non-zero key becomes reachable, and both the block comment and `tests.md`
+now say so. Caught by `strat-integration-reviewer` as observation 1 on the gate for this change
+-- `VERDICT: PASS`, zero findings -- and the observation was right. THE SAME
+UNREACHED-ARM-READS-AS-COVERED SHAPE THIS WHOLE FIX EXISTS TO CLOSE, REAPPEARING IN THE
+COORDINATOR'S OWN PROSE ABOUT THE FIX.**]
+THE EXPECTATION IS THE SCOREBOARD'S OWN ROWS AND NOT A TYPED TABLE. Key N is required to name
+`StratBuildScoreboardModel`'s `Rows[N - 1].Criterion` on the seeded bridge; the only thing the
+clause supplies is that SEC 2.8 counts from one. A typed table of three pairs would have been
+this suite transcribing the switch it grades.
+FALSIFIABILITY WAS MEASURED AND NOT INFERRED, AND THE CONTROL IS THE PART WORTH CARRYING. Keys 2
+and 3 were SWAPPED in the shipped function, the target rebuilt `Result: Succeeded`, and
+`Automation RunTests Stratocracy.StratUI.T-UI-03` run: **25 succeeded, 1 failed**, the new clause
+the only red one, naming both swapped keys. THE PRE-EXISTING
+`DecidedByKeyReachesTheScreenAsACriterionAndNotAsArithmetic` STAYED GREEN OVER THE MUTANT -- which
+is the hole demonstrated rather than argued. The mutation was reverted and the blob re-measured
+identical (`git hash-object` `68a842d` before and after), the target rebuilt, and the full suite
+re-run afterwards; the report named above is a post-revert run over these exact bytes.
+TWO GATES RAN AND BOTH RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, and the second one exists
+because the first changed the tree. `strat-integration-reviewer` read the UNCOMMITTED working tree
+and re-derived every figure above rather than taking it -- the macro census 224 -> 225 walked from
+`git ls-tree` on the HEAD side, the report's mtime proven to postdate every test-defining source,
+the vendored bytes checked through git's own tracked-path machinery with filters applied --
+`git diff --stat`, `git status --porcelain` and `git diff --numstat` over `Source/StratRules` and
+`Data`, all empty, plus `rulesCommit 96d93ea` and `dataCommit c2f5860` re-derived from the
+manifests, NOT a literal `git hash-object` per vendored file -- the module arrows parsed out of all five
+`.Build.cs` files. ITS OBSERVATION 1 OF FIVE WAS A REAL DEFECT AND IS THE PART WORTH READING: the new
+clause's third block, which this entry originally said pinned the builder as the seam's CALLER,
+is a TAUTOLOGY on the shipped scenario -- see the correction above. The re-gate on that correction
+returned `PASS` too, on a shape sweep rather than a phrase sweep, and upheld keeping the inert
+block as a labelled latch on a ground the `coordinator` had not made: it lives INSIDE an existing
+clause, so it cannot inflate the suite census the way a standalone inert clause would.
+THE RE-GATE ALSO OVERRULED THE WORD "IMPOSSIBLE", AND IT WAS RIGHT TO. The `coordinator` told it
+no way existed to make that block bite. `FStratMatchResultView` is a plain `USTRUCT` with a public
+defaulted `int32 DecidedByKey`, so a clause can hand-author key 2 WITH NO BRIDGE; the only
+obstacle is that `StratBuildMatchResultModel` reaches for its result through the bridge, and
+extracting the key-to-tag step to take a `const FStratMatchResultView&` makes the caller property
+fully falsifiable. AN UNMEASURED LIMITATION ASSERTED AS A RULE is its own defect class in this
+record, and this is an instance of it caught inside one session.
+FILED, NOT BUILT -- CARRIED DEBT, OWNED BY THE `coordinator`. (a) Extract
+`StratBuildMatchResultModel`'s key-to-tag step to take a `const FStratMatchResultView&`, so the
+caller property stops being a latch and becomes a pin. Cost: one production change plus a gate;
+declined this pass because the property's subject is one line. (b) `strat_banner_sweep.py`'s
+`TRACKED_ITEMS` is a TYPED list of two and does not know about (a), so no guard will notice if
+that latch is still inert a milestone from now. Registering it is `strat-data-steward`'s lane and
+carries that lane's falsifiability obligation -- a guard whose reference data is typed by hand
+goes inert on its own subject silently, which this record has measured before.
+NOTHING IS COMMITTED. The working tree carries six modified files -- two source, one clause file
+and three record files -- and staging is the user's call.)
+
 _Last run 2026-08-25 (ITEM 1e LANDS WHOLE AND IS MERGED: SEC 2.11.4'S END-OF-MATCH SCREEN IS
-ROUTED, PINNED, DRAWN AND REACHABLE BY A PLAYER. The suite is now 224/224,
-every entry Success, zero failed and zero notRun. The delta is +6 and nothing was removed or
+ROUTED, PINNED, DRAWN AND REACHABLE BY A PLAYER. The suite WAS **224/224** at that pass,
+every entry Success, zero failed and zero notRun; SUPERSEDED 2026-08-25 by the 225/225 entry
+above, which added one clause and removed none. The delta is +6 and nothing was removed or
 renamed, measured by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/`
 and RE-DERIVED BY THE `coordinator` independently of the lane report -- 218 on `master` at
 `194de95` and 224 in the lane tree, the macro census and the automation report agreeing at 224.
@@ -102,11 +181,13 @@ that `MatchResultWidgetClass` is typed to the concrete class rather than to a ba
 as `ProductionMenuWidgetClass` is, so the asset will bake `/Script/StratUI.StratMatchResultWidget`
 into itself irreversibly; that is deliberate, since a WBP free to compose its own verdict would be
 a second author of SEC 2.8's result.
-THREE THINGS ARE FILED FOR AN OWNER OTHER THAN THE LANE THAT FOUND THEM. (1) SEC 2.8's tiebreak
-keys 2 and 3 CANNOT BE PINNED today: every game the AI plays on the shipped scenario ends
-`Decisive`/`FlagDestroyed` with `decidedByKey == 0`, so a wrong mapping for keys 2 and 3 ships
-green. The seam named is a `STRATUI_API` free function exposing the key-to-criterion switch that
-is currently inline in `StratBuildMatchResultModel`. (2) `kb/setting.md`'s nine banned register
+THREE THINGS ARE FILED FOR AN OWNER OTHER THAN THE LANE THAT FOUND THEM. (1) **[DISCHARGED
+2026-08-25 by the 225/225 entry above; the sentence is kept because it is what named the seam.]**
+SEC 2.8's tiebreak keys 2 and 3 COULD NOT BE PINNED at that pass: every game the AI plays on the
+shipped scenario ends `Decisive`/`FlagDestroyed` with `decidedByKey == 0`, so a wrong mapping for
+keys 2 and 3 shipped green. The seam named was a `STRATUI_API` free function exposing the
+key-to-criterion switch that was then inline in `StratBuildMatchResultModel` -- it is now
+`StratScoreCriterionForKey`, and one clause calls it. (2) `kb/setting.md`'s nine banned register
 words are a STATED LITERAL in the clause and not a read, because that file lives only in
 `E:/MultiAgent/stratocracy-content` and a headless run may not reach outside the tree; discharged
 by vendoring it beside the GDD snapshot, which is `strat-data-steward`'s call. (3)

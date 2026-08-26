@@ -168,6 +168,32 @@ STRATUI_API FText StratResultLineFor(EStratResultTier Tier, EStratResultCause Ca
 STRATUI_API FText StratResultTierTextFor(EStratResultTier Tier);
 
 /**
+ * §2.8's key number as the criterion tag §2.11.4's screen marks a row with.
+ *
+ * THE SEAM EXISTS SO THE MAPPING CAN BE PINNED, and that is its whole justification. §2.8
+ * numbers its tiebreak keys 1, 2, 3; `EStratScoreCriterion` numbers the same three criteria
+ * 0, 1, 2. While this switch lived inline in `StratBuildMatchResultModel`, keys 2 and 3 were
+ * unreachable from any clause the suite can write: they need a capped match in which both
+ * sides fought to an EQUAL combat Fame, and every game §2.9's AI plays on the shipped
+ * scenario ends `Decisive / FlagDestroyed` with `decidedByKey == 0`. A wrong mapping for
+ * those two keys therefore shipped GREEN -- the screen would mark the wrong row and every
+ * number on it would still be right. `Tools/architect/state/tests.md` named this function as
+ * the discharge before it existed.
+ *
+ * A `switch` AND NOT `Key - 1`, for T-UI-03's reason one layer down: the shift is arithmetic
+ * between two vocabularies that both already exist, and a cast off an int would turn every
+ * key §2.8 does not have into a real row of the scoreboard.
+ *
+ * @param Key           `FStratMatchResultView::DecidedByKey`, in §2.8's own 1-based
+ *                      numbering.
+ * @param OutCriterion  written ONLY when the answer is true, so the caller's own default
+ *                      survives a key of 0 -- which is the common case, a flag kill having
+ *                      evaluated no key at all, and not an error.
+ * @return true exactly when `Key` names one of §2.8's three keys.
+ */
+STRATUI_API bool StratScoreCriterionForKey(int32 Key, EStratScoreCriterion& OutCriterion);
+
+/**
  * Everything the end-of-match screen draws, in one value.
  *
  * A SNAPSHOT OF A SNAPSHOT, held by value, for `FStratScoreboardModel`'s stated reason: the

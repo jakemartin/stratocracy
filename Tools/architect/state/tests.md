@@ -12,6 +12,71 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-25, WRITTEN BY THE `coordinator`, NOT BY `strat-test-author`, AND THE DEPARTURE IS
+  DECLARED RATHER THAN QUIET.** No subagent ran this pass; the user asked for the fix directly and
+  the two halves of it straddle the test lane and the engine lane, so one writer made both edits
+  and both record entries. **§2.8's TIEBREAK KEYS 2 AND 3 ARE PINNED. The hole this file recorded
+  in the WAVE 6 entry below is DISCHARGED**, and that bullet is stamped where it stands.
+  - **ONE NEW CLAUSE**, `Stratocracy.StratUI.T-UI-03.EveryTiebreakKeyReachesTheScreenAsItsOwnCriterion`,
+    appended to the existing `Source/StratUI/Tests/StratMatchResultModelClauses.cpp`. **Clause
+    delta +1**, by set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` walked over `Source/` --
+    224 names at `a808e0b`, 225 in this tree, exactly one added and none removed or renamed. Never
+    by an acceptance-ID grep, which has undercounted 8 as 5 in this repo. **No id minted**; it
+    joins T-UI-03 beside the clause it completes. The live suite figure is in `global.md` and is
+    not restated here.
+  - **THE MODULE-SIDE SEAM THIS FILE ASKED FOR NOW EXISTS**: `STRATUI_API bool
+    StratScoreCriterionForKey(int32 Key, EStratScoreCriterion& OutCriterion)`, the switch that was
+    inline in `StratBuildMatchResultModel`, moved out unchanged. See `engine.md` for that half.
+    The clause was NOT WRITABLE BEFORE IT -- keys 2 and 3 need a capped match in which both sides
+    fought to an EQUAL combat Fame, and no bridge this suite can build produces one. The
+    unreachability is unchanged; what changed is that the mapping is now callable.
+  - **WHERE THE EXPECTATION COMES FROM, WHICH IS STILL THE COLUMN THAT MATTERS.**
+    `StratBuildScoreboardModel`'s OWN rows on the seeded bridge: §2.11.4 orders them in §2.8's
+    tiebreak order and §2.8 numbers its keys from one, so key N must name `Rows[N - 1].Criterion`.
+    The clause supplies only "§2.8 counts from one". A typed table of three pairs would have been
+    this file transcribing the switch it grades, and would have agreed with a swapped mapping the
+    moment somebody swapped both copies.
+  - **THE NON-KEYS ARE PINNED IN BOTH DIRECTIONS.** `false` alone is half the contract: the
+    function must also leave `OutCriterion` UNTOUCHED, which is what lets key 0 -- the common
+    case, a flag kill having evaluated no key -- keep the caller's default instead of naming a
+    row. Every call pre-loads the out-parameter with a value the true answer is not, over all
+    three criteria, so the write and the non-write are both measured. Non-keys walked: 0, -1, 4,
+    `INT32_MAX`, `INT32_MIN`. `INDEX_NONE` is not listed separately because it IS -1.
+  - **THE BUILDER IS *NOT* PINNED AS THE SEAM'S CALLER, AND THE FIRST VERSION OF THIS ENTRY SAID
+    IT WAS.** [Corrected 2026-08-25, same pass, on `strat-integration-reviewer`'s observation 1 --
+    the gate returned `VERDICT: PASS` with zero findings and five observations, of which this was
+    the first, and it was right.] The clause's third block builds the model over the seeded opening, where
+    `DecidedByKey == 0`; the seam then returns false and leaves the comparison value as seeded, so
+    both assertions reduce to `x == x` and `false == false`. **A builder keeping a private second
+    switch would pass them.** The block is KEPT as a latch -- it arms itself with no edit the
+    moment a non-zero key becomes reachable -- and its comment now says so, with an `AddInfo` that
+    prints the inertness into every report. **This is the same unreached-arm-reads-as-covered
+    shape the clause exists to close, reappearing one layer up in my own prose**, which is the
+    part worth carrying forward.
+  - **AND "UNREACHABLE" WOULD HAVE BEEN THE NEXT DEFECT, CAUGHT ON THE RE-GATE.** The
+    `coordinator` told the reviewer it "could find no way" to make that block bite. That is an
+    unmeasured limitation asserted as a rule, and it is wrong: `FStratMatchResultView` is a plain
+    `USTRUCT` with a public defaulted `int32 DecidedByKey`, so a clause can hand-author key 2 with
+    NO bridge. The only obstacle is that `StratBuildMatchResultModel` reaches for its result
+    through the bridge; extracting the key-to-tag step to take a `const FStratMatchResultView&`
+    makes the caller property fully falsifiable. **Not a wall -- a cost that was weighed and
+    declined this pass**, and filed in `global.md`'s backlog rather than forgotten.
+  - **FALSIFIABILITY WAS MEASURED, NOT INFERRED, AND THE CONTROL IS THE FINDING.** Keys 2 and 3
+    were SWAPPED in the shipped function, the target rebuilt (`Result: Succeeded`), and
+    `Automation RunTests Stratocracy.StratUI.T-UI-03` run: **25 succeeded, 1 failed** -- the new
+    clause the only red one, naming both swapped keys with the criterion each should have been.
+    **`DecidedByKeyReachesTheScreenAsACriterionAndNotAsArithmetic` STAYED GREEN over that mutant**,
+    which is the hole demonstrated rather than argued. Reverted, blob re-measured identical by
+    `git hash-object` (`68a842d` before and after), rebuilt, full suite re-run.
+  - **THE TEMPORARY EDIT WAS TO A NON-`Tests/` FILE AND THAT IS ONLY ADMISSIBLE BECAUSE NO LANE
+    AGENT MADE IT.** The WAVE 6 entry below records `strat-test-author` REFUSING exactly this
+    mutation and being right to; that rule is unchanged and this is not a precedent for it. A
+    lane agent asked to do this must still refuse and notify the coordinator.
+  - **THE END-TO-END CLAUSE IS NOT MADE REDUNDANT.**
+    `DecidedByKeyReachesTheScreenAsACriterionAndNotAsArithmetic` is still the only place the key
+    travels from the rules module, through `StratBuildMatchResultModel`, onto the model a widget
+    reads. The two clauses are the reachable half and the callable half of one property.
+
 - **WAVE 6: §2.11.4's END-OF-MATCH SCREEN. SIX CLAUSES, AND ONE OF THE TWO ACCEPTANCE IDs THE
   DISPATCH PROPOSED DID NOT SURVIVE READING THE DOCUMENT.** Three new clause-bearing files:
   `Source/StratUI/Tests/StratMatchResultModelClauses.cpp` (five clauses, `T-UI-03`) and
@@ -51,18 +116,24 @@
     - `ResultLineMappingIsTotalOverEveryTierCauseAndWinner` — **72** triples off `StaticEnum`'s
       own walks, **42** of them with a line, and every non-empty answer is required to be one of
       the GDD's six. Without that closure the totality clause is satisfied by returning "x".
-    - `DecidedByKeyReachesTheScreenAsACriterionAndNotAsArithmetic` — see the hole below.
+    - `DecidedByKeyReachesTheScreenAsACriterionAndNotAsArithmetic` — see the hole below, now
+      DISCHARGED, and its companion clause in this file's topmost entry.
     - `MatchResultScreenIsAskedForOncePerMatchAndClearedOnRestart` — ONE clause on purpose. The
       subject is the COMBINATION; either half alone passes against a broken implementation, and a
       trigger unobservable except by combination is the §2.11.6-B beat-2 defect class.
-  - **WHAT THE KEY CLAUSE DOES NOT PIN, AND IT IS A REAL HOLE.** §2.8's keys **2 and 3** are
-    unreachable from any bridge this suite can build — they need a capped match in which both
-    sides fought to an EQUAL combat Fame. Every game §2.9's AI plays on the shipped scenario ends
-    `Decisive / FlagDestroyed` with `decidedByKey == 0`, so the clause measures the **key-0 arm
-    only** and states the shift as a relation (`Rows[DecidedByKey - 1].Criterion`) that fires only
-    if a key is ever non-zero. **Discharged by a module-side seam this lane may not add:** a
-    `STRATUI_API` free function exposing the key→criterion switch that currently lives inline in
-    `StratBuildMatchResultModel`. Until then a wrong mapping for keys 2 and 3 ships green.
+  - **WHAT THE KEY CLAUSE DOES NOT PIN, AND IT WAS A REAL HOLE. [DISCHARGED 2026-08-25 — see the
+    entry at the top of this file. The bullet is kept unshortened because it is what named the
+    seam, and the closing sentence below was true only until that seam landed.]** §2.8's keys
+    **2 and 3** are unreachable from any bridge this suite can build — they need a capped match in
+    which both sides fought to an EQUAL combat Fame. Every game §2.9's AI plays on the shipped
+    scenario ends `Decisive / FlagDestroyed` with `decidedByKey == 0`, so **this** clause measures
+    the **key-0 arm only** and states the shift as a relation (`Rows[DecidedByKey - 1].Criterion`)
+    that fires only if a key is ever non-zero. **Discharged by a module-side seam this lane may
+    not add:** a `STRATUI_API` free function exposing the key→criterion switch that then lived
+    inline in `StratBuildMatchResultModel`. That function is `StratScoreCriterionForKey`, it
+    exists, and `EveryTiebreakKeyReachesTheScreenAsItsOwnCriterion` calls it — so the sentence
+    *"until then a wrong mapping for keys 2 and 3 ships green"* NO LONGER HOLDS. It did hold for
+    every pass before this one.
   - **THE MUTATION WITNESS IS IN THE CLAUSE, NOT IN A REPORT, AND THE LANE RULE IS WHY.** The
     dispatch asked for a two-directional differential over a temporary edit to
     `Source/StratUI/StratMatchResultWidget.cpp`. That file is outside this lane and the rule

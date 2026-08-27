@@ -2184,6 +2184,60 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-27, COORDINATOR -- USER RULING, AMENDED THE SAME DAY ON EVIDENCE FROM `Ui.h` ITSELF:
+  WAVE 3'S FOUR READOUTS SPLIT ACROSS TWO EXISTING IDS AND TWO UNPINNED ITEMS. NO ID IS MINTED
+  HERE, AND AN UPSTREAM MINT IS FILED. RECORD-ONLY; NO CODE, NO ASSET, NO TEST AND NO SUITE RUN.**
+  W3 (the persistent HUD, Sec 2.11.2) had no acceptance ID, and a clause may not be named without
+  one -- a proposed identifier greps exactly like a defined one, which is a failure this record
+  has already been caught by.
+  **THIS ENTRY IS WRITTEN FLAT AND ITS FIRST WORDING IS QUOTED RATHER THAN LEFT STANDING**, because
+  a correction that only ADDS leaves both claims live and a NESTED one has already let a false
+  sentence survive directly above its own retraction in this file.
+  - **STRUCK, and it was the coordinator's own recommendation before the evidence was read:**
+    `The +X/turn income line, the End Turn surface and the idle count ride T-UI-05`, on the ground
+    that `the income line, the End Turn surface and the idle count are each a module-held field
+    displayed truthfully`. **That is false for two of the three**, and `Ui.h` says so in its own
+    words rather than by inference.
+  - **THE RULING AS IT STANDS.** The Fame **purse** rides `T-UI-04`. The **`+X/turn` income line**
+    rides `T-UI-05`. The **End Turn surface** and the **idle count** ride NOTHING and land
+    **unpinned**, and an upstream mint is filed against `stratocracy-content` for an ID covering
+    Sec 2.11.2's HUD verbs and per-unit presentation state.
+  - **WHY THE TWO THAT HOLD, HOLD.** `T-UI-04`'s own GDD sentence is `the production menu binds to
+    the buildlist derived from the four Stub-2 unit rows plus current fameTotal` -- the purse IS
+    `fameTotal`, named in the ID's own text, so that half is not a stretch at all. The income rate
+    is a SNAPSHOT FIELD by `Ui.h`'s own accounting, which lists it among the members `RULED on
+    2026-08-04` and says `The first two are snapshot fields below`; `T-UI-05` asks whether the
+    snapshot tells the truth about the state the module holds, so the income line is squarely its
+    subject.
+  - **WHY THE TWO THAT DO NOT, CANNOT, and the header refuses them by name.** The idle count is
+    derived from `FStratUnitView::bDone` and `FStratUnitView::bLockedThisTurn`
+    (`Source/StratUI/StratViewModel.h`), which are the UE-side mirrors of `done` and
+    `lockedThisTurn` in `Ui.h`'s PRESENTATION BLOCK (`strat::UiPresentationUnit`).
+    **[CORRECTED 2026-08-27, SAME DAY, BY `strat-data-steward` DURING THE UPSTREAM FILING, AND
+    STATED FLAT RATHER THAN NESTED. STRUCK: `bDone` and `bLockedThisTurn`, which are members of
+    `Ui.h`'s PRESENTATION BLOCK. WHAT IS TRUE: those two names appear ZERO times in `Ui.h` -- the
+    module spells them `done` and `lockedThisTurn`, and the `b`-prefixed pair is
+    `FStratUnitView`'s. THE RULING IS UNAFFECTED, because the exclusion quoted below is a sentence
+    about the block itself and not about either spelling; what was wrong was the OWNERSHIP, and an
+    ownership claim that does not survive a grep of the file it names is worth striking even when
+    it changes no outcome. The coordinator wrote it; the steward caught it while verifying its
+    dispatch rather than carrying it forward.]** That block's own header says: `It is NOT in T-UI-05's subject. That invariant asks whether
+    the snapshot tells the truth about the module's state; these members have no module-side
+    counterpart and no derivation from one, so there is nothing for it to compare them against.`
+    `UiSnapshot` carries no idle count and, by that ruling, could not. The End Turn surface is a
+    COMMAND PATH and not a snapshot field at all, so the same invariant does not reach it either.
+    A clause riding an ID whose own text excludes its subject is unfalsifiable by construction.
+  - **HOW THIS WAS CAUGHT, because the route matters more than the answer.** `strat-gameplay-engineer`
+    disputed the ruling in its lane report rather than complying with it, and the premises it cited
+    were then measured against `Ui.h` before the dispute was accepted. The record's standing rule
+    -- verify a crew agent's objection rather than overriding it, and rather than taking it -- paid
+    here.
+  - **WHAT LANDS UNPINNED IS NAMED, not left for a reader to discover.**
+    `AStratPlayerController::RequestEndTurn` and the idle-count selector ship with no clause. That
+    is a real coverage gap and it is stated as one.
+  - **STILL UNRULED: W2, W4, W5, W6 and W8.** Each is the user's to rule the same way, or to mint
+    upstream. This ruling covers W3 alone and widens nothing.
+
 - **2026-08-27, COORDINATOR -- W0'S HOVER NOW REACHES THE GAME. THE INPUT ROUTE WAS THE DEFECT,
   IT IS REPLACED, AND A HUMAN HAS SEEN IT WORK.** The entry below records the playtest that found
   wave 0's hover dead; this one records the diagnosis being settled by instrumentation, the route

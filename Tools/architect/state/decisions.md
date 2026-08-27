@@ -797,3 +797,69 @@
     record this ruling; the ruling closes the question, not a build task.
   - This entry does not state a suite count or a phase verdict -- see `state/global.md` for the
     live figure.
+
+- **FILED UPSTREAM 2026-08-27, on the user's 2026-08-27 ruling (see `state/global.md`'s
+  `NEXT` entry "WAVE 3'S FOUR READOUTS SPLIT ACROSS TWO EXISTING IDS AND TWO UNPINNED ITEMS" --
+  linked, not restated) -- W3's End Turn surface and idle-unit count have no acceptance ID and
+  the GDD's UI acceptance set (`T-UI-01`..`T-UI-05`, §4.11 "Build order", the row at the GDD's
+  own `UI binding (Stub 8)` line) does not cover either. This entry is the mint request itself,
+  drafted against `E:\MultiAgent\stratocracy-content` -- **DRAFT ONLY, not landed.** No file in
+  that repo was touched by this pass: `stratocracy-content` is outside this task's write
+  permission (`Config/` and `Tools/architect/` only) exactly as `Data/` and `Source/StratRules/`
+  are, and this entry states the request rather than committing it, following the same shape the
+  Q27 entry above used before it landed.
+  - **The two IDs that already cover half of W3, verified against the GDD and against `Ui.h`
+    rather than taken from the ruling's own wording.** `T-UI-04` covers the Fame purse -- its GDD
+    text (`Stratocracy_Prototype_GDD.md:2510-2512`, read by grep, not `cat`) is *"the production
+    menu binds to the buildlist derived from the four Stub-2 unit rows plus current fameTotal"*,
+    naming the purse field directly. `T-UI-05` covers the `+X/turn` income line -- the income
+    rate is a snapshot field by `Source/StratRules/Ui.h`'s own accounting (the presentation-block
+    header at that file, quoted below, draws the line at exactly this boundary).
+  - **Why the other two cannot ride either ID, quoted from `Ui.h` rather than argued around.**
+    `Ui.h`'s `UiPresentationUnit` struct (`done` and `lockedThisTurn`, the idle-count inputs) sits
+    under a comment block reading: *"It is NOT in T-UI-05's subject. That invariant asks whether
+    the snapshot tells the truth about the module's state; these members have no module-side
+    counterpart and no derivation from one, so there is nothing for it to compare them against."*
+    `UiSnapshot` carries no idle count and, by that block's own ruling, could not. The End Turn
+    surface is a command path (`AStratPlayerController::RequestEndTurn`), not a snapshot field,
+    so the same invariant does not reach it either.
+  - **A citation this entry does NOT carry forward, because it does not survive a read of the
+    file it names.** Both the 2026-08-27 dispatch that produced this filing and `global.md`'s own
+    entry above say the idle count is "derived from `bDone` and `bLockedThisTurn`, which are
+    members of `Ui.h`'s PRESENTATION BLOCK." Read directly, `Ui.h`'s presentation block
+    (`struct UiPresentationUnit`) names its two members `done` and `lockedThisTurn` -- no `b`
+    prefix, because the vendored header is plain C++ and carries no Unreal naming convention.
+    `bDone` and `bLockedThisTurn` are `FStratUnitView`'s own members in
+    `Source/StratUI/StratViewModel.h`, the UE-side mirror of those two fields, one level removed
+    from the vendored struct they are named after. The distinction does not change which ID
+    covers what -- `Ui.h`'s header text about T-UI-05's subject is the same sentence either
+    way -- but the filing should not repeat an ownership claim about a vendored file that a plain
+    grep of that file does not support, so it is corrected here rather than carried forward
+    silently.
+  - **What ships unpinned as a result, named rather than left for a reader to discover.**
+    `AStratPlayerController::RequestEndTurn` (`Source/StratPlay/StratPlayerController.h/.cpp`,
+    modified) and `UStratViewModelLibrary::CountUnitsAbleToAct` /
+    `CountViewingSideUnitsAbleToAct` (`Source/StratUI/StratViewModelLibrary.h/.cpp`, new,
+    untracked) -- all three verified present and uncommitted in
+    `E:\MultiAgent\Strat-wt\slot-2` (`feat/persistent-hud`, `git status --porcelain` run in that
+    worktree for this entry) at the time of writing.
+  - **What the requested ID should cover.** §2.11.2's HUD verbs (End Turn as a surface, not as a
+    key binding) and per-unit presentation state (the DONE bit and the per-turn lock) -- the two
+    things `Ui.h` names as owned by the selection machine and the guidance layer respectively and
+    deliberately absent from the rules module, per the same `UiPresentationUnit` block: *"where
+    per-unit presentation state lives is unruled."*
+  - **A proposed number, not a mint.** `T-UI-06` is already taken -- minted 2026-08-21 in the crew
+    repo's `spec/ui_spec.md` for the beat-1a input-gating constraint (Q27), verified by grep of
+    that file and of `state/global.md`'s own account of the ruling; it does not yet appear in the
+    shipped GDD at all (`grep T-UI-06 Stratocracy_Prototype_GDD.md` returns nothing), which is a
+    separate, already-open gap and not this one. `T-UI-07` is free in both repos as of this
+    entry -- offered as an example the way the Q27 filing's own `(e.g. T-UI-06)` was, not as a
+    mint. Minting is the Director's call, exercised upstream.
+  - **The durable point, not the missing number.** This is not an oversight in the GDD's ID list;
+    `Ui.h` has deliberately declined to own idle/lock presentation state, and the GDD's acceptance
+    set was written around the module's subjects. A HUD reading presentation state therefore has
+    no invariant to ride *by construction*, and `state/global.md`'s own entry already names
+    `W2, W4, W5, W6` and `W8` as still unruled and likely to hit the same wall -- linked, not
+    re-argued here.
+  - This entry does not state a suite count or a phase verdict -- see `state/global.md` for the
+    live figure.

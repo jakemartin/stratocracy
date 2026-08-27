@@ -12,6 +12,62 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-27 (local; the run's own reportCreatedOn is UTC 2026.08.27-03.59.15) — WAVE 0's HOVER INPUT, FIVE CLAUSES, AND TWO LEGS THAT COULD NOT FAIL.** New file
+  `Source/StratPlay/Tests/StratHoverInputClauses.cpp`; the clause-name set grew by exactly five,
+  measured by set difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` and not by an acceptance-ID
+  grep — every wave-0 clause shares `T-UI-01` by the user's ruling, so an ID grep is useless here
+  by construction. Nothing was removed. The live suite figure is in `global.md` and is not
+  restated here.
+  - **THE FILING IS `T-UI-01` AND NOT ONE OF THESE CLAUSES ASSERTS `T-UI-01`'s OWN SENTENCE.**
+    That sentence is *the forecast equals the resolution*, and it lives in
+    `Stratocracy.StratBridge.T-UI-01.CombatOutcomeAgreesWithForecast`. Wave 0 has no forecast at
+    all. What the five pin is the NECESSARY CONDITION underneath it — that a hovered hex reaches
+    `FStratViewModel::Hover`, and WHICH hex reaches it — because a card drawn for the wrong tile
+    is wrong before `FStratBridge::Forecast` is ever called. The file's own header block says this
+    in as many words so that a future reader cannot mistake the id for a claim about coverage.
+  - **WHAT THE FIVE PIN.** `HoveredHexReachesTheViewModel` — hex identity on the model, two board
+    hexes through one `FStratHoverState`, so a decorator writing a constant is caught.
+    `ClearedHoverLeavesNoStaleHex` — a cleared model is a complete statement, both fields.
+    `HoverChangeIsReportedOnlyWhenItMoves` — the setters' own return value, including the
+    clear-then-same-hex leg. `AnUndecoratedModelIsNotHovering` — `StratBuildViewModel` has no
+    opinion about the cursor, with a positive control. `ControllerHoverRouteReachesTheModel` —
+    the live `AStratPlayerController` route, `SetHoveredHex` → `GetHoveredHex` →
+    `DecorateForPresentation`.
+  - **THE FIRST DEFECT WAS MINE AND IT IS THE ENTRY'S POINT. A CLEAR THAT ALSO WIPES THE
+    COORDINATE MAKES THE RE-ENTRY LEG UNFALSIFIABLE AT EVERY HEX BUT ONE.**
+    `FStratHoverState::SetHoveredHex`'s change test is `!bHasHoveredHex || HoveredHex != Hex`, and
+    the whole worth of the third clause was the left disjunct — the drag across a unit's mesh and
+    back onto the tile under it. But `FStratHoverState::ClearHoveredHex` resets the coordinate as
+    well as the flag, so after a clear the held coordinate is the default and re-entering ANY
+    other hex answers true on the right disjunct alone. The first version re-entered an arbitrary
+    board hex and stayed **green** over a mutant that deleted `!bHasHoveredHex ||` outright. The
+    leg now re-enters the board hex that IS the default, found by `BoardHexEqualToTheDefault`,
+    and the same mutant reddens it. *A leg aimed at one disjunct must be run at a value where the
+    other disjunct is false; nothing about the test's prose reveals that it is not.*
+  - **THE SECOND IS A PROPERTY OF THE SHIPPED CODE, AND IT LIMITS WHAT A GREEN HERE MEANS.**
+    "No stale hex" is defended in THREE places — the reset in `ClearHoveredHex`, and the
+    `bHasHoveredHex ? ... : ...` masks in `FStratHoverState::DecorateViewModel` and
+    `FStratHoverState::GetHoveredHex` — and any two cover for the third. Deleting the reset ALONE
+    left all five clauses green; only deleting the reset and both masks reddens
+    `ClearedHoverLeavesNoStaleHex`. **So a green there is not evidence that the reset line is
+    live.** It is evidence that no stale coordinate is READABLE through either public reader,
+    which is the property a consumer depends on and the strongest one reachable without a seam
+    into the private field. Recorded on the clause itself as well as here.
+  - **WHAT NO CLAUSE HERE PINS**, stated so a later wave does not assume it: that `HoverAction` is
+    BOUND, or bound to `ETriggerEvent::Triggered` — the asset is null in C++ by the project's own
+    rule 4 and is authored on a Blueprint in a separate editor batch, so there is nothing yet to
+    name; that a mouse move produces a hover — nothing in this suite drives `UPlayerInput`; that
+    `AStratPlayerController::UpdateHoverFromCursor` resolves anything — it calls
+    `HexUnderCursor`, which needs a viewport, a local player and a cursor no automation test has;
+    and that `AStratPlayerController::ApplyHoverChange` REFRESHES — `RefreshFromMachine` refuses
+    in a fixture with no live match and the shipped code returns true anyway, deliberately.
+  - **EVERY EXPECTATION IS MODULE-SIDE.** Every hex is enumerated off a model
+    `StratBuildViewModel` built from the shipped scenario; there is not one hex literal and no
+    hex arithmetic in the file. "Not hovering" is a default-constructed `FStratHoverView`, asked
+    rather than typed, so the assertion moves if the struct's default ever does. No string is
+    compared anywhere in the file — wave 0 produces no text, which is the cleanest available
+    handling of this project's case-insensitive-`FString` hazard.
+
 - **2026-08-25 (second pass that day), WRITTEN BY THE `coordinator`, NOT BY `strat-test-author` --
   declared, same as the entry below. THE LATCH IS A PIN, AND THE PROPERTY IT PINS IS NOT THE ONE
   THE LATCH CLAIMED.** **NO CLAUSE WAS ADDED OR REMOVED** — the name set is byte-identical to

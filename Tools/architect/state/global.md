@@ -119,6 +119,16 @@ this fact class; the acting and the file write are attributed separately there, 
 FIRST IN THE OWED LIST IS ITEM 2, THE HUMAN AT THE MOUSE** -- four properties stay unpinnable
 by anything in this project's automation, and the editor is left OPEN for that playtest.]**
 
+**[STAMPED 2026-08-27, LATER STILL -- THAT PLAYTEST HAS NOW RUN, AND ITS RESULT IS THE
+TOPMOST ENTRY UNDER `## NEXT`. The sentence above is kept as written because it was true
+when written: at that moment the playtest was owed and the editor was held open for it.
+What it should no longer be read as is a statement of what is owed NOW. The playtest found
+that Enhanced Input delivers no `Triggered` event for `IA_Hover` from a mouse move, so of
+the four properties that paragraph calls unpinnable, one is not merely unpinned but
+MEASURED FAILING, and the remaining three cannot be exercised by a mouse until it is
+fixed. The fix is `strat-gameplay-engineer`'s lane. Nothing in the commit that set the
+Blueprint default is falsified by this.]**
+
 **[SUPERSEDED 2026-08-27 BY THE BANNER ABOVE -- the 225/225 in the paragraph below was the figure
 at that pass, and the report it cites is that pass's. Neither is the live figure.]**
 _Last run 2026-08-26 (NINE GOVERNANCE ITEMS CLOSE AND NOT ONE OF THEM WAS GAMEPLAY: A GUARD
@@ -2091,6 +2101,50 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-27, COORDINATOR -- THE HUMAN PLAYTEST RAN AND WAVE 0'S INPUT HALF DOES NOT REACH THE
+  GAME. FINDING ONLY; NO CODE, NO ASSET AND NO TEST WAS TOUCHED BY IT.** The playtest that the
+  banner above named as the next thing owed has now happened, with a human at the mouse, in the
+  live editor on this tree. **NO SUITE WAS RUN AND NO SUITE FIGURE MOVES** -- the live figure is
+  the one the topmost banner cites. **THE GATE RETURNED `VERDICT: PASS` WITH ZERO
+  FINDINGS ON ITS SECOND ROUND, over this uncommitted tree, and that is the verdict for this
+  record-only pass** -- stated here because `global.md` is the only file that may state one. The
+  sentence this replaces said no verdict was stated, which was true until the gate answered;
+  it is replaced rather than joined, because an entry carrying both asserts both. The first round
+  blocked on ONE finding, a miscounted poll split in `content.md` whose cause -- an instrument
+  that double-counted its own summary -- is recorded where the figure sits. **TWO CHANGES WERE
+  MADE AFTER THAT PASS AND ARE NAMED SO A READER KNOWS WHAT IT DID NOT COVER**: both are
+  non-gating observations the gate raised and neither touches a figure -- a backticked token
+  quoted from a poller file that did not match the file's own text, and a "seven key rows work"
+  support that had become load-bearing without saying it was measured in earlier passes rather
+  than this session's log. This sentence is the third. What this entry records beyond the verdict
+  is a measurement and the work that measurement makes owed. The full evidence, the poll designs
+  and the two instrument defects found along the way are in `content.md`, which owns PIE evidence;
+  this entry does not restate the numbers it does not need.
+  - **THE RESULT IN ONE LINE.** Every link of the hover chain is proven working EXCEPT the first:
+    Enhanced Input delivers no `Triggered` event for `IA_Hover` from a mouse move. The
+    `HoverAction` default loads and binds, the `IA_Hover` -> `Mouse2D` row is live in the running
+    game's mapping context, and `UpdateHoverFromCursor` resolves a hex and refreshes the model
+    correctly when called directly. Driven by the mouse, the hovered hex never changes.
+  - **THE COMMIT THAT SET THE DEFAULT IS NOT FALSIFIED BY THIS, and the distinction is the point.**
+    `db3de97` claimed the default is set and byte-verified; it is, and the running game confirms
+    it independently. What this finding falsifies is any reading of WAVE 0 -- `1da4198` and its
+    merge -- in which the hover input surface reaches the game. The wave's five clauses are
+    likewise untouched: every one of them was written to pin something OTHER than the four
+    properties declared unpinnable, and this is a failure in exactly one of those four.
+  - **WHAT IS OWED, and it is `strat-gameplay-engineer`'s lane, not the content lane.** The
+    leading hypothesis -- stated as a hypothesis in `content.md`, not as a finding -- is that a
+    visible uncaptured cursor feeds no mouse AXIS input, which would make `Mouse2D` the wrong
+    route regardless of how the asset is authored. Proving or refuting it needs one log line
+    inside `AStratPlayerController::OnHover` and a rebuild with the editor closed. If it holds,
+    the fix is a route change rather than an asset change, and this project already has the
+    seam for it: `UpdateHoverFromCursor` is `BlueprintCallable`, was called thirty times from a
+    console during the playtest, and answered correctly every time.
+  - **W1 AND W2 ARE AFFECTED AND THE WAVE PLAN SHOULD SAY SO.** Both were recorded as unblocked by
+    W0. They still are for their view-model and widget work, which does not depend on the input
+    route -- but neither can be SEEN working end to end until a hover reaches the game, because a
+    forecast card with no hovered hex has nothing to draw. Treat W0 as landed in code and open in
+    behaviour.
 
 - **2026-08-26, COORDINATOR -- THE MVP-GAP AUDIT IS CUT INTO WAVES, AND CUTTING IT CORRECTED TWO
   OF ITS OWN CLAIMS. ASSIGNMENT ONLY; RECORD-ONLY.** The entry below ends by saying nothing is

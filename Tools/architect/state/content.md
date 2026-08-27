@@ -37,6 +37,96 @@
 
 ## NEXT
 
+- **THE HUMAN PLAYTEST RAN, AND THE HOVER DOES NOT REACH THE GAME: `Mouse2D` DELIVERS NO
+  `Triggered` EVENT, WHILE EVERY OTHER LINK IN THE CHAIN IS PROVEN WORKING.** **THE HEADLINE IS
+  ONE INFERENTIAL STEP PAST THE MEASUREMENT, and the step is marked here rather than left for a
+  reader to notice.** What was MEASURED is an unchanged model field across 28 samples. That it
+  means `OnHover` never ran follows from `AStratPlayerController::OnHover` doing nothing but call
+  `UpdateHoverFromCursor`, which unconditionally sets or clears -- so no run is the only state
+  that leaves a planted hex untouched. Sound, but derived. 2026-08-27, the
+  same session and the same live editor as the entry below. **Attribution, separately as both
+  clauses require:** the ACTING -- driving the live editor and its PIE session -- is the
+  `coordinator` under `CLAUDE.md`'s **editor-driver clause**; the FILE WRITE is the `coordinator`
+  under THIS file's header fallback condition. The shared measured absence and its control are
+  recorded in the entry below and are unchanged. A human drove the mouse; nothing here was
+  injected, because nothing in this project's automation reaches `UPlayerInput`. `global.md`
+  carries what this means for the wave and any verdict; this file states no count and no verdict.
+  - **THE DIFFERENTIAL, WHICH IS THE WHOLE FINDING.** Three polls carry it, each ~28-30 samples
+    over ~56 seconds. A FOURTH exists on disk and is named here so its absence below is not read
+    as concealment: an earlier 28-reading all-`False` read-only poll, discarded because the cursor
+    was not witnessed to be over the board during it -- the user was reading a message at the
+    time. It is not evidence and is not counted. The three that are, reading `UStratMatchSubsystem::AppliedModel`'s `Hover` through
+    `playtest_console("GetAll ...")` and the log:
+    - **Forced call, cursor parked on the board: 30/30 `bHasHoveredHex=True`.**
+      `ke StratPlayerController UpdateHoverFromCursor` resolved a hex every time AND TRACKED THE
+      CURSOR MOVING -- **five samples at `(1, 4)`, twenty-five at `(-1, 3)`**, the latter the hex
+      `AppliedModel` gives Artillery `UnitId 4`. **[The split first written here was `ten` and
+      `twenty-six`, and a gate blocked on it. The cause is worth more than the correction: the
+      figures came from a `uniq -c` over the poller's OUTPUT FILE, which prints each reading once
+      in its per-sample list and AGAIN in the six sample lines its own `readings 30   TRUE 30` foot
+      repeats beneath itself. The instrument
+      double-counted its own summary. `10 + 26 = 36` contradicted the `30/30` in the same
+      sentence, so the entry refuted itself without leaving the bullet -- and the arithmetic was
+      the only reader that could have caught it, since both figures looked plausible. Never
+      derive a count from a file that summarises itself.]** So `HexUnderCursor`, `ApplyHoverChange`,
+      `RefreshFromMachine`, `FStratHoverState::DecorateViewModel` and the model field are all
+      sound.
+    - **Read-only, cursor circling the board: 28/28 `bHasHoveredHex=False`**, after a confirmed
+      clear. No forced calls in this poll at all.
+    - **Plant-survival, cursor circling the board: 28/28 still `True (2, 7)`.** A planted hex was
+      neither replaced by the hex under the cursor nor cleared. `distinct states` over the whole
+      poll was a one-element set.
+    The third is the decisive one and it is a THREE-WAY discriminator by construction: replaced
+    means the path works, cleared means it runs and fails to resolve, unchanged means it never
+    runs. It came back unchanged.
+  - **WHAT IS PROVEN WORKING, and it is most of the wave.** The `HoverAction` default loads and
+    `SetupInputComponent` binds it -- no `HoverAction is unset; no hover binding exists.` line
+    exists in the PIE session's log, and that message shape is shared verbatim by all six actions.
+    **THAT CONTROL IS THE WEAKER HALF OF THIS BULLET AND IS LABELLED RATHER THAN LEANED ON.** No
+    `is unset` line of ANY of the six appears in this log, so nothing here demonstrates the
+    channel can speak -- the shape is shared, which is not the same as the instrument being shown
+    able to print it. What actually carries the conclusion is independent: the live mapping row
+    below, and seven key rows that work through the same `SetupInputComponent`. **WHERE THAT
+    SECOND SUPPORT WAS MEASURED IS NOT THIS SESSION'S LOG, and saying so is the point of naming
+    it.** This session's log carries only two player-driven `LogStratPlay` lines, both
+    `Guided opening skipped by the player`; the key rows working is carried by earlier passes,
+    the closed SS2.11.6-B playtest among them, and by this session's human report of selecting a
+    unit and seeing its movement space. Load-bearing and true, but not re-measured here.
+    The mapping row is live in the RUNNING game, not merely in the asset:
+    `GetAll InputMappingContext DefaultKeyMappings` returned eight rows ending
+    `(Action="...IA_Hover.IA_Hover'",Key=Mouse2D)`, in the same array as the seven rows that
+    demonstrably work -- which kills the hypothesis this file's own notes made most likely, that
+    the new row had gone into the LEGACY `Mappings` array. That array printed EMPTY in the same
+    dump, which is the control.
+  - **THE HYPOTHESIS, STATED AS ONE AND NOT AS A FINDING.** `GetAll PlayerController
+    bShowMouseCursor` returns **True** on the live `BP_StratPlayerController_C_0`. With a visible,
+    uncaptured cursor, UE feeds no mouse AXIS input -- `MouseX`, `MouseY` and `Mouse2D` are
+    look-input axes generated on capture -- while button and key events are unaffected. That is
+    exactly the split measured: all seven key rows work and the one `Axis2D`-on-`Mouse2D` row
+    does not, and `IA_Hover` being the project's only non-Boolean action is the one deliberate
+    difference wave 0 introduced. **THIS IS NOT PROVEN AND IS NOT RECORDED AS PROVEN.** What
+    would prove it is a log line inside `AStratPlayerController::OnHover`, which is C++, the
+    engineer's lane, and a rebuild with the editor closed.
+  - **AN INFERENCE MADE DURING THIS PLAYTEST AND RETRACTED BY THE NEXT MEASUREMENT, recorded
+    because the reasoning was wrong in a way that reads as sound.** A planted hex was observed to
+    go `False` after a mouse sweep, and the `coordinator` inferred from a `grep` of every
+    `ClearHoveredHex` caller -- there are two, and only `UpdateHoverFromCursor`'s off-board branch
+    is reachable without the console -- that `OnHover` must therefore be firing. The grep was
+    right and the inference was wrong: THE SWEEP ENDED WITH THE CURSOR LEAVING THE VIEWPORT to
+    reach the terminal, and clearing on an off-board cursor is the CORRECT behaviour that branch
+    exists for. A right answer was read as evidence of a wrong one. The plant-survival poll, where
+    the cursor never left the window, is what caught it.
+  - **AND THE FIRST INSTRUMENT WROTE THE VALUE IT WAS BUILT TO OBSERVE.** The forced-call poll
+    calls `UpdateHoverFromCursor` and then reads the field that call writes, so its 30/30 `True`
+    cannot distinguish "Enhanced Input drove this" from "the poller drove this". It is retained
+    above because it is sound for the ONE thing it does establish -- that the resolution path
+    works -- and useless for the thing it was first reached for. The read-only and plant-survival
+    polls exist because of it.
+  - **WHAT THIS COSTS THE RECORD, and it is narrower than it looks.** Nothing in the commit that
+    set the default is falsified: the default IS set, the row IS live, and both were verified from
+    the saved bytes and now again from the running game. What is false is any reading of wave 0 in
+    which the hover input surface reaches the game. PIE was left RUNNING at the time of writing.
+
 - **THE `HoverAction` BLUEPRINT DEFAULT IS SET AND VERIFIED FROM THE SAVED PACKAGE BYTES, AND THE
   RELINK THAT MADE IT POSSIBLE WAS WITNESSED BY THE PROPERTY ITSELF.** 2026-08-27. **THE TWO
   PERMISSIONS ARE CITED SEPARATELY, because citing one authority for both halves is a finding.**

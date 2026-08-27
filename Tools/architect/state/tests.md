@@ -12,6 +12,120 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-27 (local; this pass's own build and suite run stamp UTC `2026.08.27-21.06.06`) —
+  W1'S FORECAST CARD IS PINNED AT THIRTEEN CLAUSES ACROSS THREE MODULES, AND THE ONE DEBT THE
+  ENGINEER CALLED SHARPEST IS DISCHARGED.** Three new files:
+  `Source/StratBridge/Tests/StratForecastCardParity.cpp` (5 clauses),
+  `Source/StratUI/Tests/StratForecastViewClauses.cpp` (5), and
+  `Source/StratPlay/Tests/StratForecastDecoratorClauses.cpp` (3). The clause-name set grew by
+  exactly thirteen and NOTHING was removed or renamed, measured by SET DIFFERENCE on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` between `git grep HEAD` and the worktree. The live suite
+  figure is `global.md`'s and is not restated here.
+  - **EVERY CLAUSE RIDES `T-UI-01` EXCEPT ONE, WHICH RIDES `T-FAME-01`, AND NO ID WAS MINTED.**
+    The engineer's report proposed `T-UI-03` for the compose clauses and `T-INT-05` for the
+    decorator ones; the coordinator ruled both out and this lane wrote neither. `T-UI-03`'s
+    subject is the standings scoreboard and its no-widget-arithmetic sentence is a design rule
+    cited across the GDD, not a licence to name forecast clauses under it. The single
+    `T-FAME-01` clause is the kill award, which is that ID's own subject.
+  - **THE STRETCH IS DECLARED IN EVERY CLAUSE THAT TAKES IT.** `T-UI-01`'s own sentence is that
+    the forecast EQUALS the resolution. Exactly one clause asserts that equality
+    (`ForecastCardHpAfterIsTheOracles`); the other twelve assert things the forecast card NEEDS
+    — a mapping, a table read, a visibility rule, an ordering constraint — and each says so in
+    its own comment rather than writing itself as though the ID's claim covered it.
+  - **DEBT 1 IS DISCHARGED AND IT IS THE ENTRY WORTH REMEMBERING.** The two HP-after clamps in
+    `FStratBridge::AttackForecast` were the only numbers on §2.11.3's card that no test compared
+    against anything. `ForecastCardHpAfterIsTheOracles` calls `strat::uiResolveForGate` from
+    `Source/StratBridge/Tests/` — which a TEST may do and PRODUCTION may not, on
+    `StratCombatOutcomeParity.cpp`'s own construction — over three positions: a fixture attack
+    with a firing counter, a fixture kill, and a SEARCHED counter-kill at prefix 20, which is the
+    only position in this project where the attacker's clamp reaches its floor. One candidate was
+    found at that prefix this pass; if it ever reaches zero the clause FAILS loudly rather than
+    passing having proved nothing.
+  - **WHAT THE COUNTER-REASON CLAUSE PINS, AND WHY IT IS NOT A COPY OF ITS OWN SUBJECT.**
+    `StratComposeForecastView` chooses `EStratCounterReason` out of exactly two booleans, so a
+    clause asserting the enum against those two booleans would stay green over any rearrangement
+    of them and over both lie-vectors the engineer named.
+    `Stratocracy.StratUI.T-UI-01.CounterReasonMatchesTheDefendersBand` witnesses each arm with a
+    fact the mapping never consulted: `DefenderDestroyed` against the bridge's own
+    `DefenderHpAfter` clamp, and `Number` / `OutOfRange` against the DEFENDER'S OWN
+    `[rangeMin, rangeMax]` read off the projection. `out of range` is asserted only where the
+    distance genuinely is outside that band. If `Combat.h::defenderCanCounter` ever gains a
+    second refusal reason, this clause reddens — which is precisely what the engineer said no
+    numeric parity gate could see.
+  - **THE MODULE A CLAUSE LIVES IN WAS DECIDED BY THE LINKER AND ONE OF THE DECISIONS WAS
+    MEASURED THIS PASS.** A first revision of the StratUI file drove its board off
+    `Data/parity_fixture.save`; `strat::parseSave` is a vendored free function and the build
+    returned **1 x `LNK2019`** on `UnrealEditor-StratUI.dll` naming `?parseSave@strat@@...`,
+    then `LNK1120`. **A StratUI or StratPlay test cannot read the fixture at all.** The fix was
+    to drive the board with §2.9's own AI instead — `FStratBridge::NextAiCommand` plus the
+    engine-typed `SubmitMoveToHex` / `SubmitAttackAtHex` / `SubmitBuildAtHex` / `SubmitEndTurn`
+    — which reaches mid-match boards from any module and has BETTER provenance than a fixture
+    for a UI clause, because every position is the rules module's choice. 64 AI commands, 9
+    sampled boards, all three counter arms reached. Note also that `Board::terrainAt` is an
+    out-of-line member of a vendored struct and links no better than a free function.
+  - **WHAT EACH CLAUSE DOES NOT PIN, stated where the gap is.**
+    - `ForecastKillAwardIsTheModulesAward` pins `KillAwardFame == strat::killAward(victim, isFlag)`
+      over 64 lethal and 426 survivable forecasts, and proves the `isFlag` argument load-bearing
+      by asserting `killAward(def,true) != killAward(def,false)` on the loaded tables. It does
+      **NOT** exercise the flat-500 arm through `AttackForecast`: **no lethal attack on a flag is
+      reachable from any fixture position swept** (0 of 64 kills), and the clause reports that in
+      an `AddInfo` rather than implying otherwise. The 500 is never typed anywhere.
+    - The three decorator clauses pin WHEN there is a card, WHICH hex it is about, and that the
+      model's field is written on all five no-card paths. They pin nothing about
+      `AStratPlayerController::DecorateForPresentation`'s call site — that the forecast decorator
+      is placed after the hover one in that method is asserted by no clause. What IS pinned is
+      that the ordering CONSTRAINT is real: run before the hover, the decorator demonstrably
+      composes last frame's hex.
+    - `ForecastLegalityIsTheLitTargetSet` overlaps the pre-existing
+      `T-UI-01.AttackTargetsAreForecastLegal` and is strictly stronger (set equality in BOTH
+      directions, over every hex on the board, on `AttackForecast` rather than on `Forecast`).
+      Neither supersedes the other; the older one names its failures more narrowly.
+  - **THE INSTRUMENTS THAT MAKE THESE FALSIFIABLE, because three of them are the whole clause.**
+    (1) The decorator's unconditional-write clause pre-populates `Model.Forecast` with a card
+    loud on all nineteen fields, because an unconditional writer called with a default payload
+    reads identically to a writer never called. (2) The spent-unit clause asserts THE QUERY WAS
+    NOT ASKED — a clause that only observed "no card" would stay green with the gate deleted.
+    (3) Every "should be empty" is a field-by-field comparison against a default-constructed
+    `FStratForecastView`, never a typed zero. Also: `FString` comparison is case-INSENSITIVE
+    here, so the one reason-string assertion uses `ESearchCase::CaseSensitive` explicitly, and
+    the `FName` comparisons use `TestTrue` on `==` rather than `TestEqual` on two `FString`s.
+  - **A `TestEqual` OVERLOAD FOR `FIntPoint` DOES NOT EXIST.** The hover-ordering clause compares
+    hexes componentwise for that reason, which also makes an offset/axial confusion legible in
+    the failure text instead of hidden by an even row.
+  - **`Source/Stratocracy/StratData/Tests/` IS A FOURTH TESTS DIRECTORY** and a glob of
+    `Source/*/Tests/*.cpp` does not reach it. A first set-difference this pass used that glob on
+    one side and `git grep HEAD -- 'Source/*/Tests/*.cpp'` on the other, and reported five
+    `StratData` clauses as REMOVED that were never touched. The instrument must be identical on
+    both sides; re-measured with `Source/**/Tests/*.cpp` on both, the removed set is empty.
+  - **ALL THIRTEEN WERE PROVED TO GO RED, BY SUBJECT-SIDE MUTATION OF THE SHIPPED FUNCTIONS.**
+    Escalated first and authorised in writing by the coordinator, who took independent copies of
+    the three production files outside the repo BEFORE any edit — the restore route was a copy
+    from that directory and never `git checkout --`, which in this tree would have destroyed the
+    engineer's uncommitted W1 work AND rewritten the line endings on the way in. Thirteen
+    mutations applied at once, one build, one suite run: **231 green, 13 red, and the thirteen
+    red names were exactly the thirteen added names. Not one pre-existing clause moved.** Every
+    clause failed on its OWN intended assertion, not on a crash or a neighbour's — the
+    counter-reason clause failed with `the card says 'out of range' at distance 1, which is
+    INSIDE unit 10's own band [1, 1]`, which is precisely the lie-vector it was written to catch
+    and which no numeric parity gate could have seen. Restored, rebuilt, re-run to green;
+    the restore was verified **by content**, `sha256` against the pre-mutation digests
+    (`ec5be618…`, `4f2e01fb…`, `1ab4fde6…`) with CR==LF at 1757/635/107, never by re-reading the
+    files. **THE MUTATIONS WERE THE ONLY EDIT MADE OUTSIDE `Tests/`, and nothing else in those
+    three files was touched** — no fix, no tidy, and no defect was found to report.
+  - **WHAT THE COMBINED RUN PROVES, AND WHAT IT DOES NOT.** It proves each of the thirteen
+    assertions is REACHABLE and SENSITIVE to its subject. It does **NOT** establish a one-to-one
+    mutation→clause mapping, because thirteen mutations were live at once and two clauses are
+    over-determined by construction: `ForecastCardRepeatsTheModulesForecast` is reddened by BOTH
+    the HpBefore transposition and the legality suppression, and
+    `ForecastDecoratorWritesUnconditionally` by BOTH the dropped up-front reset and the deleted
+    act gate. For those two the claim is "red under the mutant set", not "red under its own
+    mutation". The other eleven have a single plausible cause and their failure messages name it,
+    but the run itself cannot separate the cases. **These are SUBJECT-side mutations in the
+    shipped functions, which is the stronger kind** — W3's lane this session could reach only
+    instrument-side mutations because it could not reach the code under test. That difference is
+    worth keeping and worth not overstating: it makes these proofs about the production code,
+    not about the fixtures.
+
 - **2026-08-27 (local; this pass's own runs stamp UTC `2026.08.27-19.18.01`, `-19.20.22` and
   `-19.22.02`) — THE HOVER'S INPUT ROUTE IS PINNED FOR THE FIRST TIME, BY ONE CLAUSE, AND THE
   CLAUSE WAS PROVED TO FAIL BEFORE IT WAS BELIEVED.** One clause added,

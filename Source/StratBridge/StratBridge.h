@@ -103,6 +103,158 @@ struct FStratResult
 };
 
 // ---------------------------------------------------------------------------
+// §2.11.3's attack forecast card, in engine types -- every number the card shows,
+// off ONE read of the board.
+//
+// WHAT GAP THIS CLOSES. `Forecast` below hands back `strat::UiForecast`, which carries
+// seven fields and NONE of the three the card is mostly made of: no HP after, no
+// terrain bonus, no kill reward, no flag flag. §2.11.3 names six readouts; three of
+// them had no source on that call, and the only way for a gameplay module to get them
+// was to derive them -- which for HP-after is precisely the "local formula that
+// happens to agree today" that `Ui.h`'s own `uiForecast` block says T-UI-01 exists to
+// catch. This struct is the whole card's worth of answers, gathered in the one module
+// where `strat::` symbols link.
+//
+// PLAIN AND NOT REFLECTED, for `FStratResult`'s reason exactly: a `USTRUCT` here would
+// put the vendored headers in front of UHT. The reflected mirror is
+// `FStratForecastView` in `Source/StratUI/StratViewModel.h` and the copy across is
+// `StratComposeForecastView`. `StratPlay` names this struct and never a `strat::` one.
+//
+// IT SHAPES NOTHING FOR PRESENTATION. There is no counter-reason enum here, no
+// "flag at risk" boolean and no formatted string: those are MAPPINGS over these
+// answers, and they live in the compose function one layer up, where the view model's
+// own no-arithmetic census can see them. What is here is either a module answer or one
+// of the two clamps named below.
+//
+// THE TWO CLAMPS, AND WHY THEY ARE COMPUTED HERE RATHER THAN CALLED FOR. `Ui.h`
+// declares `strat::uiResolveForGate`, which returns exactly the two HP-after numbers
+// and "calls uiForecast and applies its numbers, adding no arithmetic of its own" --
+// and it MUST NOT BE CALLED FROM HERE. `StratCombatOutcomeParity.cpp`'s header block
+// states the reason in as many words: that function "has zero production callers in
+// this tree BY CONSTRUCTION", it is T-UI-01's independent oracle at the resolution end,
+// and "a `uiResolveForGate` invoked by the bridge would make every comparison below a
+// comparison of the bridge with itself". `StratBridge.cpp`'s `StratCombatObservation`
+// block says the same from the other side. So the subtraction and the clamp-at-zero are
+// written out ONCE, here, in the module the card is served from -- and what discharges
+// that is a gate: a test in `Source/StratBridge/Tests/` CAN call the oracle and compare
+// it against these fields. The bridge computing independently and the oracle computing
+// independently is the arrangement that construction wanted; the bridge ASKING the
+// oracle is the one it forbade.
+//
+// `bAttackerDies` IS THE BRIDGE'S WHERE `bDefenderDies` IS THE MODULE'S, and the
+// asymmetry is not an oversight. `UiForecast::defenderDies` is a field; there is no
+// counterpart for the attacker, so the counter-kill has to be said here. The expression
+// is `bCounterFires && CounterDamage >= AttackerHpBefore`, which is the SAME expression
+// `StratDivergenceMaskOf`'s `bExpectAttackerDie` already uses in this file's .cpp --
+// one spelling of the counter-kill in this module, not two.
+struct FStratAttackForecast
+{
+	/** `UiForecast::legal`. False is an ANSWER, not a fault -- see `Forecast`'s two-channel block. */
+	bool    bLegal = false;
+
+	/** `UiForecast::reason`, verbatim. Empty when `bLegal`. Diagnostic: an illegal target draws no card. */
+	FString IllegalReason;
+
+	/** `UiForecast::distance`. `Hex.h` decided it. */
+	int32   Distance = 0;
+
+	/** `UiForecast::damage`. `Combat.h::resolveDamage` decided it. */
+	int32   Damage = 0;
+
+	/** `UiForecast::defenderDies`. The module's own field. */
+	bool    bDefenderDies = false;
+
+	/** `UiForecast::counterFires`. `Combat.h::defenderCanCounter` decided it. */
+	bool    bCounterFires = false;
+
+	/** `UiForecast::counterDamage`. Zero and meaningless unless `bCounterFires`. */
+	int32   CounterDamage = 0;
+
+	/** The attacker id the caller asked about, echoed so a consumer can prove which. */
+	int32   AttackerUnitId = INDEX_NONE;
+
+	/**
+	 * The unit standing on the defender hex. `INDEX_NONE` when the hex holds nobody.
+	 *
+	 * NOT A SECOND AUTHOR OF "who is on that hex", though it looks like one.
+	 * `FStratViewModel::Units` states that too and `FStratHoverView`'s block refuses a
+	 * `HoveredUnitId` on exactly that ground. The difference is that this field is not an
+	 * answer to "who is there" -- it is "who did I forecast against", which only this call
+	 * knows. A card whose numbers and whose name came from two different lookups can
+	 * disagree on the frame a unit moves between them.
+	 */
+	int32   DefenderUnitId = INDEX_NONE;
+
+	/** `UiUnit::unit.hp` for each, read off the same `UiWorld` every number above came from. */
+	int32   AttackerHpBefore = 0;
+	int32   DefenderHpBefore = 0;
+
+	/** The two clamps. See the block above on why they are computed here and not called for. */
+	int32   AttackerHpAfter = 0;
+	int32   DefenderHpAfter = 0;
+
+	/** The counter-kill. The bridge's, because `UiForecast` has no field for it. */
+	bool    bAttackerDies = false;
+
+	/** `UiUnit::isFlag` for each -- Stub 7's placement field, mirrored, never inferred. */
+	bool    bAttackerIsFlag = false;
+	bool    bDefenderIsFlag = false;
+
+	/**
+	 * The side each is on.
+	 *
+	 * CARRIED SO THAT "WHOSE FLAG" NEED NOT BE ASSUMED. §2.11.3 colours the flag band red
+	 * for the player's own flag and gold for the enemy's, and the obvious shortcut --
+	 * "the attacker is the viewing player, because you can only select your own units" --
+	 * is true today and is exactly the kind of premise a hot-seat hand-over breaks
+	 * quietly. With the sides on the card the widget compares against
+	 * `FStratViewModel::ViewingSide` and assumes nothing.
+	 */
+	int32   AttackerSide = INDEX_NONE;
+	int32   DefenderSide = INDEX_NONE;
+
+	/**
+	 * The DEFENDER's hex's `TerrainDef::defensePct`, and that row's own `id`.
+	 *
+	 * SIGNED, AND THE SIGN IS LOAD-BEARING. `Data.h` says so on the field itself --
+	 * "SIGNED -- Bridge is -10 (§2.3)" -- so a card that renders this as `+N%`
+	 * unconditionally lies on a bridge hex. §2.11.3 requires the bonus named inline
+	 * every time, which includes the times it is a penalty.
+	 *
+	 * IT IS THE DEFENDER'S HEX AND NEVER THE ATTACKER'S. `uiForecast` reads
+	 * `terrainDefPctAt(w, d->hex)` for the damage line; the counter reads the attacker's
+	 * hex instead, and that second number is deliberately NOT carried -- §2.11.3 names
+	 * one bonus, beside the defender, and says the placement teaches the §3 invariant
+	 * for free.
+	 *
+	 * A TABLE READ, NOT A DERIVATION -- the same one `FStratHexView::TerrainId` already
+	 * performs, board terrain index into the loaded terrain table. Carried beside the
+	 * numbers rather than looked up again by the widget, so the bonus shown IS the bonus
+	 * `resolveDamage` was handed.
+	 */
+	int32   DefenderTerrainDefensePct = 0;
+	FName   DefenderTerrainId;
+
+	/**
+	 * `strat::killAward(the defender's `UnitDef`, the defender is the flag)` -- §2.7 / Q5.
+	 * ZERO WHEN THE DEFENDER LIVES.
+	 *
+	 * NOT HALF A COST COMPUTED HERE, and not the literals 150 or 500. `Economy.h` says the
+	 * award is "Half the victim's §2.4 cost, or a flat 500 for a flag -- REPLACING the
+	 * ordinary award, never stacking (Q5)", and each of those three clauses is a rule this
+	 * file would have to restate in order to derive the number. §2.11.3's ordinary
+	 * `Destroys Tank · +150 Fame` and its enemy-flag `+500 · Decisive victory` are the
+	 * same function answering about two different victims, which is why one field serves
+	 * both lines.
+	 *
+	 * ZEROED ON THE SURVIVING PATH ON PURPOSE. The award that WOULD be paid is a number
+	 * with no reader on this card, and a field populated while the line it feeds is hidden
+	 * is a field waiting to be shown by mistake.
+	 */
+	int32   KillAwardFame = 0;
+};
+
+// ---------------------------------------------------------------------------
 // §2.9's opponent AI, in engine types.
 //
 // PLAIN AND NOT REFLECTED, exactly as `FStratResult` above is, and for that
@@ -576,6 +728,37 @@ public:
 	// "the forecast is exactly what resolves" rests on.
 	FStratResult Forecast(int32 AttackerId, const strat::Hex& DefenderHex,
 	                      strat::UiForecast& OutForecast) const;
+
+	// §2.11.3's card, whole, in engine types. `Forecast` above plus the four things
+	// `strat::UiForecast` does not carry.
+	//
+	// IT IS `Forecast` AND NOT A SECOND FORECAST. The damage, the distance, the counter
+	// and the defender's death all arrive through the call above and are copied across
+	// untouched; nothing here re-asks the rules module for a number it already answered,
+	// and no §2.6 rule is restated. What this method adds is a table read (the defender's
+	// terrain row), a module call (`strat::killAward`), two HP reads off the same
+	// `UiWorld`, and the two clamps `FStratAttackForecast`'s block accounts for.
+	//
+	// TWO CHANNELS, `Forecast`'s EXACTLY. `FStratResult` says whether the question could
+	// be asked; `OutForecast.bLegal` says what the rules answered. An empty hex, a
+	// friendly target and an out-of-range one all come back `Ok()` with `bLegal` false,
+	// because a cursor moving across the board produces all three every second and none
+	// of them is a fault. A refusal means the bridge is unloaded, unseeded, holds a unit
+	// outside its own table, or was handed an attacker id that is not on the board.
+	//
+	// LEGAL IS EXACTLY "LIT", AND THAT IS WHY THERE IS NO TARGET-SET ARGUMENT. §2.11.3
+	// says the card appears over a LIT target, and `AttackTargetHexes`'s own block says
+	// it keeps a hex "when the module answers `legal`" -- so `bLegal` and membership in
+	// the lit set are the same predicate, evaluated by the same function. A caller that
+	// intersected this against `AttackTargetHexes` would be asking `uiForecast` twice and
+	// giving itself two chances to disagree.
+	//
+	// EVERY FIELD IS FILLED ON THE LEGAL PATH AND NONE ON THE ILLEGAL ONE. On `bLegal`
+	// false the struct is left default-constructed but for `IllegalReason` and
+	// `AttackerUnitId`: a terrain bonus or a kill award for an attack the rules refuse is
+	// a number that can only ever be shown wrongly.
+	FStratResult AttackForecast(int32 AttackerId, FIntPoint DefenderHex,
+	                            FStratAttackForecast& OutForecast) const;
 
 	// §2.11.5's production menu, as `strat::uiBuildOptions` returns it: one entry
 	// per §2.4 unit-table row, each carrying its price, whether this side can pay

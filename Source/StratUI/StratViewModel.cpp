@@ -536,3 +536,100 @@ bool StratBuildMatchResult(
 	OutResult = Built;
 	return true;
 }
+
+// ---------------------------------------------------------------------------
+// §2.11.3's card. The copy, and the three shapings.
+//
+// EVERY ASSIGNMENT BELOW IS `=` ON ONE FIELD, WITH THREE EXCEPTIONS THAT ARE CHOICES OVER
+// BOOLEANS AND NOT OVER NUMBERS. There is no `+`, no `-`, no `*` and no comparison of two
+// quantities anywhere in this function. The card's two subtractions live in
+// `FStratBridge::AttackForecast`, whose block records why `strat::uiResolveForGate` -- the
+// function that exists to do exactly them -- may not be called from production code.
+// ---------------------------------------------------------------------------
+void StratComposeForecastView(const FStratAttackForecast& Source,
+                              FStratForecastView&         OutForecast)
+{
+	// ALL-OR-NOTHING, and the empty case is written rather than fallen into: an illegal
+	// forecast produces a default-constructed card and never a partly-filled one.
+	FStratForecastView Built;
+
+	if (!Source.bLegal)
+	{
+		OutForecast = Built;
+		return;
+	}
+
+	Built.bHasForecast    = true;
+	Built.AttackerUnitId  = Source.AttackerUnitId;
+	Built.DefenderUnitId  = Source.DefenderUnitId;
+
+	Built.Damage           = Source.Damage;
+	Built.Distance         = Source.Distance;
+	Built.DefenderHpBefore = Source.DefenderHpBefore;
+	Built.DefenderHpAfter  = Source.DefenderHpAfter;
+	Built.AttackerHpBefore = Source.AttackerHpBefore;
+	Built.AttackerHpAfter  = Source.AttackerHpAfter;
+
+	Built.bCounterFires = Source.bCounterFires;
+	Built.CounterDamage = Source.CounterDamage;
+	Built.bDefenderDies = Source.bDefenderDies;
+	Built.KillAwardFame = Source.KillAwardFame;
+
+	Built.DefenderTerrainDefensePct = Source.DefenderTerrainDefensePct;   // SIGNED. See Data.h.
+	Built.DefenderTerrainId         = Source.DefenderTerrainId;
+
+	// SHAPING 1 -- §2.11.3's counter line, "a number, `out of range`, or `defender
+	// destroyed`". THE ORDER IS THE MAPPING and `EStratCounterReason`'s block is the
+	// authority on why it is exact today and on the two upstream changes that would make
+	// it lie without moving a number. Written as an if/else ladder rather than as a switch
+	// because the inputs are two independent booleans and there is nothing to switch on;
+	// the dying-defender arm is FIRST because `uiForecast` computes the counter inside
+	// `if (!f.defenderDies)`, so a dead defender's `counterFires` is false and the
+	// `OutOfRange` arm would otherwise claim a range answer about a corpse.
+	if (Source.bDefenderDies)
+	{
+		Built.CounterReason = EStratCounterReason::DefenderDestroyed;
+	}
+	else if (Source.bCounterFires)
+	{
+		Built.CounterReason = EStratCounterReason::Number;
+	}
+	else
+	{
+		Built.CounterReason = EStratCounterReason::OutOfRange;
+	}
+
+	// SHAPING 2 -- §2.11.3's "and for the attacker whenever the counter is nonzero". Here
+	// rather than in a widget binding because of T-UI-03; `FStratForecastView::
+	// bShowAttackerHp` records why "it is only a comparison" is not an exemption. NOT
+	// `bCounterFires`: a counter that fires for nothing would draw a `20 -> 20` row that
+	// teaches the player it did something.
+	Built.bShowAttackerHp = Source.bCounterFires && Source.CounterDamage != 0;
+
+	// SHAPING 3 -- §2.11.3's flag band, in BOTH directions. "No player can end a match,
+	// theirs or the enemy's, without having been told on the card they clicked", so the
+	// attacker's own flag dying to a counter raises it exactly as the enemy flag dying to
+	// the attack does. The attacker half rests on `FStratAttackForecast::bAttackerDies`,
+	// which is the bridge's field and not the rules module's -- `strat::UiForecast` has no
+	// attacker-death field at all, and that asymmetry is recorded on the bridge struct.
+	//
+	// THE SIDE AND NOT AN OWN/ENEMY BOOLEAN. See `RiskedFlagSide`: the widget compares this
+	// against `FStratViewModel::ViewingSide`, so the colour does not rest on the premise
+	// that the attacker is always the viewer.
+	const bool bDefenderFlagFalls = Source.bDefenderIsFlag && Source.bDefenderDies;
+	const bool bAttackerFlagFalls = Source.bAttackerIsFlag && Source.bAttackerDies;
+
+	Built.bFlagAtRisk = bDefenderFlagFalls || bAttackerFlagFalls;
+
+	// THE DEFENDER'S FLAG IS NAMED FIRST WHEN BOTH FALL, and both CAN: a flag attacking a
+	// flag, each lethal to the other, is a legal position on any board that gives two flags
+	// overlapping range. §2.11.3 describes one band and gives no rule for the pair, so the
+	// choice is made here and stated rather than left to whichever branch happened to be
+	// written second -- the attack the player is about to commit is the defender's death,
+	// and that is the one the card is about.
+	Built.RiskedFlagSide = bDefenderFlagFalls ? Source.DefenderSide
+	                     : bAttackerFlagFalls ? Source.AttackerSide
+	                                          : INDEX_NONE;
+
+	OutForecast = Built;
+}

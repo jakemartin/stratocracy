@@ -11,6 +11,73 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-27 (SEC 2.11.3'S FORECAST CARD HAS A MODEL SIDE, AND THE CENTREPIECE THE GDD
+NAMES IS NO LONGER ABSENT. Written by the `coordinator`, whose file this is. THE PROVENANCE IS A
+LANE TREE AND THAT IS STATED FIRST: the run below was made in `E:/MultiAgent/Strat-wt/slot-1` on
+branch `feat/forecast-card`, NOT in the integration tree, and it certifies the figure for THIS
+BRANCH. The count moves again in the merge commit, where it is re-derived on `master`. The suite
+is now **244/244**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+THE DELTA IS **+13 AND NOTHING WAS REMOVED OR RENAMED**, by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` and never by an acceptance-ID grep, which would be useless here
+by construction since twelve of the thirteen share one ID. **AND THE INSTRUMENT ITSELF NEEDED
+FIXING BEFORE IT COULD BE TRUSTED: a single-line grep for that macro returns ZERO in this tree,
+because the macro's argument sits on the NEXT line.** Zero reads exactly like `no clauses here`
+rather than like a broken pattern. The census is multiline and the derived list is asserted
+non-empty before the difference is taken; the `coordinator` and the gate derived 231 -> 244
+independently and agreed, and the thirteen added names are listed in this pass's `## NEXT` entry.
+THE REPORT THAT CERTIFIES THE LIVE FIGURE IS THIS BRANCH'S: `reportCreatedOn
+2026.08.27-21.18.42`, `succeeded 244`, `failed 0`, `notRun 0`, 244 entries and zero non-Success,
+read directly by the `coordinator` as well as by the lane. THAT STAMP IS UTC AND THIS ENTRY'S
+DATE IS LOCAL.
+ALL THIRTEEN WERE PROVED RED-UNDER-MUTATION AND GREEN-WHEN-RESTORED, AND THE MUTATIONS WERE
+SUBJECT-SIDE. One combined run over thirteen simultaneous one-line mutations in
+`FStratBridge::AttackForecast`, `StratComposeForecastView` and `StratDecorateForecast` gave
+**231 green / 13 failed**, and the red set was EXACTLY the thirteen added names with no
+pre-existing clause moving. Restored, **244/244**, the restore verified BY CONTENT against copies
+held outside the repository -- `sha256` equality on all three files with `CR == LF` at 1757 / 635 /
+107, so no line ending was rewritten -- and re-verified independently by the `coordinator` rather
+than accepted from the lane.
+**WHAT THE COMBINED RUN CANNOT CLAIM IS STATED WHERE THE CLAIM IS MADE.** It proves each assertion
+reachable and sensitive to its subject; it does NOT establish per-clause attribution, and two
+clauses are over-determined by construction -- `ForecastCardRepeatsTheModulesForecast` reddens
+under two of the thirteen mutations and `ForecastDecoratorWritesUnconditionally` under two others.
+For those two the honest claim is `red under the mutant set`, not `red under its own mutation`.
+THE MUTATION PASS WAS AUTHORIZED IN ADVANCE, IN WRITING, AND THAT IS THE PROCESS RESULT WORTH
+CARRYING. Every mutation landed outside the test lane, in files carrying the engineer's
+uncommitted work, so `git checkout --` as a restore route would have destroyed the wave.
+`strat-test-author` STOPPED AND ESCALATED with the mutation list and pre-mutation digests rather
+than acting and declaring the conflict afterwards -- which is exactly what the previous wave's
+gate asked for after a brief mandated a probe on a file it also forbade touching. The
+`coordinator` verified the digests against the live files, took independent copies outside the
+repository, and authorized the pass before it ran.
+A DISPATCH INSTRUCTION WAS REFUSED BY THE ENGINEER AND THE ENGINEER WAS RIGHT. The
+`coordinator`'s brief told it to bridge `strat::uiResolveForGate` for the HP before -> after
+readouts. `StratCombatOutcomeParity.cpp`'s header says that function `has zero production callers
+in this tree BY CONSTRUCTION` and `must stay uncalled from production`, because a bridge call
+`would make every comparison below a comparison of the bridge with itself`. Complying would have
+collapsed `T-UI-01`'s independent oracle while every test stayed green. The subtraction and the
+clamp are written out ONCE inside `FStratBridge::AttackForecast` instead, and discharged by a
+clause that calls the oracle from `Tests/`, where calling it is legitimate. The gate censused the
+tree and confirmed ZERO production code callers survive.
+THE GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS ON ITS FIRST ROUND, and that is the verdict
+for this pass. Zero in the code, zero in the assets, zero in the module graph, and zero blocking
+record defects, across twelve structural checks. **THE PRIORITY ORDER WAS CHANGED BY USER RULING
+BEFORE THIS WAVE AND THE RESULT IS THE ARGUMENT FOR IT:** the gate was told to audit the code, the
+assets and the module graph FIRST and to report that pass explicitly, and that a record-prose
+defect blocks only when it is load-bearing. The two waves before this one cost `BLOCK, BLOCK,
+PASS` each with not one finding in the game code across all six rounds. Under the new order both
+waves this session passed first time.
+ITS ONE NOTE, non-gating and recorded so it is not rediscovered: `engine.md` still carries a
+CONDITIONAL sentence, `until such a clause exists, the two HP-after fields are the only numbers on
+the card that no test compares against anything`, whose condition was met inside this same tree by
+`Stratocracy.StratBridge.T-UI-01.ForecastCardHpAfterIsTheOracles`. It is not load-bearing: the
+sentence names the condition that retires it, the engineer could not write the file that records
+the discharge, and `tests.md` -- which owns clause inventory -- records the discharge.)_
+
+**[SUPERSEDED 2026-08-27 BY THE BANNER ABOVE -- the 231/231 below was the figure at the pass that
+pinned the hover's tick route, and it is not live in this branch. The count moved by exactly
+thirteen.]**
+
 _Last run 2026-08-27 (THE HOVER'S INPUT ROUTE IS PINNED FOR THE FIRST TIME, AND THE CLAUSE WAS
 PROVED IN BOTH DIRECTIONS. Written by the `coordinator`, whose file this is. The suite is now
 **231/231**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings. The delta
@@ -2183,6 +2250,73 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-27, COORDINATOR -- W1 LANDS: SEC 2.11.3'S ATTACK FORECAST HAS A MODEL SIDE, AND THE
+  SECTION THE GDD CALLS THE CENTREPIECE IS NO LONGER ABSENT FROM THIS ENGINE.** Lane commit on
+  `feat/forecast-card` in `E:/MultiAgent/Strat-wt/slot-1`; the banner above carries this branch's
+  figure and provenance, and the count is re-derived on `master` in the merge commit. The gate
+  returned `VERDICT: PASS` with zero findings on its FIRST round.
+  - **WHAT EXISTS NOW.** One new bridge surface, `FStratBridge::AttackForecast`, gathering all six
+    of the card's readouts; a reflected `FStratForecastView` with a three-way `EStratCounterReason`;
+    `StratComposeForecastView` in `StratUI`; and `StratDecorateForecast` in the new
+    `Source/StratPlay/StratForecastQuery.h`/`.cpp`, wired into
+    `AStratPlayerController::DecorateForPresentation` AFTER the hover. **NO WIDGET AND NO
+    `.uasset` -- the asset tail is a separate, later lane on the integration tree.**
+  - **THE THIRTEEN CLAUSES, all under `T-UI-01` except one, and none minted.**
+    `Stratocracy.StratBridge.T-UI-01.ForecastCardHpAfterIsTheOracles`,
+    `.ForecastCardRepeatsTheModulesForecast`, `.ForecastLegalityIsTheLitTargetSet`,
+    `.ForecastTerrainBonusIsTheDefenderRows`;
+    `Stratocracy.StratBridge.T-FAME-01.ForecastKillAwardIsTheModulesAward`;
+    `Stratocracy.StratUI.T-UI-01.AttackerHpRowFollowsTheCounterDamage`,
+    `.CounterReasonMatchesTheDefendersBand`, `.FlagBandRaisesForEitherFlag`,
+    `.IllegalForecastComposesADefaultCard`, `.TerrainPenaltyReachesTheCardSigned`;
+    `Stratocracy.StratPlay.T-UI-01.ForecastComposesTheHoveredHex`,
+    `.ForecastDecoratorWritesUnconditionally`, `.ForecastRefusesASpentUnit`.
+    **W1 RIDES `T-UI-01` LEGITIMATELY -- it IS the forecast ID -- BUT THE STRETCH IS STILL STATED
+    RATHER THAN HIDDEN**, as W0's ruling required: `T-UI-01`'s own GDD sentence is about the
+    forecast EQUALLING the resolution, and a clause about the counter-reason mapping or the flag
+    band asserts no such equality. Each such clause says so in its own comment. **Six clauses the
+    engineer proposed under `T-UI-03` and `T-INT-05` were RENAMED to `T-UI-01` by the
+    `coordinator` before they were written:** `T-UI-03`'s subject is the standings scoreboard and
+    its `no widget-side arithmetic` sentence is a design rule cited across the GDD, not a licence
+    to name forecast clauses under it.
+  - **THE SHARPEST CLAUSE IS `CounterReasonMatchesTheDefendersBand`, and the reason is the shape
+    of the defect it catches.** The three-way counter reason is a MAPPING over two module
+    booleans, not a combat formula, so a later rules change could make the card say `out of range`
+    about a defender that is in range **while every number on the card stayed correct** -- no
+    compiler and no numeric parity gate would see it. The clause asserts the reason against the
+    defender's own `[rangeMin, rangeMax]` band read off the projection, NEVER against the two
+    booleans the mapping was chosen from. Its mutation produced exactly that sentence: `the card
+    says 'out of range' at distance 1, which is INSIDE unit 10's own band [1, 1]`.
+  - **A DISPATCH INSTRUCTION WAS REFUSED AND THE ENGINEER WAS RIGHT, which is recorded because
+    the `coordinator` wrote the instruction.** The brief said to bridge `strat::uiResolveForGate`
+    for the HP before -> after readouts. It is `T-UI-01`'s INDEPENDENT ORACLE:
+    `StratCombatOutcomeParity.cpp`'s header says it `has zero production callers in this tree BY
+    CONSTRUCTION` and `must stay uncalled from production`, because a bridge call `would make
+    every comparison below a comparison of the bridge with itself`. The mention of it inside
+    `StratBridge.cpp` is a PROHIBITION, not a note that it has not been wrapped yet, and reading
+    it off a grep hit rather than at its site is how the instruction was written. The clamp is
+    written out once inside `FStratBridge::AttackForecast` instead and discharged by a clause that
+    calls the oracle from `Tests/`; the gate confirmed ZERO production code callers survive.
+  - **FOUR DEBTS WERE NAMED BY THE ENGINEER. TWO ARE DISCHARGED IN THIS SAME TREE**, by
+    `ForecastCardHpAfterIsTheOracles` and `CounterReasonMatchesTheDefendersBand`. **TWO REMAIN
+    OPEN AND ARE STATED AS OPEN.** (3) the `bHasActed` gate in `StratDecorateForecast` duplicates
+    `FStratSelectionMachine`'s guard -- two copies of `has this unit spent its act` -- discharged
+    the day the machine exposes that predicate or a clause asserts both refuse the same unit.
+    (4) `bFlagAtRisk` WHEN BOTH FLAGS FALL: Sec 2.11.3 describes one band and gives no rule for
+    the pair. The engineer chose the DEFENDER's side and said so at the code site rather than
+    leaving it to branch order. **That one is a design ruling for the user, not a defect.**
+  - **TWO GAPS ARE DECLARED RATHER THAN PAPERED OVER.** The flat-500 flag award is UNEXERCISED
+    through `AttackForecast` on a real board -- 0 of 64 lethal forecasts swept are against a flag
+    -- so the clause reports it in an `AddInfo` instead of implying coverage, and proves the
+    `isFlag` argument load-bearing by control. Closing it needs a scenario reaching a flag kill,
+    and `Data/` is read-only, so it is a filing rather than a change. And **no clause pins the
+    decorator's PLACEMENT** in `DecorateForPresentation`, only that its ordering constraint is
+    real; pinning the call site would need a seam that does not exist and none was invented.
+  - **WHAT IS OWED NEXT.** (1) The forecast card's Widget Blueprint, on the integration tree, in
+    the editor. (2) A user ruling on debt (4). (3) `engine.md` carries a conditional sentence
+    whose condition was met inside this same tree -- non-gating, named by the gate, and `tests.md`
+    records the discharge.
 
 - **2026-08-27, COORDINATOR -- W0'S HOVER NOW REACHES THE GAME. THE INPUT ROUTE WAS THE DEFECT,
   IT IS REPLACED, AND A HUMAN HAS SEEN IT WORK.** The entry below records the playtest that found

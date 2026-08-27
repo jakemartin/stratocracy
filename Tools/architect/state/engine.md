@@ -13,6 +13,78 @@
 
 ## NEXT
 
+- **2026-08-27, `strat-gameplay-engineer` -- W1, §2.11.3'S FORECAST CARD, MODEL SIDE. THE THREE
+  READOUTS `strat::UiForecast` DOES NOT CARRY NOW HAVE MODULE SOURCES, AND THE ONE THAT COULD
+  NOT BE ASKED FOR IS WRITTEN OUT IN THE BRIDGE WITH ITS OWN GATE NAMED.** In the lane worktree
+  `E:/MultiAgent/Strat-wt/slot-1` on `feat/forecast-card`, from `ee7300c`. Five files modified
+  and two added, all mine: `Source/StratBridge/StratBridge.h`, `Source/StratBridge/StratBridge.cpp`,
+  `Source/StratUI/StratViewModel.h`, `Source/StratUI/StratViewModel.cpp`, and the new pair
+  `Source/StratPlay/StratForecastQuery.h` / `.cpp`; plus the decorator wiring in
+  `Source/StratPlay/StratPlayerController.cpp`. Nothing committed, nothing staged, no asset, no
+  config, nothing under `Tests/`. No suite figure and no verdict is stated here; `global.md`
+  owns both.
+  - **THE BRIEF'S "BRIDGE `uiResolveForGate`" INSTRUCTION WAS REFUSED, AND THAT IS THE ONE
+    LOAD-BEARING CALL OF THIS WAVE.** The dispatch was right that the HP before-to-after pair has
+    a module-side source and that `Hp - damage` in a compose function is the defect `Ui.h` says
+    T-UI-01 exists to catch. It was wrong that the fix is to bridge it.
+    `Source/StratBridge/Tests/StratCombatOutcomeParity.cpp`'s header block states that
+    `strat::uiResolveForGate` "has zero production callers in this tree BY CONSTRUCTION", that
+    the phase which wrote the combat emitter deliberately declined to call it, and that "a
+    `uiResolveForGate` invoked by the bridge would make every comparison below a comparison of
+    the bridge with itself". `StratBridge.cpp`'s `StratCombatObservation` block says the same
+    from the other side. Bridging it would have destroyed T-UI-01's independent oracle at the
+    resolution end in order to serve a hover card.
+  - **SO THE SUBTRACTION AND THE CLAMP-AT-ZERO ARE WRITTEN OUT ONCE, INSIDE
+    `FStratBridge::AttackForecast`, AND THE DISCHARGE IS A TEST RATHER THAN A COMMENT.** A gate
+    in `Source/StratBridge/Tests/` may call the oracle; the bridge may not. The bridge computing
+    independently and the oracle computing independently is the arrangement that construction
+    wanted -- what it forbade was the bridge ASKING the oracle. Until such a clause exists, the
+    two HP-after fields are the only numbers on the card that no test compares against anything.
+  - **WHAT IS NEW ON THE BRIDGE.** One plain engine-typed struct `FStratAttackForecast` and one
+    method `FStratBridge::AttackForecast(int32, FIntPoint, FStratAttackForecast&)`. It calls the
+    existing `Forecast` for every combat number and adds exactly four things: the defender's
+    `TerrainDef::defensePct` and `id` by table read, `strat::killAward` for the lethal line's
+    fame, both units' HP off one `MakeUiWorld`, and the two clamps above.
+    **`strat::killAward` had no bridge caller before this** -- it appeared in `Source/StratBridge/`
+    only inside `StratCombatOutcomeParity.cpp`. The §2.4 cost is never halved here and the
+    literals 150 and 500 appear nowhere.
+  - **`bAttackerDies` IS THE BRIDGE'S WHERE `bDefenderDies` IS THE MODULE'S**, because
+    `strat::UiForecast` carries no attacker-death field. The expression used is the one
+    `StratDivergenceMaskOf`'s `bExpectAttackerDie` already uses in the same file, so there is one
+    spelling of the counter-kill in that module and not two.
+  - **THE COUNTER LINE'S THREE-WAY REASON IS A PRESENTATION MAPPING AND IS THE ONE PLACE A LATER
+    RULES CHANGE COULD MAKE THE CARD LIE WITHOUT MOVING A NUMBER.** `EStratCounterReason` is
+    chosen in `StratComposeForecastView` from two module booleans, dying-defender arm first. Two
+    upstream changes break it silently and no compiler and no numeric parity gate would report
+    either: if `strat::defenderCanCounter` ever refuses for a reason that is not range, the card
+    says `out of range` about a defender in range; if `strat::uiForecast` ever lets a dying
+    defender counter, the first arm swallows a counter that fires. `Distance`, `bCounterFires`
+    and `bDefenderDies` are carried on the view beside the enumerator so a clause can assert the
+    choice against something other than the booleans it was chosen from.
+  - **`bLegal` IS "LIT", SO NOTHING INTERSECTS AGAINST THE TARGET SET.**
+    `FStratBridge::AttackTargetHexes`' own block says it keeps a hex "when the module answers
+    `legal`", from the same `Forecast` call -- so the card's appearance and the highlight are the
+    same predicate evaluated by the same function, and the wave added no second range test, no
+    distance filter and no membership check.
+  - **THE FIRST DECORATOR ON THE PRESENTATION SEAM WITH AN ORDERING CONSTRAINT THAT IS NOT
+    `Observe`'S.** `StratDecorateForecast` reads `FStratViewModel::Hover`, so it runs after
+    `FStratHoverState::DecorateViewModel` in `AStratPlayerController::DecorateForPresentation`.
+    The hover decorator's own header amendment predicted this day and is still accurate -- the
+    hover has no constraint of its own; something now depends on it. It writes
+    `FStratViewModel::Forecast` unconditionally, including on all four no-card paths, so a model
+    is never a difference from a previous one.
+  - **ONE GATE IN THE DECORATOR IS NOT THE RULES MODULE'S, AND IT IS NAMED WHERE IT IS WRITTEN.**
+    `strat::uiForecast` answers about §2.6 and not about the turn, so it calls an already-spent
+    unit's attack legal. The decorator therefore reads `FStratUnitView::bHasActed` -- the same
+    RULES-side bit `FStratSelectionMachine`'s own `has already acted this turn` guard reads, and
+    deliberately not the engine's `bDone` -- so that no commit card appears for a command the
+    selection machine will refuse.
+  - **NOT IN THIS WAVE, and each is somebody else's:** the Widget Blueprint and every asset
+    (`Content/` is not this lane's); all card TEXT, since the view carries an enumerator, a signed
+    percentage and two ids and no formatted string; §2.11.3's range-1 dead-zone ring, which is
+    `BuildOverlays`' overlay and is about the selection rather than one hovered target; and every
+    clause, which is `strat-test-author`'s.
+
 - **2026-08-27, `strat-gameplay-engineer` -- THE HOVER IS POLLED ON TICK. THE ENHANCED INPUT
   HOVER ROUTE WAS MEASURED DEAD AND HAS BEEN REMOVED, AND THE INSTRUMENT THAT MEASURED IT IS
   GONE WITH IT.** In the integration tree `E:/MultiAgent/Stratocracy` on `master`, from

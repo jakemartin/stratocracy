@@ -22,6 +22,7 @@
 
 #include "StratBoardActor.h"
 #include "StratBridge.h"
+#include "StratForecastQuery.h"
 #include "StratMatchSubsystem.h"
 #include "StratPlay.h"
 #include "StratScoreboardHUD.h"
@@ -990,12 +991,44 @@ void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
 	SelectionMachine.DecorateViewModel(Model);
 	GuidedOpening.DecorateViewModel(Model);
 
-	// THE HOVER SITS LAST AND COULD SIT ANYWHERE. It writes `FStratViewModel::Hover` and no
-	// other field, reads nothing off the model, and consults neither the machine nor the
-	// guidance layer -- so unlike `Observe` above it has no ordering constraint at all. Last
-	// for readability, and stated as unordered so that a future decorator inserted around it
-	// does not have to work out whether it may be.
+	// THE HOVER STILL HAS NO ORDERING CONSTRAINT OF ITS OWN. It writes
+	// `FStratViewModel::Hover` and no other field, reads nothing off the model, and consults
+	// neither the machine nor the guidance layer. What HAS changed is that something now
+	// depends on it, so it is no longer last -- see the forecast below.
 	Hover.DecorateViewModel(Model);
+
+	// §2.11.3'S CARD, AND IT MUST RUN AFTER THE HOVER. `StratDecorateForecast` reads
+	// `Model.Hover` -- that is the whole of the ordering constraint and it runs one way:
+	// the forecast reads the hover and writes nothing the hover reads. Placed before it,
+	// it would compose this frame's selection against last frame's hex and the card would
+	// be silently one mouse-move stale, which is the failure mode that looks like a
+	// latency bug and is a sequencing one.
+	//
+	// IT ALSO READS THE MACHINE'S SELECTION, so it sits after
+	// `SelectionMachine.DecorateViewModel` as well -- though only incidentally: it takes
+	// the selection through `GetSelectedUnitId` rather than off the model, so that arm has
+	// no ordering requirement. The hover one is real.
+	//
+	// A REFUSAL HERE IS ORDINARY AND IS NOT LOGGED AT WARNING. The commonest cause by far
+	// is an unseeded bridge, which is the state every frame before `StartMatch` finishes,
+	// and this function runs on every reconcile. The card is cleared unconditionally inside
+	// the decorator, so a refusal leaves no stale forecast to report.
+	{
+		const UStratMatchSubsystem* const Match  = GetMatch();
+		const FStratBridge* const         Bridge = (Match != nullptr) ? Match->GetBridge() : nullptr;
+
+		const FStratBridgeForecastQuery ForecastQuery(Bridge);
+
+		FString ForecastFailureReason;
+		if (!StratDecorateForecast(Model, SelectionMachine.GetSelectedUnitId(),
+		                           ForecastQuery, ForecastFailureReason)
+			&& !ForecastFailureReason.IsEmpty())
+		{
+			UE_LOG(LogStratPlay, Verbose,
+				TEXT("%s could not forecast for the hovered hex (this is ordinary before the match starts): %s"),
+				*GetName(), *ForecastFailureReason);
+		}
+	}
 }
 
 void AStratPlayerController::TryArmGuidedOpening()

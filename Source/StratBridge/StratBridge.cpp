@@ -929,6 +929,144 @@ FStratResult FStratBridge::Forecast(int32 AttackerId, const strat::Hex& Defender
 	return FStratResult::Ok();
 }
 
+FStratResult FStratBridge::AttackForecast(int32 AttackerId, FIntPoint DefenderHex,
+                                          FStratAttackForecast& OutForecast) const
+{
+	// Reset up front, `Forecast`'s reason unchanged: a refusal must not leave the
+	// caller holding a previous card's damage number and read it as this one's.
+	OutForecast = FStratAttackForecast();
+	OutForecast.AttackerUnitId = AttackerId;
+
+	const strat::Hex Target{DefenderHex.X, DefenderHex.Y};
+
+	// EVERY COMBAT NUMBER COMES THROUGH HERE AND THROUGH NOTHING ELSE. `Forecast` is
+	// `strat::uiForecast` with two channels in front of it, and it also performs this
+	// method's whole refusal ladder -- definitions loaded, scenario seeded, no unit
+	// carrying a defIndex outside the table, attacker on the board. Repeating that
+	// ladder here would be a second, weaker copy of it that could disagree.
+	strat::UiForecast Forecasted;
+	const FStratResult Asked = Forecast(AttackerId, Target, Forecasted);
+	if (!Asked.bOk)
+	{
+		return Asked;
+	}
+
+	OutForecast.bLegal        = Forecasted.legal;
+	OutForecast.IllegalReason = Forecasted.legal ? FString() : FromStd(Forecasted.reason);
+
+	if (!Forecasted.legal)
+	{
+		// THE ILLEGAL PATH FILLS NOTHING ELSE, on purpose. See the declaration: a terrain
+		// bonus or a kill award attached to an attack the rules refuse is a number that
+		// can only ever be shown wrongly, and leaving the fields at their defaults is what
+		// makes "no card" the only thing a consumer can render.
+		return FStratResult::Ok();
+	}
+
+	// The module's own answers, copied and not adjusted.
+	OutForecast.Distance      = Forecasted.distance;
+	OutForecast.Damage        = Forecasted.damage;
+	OutForecast.bDefenderDies = Forecasted.defenderDies;
+	OutForecast.bCounterFires = Forecasted.counterFires;
+	OutForecast.CounterDamage = Forecasted.counterDamage;
+
+	// ONE `UiWorld`, AND THE SAME KIND `Forecast` READ. Both participants' HP, both
+	// `isFlag` bits, both sides and the defender's terrain row are taken off a single
+	// projection, so the card cannot describe a board that was two different boards.
+	const strat::UiWorld World = MakeUiWorld();
+
+	const strat::UiUnit* const Attacker = strat::findUiUnit(World, AttackerId);
+	const strat::UiUnit*       Defender = nullptr;
+	for (const strat::UiUnit& U : World.units)
+	{
+		if (U.hex.q == Target.q && U.hex.r == Target.r)
+		{
+			Defender = &U;
+			break;
+		}
+	}
+
+	// UNREACHABLE WHILE `legal` IS TRUE, AND CHECKED ANYWAY. `uiForecast` returns
+	// `legal` only after it has found both units in this same list off this same
+	// projection, so a null here would mean `MakeUiWorld` disagreed with itself between
+	// two calls. Refused rather than dereferenced, because the alternative to a refusal
+	// is a crash in a hover path that runs whenever the mouse moves.
+	if (Attacker == nullptr || Defender == nullptr)
+	{
+		return FStratResult::Fail(FString::Printf(
+			TEXT("the forecast was legal but unit %d or the unit on (%d,%d) is not in the projection"),
+			AttackerId, DefenderHex.X, DefenderHex.Y));
+	}
+
+	OutForecast.DefenderUnitId   = Defender->id;
+	OutForecast.AttackerSide     = Attacker->side;
+	OutForecast.DefenderSide     = Defender->side;
+	OutForecast.bAttackerIsFlag  = Attacker->isFlag;
+	OutForecast.bDefenderIsFlag  = Defender->isFlag;
+	OutForecast.AttackerHpBefore = Attacker->unit.hp;
+	OutForecast.DefenderHpBefore = Defender->unit.hp;
+
+	// THE TWO CLAMPS, WRITTEN OUT ONCE. `strat::uiResolveForGate` returns exactly these
+	// two numbers and may not be called from production code -- see
+	// `FStratAttackForecast`'s block and `StratCombatOutcomeParity.cpp`'s header for the
+	// construction that forbids it and the gate that discharges writing them here.
+	// Neither line invents a rule: the subtrahend is `uiForecast`'s own damage, the
+	// counter is applied only when `uiForecast` says it fires, and zero is the floor
+	// because zero HP is death in this rules module.
+	OutForecast.DefenderHpAfter = FMath::Max(0, Defender->unit.hp - Forecasted.damage);
+	OutForecast.AttackerHpAfter = FMath::Max(
+		0, Attacker->unit.hp - (Forecasted.counterFires ? Forecasted.counterDamage : 0));
+
+	// THE COUNTER-KILL, IN `StratDivergenceMaskOf`'s SPELLING. That function's
+	// `bExpectAttackerDie` is `bForecastCounterFires && ForecastCounterDamage >=
+	// AttackerHpBefore`, and this is the same expression rather than a second one
+	// phrased off `AttackerHpAfter == 0` -- two spellings of the counter-kill in one
+	// module is how they come to differ on the day one of them is edited.
+	OutForecast.bAttackerDies =
+		Forecasted.counterFires && Forecasted.counterDamage >= Attacker->unit.hp;
+
+	// THE DEFENDER'S TERRAIN ROW. A table read: the board's terrain index at the
+	// defender's hex, into the loaded table. It is deliberately the DEFENDER's hex --
+	// §2.11.3 names one bonus and puts it beside the defender, and `uiForecast` hands
+	// `resolveDamage` this same hex's percentage for the damage line.
+	const int32 TerrainIndex = World.board.terrainAt(Defender->hex);
+	if (TerrainIndex < 0 || static_cast<size_t>(TerrainIndex) >= Terrain.size())
+	{
+		// A REFUSAL AND NOT A ZERO. `strat::terrainDefPctAt` answers 0 for an
+		// out-of-table index because it is inside the damage formula and must return
+		// something; here the number is going on a card that promises the bonus is never
+		// hidden, and `Plains +0%` over a hex whose row could not be found is that promise
+		// broken silently.
+		return FStratResult::Fail(FString::Printf(
+			TEXT("hex (%d,%d) carries terrain index %d, outside the loaded terrain table"),
+			DefenderHex.X, DefenderHex.Y, TerrainIndex));
+	}
+
+	const strat::TerrainDef& DefenderTerrain = Terrain[static_cast<size_t>(TerrainIndex)];
+	OutForecast.DefenderTerrainDefensePct = DefenderTerrain.defensePct;   // SIGNED. See Data.h.
+	OutForecast.DefenderTerrainId         = FName(*FromStd(DefenderTerrain.id));
+
+	// §2.7's award, from `strat::killAward` and from nothing else, and only when there is
+	// a kill to reward. Half a cost computed here would agree with a broken `killAward`
+	// forever -- which is the reasoning `StratCombatOutcomeParity.cpp` already records
+	// for the resolution end of the same number.
+	if (Forecasted.defenderDies)
+	{
+		if (Defender->defIndex < 0 || static_cast<size_t>(Defender->defIndex) >= Units.size())
+		{
+			// Unreachable behind `Forecast`'s own table sweep, refused rather than indexed.
+			return FStratResult::Fail(FString::Printf(
+				TEXT("unit %d carries defIndex %d, outside the loaded unit table"),
+				Defender->id, Defender->defIndex));
+		}
+
+		OutForecast.KillAwardFame = strat::killAward(
+			Units[static_cast<size_t>(Defender->defIndex)], Defender->isFlag);
+	}
+
+	return FStratResult::Ok();
+}
+
 FStratResult FStratBridge::BuildOptions(int32 Side, const strat::Hex& FactoryHex,
                                         std::vector<strat::UiBuildOption>& OutOptions) const
 {

@@ -130,6 +130,18 @@
 class FStratBridge;
 
 /**
+ * §2.11.3's card as `FStratBridge::AttackForecast` answers it -- a PLAIN struct declared
+ * in `StratBridge.h`, made of `int32`, `bool`, `FString` and `FName` and naming no
+ * `strat::` type.
+ *
+ * FORWARD DECLARED FOR THE SAME REASON `FStratBridge` IS, and the reason is stronger than
+ * it looks: the struct itself is harmless, but it is declared in a header that includes
+ * `Ui.h` and `Data.h`, and this file declares USTRUCTs. `StratComposeForecastView` takes it
+ * by const reference and only the .cpp needs its definition.
+ */
+struct FStratAttackForecast;
+
+/**
  * §2.8's result tier, mirrored into a reflected enum.
  *
  * THE ORDER IS THE VENDORED ENUM'S AND IS NOT FREE. `strat::ResultTier`
@@ -880,6 +892,282 @@ struct FStratHoverView
 };
 
 /**
+ * The counter line's stated reason -- §2.11.3's "a number, `out of range`, or
+ * `defender destroyed`", as one value.
+ *
+ * A PRESENTATION MAPPING AND NOT A COMBAT RULE, and this is the one place on the card
+ * where that distinction is load-bearing enough to spell out. Every other field on
+ * `FStratForecastView` is a module answer copied across; this enumerator is CHOSEN, by
+ * `StratComposeForecastView`, out of two module booleans and in a fixed order:
+ *
+ *     `bDefenderDies`  -> `DefenderDestroyed`
+ *     `bCounterFires`  -> `Number`
+ *     otherwise        -> `OutOfRange`
+ *
+ * WHY THE ORDER IS SAFE TODAY. `strat::uiForecast` computes the counter inside
+ * `if (!f.defenderDies)`, so `counterFires` is false whenever `defenderDies` is true and
+ * the first two arms cannot both match. `Combat.h::defenderCanCounter` is documented
+ * "True only when distance is inside the defender's [rangeMin, rangeMax] band", so range
+ * is the ONLY thing that can make `counterFires` false on a surviving defender, and the
+ * third arm's words are exact.
+ *
+ * THIS IS THE ONE PLACE A LATER RULES CHANGE COULD MAKE THE CARD LIE, and it would do so
+ * QUIETLY -- no compiler and no existing clause would report it. Two changes upstream do
+ * it. (1) If `defenderCanCounter` ever refuses for a reason that is not range -- a
+ * suppression, an ammunition state, a type rule -- the card says `out of range` about a
+ * defender that is in range, and the mapping is still total, still exhaustive and still
+ * wrong. (2) If `uiForecast` ever lets a dying defender counter, the first arm silently
+ * swallows a counter that fires. Neither is arithmetic and neither moves a number, which
+ * is why a numeric parity gate cannot see either one.
+ *
+ * `Distance`, `bCounterFires` AND `bDefenderDies` ARE ALL CARRIED BESIDE THIS FIELD for
+ * exactly that reason: a gate can assert the enumerator against the inputs it was chosen
+ * from, and against the defender's own range, without this file being the only witness.
+ *
+ * NO `None`. There is no card without a forecast -- `bHasForecast` is the flag for that --
+ * and a fourth enumerator would be a counter line §2.11.3 says is "never omitted".
+ */
+UENUM(BlueprintType)
+enum class EStratCounterReason : uint8
+{
+	/** The counter fires. `CounterDamage` is the number the line shows. */
+	Number            UMETA(DisplayName = "A number"),
+
+	/** The defender survives and cannot reach back. `Counter 0 -- out of range`. */
+	OutOfRange        UMETA(DisplayName = "Out of range"),
+
+	/** The defender does not survive to counter. `Counter 0 -- defender destroyed`. */
+	DefenderDestroyed UMETA(DisplayName = "Defender destroyed")
+};
+
+/**
+ * §2.11.3's attack forecast card, as the widget needs to see it. THE CENTREPIECE DISPLAY'S
+ * WHOLE MODEL.
+ *
+ * WHAT GAP THIS CLOSES. `FStratHoverView` above landed wave 0's half -- where the cursor is
+ * -- and its own block says in as many words that "neither the forecast struct nor the info
+ * panel struct is here, because each is its own wave". This is the forecast wave. Before it,
+ * the six readouts §2.11.3 requires had no reflected home at all, and three of them had no
+ * source anywhere on the engine side: `strat::UiForecast` carries seven fields and none of
+ * them is an HP-after, a terrain bonus or a kill award.
+ *
+ * PART OF THE MODEL AND NOT OF A WIDGET, for `FStratGuidanceView`'s reason and
+ * `FStratHoverView`'s: a card that appears because of a hover is a visible element, and
+ * T-INT-05's "rebuild the screen from the view model alone" stops holding the moment one
+ * visible element reads from somewhere else. A `BlueprintPure` on the controller returning a
+ * forecast would work on the first day and would make that invariant false with nothing
+ * reporting it.
+ *
+ * EVERY NUMBER BELOW IS `FStratBridge::AttackForecast`'s, COPIED. That method's own block
+ * accounts for each one -- which are `strat::uiForecast`'s, which is
+ * `strat::killAward`'s, which is a terrain-table read, and which two are the clamps it
+ * writes out because `strat::uiResolveForGate` may not be called from production. NOTHING
+ * IS COMPUTED IN THIS FILE except the three presentation shapings named on their own
+ * fields: `CounterReason`, `bFlagAtRisk` / `RiskedFlagSide`, and `bShowAttackerHp`. Each is
+ * a CHOICE OVER BOOLEANS, not a number, and each says so where it is declared. The header
+ * block's no-arithmetic census stands: no field here is an addition, a subtraction or a
+ * comparison of two quantities.
+ *
+ * THE WIDGET SHAPES NOTHING FURTHER, which is T-UI-03's standing rule and the reason
+ * `bShowAttackerHp` exists at all rather than being left as `CounterDamage > 0` in a
+ * binding. The card's remaining work is formatting: a number into a string, an enumerator
+ * into a sentence, a side into a colour.
+ *
+ * WRITTEN BY `StratDecorateForecast` (`Source/StratPlay/StratForecastQuery.h`), on the
+ * decoration seam `FStratSelectionMachine`, `FStratGuidedOpening` and `FStratHoverState`
+ * already use, and AFTER the hover decorator because it reads `FStratViewModel::Hover`. That is the first ordering constraint any decorator but
+ * `Observe` has carried, and it is recorded on the producer as well as here.
+ * `StratBuildViewModel` leaves this default-constructed -- no card -- exactly as it leaves
+ * the hover not-hovering and the guidance block inactive.
+ *
+ * NOT IN THIS ROUND, with reasons:
+ * - NO TEXT. Not the terrain phrase, not `Destroys Tank · +150 Fame`, not `FLAG AT RISK`.
+ *   Those are formatted from these fields, and putting the sentence here would make this
+ *   struct the place a localisation change lands.
+ * - NO ATTACK RING AND NO RANGE-1 HOLE. §2.11.3's dead-zone drawing is the overlay's, off
+ *   `FStratSelectionMachine::BuildOverlays`, and it is about the SELECTION rather than
+ *   about one hovered target.
+ * - NO §2.11.6 ONE-SHOT REASSURANCE LINE. That is the guidance layer's beat and
+ *   `FStratGuidanceView` is where it belongs.
+ */
+USTRUCT(BlueprintType)
+struct FStratForecastView
+{
+	GENERATED_BODY()
+
+	/**
+	 * Whether there is a card at all.
+	 *
+	 * READ FIRST BY EVERY CONSUMER, on `FStratHoverView::bHasHoveredHex`'s rule and for its
+	 * reason: no value of the numbers below can mean "no forecast" -- zero damage against a
+	 * zero-HP unit is a real forecast -- so the absence needs its own flag. True requires all
+	 * of: a unit selected, a hovered hex, the bridge answering, and the rules module calling
+	 * the attack LEGAL. That last conjunct is what makes this exactly §2.11.3's "over a lit
+	 * target": `FStratBridge::AttackTargetHexes` lights a hex on the same `legal` answer, so
+	 * the card and the highlight cannot disagree about which hexes are targets.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	bool bHasForecast = false;
+
+	/**
+	 * The two participants, by unit id.
+	 *
+	 * THE ATTACKER IS THE SELECTION AND IS ECHOED so a card can be proved to be about the
+	 * unit the player selected rather than about whatever was selected when it was built.
+	 * The defender is the bridge's answer to "who did I forecast against" -- see
+	 * `FStratAttackForecast::DefenderUnitId` on why that is not a second author of the fact
+	 * `Units` states by hex.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 AttackerUnitId = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 DefenderUnitId = INDEX_NONE;
+
+	/** `You deal N dmg`. `strat::resolveDamage`'s answer, through the bridge. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 Damage = 0;
+
+	/**
+	 * `Tank 20 -> 17`. §2.11.3's before-and-after for the defender.
+	 *
+	 * BOTH HALVES CARRIED, though `FStratUnitView::Hp` already states the "before". The pair
+	 * is the readout, the bridge produced them from one read of one board, and splitting them
+	 * across two authors is how a card comes to show a before from this frame beside an after
+	 * from the last. That is the same reasoning `FStratAttackForecast::DefenderUnitId` gives,
+	 * and it is the deliberate exception to the lookup-not-duplication preference
+	 * `FStratHoverView` states.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 DefenderHpBefore = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 DefenderHpAfter = 0;
+
+	/** Whether a counter fires at all. `strat::defenderCanCounter`'s answer, through the bridge. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	bool bCounterFires = false;
+
+	/** The counter line's number. Zero and meaningless unless `bCounterFires`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 CounterDamage = 0;
+
+	/**
+	 * Which of §2.11.3's three counter phrasings this line takes.
+	 *
+	 * THE ONE CHOSEN FIELD ON THIS CARD, and `EStratCounterReason`'s own block is the
+	 * authority on how it is chosen, why the choice is exact today, and the two upstream
+	 * changes that would make it lie without moving a number.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	EStratCounterReason CounterReason = EStratCounterReason::OutOfRange;
+
+	/**
+	 * The attacker's own before-and-after, for the counter.
+	 *
+	 * SHOWN ONLY WHEN `bShowAttackerHp`, which is §2.11.3's "and for the attacker whenever
+	 * the counter is nonzero". Filled whenever there is a forecast, because the attacker's
+	 * HP-before is true regardless and the after equals it when nothing fires.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 AttackerHpBefore = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 AttackerHpAfter = 0;
+
+	/**
+	 * Whether the attacker's HP row is drawn. §2.11.3's "whenever the counter is nonzero".
+	 *
+	 * A SHAPING, AND HERE RATHER THAN IN A BINDING BECAUSE OF T-UI-03. `CounterDamage > 0`
+	 * in a widget graph is a comparison of two quantities inside the layer that is
+	 * explicitly not allowed to shape numbers, and "it is only a comparison" is the argument
+	 * that ends with a widget doing arithmetic. It is chosen here, once, and the widget binds
+	 * visibility straight to it.
+	 *
+	 * IT IS NOT `bCounterFires`. A counter that fires for zero damage moves no HP, and a
+	 * `20 -> 20` row would teach the player that the counter did something.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	bool bShowAttackerHp = false;
+
+	/**
+	 * `(Woods +20%)` -- the defender's terrain, named inline, every time.
+	 *
+	 * SIGNED, AND A WIDGET THAT WRITES `+` UNCONDITIONALLY IS WRONG. `strat::TerrainDef::
+	 * defensePct` is signed and its own comment names the case: `Bridge is -10 (§2.3)`.
+	 * §2.11.3 requires the modifier named so that terrain defense "must never read as hidden
+	 * dice", and a bridge hex showing `+-10%` or `+10%` breaks that in opposite directions.
+	 *
+	 * IT IS THE DEFENDER'S HEX. The §3 invariant is that it always is; the card's placement
+	 * of the modifier beside the defender is what teaches it, per §2.11.3. The attacker's
+	 * hex has a percentage too -- the counter's -- and it is deliberately not on this card.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 DefenderTerrainDefensePct = 0;
+
+	/** That terrain row's own `id` ("Woods", "Bridge", ...). `FStratHexView::TerrainId`'s lookup, for the hex the damage was computed on. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	FName DefenderTerrainId;
+
+	/** Whether this attack kills. `UiForecast::defenderDies`, the module's own field. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	bool bDefenderDies = false;
+
+	/**
+	 * The `+N Fame` of §2.11.3's `Destroys Tank · +150 Fame`, and of the enemy-flag band's
+	 * `+500 · Decisive victory`. ZERO WHEN THE DEFENDER LIVES.
+	 *
+	 * `strat::killAward`'s ANSWER AND NOT HALF A COST. One function serves both lines,
+	 * because Q5 makes the flat 500 a REPLACEMENT for the ordinary award rather than a
+	 * second rule -- so a widget that special-cased the flag would be restating a ruling the
+	 * rules module already made.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 KillAwardFame = 0;
+
+	/**
+	 * §2.11.3's `FLAG AT RISK -- this attack ends the match` band.
+	 *
+	 * A SHAPING OVER FOUR BOOLEANS, chosen in `StratComposeForecastView`: true when the
+	 * forecast is lethal to EITHER flag -- the defender is the flag and dies, or the attacker
+	 * is the flag and the counter kills it. §2.11.3 requires both directions: "No player can
+	 * end a match, theirs or the enemy's, without having been told on the card they clicked."
+	 *
+	 * THE ATTACKER-SIDE HALF RESTS ON `FStratAttackForecast::bAttackerDies`, which is the
+	 * BRIDGE'S and not the module's -- `strat::UiForecast` has no attacker-death field. That
+	 * asymmetry is recorded on the bridge struct; it is named here too because this band is
+	 * the only thing on the card that depends on it.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	bool bFlagAtRisk = false;
+
+	/**
+	 * Which side's flag is at risk, or `INDEX_NONE`. Meaningless when `bFlagAtRisk` is false.
+	 *
+	 * A SIDE AND NOT A `bIsOwnFlag`. §2.11.3 colours the band red for the player's own flag
+	 * and gold for the enemy's, and the shortcut -- "the attacker is the viewer, because you
+	 * can only select your own units" -- is true today and is exactly the premise a hot-seat
+	 * hand-over breaks without saying so. The widget compares this against
+	 * `FStratViewModel::ViewingSide`, which is the same distinction
+	 * `FStratSelectionMachine` records between the viewing side and the side to move.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 RiskedFlagSide = INDEX_NONE;
+
+	/**
+	 * `UiForecast::distance` -- `Hex.h`'s answer.
+	 *
+	 * NOT ON THE CARD, AND CARRIED ANYWAY. §2.11.3 shows no distance readout. It is here
+	 * because `CounterReason`'s `OutOfRange` arm is an inference ABOUT this number, and a
+	 * clause that cannot see the distance can only assert the mapping against the same two
+	 * booleans the mapping was chosen from -- which is a test agreeing with itself. See
+	 * `EStratCounterReason`.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Forecast")
+	int32 Distance = 0;
+};
+
+/**
  * The whole view model: everything that should be on screen, in engine types.
  *
  * A VALUE, REBUILT, NEVER PATCHED. Phase 3's `ApplyView` reconciles actors against this
@@ -988,6 +1276,25 @@ struct FStratViewModel
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	FStratHoverView Hover;
+
+	/**
+	 * §2.11.3's attack forecast card. Wave 1.
+	 *
+	 * WRITTEN BY `StratDecorateForecast`, on the decoration seam, and
+	 * AFTER `FStratHoverState::DecorateViewModel` -- it reads `Hover` and is the first
+	 * decorator with an ordering constraint that is not `FStratGuidedOpening::Observe`'s.
+	 * `StratBuildViewModel` leaves it default-constructed, which is "no card", and that
+	 * default is load-bearing for the hover field's reason: every model built for a
+	 * hand-over, a gate, an AI turn or a reconcile nobody hovered during says "no card",
+	 * which is the truth for all of them.
+	 *
+	 * IT IS A STATEMENT AND NOT AN EVENT. Nothing here records that a card APPEARED; the
+	 * card is on screen on exactly the frames this says it should be, and is rebuilt from
+	 * this value like everything else. §4.9's ordered event list is a different thing, and
+	 * `StratBridge.h` records the conflation as the trap.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	FStratForecastView Forecast;
 };
 
 /**
@@ -1079,3 +1386,41 @@ STRATUI_API bool StratBuildMatchResult(
 	const FStratBridge&    Bridge,
 	FStratMatchResultView& OutResult,
 	FString&               OutFailureReason);
+
+/**
+ * Copies `FStratBridge::AttackForecast`'s answer into the reflected card, and performs
+ * §2.11.3's three presentation shapings. THE LAST PLACE A NUMBER MAY BE SHAPED.
+ *
+ * A FREE FUNCTION IN StratUI AND NOT A METHOD ON THE DECORATOR THAT CALLS IT, which is a
+ * placement decision and the reason is this header's own census. The block at the top of
+ * this file states what every field of the view model may be -- a snapshot mirror, a table
+ * lookup, and since 2026-08-25 exactly one arithmetic exception -- and that census can only
+ * govern code it can see. A compose living in `StratPlay` would fill this model from outside
+ * the file that says what filling it is allowed to mean. It is also `StratBuildViewModel`'s
+ * own shape, for `StratBuildViewModel`'s own reason: it can be asserted with no actor, no
+ * world, no controller and no Slate in existence.
+ *
+ * IT TAKES THE BRIDGE'S PLAIN STRUCT AND NOT THE BRIDGE. So a gate can hand it a
+ * hand-built `FStratAttackForecast` -- a counter-kill on a flag, a negative terrain
+ * percentage, a lethal forecast against a flag on the far side -- and pin the shapings over
+ * positions no fixture on this project's one scenario reaches. Half of §2.11.3's card is
+ * only exercisable that way, and `a-correct-mapping-can-be-unreachable-by-test` is what
+ * happens when it is not.
+ *
+ * THE THREE SHAPINGS, ALL DECLARED ON THEIR OWN FIELDS AND ALL CHOICES OVER BOOLEANS:
+ * `CounterReason` (see `EStratCounterReason` for the one lie-vector on this card),
+ * `bFlagAtRisk` / `RiskedFlagSide`, and `bShowAttackerHp`. EVERY OTHER FIELD IS A COPY.
+ * Nothing here adds, subtracts or divides; the two subtractions the card needs were done in
+ * `FStratBridge::AttackForecast`, and that method's block says why they could not be asked
+ * for instead.
+ *
+ * AN ILLEGAL FORECAST PRODUCES `bHasForecast` FALSE AND NOTHING ELSE. The bridge already
+ * leaves its own struct empty on that path; this restates the emptiness rather than trusting
+ * it, so a card cannot be assembled out of a refusal's leftovers.
+ *
+ * ALL-OR-NOTHING, as every builder in this file is: it fills a local and assigns on the last
+ * line.
+ */
+STRATUI_API void StratComposeForecastView(
+	const FStratAttackForecast& Source,
+	FStratForecastView&         OutForecast);

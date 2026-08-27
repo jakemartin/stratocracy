@@ -12,6 +12,96 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-27 (local; this pass's own runs stamp UTC `2026.08.27-19.18.01`, `-19.20.22` and
+  `-19.22.02`) — THE HOVER'S INPUT ROUTE IS PINNED FOR THE FIRST TIME, BY ONE CLAUSE, AND THE
+  CLAUSE WAS PROVED TO FAIL BEFORE IT WAS BELIEVED.** One clause added,
+  `Stratocracy.StratPlay.T-UI-01.TickDrivesTheHoverPath`, into the existing
+  `Source/StratPlay/Tests/StratHoverInputClauses.cpp`. It rides `T-UI-01` by the same user ruling
+  that covers wave 0's five; NO NEW ACCEPTANCE ID WAS MINTED. The clause-name set grew by exactly
+  one and nothing was removed or renamed, measured by SET DIFFERENCE on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` over `git grep HEAD` versus the worktree — never by an
+  acceptance-ID grep, which is useless here by construction since all six wave-0/hover clauses
+  share one ID. The live suite figure is `global.md`'s and is not restated here.
+  - **WHY THIS ONE MATTERS MORE THAN ITS SIZE.** Wave 0's hover rode an `Axis2D` `UInputAction`
+    bound `ETriggerEvent::Triggered`. The binding was correct, live, warning-free and green, and
+    the engine delivered essentially nothing through it — the handler ran ONCE in three and a half
+    minutes, on a focus transition. **NO CLAUSE COULD HAVE CAUGHT THAT AND NONE DID**, because
+    nothing in this project's automation reaches `UPlayerInput`; the record said so at the time
+    and was right. The route is now `AStratPlayerController::Tick` calling
+    `UpdateHoverFromCursor`, and a tick is something a fixture can deliver. That is the whole
+    change in testability: the hover's input route went from unpinnable-by-construction to pinned.
+  - **WHAT THE CLAUSE PINS.** A live spawned `AStratPlayerController` is given a hover through the
+    shipped public `SetHoveredHex` seam, the plant is asserted STANDING (on the controller and on
+    a model its own `DecorateForPresentation` wrote), the controller is TICKED, and it then
+    reports no hovered hex on both readers. A second tick does not put it back.
+  - **WHAT IT DOES NOT PIN, AND THIS IS THE HONEST LIMIT.** It cannot distinguish `Tick` calling
+    `UpdateHoverFromCursor` from `Tick` calling `ClearHoveredHex()` directly. With no seeded match
+    `GetBoard()` is null, so `HexUnderCursor` returns false before it would need a viewport, and
+    both routes end at the identical `ApplyHoverChange(Hover.ClearHoveredHex())` with no other
+    observable. **Only the OFF-BOARD branch is reachable headlessly.** The on-board branch — that
+    a cursor over a hex produces THAT hex — needs `GetHitResultUnderCursor` and therefore a
+    viewport; it was witnessed by a human across 25 distinct hexes and is `content.md`'s, not a
+    clause's. Pinning the callee would need a seam that does not exist, and this lane did not
+    create one.
+  - **THE PLANT IS WHAT MAKES THE ASSERTION FALSIFIABLE AT ALL.** Without it, "not hovering after
+    a tick" is indistinguishable from a controller that was never hovering — this record's
+    own recorded shape where a default read cannot tell silence from an empty call. The
+    pre-condition legs are therefore load-bearing, not decoration, and the clause bails with an
+    `AddError` if the plant does not stand rather than reading a default and calling it a pass.
+  - **NO COPY OF THE SUBJECT IS HELD.** The clause constructs no `FStratHoverState`; every value
+    read comes back out of the spawned controller. The only default-constructed object is an
+    `FStratHoverView`, and that is the MODULE-SIDE expectation for "cleared", asked rather than
+    typed. Every hex is enumerated off a `StratBuildViewModel` built from the shipped scenario —
+    no hex literal. Every boolean asserted is a shipped function's own return value.
+  - **`Tick` IS `protected`, AND THE HANDLE TYPE IS THE FIX.** `Controller->Tick(dt)` through an
+    `AStratPlayerController*` does not compile. `AActor::Tick` is `public` and `APlayerController`
+    does not re-declare it, so an `AActor*` handle compiles — access is checked on the STATIC type
+    while dispatch stays virtual. **VERIFIED BY COMPILING IT, not taken from the brief**, which is
+    worth noting because a previous handoff got this wrong and a gate caught it.
+  - **FALSIFIABILITY: MEASURED IN BOTH DIRECTIONS, ON A CONTENT-ADDRESSED MUTATION.**
+    `AStratPlayerController::Tick`'s call was commented out; build green; the suite ran with
+    **exactly one failed entry and it was this clause**, on six assertion legs including the
+    headline one. The file was then restored BY COPYING A PRISTINE BACKUP rather than by re-typing
+    the line, and `sha256sum` confirmed byte identity with the pre-mutation file
+    (`dff277b2e4f3a4fb117034cdc067500f2f9dfe1e411fd2ace48a1b7875404037`), with `git status` clean
+    of the controller and a zero-count census of the mutant token. Rebuild green, suite green,
+    clause Success. **The restore was verified by content and not by a count**, on this project's
+    recorded finding that a count-based integrity check cannot see a corruption that changes the
+    count and changes it back.
+  - **THE MUTATION TOUCHED A FILE OUTSIDE THIS LANE, TEMPORARILY AND UNDER EXPLICIT INSTRUCTION,
+    AND THAT IS DECLARED RATHER THAN LEFT TO BE NOTICED.** The dispatching brief both mandated the
+    probe ("the falsifiability step is the deliverable as much as the clause") and, in its scope
+    section, forbade editing `StratPlayerController.cpp`. The two directions contradict; the probe
+    was run because it was the specific, detailed instruction and because this file's own
+    precedent is that a hover clause is proved by reverting what it pins. The tree ends byte-equal
+    to where it started outside `Tests/`. **A future pass should not read this as a standing
+    licence** — it was a single reverted probe with a hash check on both ends.
+  - **ONE FURTHER THING THE MUTANT RUN PROVED THAT WAS NOT ASKED FOR.** EVERY OTHER CLAUSE IN THE
+    SUITE stayed green with the hover's tick call deleted — no figure is written here, deliberately;
+    `global.md` owns the count and the delta above is a delta, not a total.
+    That is the measurement of how blind the rest of the
+    suite is to this route, and it is the same shape as the phase-6 `bCanEverTick` finding: the
+    defect that the whole suite is silent about is exactly the one worth a clause.
+  - **AMENDED, NOT ADDED — `Stratocracy.StratPlay.T-UI-02.ControllerTicksSoInputDispatches`.** Its
+    assertion is unchanged and was correct throughout; it protected TWO mechanisms and named ONE.
+    Since the hover is polled on `Tick`, `bCanEverTick == false` now stops the hover dead as well
+    as Enhanced Input, with the same total silence. The rationale and the failure message now
+    state both, and the two clauses are cross-referenced: **T-UI-02 pins that the engine WILL call
+    `Tick`; T-UI-01.TickDrivesTheHoverPath pins that `Tick` moves the hover when called. Neither
+    alone is the route, and neither re-asserts the other's subject** — the new clause calls the
+    override directly and reads no tick flag, which is why it stays green with the flag off. That
+    is deliberate on both sides and is stated in both files.
+  - **PROSE CORRECTED IN `StratHoverInputClauses.cpp`, IN PLACE AND AS HISTORY.** Two sites
+    described a `HoverAction` BINDING that no longer exists — "deliberately out of scope" and
+    "THAT `HoverAction` IS BOUND" — which read as LIVE SCOPE STATEMENTS rather than as history: a
+    reader deciding what was safe to remove would have taken them to mean the binding exists
+    somewhere and is merely untested. Both are quoted verbatim and struck rather than deleted,
+    because they record why those clauses were scoped as they were. Three further counts-of-a-
+    growing-set were amended in the same pass and are named because each was a live defect and not
+    tidying: the file header's "THESE FIVE CLAUSES", an ORDINAL ("the fifth clause") into a file
+    that grows, and `StratPlayerControllerTick.cpp`'s "all 66 other tests in this suite" — a stale
+    suite count sitting in a source file, replaced with "every other test" and no figure.
+
 - **2026-08-27 (local; the run's own reportCreatedOn is UTC 2026.08.27-03.59.15) — WAVE 0's HOVER INPUT, FIVE CLAUSES, AND TWO LEGS THAT COULD NOT FAIL.** New file
   `Source/StratPlay/Tests/StratHoverInputClauses.cpp`; the clause-name set grew by exactly five,
   measured by set difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` and not by an acceptance-ID
@@ -54,9 +144,19 @@
     which is the property a consumer depends on and the strongest one reachable without a seam
     into the private field. Recorded on the clause itself as well as here.
   - **WHAT NO CLAUSE HERE PINS**, stated so a later wave does not assume it: that `HoverAction` is
-    BOUND, or bound to `ETriggerEvent::Triggered` — the asset is null in C++ by the project's own
-    rule 4 and is authored on a Blueprint in a separate editor batch, so there is nothing yet to
-    name; that a mouse move produces a hover — nothing in this suite drives `UPlayerInput`; that
+    BOUND, or bound to `ETriggerEvent::Triggered` — **[STAMPED 2026-08-27, LATER THE SAME DAY.
+    THE REASON GIVEN HERE HAS GONE STALE IN BOTH DIRECTIONS AND THE ITEM ITSELF NO LONGER HAS A
+    SUBJECT. The wording is kept verbatim rather than deleted: `the asset is null in C++ by the
+    project's own rule 4 and is authored on a Blueprint in a separate editor batch, so there is
+    nothing yet to name`. FIRST it went stale by UNDER-claiming: that batch landed, `IA_Hover`,
+    its `IMC_Selection` row AND the Blueprint default were all authored and byte-verified, so
+    there was an asset to name. THEN the whole subject was removed: the `Axis2D` binding was
+    measured dead on a human playtest and `HoverAction`, `OnHover`, the binding and both assets
+    are gone. So this item is not an outstanding gap to be closed later — IT HAS NO SUBJECT. A
+    reader who meets it looking for the unpinned half of the hover should read the topmost entry
+    in this file instead. Left standing, it would have sent that reader to build a clause for a
+    property that does not exist, which is the under-claiming failure this record has recorded
+    before.]** — that a mouse move produces a hover — nothing in this suite drives `UPlayerInput`; that
     `AStratPlayerController::UpdateHoverFromCursor` resolves anything — it calls
     `HexUnderCursor`, which needs a viewport, a local player and a cursor no automation test has;
     and that `AStratPlayerController::ApplyHoverChange` REFRESHES — `RefreshFromMachine` refuses

@@ -1,6 +1,12 @@
 // Wave 0's hover input, pinned. GDD §2.11.3 / §2.11.2, filed under T-UI-01.
 //
-// WHAT T-UI-01 SAYS, AND WHAT THESE FIVE CLAUSES DO NOT CLAIM. T-UI-01's own GDD sentence is
+// [AMENDED 2026-08-27: the heading below read "WHAT T-UI-01 SAYS, AND WHAT THESE FIVE CLAUSES
+// DO NOT CLAIM", and a sixth clause has since been added to this file. It is rewritten to name
+// the set rather than to count it -- this tree has a standing lesson that a count of a growing
+// thing written inside that thing is stale on the next addition, and this file's own neighbour
+// `StratPlayerController.cpp` carries the same warning on two comment blocks.]
+//
+// WHAT T-UI-01 SAYS, AND WHAT THE CLAUSES IN THIS FILE DO NOT CLAIM. T-UI-01's own GDD sentence is
 // about THE FORECAST EQUALLING THE RESOLUTION -- the attack card and the combat that follows
 // it agreeing -- and `Source/StratBridge/Tests/StratCombatOutcomeParity.cpp` is where that
 // sentence is asserted. NOT ONE CLAUSE BELOW ASSERTS IT. There is no forecast in this wave,
@@ -41,11 +47,16 @@
 // puts a SENTENCE on the model, the clause that pins it must compare with
 // `FString::Equals(..., ESearchCase::CaseSensitive)`.
 //
-// THE ASSERTIONS ARE AGAINST THE LIVE OBJECTS AND NEVER AGAINST A COPY OF THEM. The fifth
-// clause drives a spawned `AStratPlayerController` and reads back through that same
-// controller's own `GetHoveredHex` and its own `DecorateForPresentation`; it holds no
-// `FStratHoverState` of its own and mirrors nothing. Reverting any line of the shipped hover
-// path moves what these clauses read, which was proved by reverting it.
+// THE ASSERTIONS ARE AGAINST THE LIVE OBJECTS AND NEVER AGAINST A COPY OF THEM.
+// `ControllerHoverRouteReachesTheModel` and `TickDrivesTheHoverPath` each drive a spawned
+// `AStratPlayerController` and read back through that same controller's own `GetHoveredHex`
+// and its own `DecorateForPresentation`; neither holds an `FStratHoverState` of its own and
+// neither mirrors anything. Reverting any line of the shipped hover path moves what these
+// clauses read, which was proved by reverting it -- for the tick clause, by emptying
+// `AStratPlayerController::Tick`'s body and watching it go red.
+// [AMENDED 2026-08-27: this paragraph named "the fifth clause" by position. It is now named by
+// clause name instead -- an ordinal into a file that grows is the same defect as a count of a
+// growing set, and this file added a sixth clause the day the ordinal was written.]
 //
 // NO `strat::` TYPE IS NAMED AND NO `strat::` FREE FUNCTION IS CALLED, per
 // `StratPlay.Build.cs`. `StratBridge.h` is included from this `.cpp` and from no header.
@@ -62,6 +73,9 @@
 #include "Engine/DataTable.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+// `AActor` by name, and NOT for convenience -- see `TickDrivesTheHoverPath`. It is the handle
+// type the tick is reached through, because `AStratPlayerController::Tick` is `protected`.
+#include "GameFramework/Actor.h"
 #include "Math/IntPoint.h"
 #include "Misc/Paths.h"
 #include "UObject/UObjectGlobals.h"
@@ -710,18 +724,51 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
  * moves what this clause reads, which was proved by reverting it.
  *
  * `BeginPlay` IS NOT DISPATCHED, on `StratProductionMenuAffordance.cpp`'s stated precedent, so
- * `SetupInputComponent` never runs and `HoverAction`'s BINDING is deliberately out of scope
- * here -- see "WHAT THIS CLAUSE DOES NOT PIN" below. `UpdateHoverFromCursor` is likewise out
- * of scope: it calls `HexUnderCursor`, which calls `APlayerController::GetHitResultUnderCursor`
- * and needs a viewport, a local player and a cursor position no automation test has. The
- * shipped `SetHoveredHex` exists as the headless seam for exactly that reason and its own
- * declaration says so; this clause takes it at its word rather than reshaping anything.
+ * `SetupInputComponent` never runs.
+ *
+ * [AMENDED 2026-08-27 -- THE SENTENCE THIS PARAGRAPH CARRIED IS KEPT VERBATIM BECAUSE IT
+ * RECORDS THE SCOPE THIS CLAUSE WAS WRITTEN TO, AND IT IS NO LONGER A TRUE STATEMENT ABOUT
+ * THE TREE. It read: "`SetupInputComponent` never runs and `HoverAction`'s BINDING is
+ * deliberately out of scope here -- see "WHAT THIS CLAUSE DOES NOT PIN" below." THERE IS NO
+ * `HoverAction` PROPERTY, NO `OnHover` HANDLER AND NO BINDING ANY LONGER, and `IA_Hover` and
+ * its `IMC_Selection` row are deleted assets. Wave 0 bound an `Axis2D` action on
+ * `ETriggerEvent::Triggered`; the binding was correct and live and the engine delivered
+ * essentially nothing through it -- instrumentation measured the handler running ONCE in
+ * three and a half minutes, on a focus transition. The route is now a poll:
+ * `AStratPlayerController::Tick` calls `UpdateHoverFromCursor`. See `engine.md`'s topmost
+ * entry for the measurement and `Tick`'s own definition in
+ * `Source/StratPlay/StratPlayerController.cpp` for the summary.
+ *
+ * THE CORRECTION MATTERS BECAUSE THE OLD WORDING READS AS A LIVE SCOPE STATEMENT RATHER THAN
+ * AS HISTORY: a reader deciding what is safe to remove would take "deliberately out of scope"
+ * to mean the binding exists somewhere and is merely untested. It does not exist. Nothing
+ * about the SCOPE OF THIS CLAUSE moves -- it drives the public `SetHoveredHex` seam and
+ * asserts the decoration route, exactly as before.]
+ *
+ * `UpdateHoverFromCursor` IS OUT OF SCOPE HERE, and that is unchanged: it calls
+ * `HexUnderCursor`, which calls `APlayerController::GetHitResultUnderCursor` and needs a
+ * viewport, a local player and a cursor position no automation test has. The shipped
+ * `SetHoveredHex` exists as the headless seam for exactly that reason and its own declaration
+ * says so; this clause takes it at its word rather than reshaping anything.
+ *
+ * [ADDED 2026-08-27: a SIXTH clause below, `TickDrivesTheHoverPath`, now reaches
+ * `UpdateHoverFromCursor` -- through `Tick`, and only down its OFF-BOARD branch, which is the
+ * one branch a viewportless fixture can reach. The sentence above is therefore about THIS
+ * clause and not about the file. Read that clause's own block for what the off-board-only
+ * reach can and cannot pin.]
  *
  * WHAT THIS CLAUSE DOES NOT PIN, stated rather than left to be discovered:
- *   - THAT `HoverAction` IS BOUND, or that it is bound to `ETriggerEvent::Triggered`. That
- *     needs `SetupInputComponent` over a `UEnhancedInputComponent`, and the asset itself is
- *     null in C++ by this project's rule 4 and is authored on a Blueprint in a separate
- *     editor batch. Until that batch lands there is no asset for a clause to name.
+ *   - [STRUCK 2026-08-27, AND QUOTED RATHER THAN DELETED BECAUSE IT RECORDS A REAL GAP THAT
+ *     WAS CLOSED BY REMOVAL RATHER THAN BY A TEST. It read: "THAT `HoverAction` IS BOUND, or
+ *     that it is bound to `ETriggerEvent::Triggered`. That needs `SetupInputComponent` over a
+ *     `UEnhancedInputComponent`, and the asset itself is null in C++ by this project's rule 4
+ *     and is authored on a Blueprint in a separate editor batch. Until that batch lands there
+ *     is no asset for a clause to name." THAT BATCH DID LAND -- `IA_Hover`, the `IMC_Selection`
+ *     row and eventually the Blueprint default were all authored and byte-verified -- AND THE
+ *     BINDING WAS THEN MEASURED DEAD AND REMOVED, assets and all. So this item is not
+ *     outstanding and is not "still unpinned": ITS SUBJECT NO LONGER EXISTS. A future reader
+ *     looking for the unpinned half of the hover should read the two items below and the
+ *     sixth clause's own block, not this one.]
  *   - THAT A MOUSE MOVE PRODUCES A HOVER. Nothing in this suite drives `UPlayerInput`.
  *   - THAT `ApplyHoverChange` REFRESHES. `RefreshFromMachine` refuses in this fixture -- no
  *     match is live -- and the shipped code logs that at `Log` and returns true anyway,
@@ -832,6 +879,225 @@ bool FStratControllerHoverRouteReachesTheModelTest::RunTest(const FString& /*Par
 		Cleared.Hover.bHasHoveredHex);
 	TestEqual(TEXT("and its hex is the struct's own default, not the stale one"),
 		Cleared.Hover.HoveredHex, Default.HoveredHex);
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// CLAUSE 6 -- `Tick` drives the hover path.
+// ---------------------------------------------------------------------------
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratTickDrivesTheHoverPathTest,
+	"Stratocracy.StratPlay.T-UI-01.TickDrivesTheHoverPath",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+/**
+ * A LIVE `AStratPlayerController` is given a hover, then TICKED, and reports no hover after.
+ *
+ * WHY THIS CLAUSE EXISTS, AND IT IS THE FIRST HOVER ROUTE THIS PROJECT CAN PIN AT ALL. Wave 0
+ * carried the hover on an `Axis2D` `UInputAction` bound `ETriggerEvent::Triggered`. The
+ * binding was correct and live and the engine delivered essentially nothing through it --
+ * instrumentation on a human playtest measured the handler running ONCE in three and a half
+ * minutes, at a focus transition, while a fifteen-second sweep across the board moved it not
+ * at all. That route was unpinnable BY CONSTRUCTION: nothing in this project's automation
+ * reaches `UPlayerInput`, so no clause could have caught it and none did. The route is now
+ * `AStratPlayerController::Tick` calling `UpdateHoverFromCursor`, and a tick is something a
+ * fixture can deliver. The whole worth of this clause is that the failure which actually
+ * happened -- the hover mechanism wired to something that never fires -- now has a net under
+ * a route that reddens when the call goes away. It was proved to redden; see below.
+ *
+ * WHERE THE EXPECTATION COMES FROM.
+ *   - THE PLANTED HEX is enumerated off a `StratBuildViewModel` built from the shipped
+ *     scenario through a live `FStratBridge`, by `TwoDistinctBoardHexes`. No hex literal.
+ *   - THE CLEARED HEX is a default-constructed `FStratHoverView`'s own `HoveredHex`, read off
+ *     the module's struct, never a hand-typed `(0, 0)`.
+ *   - EVERY BOOLEAN IS A SHIPPED FUNCTION'S OWN RETURN VALUE -- `SetHoveredHex`'s and
+ *     `GetHoveredHex`'s, both read off the spawned controller.
+ *   - `kTickSeconds` IS A HARNESS CONSTANT AND NOT A RULE. Nothing on the hover path reads
+ *     `DeltaSeconds` -- `Tick`'s body is one call that takes no argument -- so the value is
+ *     arbitrary by construction and is deliberately not dressed up as a frame time.
+ *
+ * IT ASSERTS AGAINST THE LIVE ACTOR AND HOLDS NO `FStratHoverState` OF ITS OWN. This project
+ * has a recorded defect class where a fixture asserts against a COPY of its subject and
+ * passes for the wrong reason; every value below comes back out of the spawned controller.
+ *
+ * HOW `Tick` IS REACHED, AND THIS IS NOT A STYLE CHOICE. `AStratPlayerController::Tick` is
+ * declared `protected`, so `Controller->Tick(...)` through an `AStratPlayerController*` DOES
+ * NOT COMPILE from here. `AActor::Tick` is `public` (`Actor.h`, in the `public:` section its
+ * declaration sits in) and `APlayerController` does not re-declare it, so an `AActor*` handle
+ * compiles: ACCESS IS CHECKED ON THE STATIC TYPE WHILE DISPATCH STAYS VIRTUAL, and the
+ * override that runs is `AStratPlayerController`'s. Verified by compiling it.
+ *
+ * WHY DIRECTLY AND NOT THROUGH THE WORLD'S TICK. Calling the override is deterministic and
+ * needs no tick registration, no `bCanEverTick` and no world tick group. THAT `bCanEverTick`
+ * IS TRUE IS A SEPARATE CLAUSE and deliberately not re-asserted here --
+ * `Stratocracy.StratPlay.T-UI-02.ControllerTicksSoInputDispatches` owns it, and since
+ * 2026-08-27 that clause's own block states that the flag now protects the hover as well as
+ * Enhanced Input. The two together are the chain: the flag makes the engine call `Tick`, this
+ * clause makes `Tick` move the hover. Neither alone is the route.
+ *
+ * WHY THE OFF-BOARD BRANCH IS THE OBSERVABLE ONE. The fixture's world has no seeded match, so
+ * `GetBoard()` is null, so `HexUnderCursor` returns false BEFORE it would need a viewport, a
+ * local player or a cursor position -- none of which automation has. `UpdateHoverFromCursor`
+ * therefore takes its documented off-board branch and clears. A PLANTED HOVER IS WHAT MAKES
+ * THAT OBSERVABLE AT ALL: without it, "not hovering" after a tick is indistinguishable from
+ * a controller that was never hovering, which is the shape a default read cannot tell from
+ * silence. The plant is made through the shipped public seam and the clause asserts it is
+ * STANDING before the tick, so the reading after the tick is a transition and not a default.
+ *
+ * WHAT THIS CLAUSE DOES NOT PIN, stated rather than left to be discovered:
+ *   - WHICH FUNCTION `Tick` CALLS. It pins that ticking the controller moves the hover to
+ *     "not hovering". It CANNOT distinguish `Tick` calling `UpdateHoverFromCursor` from
+ *     `Tick` calling `ClearHoveredHex()` directly, because with no board both end at the same
+ *     `ApplyHoverChange(Hover.ClearHoveredHex())` and there is no other observable. Pinning
+ *     the callee would need a seam that does not exist and that this lane does not create.
+ *     What it DOES catch is the failure that actually occurred: a `Tick` that drives no hover
+ *     at all.
+ *   - THAT A CURSOR OVER A HEX PRODUCES THAT HEX. That is the on-board branch and it needs
+ *     `GetHitResultUnderCursor`, hence a viewport. It was witnessed by a human across 25
+ *     distinct hexes on 2026-08-27 and is recorded in `content.md`; it is not asserted here
+ *     and no clause in this tree asserts it.
+ *   - THAT A MOUSE MOVE PRODUCES A TICK-VISIBLE CURSOR MOVE. Nothing in this suite drives
+ *     `UPlayerInput`, and after wave 0's measurement nothing should claim it does.
+ *   - THAT `ApplyHoverChange` REFRESHES. Unchanged from the clause above it:
+ *     `RefreshFromMachine` refuses in this fixture and the shipped code logs at `Log` and
+ *     returns true anyway, deliberately.
+ *
+ * FALSIFIABILITY, MEASURED AND NOT REASONED. `AStratPlayerController::Tick`'s body was emptied
+ * to `Super::Tick(DeltaSeconds);` alone and this clause went RED on the leg below that reads
+ * the controller after the tick -- the planted hover stood. The body was restored and it went
+ * GREEN. Both runs are reported in this pass.
+ */
+bool FStratTickDrivesTheHoverPathTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratHoverInputClauses;
+
+	// Nothing on the hover path reads `DeltaSeconds`; see the block above.
+	const float kTickSeconds = 1.0f / 60.0f;
+
+	FStratBridge Bridge;
+	FString      Error;
+	if (!TestTrue(TEXT("the bridge seeds from the shipped scenario"), SeedBridge(Bridge, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	FStratViewModel Built;
+	if (!TestTrue(TEXT("StratBuildViewModel builds a model from the seeded bridge"),
+			StratBuildViewModel(Bridge, kFirstSide, Built, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// `Away` differs from the default hover hex by `TwoDistinctBoardHexes`'s own contract,
+	// which is what makes the cleared reading below distinguishable from the planted one.
+	FIntPoint Away;
+	FIntPoint Other;
+	if (!TestTrue(TEXT("the scenario offers a board hex distinct from the default hover hex"),
+			TwoDistinctBoardHexes(Built, Away, Other, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	const FStratHoverView Default;
+	TestNotEqual(
+		TEXT("the planted hex is not the default hover hex, or a cleared controller and a "
+		     "hovering one would read alike and this clause could not fail"),
+		Away, Default.HoveredHex);
+
+	FTestWorldScope Scope;
+	if (!TestNotNull(TEXT("a transient world was created"), Scope.World))
+	{
+		return false;
+	}
+
+	AStratPlayerController* const Controller =
+		Scope.World->SpawnActor<AStratPlayerController>();
+	if (!TestNotNull(TEXT("AStratPlayerController spawned"), Controller))
+	{
+		return false;
+	}
+
+	// --- THE PLANT, AND THE PROOF THAT IT IS STANDING -----------------------
+	//
+	// Through the shipped public seam, and read back off the controller itself. If this half
+	// failed, the reading after the tick would prove nothing at all.
+	TestTrue(
+		*FString::Printf(TEXT("the controller reports the hover onto %s as a change"),
+			*Describe(Away)),
+		Controller->SetHoveredHex(Away));
+
+	FIntPoint Planted = Other;
+	if (!TestTrue(TEXT("PRE-CONDITION: the controller is hovering before the tick"),
+			Controller->GetHoveredHex(Planted)))
+	{
+		AddError(TEXT("the plant did not stand, so the post-tick reading below would be a "
+		              "default and not a transition; the rest of this clause is skipped"));
+		return false;
+	}
+	TestEqual(
+		*FString::Printf(TEXT("PRE-CONDITION: and on %s, read back off the controller"),
+			*Describe(Away)),
+		Planted, Away);
+
+	// And the same is visible on a model decorated by the controller's own decorator, so the
+	// transition below is a transition of the ROUTE and not only of a private member.
+	FStratViewModel BeforeTick;
+	Controller->DecorateForPresentation(BeforeTick);
+	TestTrue(TEXT("PRE-CONDITION: a model decorated before the tick reports a hover"),
+		BeforeTick.Hover.bHasHoveredHex);
+	TestEqual(
+		*FString::Printf(TEXT("PRE-CONDITION: carrying %s"), *Describe(Away)),
+		BeforeTick.Hover.HoveredHex, Away);
+
+	// --- THE TICK -----------------------------------------------------------
+	//
+	// Through an `AActor*` handle because `AStratPlayerController::Tick` is `protected`; see
+	// the block above. The dispatch is virtual, so the body that runs is the override's.
+	AActor* const AsActor = Controller;
+	if (!TestNotNull(TEXT("the controller is reachable as an AActor"), AsActor))
+	{
+		return false;
+	}
+	AsActor->Tick(kTickSeconds);
+
+	// --- THE CLAUSE ---------------------------------------------------------
+	FIntPoint AfterTick = Away;
+	TestFalse(
+		TEXT("AFTER ONE TICK the controller reports NO hovered hex. If this failed: `Tick` is "
+		     "not driving the hover path. `AStratPlayerController::Tick` must call "
+		     "`UpdateHoverFromCursor`; with no board `HexUnderCursor` returns false and the "
+		     "documented off-board branch clears the hover. This is the ONLY automated net "
+		     "under the hover's input route -- wave 0's Enhanced Input binding was correct, "
+		     "live, and delivered nothing, and no clause could catch it. Restore the call in "
+		     "Source/StratPlay/StratPlayerController.cpp; do not delete this test."),
+		Controller->GetHoveredHex(AfterTick));
+	TestEqual(
+		TEXT("and the out-parameter is the struct's own default, not the planted hex"),
+		AfterTick, Default.HoveredHex);
+
+	// The route, at the model: what the screen would be rebuilt from no longer hovers.
+	FStratViewModel AfterModel;
+	Controller->DecorateForPresentation(AfterModel);
+	TestFalse(TEXT("a model decorated after the tick reports no hover"),
+		AfterModel.Hover.bHasHoveredHex);
+	TestEqual(TEXT("and its hex is the struct's own default, not the stale planted one"),
+		AfterModel.Hover.HoveredHex, Default.HoveredHex);
+
+	// --- A SECOND TICK DOES NOT PUT IT BACK ---------------------------------
+	//
+	// Cheap, and it catches a `Tick` that toggles rather than resolves.
+	AsActor->Tick(kTickSeconds);
+
+	FIntPoint AfterSecond = Away;
+	TestFalse(TEXT("a second tick leaves the controller not hovering"),
+		Controller->GetHoveredHex(AfterSecond));
+	TestEqual(TEXT("and still on the struct's own default"),
+		AfterSecond, Default.HoveredHex);
 
 	return true;
 }

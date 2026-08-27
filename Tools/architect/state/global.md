@@ -11,6 +11,64 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-27 (THE HOVER'S INPUT ROUTE IS PINNED FOR THE FIRST TIME, AND THE CLAUSE WAS
+PROVED IN BOTH DIRECTIONS. Written by the `coordinator`, whose file this is. The suite is now
+**231/231**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings. The delta
+is **+1 and nothing was removed or renamed**, computed by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` and re-derived independently of the lane's own report: HEAD
+carries 230 clause names, the worktree 231, the added name is
+`Stratocracy.StratPlay.T-UI-01.TickDrivesTheHoverPath`, and the removed set is EMPTY. THE REPORT
+THAT CERTIFIES THE LIVE FIGURE IS THIS TREE'S: `reportCreatedOn 2026.08.27-19.27.46`,
+`succeeded 231`, `failed 0`, `notRun 0`, zero succeededWithWarnings, 231 entries and zero
+non-Success entries, run in `E:/MultiAgent/Stratocracy` on `master`. THAT STAMP IS UTC AND THIS
+ENTRY'S DATE IS LOCAL. **IT IS THE SECOND RUN OF THIS PASS AND THE FIRST ONE IS NOT CITED, which
+the sweep is the reason for rather than a preference:** the lane's own run
+(`2026.08.27-19.22.02`) predated its last two test-file writes by three minutes, and the REPORT
+IDENTITY check refused it as `evidence about a PAST tree, not the current one, whatever its count
+happens to say`. Rebuilt and re-ran rather than reasoning about whether the later edits could
+have mattered.
+WHAT THE CLAUSE PINS AND WHY IT COULD NOT EXIST BEFORE. `T-UI-01.TickDrivesTheHoverPath` plants a
+hover on a LIVE spawned controller, ticks it through an `AActor*` handle -- `Tick` is `protected`,
+so an `AStratPlayerController*` will not compile -- and asserts the hover is gone, on the
+controller's own `GetHoveredHex` AND on a model its own `DecorateForPresentation` wrote. The
+planted hex is ENUMERATED off a view model built through a live `FStratBridge` rather than typed,
+and the cleared value is a default-constructed `FStratHoverView::HoveredHex`, asked rather than
+asserted. The old Enhanced Input route could not be pinned at all; this is the first hover path
+any clause in this project has reached.
+IT WAS PROVED BY REVERTING WHAT IT PINS, IN BOTH DIRECTIONS. With `Tick`'s body emptied the suite
+went **230 passed / 1 failed of 231** and the one failure was this clause, red on six separate
+legs. Restored, **231/231**, and the restore was verified BY CONTENT -- `sha256` equality against
+the pre-mutation file, a mutant-token census of zero, and the controller absent from
+`git status`. **AND EVERY OTHER CLAUSE STAYED GREEN UNDER THE MUTANT**, which is the finding worth
+carrying: the new clause is the sole net under that route, the same shape as the phase-6
+`bCanEverTick` result.
+THE LANE FLAGGED A GUARD DEFECT THAT DOES NOT EXIST, AND IT IS THE SECOND AGENT TO FLAG IT.
+`strat_banner_sweep.py` was reported to print `SWEEP FAILED` while returning exit code 0, which
+would mean the pre-commit hook gates nothing. Measured HERE on a genuinely failing tree -- this
+one, before the figure below was moved -- with the real report and no scratch file and no
+redirection: `SWEEP FAILED` and **exit 1**, twice. The engineer reported the identical false
+claim earlier the same day and it was disproved the same way. The cause is a shell idiom rather
+than the tool: `$?` after a pipe is the LAST command's status, not the script's. The guard is
+sound. **IT IS NOW THE THIRD INDEPENDENT REPORT OF THIS PHANTOM DEFECT FROM A THIRD AGENT**, and
+the gate's re-derivation this pass is the durable answer: a control run gives `SWEEP CLEAN`/exit
+0, a one-line mutation of the live figure gives `SWEEP FAILED`/exit 1, and piping that same
+failing script through `tail` or `grep` then reading `$?` gives 0 both times. It costs a full
+re-derivation every time it is reported, so it belongs in the dispatch brief rather than only
+here.
+THE GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS across twelve structural checks and eight
+audited claims, and that is the verdict for this pass. Its one non-gating debt is a sequencing
+one worth stating: the falsifiability probe MUTATED `Source/StratPlay/StratPlayerController.cpp`,
+outside the test lane, and declared the conflict AFTER the fact rather than escalating first. The
+tree is byte-identical to HEAD there -- the gate proved it with `git hash-object` against the HEAD
+blob rather than accepting the lane's own `sha256` -- so nothing needs fixing, and `tests.md`'s
+own "not a standing licence" sentence should survive. The brief that mandated a probe on a file it
+also forbade touching is the thing to fix next time.)_
+
+**[SUPERSEDED 2026-08-27 BY THE BANNER ABOVE -- the 230/230 in the paragraph below, and the
+`2026.08.27-18.05.07` report it cites, were the figure and the provenance at that pass. Neither
+is live. The count moved by exactly one, and the entry under `## NEXT` that carried the same
+230/230 is stamped where it stands rather than only here.]**
+
 _Last run 2026-08-27 (WAVE 0 LANDS: THE HOVER INPUT SURFACE EXISTS, AND THE TWO SECTIONS THAT
 SIT BEHIND IT CAN NOW BE BUILT. Written by the `coordinator`, whose file this is. The suite is
 now **230/230**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings. The
@@ -2129,9 +2187,14 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - **2026-08-27, COORDINATOR -- W0'S HOVER NOW REACHES THE GAME. THE INPUT ROUTE WAS THE DEFECT,
   IT IS REPLACED, AND A HUMAN HAS SEEN IT WORK.** The entry below records the playtest that found
   wave 0's hover dead; this one records the diagnosis being settled by instrumentation, the route
-  being replaced, and the replacement being witnessed. **THE SUITE FIGURE MOVES ONLY IN THE SENSE
-  THAT IT WAS RE-RUN AND DID NOT CHANGE: 230/230**, every entry Success, zero failed, zero notRun,
-  zero succeededWithWarnings. **[CORRECTED 2026-08-27, AND REWRITTEN FLAT ON THE SECOND GATE
+  being replaced, and the replacement being witnessed. **[STAMPED 2026-08-27, LATER: the figure in the next
+  sentence was live at that pass and is not now -- the suite is 231/231 and the live provenance is
+  this file's topmost banner. It is stamped here, where it stands, and not only in that banner.]**
+  **THE SUITE FIGURE AT THAT PASS WAS 230/230**, re-run and
+  unchanged, every entry Success, zero failed, zero notRun, zero succeededWithWarnings. **[The
+  tense was moved onto the figure itself on 2026-08-27: the stamp above this sentence did not
+  make the sweep read it as history, because positional supersession alone does not -- the word
+  that dates a figure has to TOUCH it. The live figure is 231/231 in this file's topmost banner.]** **[CORRECTED 2026-08-27, AND REWRITTEN FLAT ON THE SECOND GATE
   FINDING RATHER THAN NESTED A THIRD TIME -- the nesting is what let a false outer layer survive
   directly above its own retraction, so the whole block is restated once, correctly, and the
   superseded wordings are quoted rather than left standing as sentences. TWO WORDINGS ARE STRUCK.

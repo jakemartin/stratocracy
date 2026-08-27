@@ -37,6 +37,57 @@
 
 ## NEXT
 
+- **THE `HoverAction` BLUEPRINT DEFAULT IS SET AND VERIFIED FROM THE SAVED PACKAGE BYTES, AND THE
+  RELINK THAT MADE IT POSSIBLE WAS WITNESSED BY THE PROPERTY ITSELF.** 2026-08-27. **THE TWO
+  PERMISSIONS ARE CITED SEPARATELY, because citing one authority for both halves is a finding.**
+  The ACTING -- launching the editor and driving it -- is the `coordinator` under `CLAUDE.md`'s
+  **editor-driver clause**. The FILE WRITE is the `coordinator` under THIS file's header fallback
+  condition. **Both share one measured absence, shown with the control the clauses require:** a
+  single `ToolSearch` `select:` lookup naming four tools returned exactly two schemas --
+  `mcp__NeoStack_Connect__unreal_status` and `mcp__NeoStack_Connect__list_unreal_projects` -- and
+  neither `mcp__NeoStack_Connect__execute_script` nor `mcp__unreal-editor-direct__execute_script`.
+  The same lookup returning the tools that ARE served is what makes the absence a measurement
+  rather than a name that failed to appear. `strat-editor-builder` therefore had no route to the
+  editor at all, which is the condition both clauses name. The editor was driven over its own MCP
+  endpoint with `Tools/neostack/ns.py`. `global.md` carries the suite figure and any verdict; this
+  file states neither.
+  - **THE EDITOR WAS NOT RUNNING AND WAS LAUNCHED ON THE INTEGRATION TREE.** No editor process
+    existed (`Get-Process UnrealEditor` errored, which is the absence). Launched on
+    `E:/MultiAgent/Stratocracy/Stratocracy.uproject`, pid 37412, and readiness taken from the
+    window title REVERSING to `Stratocracy - Unreal Editor` with a 4.09 GB working set -- not from
+    a non-empty title, which is the splash. `ns.py` then advertised `http://127.0.0.1:9315/mcp`
+    with `editorPid 37412` and `projectPath E:/MultiAgent/Stratocracy/`, and
+    `print(project_dir())` answered `E:/MultiAgent/Stratocracy/` from INSIDE the editor, which is
+    the control that matters -- `runtimes.json` accumulates stale entries from other checkouts.
+  - **THE RELINK IS WITNESSED BY THE SUBJECT OF THE WORK, WHICH IS THE STRONGEST FORM AVAILABLE
+    HERE.** The entry below measured the pre-wave DLL as `class_properties` on
+    `/Script/StratPlay.StratPlayerController` returning **91 entries**, of which the
+    `Action|Mapping|Hover` filter returned exactly **seven**. The same two calls against the
+    relinked editor return **92** and **eight**, the eighth being `HoverAction`. The other seven
+    are unchanged and in the same order. No tooltip probe was needed: the property whose absence
+    proved the stale binary is the property whose presence proves the fresh one.
+  - **THE DEFAULT WAS SET ON THE CDO THROUGH `bp:set("self", ...)`, AND THE TARGET NAME WAS FOUND
+    BY PROBE RATHER THAN GUESSED.** `cdo`, `default`, `CDO` and `defaults` all answered
+    `[FAIL] -> target not found`; `self` answered, and the control that proves the READ works is
+    that `bp:get("self", "OpenProductionMenuAction")` returned `IA_OpenProductionMenu` before
+    anything was written. `HoverAction` read `None` before the set and the full `InputAction`
+    object path after it. `compile()` -> success, `save()` -> saved.
+  - **VERIFIED FROM THE SAVED BYTES WITH A POSITIVE CONTROL, NOT FROM THE `set` RETURN VALUE** --
+    this file already records that an authoring call's return lies in both directions. On disk,
+    `Content/StratPlay/BP_StratPlayerController.uasset` went 21848 -> 22028 bytes and
+    `sha256 a4c3a209...` -> `4b52e88c...`. Occurrence counts in the package bytes, before -> after:
+    `HoverAction` **0 -> 1** and `IA_Hover` **0 -> 2**. The control that makes those numbers mean
+    something is an action already known to be wired: `SelectAction` reads **1** and `IA_Select`
+    reads **2**, both before AND after -- so the new default has exactly the byte shape of a wired
+    action, and nothing else in the package moved. `git status --short Content/` was EMPTY before
+    the save and names this one file after it.
+  - **WHAT THIS STILL DOES NOT PIN, and it is the same four properties.** That `HoverAction` is
+    BOUND and to `Triggered`, that a mouse move produces a hover, that `UpdateHoverFromCursor`
+    resolves a hex, and that `ApplyHoverChange` refreshes. The asset half of the first is now
+    discharged -- the default exists and points at the right asset -- but the BINDING itself runs
+    in `SetupInputComponent`, and nothing in this project's automation reaches `UPlayerInput`.
+    A human at the mouse is the only instrument left, and the editor is open for it.
+
 - **`IA_Hover` EXISTS AND IS MAPPED TO `Mouse2D` IN `IMC_Selection`, AND IT IS THE FIRST
   NON-BOOLEAN INPUT ACTION THIS PROJECT HAS.** 2026-08-27, written by `strat-editor-builder` over
   `mcp__unreal-editor-direct__execute_script`, which was on the tool surface from this session's
@@ -62,6 +113,12 @@
     properties that DO exist and no sixth.** So the running editor's CDO has no such property and
     the `BP_StratPlayerController.HoverAction` default cannot be set in this session; that half of
     the wave's asset tail is BLOCKED until `feat/hover-input` merges and the editor relinks.
+    **[STAMPED 2026-08-27, LATER THE SAME DAY -- DISCHARGED, NOT RETRACTED. Every measurement in
+    this bullet was correct for the editor it was taken in; `feat/hover-input` has since merged
+    (`1e32b18`), the editor was relaunched on the rebuilt tree, and the same `class_properties`
+    calls now return 92 and eight. The default IS set and verified from the saved package bytes
+    -- see the entry above this one. The BLOCKED half of the asset tail is closed; the BINDING
+    half still needs a human at the mouse.]**
     **The trap this file already records was live again:** `class_properties` on the BLUEPRINT
     class path (`/Game/.../BP_StratPlayerController_C`) answered **`[OK] -> 0 entries`**, which is
     indistinguishable from "the property is absent" and proves nothing. Only the NATIVE class path
@@ -154,6 +211,17 @@
     `feat/hover-input` merges and `UnrealEditor-StratPlay.dll` relinks -- and this file's recorded
     way to WITNESS that relink rather than assume it is to read the new property off the NATIVE
     class path, exactly as its absence was measured above.
+    **[STAMPED 2026-08-27, LATER THE SAME DAY -- THIS IS THIS ENTRY'S HANDOFF SENTENCE AND IT WAS
+    THE ONE THE FIRST CORRECTION MISSED. A `strat-integration-reviewer` gate blocked on it: the
+    stamp 91 lines above was attached to the evidence and never reached the bullet that ASSIGNS
+    the work, which is the one place a reader looks to find out what is owed. Both halves are now
+    false. `feat/hover-input` merged at `1e32b18`; a controller property DOES point at `IA_Hover`
+    -- `BP_StratPlayerController.HoverAction`, set and verified in this file's topmost entry -- so
+    the mapping is consumed and the ownership sentence names work that is done. The prescription
+    in it was FOLLOWED and is the only part that stands: the relink was witnessed by reading the
+    new property off the NATIVE class path, exactly as this bullet said to. WHAT IS STILL TRUE is
+    the first sentence -- nothing here is a runtime observation, and no `STRAT-` line has yet
+    witnessed a hover.]**
 
 - **SEC 2.11.4'S END-OF-MATCH SCREEN EXISTS, AND IT WAS SEEN DRAWING A REAL VERDICT OVER A REAL
   MATCH.** 2026-08-25. `WBP_MatchResult` is NEW and `BP_StratScoreboardHUD` gained one

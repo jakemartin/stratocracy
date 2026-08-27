@@ -56,6 +56,18 @@ needs an asset default that cannot be set until this merges and the editor relin
 needs a human at the mouse, since nothing in this project's automation reaches `UPlayerInput`.
 `IA_Hover` and its `IMC_Selection` row ARE authored and verified from the package bytes; the
 Blueprint default is not.
+**[STAMPED 2026-08-27, LATER THE SAME DAY -- THE LAST SENTENCE ABOVE IS COMPOUND AND ONLY ITS
+SECOND CLAUSE MOVES. `IA_Hover` and its `IMC_Selection` row ARE authored and verified from the
+package bytes: still true, untouched. `the Blueprint default is not`: no longer true. The
+sentence before it is likewise half-true. The Blueprint default IS now authored and verified from the package
+bytes, on the same evidence standard as the other two assets; `cannot be set until this merges
+and the editor relinks` describes a condition that has since been met, not a standing one. WHAT
+SURVIVES UNCHANGED is that the BINDING is still unpinned. What was discharged is its stated
+REASON -- the asset default that could not be set -- not its conclusion, and the human at the
+mouse is still owed. Note the properties are not being renumbered here: `the second` in the
+sentence above is *that a mouse move produces a hover*, which this pass did not touch either. Stamped here as
+well as at the foot of this banner because a discharge recorded in one place and contradicted in
+another asserts both. See the stamp below and `content.md`'s topmost entry.]**
 THE ASSET BATCH LANDS IN THIS COMMIT, and what it could not do is measured rather than assumed.
 `IA_Hover` is an `Axis2D` action -- the one deliberate difference from the five existing actions,
 which are all `Boolean` -- and it carries no triggers and no modifiers, matching them. It is row
@@ -70,6 +82,42 @@ seven -- the five existing actions plus the mapping context and its priority, an
 indistinguishable from absence and is the recorded trap. The editor was serving a DLL built
 before this wave; setting that default needs a relinked editor and is the first thing the next
 session owes.)_
+
+**[STAMPED 2026-08-27, LATER THE SAME DAY -- THE OWED ITEM IN THE LAST SENTENCE ABOVE IS
+DISCHARGED. **THIS IS NOT THE ONLY SENTENCE IN THIS BANNER THAT MOVES, and the earlier wording
+here said it was** -- a `strat-integration-reviewer` gate blocked on exactly that, because the
+`WHAT IS NOT PINNED` paragraph earlier in this same banner still asserted `the Blueprint default
+is not` and this stamp's own phrasing read as an instruction to leave it standing. That paragraph
+is named rather than counted to: the in-place stamp it now carries changed the distance between
+the two, which is what a line count into an append-above document always does. That paragraph now
+carries its own stamp in place. NO SUITE WAS RUN AND NO SUITE FIGURE
+MOVES: the live figure is the one that banner cites, and this pass touched one `.uasset` and
+two record files -- no source, no test, no config. **THIS PASS HAS BEEN THROUGH THE
+`strat-integration-reviewer` GATE** -- the sentence here previously said it had not, which was
+true when this stamp was first written and was left standing when the gate-blocked sentence was
+inserted above it. That is the add-only correction defect reproduced INSIDE the fix for itself,
+and the gate's second round blocked on it. **NO GATE ROUND HAS FOUND ANYTHING IN THE ASSET WORK
+OR IN THE `.uasset`** -- every finding returned so far has been in this record, and the package
+sha256 is unchanged across all of them. No running tally of rounds is written here on purpose: a
+count of a thing still growing goes stale inside the document that states it. **THE GATE
+RETURNED `VERDICT: PASS` WITH ZERO FINDINGS ON THE THIRD ROUND, over this uncommitted tree, and
+that is the verdict for this pass.** It is recorded here because `global.md` is the only file
+that may state one. **THIS SENTENCE IS THE ONLY CHANGE MADE AFTER THAT PASS**, and it is stated
+so a reader knows exactly what the PASS covered: the tree as it stood with this stamp reading
+`STATES NO PHASE VERDICT OF ITS OWN`, plus this recording of the result. Two cosmetic residuals
+the gate raised and did not block on are deliberately left rather than re-opened for a fourth
+round -- two spliced lines here run past the file's wrap, and the `the live figure is the one
+that banner cites` phrasing further down this stamp dangles, since the stamp sits inside the
+banner it points at. Both are wording no guard reads, and the second predates this pass. The editor was relaunched on the rebuilt integration tree and the
+relink was witnessed by the subject itself -- `class_properties` on the NATIVE
+`AStratPlayerController` path went from 91 entries / seven filtered to 92 / eight, the eighth
+being `HoverAction`. `BP_StratPlayerController.HoverAction` now points at `IA_Hover`, verified
+from the SAVED package bytes against a wired-action control rather than from the `set` call's
+return value. The full evidence is `content.md`'s topmost entry, which is the file that owns
+this fact class; the acting and the file write are attributed separately there, to
+`CLAUDE.md`'s editor-driver clause and to `content.md`'s own fallback condition. **WHAT IS NOW
+FIRST IN THE OWED LIST IS ITEM 2, THE HUMAN AT THE MOUSE** -- four properties stay unpinnable
+by anything in this project's automation, and the editor is left OPEN for that playtest.]**
 
 **[SUPERSEDED 2026-08-27 BY THE BANNER ABOVE -- the 225/225 in the paragraph below was the figure
 at that pass, and the report it cites is that pass's. Neither is the live figure.]**

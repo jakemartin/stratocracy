@@ -11,6 +11,70 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-27 (SEC 2.11.2'S PERSISTENT HUD HAS A MODEL SIDE, AND THE FAME RATE THAT NO
+CODE HAD EVER READ NOW HAS A ROUTE TO A SCREEN. Written by the `coordinator`, whose file this is.
+THE PROVENANCE IS THE INTEGRATION TREE: this run was made in `E:/MultiAgent/Stratocracy` on
+branch `master`, AFTER the `--no-ff` merge of `feat/persistent-hud`, which itself had been
+rebased onto wave 1's merge at `1d4d0e0`. So this figure covers BOTH waves -- wave 1's thirteen
+clauses and wave 3's five. The suite is now
+**249/249**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+THE DELTA OVER `master` IS **+5 AND NOTHING WAS REMOVED OR RENAMED**, by multiline set-difference
+on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- never by an acceptance-ID grep, and never by a
+single-line one, which returns ZERO in this tree because the macro's argument sits on the next
+line. Measured against `master` itself rather than against `ee7300c`: 244 there, 249 here, the
+five added names listed in this pass's `## NEXT` entry, removed set EMPTY.
+**THE FIGURE WAS MEASURED THREE TIMES ON THE WAY HERE AND NEVER PREDICTED, which is the point.**
+A rebase is a change and a merge is a change, and a green from before either describes different
+bytes -- so each step was rebuilt (`Result: Succeeded`) and re-run rather than reasoned about.
+**[STAMPED 2026-08-27 -- THE TWO EARLIER RUNS OF THIS WAVE ARE QUOTED HERE AS HISTORY AND NEITHER
+BACKS THE LIVE FIGURE. The lane's own pass was `reportCreatedOn 2026.08.27-21.02.15`, 236/236, run
+in `E:/MultiAgent/Strat-wt/slot-2` before wave 1 existed. The REBASED branch's pass was
+`reportCreatedOn 2026.08.27-21.44.34`, 249/249, run in that same lane tree after rebasing onto
+`1d4d0e0`. Both are superseded by this tree's own run, named below. They are stamped rather than
+deleted because a superseded citation left standing unstamped is exactly the shape this record
+has been bitten by -- and the sweep refused this entry once, on these two lines, before they
+carried this stamp.]**
+THE REPORT THAT CERTIFIES THE LIVE FIGURE IS THIS TREE'S: `reportCreatedOn
+2026.08.27-21.52.53`, `succeeded 249`, `failed 0`, `notRun 0`, 249 entries and zero non-Success,
+read directly by the `coordinator`. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL.
+THE REBASE WAS RE-GATED NARROWLY AND RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, and that is the
+verdict for this merge. Its subject was the one thing a rebase can break behind a green suite:
+**three source files were modified by BOTH waves and auto-merged with no conflict** --
+`StratViewModel.h`, `StratViewModel.cpp` and `StratPlayerController.cpp`. The gate confirmed both
+waves' changes survived intact, that `AStratPlayerController::DecorateForPresentation` still runs
+`SelectionMachine -> GuidedOpening -> Hover -> StratDecorateForecast` with ZERO diff against
+`master` -- wave 1's ordering constraint, in a file wave 3 also touched -- and that
+`FStratViewModel`'s field list is byte-identical to `master`, so `StratViewModelParity` keeps the
+subject its clauses assume. Checks the two full gates had already cleared were scoped OUT and
+said to be scoped out, on the ground that `git patch-id --stable` equality proves the rebase
+moved no source line of either wave's diff.
+THE GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS ON ITS FIRST ROUND, and that is the verdict
+for this pass -- zero in the code, zero in the assets, zero in the module graph, and zero
+blocking record defects, across twelve structural checks. It verified the vendored bytes by
+`git hash-object` across all 32 files rather than by a worktree diff, re-derived the module graph
+at 15 rows and five arrows with `StratUI` still free of `Stratocracy`, and audited the wave's
+three design calls on their merits rather than accepting the lane's account of them.
+**THE PRIORITY ORDER WAS CHANGED BY USER RULING BEFORE THIS WAVE AND THIS IS THE ARGUMENT FOR
+IT:** the gate audits the code, the assets and the module graph FIRST and reports that pass
+explicitly, and a record-prose defect blocks only when it is load-bearing. The two waves before
+this one cost BLOCK, BLOCK, PASS each with not one finding in the game code across all six
+rounds.
+THE FALSIFIABILITY PROOF STATES ITS OWN LIMIT, which is the half worth carrying. Five
+simultaneous mutations gave **231 green / 5 failed** with the red set exactly the five added
+names; the restore was verified by `sha256` against pre-mutation copies. **But every mutation
+was INSTRUMENT-SIDE**, because this lane may not edit the code under test even temporarily. That
+proves each assertion reachable and sensitive to the quantity it names; it does NOT prove the
+clause would catch an arbitrary defect in the shipped function. Said at the point of the claim
+rather than left for a reader to infer.)_
+
+**[SUPERSEDED 2026-08-27 BY THE BANNER ABOVE -- the 231/231 below was the figure at the pass that
+pinned the hover's tick route, and it is not live in this branch. The count moved by exactly
+five.]**
+**[SUPERSEDED 2026-08-27 BY THE BANNER ABOVE -- the 244/244 in the segment below, and the
+`2026.08.27-21.38.56` report it cites, were the figure and the provenance when wave 1 merged to
+`master`. Neither is live on this branch. The count moved by exactly five, and every other word
+of that segment still stands.]**
+
 _Last run 2026-08-27 (SEC 2.11.3'S FORECAST CARD HAS A MODEL SIDE, AND THE CENTREPIECE THE GDD
 NAMES IS NO LONGER ABSENT. Written by the `coordinator`, whose file this is. THE PROVENANCE IS
 THE INTEGRATION TREE AND IT IS STATED FIRST: this run was made in `E:/MultiAgent/Stratocracy` on
@@ -2253,6 +2317,57 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-27, COORDINATOR -- W3 LANDS: SEC 2.11.2'S PERSISTENT HUD HAS A MODEL SIDE, AND A TURN
+  CAN NOW BE ENDED BY SOMETHING OTHER THAN A KEY.** Lane commit on `feat/persistent-hud` in
+  `E:/MultiAgent/Strat-wt/slot-2`; the banner above carries this branch's figure, and the count is
+  re-derived on `master` in the merge commit. Gate: `VERDICT: PASS`, zero findings, first round.
+  - **WHAT EXISTS NOW.** `UStratViewModelLibrary` -- four `BlueprintPure` selectors over
+    `FStratViewModel`, giving `FStratSideView::IncomePerTurn` its FIRST reader in the project and
+    the idle count a named home; a six-argument `StratBuildProductionMenu` returning
+    `OutPurseFame`, with the five-argument form kept as a one-line forward;
+    `UStratMatchSubsystem::ProductionMenuFameTotal`; and `AStratPlayerController::RequestEndTurn`.
+    **NO WIDGET AND NO `.uasset`** -- the HUD and command bar are a later lane on the integration
+    tree.
+  - **THE FIVE CLAUSES.**
+    `Stratocracy.StratUI.T-UI-04.ReturnedPurseIsTheOneEveryShortfallWasComputedAgainst`,
+    `Stratocracy.StratUI.T-UI-04.TheFiveArgumentFormIsTheSixArgumentFormMinusThePurse`,
+    `Stratocracy.StratPlay.T-UI-04.PublishedHeaderPurseIsTheOpenMenusPurseAndZeroWhenClosed`,
+    `Stratocracy.StratUI.T-UI-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange`,
+    `Stratocracy.StratUI.T-UI-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove`.
+  - **TWO SURFACES SHIP DELIBERATELY UNPINNED, and the gap is named rather than hidden.**
+    `AStratPlayerController::RequestEndTurn` and
+    `UStratViewModelLibrary::CountUnitsAbleToAct` / `CountViewingSideUnitsAbleToAct` carry NO
+    clause. The reason is the acceptance-ID ruling recorded below, and the upstream mint is filed
+    in `decisions.md`. **A missing clause for those three is the ruling working, not an
+    oversight** -- and each new test file names its own omission in its header block.
+  - **THE DESIGN CALL WORTH KEEPING: the idle count is a function OVER the model, not a field ON
+    it.** A `UnitsAbleToActCount` field would have been the first arithmetic inside
+    `FStratViewModel` and the first entry in `StratViewModelParity`'s walk with no snapshot field
+    to check against -- a number that looks pinned and is not. The gate verified the consequence
+    rather than the intention: `StratViewModelParity.cpp` is unmodified and reaches
+    `UStratViewModelLibrary` nowhere, so the walk's subject is unchanged.
+  - **THE PURSE IS AN OUTPUT RATHER THAN A SECOND READ, because it must ride the rows' own
+    clock.** A separately-refreshed model can print `Fame: 250` above a 275-cost row reading
+    `need 50`, each correct at a different instant. The gate confirmed the guarantee is
+    structural: one `FameTotal` local in the function, every `Shortfall` computed against it,
+    `OutPurseFame` assigned from that same local, and no second read of the purse in the body.
+  - **A MEASUREMENT FOUND WHILE WRITING A FIXTURE, worth recording because it is not what a
+    reader would assume:** `StratBuildProductionMenu` at a hex that is NO FACTORY does not
+    refuse -- it answers with `bAvailable` false rows. The refusal channel is reserved for a
+    malformed question, such as a side outside the match. A clause's refusal arm was empty
+    because of it and went red on its own vacuity guard, which is the guard doing its job.
+  - **AND A FIXTURE THAT COULD NOT HAVE FAILED WAS CAUGHT BEFORE IT SHIPPED.**
+    `ferrum_crossing.json` seeds `startingFame` 200/200 on a symmetric board, so at turn 1 the two
+    side rows are identical and the viewer clause would have passed whichever row it returned.
+    The fixture now has side 0 spend Fame on a real build first, and the clause ASSERTS the
+    divergence before relying on it.
+  - **CARRY INTO THE CONTENT LANE, from the gate's own non-gating observations.** (1)
+    `FStratViewModel::Sides[ViewingSide].FameTotal` is still `BlueprintReadOnly` beside
+    `ProductionMenuFameTotal`, so a HUD Blueprint can still bind the stale purse the new output
+    exists to prevent -- the prose warns, nothing structural forbids. (2) `GetSideView`'s refusal
+    is a bare return bool, and a caller that ignores it gets a default `FStratSideView` reading
+    `Fame: 0`, the precise outcome its own header says must never reach the screen; an
+    `ExpandBoolAsExecs` meta on the return value would make that branch unskippable.
 - **2026-08-27, COORDINATOR -- W1 LANDS: SEC 2.11.3'S ATTACK FORECAST HAS A MODEL SIDE, AND THE
   SECTION THE GDD CALLS THE CENTREPIECE IS NO LONGER ABSENT FROM THIS ENGINE.** Lane commit on
   `feat/forecast-card` in `E:/MultiAgent/Strat-wt/slot-1`; the banner above carries this branch's

@@ -13,6 +13,92 @@
 
 ## NEXT
 
+- **2026-08-27, `strat-gameplay-engineer` -- WAVE 3: §2.11.2's THREE HUD NUMBERS AND ITS END TURN
+  VERB, MODEL-SIDE. THE FAME POOL AND THE INCOME LINE WERE ALREADY IN THE MODEL AND HAD NO WAY
+  TO REACH A WIDGET; THE IDLE COUNT DID NOT EXIST IN ANY FORM AND STRUCTURALLY CANNOT.** In the
+  lane worktree `E:/MultiAgent/Strat-wt/slot-2`, branch `feat/persistent-hud`, from `ee7300c`.
+  Two files added and six modified, all mine: `Source/StratUI/StratViewModelLibrary.h` and
+  `Source/StratUI/StratViewModelLibrary.cpp` (new), `Source/StratUI/StratViewModel.h` and
+  `.cpp`, `Source/StratPlay/StratMatchSubsystem.h` and `.cpp`,
+  `Source/StratPlay/StratPlayerController.h` and `.cpp`. Nothing committed, nothing staged, no
+  asset, no `Content/`, no `Config/`, no test, nothing under any `Tests/` directory, no
+  `.Build.cs`, no `.uproject`. No suite figure is stated here; `global.md` owns that and owns
+  any verdict.
+  - **THE READER COUNTS, MEASURED IN THIS TREE AT `ee7300c` BEFORE ANYTHING WAS DESIGNED, and
+    they are the basis for calling this a gap rather than a convenience.**
+    `FStratSideView::FameTotal` had exactly ONE reader outside its own projection and the
+    parity clauses -- the `Shortfall` subtraction inside `StratBuildProductionMenu`.
+    `FStratSideView::IncomePerTurn` had NONE AT ALL: written by `StratBuildViewModel`, asserted
+    by `StratViewModelParity` and `StratScoreboardHUDSeam`, and read by nothing that draws.
+  - **THE IDLE COUNT HAS NO MODULE ANSWER TO BRIDGE, AND THAT IS UPSTREAM'S OWN RULING.**
+    `strat::UiUnitView` carries `hasMoved` and `hasActed` and then states that neither is
+    §2.11.1's DONE bit, which "is the selection machine's own ... deliberately absent here
+    because where per-unit presentation state lives is unruled". `strat::UiSnapshot` therefore
+    carries no idle count and could not: the count is over a bit the rules module refuses to
+    hold. **NO FILING WAS OPENED AGAINST `Source/StratRules/`**, deliberately -- a rules-side
+    idle count would be the module asserting presentation state it has ruled it does not own.
+    What would justify one is a §2.11.2 requirement that the count mean "has a legal command
+    available"; that is a rules answer, and no engine module may derive it.
+  - **THE DERIVATION IS WRITTEN OUT IN THE HEADER SO IT CAN BE PINNED RATHER THAN INFERRED.**
+    A `FStratUnitView` counts exactly when all four hold: its `Side` equals the side asked
+    about; `!bDone`; `!bLockedThisTurn`; and `!(bHasMoved && bHasActed)`. The fourth is a
+    conjunction under a negation because `hasMoved` and `hasActed` are two independent flags by
+    T-TURN-01 -- a unit that has moved but not attacked still has an attack. `bIsFlag` is not
+    consulted.
+  - **NO NEW `FStratBridge` METHOD WAS ADDED AND NO `strat::` FUNCTION IS CALLED FROM ANY NEW
+    LINE.** Every number here was already reflected: the two side numbers are `strat::UiSideView`
+    fields the projection already mirrored, the purse is the local `StratBuildProductionMenu`
+    already read to compute `Shortfall`, and `FStratBridge::SubmitEndTurn` already existed and
+    is reached through the unchanged `HandleSelectionEvent` path. `StratViewModelLibrary.cpp`
+    includes no `StratBridge.h` and names no `strat::` type at all.
+  - **A SELECTOR AND NOT A FIELD, AND THAT IS THE LOAD-BEARING CALL.** A
+    `UnitsAbleToActCount` on `FStratViewModel` would have been the first arithmetic INSIDE the
+    model -- the second exception to `StratViewModel.h`'s own absolute, and the first one inside
+    the walk `StratViewModelParity` performs, where its only possible parity assertion would be
+    against a snapshot field that does not exist. So nothing was added to `FStratViewModel`; the
+    numbers are functions OVER it, on `UStratViewModelLibrary`, taking `const FStratViewModel&`
+    and reading nothing else. T-INT-05 holds because the answers are a function of the model
+    alone; the widget performs no arithmetic because it calls a named C++ function.
+  - **THE PURSE RIDES THE ROWS' CLOCK, WHICH IS WHY IT IS A NEW OUTPUT RATHER THAN A SECOND
+    READ.** `StratBuildProductionMenu` gained a six-argument overload returning the very
+    `FameTotal` local every `Shortfall` was computed against; the five-argument form is now a
+    one-line forward and its contract and its callers are unchanged.
+    `UStratMatchSubsystem::ProductionMenuFameTotal` is where it lands, in the same statement
+    group as `ProductionMenu`, `ProductionMenuHex` and `bProductionMenuSpawnBlocked`, and
+    cleared with them. Read off `FStratViewModel::Sides[...].FameTotal` instead, a header could
+    print `Fame: 250` above a 275-cost row reading `need 50` -- each correct, at two instants.
+  - **THE END TURN VERB CLOSES A ROUTE, NOT A MECHANISM.** `FStratBridge::SubmitEndTurn`,
+    `EStratSelectionEvent::EndTurn` and the whole gate chain were already correct at `ee7300c`;
+    the only caller was `AStratPlayerController::OnEndTurn`, a private Enhanced Input handler.
+    So a turn could be ended by a key and by nothing else, and §2.11.2 specifies a button.
+    `AStratPlayerController::RequestEndTurn` is a `BlueprintCallable` one-line call to the same
+    `HandleSelectionEvent`, and `OnEndTurn` now goes through it, so the key and the button spell
+    the event once between them. It takes no enum, so it does not reopen that header's recorded
+    objection to a reflected `HandleSelectionEvent`; that paragraph was amended in place rather
+    than replaced, and the amendment says which half moved.
+  - **ID COVERAGE, AND ONLY ONE OF THE FOUR IS COVERED.** The GDD's UI acceptance set is
+    `T-UI-01` through `T-UI-05` and nothing else -- verified by scanning every `T-UI-NN`
+    occurrence in `Stratocracy_Prototype_GDD.md`, which returns exactly those five. **The purse
+    header IS `T-UI-04`**, on its own wording: "the production menu binds to the buildlist
+    derived from the four Stub-2 unit rows **plus current fameTotal**", and
+    `ProductionMenuFameTotal` is literally that, bound to that menu. **The other three are
+    uncovered.** `T-UI-03` enumerates the standings rows it governs -- destroyed, objectives
+    held X/N, surviving units/HP, turn vs cap -- and neither the Fame pool nor the income line
+    is among them, so §2.11.2's HUD line is not its subject. The End Turn verb has no ID. The
+    idle count has no ID and structurally cannot ride `T-UI-05`, whose subject is snapshot
+    fidelity, because the DONE bit is not in the snapshot. **NO ID WAS INVENTED AND NO CLAUSE
+    WAS NAMED**; the ruling is the user's and was outstanding at the time of writing.
+  - **BUILD AND SUITE.** `Build.bat StratocracyEditor Win64 Development` in this worktree:
+    `Result: Succeeded`, process exit 0, quoted from the tool's own line rather than inferred
+    from an exit code. `StratViewModelLibrary.cpp` appears in the log as `[56/114] Compile
+    [x64]`, so the new translation unit was genuinely compiled and the green is not a no-op.
+    The suite was run in this worktree and its report is at `Saved/AutomationReport`; the
+    figures belong to `global.md` and are not restated here.
+  - **ONE CORRECTION TO THE DISPATCH BRIEF, RECORDED BECAUSE IT WILL BE REPEATED.** The brief
+    stated this worktree is brand-new with no `Intermediate/` and that the first build would
+    take 20-40 minutes. Both `Intermediate/` and `Binaries/` were present on arrival and the
+    build took 73 seconds of executor time over 114 actions. Nothing was worked around; the
+    premise was simply not true of the tree.
 - **2026-08-27, `strat-gameplay-engineer` -- W1, §2.11.3'S FORECAST CARD, MODEL SIDE. THE THREE
   READOUTS `strat::UiForecast` DOES NOT CARRY NOW HAVE MODULE SOURCES, AND THE ONE THAT COULD
   NOT BE ASKED FOR IS WRITTEN OUT IN THE BRIDGE WITH ITS OWN GATE NAMED.** In the lane worktree

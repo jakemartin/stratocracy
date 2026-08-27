@@ -856,8 +856,15 @@ bool UStratMatchSubsystem::RefreshProductionMenu(FIntPoint FactoryHex, FString& 
 	// BUILT INTO A LOCAL AND MOVED ACROSS ONLY ON SUCCESS. `StratBuildProductionMenu` is
 	// already all-or-nothing on the array it fills; the hex beside it is ours, and written
 	// before the call it could move on a call that produced no rows.
+	// THE SIX-ARGUMENT OVERLOAD, FOR §2.11.5's HEADER NUMBER. `BuiltPurse` is the very purse
+	// each row's `Shortfall` was computed against, returned by the same call in the same frame,
+	// so the header and the `need N` rows cannot describe two different amounts of Fame. Read
+	// through this overload rather than off `AppliedModel.Sides` for the reason the spawn-block
+	// query below is asked here rather than read off `AppliedModel.Factories`.
 	TArray<FStratBuildOptionView> Built;
-	if (!StratBuildProductionMenu(*Live, ViewingSide, FactoryHex, Built, OutFailureReason))
+	int32                         BuiltPurse = 0;
+	if (!StratBuildProductionMenu(
+			*Live, ViewingSide, FactoryHex, Built, BuiltPurse, OutFailureReason))
 	{
 		// FORWARDED UNCHANGED AND NOT CONVERTED INTO AN EMPTY MENU. The caller keeps
 		// whatever menu it already had, which is what makes a transient refusal invisible
@@ -880,6 +887,11 @@ bool UStratMatchSubsystem::RefreshProductionMenu(FIntPoint FactoryHex, FString& 
 	ProductionMenu              = MoveTemp(Built);
 	ProductionMenuHex           = FactoryHex;
 	bProductionMenuSpawnBlocked = bBlockedKnown && bBlocked;
+	// IN THE SAME STATEMENT GROUP, so the four members still change together or not at all.
+	// [AMENDED with this line: the block above said "the three members". A count of a growing
+	// set, which is the shape this project has been caught by before; the invariant -- they
+	// move together or not at all -- is what the sentence is for and needs no number.]
+	ProductionMenuFameTotal     = BuiltPurse;
 
 	// A REFUSAL HERE IS NOT LOGGED, AND THAT IS A DECISION RATHER THAN AN OVERSIGHT. Two
 	// refusals are reachable past a successful menu build, and neither wants a warning:
@@ -1027,6 +1039,12 @@ void UStratMatchSubsystem::CloseProductionMenu()
 	// closed-panel answer is false twice over -- deliberately, because that accessor's
 	// guarantee must survive a future writer that clears the rows and forgets this line.
 	bProductionMenuSpawnBlocked = false;
+
+	// AND SO DOES §2.11.5'S HEADER NUMBER, for the hex's reason exactly. A stale purse beside
+	// an emptied menu is the same defect as a stale hex: it reads as live state. ZERO IS NOT A
+	// CLAIM THAT THE PLAYER HAS NO FAME -- it is what a closed panel's header is worth, and
+	// `IsProductionMenuOpen()` is the discriminator, as it is for the three above.
+	ProductionMenuFameTotal = 0;
 }
 
 bool UStratMatchSubsystem::IsOpenMenuFactorySpawnBlocked() const

@@ -12,6 +12,102 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-27 (local; this pass's runs stamp UTC `2026.08.27-20.56.24`, `-20.57.47`,
+  `-20.59.19` and the final restored-tree run `-21.02.15`) — WAVE 3's PERSISTENT-HUD MODEL SURFACE IS PINNED BY FIVE CLAUSES, ACROSS TWO
+  EXISTING ACCEPTANCE IDS, AND TWO SURFACES OF THAT SAME WAVE ARE DELIBERATELY LEFT UNPINNED.**
+  Three new files, all inside `Tests/`:
+  `Source/StratUI/Tests/StratProductionPurseClauses.cpp` (2),
+  `Source/StratUI/Tests/StratViewingSideSelectorClauses.cpp` (2), and
+  `Source/StratPlay/Tests/StratProductionPurseSeamClauses.cpp` (1). The clause-name set grew by
+  exactly five and NOTHING was removed or renamed, measured by SET DIFFERENCE on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` between `HEAD` and the worktree — never by an acceptance-ID
+  grep, which is useless here by construction since the five share two IDs. The live suite figure
+  is `global.md`'s and is not restated here.
+  - **WHICH CLAUSE PINS WHICH BEHAVIOUR.**
+    - `Stratocracy.StratUI.T-UI-04.ReturnedPurseIsTheOneEveryShortfallWasComputedAgainst` —
+      on ONE call of `StratBuildProductionMenu`'s six-argument overload, every unaffordable row's
+      `Shortfall` equals `CostFame - OutPurseFame`, and `OutPurseFame` equals
+      `strat::UiSnapshot::side[Side].fameTotal` read off the same bridge in the same frame. The
+      §2.11.5 defect it forbids — a header printing `Fame: 250` above a 275-cost row reading
+      `need 50` — is thereby structural rather than asserted.
+    - `Stratocracy.StratUI.T-UI-04.TheFiveArgumentFormIsTheSixArgumentFormMinusThePurse` —
+      the one-line forward agrees with the implementation on rows, on order, on every field
+      (`Id` and `Reason` compared CASE-SENSITIVELY), on refusing, and on the refusal sentence.
+    - `Stratocracy.StratPlay.T-UI-04.PublishedHeaderPurseIsTheOpenMenusPurseAndZeroWhenClosed` —
+      `UStratMatchSubsystem::ProductionMenuFameTotal` across four stations of one cycle: never
+      opened, open, AFTER A BUILD (the panel stays open and the header must have moved), and
+      closed. The build station is the one a write-once member fails.
+    - `Stratocracy.StratUI.T-UI-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange` —
+      `GetSideView` yields `Model.Sides[i]`; an out-of-range side, a negative side, a model whose
+      own `ViewingSide` is out of range and an empty model all REFUSE and leave `OutSide`
+      default-constructed. `GetViewingSideView` agrees with `GetSideView(Model.ViewingSide, ...)`
+      on both the answer and the refusal.
+    - `Stratocracy.StratUI.T-UI-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove` —
+      on a model rendered for side 1 while side 0 is to move, the selector returns the VIEWER's
+      row and provably not the side-to-move's. This is the clause that protects the `+X/turn`
+      line, because `FStratSideView::IncomePerTurn` had ZERO readers before this wave and this
+      selector is now its only route to a widget.
+  - **WHAT THESE CLAUSES DO NOT PIN, STATED SO NOBODY READS THEM WIDER THAN THEY ARE.** No widget,
+    no Slate, no binding: wave 3 is model-side and T-UI-04's own BINDING is still blocked on a
+    human-driven playtest, exactly as `StratProductionMenuRouting.cpp`'s header already records.
+    The menu's ROUTING (rows are the bridge's rows, in the bridge's order, byte for byte) remains
+    GATE-BUILDMENU's and is not restated. That `FStratSideView` mirrors `strat::UiSideView` field
+    for field remains `StratViewModelParity.cpp`'s.
+  - **TWO WAVE-3 SURFACES ARE UNPINNED ON PURPOSE, AND THE SILENCE IS DELIBERATE RATHER THAN AN
+    OVERSIGHT.** `AStratPlayerController::RequestEndTurn` and
+    `UStratViewModelLibrary::CountUnitsAbleToAct` / `CountViewingSideUnitsAbleToAct` got NO clause
+    from this lane. Per the user ruling of this date, the GDD's UI acceptance set is
+    `T-UI-01`..`T-UI-05` and neither surface falls under any of them; the idle count's subject is
+    `bDone` and `bLockedThisTurn`, which `StratViewModel.h`'s PRESENTATION BLOCK rules OUT of
+    T-UI-05's subject in terms — they have no module-side counterpart for a fidelity clause to
+    compare against. An upstream mint is being filed. **No ID was stretched to reach them and none
+    was invented.** Each of the two new files whose subject neighbours those surfaces names its
+    own omission in its header block, so the gap is legible from the code as well as from here.
+  - **A FIXTURE HAD TO DRIVE THE TWO SIDES APART BEFORE THE VIEWER CLAUSE COULD FAIL AT ALL, AND
+    THIS IS THE MOST REUSABLE THING THIS PASS LEARNED.** `Data/ferrum_crossing.json` seeds
+    `startingFame` at 200/200 on a symmetric board, so at turn 1 `Sides[0]` and `Sides[1]` can
+    carry identical rows — and a clause asking "did the selector return the VIEWING side's row"
+    against two identical rows CANNOT FAIL whichever row it returns. The fixture therefore has
+    side 0 spend Fame on a real build first, and the clause then ASSERTS the divergence (both the
+    index divergence and the purse divergence) before relying on it, bailing loudly if either is
+    ever untrue. Any future clause distinguishing two sides on this scenario needs the same step.
+  - **A REFUSAL AND AN ANSWERED NO ARE DIFFERENT THINGS HERE, AND THE FIRST DRAFT GOT IT WRONG —
+    MEASURED, NOT REASONED.** `StratBuildProductionMenu` at a hex that is NO FACTORY does not
+    refuse; it answers with rows whose `bAvailable` is false, which
+    `StratProductionMenuRouting.cpp`'s `AnAnsweredNoIsNotARefusal` already pins. The forward
+    clause's refusal arm was consequently EMPTY and the clause went RED on its own vacuity guard
+    on the first run. The refusal is reserved for a MALFORMED QUESTION — a side outside the match.
+    The vacuity guards on both arms are what turned a silently half-tested clause into a red one;
+    they are load-bearing and must not be removed.
+  - **HOW EACH CLAUSE WAS PROVED FALSIFIABLE, AND THE HONEST LIMIT OF THAT PROOF.** All five were
+    reddened in ONE differential run with five simultaneous, independent mutations, then restored
+    and re-run. Exactly five went red and no other clause moved, which is itself the no-collateral
+    evidence. **EVERY MUTATION WAS INSTRUMENT-SIDE**, because this lane may not edit the code under
+    test even temporarily; four of the five are shaped like the defect the clause forbids (a
+    transposed `q`/`r` on the forward's hex; an off-by-one range bound; reading the PRE-BUILD purse
+    where the published one belongs; comparing against `Sides[SideToMove]` instead of
+    `Sides[ViewingSide]`), and the fifth — perturbing the returned purse by one before the
+    assertions read it — is a plain sensitivity probe and is the weakest of the five. **What this
+    proves is that each assertion is reachable and sensitive to the quantity it names. It is NOT a
+    proof that the clause would catch an arbitrary defect in the shipped function**, which would
+    have required mutating `Source/StratUI/StratViewModel.cpp` or `StratMatchSubsystem.cpp` —
+    outside this lane, and not done.
+  - **A `.pristine` COPY WAS TAKEN BEFORE THE MUTATIONS AND THE RESTORE WAS VERIFIED BY SHA-256
+    AGAINST IT**, not by re-reading the files and not by a diff against `HEAD` — all three files
+    are UNTRACKED, so `HEAD` carries no blob to compare against and a `numstat` check would have
+    been silently vacuous. A grep for the mutation markers returning zero is a second, independent
+    check and was also run.
+  - **THE INSTRUMENT CAVEATS THIS PASS HONOURED, EACH ALREADY THIS RECORD'S.** `FString` `==`,
+    `Contains`, `FName` comparison and `TestEqual` are all CASE-INSENSITIVE here, so the forward
+    clause compares `Id` and `Reason` through `FString::Equals(..., ESearchCase::CaseSensitive)`.
+    The out-parameter is PRE-POISONED before every refusing call, because `GetSideView` resets
+    `OutSide` on entry and without a poison "left default-constructed" reads identically on a
+    function that never touched it. The refusal expectation is a freshly default-constructed
+    `FStratSideView()` — the module-side default asked for, never five zeroes typed out — so the
+    clause moves if that struct ever grows a non-zero default. `IsProductionMenuOpen()` is asked
+    of the subsystem at every station rather than inferred from the preceding call.
+  - **NO REGRESSION.** The mutant run's green set is exactly the clause set that was green before
+    this pass, so the failures were the five mutations and nothing else.
 - **2026-08-27 (local; this pass's own build and suite run stamp UTC `2026.08.27-21.06.06`) —
   W1'S FORECAST CARD IS PINNED AT THIRTEEN CLAUSES ACROSS THREE MODULES, AND THE ONE DEBT THE
   ENGINEER CALLED SHARPEST IS DISCHARGED.** Three new files:

@@ -386,11 +386,28 @@ bool StratBuildViewModel(
 // §2.11.5 — the production menu, per factory.
 // ---------------------------------------------------------------------------
 
+// THE FIVE-ARGUMENT FORM IS A FORWARD AND HOLDS NO LOGIC OF ITS OWN. Every existing caller
+// uses it and none of them wants §2.11.5's header number; the purse is discarded into a local
+// rather than the two bodies being kept in step by hand, which is the arrangement that cannot
+// drift. See the header for why the purse had to become an output at all.
 bool StratBuildProductionMenu(
 	const FStratBridge&            Bridge,
 	int32                          Side,
 	FIntPoint                      FactoryHex,
 	TArray<FStratBuildOptionView>& OutOptions,
+	FString&                       OutFailureReason)
+{
+	int32 UnusedPurse = 0;
+	return StratBuildProductionMenu(
+		Bridge, Side, FactoryHex, OutOptions, UnusedPurse, OutFailureReason);
+}
+
+bool StratBuildProductionMenu(
+	const FStratBridge&            Bridge,
+	int32                          Side,
+	FIntPoint                      FactoryHex,
+	TArray<FStratBuildOptionView>& OutOptions,
+	int32&                         OutPurseFame,
 	FString&                       OutFailureReason)
 {
 	// Cleared up front so a success cannot leave a previous call's refusal sitting in
@@ -489,7 +506,13 @@ bool StratBuildProductionMenu(
 		Built.Add(MoveTemp(OptionView));
 	}
 
-	OutOptions = MoveTemp(Built);
+	// ASSIGNED TOGETHER, ON THE LAST TWO LINES, AND THE PAIRING IS THE POINT. `OutPurseFame`
+	// is the very `FameTotal` every `Shortfall` above was computed against -- the same local,
+	// not a second read -- so §2.11.5's header and its `need N` rows cannot describe two
+	// different purses. Written here rather than beside the read, so that a refusal between
+	// the two leaves both of the caller's values as it found them.
+	OutOptions   = MoveTemp(Built);
+	OutPurseFame = FameTotal;
 	return true;
 }
 

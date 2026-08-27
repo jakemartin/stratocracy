@@ -397,11 +397,31 @@ void AStratPlayerController::OnWait()
 
 void AStratPlayerController::OnEndTurn()
 {
+	// THROUGH `RequestEndTurn` AND NOT DIRECTLY TO `HandleSelectionEvent`, so the key and
+	// §2.11.2's button spell the event and its meaningless hex ONCE between them. The three
+	// handlers above still call `HandleSelectionEvent` directly because no reflected verb
+	// exists for their events; if one ever does, this is the shape it takes.
 	FString Reason;
-	if (!HandleSelectionEvent(EStratSelectionEvent::EndTurn, FIntPoint::ZeroValue, Reason))
+	if (!RequestEndTurn(Reason))
 	{
 		UE_LOG(LogStratPlay, Log, TEXT("End turn: %s"), *Reason);
 	}
+}
+
+// §2.11.2's End Turn control. THE SAME PATH THE KEY TAKES, named so a widget can take it too.
+//
+// IT IS `OnEndTurn` WITH THE REFUSAL RETURNED INSTEAD OF LOGGED, and the difference is the
+// whole of it. A key press has nobody to tell, so `OnEndTurn` logs at `Log` and returns void; a
+// button press has a caller, and swallowing "move the marked Infantry first" into the output
+// log would leave the player pressing a control that does nothing and says nothing.
+bool AStratPlayerController::RequestEndTurn(FString& OutFailureReason)
+{
+	// NO GATE, NO CHECK AND NO LOG OF ITS OWN. Everything this function could usefully decide
+	// is already decided inside `HandleSelectionEvent`, in an order that block calls the
+	// contract; anything added here would be a copy of one of those decisions that can drift
+	// from it.
+	return HandleSelectionEvent(
+		EStratSelectionEvent::EndTurn, FIntPoint::ZeroValue, OutFailureReason);
 }
 
 void AStratPlayerController::OnToggleProductionMenu()

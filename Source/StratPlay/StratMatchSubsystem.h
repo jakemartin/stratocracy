@@ -1080,6 +1080,32 @@ public:
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Production")
 	FIntPoint ProductionMenuHex = FIntPoint(0, 0);
 
+	/**
+	 * Sec 2.11.5's header number: the purse the rows above were priced against.
+	 * `FACTORY -- BUILD   Fame: 250`.
+	 *
+	 * IT RIDES THE ROWS' CLOCK, WHICH IS THE ONLY REASON IT IS HERE RATHER THAN READ OFF THE
+	 * VIEW MODEL. `FStratViewModel::Sides[ViewingSide].FameTotal` is the same quantity, and a
+	 * widget binding to it would be reading it at a different instant from the one every
+	 * `FStratBuildOptionView::Shortfall` beside it was computed against. The two would then be
+	 * able to disagree on screen -- a header saying `Fame: 250` above a 275-cost row saying
+	 * `need 50` -- while each was individually correct. `StratBuildProductionMenu`'s
+	 * six-argument overload returns the very local the shortfalls used, and this member is
+	 * where it lands.
+	 *
+	 * SAME LIFETIME AND SAME STATEMENT GROUP AS THE ROWS. Assigned in `RefreshProductionMenu`
+	 * with `ProductionMenu` and `ProductionMenuHex`, cleared in `CloseProductionMenu` with
+	 * them, and MEANINGLESS WHILE `IsProductionMenuOpen()` IS FALSE for the reason the hex
+	 * above gives: a value left behind an emptied container reads like live state to anyone
+	 * who consults it without consulting the container first.
+	 *
+	 * IT IS THE PURSE OF `ViewingSide`, because that is the side `RefreshProductionMenu` opens
+	 * every menu for. It is deliberately NOT re-derived from `Match.SideToMove`, which in
+	 * hot-seat is a different side on every other screen.
+	 */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Production")
+	int32 ProductionMenuFameTotal = 0;
+
 	// ---- §4.10 save slots ---------------------------------------------------
 	// THIS CLASS OWNS WHERE A SAVE LIVES, and it is the only thing in the tree that does.
 	// `FStratBridge::SerializeRecordedSave` says of itself "SERIALIZES, AND DOES NOT WRITE

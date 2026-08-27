@@ -1360,6 +1360,43 @@ STRATUI_API bool StratBuildProductionMenu(
 	FString&                       OutFailureReason);
 
 /**
+ * The same menu, and §2.11.5's OWN HEADER NUMBER beside it: `FACTORY -- BUILD   Fame: 250`.
+ *
+ * WHAT GAP THIS CLOSES. The five-argument form above already READ the purse -- it has to, in
+ * order to compute `FStratBuildOptionView::Shortfall` -- and then threw it away, so §2.11.5's
+ * header had no source at all. A caller that wanted it had to go back to
+ * `FStratViewModel::Sides[...].FameTotal`, which is the SAME number read at a DIFFERENT
+ * INSTANT.
+ *
+ * AND THAT SECOND INSTANT IS THE WHOLE REASON THIS OVERLOAD EXISTS, rather than convenience.
+ * `Shortfall` is `CostFame - FameTotal` against the purse as it stood when the rows were
+ * built. A header drawn from a separately-refreshed model could print `Fame: 250` above a row
+ * reading `need 50` on a 275-cost unit, and the two would be inconsistent on screen while each
+ * was individually correct. One read, one instant, one number -- the same rule
+ * `UStratMatchSubsystem::IsOpenMenuFactorySpawnBlocked`'s block states for §2.11.5's footer
+ * fact, arrived at here from the same direction.
+ *
+ * IT IS THE PURSE OF `Side`, NOT OF THE VIEWING SIDE AND NOT OF THE SIDE TO MOVE. This
+ * function does not know which of the three `Side` is; the caller stated it, and the header
+ * this fills belongs to the menu that caller opened.
+ *
+ * THE FIVE-ARGUMENT FORM IS THE ONE-LINE FORWARD AND NOT THE OTHER WAY AROUND, so that there
+ * is exactly one implementation and no second place a purse can be read from. Its existing
+ * callers are unchanged and its contract is unchanged.
+ *
+ * ALL-OR-NOTHING COVERS THE PURSE TOO. `OutPurseFame` is written on the same last lines as
+ * `OutOptions` and is untouched by a refusal, so a caller keeps the header it was drawing
+ * beside the rows it was drawing.
+ */
+STRATUI_API bool StratBuildProductionMenu(
+	const FStratBridge&            Bridge,
+	int32                          Side,
+	FIntPoint                      FactoryHex,
+	TArray<FStratBuildOptionView>& OutOptions,
+	int32&                         OutPurseFame,
+	FString&                       OutFailureReason);
+
+/**
  * §2.8's result WHOLE, in engine types. The projection §2.11.4's end-of-match screen
  * needs and the one `StratBuildViewModel` structurally cannot supply.
  *

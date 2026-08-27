@@ -285,8 +285,57 @@ public:
 	 * Blueprint-callable version would have to take a `uint8` and cast. That is an untyped
 	 * entry point into a state machine, and the only thing it buys is a node nothing in this
 	 * milestone needs. `RefreshFromMachine` above IS reflected, because it takes no enum.
+	 *
+	 * [AMENDED, wave 3. The paragraph above is unchanged and still correct about the GENERIC
+	 * form. What has changed is that ONE event now has a Blueprint caller: §2.11.2's End Turn
+	 * control. `RequestEndTurn` below is that route -- a named verb taking no enum, which is
+	 * why it does not reopen the objection above. A reader who takes the paragraph to mean
+	 * "no Blueprint can end a turn" would be reading it as a claim about the verb rather than
+	 * about the untyped entry point, and that is the misreading this note exists to close.]
 	 */
 	bool HandleSelectionEvent(EStratSelectionEvent Event, FIntPoint Hex, FString& OutFailureReason);
+
+	/**
+	 * §2.11.2's End Turn control, as a verb Blueprint can call.
+	 *
+	 * WHAT GAP THIS CLOSES. At `ee7300c` the ONLY route to `EStratSelectionEvent::EndTurn` was
+	 * `OnEndTurn`, a private Enhanced Input handler bound to `EndTurnAction`. So a turn could
+	 * be ended by a key and by nothing else, and §2.11.2's persistent HUD specifies a BUTTON.
+	 * This project has been caught before by a verb that was correct, reflected and
+	 * unreachable; this is the same shape found from the other side -- a verb that is correct
+	 * and reachable only by a key.
+	 *
+	 * A NAMED VERB AND NOT A REFLECTED `HandleSelectionEvent`, which was the other shape. That
+	 * one would have to take a `uint8` and cast, for the reason the block above records, and it
+	 * would hand Blueprint every event rather than the one §2.11.2 asks for. This takes no
+	 * enum, so the objection does not attach to it, and it is the only selection event that
+	 * gets one.
+	 *
+	 * IT IS ONE CALL TO `HandleSelectionEvent` AND DECIDES NOTHING. Every gate that applies to
+	 * the key applies here unchanged and in the same order, because it is the same call: §2.8's
+	 * concluded-match gate, §2.11.6-B's beat-1a End Turn gate, the selection machine, the
+	 * submit, `NotifyCommandApplied`, the AI's turn, the refresh. A second sequence written
+	 * here for the button's benefit is the precise defect `RefreshFromMachine`'s own block
+	 * names -- "a second, subtly different sequence is what a future caller writes when there
+	 * is no first one to call".
+	 *
+	 * IT DOES NOT ASK WHETHER END TURN IS GATED, AND A CALLER MUST NOT EITHER. Whether the
+	 * button draws dimmed is `FStratGuidanceView::bEndTurnGated` on the model, with
+	 * `EndTurnGateHover` as its hover text -- both already there, both already the screen half
+	 * of the same gate. A widget that consulted this function to decide its own appearance
+	 * would be submitting a command to find out how to draw.
+	 *
+	 * `FIntPoint::ZeroValue` IS PASSED AND MEANS NOTHING. `EndTurn` names no hex --
+	 * `FStratSelectionOutcome`'s block says so of the whole kind -- and `OnEndTurn` passes the
+	 * same value for the same reason.
+	 *
+	 * @return false on any refusal, gate or inert input, with the same sentence the key path
+	 *         produces. A `false` here is NOT a fault by itself: "the match is over" and "move
+	 *         the marked Infantry first" both arrive this way and both are the interface
+	 *         working.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Input")
+	bool RequestEndTurn(FString& OutFailureReason);
 
 	/**
 	 * Which hex the cursor is over, if any.

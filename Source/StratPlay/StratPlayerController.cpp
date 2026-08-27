@@ -1,7 +1,12 @@
 // GDD §2.11.1 / §4.9 -- the player controller, implementation.
 //
-// THE WHOLE OF THE INPUT PATH IS BELOW AND IT IS SHORT ON PURPOSE. Four handlers, one
-// cursor trace, one refresh. Every decision belongs to `FStratSelectionMachine`, every
+// THE WHOLE OF THE INPUT PATH IS BELOW AND IT IS SHORT ON PURPOSE. One handler per action,
+// ONE cursor trace shared by all of them, one refresh. [AMENDED, wave 0: "Four handlers, one
+// cursor trace, one refresh." --
+// a count of a growing set, wrong since `OpenProductionMenuAction` landed. The invariant it
+// was really about is the ONE cursor trace, which is unchanged: `HexUnderCursor` is still
+// the only route from a cursor to a hex in this project, and the hover reuses it rather than
+// adding a second.] Every decision belongs to `FStratSelectionMachine`, every
 // rules answer to `FStratBridge`, every reconciliation to `UStratMatchSubsystem`, and every
 // coordinate to `AStratBoardActor`. If this file grows a branch on a rule, the branch is in
 // the wrong file.
@@ -54,8 +59,12 @@ AStratPlayerController::AStratPlayerController()
 	// here from phase 4 with the reasoning "this controller polls nothing", which is true and
 	// which does not survive the fact that undoes it. The symptom was maximally misleading:
 	// standalone PIE showed `STRAT-PROBE ... InputKey key=... event=...` for every key,
-	// `IgnoreInput=FALSE`, a valid `LocalPlayer_0` at `ControllerId=0`, all four `BindAction`
-	// calls proven to have run (zero `is unset` warnings) -- and still zero `STRAT-CMD` lines.
+	// `IgnoreInput=FALSE`, a valid `LocalPlayer_0` at `ControllerId=0`, EVERY `BindAction` call
+	// THAT EXISTED THEN proven to have run (zero `is unset` warnings) -- and still zero
+	// `STRAT-CMD` lines. [AMENDED, wave 0: "all four `BindAction` calls". A measurement, and
+	// the measurement is unchanged -- what is removed is only the implication that four is
+	// still the number, which a reader of this paragraph had no way to sort from the live
+	// counts that used to sit sixty lines below it.]
 	// The console kept working throughout, which read as "input is fine", but the console is
 	// handled at the viewport-client layer UPSTREAM of player-input processing and needs no
 	// controller tick at all. Do not re-derive "polls nothing, so need not tick" from this
@@ -179,23 +188,35 @@ void AStratPlayerController::SetupInputComponent()
 		return;
 	}
 
-	// EACH BINDING IS GUARDED SEPARATELY, so that authoring three of the four assets binds
-	// three actions rather than none. `BindAction` with a null action is a check() in the
-	// engine, so the guard is required and not defensive.
+	// EACH BINDING IS GUARDED SEPARATELY, so that authoring SOME of the assets binds those
+	// actions rather than none. `BindAction` with a null action is a check() in the engine, so
+	// the guard is required and not defensive.
 	//
-	// `ETriggerEvent::Started` ON ALL FOUR. Each of these is a discrete decision -- a click,
-	// a cancel, a wait, an end-turn -- and `Triggered` would repeat them for the length of a
-	// held key. A repeated Move is refused by the rules module the second time (the unit has
-	// moved), so the visible symptom would be a log full of refusals rather than a wrong
-	// board; it is still the wrong event.
+	// `ETriggerEvent::Started` ON EVERY SELECTION BINDING BELOW. Each of these is a discrete
+	// decision -- a click, a cancel, a wait, an end-turn -- and `Triggered` would repeat them
+	// for the length of a held key. A repeated Move is refused by the rules module the second
+	// time (the unit has moved), so the visible symptom would be a log full of refusals rather
+	// than a wrong board; it is still the wrong event. NOT A STATEMENT ABOUT EVERY BINDING IN
+	// THIS FUNCTION: the hover binding at the bottom is `Triggered` on purpose and says why.
 	// AND EACH NULL BRANCH NOW SAYS SO BY NAME. THIS PART IS PERMANENT. It outlived the
 	// temporary phase 6 diagnostics on purpose and is not to be stripped with them. Until
-	// phase 6 these four guards were silent on the null side, so a log in which no input ever
-	// arrived was consistent with four bindings AND with zero bindings, and the difference
-	// between those two is the difference between an asset gap and an engine one. Phase 6
-	// spent a standalone PIE session, a `showdebug enhancedinput` overlay and a
-	// `GetAll EnhancedPlayerInput` probe establishing by other means what these four lines
-	// state directly. "The defaults are set" is now an observation rather than an assertion.
+	// phase 6 THE GUARDS THAT EXISTED THEN were silent on the null side, so a log in which no
+	// input ever arrived was consistent with every action bound AND with none bound, and the
+	// difference between those two is the difference between an asset gap and an engine one.
+	// Phase 6 spent a standalone PIE session, a `showdebug enhancedinput` overlay and a
+	// `GetAll EnhancedPlayerInput` probe establishing by other means what these guards state
+	// directly. "The defaults are set" is now an observation rather than an assertion.
+	//
+	// [AMENDED, wave 0: this block said "three of the four assets", "`ETriggerEvent::Started`
+	// ON ALL FOUR", "these four guards", "consistent with four bindings" and "what these four
+	// lines state directly" -- and, on the same line as the first of them, "three actions
+	// rather than none", now "those actions rather than none" -- six counts of the same
+	// growing set inside one function, every
+	// one already stale when `OpenProductionMenuAction` landed, and now contradicted outright
+	// by wave 0's
+	// own hover binding at the bottom of this same function. The phase 6 sentences are kept as
+	// HISTORY and scoped to the guards of that day rather than deleted: what phase 6 measured
+	// is unchanged, and only the implication that the set is still that size is removed.]
 	//
 	// WARNING AND NOT ERROR, because a null action asset is a Blueprint-default gap that a
 	// property on this class fixes -- unlike the non-Enhanced `InputComponent` above, which no
@@ -242,7 +263,8 @@ void AStratPlayerController::SetupInputComponent()
 			TEXT("%s: EndTurnAction is unset; no end-turn binding exists."), *GetName());
 	}
 
-	// THE FIFTH BINDING, AND IT IS `Started` FOR A REASON THE OTHER FOUR DO NOT HAVE. This
+	// THE PRODUCTION-MENU BINDING, AND IT IS `Started` FOR A REASON THE SELECTION BINDINGS
+	// ABOVE DO NOT HAVE. [AMENDED, wave 0: "THE FIFTH BINDING ... THE OTHER FOUR".] This
 	// one is a TOGGLE, so `Triggered` on a held key would open and close the menu once per
 	// frame -- a symptom that reads as a flickering panel rather than as a wrong trigger
 	// event, and would send the next reader to the widget.
@@ -256,6 +278,28 @@ void AStratPlayerController::SetupInputComponent()
 		UE_LOG(LogStratPlay, Warning,
 			TEXT("%s: OpenProductionMenuAction is unset; no production-menu binding exists."),
 			*GetName());
+	}
+
+	// THE HOVER BINDING, AND IT IS THE ONLY `Triggered` ONE IN THIS FILE. The bindings above
+	// are `Started` because each is a discrete decision; this one reports where the cursor is,
+	// continuously, and `Started` would fire once at the beginning of a mouse movement and not
+	// again -- freezing the hovered hex at wherever the cursor was on that first frame while
+	// the player went on moving. The symptom would read as a card showing the wrong hex, which
+	// sends the next reader to the forecast rather than to the trigger event.
+	//
+	// THE COST OF `Triggered` IS PAID IN `UpdateHoverFromCursor` AND NOT HERE. It runs a trace
+	// per mouse-move frame and refreshes the model only when the resolved hex actually
+	// changed; see `FStratHoverState`'s header on why the de-duplication lives in the state
+	// rather than in the refresh.
+	if (HoverAction != nullptr)
+	{
+		EnhancedInput->BindAction(HoverAction, ETriggerEvent::Triggered, this,
+			&AStratPlayerController::OnHover);
+	}
+	else
+	{
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("%s: HoverAction is unset; no hover binding exists."), *GetName());
 	}
 }
 
@@ -306,7 +350,11 @@ bool AStratPlayerController::HexUnderCursor(FIntPoint& OutHex)
 }
 
 // ---------------------------------------------------------------------------
-// The input handlers. Four one-line calls.
+// The input handlers. One line each. [AMENDED, wave 0: "The input handlers. Four one-line
+// calls." -- a count of a growing set. Wave 0's first draft changed this line SILENTLY while
+// its own record entry claimed every such site had been quoted and stamped, so that entry was
+// false against this very line. Stamped on the gate's finding, which is the shape the
+// amendment pass exists to catch and did not catch in itself.]
 // ---------------------------------------------------------------------------
 
 void AStratPlayerController::OnSelect()
@@ -367,6 +415,87 @@ void AStratPlayerController::OnToggleProductionMenu()
 		// working.
 		UE_LOG(LogStratPlay, Log, TEXT("Production menu: %s"), *Reason);
 	}
+}
+
+void AStratPlayerController::OnHover()
+{
+	// THE RETURN VALUE IS DISCARDED HERE AND NOWHERE ELSE. See the declaration.
+	UpdateHoverFromCursor();
+}
+
+// ---------------------------------------------------------------------------
+// §2.11.3 / §2.11.2's hover, wave 0. Resolve, record, refresh if it moved.
+//
+// EVERY FUNCTION BELOW ENDS AT `ApplyHoverChange`, which is the one place a hover decides to
+// refresh. However many entry points there come to be, there is ONE refresh decision, rather
+// than a copy of it per entry point -- the shape `RefreshFromMachine`'s own block gives as the
+// reason it is a single named method: a second, subtly different sequence is what a future
+// caller writes when there is no first one to call. [AMENDED, wave 0, on the second W0 gate:
+// "Three entry points and one refresh decision, rather than three copies of the same two
+// lines." A census of a growing set, in the same class as the gate's own R2 finding and found
+// by the same sweep after the blind spot that hid R2 was closed. The invariant -- one refresh
+// decision, not one per caller -- is what the sentence was for and needs no count at all.]
+// ---------------------------------------------------------------------------
+
+bool AStratPlayerController::UpdateHoverFromCursor()
+{
+	// THE SAME CURSOR-TO-HEX ROUTE `OnSelect` USES, AND NOT A SECOND ONE. `HexUnderCursor` is
+	// an instance-index lookup into the board's own list; there is no inverse of
+	// `WorldLocationOfHex` in this project and this path does not invent one.
+	FIntPoint Hex;
+	if (!HexUnderCursor(Hex))
+	{
+		// OFF THE BOARD IS A HOVER ANSWER AND NOT A NON-ANSWER, which is the one place this
+		// path differs in posture from `OnSelect`. A click on the sky is deliberately NOT
+		// forwarded as a Cancel, because it is not a statement about the selection; a MOUSE
+		// MOVE onto the sky is a complete statement about the cursor, and dropping it would
+		// leave a forecast card standing over a hex the cursor has left.
+		return ApplyHoverChange(Hover.ClearHoveredHex());
+	}
+
+	return ApplyHoverChange(Hover.SetHoveredHex(Hex));
+}
+
+bool AStratPlayerController::SetHoveredHex(FIntPoint Hex)
+{
+	return ApplyHoverChange(Hover.SetHoveredHex(Hex));
+}
+
+bool AStratPlayerController::ClearHoveredHex()
+{
+	return ApplyHoverChange(Hover.ClearHoveredHex());
+}
+
+bool AStratPlayerController::GetHoveredHex(FIntPoint& OutHex) const
+{
+	return Hover.GetHoveredHex(OutHex);
+}
+
+bool AStratPlayerController::ApplyHoverChange(bool bChanged)
+{
+	if (!bChanged)
+	{
+		return false;
+	}
+
+	// THE REFRESH IS HOW THE HOVER REACHES THE SCREEN, and it is the whole of the mechanism.
+	// `DecorateForPresentation` writes `FStratViewModel::Hover` on the way through, so there
+	// is no hover-specific push, no event and no widget notification -- the screen is rebuilt
+	// from the model exactly as it is after a move or an end-turn.
+	FString RefreshReason;
+	if (!RefreshFromMachine(RefreshReason))
+	{
+		// AT LOG AND NOT WARNING, on `OnSelect`'s rule. The commonest cause by far is a cursor
+		// moving over the board before `StartMatch` has seeded anything, which is the
+		// interface working; and this fires at mouse-move rate, so a Warning here would bury
+		// the log for a condition that is not a fault.
+		UE_LOG(LogStratPlay, Log, TEXT("Hover: %s"), *RefreshReason);
+	}
+
+	// TRUE EVEN WHEN THE REFRESH REFUSED. The caller asked whether the HOVER moved; it did.
+	// See `UpdateHoverFromCursor`'s declaration on why conflating the two would make one
+	// return value mean two things.
+	return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -797,6 +926,13 @@ void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
 
 	SelectionMachine.DecorateViewModel(Model);
 	GuidedOpening.DecorateViewModel(Model);
+
+	// THE HOVER SITS LAST AND COULD SIT ANYWHERE. It writes `FStratViewModel::Hover` and no
+	// other field, reads nothing off the model, and consults neither the machine nor the
+	// guidance layer -- so unlike `Observe` above it has no ordering constraint at all. Last
+	// for readability, and stated as unordered so that a future decorator inserted around it
+	// does not have to work out whether it may be.
+	Hover.DecorateViewModel(Model);
 }
 
 void AStratPlayerController::TryArmGuidedOpening()

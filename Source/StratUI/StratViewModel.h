@@ -816,6 +816,70 @@ struct FStratGuidanceView
 };
 
 /**
+ * Which hex the cursor is over, as one value. §2.11.3 / §2.11.2, wave 0.
+ *
+ * WHAT GAP THIS CLOSES. §2.11.3's attack forecast card and §2.11.2's info panel are both
+ * specified as HOVER-driven, and until this struct existed nothing on this side of the
+ * project carried a hovered hex at all -- at `69e75bb`, `AStratPlayerController` bound no
+ * hover action of any kind. The hover STRINGS on `FStratGuidanceView` above are tooltip
+ * TEXT for a widget that already knows what it is drawing; they are not an input and they
+ * answer no question about where the cursor is. This struct is the input half, and it is
+ * deliberately the whole of wave 0's model surface: neither the forecast struct nor the info
+ * panel struct is here, because each is its own wave and a field landed ahead of its reader
+ * is a field written without its caller.
+ *
+ * PART OF THE MODEL AND NOT OF THE CONTROLLER, for `FStratGuidanceView`'s reason exactly and
+ * with the same trap one line away: a `BlueprintPure` on `AStratPlayerController` returning
+ * the hovered hex would work on the first day and would make `T-INT-05` false, because
+ * "rebuild the screen from the view model alone" stops holding the moment one visible element
+ * reads from somewhere else. A card that appears because of a hover IS a visible element.
+ *
+ * A FLAG AND A HEX RATHER THAN A SENTINEL, because there is no hex value that cannot be a
+ * real hex. `FIntPoint::ZeroValue` is (0,0), which on Ferrum Crossing is an ordinary
+ * board corner -- a model that encoded "not hovering" as (0,0) would draw a forecast for the
+ * top-left tile every time the cursor left the board. `bHasHoveredHex` is therefore read
+ * FIRST by every consumer, and `HoveredHex` means nothing when it is false.
+ *
+ * NO UNIT ID, NO TERRAIN, NO FORECAST. A widget that wants the unit under the cursor looks it
+ * up in `Units` by hex; that is a lookup and not arithmetic, and it is the same lookup every
+ * other consumer of this model already performs. Adding a `HoveredUnitId` here would be a
+ * second author of a fact `Units` already states, and the two would drift the day a unit
+ * moves between the build and the decoration.
+ *
+ * WRITTEN BY `FStratHoverState::DecorateViewModel` (`Source/StratPlay/StratHoverState.h`),
+ * between `StratBuildViewModel` and `ApplyView`, on the same seam
+ * `FStratSelectionMachine::DecorateViewModel` and `FStratGuidedOpening::DecorateViewModel`
+ * use. `StratBuildViewModel` leaves it default-constructed -- not hovering -- exactly as it
+ * leaves the guidance block inactive.
+ */
+USTRUCT(BlueprintType)
+struct FStratHoverView
+{
+	GENERATED_BODY()
+
+	/**
+	 * Whether the cursor is over a board hex at all.
+	 *
+	 * FALSE IS THE ORDINARY STATE AND NOT A FAULT -- the cursor is off the board, over a
+	 * unit's own mesh, over a widget, or the game is not being played with a mouse.
+	 * `AStratPlayerController::HexUnderCursor` already treats all of those as one answer and
+	 * this field is that answer, projected.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	bool bHasHoveredHex = false;
+
+	/**
+	 * The hex, X = q and Y = r, in the same coordinates every other hex in this model uses.
+	 *
+	 * MEANINGLESS WHEN `bHasHoveredHex` IS FALSE, and left at (0,0) then rather than at some
+	 * out-of-band value, precisely so that a consumer which forgets to check the flag draws
+	 * something obviously wrong at a corner rather than something plausible in the middle.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	FIntPoint HoveredHex = FIntPoint::ZeroValue;
+};
+
+/**
  * The whole view model: everything that should be on screen, in engine types.
  *
  * A VALUE, REBUILT, NEVER PATCHED. Phase 3's `ApplyView` reconciles actors against this
@@ -908,6 +972,22 @@ struct FStratViewModel
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	FStratGuidanceView Guidance;
+
+	/**
+	 * Which hex the cursor is over. §2.11.3 / §2.11.2, wave 0.
+	 *
+	 * WRITTEN BY `FStratHoverState::DecorateViewModel`, on the decoration seam, exactly as
+	 * `Guidance` and the two unit bits are. `StratBuildViewModel` leaves it
+	 * default-constructed, which is "not hovering" -- and that default is load-bearing rather
+	 * than incidental: every model built for a hand-over, a gate, an AI turn or a reconcile
+	 * this controller did not start says "not hovering", which is the truth for all of them.
+	 *
+	 * IT DOES NOT MOVE A UNIT, SELECT ONE, OR CHANGE ANY OTHER FIELD OF THIS STRUCT. A hover
+	 * is a statement about the cursor and never about the board; `FStratSelectionMachine` is
+	 * not consulted when it changes and holds no copy of it.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	FStratHoverView Hover;
 };
 
 /**

@@ -11,6 +11,51 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-27 (WAVE 0 LANDS: THE HOVER INPUT SURFACE EXISTS, AND THE TWO SECTIONS THAT
+SIT BEHIND IT CAN NOW BE BUILT. Written by the `coordinator`, whose file this is. The suite is
+now **230/230**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings. The
+delta is **+5 and nothing was removed or renamed**, computed by set-difference on
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` and never by an acceptance-ID grep -- which would be useless
+here by construction, since all five new clauses share one ID. THE REPORT THAT CERTIFIES THE LIVE
+FIGURE WAS PRODUCED IN `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/hover-input`, NOT IN THE
+INTEGRATION TREE: `reportCreatedOn 2026.08.27-03.59.15`, `succeeded 230`, `failed 0`, `notRun 0`.
+**THAT IS DELIBERATE AND IT IS THE ONLY RUN THAT COULD EXIST YET** -- the wave's C++ is on the
+lane branch and is not merged as this banner is written, so no run in the integration tree could
+have exercised it. The figure moves again in the merge commit, where a run in the integration
+tree replaces this provenance. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL, which is why
+they can name different days.
+WHAT LANDED. `FStratHoverState` -- a plain, world-free, non-reflected struct holding the hovered
+hex -- plus a sixth `HoverAction` on `AStratPlayerController` bound `Triggered` and reusing the
+one existing cursor-to-hex route, and `FStratViewModel::Hover` carrying the hex to the screen
+through the decoration seam the selection machine and guided opening already use. Five clauses
+ride `T-UI-01` BY USER RULING, minting no new ID; the boundary is stated in the fixture and in
+`tests.md` -- none of them asserts that ID's own forecast-equals-resolution claim, and each pins
+something the forecast path needs and cannot produce for itself.
+THE GATE TOOK THREE ROUNDS AND EVERY FINDING WAS IN PROSE OR IN A GUARD, NEVER IN THE CODE.
+`VERDICT: BLOCK` twice, then `VERDICT: PASS` with zero findings. The first block was five stale
+or contradicting comment counts; the second was the census instrument itself -- the command this
+record designated as its derived total did not run (no `-r`, exit 2, printing `:0`, which reads
+as ZERO NOTES) and, once corrected, counted its own documenting line. It is fixed at the cause:
+the only spelling of the search token now lives in this record, OUTSIDE the tree the command
+searches. **AND A FALSIFIABILITY PROBE SILENTLY CORRUPTED A SOURCE FILE WHILE PRINTING THE
+NUMBERS THAT WERE SUPPOSED TO PROVE IT HAD NOT** -- 17 -> 16 -> 17, exactly what an intact tree
+prints, because the probe's pattern spanned a line wrap and ate the opening of a quoted sentence.
+`sha256sum` was the only instrument that found it. **A COUNT-BASED INTEGRITY CHECK CANNOT DETECT
+A CORRUPTION THAT CHANGES THE COUNT AND CHANGES IT BACK**: when the mutation is pattern-driven,
+the verification must be content-addressed. The gate's own corruption hunt then cleared the full
+diff positively rather than by absence of impression -- zero code lines removed across the three
+tracked files, all 22 quoted fragments verifying verbatim against the base blob, balanced comment
+and quote structure, and the damaged site restored in full.
+WHAT IS NOT PINNED, AND IT IS THE INPUT HALF. Four properties are declared unpinnable rather than
+faked: that `HoverAction` is bound at all and to `Triggered`, that a mouse move produces a hover,
+that `UpdateHoverFromCursor` resolves a hex, and that `ApplyHoverChange` refreshes. The first
+needs an asset default that cannot be set until this merges and the editor relinks; the second
+needs a human at the mouse, since nothing in this project's automation reaches `UPlayerInput`.
+`IA_Hover` and its `IMC_Selection` row ARE authored and verified from the package bytes; the
+Blueprint default is not.)_
+
+**[SUPERSEDED 2026-08-27 BY THE BANNER ABOVE -- the 225/225 in the paragraph below was the figure
+at that pass, and the report it cites is that pass's. Neither is the live figure.]**
 _Last run 2026-08-26 (NINE GOVERNANCE ITEMS CLOSE AND NOT ONE OF THEM WAS GAMEPLAY: A GUARD
 LEARNS TO READ PROVENANCE, A CLAUSE STOPS TYPING ITS OWN REFERENCE DATA, A LANE RULE GETS THE
 WORD IT HAS BEEN MISSING FOR FOUR PASSES, AND A FINDING THIS RECORD CARRIED IN TWO PLACES TURNS

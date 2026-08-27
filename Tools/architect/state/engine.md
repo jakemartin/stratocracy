@@ -13,6 +13,210 @@
 
 ## NEXT
 
+- **2026-08-26, `strat-gameplay-engineer` -- WAVE 0: THE HOVER INPUT SURFACE. C++ ONLY, IN THE
+  WORKTREE `E:/MultiAgent/Strat-wt/slot-1` ON `feat/hover-input`, BRANCHED FROM `69e75bb`.
+  NOTHING IS COMMITTED, NOTHING IS STAGED, NO ASSET WAS TOUCHED AND NO TEST WAS WRITTEN.** No
+  suite was run in this tree and no suite figure is stated here or moves on this work -- the live
+  figure is `global.md`'s, which is the only file that may carry one. No phase verdict is stated;
+  nothing here has been through a gate.
+  - **WHAT THE GAP WAS.** The MVP-gap audit found §2.11.3's forecast card and §2.11.2's info
+    panel both specified as hover-driven with NO HOVER INPUT ANYWHERE:
+    at `69e75bb` `AStratPlayerController` bound no hover action of any kind -- dated here for
+    the reason it is dated in `FStratHoverView`'s own block, an inconsistency the second W0 gate
+    caught in this file after I had fixed it in the header. The hover STRINGS
+    are shipped and are a different thing -- `FStratGuidanceView::EndTurnGateHover` and
+    `LockedUnitHover` are tooltip TEXT for a widget that already knows what it is drawing, and
+    neither answers "where is the cursor". Nothing in this wave reads or writes either.
+  - **THE SHAPE.** A new plain struct `FStratHoverState` (`Source/StratPlay/StratHoverState.h`
+    and its `.cpp`) holds the hex and the has-a-hex flag and produces `FStratHoverView`, a new
+    `USTRUCT` on `FStratViewModel::Hover`. `AStratPlayerController` gains an
+    `EditDefaultsOnly TObjectPtr<UInputAction> HoverAction`, an `OnHover` handler, three public
+    entry points (`UpdateHoverFromCursor`, `SetHoveredHex`, `ClearHoveredHex`), a
+    `BlueprintPure GetHoveredHex`, `GetHoverState`, and one private `ApplyHoverChange` that is
+    the only place a hover decides to refresh. `DecorateForPresentation` calls
+    `FStratHoverState::DecorateViewModel` beside the machine's and the guidance layer's.
+  - **IT REUSES THE ONE CURSOR-TO-HEX ROUTE AND ADDS NO SECOND TRACE.**
+    `UpdateHoverFromCursor` calls `AStratPlayerController::HexUnderCursor`, which is the same
+    instance-index lookup `OnSelect` uses. No inverse of `WorldLocationOfHex` was written and
+    none exists to call. **There is no hex arithmetic in any file this wave added or changed** --
+    no distance, no neighbour, no addition of two coordinates; `FIntPoint::operator==` is the
+    only spatial operator and it answers "did the hovered hex change", which is a question about
+    two values the code was handed rather than about the board.
+  - **NOT ONE `strat::` CALL AND NOT ONE `/Game/` LITERAL WAS ADDED.** This wave asks the rules
+    module nothing: a hover is a statement about the cursor, and there is no rules question whose
+    answer is which hex the mouse is over. `StratHoverState.cpp` does not include
+    `StratBridge.h`. The Enhanced Input asset is the `EditDefaultsOnly` property and is authored
+    in a separate editor batch.
+  - **THE ONE `Triggered` BINDING IN THE FILE, AND THE REASON IS RECORDED AT THE BINDING.**
+    Every other action binds `ETriggerEvent::Started` because each is a discrete decision.
+    `Started` on a hover fires once when the mouse begins moving and not again, which would
+    freeze the hovered hex at the first frame of a drag -- a symptom that reads as a card showing
+    the wrong hex and sends the next reader to the forecast rather than to the trigger event.
+  - **THE OBSERVABLE SEAM, STATED SO A CLAUSE CAN BE WRITTEN AGAINST IT.** `FStratHoverState` is
+    drivable with no actor, no world, no PIE and no cursor: `SetHoveredHex` then
+    `DecorateViewModel` over a default-constructed `FStratViewModel`, then read
+    `Model.Hover.bHasHoveredHex` and `Model.Hover.HoveredHex`. That route reaches WHICH HEX and
+    not merely THAT a hex arrived. The controller-level route
+    (`AStratPlayerController::SetHoveredHex` -> `GetHoveredHex`) is the same path from the hex
+    onward with only the trace removed, and needs a world but no viewport. **The split exists for
+    exactly this reason and the header says so** -- a hovered hex whose only observable route was
+    a live mouse over live Slate could not be pinned at all.
+  - **STALE COUNTS AMENDED IN PLACE RATHER THAN LEFT -- AND THE FIRST DRAFT OF THIS BULLET WAS
+    ITSELF A FALSE COMPLETENESS CLAIM, WHICH THE W0 GATE CAUGHT AND WHICH IS THE MORE USEFUL
+    HALF OF THIS ENTRY.** [STAMPED 2026-08-27 on `strat-integration-reviewer`'s `VERDICT: BLOCK`,
+    five findings, ALL FIVE IN COMMENT PROSE AND ALL FIVE MINE; the reviewer's own words on the
+    behaviour were "the code itself is clean" and all twelve constraint checks passed. What the
+    draft said: *"Four further sites said 'four' of a set that had grown twice. **Every one** is
+    amended to name no number, each with an `[AMENDED, wave 0: ...]` note quoting what it said."*
+    Both halves were false against the tree that sentence was written about. The census was
+    wrong, and `StratPlayerController.cpp`'s input-handlers banner had been changed from "Four
+    one-line calls." to "One line each." **silently** -- no quote, no stamp. A bullet about
+    unstamped rewrites, containing an unstamped rewrite.]
+  - **WHAT THE SUBJECT ACTUALLY WAS.** `StratPlayerController.h`'s header block stated the action
+    set as both "THE FOUR ACTIONS" and "all five null" within one paragraph, and BOTH were
+    already wrong before this wave -- `OpenProductionMenuAction` landed 2026-08-22 and neither
+    count had moved. Beyond that: `SetupInputComponent` carried five counts of the same set
+    inside ONE function ("three of the four assets", "ON ALL FOUR", "these four guards",
+    "consistent with four bindings", "what these four lines state directly") while that same
+    function now binds a hover action; `OnToggleProductionMenu`'s note called it "the only one of
+    the five that does not go through `HandleSelectionEvent`" while wave 0's own added text a few
+    lines above already named `OnHover` as a second; and the class doc had its count AND its
+    tense rewritten with no quote.
+  - **I DO NOT STATE A TOTAL HERE, AND THAT IS THE CORRECTION RATHER THAN AN OMISSION.** The
+    previous draft typed one and was wrong by at least one within its own pass. **The census is
+    the marker string, and THIS IS ITS ONE SPELLING IN THE PROJECT** -- the note in
+    `AStratPlayerController`'s header block points here rather than restating it, because a
+    second spelling is a second thing to go stale and, worse, a spelling *inside the searched
+    tree* is a hit:
+
+        grep -ro "\[AMENDED, wave 0" Source | wc -l
+
+    **[STAMPED 2026-08-27 -- THE SECOND W0 GATE MEASURED THE PREVIOUS SPELLING AND IT WAS BROKEN
+    TWICE OVER, WHICH IS WHY THE COMMAND ABOVE LOOKS OVER-BUILT.** It read
+    `grep -c "AMENDED, wave 0" Source/StratPlay/`. Run verbatim it does not run at all:
+    `grep: Source/StratPlay/: Is a directory`, printing `Source/StratPlay/:0` at **exit 2** --
+    so a reader who trusts the output and not the exit code sees a census reporting **ZERO**
+    notes, which is this record's own "exit code is not a verdict" shape. Add `-r` to make it
+    run and it returns **16 against 15 real notes**, because the sixteenth hit was the header
+    line quoting its own search token -- the recorded "a census that quotes its own search
+    token" defect, and the whole of the gap between the 16 reported to the user and the 15 that
+    existed. **Bracketing the token does not by itself fix this**, because the documenting line
+    still contains the pattern; what fixes it is keeping the only spelling OUTSIDE the tree the
+    command searches, which is why it lives in this file and not in a header.]**
+
+    Why each part: `-r` because the argument is a directory; `-o | wc -l` rather than `-c`
+    because `-c` counts matching LINES and would undercount two markers landing on one line;
+    `Source` rather than `Source/StratPlay/` because notes now exist in `StratUI` too; and the
+    marker stays wave-qualified because the tree already carries older `[AMENDED <date>:` notes
+    from previous passes that must not be swept in -- measured, there are five of them.
+
+    **PROVED, not asserted.** It returns **17**; demoting one real note to a non-marker returns
+    **16**; restoring it returns **17** again, with `sha256sum` on the file before and after
+    confirming the probe was byte-lossless.
+  - **THE FIRST RUN OF THAT PROOF DAMAGED A SOURCE FILE, AND ONLY THE HASH GUARD CAUGHT IT.**
+    The probe's mutation pattern had a fallback that SPANNED A LINE WRAP -- it matched
+    `[AMENDED, wave 0, on the second W0 gate:` plus the newline, the `//` and the opening words
+    of the quoted sentence -- so the "removal" ate `"Three entry points` and the "restore" put
+    back only the short marker. **The census went 17 -> 16 -> 17 exactly as predicted while the
+    file was silently broken**, because the marker count was restored and the sentence was not;
+    the verdict line was clean and the tree was not. `sha256sum` before and after is the only
+    reason it was found, and it is why the check is stated with the hash step rather than as
+    three numbers. Repaired, re-verified, rebuilt. The re-run uses a SAME-LENGTH, SINGLE-LINE
+    token swap that cannot span a wrap. This is the project's recorded "prove a restore on a
+    disposable copy" lesson arriving the hard way: a probe is an edit, and an edit to prove a
+    claim is still an edit. Every note quotes the sentence it replaced, so the
+    number and the quotations are checkable against each other without trusting this file.
+  - **THE COMPLETENESS CLAIM IS NOW DERIVED FROM `git`, MEASURED, AND FALSIFIABLE.** A throwaway
+    script took every comment line at `69e75bb` carrying a count word, dropped those that survive
+    verbatim, and checked that each remaining one is quoted inside some `[AMENDED, wave 0:` note
+    -- subject set from `git show`, never a hand-kept list. Result: **COVERED**, and the claim
+    is now true at LINE level rather than only at SITE level. **That distinction was a real
+    caveat and it was closed rather than narrowed**: the reviewer found two fragments
+    (`three actions rather than none` -> `those actions rather than none`, and
+    `because the other three are statements` -> `because the others are`) whose blocks carried a
+    stamped note but whose own words were nowhere quoted, so the site-level reading passed and
+    the line-level reading did not. Both are now quoted verbatim in their block's note, which
+    takes the base side to **0 uncovered** on the stricter reading.
+    **It was proved able to fail, and the FIRST probe was mis-shaped** -- mutating a line wave 0
+    had ADDED changed nothing, because the check's subject is lines that existed at `69e75bb`, so
+    the probe routed around the guard rather than testing it. The correctly shaped probe strips
+    the quote out of one note; the check then names `"Binds the four actions on the Enhanced
+    Input component."` as uncovered. Both mutants were reverted and the revert proved
+    byte-lossless by `sha256sum` on each file before and after. **Two instrument defects were
+    found and fixed BEFORE the verdict was read**, both of which had produced false alarms: the
+    note blob was flattened without stripping `//` and `*` prefixes, and the comparison was
+    punctuation- and non-ASCII-sensitive, so `ON ALL FOUR.` never matched a quote ending
+    `ON ALL FOUR"`. Three "findings" in the first run were pure encoding artifacts on lines
+    `git diff` proves this wave never touched.
+  - **WHICH ORDINALS WERE REMOVED AND WHICH WERE KEPT, on the coordinator's instruction to use
+    judgement rather than delete every one.** REMOVED, because each is a CENSUS of a growing set
+    and goes stale on the next property: "A SIXTH ACTION ... The five above", "exactly as the
+    five above are", "the other five", "the sixth handler", "THE SIXTH BINDING", "THE FIFTH
+    BINDING ... THE OTHER FOUR", "A FIFTH ACTION RATHER THAN A FIFTH MEANING", "Unlike the four
+    above". KEPT, because it is the CONTRAST that is the actual point and it survives without a
+    total: the hover binding is `ETriggerEvent::Triggered` where **the bindings above** are
+    `Started`, and the production-menu binding is `Started` for a reason **the selection bindings
+    above** do not have. Rewritten as "THE HOVER BINDING" and "THE PRODUCTION-MENU BINDING" --
+    a binding named for what it does cannot go stale when a seventh arrives.
+  - **HISTORICAL COUNTS SCOPED RATHER THAN DELETED.** Phase 6's measurement sentences ("all four
+    `BindAction` calls proven to have run", "these four guards were silent on the null side") are
+    a RECORD OF WHAT WAS MEASURED and deleting them would destroy evidence. They now read "EVERY
+    `BindAction` call THAT EXISTED THEN" and "THE GUARDS THAT EXISTED THEN", each with a note
+    saying the measurement is unchanged and only the implication that four is still the number is
+    removed. Same treatment for "the four `IA_*` actions", which was accurate about phase 5 and
+    which no reader could sort from the live counts around it.
+  - **COUNTS I INTRODUCED IN THIS WAVE AND THEN HAD TO REMOVE. [STAMPED 2026-08-27: THIS BULLET
+    SAID "THREE" AND SAID I HAD BROKEN THE POLICY "three times in the same pass". BOTH WERE
+    FALSE -- the second W0 gate's R2 found a fourth, and a sweep that closed my check's blind
+    spot then found a fifth and a sixth. A completeness claim about counts, carrying a count
+    that was wrong: the F1 shape, third occurrence, and the reason no total is stated in this
+    bullet either.]** What they were: `StratHoverState.cpp`'s block opened "FOUR SHORT
+    FUNCTIONS"; `FStratHoverView`'s block said `AStratPlayerController` "bound five actions";
+    both of my own `[AMENDED]` notes restated "the fifth"/"the sixth" while removing exactly
+    those ordinals a clause earlier; `FStratHoverState::DecorateViewModel` claimed it was safe
+    to call "in any order relative to the other two decorators" (**the gate's R2** -- true while
+    `DecorateForPresentation` calls exactly two others, false the day W1 or W2 adds one); the
+    hover section header in `StratPlayerController.cpp` said "Three entry points and one refresh
+    decision, rather than three copies of the same two lines"; and `FStratHoverView`'s block
+    said "The two hover STRINGS on `FStratGuidanceView`". Every one is gone, each replaced by
+    the invariant the sentence was actually for -- the file's own functions are the census, the
+    ordering claim does not depend on how many decorators there are, there is ONE refresh
+    decision however many entry points call it, and the view-model block now DATES its claim
+    (`at 69e75bb ... bound no hover action of any kind`) instead of counting. **Writing the
+    policy did not stop me from breaking it repeatedly in the same pass**, which is the argument
+    for the derived check below rather than for care.
+  - **R2's REAL LESSON IS THE BLIND SPOT, NOT THE LINE, AND THE BLIND SPOT IS NOW CLOSED.** My
+    first check's subject set was "comment lines present at `69e75bb`", so it was blind BY
+    CONSTRUCTION to counts introduced on ADDED lines and in NEW FILES -- which is where R2 lived
+    and why the check reported COVERED over it. That is the same defect as the first
+    falsifiability probe, which mutated an added line and moved nothing: a subject set that
+    excludes the wave's own new text will miss the next one identically. The rebuilt check
+    sweeps BOTH sides -- 114 base count-lines and 45 added ones -- and it earned its keep
+    immediately: it found the two survivors above that neither the gate nor the reviewer's own
+    44-line sweep named. **The added side is a TRIAGE AID AND NOT A VERDICT**, because whether a
+    count names a growing set or a fixed one is a judgement, not a match: it prints 13
+    candidates that are all genuinely fixed pairs named in their own sentence ("the two unit
+    bits", "addition of two coordinates", "TWO FIELDS AND NOTHING ELSE"), and a human adjudicates.
+  - **ONE THING THE GATE DID NOT NAME AND I FIXED ANYWAY, plus one it did.** Not named: the three
+    live census sentences in the `OpenProductionMenuAction` block, which my own second pass then
+    rewrote WITHOUT quotes -- committing F1's shape a second time, inside the fix for F1. Caught
+    by the derived check, now quoted. Named and fixed: the wrap artifact that left an orphaned
+    "A / controller that" mid-sentence.
+  - **DEBT TAKEN ON, WITH ITS DISCHARGE CONDITION, AND IT IS WRITTEN IN THE HEADERS TOO.**
+    `FStratHoverView` carries a hex and a flag and nothing else -- no hovered unit id, no
+    terrain, no forecast. The condition that discharges it is W1 and W2 arriving with their own
+    structs and their own readers; a field landed ahead of its reader is a field written without
+    its caller, and this record already describes what an unreachable-but-correct surface reads
+    like.
+  - **THE BUILD IS GREEN IN THIS WORKTREE**, with `-NoHotReloadFromIDE` because the editor is
+    open on the integration tree and the Live Coding mutex is engine-keyed and machine-wide.
+    `Result: Succeeded`, zero warnings. Built twice: once for the code
+    (`StratHoverState.cpp` compiled, both module DLLs linked, 41.50 s) and once after the
+    comment-only amendment pass, which still recompiles because two of the amended sites are
+    inside function bodies -- `StratPlayerController.cpp` recompiled and
+    `UnrealEditor-StratPlay.dll` relinked, 37.33 s. No suite was run in this tree; see the
+    handoff about this slot's stale local automation report.
+
 - **2026-08-25 (second pass that day), WRITTEN BY THE `coordinator`, NOT BY
   `strat-gameplay-engineer` -- declared, same as the entry below. THE COMPOSITION IS SPLIT OUT OF
   THE BRIDGE-TAKING BUILDER SO THAT A TAG NO TEST COULD REACH BECOMES ONE A TEST DRIVES.**

@@ -33,18 +33,36 @@
 // itself built. A trace that hits something that is not a board tile is "the cursor is not
 // on the board", which is an ordinary answer.
 //
-// THE MAPPING CONTEXT AND THE FOUR ACTIONS ARE NULL IN C++ AND SET ON A BLUEPRINT, AND THE
+// THE MAPPING CONTEXT AND EVERY ACTION ARE NULL IN C++ AND SET ON A BLUEPRINT, AND THE
 // NULL CASE IS SUPPORTED RATHER THAN TOLERATED. They are `EditDefaultsOnly` `TObjectPtr`
 // properties -- never a `/Game/` literal, which this project forbids in gameplay C++
-// outright. With all five null this controller adds no context, binds no action, logs one
-// line saying so, and the match is still seeded, drawn and reconciled. A controller that
-// asserted on a null context would have made asset authoring a prerequisite for this class's
-// build being green.
+// outright. With them all null this controller adds no context, binds no action, logs one
+// line per unset property saying so, and the match is still seeded, drawn and reconciled.
+// [AMENDED, wave 0: this paragraph said "THE FOUR ACTIONS" and "all five null" -- two
+// different counts of the same set, in one paragraph, and BOTH were already wrong before
+// wave 0 touched anything: `OpenProductionMenuAction` landed on 2026-08-22 and `HoverAction`
+// lands with this amendment, and the paragraph had counted neither. The counts are removed
+// rather than refreshed, AND NO ORDINAL IS WRITTEN IN THEIR PLACE -- not even in this note,
+// whose own first draft called those two properties "the fifth" and "the sixth" and so
+// restated the count it had just removed. A count of a set that is still growing is stale by
+// the next property and nothing in a comment recomputes it; the properties themselves are the
+// census. THE NOTES LIKE THIS ONE ARE COUNTED BY THE COMMAND IN `Tools/architect/state/
+// engine.md`'s wave-0 entry, AND THAT COMMAND IS DELIBERATELY NOT SPELLED OUT HERE: its search
+// token is the bracketed marker these notes open with, so any line quoting it inside `Source/`
+// -- this line, had it done so -- becomes a sixteenth hit against fifteen real notes and the
+// census silently counts itself. It did exactly that until the W0 gate measured it. One
+// spelling, kept outside the tree it searches.] A controller that asserted on a null context
+// would have made asset authoring a prerequisite for this class's build being green.
 //
 // THE ASSETS NOW EXIST -- an earlier spelling of this paragraph read "ARE NULL UNTIL PHASE
 // 5", which describes a world that ended when the hot-seat milestone's phase 5 authored
-// `IMC_Selection` and the four `IA_*` actions and set them on the `BP_` subclass a GameMode
-// Blueprint points at. What is still true, and is the load-bearing half, is that the C++
+// `IMC_Selection` and the `IA_*` actions THAT EXISTED THEN and set them on the `BP_` subclass
+// a GameMode Blueprint points at. [AMENDED, wave 0: "the four `IA_*` actions". Historically
+// accurate about that pass and left standing as history ever since -- but it was one more
+// "four" among several in this file's opening, and a reader had no way to sort the
+// historical one from the live ones. Scoped rather than deleted: what phase 5 did is
+// unchanged, and only the reader's ability to mistake it for a live census is.] What is still
+// true, and is the load-bearing half, is that the C++
 // DEFAULTS are null and every use site below stays null-safe: this class must remain
 // constructible and drivable with no asset in existence, because that is what lets it be
 // built and reasoned about without the content pass.
@@ -148,6 +166,7 @@
 #include "GameFramework/PlayerController.h"
 
 #include "StratGuidedOpening.h"
+#include "StratHoverState.h"
 #include "StratSelectionMachine.h"
 
 #include "StratPlayerController.generated.h"
@@ -164,9 +183,17 @@ class UStratMatchSubsystem;
  * Turns clicks and keys into §4.9 commands, through `FStratSelectionMachine` and
  * `FStratBridge` and through nothing else.
  *
- * A map gets one by pointing a GameMode Blueprint at a subclass of this class. Phase 5
- * authors that Blueprint and the five input assets it carries; until it does, this class
- * runs inert and says so once.
+ * A map gets one by pointing a GameMode Blueprint at a subclass of this class. The hot-seat
+ * milestone's phase 5 authored that Blueprint and the input assets it carries; an unset
+ * action property runs inert and says so once, by name.
+ *
+ * [AMENDED, wave 0: "Phase 5 authors that Blueprint and the five input assets it carries;
+ * until it does, this class runs inert and says so once." Both halves were wrong and only one
+ * of them was a count. The COUNT was stale by an action; the TENSE described phase 5 as
+ * pending, which it has not been since the hot-seat milestone closed; and "runs inert" was a
+ * claim about the whole class where the truth is per-property. Wave 0's first draft rewrote
+ * all three silently -- the only site in that pass corrected without a quote, which the gate
+ * caught and which is why the quote is here now.]
  */
 UCLASS(Blueprintable, meta = (DisplayName = "Strat Player Controller"))
 class STRATPLAY_API AStratPlayerController : public APlayerController
@@ -235,8 +262,11 @@ public:
 	 * Feeds one event to the selection machine, submits whatever it asks for, and refreshes.
 	 *
 	 * PUBLIC AND NOT PROTECTED, so that a hand-over screen, a debug command or a gate can
-	 * drive the same path a key does. The Enhanced Input handlers below are four one-line
-	 * calls to this.
+	 * drive the same path a key does. The `EStratSelectionEvent` handlers below are one-line
+	 * calls to this. [AMENDED, wave 0: "The Enhanced Input handlers below are four one-line
+	 * calls to this." -- a count of a growing set, and
+	 * the set has grown twice since. Not every Enhanced Input handler reaches this method:
+	 * `OnToggleProductionMenu` and `OnHover` deliberately do not, and each says so.]
 	 *
 	 * THE ORDER IS THE CONTRACT: decide, submit, and only then tell the machine the command
 	 * applied. `FStratSelectionMachine::NotifyCommandApplied` is documented "call it only on
@@ -266,6 +296,85 @@ public:
 	 * position to make.
 	 */
 	bool HexUnderCursor(FIntPoint& OutHex);
+
+	// ---- §2.11.3 / §2.11.2's hover, wave 0 ---------------------------------
+	// THIS CLASS RESOLVES THE HOVER AND DOES NOT STORE IT, exactly as it drives the selection
+	// machine without storing what is selected. `FStratHoverState` holds the hex; this class
+	// owns only the two things that need a world -- the cursor, and the decision to refresh.
+	//
+	// THE HOVER IS THE INPUT AND THE STRINGS ARE NOT. `FStratGuidanceView::EndTurnGateHover`
+	// and `LockedUnitHover` are shipped tooltip text and were never a hover input; nothing
+	// below reads either, and nothing below writes them.
+
+	/**
+	 * Re-resolves the hovered hex from the cursor and refreshes if it moved.
+	 *
+	 * THE ONE HOVER PATH IN THIS CLASS, and `OnHover` is a one-line call to it. PUBLIC for
+	 * `RefreshFromMachine`'s reason -- a hand-over, a debug command or a gate should be able
+	 * to drive the same path the mouse does -- and because a hover that could only be produced
+	 * by a live cursor over a live viewport is a hover no clause can reach.
+	 *
+	 * IT REUSES `HexUnderCursor` AND ADDS NO SECOND TRACE. There is one cursor-to-hex route in
+	 * this project and `SelectAction` already uses it; a hover-specific trace would be a
+	 * second author of the same answer.
+	 *
+	 * IT REFRESHES ONLY ON A CHANGE. `FStratHoverState`'s setters return whether anything
+	 * moved and this method believes them -- a mouse-move action triggers every frame the
+	 * cursor moves, and rebuilding the model at that rate for an identical state is the cost
+	 * that shape was written to avoid.
+	 *
+	 * @return true if the hovered hex changed. A refresh REFUSAL does not change this answer:
+	 *         the hover moved either way, and reporting otherwise would make the caller's
+	 *         return value mean two different things. A refusal is logged, as elsewhere here.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Input")
+	bool UpdateHoverFromCursor();
+
+	/**
+	 * Sets the hovered hex directly, without a cursor.
+	 *
+	 * THE HEADLESS SEAM, AND IT IS STATED AS ONE RATHER THAN LEFT TO BE DISCOVERED. A clause
+	 * under `T-UI-01` must be able to assert that a hovered hex reaches the model AND WHICH
+	 * HEX, and `GetHitResultUnderCursor` needs a viewport, a local player and a cursor
+	 * position that no automation test has. This method is the same path from the hex onward
+	 * -- the identical `FStratHoverState` call and the identical refresh decision -- with only
+	 * the trace removed.
+	 *
+	 * IT IS NOT A TEST-ONLY BACK DOOR AND MUST NOT BECOME ONE. It sets no state `HexUnderCursor`
+	 * could not have produced, and a caller passing a hex that is not on the board gets a model
+	 * naming a hex that is not on the board -- which is what it asked for. If a future caller
+	 * needs that refused, the refusal belongs in `AStratBoardActor`, which is the only object
+	 * that knows the board's extent.
+	 *
+	 * @return true if the hovered hex changed, on `UpdateHoverFromCursor`'s terms exactly.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Input")
+	bool SetHoveredHex(FIntPoint Hex);
+
+	/**
+	 * Records that nothing is hovered, and refreshes if that is news.
+	 *
+	 * PUBLIC BECAUSE THE CURSOR IS NOT THE ONLY WAY A HOVER ENDS. A hand-over, a match result,
+	 * or a modal production menu all leave the board unhovered while the mouse has not moved,
+	 * so the last mouse-move event cannot be relied on to have cleared it.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Input")
+	bool ClearHoveredHex();
+
+	/**
+	 * The hovered hex, if any.
+	 *
+	 * A READ AND NOT THE SCREEN'S SOURCE. Nothing drawn may read this: `T-INT-05` holds only
+	 * while the screen is a function of the view model alone, and `FStratViewModel::Hover` is
+	 * where a widget looks. This accessor exists so a clause can assert the controller's own
+	 * state beside the model's, and so a hand-over can ask.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Input")
+	bool GetHoveredHex(FIntPoint& OutHex) const;
+
+	/** The hover state, so a clause or a hand-over can drive and read it whole. */
+	FStratHoverState&       GetHoverState()       { return Hover; }
+	const FStratHoverState& GetHoverState() const { return Hover; }
 
 	/**
 	 * The machine, so a hand-over or a gate can read what is selected.
@@ -442,25 +551,60 @@ protected:
 	/**
 	 * §2.11.5's production menu: open it on the hex under the cursor, or close it.
 	 *
-	 * A FIFTH ACTION RATHER THAN A FIFTH MEANING FOR `SelectAction`, and that is the user's
-	 * ruling of 2026-08-22 rather than this file's preference. A primary click on a factory
+	 * A SEPARATE ACTION RATHER THAN ANOTHER MEANING FOR `SelectAction`, and that is the user's
+	 * ruling of 2026-08-22 rather than this file's preference. [AMENDED, wave 0: "A FIFTH
+	 * ACTION RATHER THAN A FIFTH MEANING FOR `SelectAction`". The ruling is unchanged; only
+	 * the two ordinals are, and the contrast the sentence is actually making -- a separate
+	 * action versus another meaning for an existing one -- never needed either of them.] A primary click on a factory
 	 * hex already means something -- select, move to, or attack whatever stands there -- and
 	 * `FStratSelectionMachine::HandleEvent` decides which. Adding a BUILD arm there would put
 	 * a §2.11.5 question inside the §2.11.1 state machine and make one click's meaning depend
 	 * on the terrain under it.
 	 *
-	 * IT MAPS TO NO `EStratSelectionEvent`. Unlike the four above, this action does not reach
-	 * `HandleSelectionEvent` at all: it starts no command, advances no selection and submits
+	 * IT MAPS TO NO `EStratSelectionEvent`. Unlike the selection actions above, it does not reach
+	 * `HandleSelectionEvent` at all -- nor does `HoverAction` below. [AMENDED, wave 0: "Unlike
+	 * the four above". A census, and one that silently required this property to stay the fifth
+	 * declaration in the file.] It starts no command, advances no selection and submits
 	 * nothing. `OnToggleProductionMenu` calls `ToggleProductionMenu` and that is the whole
 	 * path.
 	 *
-	 * NULL IS SUPPORTED exactly as the four above are: no binding, one Warning naming this
+	 * NULL IS SUPPORTED exactly as the actions above are: no binding, one Warning naming this
 	 * property, and a match that is otherwise fully playable -- the production surface is
 	 * still reachable from a console or a gate through `UStratMatchSubsystem`'s three
-	 * reflected `Stratocracy|Production` entry points.
+	 * reflected `Stratocracy|Production` entry points. [AMENDED, wave 0: "exactly as the four
+	 * above are".]
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Input")
 	TObjectPtr<UInputAction> OpenProductionMenuAction;
+
+	/**
+	 * §2.11.3 / §2.11.2's hover: the cursor moved, so re-resolve which hex it is over.
+	 *
+	 * A NEW ACTION, AND THE FIRST ONE THAT IS NOT A DECISION. The actions above are each a
+	 * discrete statement by the player -- a click, a cancel, a wait, an end-turn, a menu
+	 * toggle -- and every one of them binds `ETriggerEvent::Started`. This one is a
+	 * CONTINUOUS report of where the cursor is, so it binds `ETriggerEvent::Triggered` and is
+	 * the one action for which `Started` would be wrong: `Started` fires once when the mouse
+	 * begins moving and not again until it stops and starts, which would leave the hovered hex
+	 * frozen at wherever the cursor was on the first frame of a drag.
+	 *
+	 * THE ASSET IS A 2D-AXIS ACTION OVER MOUSE XY, AND THE VALUE IS NEVER READ. `OnHover`
+	 * takes no argument and asks `HexUnderCursor` for the answer. That is deliberate rather
+	 * than lazy: a mouse DELTA is not a position, turning one into a position is arithmetic
+	 * over a viewport this class has no business performing, and the cursor's position is
+	 * already known to the engine method the select path uses. The action exists to say WHEN
+	 * to look, not WHERE.
+	 *
+	 * NULL IS SUPPORTED exactly as the actions above are: no binding, one Warning naming this
+	 * property, and a match that is otherwise fully playable -- what is lost is the hover, and
+	 * `UpdateHoverFromCursor` / `SetHoveredHex` remain reachable from a console or a gate.
+	 * That matters more here than for the others, because this property's asset and its
+	 * mapping-context row are authored in a separate editor batch: between this code landing
+	 * and that batch, the shipping `BP_` subclass has this null, and a null here must cost a
+	 * Warning and nothing else.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Input")
+	TObjectPtr<UInputAction> HoverAction;
 
 	// ---- Lifetime ---------------------------------------------------------
 
@@ -506,7 +650,8 @@ protected:
 	void TryArmGuidedOpening();
 
 	/**
-	 * Binds the four actions on the Enhanced Input component.
+	 * Binds this class's actions on the Enhanced Input component, each behind its own null
+	 * guard. [AMENDED, wave 0: "the four actions".]
 	 *
 	 * IT REFUSES QUIETLY AND COMPLETELY IF THE COMPONENT IS NOT AN ENHANCED ONE, which
 	 * happens when the project's default input component class has been changed out from
@@ -522,17 +667,56 @@ private:
 	/** The spawned board, or null. Read through the subsystem so there is one owner of it. */
 	AStratBoardActor* GetBoard() const;
 
-	// The four Enhanced Input handlers. Each is one call to `HandleSelectionEvent`; the
-	// only one that reads the cursor is `OnSelect`, because the other three are statements
-	// about the selection rather than about a hex.
+	// The `EStratSelectionEvent` handlers. Each is one call to `HandleSelectionEvent`; the
+	// only one that reads the cursor is `OnSelect`, because the others are statements about
+	// the selection rather than about a hex. [AMENDED, wave 0: "because the other three are
+	// statements about the selection rather than about a hex", now "because the others are";
+	// and "The four Enhanced Input
+	// handlers" -- there are more Enhanced Input handlers than these, and two of them
+	// (`OnToggleProductionMenu`, `OnHover`) do not call `HandleSelectionEvent` at all, so the
+	// old sentence was mis-describing the group as well as miscounting it.]
 	void OnSelect();
 	void OnCancel();
 	void OnWait();
 	void OnEndTurn();
 
-	/** §2.11.5's fifth handler. One call to `ToggleProductionMenu`, and the only one of the
-	 *  five that does not go through `HandleSelectionEvent`. */
+	/**
+	 * §2.11.5's production-menu handler. One call to `ToggleProductionMenu`, and it does not go
+	 * through `HandleSelectionEvent` at all -- nor does `OnHover`.
+	 *
+	 * [AMENDED, wave 0: "§2.11.5's fifth handler. One call to `ToggleProductionMenu`, and the
+	 * only one of the five that does not go through `HandleSelectionEvent`." A count of a
+	 * growing set, and by the end of wave 0's own pass it was contradicted by wave 0's own
+	 * added text a few lines above, which names `OnHover` as a second such handler. Two
+	 * comments in one block disagreeing about the same fact is worse than either being stale.]
+	 */
 	void OnToggleProductionMenu();
+
+	/**
+	 * §2.11.3 / §2.11.2's hover handler. One call to `UpdateHoverFromCursor`.
+	 *
+	 * IT DISCARDS THE RETURN VALUE, and that is the only thing in this class that does. A
+	 * hover that did not move is not news to anybody -- there is no caller waiting on it and
+	 * nothing to log -- whereas `UpdateHoverFromCursor`'s other callers are a clause and a
+	 * hand-over, which both want the answer. The value is returned for them and ignored here.
+	 */
+	void OnHover();
+
+	/**
+	 * The one place a hover decides whether to refresh.
+	 *
+	 * TAKES THE ANSWER RATHER THAN COMPUTING IT. `FStratHoverState`'s setters already know
+	 * whether anything moved, and re-deriving it here would need a copy of the previous hex on
+	 * this actor -- which is the copy T-INT-05 forbids, reintroduced for a bookkeeping reason.
+	 *
+	 * PRIVATE, because it is a step and not an entry point: every public hover method above
+	 * ends here, and a caller reaching this directly would be asserting a change it had not
+	 * made.
+	 *
+	 * @param bChanged  whether the hovered hex moved.
+	 * @return `bChanged`, unmodified, so the public methods can return it straight.
+	 */
+	bool ApplyHoverChange(bool bChanged);
 
 	/**
 	 * The latched target hex and whether anything is latched. See `GetProductionTargetHex`.
@@ -554,6 +738,21 @@ private:
 	 * member cannot become one because `FStratSelectionMachine` is not a reflected type.
 	 */
 	FStratSelectionMachine SelectionMachine;
+
+	/**
+	 * §2.11.3 / §2.11.2's hovered hex and the producer of `FStratHoverView`.
+	 *
+	 * BY VALUE AND BESIDE THE MACHINE, for the machine's reasons exactly and for one of its
+	 * own: `FStratHoverState` is not a reflected type, so this member cannot become the
+	 * reflected copy of a presentation bit on an actor that T-INT-05 forbids -- and the
+	 * hovered hex is a presentation bit in the fullest sense, since the only thing that reads
+	 * it is a card that appears because of it.
+	 *
+	 * NOT ARMED, NOT RESET AT BEGINPLAY, AND HOLDING NOTHING ACROSS A RESEED. Its default is
+	 * "not hovering", which is the truth for a controller whose cursor has not yet moved, so
+	 * unlike `GuidedOpening` there is nothing here to arm and no bridge to wait for.
+	 */
+	FStratHoverState Hover;
 
 	/**
 	 * §2.11.6's guided opening. BY VALUE AND BESIDE THE MACHINE, for the machine's reasons.

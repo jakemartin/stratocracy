@@ -17,13 +17,16 @@ now **230/230**, every entry Success, zero failed, zero notRun, zero succeededWi
 delta is **+5 and nothing was removed or renamed**, computed by set-difference on
 `IMPLEMENT_SIMPLE_AUTOMATION_TEST` and never by an acceptance-ID grep -- which would be useless
 here by construction, since all five new clauses share one ID. THE REPORT THAT CERTIFIES THE LIVE
-FIGURE WAS PRODUCED IN `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/hover-input`, NOT IN THE
-INTEGRATION TREE: `reportCreatedOn 2026.08.27-03.59.15`, `succeeded 230`, `failed 0`, `notRun 0`.
-**THAT IS DELIBERATE AND IT IS THE ONLY RUN THAT COULD EXIST YET** -- the wave's C++ is on the
-lane branch and is not merged as this banner is written, so no run in the integration tree could
-have exercised it. The figure moves again in the merge commit, where a run in the integration
-tree replaces this provenance. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL, which is why
-they can name different days.
+FIGURE IS THIS TREE'S: `reportCreatedOn 2026.08.27-05.17.45`, `succeeded 230`, `failed 0`,
+`notRun 0`, zero succeededWithWarnings, run in `E:/MultiAgent/Stratocracy` on branch `master`
+after the merge, and every one of its 230 entries is Success. THAT STAMP IS UTC AND THIS ENTRY'S
+DATE IS LOCAL, which is why they can name different days.
+**[STAMPED 2026-08-27, THE MERGE COMMIT: the sentence this paragraph carried before it said the
+certifying report `WAS PRODUCED IN E:/MultiAgent/Strat-wt/slot-1 on branch feat/hover-input, NOT
+IN THE INTEGRATION TREE: reportCreatedOn 2026.08.27-03.59.15`. That was true when written and is
+kept rather than deleted, because it records WHY a lane provenance was correct for one commit:
+the wave's C++ was not merged, so no run in this tree could have exercised it. It is not the live
+provenance now, and the two runs agree at 230/230 with the same clause name set.]**
 WHAT LANDED. `FStratHoverState` -- a plain, world-free, non-reflected struct holding the hovered
 hex -- plus a sixth `HoverAction` on `AStratPlayerController` bound `Triggered` and reusing the
 one existing cursor-to-hex route, and `FStratViewModel::Hover` carrying the hex to the screen
@@ -52,7 +55,21 @@ that `UpdateHoverFromCursor` resolves a hex, and that `ApplyHoverChange` refresh
 needs an asset default that cannot be set until this merges and the editor relinks; the second
 needs a human at the mouse, since nothing in this project's automation reaches `UPlayerInput`.
 `IA_Hover` and its `IMC_Selection` row ARE authored and verified from the package bytes; the
-Blueprint default is not.)_
+Blueprint default is not.
+THE ASSET BATCH LANDS IN THIS COMMIT, and what it could not do is measured rather than assumed.
+`IA_Hover` is an `Axis2D` action -- the one deliberate difference from the five existing actions,
+which are all `Boolean` -- and it carries no triggers and no modifiers, matching them. It is row
+8 of `IMC_Selection` on `Mouse2D`, with the seven existing rows unchanged and in order. Both were
+verified from the SAVED package bytes with a negative control, not from the authoring call's
+return value -- which lied in both directions in this session: a malformed value returned `true`
+with a no-op warning, and the correct value returned `[FAIL]` AND APPLIED. **THE BLUEPRINT
+DEFAULT COULD NOT BE SET AND THE ABSENCE WAS MEASURED WITH A CONTROL**: `class_properties` on the
+NATIVE class path returned 91 entries, of which the `Action|Mapping|Hover` filter returned exactly
+seven -- the five existing actions plus the mapping context and its priority, and no
+`HoverAction`. The same call on the BLUEPRINT class path answered `[OK] -> 0 entries`, which is
+indistinguishable from absence and is the recorded trap. The editor was serving a DLL built
+before this wave; setting that default needs a relinked editor and is the first thing the next
+session owes.)_
 
 **[SUPERSEDED 2026-08-27 BY THE BANNER ABOVE -- the 225/225 in the paragraph below was the figure
 at that pass, and the report it cites is that pass's. Neither is the live figure.]**

@@ -37,6 +37,124 @@
 
 ## NEXT
 
+- **`IA_Hover` EXISTS AND IS MAPPED TO `Mouse2D` IN `IMC_Selection`, AND IT IS THE FIRST
+  NON-BOOLEAN INPUT ACTION THIS PROJECT HAS.** 2026-08-27, written by `strat-editor-builder` over
+  `mcp__unreal-editor-direct__execute_script`, which was on the tool surface from this session's
+  FIRST call -- **THE FALLBACK CONDITION IN THIS FILE'S HEADER WAS NOT MET and the coordinator did
+  not write this entry.** `print(project_dir())` answered `E:/MultiAgent/Stratocracy/` before
+  anything was touched, so this is the integration tree and not a worktree. `playtest_status()`
+  reports `has_pie_world=false, playing=false`; **no PIE was started, no `open_asset` was called on
+  any Widget Blueprint, and no Blueprint was compiled** -- this batch is two data assets and
+  nothing else. `global.md` carries what any of this does for the section; this file states no
+  count and no verdict.
+  - **TWO ASSETS MOVED, BOTH UNDER `/Game/StratInput`.** `IA_Hover` is NEW; `IMC_Selection` gained
+    exactly one row. Neither derives from a Stratocracy C++ class -- `InputAction` and
+    `InputMappingContext` are both `/Script/EnhancedInput`, an engine module, so the "which module
+    declares the C++ parent" pre-flight has nothing here to get wrong. Read off
+    `class_properties("/Script/EnhancedInput.InputAction")` returning its 11 properties, not
+    assumed.
+  - **`HoverAction` DOES NOT EXIST ON THE LOADED `AStratPlayerController`, MEASURED WITH THE
+    CONTROL THAT MAKES IT A MEASUREMENT.** `class_properties` on
+    `/Script/StratPlay.StratPlayerController` returns **91 entries**, and filtering them for
+    `Action|Mapping|Hover` yields exactly seven: `SelectionMappingContext`, `MappingPriority`,
+    `SelectAction`, `CancelAction`, `WaitAction`, `EndTurnAction`, `OpenProductionMenuAction`.
+    **The same filter that would have caught `HoverAction` twice over returns the five action
+    properties that DO exist and no sixth.** So the running editor's CDO has no such property and
+    the `BP_StratPlayerController.HoverAction` default cannot be set in this session; that half of
+    the wave's asset tail is BLOCKED until `feat/hover-input` merges and the editor relinks.
+    **The trap this file already records was live again:** `class_properties` on the BLUEPRINT
+    class path (`/Game/.../BP_StratPlayerController_C`) answered **`[OK] -> 0 entries`**, which is
+    indistinguishable from "the property is absent" and proves nothing. Only the NATIVE class path
+    answers.
+  - **WHERE `IA_Hover` DIFFERS FROM `IA_Select`, AND IT IS ONE FIELD.** All five existing actions
+    were read, not just one: every one of them is `ValueType=Boolean`,
+    `AccumulationBehavior=TakeHighestAbsoluteValue`, `bConsumeInput=True`,
+    `bTriggerWhenPaused=False`, `bConsumesActionAndAxisMappings=False`, `bReserveAllMappings=False`,
+    with **zero `Triggers` and zero `Modifiers`** -- this project adds no trigger or modifier to
+    any action and `IA_Hover` adds none either. `IA_Hover` matches all of that except
+    **`ValueType`, which is `Axis2D`**, because a hover reports a continuous cursor position rather
+    than a press. The second, smaller difference is convention-following rather than a departure:
+    only the NEWEST of the five, `IA_OpenProductionMenu`, carries an `ActionDescription`; the four
+    older ones are empty. `IA_Hover` follows the newer practice with
+    `Report where the cursor is, continuously`.
+  - **THE MAPPING ROWS, BEFORE AND AFTER, READ OFF THE ASSET.** Before, 7 rows:
+    `IA_Select`/`LeftMouseButton`, `IA_Cancel`/`RightMouseButton`, `IA_Cancel`/`Escape`,
+    `IA_Wait`/`W`, `IA_EndTurn`/`Enter`, `IA_EndTurn`/`SpaceBar`, `IA_OpenProductionMenu`/`B`.
+    After, 8 rows: the same seven **in the same order and unchanged**, plus
+    `[7] IA_Hover / Mouse2D` appended. `Mouse2D` is the engine's mouse XY 2D-axis key and imports
+    from the bare name, which is this file's own recorded `FKey` rule (`Key=(KeyName="X")` writes
+    an empty key silently) used rather than rediscovered.
+  - **IN UE 5.8 THE ROWS ARE NOT IN `Mappings`, THEY ARE IN `DefaultKeyMappings.Mappings`, AND
+    `Mappings` STILL EXISTS AND READS AS EMPTY.** `array_count("Mappings")` returns **0** on a
+    context that plainly has seven rows, and `property_meta("Mappings")` reports it
+    `editable=false`. Anyone reading the legacy array will conclude the context is empty. The live
+    rows are the `FInputMappingContextMappingData` struct property `DefaultKeyMappings`, and this
+    file's standing whole-struct workaround is still the WRITE route:
+    `array_count("DefaultKeyMappings.Mappings")` fails `property not found` exactly as recorded.
+    **What IS newly available is the dot-path READ** -- `get("DefaultKeyMappings.Mappings[0].Key")`
+    returns `LeftMouseButton`, and the per-element `Action`/`Key` reads drove the before/after
+    lists above. So: read per element with dot-path, write the whole struct.
+  - **`set` LIED IN BOTH DIRECTIONS IN THIS PASS, AND THE READBACK IS THE ONLY THING THAT WAS
+    RIGHT.** Two separate failures, and both matter to anyone writing a struct property here.
+    (1) A malformed value returned **`true`** with a `[WARN] ... (no-op: value already equal, or
+    engine reverted the write)` -- so a write that did nothing reported success. (2) The
+    **correct** value returned **`[FAIL] Failed to set value ... Use list_properties() to see valid
+    format`** and yet **APPLIED**: the readback grew 704 -> 797 bytes with the new row present, and
+    it survived `save()` into the package. Note why that FAIL is spurious -- the error message
+    echoes the offending string with its final `)` missing, i.e. **the diagnostic truncates its own
+    echo**, so the text it complains about is not the text that was passed. **Never take `set`'s
+    return or its log line as evidence on a struct property; diff the value you read back.**
+  - **THE SELF-INFLICTED HALF, RECORDED BECAUSE IT WILL RECUR.** The first two attempts failed on
+    string surgery, not on the API. The exported tail is `...Key=B)))` -- three closing parens that
+    are the last ROW, the `Mappings` array, and the struct. Stripping three to append a row eats
+    the last row's own paren and produces `Key=B,(Action=...`, which is silently a nested field
+    rather than a new element. **Strip TWO.** The `Mouse2D` key name was never the problem, and a
+    lane that had not run the control would have blamed it.
+  - **VERIFIED AGAINST THE SAVED BYTES, NOT THE AUTHORING CALL, WITH A NEGATIVE CONTROL.**
+    `IMC_Selection.uasset` is 5273 bytes at `2026-08-27T04:17:42Z` and its name table carries
+    `IA_Hover` x2 and `Mouse2D` x1 beside all five pre-existing actions and their keys.
+    `IA_Hover.uasset` is 1537 bytes at `04:16:56Z` and carries `Axis2D` x2 and
+    `EInputActionValueType` x2 with **`Boolean` at ZERO** -- the value type is serialised because
+    it differs from the C++ default, which is the same "a default is absent from the package"
+    reasoning this project already relies on, used here in its positive direction. A
+    `ZZZ_NOT_PRESENT` token scored 0 in both files, which is what makes the non-zero counts a
+    measurement rather than a hopeful substring hit.
+  - **TWO INSTRUMENTS ARE BLIND TO `.uasset` AND ONE OF THEM FAILS QUIETLY ENOUGH TO MISLEAD.**
+    `read_file` on a `.uasset` refuses outright with `binary asset rejected` and returns zero
+    bytes -- loud, fine. **`Grep`/ripgrep over `Content/StratInput` returns "No files found" for
+    `LeftMouseButton`**, a string that is certainly in that package: rg skips binary files silently
+    and the Grep tool exposes no `-a`. That control is the only reason those zeros were not read
+    as "the row is not there". **The route that works:** `copy_file` the package to a
+    non-`.uasset` extension, `read_file(..., {encoding="binary"})` -- which returns base64 -- and
+    decode in Lua. A `utf8` read of the same copy returns **9 bytes** for a 5273-byte file, so that
+    encoding is useless here. And the obvious decoder is too slow: a `gsub`-per-character
+    bit-string base64 decoder hit `Script exceeded instruction limit (possible infinite loop)` on
+    7 KB, while an arithmetic decoder stepping 4 chars at a time handled the whole 112 KB record
+    file. **`read_file`'s `offset`/`limit` are IGNORED under `encoding="binary"`** -- it returns
+    the entire file every time, which is convenient here but silently defeats any attempt to page
+    a large binary.
+  - **`list_properties` IS A METHOD ON THE ASSET TABLE, NOT A GLOBAL, AND ITS ENTRIES KEY ON
+    `.name`.** The global call aborts the whole script with `attempt to call a nil value`, which is
+    this file's recorded "the script died on line 2" shape. And where this file records entries
+    keying on `.property`, `asset:list_properties()` entries key on **`.name`**, with `.value`,
+    `.type` and `.category` -- a loop over `.property` prints a column of `nil` while cheerfully
+    reporting the right property count.
+  - **THIS ENTRY WAS SPLICED IN AT BYTE OFFSET 2900 AND THE FILE IS CRLF.** `Edit` was disabled on
+    this session's tool surface, so the record write went through the editor's own `write_file` on
+    the base64 route this file already documents. Two things the next lane needs: `content.md` is
+    **CRLF**, so an entry written with bare `\n` ships as a mixed-ending file; and a base64 splice
+    only concatenates cleanly on a 3-byte boundary, so the inserted text was padded with trailing
+    spaces on its final blank line to make its length a multiple of 3. A `write_file` round-trip
+    of a known string through a scratch file was run FIRST as the control, and `bytes_written`
+    matched the source length exactly.
+  - **WHAT THIS DOES NOT REACH.** Nothing here is a runtime observation. No controller property
+    points at `IA_Hover` yet, so nothing consumes the mapping and no `STRAT-` line can witness it;
+    the asset and the row are design-time facts verified in the package bytes and are claimed as
+    nothing more. The `HoverAction` default is OWNED by whoever runs the editor after
+    `feat/hover-input` merges and `UnrealEditor-StratPlay.dll` relinks -- and this file's recorded
+    way to WITNESS that relink rather than assume it is to read the new property off the NATIVE
+    class path, exactly as its absence was measured above.
+
 - **SEC 2.11.4'S END-OF-MATCH SCREEN EXISTS, AND IT WAS SEEN DRAWING A REAL VERDICT OVER A REAL
   MATCH.** 2026-08-25. `WBP_MatchResult` is NEW and `BP_StratScoreboardHUD` gained one
   Blueprint default; nothing else under `Content/` moved.

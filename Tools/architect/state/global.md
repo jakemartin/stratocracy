@@ -1982,6 +1982,111 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-26, COORDINATOR -- AN MVP-GAP AUDIT READ OFF THE TREE, AND THE LARGEST GAP IS THE
+  SECTION THE GDD ITSELF CALLS THE CENTREPIECE. RECORD-ONLY.** The user asked what the MVP
+  still lacks. Answered by reading `Source/`, `Content/`, `Config/` and `Data/` rather than this
+  record, on this file's own rule that the tree outranks the note. **NO SOURCE, NO TEST, NO
+  ASSET AND NO CONFIG FILE WAS TOUCHED; NO SUITE WAS RUN AND NO SUITE FIGURE MOVES ON IT** --
+  the live figure is the one this file's topmost banner cites and it is unchanged. **NO PHASE
+  VERDICT IS STATED HERE**: an audit is not a gate, and nothing below has been through one.
+  The checklist is the GDD'S OWN and not one assembled here -- Sec 2.10's IN column, Sec
+  2.11.2's earn-your-pixels table, and Sec 2.11.5's "complete screen list for the prototype".
+  - **WHAT IS BUILT, so the gaps are read against it and not against nothing.** The rules half
+    is complete and vendored: grid, terrains, four units, move, attack, capture, Fame,
+    production, the heuristic AI, win-by-flag, the turn cap and the tiebreak. On this side: the
+    board with its three overlays, the scoreboard, the directive strip and the guided opening,
+    the pre-match briefing, the production menu, the match-result screen, save-slot I/O with
+    the completion record, and the one shipped scenario. A human has played a match to a result
+    against the AI. **So every finding below is about what the player is not TOLD, not about
+    what the game cannot DO** -- which is why not one of them has ever reddened a clause.
+  - **SEC 2.11.3, THE ATTACK FORECAST, DOES NOT EXIST ON THIS SIDE.** `FStratBridge::Forecast`
+    works and `T-UI-01` pins it. Its only non-test consumer is `FStratSelectionMachine`, which
+    asks it which enemy hexes are legal targets and DISCARDS THE NUMBERS. No forecast struct
+    exists in `StratViewModel.h`, no widget for it exists under `Content/UI/`, and no clause
+    asserts a forecast is drawn. Absent, therefore: the damage line, the counter line and its
+    stated reason, the HP before -> after, the lethal `Destroys <unit>` reward line, and the
+    FLAG AT RISK band that Sec 2.11.3 says no player may end a match without having seen. The
+    player commits attacks blind against a rules module whose entire design claim is that the
+    forecast IS the resolution, shown early.
+    - **THIS RECORD HAD NEVER MENTIONED THAT SECTION, AND THE CHECK IS NOT REPEATABLE AFTER
+      THIS ENTRY.** Before this bullet was written, a sweep of all six files in
+      `Tools/architect/state/` for that section number returned NOTHING. This paragraph is now
+      the first mention, so re-running it finds this and not the silence -- stamped that way
+      because the silence IS the finding: a centrepiece section can go four milestones without
+      one line in the record and read exactly like a section that was weighed and deferred.
+  - **ONE MISSING INPUT ACCOUNTS FOR TWO OF THE GAPS, WHICH MAKES THEM ONE FIX AND NOT TWO.**
+    HOVER IS NOT WIRED ANYWHERE: a scan of `Source/StratPlay` and `Source/StratUI` outside
+    `Tests/` for hover vocabulary returns ZERO. Sec 2.11.3's card and Sec 2.11.2's info panel
+    are both specified as hover-driven, so both sit behind the same absent Enhanced Input
+    surface. `AStratPlayerController` carries `SelectAction`, `CancelAction`, `WaitAction`,
+    `EndTurnAction` and `OpenProductionMenuAction`, and nothing for hover.
+  - **THREE OF SEC 2.11.2'S FOUR PERSISTENT ELEMENTS ARE UNBUILT.** The scoreboard is the one
+    that exists.
+    - **The Fame pool and its `+X/turn` are drawn nowhere.** `FStratSideView::FameTotal` is
+      projected and read by exactly one caller -- `StratBuildProductionMenu`, to compute
+      `Shortfall` -- and `FStratSideView::IncomePerTurn` is projected and read by NOTHING.
+      **The player's current Fame is never printed on screen**, not even in the production
+      menu's own header, which Sec 2.11.5's mock shows carrying `Fame: 250`:
+      `FStratBuildOptionView` has the per-row cost and shortfall and no field for the pool.
+    - **End Turn and the idle-unit count have no on-screen home.** `EndTurnAction` is a key
+      binding; there is no button, and no count of units still able to act.
+    - **The on-map half of that same list is unbuilt too** -- the flag `H` markers for both
+      sides and the unacted pip on own units. `AStratUnitActor::ApplyView` applies mesh-by-
+      `DefId`, the side material and the guided marker, and nothing else; `bIsFlag` and `bDone`
+      are populated in the view model and read by no drawing code.
+  - **THE INFO PANEL IS ABSENT, AND ITS CONSEQUENCE IS SHARPER THAN THE ELEMENT.** No widget
+    carries a hovered hex's terrain name, move cost or defense bonus, and none carries a unit's
+    stat line. So **PER-UNIT HP IS INVISIBLE TO THE PLAYER**: `FStratUnitView::Hp` and `HpMax`
+    are projected and read by nothing outside `Tests/`. The only HP anywhere on screen is the
+    scoreboard's aggregate `Unit HP` row. A damaged attacker hits softer by Sec 2.6's formula,
+    and the player cannot see which of their own units is damaged.
+  - **THE CONTEXTUAL AND TRANSIENT LAYERS ARE THIN.** Built: the reachable-hex highlight, the
+    attack-target highlight, the objective ring, the production menu, the guided strip and its
+    one-shot tip. Absent: the path preview with cost ticks, the capture-progress pip
+    (`CaptureProgress` projected, unread), the repair-eligibility pip, the `BUILD` pulse on an
+    affordable factory (`bHasBuiltThisTurn` projected, unread), the income and kill toasts, and
+    the `YOUR TURN` / `ENEMY TURN` banner.
+  - **THE AI'S TURN IS NEVER SHOWN.** Sec 2.11.2 requires the AI's action list replayed at a
+    watchable fixed pace, the camera stepping to each action, any click skipping to the end.
+    `FStratAiTurnRunner`'s own header states it runs a whole turn SYNCHRONOUSLY, and
+    `FStratMatchConfig::AiTurnDelaySeconds` paces BETWEEN turns rather than between actions.
+    The player sees a board that has changed and gets no account of how.
+  - **THERE IS NO TITLE/MENU SCREEN, AND SEC 2.11.5 FIXES THE LIST AT FOUR.** Briefing, match
+    and result are built; the menu is not. `Config/DefaultEngine.ini` sets `GameDefaultMap` to
+    `Lvl_FerrumCrossing`, so a packaged build boots straight into a match with no new-match, no
+    restart and no quit route. This is the one gap that is not a readout: it is the shell the
+    other three screens hang off, and it is what makes the packaging item below more than a
+    build step.
+  - **TWO SPECIFIED CONTROLS EXIST IN C++ AND NO PLAYER CAN REACH EITHER.**
+    - `AStratPlayerController::SkipGuidance` is correct and `BlueprintCallable` and HAS NO
+      CALLER -- no input action, no button. Sec 2.11.6 specifies a `Skip guidance` control that
+      kills guidance instantly for anyone. Already on this record since 2026-08-24 and still
+      true; restated here because it is an MVP surface and not only a loose end.
+    - **Sec 2.9's Easy default is not applied.** Sec 2.11.6 says the first match runs at Easy
+      with the player on an opening-Fame handicap. `ferrum_crossing.json` carries a symmetric
+      `startingFame` of 200/200, `Scenario.h` says in as many words that the difficulty
+      handicap is a match-setup parameter applied on top of the scenario rather than a field in
+      it, and `FStratMatchConfig` has no field for it. **Nothing applies it**, so the guided
+      opening's own premise about the first session is unmet.
+  - **TWO ITEMS ON THE MVP LINE THAT ARE NOT FEATURES.** Sec 4.4 wk 7 names the PACKAGED BUILD
+    as the deliverable and no package has ever been produced here -- this record discusses "the
+    packaged game" only hypothetically and there is no packaging output in the tree. Sec 4.4
+    wk 4 and wk 6 name the self-play balance sims and the balance lock; both are crew-side and
+    unstarted.
+  - **WHAT THIS AUDIT DOES NOT COVER, said plainly.** The six Widget Blueprint graphs under
+    `Content/UI/` were NOT read -- `.uasset` is not text and no editor was driven for this
+    pass. That limit does not reach the findings: for every missing readout above, the C++
+    model the widget binds to carries no field holding the value, and this project forbids
+    widget-side arithmetic, so a graph could not be quietly supplying one. Where a graph COULD
+    differ from this account is in the layout and wording of what is already modelled.
+  - **AND THE ORDERING IS A JUDGEMENT, NOT A MEASUREMENT.** The sequence above is by what the
+    player loses without each item. **This record holds no MVP burndown to check that against**
+    -- the candidate backlog further down scores CANDIDATES, not GDD coverage, and that is the
+    same shape as the four entries corrected there on 2026-08-24 one level up: a status that is
+    derived is only as correct as the subject the probe was pointed at, and no probe in
+    `scan.py` or `candidates.py` is pointed at Sec 2.11.2's table at all. **NOTHING IS ASSIGNED
+    HERE**: this is a finding list, and turning it into lanes is a separate pass.
+
 - **SEC 2.11.6-B CLOSES. 2026-08-24, HUMAN-DRIVEN PLAYTEST, THE USER AT THE KEYBOARD: THE RING
   AND THE MARKER WERE SEEN DRAWN AND THEY PASSED. RULED CLOSED BY THE USER; RECORDED BY THE
   `coordinator`, WHICH IS THIS FILE'S TO STATE.** This is the verdict the entries below have

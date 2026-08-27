@@ -21,6 +21,30 @@ FIGURE IS THIS TREE'S: `reportCreatedOn 2026.08.27-05.17.45`, `succeeded 230`, `
 `notRun 0`, zero succeededWithWarnings, run in `E:/MultiAgent/Stratocracy` on branch `master`
 after the merge, and every one of its 230 entries is Success. THAT STAMP IS UTC AND THIS ENTRY'S
 DATE IS LOCAL, which is why they can name different days.
+**[STAMPED 2026-08-27, LATER THE SAME DAY -- THE REPORT NAMED IN THE SENTENCE ABOVE IS
+SUPERSEDED AND THE FIGURE IT CERTIFIES IS NOT. The live report is now
+`reportCreatedOn 2026.08.27-18.05.07`, run in this same tree on `master` after the hover route
+was replaced: `succeeded 230`, `failed 0`, `notRun 0`, zero succeededWithWarnings. THE COUNT DID
+NOT MOVE, WHICH IS EXACTLY WHY THIS STAMP IS NEEDED -- the sweep's SUITE COUNT check compares the
+figure and this record has already been bitten once by a provenance that was stale while the
+count happened to agree, so a superseded report citation left standing here would be clean and
+wrong at the same time. **[AMENDED WITHIN THIS STAMP, SAME DAY, ON TWO GATE FINDINGS, AND
+RESTATED FLAT RATHER THAN NESTED -- nesting a correction inside a correction is what let a false
+sentence survive above its own retraction in this file's `## NEXT` copy, so both superseded
+wordings are QUOTED here and neither is left standing as prose. STRUCK: (1) `the zero-warnings
+field is load-bearing in the newer run: it is the independent confirmation that a diagnostic
+Warning added and removed mid-pass is gone`; (2) its first replacement, which said the field
+`read zero on the 05.17.45 report too, which was run on the INSTRUMENTED tree`. WHAT IS TRUE: no
+suite was ever run while the instrument existed, so there is no reading of an instrumented tree in
+either direction -- verified by classifying every 2026-08-27 session log, the one instrumented
+session having run zero tests and all three automation runs carrying zero `HOVER-DIAG` lines.
+That is a cleaner refutation than the one first written here, not a weaker one.]** The field
+confirms nothing either way, and `engine.md` gives the construction reason: no automation clause
+reaches `OnHover`, and the second log site was put at
+`Log` precisely so a diagnostic could not raise a clause warning. The removal is confirmed by the
+diff and a token census over the source instead. The correction is written here rather than only where the claim
+was repeated, because this stamp is the copy a reader of the banner meets first.]** The entry that
+produced the newer run is the topmost one under `## NEXT`.]**
 **[STAMPED 2026-08-27, THE MERGE COMMIT: the sentence this paragraph carried before it said the
 certifying report `WAS PRODUCED IN E:/MultiAgent/Strat-wt/slot-1 on branch feat/hover-input, NOT
 IN THE INTEGRATION TREE: reportCreatedOn 2026.08.27-03.59.15`. That was true when written and is
@@ -2101,6 +2125,108 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-27, COORDINATOR -- W0'S HOVER NOW REACHES THE GAME. THE INPUT ROUTE WAS THE DEFECT,
+  IT IS REPLACED, AND A HUMAN HAS SEEN IT WORK.** The entry below records the playtest that found
+  wave 0's hover dead; this one records the diagnosis being settled by instrumentation, the route
+  being replaced, and the replacement being witnessed. **THE SUITE FIGURE MOVES ONLY IN THE SENSE
+  THAT IT WAS RE-RUN AND DID NOT CHANGE: 230/230**, every entry Success, zero failed, zero notRun,
+  zero succeededWithWarnings. **[CORRECTED 2026-08-27, AND REWRITTEN FLAT ON THE SECOND GATE
+  FINDING RATHER THAN NESTED A THIRD TIME -- the nesting is what let a false outer layer survive
+  directly above its own retraction, so the whole block is restated once, correctly, and the
+  superseded wordings are quoted rather than left standing as sentences. TWO WORDINGS ARE STRUCK.
+  (1) `the independent confirmation that the diagnostic Warning added mid-pass is gone`. (2) `The
+  field read zero BEFORE the instrumentation, WITH it, and after it`. WHAT IS TRUE: the field
+  confirms nothing, because THERE IS NO READING OF AN INSTRUMENTED TREE AT ALL -- no suite was
+  ever run while the instrument existed. The gate re-derived that by classifying every
+  2026-08-27 session log: the one instrumented session ran ZERO tests, and all three automation
+  runs carry ZERO `HOVER-DIAG` lines, with each half of the table acting as the other's control.
+  `engine.md` gives the construction reason the field could not have moved in any case: no
+  automation clause reaches `OnHover`, and the second log site was deliberately put at `Log` for
+  exactly that reason.]** A figure that cannot move is not evidence that something changed. WHAT ACTUALLY CONFIRMS
+  THE REMOVAL is a token census over the source, WITH A CONTROL -- and NOT the diff, which
+  `engine.md` withdrew on the sharper ground that a churn count cannot separate an instrument line
+  from a refactor line, so it never bore on the claim at all. The two files are aligned on that
+  deliberately: naming `the diff` here after it was struck there is how a withdrawn item walks back
+  in. The census: no `HOVER-DIAG`, no counter and no
+  handler survives as code. The suite's role here is regression only -- it says the removal broke
+  nothing, which is worth having and is all it says.]**
+  The report is this tree's: `reportCreatedOn 2026.08.27-18.05.07`, run in
+  `E:/MultiAgent/Stratocracy` on `master`. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL.
+  **THE REPORT PREDATES THE CURRENT BYTES AND THAT IS STATED RATHER THAN LEFT FOR A READER TO
+  NOTICE.** It is 14:05:07 local; the two source files were last written at 14:49:15 and relinked
+  at 14:49:39. Everything written in between was PROSE -- the amendments two gate findings asked
+  for -- and a comment cannot change a clause's outcome, which needs no corroborating build; a
+  green rebuild would only say the current bytes compile. So the figure is not claimed to have been
+  measured on the exact current bytes, only on the last bytes that could have moved it.
+  **AND THE GATE THEN DERIVED THAT RATHER THAN LEAVING IT STATED.** It ran the comment-stripped
+  diff of both source files: the ENTIRE non-comment delta is four things -- the `HoverAction`
+  `UPROPERTY` removed, `OnHover`'s declaration and definition removed, the `Triggered` binding
+  removed, `Tick`'s declaration and definition added. Nothing else in either file. And
+  `Intermediate/.../StratPlay/UHT/StratPlayerController.gen.cpp` is still stamped 14:00:44, so the
+  14:49 header edit changed no reflected surface. The header's CODE content at report time equals
+  its code content now, so no re-run is owed.
+  Lanes: the C++ and `engine.md` are `strat-gameplay-engineer`'s and are its own work; the editor
+  driving, the asset cleanup and `content.md` are the `coordinator`'s under the editor-driver
+  clause and that file's fallback, cited separately there.
+  **THE GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS ON ITS THIRD ROUND, and that is the
+  verdict for this pass** -- recorded here because `global.md` is the only file that may state one.
+  It blocked twice first, and NEITHER ROUND FOUND ANYTHING IN THE GAME CODE, THE ASSETS OR THE
+  MODULE GRAPH: round one was three record claims, round two was two claims inside the corrections
+  for round one, and the sharpest was a false sentence surviving directly ABOVE its own retraction
+  because the correction had been nested rather than restated. Both correction blocks were then
+  rewritten FLAT, which is the structural lesson and not merely the fix. **TWO CHANGES WERE MADE
+  AFTER THAT PASS AND ARE NAMED SO A READER KNOWS WHAT IT DID NOT COVER**, both non-gating
+  observations the gate raised and neither touching a figure: this entry no longer names `the diff`
+  as confirming the instrument's removal, since `engine.md` withdrew that item and leaving the word
+  here is how a withdrawn claim walks back in; and the provenance paragraph no longer leans on a
+  green rebuild as corroboration, carrying the gate's own comment-stripped derivation instead. This
+  sentence is the third.
+  - **THE DIAGNOSIS WAS SETTLED BY AN INSTRUMENT, NOT BY INFERENCE, and the instrument was
+    designed better than it was asked for.** The engineer added a counter and log site in
+    `OnHover` plus a CONSOLE-FORCIBLE CONTROL in `UpdateHoverFromCursor` -- so one `ke` call
+    proved the channel prints, proved the editor held the rebuilt DLL, and read the handler count
+    out of the running game, with no planted state. It answered: **`OnHover` ran exactly ONCE in
+    three and a half minutes**, at a focus transition seven seconds after the match seeded, with
+    the cursor off the board; a fifteen-second human sweep across the board did not move it.
+  - **THAT ALSO EXPLAINED THE ONE OBSERVATION THE PREVIOUS ENTRY COULD NOT.** A planted hover had
+    cleared during the first playtest at the moment the cursor left the window -- read then as the
+    binding firing normally, and retracted. Both events are the same phenomenon: a focus
+    transition delivers one axis event, ordinary movement delivers none.
+  - **THE ROUTE IS NOW A TICK POLL, AND WHAT WAS REJECTED MATTERS AS MUCH AS WHAT WAS CHOSEN.**
+    `SetInputMode` with capture was rejected on two grounds: `bShowMouseCursor = true` is
+    load-bearing for a mouse-driven hex game and every mode that reliably feeds axis input does so
+    by capturing, which changes how a click lands; and it would be unfalsifiable at this project's
+    cost, since nothing here reaches `UPlayerInput`, so it could only ever be re-confirmed by
+    another human playtest. **The tick route is the first hover path a clause can pin at all.**
+  - **WHAT IS PROVEN AND WHAT IS NOT, kept apart deliberately.** PROVEN: mouse movement produced
+    no `Triggered` event for a mouse-axis action on this controller as configured, and the tick
+    route produces a hover that follows the cursor across 25 distinct hexes and clears off-board.
+    **NOT PROVEN: WHY.** The uncaptured-visible-cursor mechanism was never isolated, and neither
+    the code nor `engine.md` nor `content.md` asserts it. The fix working is evidence the route
+    was wrong, not proof of the engine mechanism.
+  - **A TOOLING CLAIM WAS RAISED AND DISPROVED RATHER THAN RECORDED**, and it is noted because a
+    finding this alarming would have been worth acting on had it been true. The engineer reported
+    `strat_banner_sweep.py` printing `SWEEP FAILED` while returning exit code 0 -- which would
+    mean the pre-commit hook gates nothing. Measured directly with a control: a scratch report
+    with `succeeded=17` gives `SWEEP FAILED` and **exit 1**, the real report gives `SWEEP CLEAN`
+    and **exit 0**. `render()` and `main()` read the same `result.passed`, so no individual check
+    can diverge from the code. The near-certain cause is reading `$?` after a PIPE, which returns
+    the last command's status. **The guard is sound and the claim is not in the record as a
+    finding.**
+  - **WHAT IS OWED NEXT.** (1) `Stratocracy.StratPlay.T-UI-01.TickDrivesTheHoverPath` -- newly
+    pinnable and previously not, because a tick with no viewport clears a hover planted via
+    `SetHoveredHex`, which makes it falsifiable by emptying the `Tick` body. **[CORRECTED
+    2026-08-27 ON A GATE FINDING: this reason first read `since Tick is public and virtual`.
+    `Tick` IS DECLARED `protected` in `AStratPlayerController` -- between that class's `protected:`
+    and `private:` sections -- so `Controller->Tick(dt)` through an `AStratPlayerController*` does
+    NOT compile. The clause is still writable, because `AActor::Tick` is public in the base and an
+    `APlayerController*` or `AActor*` handle dispatches virtually; what was wrong was the stated
+    route, which the receiving lane would have met as a compile error. The engineer was asked to
+    settle whether the access level or the handoff wording is the thing to change.]** `strat-test-author`'s lane. (2) `Source/StratPlay/Tests/StratPlayerControllerTick.cpp`
+    pins `bCanEverTick == true` and gives only the Enhanced Input reason; that clause now protects
+    two mechanisms and names one. Same lane, and the assertion is correct today. (3) W1 and W2 are
+    now unblocked in behaviour as well as in code.
 
 - **2026-08-27, COORDINATOR -- THE HUMAN PLAYTEST RAN AND WAVE 0'S INPUT HALF DOES NOT REACH THE
   GAME. FINDING ONLY; NO CODE, NO ASSET AND NO TEST WAS TOUCHED BY IT.** The playtest that the

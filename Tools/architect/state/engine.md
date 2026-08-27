@@ -13,6 +13,259 @@
 
 ## NEXT
 
+- **2026-08-27, `strat-gameplay-engineer` -- THE HOVER IS POLLED ON TICK. THE ENHANCED INPUT
+  HOVER ROUTE WAS MEASURED DEAD AND HAS BEEN REMOVED, AND THE INSTRUMENT THAT MEASURED IT IS
+  GONE WITH IT.** In the integration tree `E:/MultiAgent/Stratocracy` on `master`, from
+  `5e0333f`, on top of the instrumentation entry below -- which this entry DISCHARGES. Two files
+  modified, both mine: `Source/StratPlay/StratPlayerController.h` and
+  `Source/StratPlay/StratPlayerController.cpp`. Nothing committed, nothing staged, no asset, no
+  config, no test, nothing under `Tests/`. No suite figure is stated here; `global.md` owns that
+  and owns any verdict.
+  - **THE MEASUREMENT, WHICH IS THE ENTIRE BASIS FOR THE CHANGE AND IS PRESERVED HERE BECAUSE
+    THE CODE THAT PRODUCED IT NO LONGER EXISTS.** A human playtest on the instrumented binary,
+    on a seeded 99-hex board, over three and a half minutes. The complete set of `HOVER-DIAG`
+    lines: the resolve path was entered four times, three of them forced from the console; the
+    handler `OnHover` ran **exactly once**, at 17:48:59, seven seconds after the match seeded,
+    on a focus transition, with the cursor off the board. Between two forced console reads at
+    17:50:43 and 17:52:14 the human swept the cursor across the board for fifteen seconds and
+    **the handler count did not move**. An independent earlier observation agrees: a planted
+    hover cleared at the moment the human moved the cursor out of the window to type -- another
+    focus transition, off-board, one event, one clear.
+  - **THE CONTROL IS WHAT MAKES THAT AN ABSENCE RATHER THAN A SILENCE.** The forced call
+    `ke StratPlayerController UpdateHoverFromCursor` printed, which proved in the same line
+    that the log channel spoke AND that the editor had loaded the rebuilt DLL, while reading the
+    handler's count out of the running game with no planted state. The two-counter shape was
+    designed for exactly this and it did exactly this.
+  - **WHAT THE MEASUREMENT PROVES, AND -- STATED FIRST, BECAUSE IT IS THE PART A LATER READER
+    WILL OVER-CLAIM -- WHAT IT DOES NOT.** It proves that mouse movement produces no `Triggered`
+    event for a mouse-axis action on this controller as configured. **IT DOES NOT PROVE WHY.**
+    The standing hypothesis is that a visible, uncaptured cursor feeds no axis to `UPlayerInput`
+    -- this class sets `bShowMouseCursor = true` and calls `SetInputMode` nowhere in
+    `Source/StratPlay/` -- but that mechanism was never isolated and **this record does not
+    assert it**. If the tick route works when a human next drives it, that is evidence the ROUTE
+    was wrong; it is not proof of the engine mechanism behind it, and nothing downstream should
+    cite it as one.
+  - **THE ROUTE CHOSEN: `AStratPlayerController::Tick` calls `UpdateHoverFromCursor` and
+    discards the result.** Four lines of body. Every hover entry point still ends at the single
+    `ApplyHoverChange` refresh decision, unchanged.
+  - **WHAT WAS REJECTED, AND ON WHAT.** `SetInputMode` with capture, which is the more obvious
+    repair. Rejected on two counts. (1) `bShowMouseCursor = true` is load-bearing -- a
+    mouse-driven hex strategy whose player cannot see the cursor is not the game -- and every
+    mode that reliably feeds mouse axis does so by capturing, which changes cursor behaviour at
+    the viewport edge and how a click lands. A route that fixes the hover and makes selection
+    feel different is worse than the bug. (2) It is unfalsifiable at our cost: no clause in this
+    project reaches `UPlayerInput`, so an input-mode fix could only ever be re-confirmed by
+    another human playtest, whereas a tick call is reachable by a clause. **This is not a ruling
+    that input modes are wrong** -- if a later pass isolates the capture mechanism and finds a
+    mode that feeds axis with a free visible cursor, it is a live alternative again, and it would
+    still have to beat the testability.
+  - **THE THREE CLAIMS THE TASK TOLD ME TO RE-DERIVE RATHER THAN ACCEPT, ALL RE-DERIVED AT
+    SOURCE AND ALL HOLDING.** (a) The de-duplication is real: `FStratHoverState::SetHoveredHex`
+    and `ClearHoveredHex` each compute and return `bChanged` (`StratHoverState.cpp`), so the
+    per-frame cost is one trace and NOT a model rebuild. (b) `PrimaryActorTick.bCanEverTick =
+    true` was already set in the constructor with the phase-6 measurement beside it -- the
+    recorded `bCanEverTick = false` incident is closed in this tree and I did not re-open or
+    re-derive it. (c) `HexUnderCursor` returns before tracing when there is no board, so a
+    controller in an unseeded world pays a null check per frame and nothing else.
+  - **WHAT WAS REMOVED, AND WHY REMOVAL RATHER THAN LEAVING IT UNBOUND.** The `HoverAction`
+    `UPROPERTY`, the `OnHover` handler, the `ETriggerEvent::Triggered` binding in
+    `SetupInputComponent`, its unset-property Warning, and the whole diagnostic -- both counters,
+    both log sites, the powers-of-two throttle helper and both comment blocks. **NONE OF THE
+    INSTRUMENT SURVIVES**; the debt the header declared is discharged in full, on the condition
+    that header named. A wired-and-dead asset reference is worse than no reference: left in
+    place, `HoverAction` would read to the next reader as the hover mechanism --
+    `EditDefaultsOnly`, non-null on the shipping Blueprint, bound without a warning -- and send
+    anyone debugging the hover to the trigger event instead of the tick.
+  - **THE DIAGNOSIS IS RECONSTRUCTIBLE FROM THIS ENTRY ALONE, WHICH IS THE CONDITION THE TASK
+    SET FOR DELETING ALL OF IT.** The verbatim timings, the counts, the control and the sweep
+    are above. A summary of the measurement also sits on `Tick`'s definition in the `.cpp`, so a
+    reader who reaches the code without the record still gets it.
+  - **BUILD, GREEN, EDITOR CLOSED.** `Build.bat StratocracyEditor Win64 Development -waitmutex`
+    -> `Result: Succeeded`, 15.38 s, 11 actions, zero warnings and zero errors. I confirmed the
+    DLL lock was released with my own rename round-trip on
+    `Binaries/Win64/UnrealEditor-StratPlay.dll` before building, rather than taking the
+    editor-closed claim on trust.
+  - **THE `Stratocracy.StratPlay` SUBSET RAN CLEAN AFTER THE CHANGE** -- zero failed, zero
+    notRun, zero `succeededWithWarnings`. It is a regression result and NOTHING MORE. No count is
+    written in this file; the live figure is `global.md`'s.
+  - **[CORRECTED 2026-08-27, SAME DAY, ON A `strat-integration-reviewer` BLOCK. The sentence
+    this bullet carried before it read: "That last figure is the one that matters here beyond
+    regression: it is independent confirmation that the diagnostic `Warning` is gone from the
+    tree." THAT WAS AN ABSENCE WITH NO CONTROL, and it is struck rather than deleted because the
+    shape is worth keeping visible.** The conclusion is true -- the instrument is gone -- but the
+    zero could not have witnessed it, and this same file refutes the reasoning twice over.
+    (1) The design note further down states in terms that **no automation clause can reach
+    `OnHover` at all**, so that log site could never have turned a clause
+    `succeededWithWarnings` in ANY run, before or after. (2) The other log site,
+    `UpdateHoverFromCursor`, was put at `Log` and not `Warning` **precisely so that the clauses
+    which do call it would be unaffected** -- also stated in that note. Both halves of the
+    instrument were designed to be invisible to this field. A field engineered not to move cannot
+    testify that something moved. There was no pre-instrumentation-versus-post reading either:
+    the instrument was never committed and no suite was run while it existed, so the nearest
+    earlier report (`global.md`'s `05.17.45`) is not a "before" measurement of it but a run from
+    a tree that never contained it.
+    **WHAT ACTUALLY CONFIRMS THE REMOVAL, AND IT IS NOT THE SUITE.** Two things, both of them
+    direct rather than inferential: a tree-wide grep --
+    `grep -rn "HOVER-DIAG\|HoverHandlerCalls\|HoverResolveCalls\|OnHover(" Source/` returns
+    **0 lines**, so neither counter, neither log site, the throttle helper nor the handler
+    survives anywhere in `Source/`; and the build, which compiled the resulting tree with zero
+    warnings. The subject grep was re-derived 2026-08-27 at `5e0333f` **with a control** --
+    `grep -rn "UpdateHoverFromCursor\|SetHoveredHex" Source/` returns **36 lines** over the same
+    tree, so the instrument is shown able to speak and the zero is a measured absence rather than
+    a grep that could not match anything. The suite's role here is to show that removing it broke
+    nothing else.
+    **[A THIRD ITEM STOOD HERE AND WAS WITHDRAWN 2026-08-27, ON THE SECOND GATE OF THIS PASS.**
+    It read: "the diff itself, `git diff --stat Source/StratPlay/` --> 160 insertions and 72
+    deletions across the two files, which is where the removed lines are enumerable one by one."
+    The figure was wrong when the gate re-derived it: the tree at `5e0333f` says **176
+    insertions**, 72 deletions. It moved because of prose I wrote into this same header later in
+    the same pass -- the identical defect to the stale header line numbers struck one bullet
+    below, and a case of the standing rule against writing a count of a growing thing inside the
+    thing that grows. **It is withdrawn rather than corrected, and the reason is not the rot.**
+    Re-deriving 176 would fix the instance and leave the shape live: the next edit to either
+    file, including one made to satisfy the next gate, falsifies the new number too. But the
+    disqualifying fault is that **a diffstat was never evidence for this claim in the first
+    place.** The claim is that a specific instrument is absent. A deletion count is a measure of
+    total churn across the whole pass -- it cannot distinguish an instrument line from the
+    surrounding refactor, and 72 deletions is equally consistent with the instrument surviving
+    intact beside 72 unrelated removals. Absence is proved by absence. The grep above names the
+    four tokens, returns zero, and carries a control; it is strictly stronger AND it does not
+    rot, because no volume of later editing can make a token reappear that nothing writes. A
+    figure that cannot survive its own document, and that does not bear on the proposition it
+    was offered for, earns no place next to it.]
+  - **WHAT IS NEWLY PINNABLE, FOR `strat-test-author`.** Before this change, "a mouse move
+    produces a hover" was unreachable by any clause and the wave-0 hover file says so in terms.
+    It is still unreachable -- nothing here reaches `UPlayerInput`. But the ROUTE is now
+    reachable for the first time: `Tick` is virtual and callable on a spawned controller, and
+    with no viewport `HexUnderCursor` returns false, so a tick CLEARS a hover planted through
+    `SetHoveredHex`. That is a falsifiable pin on the tick-to-hover wiring --
+    emptying the `Tick` body leaves the planted hover standing. Requested clause:
+    `Stratocracy.StratPlay.T-UI-01.TickDrivesTheHoverPath`. **It should assert against the live
+    spawned controller and hold no `FStratHoverState` of its own**, on the precedent the
+    neighbouring hover clause already sets, and it should be proved by reverting what it pins.
+  - **[CORRECTED 2026-08-27, SAME DAY, SAME BLOCK -- THE HANDOFF ABOVE SAID "`Tick` is public,
+    virtual and callable on a spawned controller" AND `Tick` IS NOT PUBLIC HERE.** In
+    `Source/StratPlay/StratPlayerController.h` the declaration
+    `virtual void Tick(float DeltaSeconds) override;` sits between the file's `protected:` and
+    `private:` labels -- cited by symbol and not by line on purpose, because the line numbers
+    the gate quoted for it were already stale by the time this correction was written: the
+    prose amendment in the same pass moved that declaration from 650 to 666 and the `private:`
+    label from 691 to 707, in the very edit that answered the gate's third finding. So
+    `Controller->Tick(dt)` through an `AStratPlayerController*` is an
+    access error at compile time, and `strat-test-author` would have met the handoff as a build
+    failure rather than as a clause. The word "public" is struck; "virtual and callable" is not,
+    and the correction is written here rather than folded silently into the sentence above
+    because the sentence above is what was handed over.
+    **THE CLAUSE IS STILL WRITABLE, VIA THE BASE HANDLE, AND THAT IS THE FORK I TOOK.** C++
+    access is checked on the STATIC type of the expression, while dispatch is virtual, so a
+    `Controller` held as `APlayerController*` or `AActor*` -- where `Tick` is public in
+    `AActor` -- calls this override legitimately and with no cast, no friendship and no change
+    to this file. `SpawnActor<AStratPlayerController>` already returns something assignable to
+    either. **THE OTHER FORK WAS TO MAKE `Tick` PUBLIC HERE, AND I REJECTED IT.** `BeginPlay`,
+    `EndPlay`, `SetupInputComponent` and the rest of the framework overrides are all in that
+    same `protected:` block, which is both this file's convention and Unreal's; widening one
+    would be a change to shipping code made for a test's convenience, and it would leave the
+    next reader unable to tell whether the access level meant anything. A pin should reach its
+    subject through a handle the engine already hands out, not by relaxing the subject.]
+  - **A HANDOFF INSIDE `Tests/`, WHICH I DID NOT EDIT.**
+    `Source/StratPlay/Tests/StratPlayerControllerTick.cpp` pins the CDO's `bCanEverTick == true`
+    and its prose gives the Enhanced Input trigger-evaluation reason for it. That clause now
+    protects TWO mechanisms and names one: with this change, a `false` there would also stop the
+    hover dead. The assertion is still correct and still green; only its rationale is now
+    incomplete.
+
+- **[HISTORY, 2026-08-27 -- SUPERSEDED BY THE ENTRY ABOVE, WHICH DISCHARGED THIS INSTRUMENT'S
+  DECLARED DEBT AND DELETED EVERY LINE OF IT. The counters, log sites, token and throttle
+  described below NO LONGER EXIST IN THE TREE. Kept because it records the design of the
+  instrument that produced the measurement the fix rests on, and because the measurement itself
+  is quoted in the entry above rather than here.]**
+  **2026-08-27, `strat-gameplay-engineer` -- HOVER DIAGNOSTIC: `OnHover` IS NOW OBSERVABLE, AND
+  THE INSTRUMENT CARRIES ITS OWN CONTROL. INSTRUMENTATION ONLY -- NO FIX, NO INPUT-ROUTE CHANGE.**
+  In the integration tree `E:/MultiAgent/Stratocracy` on `master`, branched from `5e0333f`.
+  Two files modified, both mine: `Source/StratPlay/StratPlayerController.h` (+44) and
+  `Source/StratPlay/StratPlayerController.cpp` (+105), zero lines removed in either. Nothing
+  committed, nothing staged, no asset, no config, no test. No suite was run and no suite figure
+  is stated here; `global.md` owns that and any verdict.
+  - **WHAT THE GAP WAS, AND IT IS AN INSTRUMENT GAP RATHER THAN A CODE ONE.** `content.md`'s
+    playtest could not distinguish "`OnHover` never ran" from "`OnHover` ran and failed to
+    resolve a hex". It reached the first only by planting a hover hex and watching it survive 28
+    samples -- sound, but derived from a model field two frames downstream of the handler, and it
+    needed a trick to get even that far. Nothing anywhere printed when the handler itself ran.
+  - **THE SHAPE. TWO COUNTERS, TWO LOG SITES, ONE SCHEDULE.** `HoverHandlerCalls` counts entries
+    to `OnHover`; `HoverResolveCalls` counts entries to `UpdateHoverFromCursor`. Both are plain
+    `uint32` members, not `UPROPERTY`s, for `ProductionTargetHex`'s stated reason. **They are
+    members and not function-local `static`s deliberately**: a `static` is process-wide and would
+    carry a previous PIE session's count into the next one, making "never ran this session"
+    indistinguishable from "ran last session". The controller is respawned per PIE session, so a
+    member resets exactly when the question resets.
+  - **THE SECOND SITE IS THE FIRST'S CONTROL, WHICH IS THE POINT OF HAVING TWO.** `OnHover` is
+    private, unreflected and reachable only through Enhanced Input, so nobody can demonstrate its
+    line is CAPABLE of printing -- and this record has been bitten before by an absence measured
+    on an instrument never shown able to speak. `UpdateHoverFromCursor` IS console-reachable, and
+    the playtest already drove it that way 30 times out of 30. So one
+    `ke StratPlayerController UpdateHoverFromCursor` prints a line that both proves the channel
+    works and reports `OnHover`'s count out of the running game. A forced call answering
+    `OnHover has run 0 time(s)` after a minute of the cursor circling the board settles the
+    hypothesis with no planted state at all.
+  - **THE BRANCH IS VISIBLE AND NO SECOND CURSOR TRACE WAS ADDED.** `OnHover` reads the branch
+    back out of `Hover` after the call -- latched hex means the cursor resolved, cleared means it
+    took the off-board path. A struct read, not a re-trace: this file has ONE cursor-to-hex route
+    and a diagnostic is not a reason to grow a second.
+  - **THE VERBOSITY SPLIT IS OPPOSITE AT THE TWO SITES, AND EACH REASON FAILS TO APPLY AT THE
+    OTHER.** `OnHover` logs at `Warning`, because `LogStratPlay`'s default runtime verbosity is
+    `Log` and a `Verbose` line would print nothing until somebody typed `log LogStratPlay
+    Verbose` -- which makes an absent line ambiguous between "the handler never ran" and "nobody
+    raised the verbosity", the exact ambiguity this exists to remove. That is safe there because
+    **no automation clause can reach `OnHover` at all**, so it cannot turn a clause
+    `succeededWithWarnings`. `UpdateHoverFromCursor` logs at `Log`, because the wave-0 hover
+    clauses DO call it directly and a `Warning` raised inside a clause is a record-visible change
+    to the suite made by a diagnostic.
+  - **THE TOKEN IS `HOVER-DIAG` AND DELIBERATELY NOT `STRAT-`.** Every `FOutputDevice` capture in
+    `Source/StratPlay/Tests/` filters on `STRAT-CMD` or `STRAT-AI`, and several assert exact line
+    counts over their window (`StratGuidanceInputGates.cpp`'s `Lines.Num(), 0` among them). A
+    line carrying either prefix would enter those windows.
+  - **AN OFF-BY-ONE THAT WOULD HAVE FAKED THE FAILING READING, CAUGHT BEFORE THE SECOND BUILD.**
+    `UpdateHoverFromCursor` runs INSIDE `OnHover`, so its control line reports `OnHover`'s count
+    from within the very call being counted. Incrementing after the call would have made a
+    handler that had run exactly once report `OnHover has run 0 time(s)` -- the precise false
+    zero this instrument exists to abolish, printed by the instrument itself. `OnHover` therefore
+    increments FIRST and reports AFTER; the report has to be after, because the branch it names
+    is read back from `Hover`.
+  - **BOUNDED BY POWERS OF TWO, `(C & (C - 1)) == 0`, EVALUATED AFTER THE INCREMENT.** `OnHover`
+    is bound `Triggered` on a 2D-axis action over mouse XY, so it fires at mouse-move rate. Call
+    1 always prints, then 2, 4, 8, 16 ... -- about twenty lines for a whole session, 32 lines at
+    `2^32` by construction. The alternatives were considered and rejected in the code comment: a
+    first-call latch cannot separate "fired once" from "streaming"; a fixed every-Nth throttle is
+    silent for the first N-1 calls and so reproduces the same false zero the playtest already
+    hit; a time-based throttle makes the printed count depend on how fast the human moved.
+  - **THE DEBT, WITH ITS DISCHARGE CONDITION, STATED IN THE HEADER AS WELL AS HERE.** This is
+    instrumentation for one open question, not a feature. Both members, both log sites and both
+    comment blocks come out once the hover route is proven working or replaced. If it is still
+    here after that question closes it is dead weight in a hot path, and it should be deleted
+    rather than downgraded.
+  - **BUILD, GREEN, EDITOR CLOSED.** `Build.bat StratocracyEditor Win64 Development -waitmutex`
+    -> `Result: Succeeded`, 15.31 s, 11 actions, zero warnings and zero errors printed;
+    `[Adaptive Build] Excluded from StratPlay unity file: StratPlayerController.cpp` and both
+    `UnrealEditor-StratPlay.lib` and `.dll` relinked.
+  - **WHAT I DID NOT TOUCH, BECAUSE THE TASK SAID SO AND BECAUSE IT WOULD HAVE DESTROYED THE
+    MEASUREMENT.** `bShowMouseCursor`, `SetupInputComponent`'s binding, the `IA_Hover` asset, the
+    `IMC_Selection` row and the Blueprint default are all unchanged. Fixing the route in the same
+    pass that instruments it would leave nobody able to say which change did it.
+  - **MY READING OF THE HYPOTHESIS, OFFERED AS A READING AND NOT AS A FINDING.** The tree is
+    consistent with it and contains nothing that contradicts it: `IA_Hover` is the project's only
+    non-Boolean action and `Mouse2D` its only axis key, so the measured split -- seven key rows
+    working, one axis row silent -- has exactly one structural difference behind it. **And the
+    source of the `True` the playtest read off the live controller is IN THIS CLASS, which I had
+    assumed it was not until I grepped:** `AStratPlayerController`'s constructor sets
+    `bShowMouseCursor = true` with a comment saying a turn-based game is played with a cursor and
+    that it is set in the constructor rather than `BeginPlay` so a Blueprint subclass can
+    override it. No `SetInputMode` call exists anywhere in `Source/StratPlay/`. So if the
+    hypothesis holds, the fix is a decision about input MODE rather than about the hover code:
+    `FInputModeGameAndUI` with `SetHideCursorDuringCapture(false)`, or an explicit capture, or
+    reading the cursor position on tick instead of via an axis action -- and the last of those
+    would be a route change, which is why none of them is in this diff. The instrument above is
+    what decides which question is even being answered.
+
 - **2026-08-26, `strat-gameplay-engineer` -- WAVE 0: THE HOVER INPUT SURFACE. C++ ONLY, IN THE
   WORKTREE `E:/MultiAgent/Strat-wt/slot-1` ON `feat/hover-input`, BRANCHED FROM `69e75bb`.
   NOTHING IS COMMITTED, NOTHING IS STAGED, NO ASSET WAS TOUCHED AND NO TEST WAS WRITTEN.** No

@@ -41,7 +41,11 @@
 // [AMENDED, wave 0: this paragraph said "THE FOUR ACTIONS" and "all five null" -- two
 // different counts of the same set, in one paragraph, and BOTH were already wrong before
 // wave 0 touched anything: `OpenProductionMenuAction` landed on 2026-08-22 and `HoverAction`
-// lands with this amendment, and the paragraph had counted neither. The counts are removed
+// lands with this amendment, and the paragraph had counted neither. [`HoverAction` was
+// REMOVED again on 2026-08-27 -- see the block where it used to be declared. This sentence is
+// left standing as the history it is: it records what wave 0 did, and a set that shrinks
+// invalidates a census exactly as a set that grows does, which is the same argument the
+// sentence was already making.] The counts are removed
 // rather than refreshed, AND NO ORDINAL IS WRITTEN IN THEIR PLACE -- not even in this note,
 // whose own first draft called those two properties "the fifth" and "the sixth" and so
 // restated the count it had just removed. A count of a set that is still growing is stale by
@@ -267,6 +271,9 @@ public:
 	 * calls to this." -- a count of a growing set, and
 	 * the set has grown twice since. Not every Enhanced Input handler reaches this method:
 	 * `OnToggleProductionMenu` and `OnHover` deliberately do not, and each says so.]
+	 * [AMENDED 2026-08-27: `OnHover` no longer exists -- the hover is polled on `Tick`, which
+	 * likewise does not reach this method. The claim is unchanged in substance and only its
+	 * example moved.]
 	 *
 	 * THE ORDER IS THE CONTRACT: decide, submit, and only then tell the machine the command
 	 * applied. `FStratSelectionMachine::NotifyCommandApplied` is documented "call it only on
@@ -309,7 +316,11 @@ public:
 	/**
 	 * Re-resolves the hovered hex from the cursor and refreshes if it moved.
 	 *
-	 * THE ONE HOVER PATH IN THIS CLASS, and `OnHover` is a one-line call to it. PUBLIC for
+	 * THE ONE HOVER PATH IN THIS CLASS, and `Tick` is a one-line call to it. [AMENDED
+	 * 2026-08-27: "and `OnHover` is a one-line call to it". The invariant -- one hover path,
+	 * whatever drives it -- is what the sentence was for and is unchanged; the driver is what
+	 * moved, from an Enhanced Input handler that was measured never to fire to a tick poll.
+	 * See `Tick`'s definition for the measurement.] PUBLIC for
 	 * `RefreshFromMachine`'s reason -- a hand-over, a debug command or a gate should be able
 	 * to drive the same path the mouse does -- and because a hover that could only be produced
 	 * by a live cursor over a live viewport is a hover no clause can reach.
@@ -562,9 +573,13 @@ protected:
 	 * on the terrain under it.
 	 *
 	 * IT MAPS TO NO `EStratSelectionEvent`. Unlike the selection actions above, it does not reach
-	 * `HandleSelectionEvent` at all -- nor does `HoverAction` below. [AMENDED, wave 0: "Unlike
+	 * `HandleSelectionEvent` at all -- and neither does the hover, which is polled on `Tick`.
+	 * [AMENDED, wave 0: "Unlike
 	 * the four above". A census, and one that silently required this property to stay the fifth
-	 * declaration in the file.] It starts no command, advances no selection and submits
+	 * declaration in the file. AMENDED AGAIN 2026-08-27: "nor does `HoverAction` below" -- that
+	 * property was removed with the dead Enhanced Input hover route, so the sentence named a
+	 * declaration that is no longer in the file. The claim it makes is unaffected.] It starts
+	 * no command, advances no selection and submits
 	 * nothing. `OnToggleProductionMenu` calls `ToggleProductionMenu` and that is the whole
 	 * path.
 	 *
@@ -577,34 +592,44 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Input")
 	TObjectPtr<UInputAction> OpenProductionMenuAction;
 
-	/**
-	 * §2.11.3 / §2.11.2's hover: the cursor moved, so re-resolve which hex it is over.
-	 *
-	 * A NEW ACTION, AND THE FIRST ONE THAT IS NOT A DECISION. The actions above are each a
-	 * discrete statement by the player -- a click, a cancel, a wait, an end-turn, a menu
-	 * toggle -- and every one of them binds `ETriggerEvent::Started`. This one is a
-	 * CONTINUOUS report of where the cursor is, so it binds `ETriggerEvent::Triggered` and is
-	 * the one action for which `Started` would be wrong: `Started` fires once when the mouse
-	 * begins moving and not again until it stops and starts, which would leave the hovered hex
-	 * frozen at wherever the cursor was on the first frame of a drag.
-	 *
-	 * THE ASSET IS A 2D-AXIS ACTION OVER MOUSE XY, AND THE VALUE IS NEVER READ. `OnHover`
-	 * takes no argument and asks `HexUnderCursor` for the answer. That is deliberate rather
-	 * than lazy: a mouse DELTA is not a position, turning one into a position is arithmetic
-	 * over a viewport this class has no business performing, and the cursor's position is
-	 * already known to the engine method the select path uses. The action exists to say WHEN
-	 * to look, not WHERE.
-	 *
-	 * NULL IS SUPPORTED exactly as the actions above are: no binding, one Warning naming this
-	 * property, and a match that is otherwise fully playable -- what is lost is the hover, and
-	 * `UpdateHoverFromCursor` / `SetHoveredHex` remain reachable from a console or a gate.
-	 * That matters more here than for the others, because this property's asset and its
-	 * mapping-context row are authored in a separate editor batch: between this code landing
-	 * and that batch, the shipping `BP_` subclass has this null, and a null here must cost a
-	 * Warning and nothing else.
-	 */
-	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Input")
-	TObjectPtr<UInputAction> HoverAction;
+	// THERE IS NO `HoverAction` PROPERTY, AND IT WAS REMOVED RATHER THAN LEFT UNBOUND.
+	// 2026-08-27. Wave 0 declared one here -- a 2D-axis action over mouse XY, bound on
+	// `ETriggerEvent::Triggered` -- and its `IA_Hover` asset, its mapping-context row and its
+	// Blueprint default were all authored and byte-verified. A human playtest on an
+	// instrumented build then measured the handler running EXACTLY ONCE in three and a half
+	// minutes, on a focus transition, while the cursor swept the board unregistered. The
+	// measurement and the control that makes it a measurement are recorded on
+	// `AStratPlayerController::Tick` in the `.cpp`, which is the route that replaced it.
+	//
+	// THE PROPERTY IS GONE BECAUSE A WIRED-AND-DEAD ASSET REFERENCE IS WORSE THAN NO
+	// REFERENCE. Left in place it would read to the next reader as the hover mechanism --
+	// `EditDefaultsOnly`, non-null on the shipping Blueprint, bound without a warning -- and
+	// send anyone debugging the hover to the trigger event rather than to the tick. This
+	// project has a recorded incident of the mirror-image defect, a correct reflected verb no
+	// player could reach; the lesson taken from it was to check the ROUTE, and the route here
+	// is `Tick`.
+	//
+	// WHAT THIS LEFT BEHIND IN `Content/`, AND IT HAS SINCE BEEN CLEARED. Removing the property
+	// orphaned three things: the `IA_Hover` asset, its row in `IMC_Selection`, and the
+	// Blueprint default on `BP_StratPlayerController` that pointed at `HoverAction`. This block
+	// originally said that was a content-lane cleanup, not this file's, and that nothing broke
+	// if it was never done. Both halves were true; the cleanup was then done in the same
+	// working tree, before either change was committed -- `IA_Hover` deleted, the
+	// `IMC_Selection` row removed, and the Blueprint re-saved so the default is DROPPED from
+	// the package rather than merely ignored as an unknown property on load.
+	//
+	// THE PARAGRAPH IS AMENDED IN PLACE RATHER THAN DELETED, because what it records is not
+	// the outstanding work -- that is finished -- but WHY those three assets became dead at
+	// all. An asset deleted with no surviving explanation is the kind of removal that gets
+	// undone by the next reader who finds a mapping context with a gap in it. The explanation
+	// is the paragraph above this one: the trigger event was measured never to fire, and the
+	// route is `Tick`.
+	//
+	// THIS FILE STATES NO CURRENT `Content/` FACT AND SHOULD NOT ACQUIRE ONE. The lines above
+	// are history with a date on them, not a description of the working tree; `Content/` is
+	// the content lane's and its live state is `content.md`'s to record. A prose block in a
+	// header cannot be kept true about assets it does not own, which is exactly how the
+	// sentence being amended here went stale within a day of being written.
 
 	// ---- Lifetime ---------------------------------------------------------
 
@@ -620,6 +645,25 @@ protected:
 	 * until there is something to decorate.
 	 */
 	virtual void BeginPlay() override;
+
+	/**
+	 * Polls the cursor for §2.11.3 / §2.11.2's hover. One call to `UpdateHoverFromCursor`.
+	 *
+	 * THE ONLY POLLING IN THIS CLASS, AND IT EXISTS BECAUSE THE EVENT ROUTE WAS MEASURED
+	 * DEAD. Everything else here runs from an input trigger. The measurement that put this
+	 * method in the file -- a human playtest in which the Enhanced Input hover handler ran
+	 * once in three and a half minutes while the cursor swept the board -- is recorded in
+	 * full on the definition in the `.cpp`, together with the input-mode route that was
+	 * rejected and why. Read that block before replacing this with an action binding.
+	 *
+	 * A TRACE PER FRAME AND NOT A MODEL REBUILD PER FRAME. `HexUnderCursor` returns before
+	 * tracing when there is no board; when there is one, `FStratHoverState`'s setters report
+	 * whether the resolved hex actually moved and `ApplyHoverChange` refreshes only then. The
+	 * de-duplication is not new and is not assumed here -- see `StratHoverState.cpp`.
+	 *
+	 * IT DISCARDS THE RETURN VALUE, and it is the only caller that does. See the definition.
+	 */
+	virtual void Tick(float DeltaSeconds) override;
 
 	/**
 	 * Releases the view-decorator registration.
@@ -674,7 +718,11 @@ private:
 	// and "The four Enhanced Input
 	// handlers" -- there are more Enhanced Input handlers than these, and two of them
 	// (`OnToggleProductionMenu`, `OnHover`) do not call `HandleSelectionEvent` at all, so the
-	// old sentence was mis-describing the group as well as miscounting it.]
+	// old sentence was mis-describing the group as well as miscounting it.
+	// AMENDED AGAIN 2026-08-27: `OnHover` is gone -- the hover is polled on `Tick` now -- so
+	// `OnToggleProductionMenu` is once more the only Enhanced Input handler that skips
+	// `HandleSelectionEvent`. The 2026-08-27 pass deliberately did NOT rewrite the sentence to
+	// say "one of them", because that is the count this note exists to warn against writing.]
 	void OnSelect();
 	void OnCancel();
 	void OnWait();
@@ -682,25 +730,18 @@ private:
 
 	/**
 	 * §2.11.5's production-menu handler. One call to `ToggleProductionMenu`, and it does not go
-	 * through `HandleSelectionEvent` at all -- nor does `OnHover`.
+	 * through `HandleSelectionEvent` at all -- and neither does the tick-polled hover.
+	 * [AMENDED 2026-08-27: "nor does `OnHover`", a handler that no longer exists.]
 	 *
 	 * [AMENDED, wave 0: "§2.11.5's fifth handler. One call to `ToggleProductionMenu`, and the
 	 * only one of the five that does not go through `HandleSelectionEvent`." A count of a
 	 * growing set, and by the end of wave 0's own pass it was contradicted by wave 0's own
 	 * added text a few lines above, which names `OnHover` as a second such handler. Two
-	 * comments in one block disagreeing about the same fact is worse than either being stale.]
+	 * comments in one block disagreeing about the same fact is worse than either being stale.
+	 * The `OnHover` half of that history ended on 2026-08-27 with the handler itself; the
+	 * warning about counting a moving set is why this note is not being rewritten to a number.]
 	 */
 	void OnToggleProductionMenu();
-
-	/**
-	 * §2.11.3 / §2.11.2's hover handler. One call to `UpdateHoverFromCursor`.
-	 *
-	 * IT DISCARDS THE RETURN VALUE, and that is the only thing in this class that does. A
-	 * hover that did not move is not news to anybody -- there is no caller waiting on it and
-	 * nothing to log -- whereas `UpdateHoverFromCursor`'s other callers are a clause and a
-	 * hand-over, which both want the answer. The value is returned for them and ignored here.
-	 */
-	void OnHover();
 
 	/**
 	 * The one place a hover decides whether to refresh.

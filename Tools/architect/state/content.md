@@ -37,6 +37,59 @@
 
 ## NEXT
 
+- **THE TICK ROUTE WORKS UNDER A HUMAN'S MOUSE, AND THE HOVER ASSETS ARE GONE BECAUSE NOTHING
+  REFERENCES THEM ANY MORE.** 2026-08-27, later the same day, same live editor session reopened
+  on the rebuilt binary. **Attribution, separately:** the ACTING is the `coordinator` under
+  `CLAUDE.md`'s **editor-driver clause**; the FILE WRITE is the `coordinator` under THIS file's
+  header fallback condition. The measured absence and its control are unchanged from the entries
+  below. A human drove the mouse. `global.md` carries the wave status and any verdict; this file
+  states no count and no verdict.
+  - **THE RELINK IS WITNESSED BY A REMOVAL THIS TIME, which is the same instrument run backwards.**
+    `class_properties` on `/Script/StratPlay.StratPlayerController` returns **91 entries**, of
+    which the `Action|Mapping|Hover` filter returns **seven** and no `HoverAction` -- exactly the
+    figures this file recorded for the PRE-wave binary, and the exact reverse of the 92/eight that
+    witnessed the default being settable. The property whose appearance proved one relink proved
+    the next one by disappearing.
+  - **THE BEHAVIOUR, READ-ONLY AND UNCONTAMINATED.** 40 samples over ~80 seconds of
+    `UStratMatchSubsystem::AppliedModel`, no forced calls of any kind: **34 `True` across 25
+    DISTINCT HEXES**, and **6 `False` in one CONTIGUOUS run**. The distinct-hex count is the
+    claim that matters -- a single `True` could be a coincidence, 25 following a cursor cannot --
+    and the contiguity of the `False` block is the off-board branch working rather than noise.
+    Both arms of `UpdateHoverFromCursor` are now witnessed by a mouse. **The same poll against the
+    Enhanced Input route gave 28/28 `False` and ZERO distinct hexes**, which is the comparison
+    that makes these numbers mean something.
+  - **WHAT THE ASSET CLEANUP DID, verified from saved bytes with a control at every step.** The
+    C++ fix removed `HoverAction` and `OnHover` entirely, so all three assets were dead.
+    - `IMC_Selection` lost its eighth row. Read the exported `DefaultKeyMappings` value, removed
+      exactly the `IA_Hover`/`Mouse2D` element, set it back, read it back, saved. In the saved
+      bytes `IA_Hover` went **2 -> 0** and `Mouse2D` **1 -> 0**, while the controls `IA_Select`
+      and `IA_EndTurn` each still read **2**. Seven rows remain, in order.
+    - `BP_StratPlayerController` was re-saved so the now-unknown property is dropped rather than
+      merely ignored on load. **THE RESULT IS BYTE-IDENTICAL TO ITS PRE-DEFAULT STATE**: sha256
+      `a4c3a209...` at 21848 bytes, matching the `8f888ea` blob exactly, with the `db3de97` blob
+      (`4b52e88c...`, 22028 bytes) as the control proving the comparison can tell them apart.
+      `git cat-file --filters` was used rather than `git show`, because these are LFS pointers.
+      So the default this record spent a day setting is removed with zero collateral change.
+    - `IA_Hover` was deleted. **The reference scan came FIRST and carried a control**: a single
+      `grep -a -rl` over `Content/` and `Source/` found `IA_Hover` in its own asset and in two
+      `.cpp`/`.h` files -- both dated amendment PROSE naming the removed symbol, not code --
+      while the same scan for `IA_Select` returned `IMC_Selection` and the Blueprint, proving it
+      finds real references.
+  - **TWO MEASURED FACTS ABOUT THE NeoStack API, both new here.**
+    - **`delete_asset` EXISTS; `remove_asset` and `asset_delete` DO NOT.** Probed by type before
+      calling. Deleting from the shell is not an alternative while the editor is up: `rm` on a
+      loaded `.uasset` fails `Device or resource busy`.
+    - **A DATA ASSET TAKES `get`/`set` WITH ONE ARGUMENT, A BLUEPRINT TAKES TWO.**
+      `a:get("self", "DefaultKeyMappings")` on an `InputMappingContext` answers
+      `property "self" not found`; `a:get("DefaultKeyMappings")` answers. The Blueprint form
+      recorded above -- `bp:get("self", "HoverAction")` -- is the other shape, and the two are
+      not interchangeable.
+  - **THE EDITOR STAGED THE DELETION ITSELF.** After `delete_asset`, `git status` showed
+    `D  Content/StratInput/IA_Hover.uasset` in the INDEX, staged, without any `git add`. This is
+    the mirror of the behaviour this record already carries in the other direction, where the
+    editor leaves a saved asset unstaged as `AM`. Nothing here unstaged it; the user owns staging
+    and was told.
+
 - **THE HUMAN PLAYTEST RAN, AND THE HOVER DOES NOT REACH THE GAME: `Mouse2D` DELIVERS NO
   `Triggered` EVENT, WHILE EVERY OTHER LINK IN THE CHAIN IS PROVEN WORKING.** **THE HEADLINE IS
   ONE INFERENTIAL STEP PAST THE MEASUREMENT, and the step is marked here rather than left for a

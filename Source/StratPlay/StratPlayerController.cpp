@@ -46,8 +46,18 @@ AStratPlayerController::AStratPlayerController()
 	// cursor, and the alternative -- discovering it is hidden in PIE -- costs a build.
 	bShowMouseCursor = true;
 
-	// THIS CONTROLLER MUST TICK, AND NOT BECAUSE IT POLLS ANYTHING. It polls nothing: every
-	// path below runs from an input trigger. It ticks because THE TRIGGERS ARE EVALUATED
+	// THIS CONTROLLER MUST TICK, AND THERE ARE NOW TWO INDEPENDENT REASONS. The original one
+	// is below and is unchanged. [AMENDED 2026-08-27: this paragraph opened "AND NOT BECAUSE
+	// IT POLLS ANYTHING. It polls nothing: every path below runs from an input trigger." That
+	// was true when written and is now false in exactly one place -- `Tick` polls the cursor
+	// for the hover, because the Enhanced Input route for it was measured never to fire; that
+	// method's block carries the measurement. The correction is recorded here rather than in
+	// the new code alone, because a reader arriving at `bCanEverTick` with a performance
+	// question would read the old sentence and conclude the tick body was empty. NOTE WHAT IS
+	// NOT AMENDED: the reason below is not weakened by the second consumer, and turning the
+	// tick off would now break input twice over rather than once.]
+	//
+	// IT TICKS BECAUSE THE TRIGGERS ARE EVALUATED
 	// DURING THE TICK. `APlayerController::TickActor` calls `TickPlayerInput`, which calls
 	// `PlayerInput->ProcessInputStack(...)`, and that is the one place Enhanced Input walks
 	// its trigger state machines and fires the delegates `SetupInputComponent` bound. A
@@ -196,8 +206,12 @@ void AStratPlayerController::SetupInputComponent()
 	// decision -- a click, a cancel, a wait, an end-turn -- and `Triggered` would repeat them
 	// for the length of a held key. A repeated Move is refused by the rules module the second
 	// time (the unit has moved), so the visible symptom would be a log full of refusals rather
-	// than a wrong board; it is still the wrong event. NOT A STATEMENT ABOUT EVERY BINDING IN
-	// THIS FUNCTION: the hover binding at the bottom is `Triggered` on purpose and says why.
+	// than a wrong board; it is still the wrong event. [AMENDED 2026-08-27: this sentence used
+	// to continue "NOT A STATEMENT ABOUT EVERY BINDING IN THIS FUNCTION: the hover binding at
+	// the bottom is `Triggered` on purpose and says why." There is no longer a hover binding
+	// in this function -- see the block at the end of it -- so `Started` is now true of every
+	// binding here without exception. The carve-out is struck rather than deleted because a
+	// reader who remembers it should find out where it went.]
 	// AND EACH NULL BRANCH NOW SAYS SO BY NAME. THIS PART IS PERMANENT. It outlived the
 	// temporary phase 6 diagnostics on purpose and is not to be stripped with them. Until
 	// phase 6 THE GUARDS THAT EXISTED THEN were silent on the null side, so a log in which no
@@ -280,27 +294,11 @@ void AStratPlayerController::SetupInputComponent()
 			*GetName());
 	}
 
-	// THE HOVER BINDING, AND IT IS THE ONLY `Triggered` ONE IN THIS FILE. The bindings above
-	// are `Started` because each is a discrete decision; this one reports where the cursor is,
-	// continuously, and `Started` would fire once at the beginning of a mouse movement and not
-	// again -- freezing the hovered hex at wherever the cursor was on that first frame while
-	// the player went on moving. The symptom would read as a card showing the wrong hex, which
-	// sends the next reader to the forecast rather than to the trigger event.
-	//
-	// THE COST OF `Triggered` IS PAID IN `UpdateHoverFromCursor` AND NOT HERE. It runs a trace
-	// per mouse-move frame and refreshes the model only when the resolved hex actually
-	// changed; see `FStratHoverState`'s header on why the de-duplication lives in the state
-	// rather than in the refresh.
-	if (HoverAction != nullptr)
-	{
-		EnhancedInput->BindAction(HoverAction, ETriggerEvent::Triggered, this,
-			&AStratPlayerController::OnHover);
-	}
-	else
-	{
-		UE_LOG(LogStratPlay, Warning,
-			TEXT("%s: HoverAction is unset; no hover binding exists."), *GetName());
-	}
+	// THERE IS NO HOVER BINDING HERE, AND ITS ABSENCE IS THE POINT. Wave 0 bound a
+	// `HoverAction` on `ETriggerEvent::Triggered` and it was MEASURED NEVER TO FIRE -- see
+	// `Tick` below for the measurement and the route that replaced it. Do not re-add one
+	// without reading that block: an axis binding here would be a second author of the hover,
+	// racing the tick poll for the same `FStratHoverState`.
 }
 
 // ---------------------------------------------------------------------------
@@ -417,9 +415,74 @@ void AStratPlayerController::OnToggleProductionMenu()
 	}
 }
 
-void AStratPlayerController::OnHover()
+// ---------------------------------------------------------------------------
+// §2.11.3 / §2.11.2's hover: WHY IT IS POLLED ON TICK AND NOT DRIVEN BY AN ACTION.
+//
+// THIS REPLACES A MEASURED-DEAD ROUTE, AND THE MEASUREMENT IS THE WHOLE JUSTIFICATION.
+// Wave 0 wired the hover as a sixth Enhanced Input action -- `IA_Hover`, an `Axis2D` over
+// `Mouse2D`, bound here on `ETriggerEvent::Triggered` -- and its asset and mapping-context
+// row were authored and byte-verified. It never fired. Instrumented on 2026-08-27 with a
+// per-instance counter on the handler and a console-forcible control on the resolve path,
+// a human playtest measured, over three and a half minutes on a seeded 99-hex board:
+//
+//     OnHover ran EXACTLY ONCE, seven seconds after the match seeded, on a focus
+//     transition with the cursor off the board. Between two forced console reads of the
+//     counter -- `ke StratPlayerController UpdateHoverFromCursor`, which prints the
+//     handler's count out of the running game -- the human swept the cursor across the
+//     board for fifteen seconds and THE COUNT DID NOT MOVE.
+//
+// The control in that pair is what makes the absence a measurement rather than a silence:
+// the forced call printed, which proved the log channel worked and that the editor had
+// loaded the rebuilt binary, in the same line that read the handler's zero. An independent
+// earlier observation agrees -- a planted hover cleared at the moment the human moved the
+// cursor OUT of the window, which is another focus transition and not a mouse move.
+//
+// WHAT THAT PROVES AND WHAT IT DOES NOT. It proves mouse movement produces no `Triggered`
+// event for a mouse-axis action on this controller, as configured. IT DOES NOT PROVE WHY.
+// The standing hypothesis is that a visible, uncaptured cursor feeds no axis to
+// `UPlayerInput` -- this class sets `bShowMouseCursor = true` and calls `SetInputMode`
+// nowhere -- but that mechanism was never isolated, and this file does not assert it.
+// Nothing below depends on the hypothesis being right; it depends only on the measurement,
+// which is about the OBSERVED behaviour of the route and not about its cause.
+//
+// WHY POLLING AND NOT AN INPUT MODE. The obvious repair is `SetInputMode` with capture, and
+// it was rejected on a property this game cannot trade: `bShowMouseCursor = true` is
+// load-bearing -- a mouse-driven hex strategy whose player cannot see the cursor is not the
+// game -- and every input mode that reliably feeds mouse axis does so by capturing, which
+// changes how the cursor behaves at the viewport edge and how a click lands. A route that
+// fixes the hover and makes selection feel different is worse than the bug it fixes. It is
+// also unfalsifiable at our cost: no automation clause in this project reaches
+// `UPlayerInput`, so an input-mode fix could only ever be re-confirmed by another human
+// playtest, whereas the line below is reachable by a clause. If a later pass isolates the
+// capture mechanism and finds a mode that feeds axis with a free visible cursor, this
+// becomes a live alternative again -- and it would still have to beat the testability.
+//
+// THE COST IS ONE TRACE PER FRAME AND IT IS BOUNDED BY THINGS THAT ALREADY EXIST.
+// `HexUnderCursor` returns before tracing when there is no board, so a controller in a
+// world with no seeded match pays a null check. When there is a board it is one
+// `GetHitResultUnderCursor` -- the same single trace the old `Triggered` binding ran per
+// mouse-move frame, and mouse-move frames are most frames a hand is moving. The EXPENSIVE
+// half, the model rebuild, is not paid per frame: `FStratHoverState`'s setters return
+// whether anything actually moved and `ApplyHoverChange` refreshes only then. That
+// de-duplication is not new and is not taken on trust here -- it is the shape those setters
+// were written in (`StratHoverState.cpp`, both setters return `bChanged`) and the playtest
+// exercised it 30 samples out of 30 while tracking the cursor across two hexes.
+//
+// IT POLLS, AND THE CONSTRUCTOR'S TICK COMMENT HAS BEEN CORRECTED FOR IT. That block said
+// "It polls nothing: every path below runs from an input trigger", which was true when it
+// was written and is now false in exactly one place -- this one. The reason the controller
+// must tick is UNCHANGED and is still the phase-6 measurement about Enhanced Input trigger
+// evaluation; this is a second, independent consumer of the same tick.
+// ---------------------------------------------------------------------------
+
+void AStratPlayerController::Tick(float DeltaSeconds)
 {
-	// THE RETURN VALUE IS DISCARDED HERE AND NOWHERE ELSE. See the declaration.
+	Super::Tick(DeltaSeconds);
+
+	// THE RETURN VALUE IS DISCARDED HERE AND NOWHERE ELSE. A hover that did not move is not
+	// news to anybody -- there is no caller waiting on it and nothing to log. It is returned
+	// for `UpdateHoverFromCursor`'s other callers, which are a clause and a hand-over, and
+	// both want the answer.
 	UpdateHoverFromCursor();
 }
 

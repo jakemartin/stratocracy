@@ -1982,6 +1982,107 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-26, COORDINATOR -- THE MVP-GAP AUDIT IS CUT INTO WAVES, AND CUTTING IT CORRECTED TWO
+  OF ITS OWN CLAIMS. ASSIGNMENT ONLY; RECORD-ONLY.** The entry below ends by saying nothing is
+  assigned in it and that turning it into lanes is a separate pass. This is that pass. **NO
+  SOURCE, NO TEST, NO ASSET AND NO CONFIG FILE WAS TOUCHED; NO SUITE WAS RUN AND NO SUITE FIGURE
+  MOVES -- the live figure is the one this file's topmost banner cites. NO PHASE VERDICT IS
+  STATED HERE, and nothing below has been through a gate.** Nothing is dispatched either: a wave
+  is a proposed unit of work until the user starts it.
+  - **TWO OF THE AUDIT'S CLAIMS DID NOT SURVIVE THE TREE, AND BOTH ARE STAMPED WHERE THEY STAND
+    rather than only corrected here** -- an entry carrying the corrected claim in one place and
+    the original in another asserts both. (1) `AStratPlayerController::SkipGuidance` HAS a
+    caller -- `WBP_DirectiveStrip`'s `SkipButton`, built 2026-08-24 at `229fe76` and recorded in
+    `content.md` and in this file's banner of that date. (2) The hover scan did not return zero;
+    45 lines match, two of them shipped `FStratGuidanceView` fields, and `ReachOverlay` contains
+    the substring `hOverlay`, which is why an overlay-only reading looked like silence. **The
+    hover FINDING survives both corrections** -- what is absent is the hover INPUT, not hover
+    vocabulary -- so Wave 0 below is unchanged by them, while the Skip-guidance item is struck
+    from the list entirely.
+  - **THE CONTENTION MAP, because it decides the ordering more than the value does.** Waves 1, 2,
+    3 and 8 all add fields to `StratViewModel.h` and a compose function to `StratViewModel.cpp`.
+    That is a TEXT conflict, which rebases; `Content/` is the one that cannot merge, so every
+    wave's asset tail is authored on the integration tree in its own editor batch, per this
+    project's standing rule. Wave 4 touches `AStratUnitActor::ApplyView` and no view-model field,
+    and Wave 5 touches `FStratAiTurnRunner` and no widget -- those two are the ones that can run
+    beside anything.
+  - **THE WAVES.** Each names its lane, the C++ half, the asset tail, and what it unblocks.
+    - **W0 -- THE HOVER INPUT SURFACE. The unblocker, and the only wave two others sit behind.**
+      Engineer: a hover-shaped `UInputAction` property on `AStratPlayerController` beside the
+      five it carries, hovered-hex resolution reusing the cursor-to-hex route `SelectAction`
+      already uses, hovered-hex state, and the hovered hex carried into the view model. Asset
+      tail: one Enhanced Input asset under `/Game/StratInput`, its mapping-context row, and the
+      Blueprint default on `BP_StratPlayerController` -- no `/Game/` literal in C++. Unblocks W1
+      and W2 and nothing else.
+    - **W1 -- SEC 2.11.3, THE ATTACK FORECAST CARD. The largest gap, and the section the GDD
+      calls the centrepiece.** Engineer: a forecast view struct and its compose function over
+      `FStratBridge::Forecast`, which exists and whose numbers `FStratSelectionMachine` currently
+      discards. Six readouts: damage, counter and its stated reason, HP before -> after, the
+      lethal `Destroys <unit>` line, and the FLAG AT RISK band. Asset tail: one Widget Blueprint.
+      Depends on W0.
+    - **W2 -- THE INFO PANEL, AND WITH IT PER-UNIT HP.** Engineer: a hex info struct (terrain
+      name, move cost, defense bonus) and a unit stat line over `FStratUnitView::Hp`/`HpMax`,
+      which are projected and read by nothing outside `Tests/`. Asset tail: one Widget Blueprint.
+      Depends on W0. **Its consequence is sharper than the element**: today a player cannot see
+      which of their own units is damaged, while Sec 2.6's formula makes a damaged attacker hit
+      softer.
+    - **W3 -- THE PERSISTENT HUD, three of Sec 2.11.2's four elements.** Engineer: the Fame pool
+      and `+X/turn` (`FStratSideView::FameTotal` has exactly one reader and `IncomePerTurn` has
+      none), a purse field for the production menu's own header, an End Turn surface, and a count
+      of units still able to act. Asset tail: the HUD Blueprint and one command-bar widget.
+      Independent of W0 -- this is the wave to run in the second slot.
+    - **W4 -- THE ON-MAP MARKERS. The cheapest wave with a visible payoff.** Engineer:
+      `AStratUnitActor::ApplyView` draws mesh-by-`DefId`, the side material and the guided marker;
+      `bIsFlag` and `bDone` are already projected and read by no drawing code. No new model field.
+      Asset tail: material and mesh work for the flag marker and the unacted pip.
+    - **W5 -- THE AI'S TURN IS NEVER SHOWN.** Engineer, and the largest engine risk on this list:
+      `FStratAiTurnRunner`'s own header states it runs a whole turn SYNCHRONOUSLY, and
+      `FStratMatchConfig::AiTurnDelaySeconds` paces between TURNS. Sec 2.11.2 wants the action
+      list replayed at a watchable pace with the camera stepping and any click skipping to the
+      end. No asset tail beyond the skip affordance. Independent of every other wave.
+    - **W6 -- THE TITLE/MENU SCREEN, and it is a shell rather than a readout.** Sec 2.11.5 fixes
+      the prototype's screen list at four; briefing, match and result are built. Needs a level, a
+      menu widget, new-match/restart/quit routes, and `GameDefaultMap` moved off
+      `Lvl_FerrumCrossing` in `Config/DefaultEngine.ini` -- which is the steward's file, so this
+      is the only wave with a data-lane half. **It gates the packaged build**, since a package
+      today boots straight into a match with no way out of it.
+    - **W7 -- SEC 2.9'S EASY DEFAULT.** `ferrum_crossing.json` is symmetric at 200/200,
+      `Scenario.h` says in as many words that the handicap is a match-setup parameter and not a
+      scenario field, and `FStratMatchConfig` has no field for it. Ours to build, not an upstream
+      re-vendor. Small, and it is the guided opening's own unmet premise.
+    - **W8 -- THE TRANSIENT LAYER, batchable and each item small.** Path preview with cost ticks,
+      the capture-progress pip (`CaptureProgress` projected, unread), the repair-eligibility pip,
+      the BUILD pulse on an affordable factory (`bHasBuiltThisTurn` projected, unread), the income
+      and kill toasts, and the `YOUR TURN`/`ENEMY TURN` banner.
+    - **NOT WAVES.** The packaged build follows W6 rather than standing beside it. The self-play
+      balance sims and the balance lock are crew-side, in `stratocracy-crew`, and no lane here
+      moves them.
+  - **NO WAVE MAY NAME A CLAUSE UNTIL IT HAS AN ACCEPTANCE ID, AND ONLY TWO DO.** The GDD's
+    acceptance set carries five UI IDs, `T-UI-01` through `T-UI-05`, and no others; a clause name
+    in this project is `Stratocracy.<Module>.<AcceptanceID>.<Clause>`. **W1 has an ID on its
+    own**: `T-UI-01` IS the forecast ID -- the forecast shown before commit being produced by the
+    resolution path -- pinned headlessly today, so W1 extends an existing ID to the presentation
+    side and mints nothing.
+    - **W0 RIDES `T-UI-01` TOO. USER RULING, 2026-08-26, RECORDED BY THE `coordinator`.** W0's
+      clauses are named `Stratocracy.<Module>.T-UI-01.<Clause>` and NO NEW ID IS MINTED for it.
+      **The reason the ruling is coherent, stated so a later reader does not have to reconstruct
+      it:** W0 exists to carry a hovered hex to the view model, and the thing that consumes a
+      hovered hex is the forecast card -- W0 is the input half of the same acceptance, split out
+      only because the input is shared with W2. **AND THE STRETCH IS STATED RATHER THAN HIDDEN:**
+      `T-UI-01`'s own GDD sentence is about the forecast EQUALLING the resolution, and a
+      hover-input clause asserts no such equality. So a W0 clause under this ID must assert
+      something the forecast path needs -- that a hovered hex reaches the model, and which hex --
+      and must not be written as though the ID's own claim covered it. A clause that rides an ID
+      it does not test is the unfalsifiable shape this record has been caught by before.
+    - For W2, W3, W4, W5, W6 and W8 there is still no ID and no ruling, and **inventing one in a
+      test name is a failure this record has already recorded**: a proposed identifier greps
+      exactly like a defined one. Each is the user's to rule the same way, or to mint upstream in
+      the GDD.
+  - **AND THE ORDERING IS A JUDGEMENT, NOT A MEASUREMENT** -- the same caveat the audit ended on,
+    undischarged by cutting the list into waves. The sequence is by what the player loses without
+    each item, with W0 first only because two waves cannot start without it. This record still
+    holds no MVP burndown to check the ordering against.
+
 - **2026-08-26, COORDINATOR -- AN MVP-GAP AUDIT READ OFF THE TREE, AND THE LARGEST GAP IS THE
   SECTION THE GDD ITSELF CALLS THE CENTREPIECE. RECORD-ONLY.** The user asked what the MVP
   still lacks. Answered by reading `Source/`, `Content/`, `Config/` and `Data/` rather than this
@@ -2020,6 +2121,18 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     are both specified as hover-driven, so both sit behind the same absent Enhanced Input
     surface. `AStratPlayerController` carries `SelectAction`, `CancelAction`, `WaitAction`,
     `EndTurnAction` and `OpenProductionMenuAction`, and nothing for hover.
+    - **[STAMPED 2026-08-26, LATER PASS, SAME WRITER -- THE SECOND SENTENCE OF THIS BULLET IS
+      WRONG AND ITS LAST ONE IS RIGHT.** The scan did NOT return zero: a case-insensitive `hover`
+      scan of `Source/` returns 45 lines, and two of them are SHIPPED view-model fields --
+      `FStratGuidanceView::EndTurnGateHover` and `FStratGuidanceView::LockedUnitHover`, filled by
+      `FStratGuidedOpening::LockedUnitHoverText` and `EndTurnGateHoverText`. Hover STRINGS for a
+      widget to render are built and clause-pinned. **THE INSTRUMENT EXPLAINS THE ZERO:**
+      `ReachOverlay` contains the substring `hOverlay`, so that scan matches every overlay
+      identifier in `StratBoardActor`, and a truncated read of that output looks like nothing but
+      overlays. WHAT IS ACTUALLY ABSENT is the hover INPUT -- no hover-shaped `UInputAction` on
+      `AStratPlayerController`, no hovered-hex state, and nothing carrying a hovered hex into the
+      view model -- which is this bullet's LAST sentence and is untouched by the correction. The
+      finding stands; the measurement offered for it did not.]**
   - **THREE OF SEC 2.11.2'S FOUR PERSISTENT ELEMENTS ARE UNBUILT.** The scoreboard is the one
     that exists.
     - **The Fame pool and its `+X/turn` are drawn nowhere.** `FStratSideView::FameTotal` is
@@ -2062,6 +2175,25 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
       CALLER -- no input action, no button. Sec 2.11.6 specifies a `Skip guidance` control that
       kills guidance instantly for anyone. Already on this record since 2026-08-24 and still
       true; restated here because it is an MVP surface and not only a loose end.
+    - **[STAMPED 2026-08-26, LATER PASS, SAME WRITER -- THE BULLET ABOVE IS FALSE, AND THIS
+      RECORD HAD ALREADY SAID SO.** `AStratPlayerController::SkipGuidance` HAS A CALLER:
+      `WBP_DirectiveStrip`'s `SkipButton`, `On Clicked` -> `Cast To StratPlayerController` ->
+      `Skip Guidance`, authored 2026-08-24 and committed at `229fe76`. `content.md` records the
+      authoring, the fresh `read_graph` link check and the PIE capture that shows the chip
+      painted; this file's own 2026-08-24 banner records what it did for that `OWNED:` line.
+      RE-VERIFIED INDEPENDENTLY HERE WITH NO EDITOR, by reading the package's string table: the
+      same `.uasset` carries `SkipButton`, `SkipLabel`, `Skip guidance`, a `K2Node_CallFunction`,
+      the bound-event name
+      `BndEvt__WBP_DirectiveStrip_SkipButton_K2Node_ComponentBoundEvent_0_OnButtonClickedEvent__DelegateSignature`,
+      and a graph comment quoting Sec 2.11.6. **THE ROUTE OF THE ERROR IS WORTH MORE THAN THE
+      ERROR.** The sentence "already on this record since 2026-08-24 and still true" cited this
+      record for a claim this record RETIRED on that very date: it came from a memory note
+      written before the button existed, and was never checked against the tree the rest of that
+      entry was read off. The parent entry's own stated limit -- no Widget Blueprint graph was
+      read -- names exactly where it would have been caught, and a string-table read costs one
+      command and no editor. So the bullet's heading is wrong too: ONE specified control is
+      unreachable, not two. What remains unmeasured about the Skip control is only the Slate
+      click itself, for the injection reason `content.md` gives.]**
     - **Sec 2.9's Easy default is not applied.** Sec 2.11.6 says the first match runs at Easy
       with the player on an opening-Fame handicap. `ferrum_crossing.json` carries a symmetric
       `startingFame` of 200/200, `Scenario.h` says in as many words that the difficulty

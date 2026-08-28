@@ -863,3 +863,155 @@
     re-argued here.
   - This entry does not state a suite count or a phase verdict -- see `state/global.md` for the
     live figure.
+
+- **FILED UPSTREAM 2026-08-27, on the user's 2026-08-27 ruling (see `state/global.md`'s
+  `NEXT` entry "USER RULING, WIDENED THE SAME DAY ON THE GDD'S OWN Sec 2.11.2: WAVE 2'S FOUR
+  SNAPSHOT MIRRORS RIDE `T-UI-05`, AND ITS FIVE TABLE-AND-PRESENTATION READOUTS RIDE NOTHING AND
+  LAND UNPINNED" -- linked, not restated) -- W2's hex info panel and unit stat line carry FIVE
+  readouts with no acceptance ID (terrain name, move cost, defense bonus, the unit's
+  Atk/Def/Move/Range, and the `ready`/`done` bit), and the GDD's UI acceptance set
+  (`T-UI-01`..`T-UI-05`, §4.11 "UI binding (Stub 8)" row) does not cover any of the five.
+  **[WIDENED 2026-08-27, SAME DAY, ON THE COORDINATOR'S FLAG AFTER THE USER RULING WIDENED W2
+  ITSELF -- this sentence originally read "W2's hex info panel (terrain name, move cost, defense
+  bonus) has no acceptance ID", naming three of W2's nine readouts. That was not false, it was
+  INCOMPLETE, for the same reason `state/global.md`'s own ruling entry now states: the dispatch
+  that produced the original three-item ruling was taken from this file's wave-plan summary
+  rather than from the GDD, which the summary was standing in for. Reading the GDD directly
+  (`Stratocracy_Prototype_GDD.md:616-617`) while filing this request surfaced two more unpinned
+  readouts beyond the original three -- Atk/Def/Move/Range and the `ready`/`done` bit. Stamped
+  in place rather than silently widened, per this file's own append-only convention.]** This entry
+  is the mint request itself, drafted against `E:\MultiAgent\stratocracy-content` -- **DRAFT
+  ONLY, not landed.** No file in that repo was touched by this pass: `stratocracy-content` is
+  outside this task's write permission (`Config/` and `Tools/architect/` only) exactly as `Data/`
+  and `Source/StratRules/` are, and this entry states the request rather than committing it,
+  following the same shape the W3 filing immediately above used.
+  - **Where the request's subject sits, verified rather than taken from the ruling's wording.**
+    `Stratocracy_Prototype_GDD.md:616-617` (read by grep and by a bounded `Read` slice, never
+    `cat`, 446 KB / ~100 KB lines), under the `#### 2.11.2 HUD layout & information architecture`
+    heading (`:566`), in the "Info panel" subsection (`:615`): *"Hovered hex: terrain name, move
+    cost, defense bonus, and status if capturable -- `Factory · move 1 · def +15% · yours
+    (+100/turn)` or `· neutral` or `· enemy`."* (`:616`) and *"Hovered unit: name, HP as `12/20`,
+    Atk/Def/Move/Range, and `ready` or `done` -- the machine's DONE bit (§2.11.1), read from the
+    view-model's presentation block and not from a snapshot flag: a waited unit reads `done` while
+    its act flag is unspent."* (`:617`). These two sentences are this request's full subject.
+    **[WIDENED 2026-08-27, SAME DAY -- this bullet originally quoted only the `:616` hex sentence
+    and read the "status if capturable" clause out of the request "because it is a fourth,
+    distinct readout the user's ruling did not name". That framing is superseded by the widened
+    ruling: `state/global.md` now places "status if capturable" (`strat::UiHexView::owner`) on
+    `T-UI-05` as a snapshot mirror, so it is excluded here because it is PINNED, not because it
+    was never named. Restated below rather than left to imply the wrong reason.]** **What is named
+    in the quoted sentences but NOT requested, and why:** the hex's "status if capturable" and the
+    unit's HP (`12/20`) and FLAG text are excluded because `state/global.md`'s ruling already
+    places them on `T-UI-05` (`strat::UiHexView::owner`, `strat::UiUnitView::hp`/`hpMax`/`isFlag`)
+    -- they are pinned, and this filing covers only what rides nothing.
+  - **The two IDs that could plausibly be argued, quoted from the GDD and from `Ui.h` rather than
+    argued around, matching `state/global.md`'s own account.** `T-UI-05` (`:2513-2530`) is
+    *"snapshot fidelity: the snapshot tells the truth about the state the module holds ... field by
+    field"* and quantifies over `uiEnumerateSnapshot`. Verified against `Source/StratRules/Ui.h`:
+    `struct UiHexView` carries `terrainId` (an index into the loaded `TerrainDef` table)
+    and nothing else terrain-shaped -- no move cost, no defense bonus, no name. **The identical
+    check made for the unit's Atk/Def/Move/Range, one table over, rather than assumed to match --
+    the same shape as the terrain argument and refused for the same reason.** `struct UnitDef`
+    (`Source/StratRules/Data.h`) carries `atk`, `def`, `move` and `rangeMin` as §2.4's own
+    field names; `struct UiUnitView` (`Source/StratRules/Ui.h`) carries `unitId` -- the §2.4 row index, the
+    same shape as `terrainId` -- and no field named or shaped like any of `atk`/`def`/`move`/
+    `rangeMin`. `T-UI-03` (`:2507-2509`) is *"the live standings scoreboard (§2.11, §2.8) binds 1:1
+    to snapshot fields -- enemy strength destroyed, objectives held X/N, surviving units/HP, turn
+    vs cap -- with no widget-side arithmetic"* -- four SIDE-level readouts, none per-hex, none
+    per-unit-stat, and none naming Atk/Def/Move/Range either.
+  - **The `ready`/`done` bit is refused by a DIFFERENT text and a stronger argument than the four
+    table readouts above -- not by inference over what a struct does not carry, but by `Ui.h`'s
+    own words about what it deliberately does not carry.** The presentation block's own header comment,
+    directly above `struct UiPresentationUnit` in `Source/StratRules/Ui.h`, states: *"It is NOT in T-UI-05's subject. That invariant asks whether the
+    snapshot tells the truth about the module's state; these members have no module-side
+    counterpart and no derivation from one, so there is nothing for it to compare them against."*
+    `struct UiPresentationUnit::done` is one of those two members, and its own
+    comment adds *"it is DERIVABLE FROM NEITHER turn flag nor from any pair of them"*
+    (`hasMoved`/`hasActed` being `struct UiUnitView`'s two turn flags). **This is the identical wall
+    W3's idle count hit, in the identical block, and it does not need re-arguing here** -- see the
+    W3 filing immediately above this entry ("`UiPresentationUnit`... have no module-side
+    counterpart and no derivation from one"), whose End Turn / idle-count request is the direct
+    precedent for this bit's inclusion in the same mint.
+  - **The derivation trap this bit carries, worth recording because a naive clause would not catch
+    it.** The GDD gives the reason the `done` bit is read from the presentation block and not from
+    a snapshot flag: *"a waited unit reads `done` while its act flag is unspent"*
+    (`Stratocracy_Prototype_GDD.md:617`). `Ui.h` agrees from the other side, verified above:
+    `done` "is DERIVABLE FROM NEITHER turn flag nor from any pair of them" (`UiPresentationUnit::done`'s own comment, `Source/StratRules/Ui.h`). So an
+    implementation that derived the readout from `hasMoved`/`hasActed` instead of reading the
+    selection machine's own bit would be wrong -- and would PASS any clause that made the same
+    substitution, since such a clause would be asserting the derivation against itself rather than
+    against the module. The requested ID's clause must read `UiPresentationUnit::done` (or its
+    UE-side mirror) directly and never re-derive it from the two turn flags.
+  - **The near-miss on THIS wave, named because it reads the other way at a glance.** `T-UI-03`'s
+    HP-shaped phrase is `surviving units/HP`, not a defense-bonus or move-cost phrase, so the trap
+    here is smaller than W2's own HP half already named for the per-unit stat line -- but the same
+    scoreboard sentence is the one a reader chasing "does anything already cover a hex readout"
+    will meet first, and it names `strat::UiSideView::survivingHp` (the side aggregate, mirrored by
+    `FStratSideView::SurvivingHp`), not a per-hex value. Neither `T-UI-03` nor `T-UI-05` names a
+    terrain field, a move cost or a defense bonus anywhere in their own text.
+  - **What this side already does with the terrain table, as evidence the request is about an ID
+    and not about a missing mechanism -- both symbols verified present before being cited.**
+    `FStratHexView::TerrainId` (in `Source/StratUI/StratViewModel.h`, on the `FStratHexView`
+    struct) already resolves the terrain name through the bridge; its own comment calls it "THE
+    ONE FIELD HERE THAT IS NOT A SNAPSHOT MIRROR" and "A LOOKUP, NOT A DERIVATION" -- both
+    quoted from that field's own doc comment, not from a line coordinate, because W2 inserts
+    roughly 400 lines above this file's existing content and a bare number here would be stale
+    the moment that wave merges.
+    `FStratBridge::Forecast` already carries `DefenderTerrainDefensePct` and `DefenderTerrainId`
+    off the same §4.8 `TerrainDef` table (`Source/StratBridge/StratBridge.h:235-236`, populated at
+    `Source/StratBridge/StratBridge.cpp:1046-1047`, and asserted field-by-field against the loaded
+    row in `Source/StratBridge/Tests/StratForecastCardParity.cpp:855-868` under the `T-UI-01`
+    label that test already carries). Move cost has no such symbol yet on this side -- the info
+    panel would be the first consumer -- but the mechanism (a §4.8 table read reached the same way)
+    is proven twice over for the other two readouts, which is why this filing is a request for an
+    ID and not a request for a capability.
+  - **The same evidence, checked for the §2.4 side rather than assumed to carry over.**
+    `FStratUnitView::UnitId` (in `Source/StratUI/StratViewModel.h`, cited by symbol and not by
+    line for the same reason as the paragraph above) is the same shape as
+    `FStratHexView::TerrainId` -- a table-row index resolved on this side rather than left as a raw
+    integer -- but Atk/Def/Move/Range have no bridge symbol yet resolving `UnitId` into the four
+    stat values, unlike the terrain half where two of three readouts already exist as
+    `FStratBridge::Forecast` fields. **[WIDENED 2026-08-27, SAME DAY -- this bullet originally
+    ended with "the mechanism ... is proven twice over for the OTHER TWO readouts", a count that
+    was correct for the three-item terrain filing and is now incomplete: the mechanism is proven
+    for two of what is now FIVE unpinned readouts, not two of three. This addition states the
+    unit-table half's evidence rather than silently folding it into the old count.]** The request
+    is still for an ID rather than a capability on the terrain half; on the unit-stat half the
+    filing is for an ID over a mechanism this side has not yet built any symbol for at all -- named
+    here rather than left implied.
+  - **What ships unpinned as a result, named rather than left for a reader to discover.** The hex
+    info panel's terrain name, move cost and defense bonus, the unit's Atk/Def/Move/Range, and the
+    `ready`/`done` bit -- FIVE readouts, exactly the set `state/global.md`'s widened ruling names
+    -- carry no acceptance ID today and are covered by no clause in `Source/StratBridge/Tests/` or
+    `Source/StratUI/Tests/`. **[WIDENED 2026-08-27, SAME DAY -- this sentence originally named
+    "the hex info panel's terrain name, move cost and defense bonus -- exactly the three readouts
+    `state/global.md`'s ruling names". That ruling has itself been widened since, and the sentence
+    now names all five rather than restate a count the linked file has already superseded.]**
+  - **What the requested ID should cover.** §2.11.2's per-hex info-panel line (`:616`) for the
+    hovered hex's terrain name, move cost and defense bonus -- read from the §4.8 `TerrainDef` row
+    already reached through `terrainId`/`TerrainIndex`, with no widget-side arithmetic, on the same
+    footing `T-UI-01` already holds `DefenderTerrainDefensePct` and `DefenderTerrainId` to -- AND
+    §2.11.2's per-unit info-panel line (`:617`) for the hovered unit's Atk/Def/Move/Range, read
+    from the §4.8 `UnitDef` row reached through `unitId`, on the same table-index footing -- AND
+    the `ready`/`done` readout, read directly off `UiPresentationUnit::done` (or its UE-side
+    mirror) and asserted to be false of every derivation from `hasMoved`/`hasActed`, per the
+    derivation trap named above. **[WIDENED 2026-08-27, SAME DAY -- this bullet originally covered
+    only the hex sentence's three readouts. The two additions are stated as a widening of the same
+    bullet, not a second one, because `state/global.md`'s ruling treats all five as one mint: "The
+    upstream mint filed against `stratocracy-content` covers them."]**
+  - **A proposed number, not a mint, and NOT the same one the neighbouring W3 filing offered.**
+    `T-UI-06` is already minted -- re-verified fresh rather than inherited from the W3 entry above:
+    `git -C E:\MultiAgent\stratocracy-crew rev-parse HEAD` is now `96d93ea9`, and `git -C
+    E:\MultiAgent\stratocracy-crew grep -n "T-UI-06" -- spec/ui_spec.md` shows it minted and used
+    (§257, §421, §458, §466 of that file) for the beat-1a input-gating constraint (Q27); it still
+    does not appear in the shipped GDD (`grep T-UI-06 Stratocracy_Prototype_GDD.md` returns
+    nothing). `T-UI-07` was offered as an example by the W3 filing immediately above this entry, in
+    a request that is itself still **DRAFT ONLY** -- `git -C E:\MultiAgent\stratocracy-crew grep -n
+    "T-UI-07"` returns zero hits anywhere in that repo, so `T-UI-07` is free but already spoken for
+    by a sibling draft. This entry offers **`T-UI-08`** instead, so the two W2/W3 filings do not
+    collide if both land in one pass. Minting is the Director's call, exercised upstream.
+  - **This is a RECORD-ONLY pass.** No source file, no test file, no asset and no `Config/` file
+    was touched. No suite was run and no suite figure moves -- the live figure is the one
+    `state/global.md`'s topmost banner cites, linked rather than restated.
+  - This entry does not state a suite count or a phase verdict -- see `state/global.md` for the
+    live figure.

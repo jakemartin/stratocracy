@@ -2317,6 +2317,107 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-27, COORDINATOR -- USER RULING, WIDENED THE SAME DAY ON THE GDD'S OWN Sec 2.11.2:
+  WAVE 2'S FOUR SNAPSHOT MIRRORS RIDE `T-UI-05`, AND ITS FIVE TABLE-AND-PRESENTATION READOUTS
+  RIDE NOTHING AND LAND UNPINNED. NO ID IS MINTED HERE, AND AN UPSTREAM MINT IS FILED. RECORD-ONLY; NO SOURCE, NO TEST, NO ASSET AND NO CONFIG FILE WAS TOUCHED; NO SUITE WAS
+  RUN AND NO SUITE FIGURE MOVES -- the live figure is the one this file's topmost banner cites.
+  NO PHASE VERDICT IS STATED HERE and nothing below has been through a gate.**
+  W2 (the info panel, and with it per-unit HP) had no acceptance ID, and a clause may not be named
+  without one -- a proposed identifier greps exactly like a defined one, which is a failure this
+  record has already been caught by. This entry is written FLAT, because a correction that only
+  adds leaves both claims live and a nested one has already let a false sentence survive directly
+  above its own retraction in this file.
+  - **STRUCK, AND IT WAS THE COORDINATOR'S OWN WORDING BEFORE THE GDD WAS READ:** `The
+    per-unit HP stat line rides T-UI-05. The terrain name, the move cost and the defense bonus
+    ride NOTHING and land unpinned`. **That is not false, it is INCOMPLETE -- it enumerates four
+    of W2's nine readouts and is silent on the other five**, and a ruling that is silent on an
+    item ships it unpinned without saying so. It is quoted here rather than left standing,
+    because a correction that only adds leaves both claims live.
+  - **THE RULING AS IT STANDS, WIDENED 2026-08-27 BY USER RULING, AND IT IS THE WHOLE PANEL.**
+    Four readouts ride `T-UI-05`: the **per-unit HP** pair, the hex's **capturable status**
+    (`strat::UiHexView::owner`), and the **flag marker** (`strat::UiUnitView::isFlag`). Five ride
+    NOTHING and land **unpinned**: the **terrain name**, the **move cost**, the **defense bonus**,
+    the unit's **Atk/Def/Move/Range**, and the **`ready`/`done`** bit. The upstream mint filed
+    against `stratocracy-content` covers them. This ruling covers W2 alone and widens no other
+    wave.
+  - **HOW THE WIDENING WAS CAUSED, and it was a defect in the dispatch rather than in the tree.**
+    The first ruling was taken from THIS FILE's own wave-plan entry, whose W2 bullet reads `a hex
+    info struct (terrain name, move cost, defense bonus) and a unit stat line`. The GDD's Sec
+    2.11.2 **Info panel** specifies more than that summary carries -- a fourth hex readout
+    (`status if capturable`, rendered `Factory - move 1 - def +15% - yours (+100/turn)`), and a
+    unit line of `name, HP as 12/20, Atk/Def/Move/Range, and ready or done` plus the flag unit's
+    `FLAG -- its loss ends the match.` **The wave plan is a summary and the GDD is the
+    specification; the summary was read in the specification's place.** This is the recorded
+    failure that a dispatch brief is not ground truth, and it was the `coordinator`'s. It was
+    found by `strat-data-steward` while filing the mint request, from the GDD itself.
+  - **AND THE FOUR THAT RIDE `T-UI-05` ARE ALREADY PINNED, so W2 mints no `T-UI-05` clause at
+    all.** `Source/StratUI/Tests/StratViewModelParity.cpp` already asserts all four against the
+    module: `.Hp == UiUnitView::hp`, `.HpMax == UiUnitView::hpMax`, `.bIsFlag ==
+    UiUnitView::isFlag` and `.Owner == UiHexView::owner`. **This is a good outcome, not a
+    gap** -- the ruling's `T-UI-05` half is satisfied by clauses that already exist and already
+    run, and the wave adds a route to a screen rather than new state. It is recorded because an
+    unstated `already covered` reads exactly like an oversight to the next author, who would
+    otherwise write a second clause asserting what the first one does.
+  - **WHY THE FOUR THAT RIDE `T-UI-05`, RIDE IT.** `strat::UiUnitView::hp`, `::hpMax`, `::isFlag`
+    and `strat::UiHexView::owner` are UNMARKED fields of the
+    snapshot, which by `Ui.h`'s own two-kinds accounting makes each a MIRROR, and both are
+    enumerated by `uiEnumerateSnapshot`, which is what clause (a) quantifies over. `T-UI-05`'s
+    clause (a) is `every unmarked field equals
+    the module-side value it names, exactly, with nothing widened, narrowed, rounded or
+    reordered`. So all four are squarely its subject, and by a shorter argument than W3's income
+    line needed: that one had to be shown a snapshot field first, while these four are mirrors on
+    the face of the stub. `owner` and `isFlag` are ALREADY PROJECTED on this side, as
+    `FStratHexView::Owner` and `FStratUnitView::bIsFlag`, so this half of the wave is a route to
+    a screen rather than new state.
+  - **WHY THE FIVE THAT DO NOT, CANNOT, and each is refused by a different text.** (1) THE THREE
+    TERRAIN READOUTS: `T-UI-05` quantifies over `uiEnumerateSnapshot`, and NO snapshot field
+    carries a terrain name, a move cost or a defense bonus -- `strat::UiHexView` carries
+    `terrainId`, an index, and the three are §4.8 TerrainDef rows reached THROUGH it. This tree
+    says so about the name already: `FStratHexView::TerrainId`'s own comment calls it `THE ONE
+    FIELD HERE THAT IS NOT A SNAPSHOT MIRROR`. (2) ATK/DEF/MOVE/RANGE are §2.4 `strat::UnitDef`
+    rows and are refused for the same reason, one table over. (3) THE `ready`/`done` BIT is
+    refused not by inference but by `Ui.h`'s own words: the PRESENTATION BLOCK's header states
+    `It is NOT in T-UI-05's subject`, because its members `have no module-side counterpart and no
+    derivation from one, so there is nothing for it to compare them against`. **This is the same
+    wall W3's idle count hit, for the same reason and in the same block** -- W3's ruling is the
+    precedent and this one does not re-argue it. (4) `T-UI-03` is `the live standings scoreboard (§2.11, §2.8)
+    binds 1:1 to snapshot fields -- enemy strength destroyed, objectives held X/N, surviving
+    units/HP, turn vs cap -- with no widget-side arithmetic`. Its enumeration is four SIDE-level
+    readouts and no per-hex one. A clause riding an ID whose own text excludes its subject is
+    unfalsifiable by construction.
+  - **THE TRAP ON THIS WAVE IS NAMED, because it reads the other way at a glance.** `T-UI-03`'s
+    `surviving units/HP` looks like it covers a unit HP readout and does not: it names
+    `strat::UiSideView::survivingHp`, the side aggregate, which `FStratSideView::SurvivingHp`
+    already mirrors. Anyone re-deriving this ruling will meet that phrase first.
+  - **STRUCK 2026-08-27, SAME DAY, ON A CENSUS OF THE TREE'S OWN CLAUSE NAMES:** `The hex info
+    panel's terrain name, move cost and defense bonus, the unit's Atk/Def/Move/Range, and the
+    ready/done bit all ship with no clause`. **`UNPINNED` DOES NOT MEAN `UNTESTED` IN THIS
+    PROJECT, and this entry asserted that it did.** The sentence is quoted rather than left
+    standing, because a correction that only adds leaves both claims live.
+  - **WHAT LANDS UNPINNED IS NAMED, AND IT IS AN ID GAP AND NOT A TEST GAP.** Those five readouts
+    carry no ACCEPTANCE ID. **They ARE covered, by `GATE-INFOPANEL` clauses that live on
+    `feat/info-panel` and NOT YET IN THIS TREE -- the census two sentences below is of `master`
+    and correctly shows no `GATE-INFOPANEL` among its `GATE-` names.** The two statements are
+    about different trees and the tension closes when the lane merges; it is stamped rather than
+    smoothed, because a record that asserts present-tense coverage `master` does not hold is the
+    shape a later reader takes as fact. `GATE-` naming is this
+    project's standing convention for a surface with no ID and NOT a new practice: a multiline
+    census of `IMPLEMENT_SIMPLE_AUTOMATION_TEST` over `Source/**/Tests/` returns 249 clause names,
+    of which 38 already ride a locally-minted `GATE-` name -- `GATE-BUILDMENU` 33 across three
+    modules, `GATE-BRIDGE-DEFS` 3, `GATE-SAVE-PARSE` 1, `GATE-DATA-VENDOR` 1. **`GATE-BUILDMENU`
+    is the exact precedent**: §2.11.5's production menu had W2's problem -- a whole surface with
+    no acceptance ID -- and was covered this way rather than shipped bare. A `GATE-` name mints no
+    acceptance ID and claims none, so it does not touch the ruling above or pre-empt the upstream
+    mint. **The gap that remains is real and narrower than stated before: these five are not
+    graded by the GDD's acceptance set.** `T-UI-03`'s no-widget-side-arithmetic rule still BINDS the implementation
+    -- those values must reach the view model already resolved from their tables, the
+    shape `FStratBridge::Forecast` already uses for `DefenderTerrainDefensePct` and
+    `DefenderTerrainId` -- but a rule that binds an implementation is not an ID that pins a clause,
+    and this entry does not let the one stand in for the other.
+  - **STILL UNRULED: W4, W5, W6 and W8.** Each is the user's to rule the same way, or to mint
+    upstream.
+
+
 - **2026-08-27, COORDINATOR -- W3 LANDS: SEC 2.11.2'S PERSISTENT HUD HAS A MODEL SIDE, AND A TURN
   CAN NOW BE ENDED BY SOMETHING OTHER THAN A KEY.** Lane commit on `feat/persistent-hud` in
   `E:/MultiAgent/Strat-wt/slot-2`; the banner above carries this branch's figure, and the count is

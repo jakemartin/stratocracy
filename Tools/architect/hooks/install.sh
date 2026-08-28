@@ -68,15 +68,26 @@ fi
 # somebody else's hook is still never clobbered.
 SIGNATURE="Stratocracy pre-commit hook"
 
+# ONE DEFINITION, CALLED FROM ALL THREE SUCCESS EXITS BELOW, rather than a copy at each --
+# this file already has the other kind of copy-drift on its conscience (see the ACMR and
+# mktemp history in `pre-commit`'s own comments). A function is the whole fix: `/bin/sh`
+# supports `name() { ... }` and `set -eu` does not care that this defines rather than runs.
+print_trigger_note() {
+    echo "the vendored- and doc-citation checks run on every commit; the banner sweep runs only"
+    echo "when a file under Tools/architect/state/ is staged; bypass any of it with --no-verify"
+}
+
 if [ -e "$DST" ]; then
     if cmp -s "$SRC" "$DST"; then
         echo "already installed and identical: $DST"
+        print_trigger_note
         exit 0
     fi
     if grep -q "$SIGNATURE" "$DST" 2>/dev/null; then
         cp "$SRC" "$DST"
         chmod +x "$DST" 2>/dev/null || true
         echo "updated an older copy of this project's hook: $DST"
+        print_trigger_note
         exit 0
     fi
     echo "REFUSING: $DST already exists, differs from the one in this directory, and does not"
@@ -90,4 +101,4 @@ mkdir -p "$HOOK_DIR"
 cp "$SRC" "$DST"
 chmod +x "$DST" 2>/dev/null || true
 echo "installed: $DST"
-echo "it runs only when a file under Tools/architect/state/ is staged; bypass with --no-verify"
+print_trigger_note

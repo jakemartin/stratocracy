@@ -98,3 +98,16 @@ DerivedDataCache/*
 # E:\MultiAgent\Strat-wt\ alike.
 /build.log
 /suite.log
+
+# Agent worktrees.
+#
+# `/strat-parallel` creates linked worktrees under here, and each one is a REPOSITORY
+# BOUNDARY rather than an ordinary directory -- it carries its own `.git`. So `git add -A`
+# does not sweep its files in one at a time; it records the whole slot as a GITLINK, a
+# submodule commit this repo does not have. Git warns while doing it, but what lands in
+# the index is a single line that reads like an ordinary addition and carries no content
+# to review.
+#
+# Anchored for the same reason as the transcripts above: the slots are created at the root
+# of the tree that runs the command, which is the directory holding this .gitignore.
+/.claude/worktrees/

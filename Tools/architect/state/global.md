@@ -3467,7 +3467,14 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     `git worktree` under `.claude/worktrees/` holding that worktree's own copy of the FROZEN
     `Tools/architect/state.md`. The real tree had zero. The handoff called that directory
     gitignored; it is not -- `git status` lists it `??` and `git check-ignore` on a file inside it
-    exits 1. Git reports it as ONE untracked entry and never descends, because the `.git` entry
+    exits 1. **[STAMPED 2026-08-28: THAT SENTENCE WAS TRUE WHEN WRITTEN AND IS NO LONGER, AND
+    THE COORDINATOR IS WHAT MADE IT FALSE. `.gitignore` now carries `/.claude/worktrees/`, so
+    the directory IS ignored and `git status` lists it `!!`. Read the sentence above as a
+    measurement of the tree that produced the guard fix, not of the tree you are standing in.
+    THE DIAGNOSIS IT SUPPORTS IS UNCHANGED and the ignore rule does not retire the boundary
+    prune: a linked worktree is a REPOSITORY BOUNDARY, which is a different thing from an
+    ignore rule, and `os.walk` still has no notion of either. The prune remains the fix; the
+    ignore rule only stops `git add -A` recording a slot as a gitlink.]** Git reports it as ONE untracked entry and never descends, because the `.git` entry
     inside it marks a repository boundary; `os.walk` has no such notion and walked straight in. The
     gate now prunes at that boundary and also skips genuinely ignored files, both filters carrying
     fixtures in `--self-test` in BOTH directions. Falsifiability was measured, not assumed: a live

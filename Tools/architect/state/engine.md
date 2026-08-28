@@ -13,6 +13,134 @@
 
 ## NEXT
 
+- **2026-08-28, `strat-gameplay-engineer` -- W7: SEC 2.9'S DIFFICULTY HANDICAP. THE GDD HAS
+  SPECIFIED IT SINCE THE PROTOTYPE DOCUMENT AND `Source/` IMPLEMENTED NONE OF IT; A DESIGNER
+  COULD SET NO TIER AND EVERY MATCH OPENED ON THE SCENARIO'S OWN BASELINE.** In the integration
+  tree `E:/MultiAgent/Stratocracy` on branch `master`, from `e8cf7c0`. FOUR FILES MODIFIED, NO
+  FILE ADDED, all mine and all under `Source/`: `Source/StratBridge/StratBridge.h`,
+  `Source/StratBridge/StratBridge.cpp`, `Source/StratPlay/StratMatchSubsystem.h` and
+  `Source/StratPlay/StratMatchSubsystem.cpp`. Nothing committed, nothing staged, no asset, no
+  `Content/`, no `Config/`, no `Data/`, nothing under `Source/StratRules/`, no test, nothing
+  under any `Tests/` directory, no `.Build.cs`, no `.uproject`. NO SUITE FIGURE AND NO VERDICT
+  IS STATED HERE; `global.md` owns both, and this entry links to it rather than restating it.
+  - **THE BUILD, IN THIS TREE.**
+    `"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" StratocracyEditor
+    Win64 Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex`,
+    editor closed -- `tasklist | grep -i UnrealEditor` empty before the run WITH the control
+    that `tasklist` alone prints its header, because an empty grep proves nothing until the
+    instrument is shown able to speak. The tool's own last lines are `Result: Succeeded` and
+    `Total execution time: 47.86 seconds`, over 72 actions with `StratBridge.cpp`,
+    `StratMatchSubsystem.cpp`, `Module.StratPlay.gen.cpp` and both module links named among
+    them -- so the green is over the edited translation units and over UHT's regenerated
+    reflection for the new `UENUM`, not over an up-to-date tree. A SECOND RUN WAS MADE WITH THE
+    WHOLE LOG CAPTURED rather than tailed, because the first run's compile listing was
+    truncated above the `StratBridge` lines and a warning could have hidden there:
+    `touch`ed both `.cpp` files, rebuilt, `REAL_EXIT=0`, and a case-insensitive
+    `grep -c "warning|error"` over the entire captured log returns **0**.
+  - **THE SYMBOLS ADDED**, cited by name because a `file:NNN` written during a diff is
+    invalidated by that same diff. New on `FStratBridge`:
+    `FStratBridge::ApplyStartingFameHandicap`, `FStratBridge::SideFameTotal` and
+    `FStratBridge::SideFameCombat`. New in `StratMatchSubsystem.h`: `EStratDifficulty`,
+    `StratDifficultyFameDelta`, `StratHandicappedSide` and the `FStratMatchConfig::Difficulty`
+    field. `UStratMatchSubsystem::StartMatchInternal` gained the call site, between seeding and
+    the restore.
+  - **THE SHAPE: A DELTA THROUGH THE BRIDGE, AND NO TIER NUMBER INSIDE `StratBridge`.**
+    `Scenario.h` states in its own words that the handicap is "a match-setup parameter applied
+    on top" and deliberately not a scenario field, so nothing on the seeding path can apply it
+    and something after `LoadScenarioFromFile` had to. That something touches
+    `strat::EconomyState`, which is a `strat::` type, so the mutation sits behind an
+    `FStratBridge` method and `StratPlay` names no `strat::` type to reach it. The bridge takes
+    a DELTA and never an absolute: Sec 2.7 calls the 200 "a baseline, not a constant, for the
+    player" and `T-FAME-02` says a gate must assert "each side's configured value and never a
+    literal 200", so **this module authors no opening-Fame value at all**: it returns three
+    deltas, and THE ONLY STATEMENT IN `StratBridge`, `StratPlay` OR `StratUI` THAT WRITES A
+    SIDE'S `fameTotal` IS THE ONE IN `FStratBridge::ApplyStartingFameHandicap`, which ADDS a
+    delta to a number this code did not choose. `Data/ferrum_crossing.json` and
+    `strat::initSide` own the absolute. Cited by SYMBOL rather than by a grep pattern, for the
+    reason the correction below records.
+    **[CORRECTED 2026-08-28 ON THE `coordinator`'S FINDING, IN THIS ENTRY AND AT THE CODE SITE,
+    AND THEN CORRECTED A SECOND TIME BY MY OWN MEASUREMENT OF THE FIRST FIX.
+    STRUCK: `350 and 100 appear nowhere in Source/`. That was subject-versus-scope -- a claim
+    about TEXT IN A DIRECTORY standing in for a claim about VALUES IN CODE -- and a search for
+    those numerals returns the sentence that said it, along with every other line of prose about
+    the rule. STRUCK ALSO, AND THIS ONE WAS MINE ALONE: the first fix cited
+    `a grep for a fameTotal assignment` as returning EXACTLY ONE LINE. It did when I ran it, and
+    it stopped being true the moment the fix landed, because the fix QUOTED THE ASSIGNMENT
+    VERBATIM in a comment and the quotation is matched by the same search -- re-measured, two
+    hits, the second being my own sentence. The same defect one level down. Both are now stated
+    as a claim about the symbol that writes the field, which no amount of prose about it can
+    falsify.]** The rejected
+    shape was an
+    absolute `SetStartingFame(Side, Amount)`, which reads more simply and makes this module a
+    second author of the scenario's `startingFame`; that is what killed it.
+  - **`fameCombat` DOES NOT MOVE, AND THE MUTATION IS ONE STATEMENT SO THAT THE CLAIM HAS ONE
+    STATEMENT TO CHECK.** Sec 2.8's first tiebreak key is `fameCombat` and `T-TURN-05`'s
+    mutual-passivity guard fires on both sides reading zero at the cap, so a handicap that
+    touched it would move the victory condition and the draw condition at once -- and would do
+    so invisibly, since the scoreboard shows both numbers and nothing on screen compares either
+    to the tier. `Economy.h` already says this from the other side about passive income
+    (`T-FAME-01`); this is the second writer that had to be told, and the only other one the
+    module has. `SideFameCombat` exists so the non-movement is observable from outside
+    `StratBridge` without projecting a snapshot first.
+  - **THE INERTNESS IS A `coordinator` RULING AND IS LABELLED AS ONE AT THE CODE SITE.**
+    `StratHandicappedSide` returns `INDEX_NONE` when `AiSides` is empty and when `AiSides`
+    contains `ViewingSide`; otherwise it returns `ViewingSide`. The whole ruling lives in that
+    one function so overturning it is one edit, and `FStratMatchConfig::Difficulty`'s own block
+    says in terms that the reading is a two-word reading of Sec 2.7's "Single-player
+    difficulty" and NOT a GDD quotation. The alternative shape was to take the complement of
+    `AiSides` over the side count; it gives the same answer on two sides and needs `StratPlay`
+    to learn a side count that `AiSides`' own "A LIST AND NOT TWO BOOLS" block refuses to name.
+    That is what killed it.
+  - **THE DEFAULT IS `Easy` AND IS INERT, AND THOSE ARE TWO FACTS RATHER THAN ONE.** Sec 2.11.6
+    says the first match runs at Easy by default, so `Easy` is the honest C++ default;
+    `AiSides` defaults empty, so on the shipped hot seat that default reaches
+    `StratHandicappedSide` and comes back `INDEX_NONE`. `Normal` would have made the inertness
+    true by arithmetic instead of by configuration and would have hidden the ruling above,
+    which is why it was not chosen. NO BLUEPRINT DEFAULT AND NO `Content/` CHANGE WAS MADE.
+  - **EVERY EXISTING TEST CONFIGURATION IS INERT UNDER THAT FUNCTION, MEASURED RATHER THAN
+    ASSUMED, AND NO TEST WAS EDITED.** `grep -rn "\.AiSides" --include=*.cpp Source/` returns
+    twelve assignment sites across seven test files plus the two live reads in
+    `StratMatchSubsystem.cpp`. Every one was read at its site. The `BothAi` cases build their
+    side list from the projection's own units, so `AiSides` names every side and therefore
+    contains `ViewingSide`. The three single-AI cases in `StratAiMatchClauses.cpp` and
+    `StratMatchConclusion.cpp` set `AiSides` to `FirstSide`, and their shared `MakeConfig`
+    writes `Out.ViewingSide = kFirstSide` beside `Out.FirstSide = kFirstSide`, so those contain
+    it too. `StratProductionMenuSeam.cpp`'s is the one that would have moved a purse assertion,
+    and its own comment reads "The side whose screen this is plays itself" -- `AiSides` is
+    `{0}` and `ViewingSide` is 0. So the handicap is unreachable from the existing suite, which
+    is a property of the ruling and not a coincidence.
+  - **THE SAVE HAZARD: THE HANDICAP IS APPLIED BEFORE THE RESTORE, AND `T-SAVE-06`'S REFUSAL
+    NOW NAMES IT AS A FOURTH CAUSE.** `FStratBridge::RestoreFromSaveText` replays the save's
+    log onto whatever this bridge holds and compares `strat::canonicalStateHash`. The handicap
+    is not a `strat::SaveCommand`, so the log cannot carry it, and not a scenario field, so
+    `scenarioHash` cannot either. Applying it AFTER the restore would shift a state whose hash
+    had already been certified, and a slot would load "successfully" into a match worth 150
+    Fame more than the one saved; applying it BEFORE makes a tier mismatch a refusal instead.
+    The refusal's message was changed from "the log, the definitions or the seeding side" to
+    "the log, the definitions, the seeding side or the Sec 2.9 difficulty handicap", because it
+    fails safe either way but named three causes when there were four. **CHECKED FIRST THAT NO
+    CLAUSE ASSERTS THAT TEXT, since `Tests/` is not mine to fix:**
+    `StratBridgeRestoreParity.cpp`'s `RestoreRefusesAMutatedStateHash` asserts
+    `EqualsExact(Refused.Id, TEXT("T-SAVE-06"))` and
+    `ContainsExact(Refused.Reason, *HonestHash) || ContainsExact(Refused.Reason, *MutatedHash)`
+    -- the id and the two hashes, never the prose between them. Nothing else in `Source/`
+    matches `seeding side`.
+  - **A DEBT, WRITTEN DOWN WHERE THE CONDITION THAT DISCHARGES IT CAN BE READ.**
+    `ApplyStartingFameHandicap` CLAMPS AT ZERO. A negative purse is a state `strat::initSide`
+    has no way to produce and no rule reads as debt -- `queueBuild` refuses everything at 0 and
+    would refuse everything at -50 -- so the clamp removes an unobservable distinction. It is
+    reported through `OutFameTotalAfter` rather than refused, because Hard against a 50-Fame
+    scenario is a scenario/tier mismatch and not an unplayable match. The condition that
+    discharges it: if a tier is ever specified whose debt must be real, the clamp is the line
+    to delete and `strat::queueBuild` is where the behaviour must then be checked -- upstream,
+    in `E:\MultiAgent\stratocracy-crew`, not here.
+  - **WHAT IS DELIBERATELY NOT IN THIS PASS.** No `UStratMatchSubsystem` accessor projects the
+    tier into `FStratViewModel`, so no widget can show the difficulty; Sec 2.9 asks for a
+    handicap and not for a readout, and a view-model field with no clause and no widget is the
+    inert projection this lane already recorded once on the info panel. No menu sets the tier;
+    it is a Blueprint default like every other `FStratMatchConfig` field, and authoring that
+    default is `Content/` work and another lane's.
+
 - **2026-08-28, `strat-gameplay-engineer` -- §2.11.2's INFO PANEL, WIDGET-SIDE. THE
   PROJECTION WAS BUILT, PINNED AND REACHABLE BY NOTHING; A WBP AUTHORED AGAINST IT WOULD HAVE
   BEEN INERT.** In the integration tree `E:/MultiAgent/Stratocracy`, from `63433e7`. Two files

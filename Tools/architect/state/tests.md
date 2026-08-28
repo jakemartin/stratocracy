@@ -12,6 +12,111 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-28 (local; this pass's runs stamp UTC `2026.08.28-22.17.49`, `-22.19.51` and the
+  FINAL `2026.08.28-22.22.24`. THE LAST ONE IS THE REPORT THAT BACKS THIS ENTRY -- the first
+  described a clause carrying an undeclared Warning, the second the declaration that removed it,
+  and the third the same clauses after both new files were converted from LF to CRLF to match
+  every sibling in their directories. A whitespace conversion is still different bytes, and
+  inference from a diff is not a run) -- W7'S SEC 2.9 DIFFICULTY HANDICAP IS PINNED BY EIGHT
+  CLAUSES ACROSS THREE EXISTING IDS, AND THE ONE THAT MATTERS MOST IS THE ONE THAT NEEDED A
+  NON-ZERO `fameCombat` TO BE ABLE TO FAIL AT ALL.** Written in the MAIN tree,
+  `E:/MultiAgent/Stratocracy`, on `master`, against the engineer's uncommitted C++. Two new
+  files, both inside `Tests/`: `Source/StratBridge/Tests/StratDifficultyHandicapClauses.cpp` (4)
+  and `Source/StratPlay/Tests/StratDifficultyHandicapMatchClauses.cpp` (4). The clause-name set
+  grew by exactly eight and NOTHING was removed or renamed, measured by MULTILINE SET DIFFERENCE
+  on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` between `HEAD`'s git objects and the worktree, both sides
+  guarded as non-empty -- never by a single-line grep, which returns zero here because the
+  macro's argument sits on the next line, and never by an acceptance-ID grep. The live suite
+  figure is `global.md`'s and is not restated here.
+  - **THE IDS ARE THE USER'S THREE AND NOTHING WAS MINTED**, per `global.md`'s `## NEXT` ruling
+    of the same day: `T-FAME-02` for the arithmetic, the tier map, the inertness and the
+    refusals; `T-FAME-01` for the one `fameCombat` clause; `T-SAVE-06` for the one cross-tier
+    load clause. `T-AI-07` is named in both new files' header blocks as a trap and is not
+    reached for.
+  - **WHICH CLAUSE PINS WHICH BEHAVIOUR, AND WHERE ITS EXPECTATION COMES FROM.**
+    - `Stratocracy.StratBridge.T-FAME-02.HandicapMovesTheScenariosConfiguredFameByTheDelta` --
+      the opening purse is `FStratBridge::ScenarioData().startingFame[Side]`, read per side off
+      the parsed scenario, and the handicap adds the delta to THAT. **No clause in this wave
+      writes 200, 350 or 100**, which is `T-FAME-02`'s own instruction to a gate. It also pins
+      the zero arm as inert BY the canonical state hash (unchanged across a zero delta, moved
+      across a non-zero one -- the pair is what stops a do-nothing method passing), and pins
+      `RecordedCommandCount()` unchanged, which is what makes the `T-SAVE-06` clause reachable.
+    - `Stratocracy.StratBridge.T-FAME-01.HandicapLeavesANonZeroFameCombatUnmoved` -- **the
+      correctness clause of the wave.** At the seeded opening both counters are 0, and 0 is also
+      what an uninitialised read, a wrong-member read and a zeroing bug look like, so the clause
+      replays `Data/parity_fixture.save` until the MODULE reports a non-zero counter and only
+      then applies the handicap. The prefix is DISCOVERED at run time, not authored -- a
+      re-emitted fixture moves the index and not the clause -- and the clause fails loudly with
+      its own message if no prefix reaches one. Its control is that the same call moved
+      `fameTotal` by the delta it was handed.
+    - `.HandicapClampsAtZeroAndReportsZero` -- the overshoot is `-(SideFameTotal + 1)`, derived
+      from the live purse, so it clamps by exactly one Fame whatever the scenario configured.
+      The half with teeth is `bOk == true` AND `OutFameTotalAfter == 0`: `INDEX_NONE` is the
+      refusal path's sentinel, and a clamp reporting it would make `StratBridge.h`'s "reported
+      rather than refused" sentence false while every arithmetic clause stayed green.
+    - `.HandicapRefusesAnUnseededBridgeAndAnOutOfRangeSide` -- the out-parameter is PRE-LOADED
+      with a value the method cannot produce and required to have been overwritten with
+      `INDEX_NONE`, which is the property `StratBridge.h` claims for it. The out-of-range side is
+      `strat::SIDE_COUNT`, the module's own count. The prose is pinned only for what it
+      DISTINGUISHES -- the two refusals must differ from each other, case-SENSITIVELY, and the
+      out-of-range one must name the side this clause handed it -- because a reworded message
+      with identical behaviour is not a regression.
+    - `Stratocracy.StratPlay.T-FAME-02.DifficultyTierDeltasAreSection29sThreeNumbers` -- **the
+      one place in this wave where the expectation is a specification literal, and it is
+      labelled as one in the clause's own block.** `EStratDifficulty` carries no payload by
+      design, so there is nothing module-side to read a tier number from; +150 / 0 / -100 come
+      from Sec 2.9 and are cited. It also pins the two DIRECTIONS, which is what survives a
+      transcription error, and Sec 2.11.6's shipped default read off a default-constructed
+      `FStratMatchConfig`.
+    - `.HandicapIsInertWithoutASinglePlayerOpponent` -- the `coordinator`'s single-player ruling,
+      asserted on `StratHandicappedSide` directly rather than inferred from a purse, plus a live
+      hot seat at **Easy** (not Normal: a zero delta cannot tell inert from applied). Its control
+      is the fourth arm -- `AiSides` naming the OTHER side returns `ViewingSide` -- without which
+      the three `INDEX_NONE`s would all pass on a deleted handicap.
+    - `.HandicapMovesThePlayersOpeningFameAtEveryTier` -- baseline MEASURED per side from the
+      inert hot seat, then `player == baseline + StratDifficultyFameDelta(tier)` and `AI ==
+      baseline` at all three tiers. **The two StratPlay clauses cross-check each other on
+      purpose:** if the handicap ever applied to a hot seat, the baseline would shift by the same
+      delta and this clause would go RED rather than absorbing the bug into its own baseline.
+    - `Stratocracy.StratPlay.T-SAVE-06.ASlotWrittenAtOneTierIsRefusedAtAnother` -- written at
+      Easy, loaded at Hard through `SaveMatchToSlot` / `LoadMatchFromSlot`, so it is a real
+      cross-TIER load and not two deltas standing in for tiers. Its control is the identical
+      route at the SAME tier, required to succeed and to reach the hash the save was taken at,
+      so the refusal is attributable to the tier and not to the restart. It pins the id
+      case-sensitively and pins the word `handicap` in the reason -- the one token the engineer's
+      message change would lose if reverted -- and nothing else about that sentence.
+  - **WHAT THESE CLAUSES DO NOT PIN, stated rather than left to be discovered.**
+    - **Sec 2.9's OTHER claim -- "the baseline routine is identical at every tier; only the
+      economy shifts" -- IS UNPINNED.** `StratMatchSubsystem.h` states that no branch of
+      `FStratAiTurnRunner` may read `EStratDifficulty`, and that is a property of code, not of
+      an observable value: an AI that consulted the tier would still open on the same purse and
+      no economy assertion could catch it. Pinning it needs either a static check that the enum
+      is unreachable from the runner's translation unit or a determinism clause comparing two
+      tiers' command sequences at an equal purse. **Neither was written and neither is claimed.**
+    - **The `fameCombat` arm inside `HandicapMovesThePlayersOpeningFameAtEveryTier` is the
+      WEAKER reading and says so in its own message.** At the opening both counters are zero, so
+      that arm cannot tell "left alone" from "zeroed". The clause that can is the StratBridge
+      `T-FAME-01` one above; a reader chasing that property must not stop at the StratPlay file.
+    - The StratBridge clauses hand the method deltas that are deliberately NOT Sec 2.9's three
+      numbers, so nothing in `StratBridge/Tests/` pins the tier table -- that is the StratPlay
+      clause's alone, and the two halves only meet in a running match.
+  - **AN INSTRUMENT DEFECT WORTH KEEPING, because it fabricated a finding and self-corrected in
+    one step.** The first run of the clause-name set-difference reported EIGHT of this pass's
+    clauses plus FIVE `Stratocracy.StratData.*` ones as "added", which would have read as a
+    lane violation. The cause was asymmetric filters in the measuring script: the HEAD side
+    matched `Source/<one-segment>/Tests/` while the worktree side walked for ANY directory named
+    `Tests`, so `Source/Stratocracy/StratData/Tests/` existed on one side of the comparison and
+    not the other. **A set difference between two differently-collected sets measures the
+    collectors.** Both sides now use the same rule and the answer is eight.
+  - **EVERYTHING THE ENGINEER'S REPORT CLAIMED WAS CHECKED AGAINST THE TREE AND HELD**, including
+    the call site's position between seeding and the restore and the refusal joining `Complaints`
+    rather than tearing the match down. One wording nuance for a future greps: the refusal
+    message spells the section as `Sec 2.9`, not `§2.9`.
+  - **NO CODE OUTSIDE `Tests/` WAS TOUCHED AND NO MUTATION WAS RUN.** Proving a pin by reverting
+    what it pins would have meant editing the engineer's C++, which is not this lane's to edit
+    even temporarily. What stands in for it is that every clause carries a CONTROL that is
+    required to move in the same run, named in each clause's own block.
+
 - **2026-08-28 (local; this pass's runs stamp UTC `2026.08.28-00.00.07` and `-00.02.17` for the
   first nine clauses and their mutation, then `-00.18.43` and `-00.20.00` after the gate's
   finding added the tenth, and the FINAL run `-00.32.37` after the re-gate's two comment

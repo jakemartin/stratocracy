@@ -1197,6 +1197,80 @@ public:
 	// AI is handed.
 	TArray<int32> BuildlistDefIndexes() const;
 
+	// ---- Sec 2.9's difficulty handicap ------------------------------------
+
+	/**
+	 * Moves ONE side's `fameTotal` by `FameDelta`, and moves nothing else.
+	 *
+	 * WHAT GAP THIS CLOSES. Sec 2.9 makes single-player difficulty a starting-Fame
+	 * handicap rather than a smarter AI, and `Scenario.h` states in its own words that
+	 * the handicap is "a match-setup parameter applied on top" and deliberately NOT a
+	 * scenario field. So no seeding path can apply it: the scenario owns the 200/200
+	 * baseline and something AFTER seeding has to shift one side off it. This is that
+	 * something, and it lives here rather than in `StratPlay` because
+	 * `strat::EconomyState` is a `strat::` type -- the rule measured at 8 x LNK2019 puts
+	 * every touch of one inside this module.
+	 *
+	 * `fameCombat` DOES NOT MOVE, AND THAT IS WHY THIS METHOD IS THIS NARROW. Sec 2.8's
+	 * first tiebreak key is `fameCombat`, and T-TURN-05's mutual-passivity guard fires on
+	 * both sides reading zero at the cap. A handicap that touched it would move the
+	 * victory condition and the draw condition at once, and it would do so invisibly --
+	 * the scoreboard shows both numbers but nothing on screen compares either to the
+	 * tier. `Economy.h` says the same thing from the other side about passive income
+	 * (T-FAME-01); this is the second writer that had to be told, and the only other one
+	 * this module has.
+	 *
+	 * A DELTA AND NEVER AN ABSOLUTE. Handing this method 350 would make it a second
+	 * author of the scenario's `startingFame`, and T-FAME-02 says a gate must assert
+	 * "each side's configured value and never a literal 200". A delta composes with
+	 * whatever the scenario configured, so a scenario that opens on 300 reaches 450 on
+	 * Easy rather than 350 -- which is what "applied on top" means. No tier number
+	 * appears in this module; the mapping is `StratDifficultyFameDelta`, in the module
+	 * that owns match setup.
+	 *
+	 * ZERO IS A LEGAL DELTA AND IS A NO-OP BY ARITHMETIC, not by an early return. Normal
+	 * tier passes 0 and the caller is not asked to know that Normal is special.
+	 *
+	 * CLAMPED AT ZERO, WHICH IS A DECISION AND NOT AN OVERSIGHT. A negative purse is a
+	 * state `strat::initSide` has no way to produce and that no rule in the module reads
+	 * as "in debt" -- `queueBuild` refuses everything at 0 and would refuse everything at
+	 * -50, so the clamp removes an unobservable distinction rather than a meaningful one.
+	 * It is REPORTED through `OutFameTotalAfter` rather than refused, because a designer
+	 * who configures Hard against a 50-Fame scenario has authored a scenario/tier
+	 * mismatch and not an unplayable match. If a later tier needs a debt to be real, this
+	 * clamp is the line to delete and `strat::queueBuild` is where the behaviour would
+	 * then have to be checked.
+	 *
+	 * REFUSES AN UNSEEDED BRIDGE AND AN OUT-OF-RANGE SIDE, in this facade's usual words.
+	 * It does not refuse a delta of any magnitude.
+	 *
+	 * NOT RECORDED IN THE Sec 4.10 LOG, and it could not be: the log holds
+	 * `strat::SaveCommand`s and this is not one. `RestoreFromSaveText` therefore cannot
+	 * see it, which is why that method's T-SAVE-06 refusal names it as a fourth cause.
+	 */
+	FStratResult ApplyStartingFameHandicap(int32 Side, int32 FameDelta,
+	                                       int32& OutFameTotalAfter);
+
+	/**
+	 * One side's live `fameTotal`, for a caller holding no snapshot.
+	 *
+	 * ADDED FOR THE HANDICAP'S SAKE and kept as its readback half -- a mutator whose
+	 * effect only a full `MakeUiSnapshot` can confirm is a mutator a clause has to build
+	 * a projection to observe. `FStratSideView::FameTotal` is the same number and remains
+	 * what a widget binds to; this is the direct read of it.
+	 *
+	 * INDEX_NONE FOR AN OUT-OF-RANGE SIDE, AND NEVER 0. Zero is a real purse, and a
+	 * sentinel that collides with a real value cannot report absence.
+	 */
+	int32 SideFameTotal(int32 Side) const;
+
+	/**
+	 * One side's live `fameCombat`. Present so that "the handicap did not touch this" is
+	 * observable from outside this module without projecting a snapshot first. Same
+	 * INDEX_NONE convention as above, and for the same reason.
+	 */
+	int32 SideFameCombat(int32 Side) const;
+
 	// ---- The recording joint, in engine types -----------------------------
 	// `RecordedLog().size()` and "replay it onto another bridge", reachable from a
 	// module that may not name `strat::SaveCommand`.

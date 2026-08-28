@@ -273,6 +273,56 @@ bool UStratMatchSubsystem::StartMatchInternal(const FStratMatchConfig& Config,
 		return false;
 	}
 
+	// ---- STEP TWO AND A QUARTER: Sec 2.9's difficulty handicap --------------
+	// AFTER SEEDING, BECAUSE SEEDING IS WHAT CREATES THE PURSE IT MOVES. The scenario
+	// owns the baseline -- `Scenario.h` says the handicap is "a match-setup parameter
+	// applied on top" and deliberately not a scenario field -- so this is the first
+	// instant at which there is a configured value to apply it on top of.
+	//
+	// AND BEFORE THE RESTORE, WHICH IS THE ORDERING DECISION IN THIS BLOCK.
+	// `RestoreFromSaveText` replays the save's log onto whatever this bridge is holding
+	// and then compares `strat::canonicalStateHash`. A save written at Easy was written
+	// from a handicapped base, so the replay must run on a handicapped base or the hash
+	// cannot agree. Applying it AFTER the restore would shift a state whose hash had
+	// already been certified, and the slot would then load "successfully" into a match
+	// worth 150 Fame more than the one that was saved. This order makes a tier mismatch
+	// a REFUSAL instead: the handicap is not a `strat::SaveCommand`, so the log cannot
+	// carry it, and it is not a scenario field, so `scenarioHash` cannot either --
+	// loading a slot written at another tier lands on T-SAVE-06, whose refusal now names
+	// this as its fourth cause rather than leaving a reader to blame the log.
+	//
+	// A REFUSAL IS A COMPLAINT AND NOT A TEARDOWN, on `SetBuildlistByIds`' line below.
+	// The only ways this refuses are an unseeded bridge, which the line above just ruled
+	// out, and a `ViewingSide` that names no real side -- a configuration fault whose
+	// consequence is a match played at Normal. Tearing down a correctly seeded match over
+	// a difficulty setting would be the larger harm.
+	FString HandicapReason;
+	{
+		const int32 HandicappedSide = StratHandicappedSide(ActiveConfig);
+		if (HandicappedSide != INDEX_NONE)
+		{
+			const int32 Delta = StratDifficultyFameDelta(ActiveConfig.Difficulty);
+
+			int32 FameAfter = INDEX_NONE;
+			const FStratResult Handicap =
+				Fresh->ApplyStartingFameHandicap(HandicappedSide, Delta, FameAfter);
+
+			if (!Handicap.bOk)
+			{
+				HandicapReason = DescribeRefusal(TEXT("ApplyStartingFameHandicap"), Handicap);
+			}
+			else
+			{
+				// LOGGED WITH THE DELTA AND THE RESULT, not just the tier. The tier alone
+				// does not tell a reader what the scenario's baseline was, and the pair is
+				// what makes "applied on top" checkable from a log line.
+				UE_LOG(LogStratPlay, Log,
+					TEXT("Sec 2.9 handicap: side %d opens on %d Fame (%+d on the scenario's value)."),
+					HandicappedSide, FameAfter, Delta);
+			}
+		}
+	}
+
 	// ---- STEP TWO AND A HALF: the recorded log, when this is a load ---------
 	// BETWEEN SEEDING AND THE HAND-OVER, and that window is the only legal one:
 	// `RestoreFromSaveText` refuses an unseeded bridge and `AdoptBridge` refuses one too.
@@ -407,6 +457,10 @@ bool UStratMatchSubsystem::StartMatchInternal(const FStratMatchConfig& Config,
 
 	// ---- One verdict, assembled from the parts that refused ----------------
 	TArray<FString> Complaints;
+	if (!HandicapReason.IsEmpty())
+	{
+		Complaints.Add(HandicapReason);
+	}
 	if (!BuildlistReason.IsEmpty())
 	{
 		Complaints.Add(BuildlistReason);
@@ -1485,6 +1539,47 @@ bool StratMatchIsConcluded(const FStratViewModel& Model)
 {
 	// ONE FIELD. See the declaration on why `ResultTier` is not consulted here.
 	return Model.Match.bHasResult;
+}
+
+int32 StratDifficultyFameDelta(EStratDifficulty Difficulty)
+{
+	// Sec 2.9's three numbers and nothing else. NO `default:` LABEL, so that adding a
+	// tier to the enum is a compiler warning here rather than a silent 0 at runtime --
+	// and a silent 0 is exactly the failure that would read as "the handicap works,
+	// this tier just happens to be even".
+	switch (Difficulty)
+	{
+	case EStratDifficulty::Easy:   return 150;
+	case EStratDifficulty::Normal: return 0;
+	case EStratDifficulty::Hard:   return -100;
+	}
+
+	// Unreachable over the enum above, and present only because a `UENUM` is a `uint8`
+	// and a Blueprint can hold a byte the enum never named. Even is the safe answer:
+	// it leaves the scenario's configured value standing.
+	return 0;
+}
+
+int32 StratHandicappedSide(const FStratMatchConfig& Config)
+{
+	// ARM ONE -- the shipped hot seat. See the declaration: Sec 2.7 calls this
+	// "Single-player difficulty", and with no AI seat there is no player-versus-opponent
+	// asymmetry for a starting-Fame handicap to express. This is the arm that keeps every
+	// existing hot-seat opening at the scenario's own 200/200.
+	if (Config.AiSides.Num() == 0)
+	{
+		return INDEX_NONE;
+	}
+
+	// ARM TWO -- the screen opens on an AI seat. Either both sides are AI, which is what
+	// phase D's AI-vs-AI gate configures and which must not move, or the configuration is
+	// inverted. Neither is a match with a human whose side Sec 2.7 would move.
+	if (Config.AiSides.Contains(Config.ViewingSide))
+	{
+		return INDEX_NONE;
+	}
+
+	return Config.ViewingSide;
 }
 
 bool StratMatchAcceptsPlayerCommands(const FStratViewModel& Model, FString& OutRefusalReason)

@@ -188,6 +188,75 @@ class UStratSaveGame;
 DECLARE_DELEGATE_OneParam(FStratViewDecorator, FStratViewModel& /*Model*/);
 
 /**
+ * Sec 2.9's difficulty tier, which this project implements as a starting-Fame handicap
+ * and as NOTHING ELSE.
+ *
+ * THE GDD IS EXPLICIT THAT THIS IS NOT A SMARTER AI: "the baseline routine is identical
+ * at every tier; only the economy shifts". So this enum reaches exactly one number --
+ * `StratDifficultyFameDelta` below -- and no branch of `FStratAiTurnRunner` may ever read
+ * it. A tier that also changed the AI's behaviour would make Sec 2.9's stated property
+ * ("deterministic and trivially tunable, with no AI-quality risk") false, and would do so
+ * in a way no economy assertion could catch.
+ *
+ * REFLECTED, BECAUSE A DESIGNER SETS IT. It is a `FStratMatchConfig` field like every
+ * other field there, shown in the `AStratGameMode` Blueprint's details panel; `uint8` is
+ * what `UENUM(BlueprintType)` requires.
+ *
+ * THREE VALUES AND NO `Custom`. Sec 2.9 names three tiers and gives three numbers; a
+ * fourth value carrying a designer-typed delta would be a second way to say the same
+ * thing, and the two could then disagree about what "Hard" means.
+ */
+UENUM(BlueprintType)
+enum class EStratDifficulty : uint8
+{
+	/** Sec 2.9: the player opens +150 above the scenario's configured value. */
+	Easy   UMETA(DisplayName = "Easy"),
+
+	/** Sec 2.9: even. The scenario's configured value stands unchanged for both sides. */
+	Normal UMETA(DisplayName = "Normal"),
+
+	/** Sec 2.9: the player opens 100 below the scenario's configured value. */
+	Hard   UMETA(DisplayName = "Hard")
+};
+
+/**
+ * The opening-Fame delta Sec 2.9 gives each tier: +150 / 0 / -100, as a number to ADD to
+ * whatever the scenario configured for the player's side.
+ *
+ * A DELTA AND NOT AN ABSOLUTE, and this is the whole reason the function exists rather
+ * than three constants read at the call site. Sec 2.7 says the 200 is "a baseline, not a
+ * constant, for the player", and T-FAME-02 says a gate must assert "each side's configured
+ * value and never a literal 200". Returning 350 here would make this file a second author
+ * of `Data/ferrum_crossing.json`'s `startingFame`, and the two would silently disagree the
+ * first time a scenario opened on anything else.
+ *
+ * THE CHECKABLE FORM OF THAT CLAIM IS ABOUT WHAT IS ASSIGNED AND NOT ABOUT WHAT A TEXT
+ * SEARCH FINDS, and it is written that way because the other way was written first and was
+ * false. THIS FUNCTION AUTHORS NO OPENING-FAME VALUE: it returns three deltas, and the only
+ * statement in `StratBridge`, `StratPlay` or `StratUI` that writes a side's `fameTotal` is
+ * the one in `FStratBridge::ApplyStartingFameHandicap`, which ADDS a delta to a number this
+ * code did not choose. `Data/ferrum_crossing.json` and `strat::initSide` own the absolute;
+ * nothing here does.
+ *
+ * CITED BY SYMBOL AND NOT BY A GREP PATTERN, DELIBERATELY. A pattern quoted in a comment is
+ * matched by its own search, so a census phrased that way begins returning the sentence that
+ * made it -- which is exactly how the sentence this paragraph replaced went wrong. It read
+ * "350 and 100 appear NOWHERE in `Source/`", a claim about TEXT IN A DIRECTORY standing in
+ * for a claim about VALUES IN CODE, and a search for those numerals returns it along with
+ * every other line of prose here that discusses the rule. The numerals DO occur in this file
+ * and in `StratBridge.h`, as prose. What none of them is, is a value assigned to a purse.
+ *
+ * FREE AND `STRATPLAY_API`, on the precedent of `StratMatchIsConcluded` below: the tier ->
+ * delta mapping is a pure function of its argument, a clause has to be able to call it
+ * without standing up a world, and a method on the subsystem would have made it reachable
+ * only from one.
+ *
+ * TOTAL OVER THE ENUM AND WITH NO `default:` LABEL, so that adding a tier is a compiler
+ * warning here instead of a silent 0 at runtime.
+ */
+STRATPLAY_API int32 StratDifficultyFameDelta(EStratDifficulty Difficulty);
+
+/**
  * Everything `StartMatch` needs and nothing it can derive.
  *
  * A STRUCT AND NOT SEVEN ARGUMENTS, because the caller is a Blueprint default -- one
@@ -294,6 +363,37 @@ struct FStratMatchConfig
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
 	TArray<int32> AiSides;
+
+	/**
+	 * Sec 2.9's difficulty tier, applied as a starting-Fame handicap to the player's side
+	 * once the scenario has seeded.
+	 *
+	 * PLACED HERE, INSIDE THE AI BLOCK, BECAUSE `AiSides` IS WHAT ARMS IT. Sec 2.7 calls
+	 * this "Single-player difficulty" and says it moves "the player's side only", so with
+	 * `AiSides` empty there is no player as distinct from an opponent and the handicap has
+	 * no side to move. `StratHandicappedSide` below is that reading in code, and it is the
+	 * only place this field is consulted.
+	 *
+	 * THE INERTNESS IS A `coordinator` RULING FROM A TWO-WORD READING OF Sec 2.7 -- the
+	 * words "Single-player difficulty" -- AND IS NOT A GDD QUOTATION. Said plainly here so
+	 * a later reader can find it and overturn it rather than having to reconstruct why the
+	 * hot seat is exempt. What the ruling avoids is concrete: applying the handicap to
+	 * every human side would move a hot-seat opening from 200/200 to 350/350 and change the
+	 * meaning of every existing clause in the same pass that introduced the field -- which
+	 * is, in those words, what this block's own preamble above says it refused to do for
+	 * the AI. If the GDD is later read as handicapping a hot seat's first seat, the change
+	 * is to `StratHandicappedSide` alone.
+	 *
+	 * DEFAULTS TO `Easy` AND THAT DEFAULT IS INERT ON THE SHIPPED CONFIGURATION. Sec 2.11.6
+	 * says "the first match runs on the one shipped scenario at Easy by default", so `Easy`
+	 * is the honest C++ default; `AiSides` defaults empty, so on the shipped hot seat the
+	 * default reaches `StratHandicappedSide` and comes back `INDEX_NONE`. Both statements
+	 * are true at once and neither implies the other -- which is why the default is stated
+	 * as `Easy` here rather than as `Normal`, the value that would have made the inertness
+	 * true by arithmetic instead of by configuration and hidden the ruling above.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
+	EStratDifficulty Difficulty = EStratDifficulty::Easy;
 
 	/**
 	 * §2.9's buildlist, BY UNIT ID, handed to `FStratBridge::SetBuildlistByIds` after
@@ -489,6 +589,36 @@ struct FStratMatchConfig
  * asked `ResultTier != InProgress` instead would be a second author of the same fact.
  */
 STRATPLAY_API bool StratMatchIsConcluded(const FStratViewModel& Model);
+
+/**
+ * Which side Sec 2.9's handicap moves for this configuration, or `INDEX_NONE` when it
+ * moves none.
+ *
+ * THE WHOLE OF THE "SINGLE-PLAYER ONLY" RULING LIVES IN THIS FUNCTION, deliberately, so
+ * that overturning it is one edit and so that a clause can assert the ruling directly
+ * instead of inferring it from an opening purse. Three arms, and each is a different
+ * configuration rather than three ways of saying one thing:
+ *
+ *   - `AiSides` EMPTY -> `INDEX_NONE`. A hot seat has no player-versus-opponent asymmetry
+ *     for a handicap to express. This is the shipped configuration.
+ *   - `AiSides` CONTAINS `ViewingSide` -> `INDEX_NONE`. The seat the screen opens on is
+ *     itself the AI, so either both sides are AI (phase D's AI-vs-AI gate, which must not
+ *     move) or the configuration is inverted. Both fail inert rather than handicapping a
+ *     computer.
+ *   - OTHERWISE -> `ViewingSide`.
+ *
+ * `ViewingSide` IS THE PLAYER'S SEAT AND NOT `FirstSide`. Its own declaration says it is
+ * "which `strat` side the screen is drawn FOR at the start of the match"; in a
+ * single-player match that is the human, whoever moves first. The alternative shape was to
+ * take the complement of `AiSides` over the side count -- which is the same answer on two
+ * sides and needs this module to learn a side count it deliberately does not name (see
+ * `AiSides`' own "A LIST AND NOT TWO BOOLS"). That is what killed it.
+ *
+ * NOT RANGE-CHECKED, on `AiSides`' stated posture. A `ViewingSide` that names no real side
+ * comes back from `FStratBridge::ApplyStartingFameHandicap` as that method's own refusal,
+ * in its words, rather than as an upper bound invented here.
+ */
+STRATPLAY_API int32 StratHandicappedSide(const FStratMatchConfig& Config);
 
 /**
  * Whether a human command may still be offered to the rules module for this model.

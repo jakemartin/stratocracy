@@ -11,6 +11,61 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-28 (W7 LANDS: SEC 2.9'S DIFFICULTY HANDICAP EXISTS, AND THE GUIDED OPENING'S
+OWN PREMISE ABOUT THE FIRST SESSION IS MET FOR THE FIRST TIME. Written by the `coordinator`,
+whose file this is.
+THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE IN THIS WAVE: it was built in
+`E:/MultiAgent/Stratocracy` on branch `master`, with no worktree, no branch, no rebase and no
+merge, so no figure is carried over from anywhere and there is no lane run to agree or disagree
+with. The suite is
+**267/267**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+THE REPORT THAT CERTIFIES THE LIVE FIGURE IS THIS TREE'S AND THE `coordinator` RAN IT ITSELF
+RATHER THAN QUOTING A LANE'S: `reportCreatedOn 2026.08.28-22.26.49`, `succeeded 267`, `failed 0`,
+`notRun 0`, `succeededWithWarnings 0`, 267 entries and a non-Success set that is EMPTY, read
+directly out of `Saved/AutomationReport/index.json`. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS
+LOCAL.
+THE DELTA OVER `master` IS **+8 AND NOTHING WAS REMOVED OR RENAMED**, by multiline
+set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- never by an acceptance-ID grep, and never
+by a single-line one, which returns ZERO in this tree because the macro's argument sits on the
+next line. Measured against `HEAD`'s own git objects: 259 there, 267 here, removed set EMPTY,
+both sides guarded non-empty and both collected by the SAME path filter. **That symmetry is
+stated because it was the defect in the first count taken this wave**: a HEAD side filtered to
+`Source/<one-segment>/Tests/` against a worktree side that walked for any directory named
+`Tests` reported 13 added and invented five `StratData` clauses no lane had touched. A set
+difference between two differently-collected sets measures the collectors.
+WHY THE BUILD LINE READS AS A NO-OP, SAID PLAINLY RATHER THAN DRESSED UP AS A FRESH COMPILE: the
+`coordinator`'s own `Build.bat` returned `Result: Succeeded`, `REAL_EXIT=0` and zero
+warning-or-error lines over the WHOLE captured log, in 0.94 seconds with 0.09 seconds in the
+executor -- because the last rebuild of the wave had already covered these exact bytes. It is
+run and reported as a CONTROL that the tree needs no compilation, not as evidence that these
+bytes were compiled here.
+THE EIGHT ADDED CLAUSES MINT NO ACCEPTANCE ID. Six ride `T-FAME-02`, one rides `T-FAME-01` and
+one rides `T-SAVE-06`, by the user ruling recorded under `## NEXT` below, which names an existing
+upstream ID per clause SUBJECT and files no upstream mint.
+**[STAMPED 2026-08-28, LATER THE SAME EVENING: THE SENTENCE THAT STOOD HERE IS NOW FALSE AND IS
+STAMPED RATHER THAN DELETED. STRUCK: `NO GATE HAS RUN ON THIS TREE. That is stated rather than
+left to be assumed, and NO PHASE VERDICT IS STATED IN THIS ENTRY: strat-integration-reviewer has
+not seen these bytes, and a wave is not closed by a green suite.` THE GATE HAS SINCE RUN ON THIS
+TREE AND RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, ON THE FIRST ROUND, and THAT is the verdict
+for this wave. It read the working tree against `HEAD` INCLUDING THE TWO UNTRACKED TEST FILES,
+which `git diff` alone does not show. It re-derived rather than accepted: the 32 vendored blobs
+under `Source/StratRules` and `Data` compared by `git hash-object` and all identical; the module
+graph as 15 rows over 5 modules with a 6-name field census and no `.Build.cs` changed at all; and
+the clause delta 259 -> 267, +8, removed set EMPTY, which reproduced exactly. It confirmed the
+two checks most able to hide a silent defect -- that NO statement in the wave writes
+`fameCombat`, and that the clause pinning that walks the parity fixture to a genuinely NON-ZERO
+counter and fails outright if it never reaches one, so it cannot degrade into `0 == 0`.
+**WHAT THE GATE DID NOT MEASURE, IN ITS OWN WORDS AND CARRIED HERE RATHER THAN LEFT IN ITS
+REPORT: it did not run the build or the suite.** So the `Result: Succeeded` and the 267/267 above
+are the `coordinator`'s own readings and are NOT confirmed by the reviewer; the clause count
+BEHIND that figure is, independently. That distinction is the whole reason this stamp names it.]**
+WHAT THIS WAVE DOES NOT DO: it authors no asset, sets no Blueprint default and builds no menu, so
+nothing on a screen lets a player CHOOSE a tier -- the tier is an `EditDefaultsOnly` field and
+selecting it is W6's screen work. And Sec 2.9's SECOND claim, that the baseline routine is
+identical at every tier and only the economy shifts, is UNPINNED: it is a property of code rather
+than of an observable value, since an AI that consulted the tier would still open on the same
+purse, so no economy assertion can catch it. That is scope stated honestly, not a defect.)
+
 _Last run 2026-08-28 (WAVE 2 LANDS ON MASTER: SEC 2.11.2'S INFO PANEL HAS A MODEL SIDE, AND THE
 FIGURE WAS MEASURED ON THIS TREE RATHER THAN CARRIED OVER FROM THE LANE THAT PRODUCED IT.
 Written by the `coordinator`, whose file this is.
@@ -2413,6 +2468,113 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-28, COORDINATOR -- USER RULING: W7'S CLAUSES RIDE `T-FAME-02`. NO ID IS MINTED AND
+  NONE IS CLAIMED. RECORD-ONLY; NO SOURCE, NO TEST, NO ASSET AND NO CONFIG FILE WAS TOUCHED; NO
+  SUITE WAS RUN AND NO SUITE FIGURE MOVES -- the live figure is the one this file's topmost
+  banner cites. NO PHASE VERDICT IS STATED HERE and nothing below has been through a gate.**
+  W7 is Sec 2.9's difficulty handicap, and it had no acceptance ID. This entry is written FLAT,
+  because a correction that only adds leaves both claims live and a nested one has already let a
+  false sentence survive directly above its own retraction in this file.
+  - **STRUCK 2026-08-28, SAME DAY, BY A SECOND USER RULING, AND IT WAS THE `coordinator`'S OWN
+    WORDING WRITTEN BEFORE THE CLAUSE SET EXISTED:** `Every W7 clause is named
+    Stratocracy.<Module>.T-FAME-02.<Clause>. NO NEW ID IS MINTED, no upstream mint is filed, and
+    this ruling covers W7 alone and widens no other wave.` **It is not false about `T-FAME-02`;
+    it is over-broad about the WORD `every`**, and it was written before any clause had been
+    proposed, so its quantifier ranged over a set the `coordinator` had not seen. Two of the
+    eight clauses the engineer proposed have subjects `T-FAME-02`'s text does not name, and
+    forcing them under it would have produced the unfalsifiable shape this record has been caught
+    by: a clause riding an ID whose own words exclude its subject. Quoted rather than left
+    standing, because a correction that only adds leaves both claims live.
+  - **THE RULING AS IT STANDS, WIDENED 2026-08-28 BY USER RULING, AND IT IS THE WHOLE W7 CLAUSE
+    SET.** Each W7 clause rides the EXISTING upstream ID whose own text owns that clause's
+    subject, and **NO NEW ID IS MINTED, none is claimed, and no upstream mint is filed.** Three
+    IDs, and the split is by subject and not by module:
+    - **`T-FAME-02`** -- the tier-to-delta map, the handicap moving the player's side only, the
+      inertness arms, the zero clamp, and the refusals. This is the ID the first ruling named and
+      it still carries the bulk of the wave.
+    - **`T-FAME-01`** -- the one clause asserting that the handicap leaves `fameCombat`
+      untouched. `T-FAME-01` IS the separate-counter rule: `combat awards ALSO accrue a separate
+      fameCombat counter`, and `passive income never touches fameCombat`. A clause pinning that a
+      NEW non-combat mutation also never touches it is squarely that ID's subject and is nothing
+      like `T-FAME-02`'s accrual arithmetic.
+    - **`T-SAVE-06`** -- the one clause asserting that a slot written at another tier is refused.
+      `T-SAVE-06` is the replayed-state-hash refusal and is ALREADY the id this tree's
+      `StratBridgeRestoreParity.cpp` asserts on; a cross-tier load reaches that exact refusal by
+      that exact route.
+    This widening covers W7 alone and widens no other wave.
+  - **AND THE STRETCH IS STATED FOR THE TWO NEW IDS TOO, on the same standard the `T-UI-01`
+    ruling set for itself.** Neither `T-FAME-01` nor `T-SAVE-06` was written with a difficulty
+    handicap in mind. A clause under either must assert the half of that ID that W7 actually
+    reaches -- for `T-FAME-01`, that `fameCombat` is unmoved across the handicap call, and NOT
+    anything about kill awards; for `T-SAVE-06`, that the refusal fires and carries that id, and
+    NOT that the hash algorithm is correct -- and must not be written as though the ID's headline
+    claim covered the handicap.
+  - **WHY IT IS COHERENT, stated so a later reader does not have to reconstruct it.** `T-FAME-02`
+    is not merely adjacent to W7's subject -- its own stub text at Sec 4.7 NAMES W7'S NUMBERS:
+    `a side's turn-1 buying power is its STARTING FAME alone -- 200 for both sides at Normal;
+    Sec 2.9's handicap moves the PLAYER's opening Fame only, to 350 on Easy and 100 on Hard,
+    while the AI opens on 200 at every tier -- so the gate asserts each side's configured value
+    and never a literal 200`. The last clause of that sentence is an instruction to a gate, and
+    W7 is the gate it is addressed to. This is the same shape as W0 and W1 riding `T-UI-01`: an
+    upstream ID extended to this project's side of the same acceptance, minting nothing.
+  - **AND THE STRETCH IS STATED RATHER THAN HIDDEN, exactly as the `T-UI-01` ruling stated its
+    own.** `T-FAME-02`'s headline subject is INCOME ACCRUAL -- factory +100/turn, town +25/turn,
+    at the start of the owner's turn, none on turn 1. A W7 clause asserts no accrual at all. So a
+    clause under this ID must assert the half of `T-FAME-02` that W7 actually touches -- that
+    turn-1 buying power is the CONFIGURED opening Fame and not a literal 200, per tier and per
+    side -- and must not be written as though the ID's accrual half covered it. A clause that
+    rides an ID it does not test is the unfalsifiable shape this record has been caught by
+    before.
+  - **HOW THE GAP WAS FOUND, and it was a defect in this file read by the `coordinator` rather
+    than in the tree.** The wave-plan entry below closes `For W2, W3, W4, W5, W6 and W8 there is
+    still no ID and no ruling`. **W7 IS ABSENT FROM THAT LIST AND WAS NEVER GRANTED ANYTHING**,
+    while W0 and W1 are granted `T-UI-01` in the two bullets directly above it. The
+    `coordinator` read that absence as a grant and told the user W7 was the one remaining wave
+    with no ID question. **THAT WAS WRONG, and it is quoted here rather than left standing:**
+    `W7 is the one wave with no ID question blocking it`. By this record's own standard -- a
+    ruling that is silent on an item ships it unpinned without saying so -- an omission is a gap
+    and not a grant. The wave plan's list is left as it stands, because it was accurate about the
+    waves it names; this entry supplies the item it was silent on.
+  - **`T-AI-07` IS A TRAP AND IS NAMED HERE SO NOBODY REACHES FOR IT.** It appears in the GDD and
+    is NOT a defined ID: Sec 4.11's row-6 note states that the self-play smoke run carries no
+    numbered ID and that `spec/ai_spec.md` declines to mint one, `since a T-AI-07 would move Sec
+    4.5's count` -- the run rides `GATE-AI-SMOKE` instead. So `T-AI-07` greps exactly like a
+    defined identifier and is not one, which is the failure this record has already been caught
+    by, one letter-block over from the ID a W7 author would first reach for.
+  - **WHAT THE SPEC PINS, and there is nothing left to interpret.** Four sites agree: Sec 2.9
+    (`Easy = player +150 opening Fame; Normal = even (200/200); Hard = player -100`), Sec 2.7's
+    income bullet, Sec 2.13's turn-1 buying-power note, and `T-FAME-02`'s own stub. Easy is
+    player 350 / AI 200, Normal is 200/200, Hard is player 100 / AI 200. **It moves the PLAYER'S
+    SIDE ONLY** -- `the AI opens on 200 at every tier` -- and it moves OPENING FAME.
+  - **IT MUST NOT TOUCH `fameCombat`, and that is a correctness constraint and not a style note.**
+    `T-FAME-01` says combat awards ALSO accrue a separate `fameCombat` counter and that passive
+    income never touches it, and `EconomyState` carries the two as separate members.
+    `fameCombat` is Sec 2.8's tiebreak criterion-1 sort key and `T-TURN-05`'s mutual-passivity
+    guard reads it. A handicap that moved it would move the victory condition.
+  - **TWO HAZARDS, NAMED BEFORE THE LANE STARTS RATHER THAN AFTER.**
+    - **A SAVE CANNOT SEE THE DIFFICULTY IT WAS WRITTEN AT.**
+      `FStratBridge::RestoreFromSaveText` replays the save's log onto the freshly-seeded state
+      and compares `strat::canonicalStateHash`. The handicap is not a scenario field, so
+      `scenarioHash` cannot carry it, and it is not a command, so the log cannot carry it.
+      Loading a slot at a different tier than it was written at therefore lands on that method's
+      `T-SAVE-06` refusal -- whose message enumerates THREE causes, `the log, the definitions or
+      the seeding side`, and difficulty would be a silent fourth. **It fails safe and it fails
+      misleadingly**, and the second half is the part worth fixing in the refusal's own words.
+    - **HOT-SEAT IS THE SHIPPED DEFAULT AND THE HANDICAP MUST STAY INERT IN IT.** `AiSides`
+      defaults empty, which is no AI side at all. Applying the handicap to every human side would
+      move a hot-seat opening from 200/200 to 350/350 at Easy and change the meaning of every
+      existing test and every existing PIE session in the same pass that introduced it -- which
+      is precisely what `FStratMatchConfig`'s own AI block says it refused to do, in those words.
+  - **ONE THING THE `coordinator` RULES ITSELF, STATED AS AN ASSUMPTION RATHER THAN AS THE GDD'S
+    WORDS.** Sec 2.7 calls it `Single-player difficulty`, so the handicap applies only when the
+    match is single-player, and is inert otherwise. That is a reading of two words and not a
+    quotation of a rule, so it is marked here as the `coordinator`'s and is the user's to
+    overturn. It is what makes the second hazard above a non-event on the shipped default.
+  - **NO ASSET TAIL AND NO EDITOR.** W7 is a `FStratMatchConfig` field and the code that applies
+    it. Sec 2.11.6's `the first match runs at Easy by default` is satisfied by the C++ default on
+    that field, which is inert under the assumption above; no Blueprint default and no `Content/`
+    change is required, and none is authorized by this entry.
 
 - **2026-08-27, COORDINATOR -- USER RULING, WIDENED THE SAME DAY ON THE GDD'S OWN Sec 2.11.2:
   WAVE 2'S FOUR SNAPSHOT MIRRORS RIDE `T-UI-05`, AND ITS FIVE TABLE-AND-PRESENTATION READOUTS

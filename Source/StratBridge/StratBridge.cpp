@@ -1325,7 +1325,8 @@ FStratResult FStratBridge::RestoreFromSaveText(const FString&            SaveTex
 		return FStratResult::Fail(
 			FString::Printf(
 				TEXT("replayed state hash disagrees with the save's (file %s, replayed %s); ")
-				TEXT("the log, the definitions or the seeding side is not the one this save was written from"),
+				TEXT("the log, the definitions, the seeding side or the Sec 2.9 difficulty handicap ")
+				TEXT("is not the one this save was written from"),
 				*FromStd(Parsed.stateHash), *FromStd(Reached)),
 			TEXT("T-SAVE-06"));
 	}
@@ -1683,6 +1684,66 @@ TArray<int32> FStratBridge::BuildlistDefIndexes() const
 		Out.Add(Def);
 	}
 	return Out;
+}
+
+// ---------------------------------------------------------------------------
+// Sec 2.9's difficulty handicap. See the header on why the arithmetic is here
+// and the tier numbers are not.
+// ---------------------------------------------------------------------------
+
+FStratResult FStratBridge::ApplyStartingFameHandicap(int32  Side,
+                                                     int32  FameDelta,
+                                                     int32& OutFameTotalAfter)
+{
+	// Set before either guard so a refused call leaves the caller holding a
+	// sentinel rather than a previous call's answer -- `ReachableHexes`' rule
+	// about out-parameters, applied to a scalar.
+	OutFameTotalAfter = INDEX_NONE;
+
+	if (!bSeeded)
+	{
+		// Not "definitions are not loaded": seeding is what creates the purse this
+		// method moves, and a bridge with definitions and no seed has no purse at
+		// all. The two have different fixes.
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	if (Side < 0 || Side >= strat::SIDE_COUNT)
+	{
+		return FStratResult::Fail(FString::Printf(
+			TEXT("side %d is out of range (the loaded state has %d sides)"),
+			Side, static_cast<int32>(strat::SIDE_COUNT)));
+	}
+
+	strat::SideEconomy& Purse = GameState.economy.side[Side];
+
+	// THE WHOLE MUTATION IS THIS ONE LINE, and `fameCombat` is deliberately absent
+	// from it. See the header: Sec 2.8's first tiebreak key and T-TURN-05's
+	// mutual-passivity guard both read `fameCombat`, so a handicap that touched it
+	// would move the victory condition. Written as one statement so that a reader
+	// checking that claim has one statement to check.
+	Purse.fameTotal = FMath::Max(0, Purse.fameTotal + FameDelta);
+
+	OutFameTotalAfter = Purse.fameTotal;
+	return FStratResult::Ok();
+}
+
+int32 FStratBridge::SideFameTotal(int32 Side) const
+{
+	if (!bSeeded || Side < 0 || Side >= strat::SIDE_COUNT)
+	{
+		return INDEX_NONE;
+	}
+	return GameState.economy.side[Side].fameTotal;
+}
+
+int32 FStratBridge::SideFameCombat(int32 Side) const
+{
+	if (!bSeeded || Side < 0 || Side >= strat::SIDE_COUNT)
+	{
+		return INDEX_NONE;
+	}
+	return GameState.economy.side[Side].fameCombat;
 }
 
 // ---------------------------------------------------------------------------

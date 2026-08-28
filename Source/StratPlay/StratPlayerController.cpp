@@ -26,6 +26,10 @@
 #include "StratMatchSubsystem.h"
 #include "StratPlay.h"
 #include "StratScoreboardHUD.h"
+// IWYU: this file now names `StratDecorateInfoPanel` directly. It arrived transitively
+// through `StratForecastQuery.h` before, which is a dependency on somebody else's include
+// list rather than on a header.
+#include "StratViewModel.h"
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -1049,6 +1053,22 @@ void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
 				*GetName(), *ForecastFailureReason);
 		}
 	}
+
+	// §2.11.2'S INFO PANEL, AND IT IS LAST BECAUSE IT READS THE MOST. It selects the
+	// hovered hex out of `Model.Hexes` (so it must follow `Hover.DecorateViewModel`) and
+	// that hex's unit's `bDone` bit (so it must follow
+	// `SelectionMachine.DecorateViewModel`). Both constraints run one way: it writes
+	// `Model.InfoPanel` and nothing else, and no decorator above reads that field.
+	//
+	// IT IS ORDERED AFTER THE FORECAST BY CHOICE RATHER THAN BY NEED -- the two touch no
+	// common field -- and last is where a decorator that only restates the model belongs,
+	// so that whatever it restates is final.
+	//
+	// NO FAILURE CHANNEL AND NOTHING TO LOG. Unlike the forecast, this decorator has no
+	// bridge to be unseeded and no query to refuse; not hovering, hovering off the board
+	// and hovering an empty hex are all answers it writes unconditionally. See its
+	// declaration.
+	StratDecorateInfoPanel(Model);
 }
 
 void AStratPlayerController::TryArmGuidedOpening()

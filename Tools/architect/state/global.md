@@ -11,6 +11,85 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-28 (WAVE 2 LANDS ON MASTER: SEC 2.11.2'S INFO PANEL HAS A MODEL SIDE, AND THE
+FIGURE WAS MEASURED ON THIS TREE RATHER THAN CARRIED OVER FROM THE LANE THAT PRODUCED IT.
+Written by the `coordinator`, whose file this is.
+THE PROVENANCE IS THE INTEGRATION TREE: this run was made in `E:/MultiAgent/Stratocracy` on
+branch `master`, AFTER the `--no-ff` merge of `feat/info-panel`. NO REBASE WAS PERFORMED AND NONE
+WAS NEEDED -- the branch's merge-base and `master` both read `a45a7d9`, so it was already on
+master's head, and `git merge` reported `Automatic merge went well` with ZERO conflicts. The
+suite is
+**259/259**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+THE DELTA OVER PRE-MERGE `master` IS **+10 AND NOTHING WAS REMOVED OR RENAMED**, by multiline
+set-difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- never by an acceptance-ID grep, and never
+by a single-line one, which returns ZERO in this tree because the macro's argument sits on the
+next line. Measured against `a45a7d9`'s own git objects: 249 there, 259 here, removed set EMPTY.
+All ten added names carry `GATE-INFOPANEL`, which mints NO acceptance ID.
+THE REPORT THAT CERTIFIES THE LIVE FIGURE IS THIS TREE'S: `reportCreatedOn
+2026.08.28-13.29.19`, `succeeded 259`, `failed 0`, `notRun 0`, 259 entries and zero non-Success,
+read directly by the `coordinator`. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL.
+THE TREE WAS REBUILT HERE BEFORE IT WAS RUN: `Result: Succeeded`, `REAL_EXIT=0`, 62 compile
+actions -- so the green describes THESE bytes and not the lane's. A merge is a change, and a
+green from before it describes different bytes; that is why this figure was re-measured rather
+than inferred from the lane's identical 259.
+**[STAMPED 2026-08-28 -- THE LANE'S OWN RUN IS QUOTED BELOW AS HISTORY AND DOES NOT BACK THIS
+FIGURE. It was `reportCreatedOn 2026.08.28-00.32.37`, also 259/259, made in
+`E:/MultiAgent/Strat-wt/slot-1` before this merge existed. It agrees with this one, and agreement
+is not provenance: the banner below states the lane as its tree and this entry states this one.
+Two further runs of that wave, at 258/258 and an earlier 259/259, are stamped in that banner.]**
+THE NARROW RE-GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS on the lane, and the full gate
+before it returned `VERDICT: BLOCK` on two findings, both fixed and both named in the banner
+below. **NO GATE HAS RUN ON THIS TREE SINCE THE MERGE, and that is stated rather than left to be
+assumed** -- a `VERDICT: PASS` describes a tree and a merge is a post-pass change, so the
+post-merge re-gate is owed and is not claimed here. What IS measured here is the build, the
+suite and the delta, each named above with the instrument that produced it.
+WHAT THIS WAVE DOES NOT DO: no widget binds `FStratViewModel::InfoPanel`. Sec 2.11.2's panel has
+a complete model side and nothing draws it, so the asset tail is owed on this tree in an editor
+batch. That is scope stated honestly, not a defect -- but the recorded hazard of a correct value
+with no route to a screen now applies to the panel until a later wave binds it.)
+
+_Last run 2026-08-28 (SEC 2.11.2'S INFO PANEL HAS A MODEL SIDE, AND THE WAVE WAS WIDER THAN THIS
+FILE'S OWN SUMMARY OF IT. Written by the `coordinator`, whose file this is.
+THE PROVENANCE IS THE LANE TREE, NOT THE INTEGRATION TREE: this run was made in
+`E:/MultiAgent/Strat-wt/slot-1` on branch `feat/info-panel`, whose merge-base, `master` and `HEAD`
+all read `a45a7d9` -- so NO REBASE WAS NEEDED and none was performed. The suite is
+**259/259**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+THE DELTA OVER `master` IS **+10 AND NOTHING WAS REMOVED OR RENAMED**, by multiline set-difference
+on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- never by an acceptance-ID grep, and never by a
+single-line one, which returns ZERO in this tree because the macro's argument sits on the next
+line. Measured against `master`'s git objects: 249 there, 259 here, removed set EMPTY. All ten
+added names carry `GATE-INFOPANEL`, which mints no acceptance ID.
+THE REPORT THAT CERTIFIES THIS FIGURE IS THIS LANE TREE'S: `reportCreatedOn
+2026.08.28-00.32.37`, `succeeded 259`, `failed 0`, `notRun 0`, 259 entries and zero non-Success.
+THAT STAMP IS UTC AND THIS ENTRY'S DATE IS LOCAL.
+**[THE THREE EARLIER RUNS OF THIS WAVE ARE QUOTED AS HISTORY AND NONE BACKS THE LIVE FIGURE:
+`2026.08.28-00.03.21` at 258/258, before the gate's ordering finding was answered;
+`2026.08.28-00.20.54` at 259/259, before two comment corrections; and a 244/244 report at
+`2026.08.27-21.18.42` that was NOT this wave's at all -- it was the forecast-card lane's, left in
+this slot when the slot was reused, and it made the sweep report four findings that named nothing
+in this wave. It was moved aside rather than deleted. They are stamped rather than dropped
+because a superseded citation left standing unstamped is the shape this record has been bitten
+by.]**
+THE FIGURE IS THE LANE'S AND NOT `master`'s, AND THAT IS THE POINT OF SAYING WHICH TREE IT CAME
+FROM. `master` still reads 249/249 and is not wrong; the count moves in the merge commit, and it
+will be re-measured on the integration tree there rather than carried over from this line.
+THE NARROW RE-GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, and that is the verdict for this
+lane. THE FULL GATE BEFORE IT RETURNED `VERDICT: BLOCK` ON TWO FINDINGS AND BOTH ARE FIXED --
+stated rather than smoothed, because a `PASS` that hides the `BLOCK` it followed misreports how
+the work was done. The first finding was in CODE, not prose: a constraint the test lane had
+declared unobservable was observable in the fixture it already had, because
+`FStratSelectionMachine::DecorateViewModel`'s write to `bDone` is unconditional and destructive
+and the fixture owns its model by value. It is now pinned by a clause that asserts the machine's
+own post-decoration output rather than a literal, and runs its own reordered control. The second
+was five line citations in `decisions.md` that were exact in `master` and wrong the moment this
+wave merged, since it inserts some 400 lines above them; they are cited by symbol now.
+THE CODE, MODULE-GRAPH AND ASSET PASS CAME FIRST AND CAME BACK CLEAN, per the standing user
+ruling that a gate audits those before the prose: the vendored bytes verified by `git hash-object`
+across all 32 files rather than by a worktree diff, the module graph re-derived at 15 rows and
+five arrows with `StratUI` still free of `Stratocracy`, zero `strat::` calls outside the two
+permitted directories on both a single-line and a multiline scan, and no `/Game/` literal outside
+the two standing exceptions.)
+
 _Last run 2026-08-27 (SEC 2.11.2'S PERSISTENT HUD HAS A MODEL SIDE, AND THE FAME RATE THAT NO
 CODE HAD EVER READ NOW HAS A ROUTE TO A SCREEN. Written by the `coordinator`, whose file this is.
 THE PROVENANCE IS THE INTEGRATION TREE: this run was made in `E:/MultiAgent/Stratocracy` on

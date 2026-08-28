@@ -70,6 +70,25 @@
 // `id`, looked up by the index the snapshot carries. That is a table read, not a
 // derivation, and the reason it is here is recorded on the fields themselves.
 //
+// THE TABLE-READ CLAUSE ABOVE WIDENED ON 2026-08-27 AND IS AMENDED RATHER THAN REWRITTEN,
+// because "the single addition is `TerrainId` / `DefId`" was true of the fields when it
+// was written and a reader who remembers the sentence needs to see which half moved. Wave
+// 2 added `FStratHexView::TerrainMoveCost` and `::TerrainDefensePct`, which are the SAME
+// row read at the SAME index in the SAME loop as `TerrainId` -- so what changed is the
+// number of fields taken off that read, not the number of reads and not the KIND of thing
+// the model may contain. The arithmetic count did not move: there is still exactly one
+// arithmetic exception in this pair (`FStratBuildOptionView::Shortfall`) and it is still
+// outside the model. No count of table reads is stated here on purpose -- a census written
+// inside a growing thing is invalidated by the next thing that grows it, which this repo
+// has recorded happening to this very file's `static_assert` count twice.
+//
+// AND ONE LAYER THAT IS NEITHER A MIRROR NOR A TABLE READ: `FStratInfoPanelView`, filled
+// by `StratDecorateInfoPanel`, is a SELECTION over fields of this same struct. It reads
+// `Hexes`, `Units` and `Hover` and reaches nothing else -- no bridge, no snapshot, no
+// table -- so it can only restate numbers the census above already governs. That is why
+// it does not need a clause of its own, and why its function takes the model rather than
+// a bridge; see both blocks for the reasoning stated where it binds.
+//
 // THE PRESENTATION BLOCK'S DEBT IS DISCHARGED -- read the paragraph below as the reason
 // the fields are shaped this way, not as an open item. `FStratSelectionMachine::Decorate-
 // ViewModel` (`Source/StratPlay/StratSelectionMachine.h`) landed as the producer, called
@@ -275,6 +294,76 @@ struct FStratHexView
 	FName TerrainId;
 
 	/**
+	 * The same terrain row's `moveCost` and `defensePct` -- §2.11.2's info panel reads
+	 * `Factory · move 1 · def +15%` off exactly these two.
+	 *
+	 * THE SAME TABLE READ `TerrainId` ALREADY IS, at the same index, in the same loop, off
+	 * the same borrowed `strat::RulesTables`. That is the whole reason they are HERE rather
+	 * than in a struct of their own: the terrain row a hex names is read once, and three
+	 * fields taken off one read cannot disagree about which row was read. A parallel
+	 * "hex info" struct filled from a second lookup would be a second chance to read a
+	 * different row -- the failure `FStratAttackForecast`'s terrain block already refuses
+	 * from the other direction ("so the bonus shown IS the bonus `resolveDamage` was
+	 * handed").
+	 *
+	 * THEY ARE ON EVERY HEX AND NOT ONLY ON THE HOVERED ONE, deliberately. §2.5's path
+	 * preview wants "the terrain-cost tick per hex" (§2.11.2's own hover row says so), and
+	 * a per-hover-only field would send that consumer back to the table for a number the
+	 * model already had.
+	 *
+	 * `TerrainMoveCost` CARRIES `Data.h`'s §4.8 SENTINEL UNCHANGED: 0 means impassable and
+	 * is not a cheap hex. It is passed through rather than re-encoded, because re-encoding
+	 * it here would make this file the author of a rules constant. The one place that
+	 * sentinel is turned into a boolean a widget can bind to is
+	 * `FStratInfoPanelView::bTerrainImpassable`, and its own block says why it is there and
+	 * not here.
+	 *
+	 * `TerrainDefensePct` IS SIGNED AND THE SIGN IS LOAD-BEARING. `Data.h` says so on the
+	 * field itself -- "SIGNED -- Bridge is -10 (§2.3)" -- so a panel that prints `+N%`
+	 * unconditionally lies on a Bridge hex. `FStratForecastView::DefenderTerrainDefensePct`
+	 * carries the same number for the defender's hex and records the same warning; the two
+	 * are the same table field read for two different hexes and neither derives the other.
+	 *
+	 * A LOOKUP, NOT A DERIVATION, on `TerrainId`'s terms exactly. Nothing computes either
+	 * number, and if one is wrong the table is wrong.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	int32 TerrainMoveCost = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	int32 TerrainDefensePct = 0;
+
+	/**
+	 * The same row's `capturable` and `incomeFame` -- §2.11.2's fourth readout, "status if
+	 * capturable", which renders as `· yours (+100/turn)` or `· neutral` or `· enemy`.
+	 *
+	 * `bTerrainCapturable` IS NOT INFERRABLE FROM `Owner` AND THAT IS THE WHOLE REASON IT
+	 * IS HERE. `Ui.h` says `UiHexView::owner` is `OWNER_NEUTRAL` on "capturable hexes only;
+	 * OWNER_NEUTRAL elsewhere" -- so a NEUTRAL FACTORY and a PLAINS HEX both project
+	 * `Owner == INDEX_NONE` and are indistinguishable by that field. A panel that inferred
+	 * capturability from `Owner` would print `· neutral` beside every Plains hex on the
+	 * board, which is the kind of defect that looks like a formatting choice.
+	 *
+	 * `TerrainIncomeFame` IS §2.7'S RATE FROM THE TABLE, and it is the hex's own -- Factory
+	 * 100, Town 25, else 0, per `Data.h`'s comment on the field. It is NOT
+	 * `FStratSideView::IncomePerTurn`, which is a SIDE's total across every objective it
+	 * holds; the two are a row and a sum and confusing them would print a side's whole
+	 * economy beside one tile.
+	 *
+	 * CARRIED ON EVERY HEX, INCLUDING THE ONES WHERE IT IS ZERO, and not suppressed on
+	 * non-capturable rows. The table says 0 for those and 0 is the true rate; suppressing
+	 * it would mean this file deciding when income is meaningful, which is
+	 * `bTerrainCapturable`'s job to say and the panel's job to render.
+	 *
+	 * BOTH ARE THE SAME ROW READ, on `TerrainMoveCost`'s terms exactly.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	bool bTerrainCapturable = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	int32 TerrainIncomeFame = 0;
+
+	/**
 	 * Owning side of a capturable hex, or `INDEX_NONE` where nothing is capturable.
 	 * Mirrors `UiHexView::owner`.
 	 *
@@ -353,6 +442,46 @@ struct FStratUnitView
 	/** Mirrors `UiUnitView::hpMax`. */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	int32 HpMax = 0;
+
+	/**
+	 * This unit's §2.4 row stats: attack, defence, move allowance and the range band.
+	 * §2.11.2's info panel prints them as `Atk/Def/Move/Range`.
+	 *
+	 * A TABLE READ, EXACTLY AS `DefId` IS -- same `strat::UnitDef` row, same `DefIndex`,
+	 * same bounds check, same loop, one binding. Nothing computes them and if one is wrong
+	 * the table is wrong. They are here rather than in the info panel's own struct for
+	 * `FStratHexView::TerrainMoveCost`'s reason: the row a unit names is read once, and
+	 * fields taken off one read cannot disagree about which row was read.
+	 *
+	 * THE `Stat` PREFIX IS DISAMBIGUATION AND NOT DECORATION. `DefIndex` and `DefId` on
+	 * this same struct mean DEFINITION, and a bare `Def` beside them would read as a third
+	 * spelling of that rather than as §2.4's defence stat. The prefix costs five characters
+	 * and removes a misreading that a reviewer would have to catch by attention.
+	 *
+	 * `StatHpMax` IS ABSENT ON PURPOSE, though the row carries `hpMax`. `HpMax` above is
+	 * the SNAPSHOT's, per-instance, and is the number §2.11.2's `12/20` is drawn from. A
+	 * second copy read off the definition row would be a second author of the same fact,
+	 * and the two would part company the day a rule scales a unit's maximum.
+	 *
+	 * THE RANGE IS TWO NUMBERS BECAUSE `UnitDef` HAS TWO. §2.11.2 writes one word,
+	 * `Range`, and rendering `1` where min equals max and `2-3` where it does not is a
+	 * formatting decision the widget makes from these; collapsing them here would throw
+	 * away the artillery minimum, which is a rule (§2.6) and not a display detail.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	int32 StatAtk = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	int32 StatDef = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	int32 StatMove = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	int32 StatRangeMin = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	int32 StatRangeMax = 0;
 
 	/** §2.4's designated Tank. Mirrors `UiUnitView::isFlag`. */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
@@ -1168,6 +1297,255 @@ struct FStratForecastView
 };
 
 /**
+ * §2.11.2's info panel -- the bottom-left, hover-driven, never-modal three lines.
+ *
+ * WHAT GAP THIS CLOSES. §2.11.2 names two rows -- the hovered HEX ("terrain name, move
+ * cost, defense bonus, and status if capturable") and the hovered UNIT ("name, HP as
+ * `12/20`, Atk/Def/Move/Range, and `ready` or `done`", plus the flag's own line. NO COUNT
+ * OF THOSE READOUTS IS STATED HERE, on this file's own rule about censuses written inside
+ * a growing thing; read the spec, which is the GDD's `#### 2.11.2` subsection.
+ *
+ * TWO DISTINCT ABSENCES ARE CLOSED AND THEY ARE NOT THE SAME KIND. MOST of the readouts
+ * had NO SOURCE IN THE MODEL AT ALL -- move cost, defense bonus, capturability, the §2.7
+ * income rate and all four §2.4 stats were on rows the bridge holds and on no view-model
+ * field, so no widget could have shown them however it was written. `FStratUnitView::Hp`
+ * and `::HpMax` are the other kind: projected since the view model's first day, correct
+ * the whole time, and READ BY NOTHING OUTSIDE `Tests/`. A correct number with no route to
+ * a screen is the shape this project has recorded as reading like a built feature when it
+ * is not, and it is the harder of the two to notice.
+ *
+ * EVERY FIELD BELOW IS A SELECTION FROM `FStratViewModel` AND FROM NOTHING ELSE, and that
+ * is the property the whole design is arranged around rather than a happy accident.
+ * `StratDecorateInfoPanel` takes the model and no bridge, no snapshot and no table -- so
+ * every number it can possibly write is already a field of the model that the header
+ * block's census governs, and this struct structurally cannot introduce a number the
+ * screen could not otherwise have shown. It is the same reasoning `StratComposeForecast-
+ * View` states for taking the bridge's plain struct rather than the bridge, arrived at
+ * from one layer further in.
+ *
+ * IT IS ON THE MODEL AND NOT ON A WIDGET, for `FStratViewModel::Guidance`'s reason word
+ * for word: T-INT-05 requires the screen to be rebuildable from the view model alone, and
+ * a panel whose content is computed inside the widget that draws it makes that false with
+ * nothing failing. The panel is a visible element, so what it says is model state.
+ *
+ * IT IS A STATEMENT AND NOT AN EVENT. Nothing here records that the panel APPEARED or
+ * that the hover MOVED. `bHasHex` false is "the panel is gone", which is §2.11.2's own
+ * "Empty when nothing is hovered" -- there is no live-but-blank panel, exactly as
+ * `EStratGuidanceBeat::None` records for the directive strip.
+ *
+ * TWO INDEPENDENT PRESENCE BITS, NOT ONE. A hovered hex with nobody on it is the common
+ * case and draws one row; `bHasUnit` can never be true while `bHasHex` is false, because
+ * the unit is found BY the hex. One bit could not express the ordinary case.
+ *
+ * THIS STRUCT WAS BUILT TWICE ON 2026-08-27 AND THE FIRST SHAPE IS RECORDED HERE RATHER
+ * THAN ERASED, because the reason it was narrow is worth more than the fact that it was.
+ * It first carried terrain name / cost / bonus and an HP pair, on a brief that summarised
+ * §2.11.2 instead of quoting it; the deferrals were declared on this block with their
+ * discharge conditions, and the corrected spec turned out to be exactly those conditions.
+ * Both were then taken in the same pass and by the route the deferral named -- the terrain
+ * row's `incomeFame` / `capturable` onto `FStratHexView`, the §2.4 row's stats onto
+ * `FStratUnitView`, and this struct selecting both and changing shape not at all. A
+ * DECLARED DEBT NAMING ITS OWN DISCHARGE IS WHY THE SECOND PASS WAS AN EXTENSION AND NOT A
+ * REWRITE, which is the case this file's house style is making.
+ *
+ * NOT IN THIS ROUND, with reasons -- each is a real part of §2.11.2's rendered line and
+ * each is named here rather than discovered missing:
+ * - The WORDS `yours` / `neutral` / `enemy`, and the `·` separators, and the `+15%` sign
+ *   glyph, and `12/20`'s slash. Those are the widget's. This struct carries `HexOwner`
+ *   beside `FStratViewModel::ViewingSide` for the same reason
+ *   `FStratForecastView::RiskedFlagSide` carries a SIDE rather than an own/enemy boolean,
+ *   and that block's reasoning is cited rather than re-argued: the comparison rests on the
+ *   viewer, and a boolean baked here would carry the premise that the viewer is fixed
+ *   through a hot-seat hand-over.
+ *   THAT IS A DIFFERENT KIND OF COMPARISON FROM `bTerrainImpassable`, and the difference
+ *   is why one is here and the other is not. `Owner == ViewingSide` compares two fields of
+ *   this model and means only what it says. `MoveCost == 0` compares against a MEANING the
+ *   rules module declares in its own header, and a widget performing it would be a widget
+ *   holding a rules constant.
+ * - The flag's red edge and its `FLAG -- its loss ends the match.` sentence. `bUnitIsFlag`
+ *   below is the whole of the model side; the edge colour and the sentence are the
+ *   widget's, and a colour is not a view-model field.
+ * - `ready` / `done` as TEXT. `bUnitDone` is the bit; which word it prints is §2.11.2's
+ *   rendering and this struct does not spell either of them.
+ */
+USTRUCT(BlueprintType)
+struct FStratInfoPanelView
+{
+	GENERATED_BODY()
+
+	/**
+	 * Whether the panel is on screen at all. False is §2.11.2's "empty when nothing is
+	 * hovered", and it is also what a hovered hex that is not on the board gets.
+	 *
+	 * FALSE COVERS TWO CAUSES ON PURPOSE. `FStratHoverView::bHasHoveredHex` false, and a
+	 * hovered hex absent from `FStratViewModel::Hexes`. The panel says the same thing about
+	 * both because there is the same amount to say, and a "hovered a hex that does not
+	 * exist" state a widget could render would be a diagnostic wearing a player-facing
+	 * surface. The second cause is not a fault to refuse over either: the hover is written
+	 * by a decorator that traces against a board the model was built from a moment earlier,
+	 * so a hex can legitimately fall off between the two on a reseed.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	bool bHasHex = false;
+
+	/** The hex being described. X = q, Y = r. Meaningless unless `bHasHex`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	FIntPoint Hex = FIntPoint::ZeroValue;
+
+	/**
+	 * The three terrain facts, selected from that hex's `FStratHexView` and never looked up
+	 * again. See `FStratHexView::TerrainMoveCost`'s block for why the table is read once,
+	 * there, and for the sign warning on `TerrainDefensePct`.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	FName TerrainId;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 TerrainMoveCost = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 TerrainDefensePct = 0;
+
+	/**
+	 * `TerrainMoveCost == 0`, which `Data.h` declares to mean impassable -- "0 == impassable
+	 * (§4.8 sentinel)", on the field itself.
+	 *
+	 * A SENTINEL READ, NOT A RULE THIS FILE INVENTED. The comparison is against a meaning
+	 * the rules module states in its own header, and nothing here decides what impassable
+	 * costs, who may enter, or what may cross it -- `Move.h` owns all three and is not
+	 * consulted, because none of those questions is on this panel.
+	 *
+	 * IT IS ONE LAYER BELOW THE WIDGET FOR `FStratBuildOptionView::Shortfall`'S REASON, and
+	 * that precedent is cited rather than re-argued: the alternative is the widget writing
+	 * `MoveCost == 0`, and T-UI-03's binding rule is what forbids a widget deciding
+	 * anything about a number it was handed. Unlike `Shortfall` this is not arithmetic --
+	 * it adds, subtracts and divides nothing -- so the header block's single declared
+	 * arithmetic exception does not move.
+	 *
+	 * THE RAW COST IS STILL CARRIED ABOVE. A panel that showed only this boolean would have
+	 * thrown the number away, and §2.11.2 asks for `move 1` on every passable hex.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	bool bTerrainImpassable = false;
+
+	/**
+	 * §2.11.2's fourth readout -- "status if capturable", rendered `· yours (+100/turn)` or
+	 * `· neutral` or `· enemy`. All three selected from the hovered `FStratHexView`.
+	 *
+	 * `bHexCapturable` IS THE ONE THAT SAYS WHETHER THE CLAUSE APPEARS AT ALL, and it is a
+	 * separate field rather than `HexOwner != INDEX_NONE` because those are not the same
+	 * question: a NEUTRAL Factory and a Plains hex both carry `INDEX_NONE`. See
+	 * `FStratHexView::bTerrainCapturable`, where the trap is recorded against `Ui.h`'s own
+	 * wording.
+	 *
+	 * `HexOwner` IS A SIDE AND NOT AN OWN/ENEMY BOOLEAN. See this struct's "NOT IN THIS
+	 * ROUND" note and `FStratForecastView::RiskedFlagSide` before adding one.
+	 *
+	 * `HexIncomeFame` IS THIS HEX'S §2.7 RATE AND NOT A SIDE'S TOTAL. `FStratSideView::
+	 * IncomePerTurn` is the sum over everything a side holds; printing that beside one tile
+	 * would be the panel reporting the economy instead of the hex.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	bool bHexCapturable = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 HexOwner = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 HexIncomeFame = 0;
+
+	/**
+	 * Whether a unit stands on `Hex`. §2.11.2's second row.
+	 *
+	 * FOUND BY HEX AND NOT BY A HOVERED UNIT ID, and that is the same refusal
+	 * `FStratHoverView`'s block already makes: the hover states a HEX, the model states
+	 * where every unit is, and a second author of "who is on that hex" is how a panel and
+	 * a board come to disagree on the frame a unit moves.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	bool bHasUnit = false;
+
+	/** The unit's instance id, side, and §2.4 row name. Selected from its `FStratUnitView`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitId = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitSide = INDEX_NONE;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	FName UnitDefId;
+
+	/**
+	 * §2.11.2's `HP as 12/20`, AS TWO NUMBERS AND NEVER AS A STRING.
+	 *
+	 * THE SLASH IS THE WIDGET'S AND THE NUMBERS ARE THE MODEL'S. Formatting a `12/20` here
+	 * would put a player-facing string in a struct a test compares field for field, and
+	 * would make the panel's text unassertable against the two integers it came from.
+	 *
+	 * NO RATIO, NO PERCENTAGE, NO BAR FRACTION. `Hp / HpMax` is arithmetic and the header
+	 * block's census forbids it; a health bar that wants a fraction computes it in the
+	 * widget FROM these two, which is a rendering decision rather than a number about the
+	 * match. This is the pair's first reader outside `Tests/`.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitHp = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitHpMax = 0;
+
+	/**
+	 * §2.11.2's `Atk/Def/Move/Range`, selected from the unit's `FStratUnitView`.
+	 *
+	 * SELECTED AND NOT LOOKED UP. The §2.4 row was read once, in `StratBuildViewModel`, at
+	 * the `DefIndex` that unit carries; this struct reaches no table. So the stats shown
+	 * beside a unit are the stats the model already says that unit has, and the panel
+	 * cannot name a different row than the board was built from.
+	 *
+	 * TWO RANGE FIELDS, ONE WORD ON SCREEN. `FStratUnitView::StatRangeMin` records why the
+	 * pair is not collapsed here: `2-3` and `1` are the same field rendered two ways, and
+	 * the minimum is §2.6's rule rather than a display detail.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitStatAtk = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitStatDef = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitStatMove = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitStatRangeMin = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	int32 UnitStatRangeMax = 0;
+
+	/**
+	 * §2.11.2's `ready` or `done`, as the DONE bit and not as a turn flag.
+	 *
+	 * `FStratUnitView::bDone` AND NOT `bHasMoved && bHasActed`, and §2.11.2 rules on
+	 * exactly this in as many words: it is "the machine's DONE bit (§2.11.1), read from the
+	 * view-model's presentation block and not from a snapshot flag: a waited unit reads
+	 * `done` while its act flag is unspent". So this is a selection of the presentation
+	 * block, the two snapshot flags are deliberately NOT selected, and a panel built from
+	 * them would be wrong on every waited unit while agreeing with the rules module.
+	 *
+	 * THIS IS WHAT PUTS AN ORDERING CONSTRAINT ON `StratDecorateInfoPanel` -- see its own
+	 * declaration. Nothing else on this struct reads a field a decorator writes.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	bool bUnitDone = false;
+
+	/**
+	 * `FStratUnitView::bIsFlag`, mirrored so the panel can red-edge itself and append
+	 * §2.11.2's `FLAG -- its loss ends the match.` without asking a second source which
+	 * unit is the flag. Stub 7's placement field, at two removes and never inferred.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Info")
+	bool bUnitIsFlag = false;
+};
+
+/**
  * The whole view model: everything that should be on screen, in engine types.
  *
  * A VALUE, REBUILT, NEVER PATCHED. Phase 3's `ApplyView` reconciles actors against this
@@ -1295,6 +1673,24 @@ struct FStratViewModel
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	FStratForecastView Forecast;
+
+	/**
+	 * §2.11.2's info panel. Wave 2.
+	 *
+	 * WRITTEN BY `StratDecorateInfoPanel`, on the decoration seam, exactly as `Guidance`,
+	 * `Hover` and `Forecast` are. `StratBuildViewModel` leaves it default-constructed,
+	 * which is "no panel", and that default is load-bearing for the hover field's reason:
+	 * every model built for a hand-over, a gate, an AI turn or a reconcile nobody hovered
+	 * during says "no panel", which is the truth for all of them.
+	 *
+	 * IT IS THE ONLY DECORATED FIELD WHOSE INPUTS ARE ALL ON THIS SAME STRUCT. `Guidance`,
+	 * `Hover` and `Forecast` each reach outside the model for something -- a scenario, a
+	 * cursor trace, a bridge. This one reaches nowhere: it is a selection over `Hexes`,
+	 * `Units` and `Hover`, so it is a RESTATEMENT of the model for one surface's
+	 * convenience and cannot say anything the model was not already saying.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	FStratInfoPanelView InfoPanel;
 };
 
 /**
@@ -1461,3 +1857,42 @@ STRATUI_API bool StratBuildMatchResult(
 STRATUI_API void StratComposeForecastView(
 	const FStratAttackForecast& Source,
 	FStratForecastView&         OutForecast);
+
+/**
+ * Fills §2.11.2's info panel from the model it is a panel ON. Wave 2.
+ *
+ * IT TAKES THE MODEL AND NOTHING ELSE -- no bridge, no snapshot, no table, no query
+ * interface. That is the design, not an economy: a decorator holding a bridge could write
+ * a number the model does not contain, and then §2.11.2's panel would be a second source
+ * of truth about a board T-INT-05 says the model alone describes. With this signature the
+ * property is structural rather than reviewed. `FStratInfoPanelView`'s own block states
+ * the same thing from the struct's side.
+ *
+ * A DECORATOR AND NOT A COMPOSE, which is why it is spelled like `StratDecorateForecast`
+ * and not like `StratComposeForecastView`. It writes one field of a model it also reads,
+ * so a compose taking `const FStratViewModel&` and an out-parameter would invite the
+ * caller to alias the model against its own field. This form has no aliasing hazard to
+ * reason about at all.
+ *
+ * IT MUST RUN AFTER `FStratHoverState::DecorateViewModel` AND AFTER
+ * `FStratSelectionMachine::DecorateViewModel`, and BOTH constraints are real -- unlike
+ * `StratDecorateForecast`, whose selection arm is incidental. It reads `Model.Hover` for
+ * which hex, and `FStratUnitView::bDone` for §2.11.2's `ready` / `done`, and that bit is
+ * written by the machine. Run early, the panel is one mouse-move stale and reports last
+ * frame's DONE -- a failure that reads as latency and is sequencing.
+ *
+ * NO FAILURE CHANNEL, on purpose. There is no input it can be handed that has no answer:
+ * not hovering is `bHasHex` false, hovering a hex the model does not carry is `bHasHex`
+ * false, and an empty hex is `bHasUnit` false. A `bool` return here would be a value no
+ * caller could act on, and the one thing this function cannot do is fail to describe a
+ * model it was given.
+ *
+ * UNCONDITIONAL, on `StratDecorateForecast`'s rule and for its reason: it writes
+ * `Model.InfoPanel` on every call, including the calls where the answer is "no panel". A
+ * decorator that returned early on the empty case would leave the previous hover's panel
+ * on screen after the cursor left the board.
+ *
+ * ALL-OR-NOTHING, as every builder in this file is: it fills a local and assigns on the
+ * last line.
+ */
+STRATUI_API void StratDecorateInfoPanel(FStratViewModel& Model);

@@ -83,6 +83,17 @@
 // index the snapshot supplies; that is a table read and it is justified on the fields
 // themselves in the header.
 //
+// AND THE COUNT DID NOT MOVE ON 2026-08-27, which is worth saying because that day added a
+// function. `StratDecorateInfoPanel` fills §2.11.2's panel and contains no `+`, `-`, `*`
+// or `/` at all: every field it writes is assigned from a field of the same
+// `FStratViewModel` it was handed. It has no bridge, no snapshot and no table, so there is
+// nothing for it to derive a number FROM. The one comparison in it -- `TerrainMoveCost ==
+// 0` -- reads `Data.h`'s §4.8 impassability sentinel and is declared on the field it
+// writes; a comparison against a meaning the rules module states in its own header is the
+// same class of thing as the exhaustive switches below, not the same class as `Shortfall`.
+// So this file still has exactly ONE subtraction and it is still
+// `StratBuildProductionMenu`'s.
+//
 // WHY THE MAPPINGS ARE SWITCHES AND ASSERTS RATHER THAN CASTS. `EStratResultTier` and
 // `strat::ResultTier` agree today enumerator for enumerator, and a `static_cast` between
 // them would keep agreeing right up until someone adds a tier upstream, at which point
@@ -312,11 +323,28 @@ bool StratBuildViewModel(
 			return false;
 		}
 
+		// ONE ROW, BOUND ONCE, THREE FIELDS OFF IT. The index was range-checked just above
+		// and the reference is taken here rather than subscripting three times, so the
+		// three terrain facts on this hex cannot come from three different rows -- which
+		// is the property `FStratHexView::TerrainMoveCost`'s block is about.
+		const strat::TerrainDef& TerrainRow = (*Tables.terrain)[TerrainIndex];
+
 		FStratHexView HexView;
-		HexView.Hex          = HexPoint(Source.hex);
-		HexView.TerrainIndex = TerrainIndex;
-		HexView.TerrainId    = DefinitionName((*Tables.terrain)[TerrainIndex].id);
-		HexView.Owner        = static_cast<int32>(Source.owner);
+		HexView.Hex               = HexPoint(Source.hex);
+		HexView.TerrainIndex      = TerrainIndex;
+		HexView.TerrainId         = DefinitionName(TerrainRow.id);
+		// PASSED THROUGH, INCLUDING THE §4.8 SENTINEL AND INCLUDING THE SIGN. `moveCost`
+		// 0 means impassable and is not clamped, defaulted or re-encoded here, and
+		// `defensePct` is not made positive. Both are the table's own values widened to
+		// `int32`; `Data.h` is the authority on what each means.
+		HexView.TerrainMoveCost   = static_cast<int32>(TerrainRow.moveCost);
+		HexView.TerrainDefensePct = static_cast<int32>(TerrainRow.defensePct);
+		// §2.11.2's "status if capturable". `capturable` is READ rather than inferred from
+		// `owner`, because a neutral Factory and a Plains hex carry the same owner -- the
+		// trap is recorded on `FStratHexView::bTerrainCapturable`.
+		HexView.bTerrainCapturable = TerrainRow.capturable;
+		HexView.TerrainIncomeFame  = static_cast<int32>(TerrainRow.incomeFame);
+		HexView.Owner             = static_cast<int32>(Source.owner);
 
 		Built.Hexes.Add(HexView);
 	}
@@ -338,11 +366,24 @@ bool StratBuildViewModel(
 			return false;
 		}
 
+		// ONE ROW, BOUND ONCE, SIX FIELDS OFF IT -- the id and the five §2.4 stats. Bound
+		// for `FStratHexView::TerrainMoveCost`'s reason on the terrain side: fields taken
+		// off one read cannot disagree about which row was read.
+		const strat::UnitDef& UnitRow = (*Tables.units)[DefIndex];
+
 		FStratUnitView UnitView;
 		UnitView.UnitId          = static_cast<int32>(Source.id);
 		UnitView.Side            = static_cast<int32>(Source.side);
 		UnitView.DefIndex        = DefIndex;
-		UnitView.DefId           = DefinitionName((*Tables.units)[DefIndex].id);
+		UnitView.DefId           = DefinitionName(UnitRow.id);
+		// §2.11.2's `Atk/Def/Move/Range`, the table's own values widened to `int32`.
+		// `UnitRow.hpMax` is DELIBERATELY NOT READ -- `HpMax` below is the snapshot's
+		// per-instance number and a second author of it is what the field's block refuses.
+		UnitView.StatAtk         = static_cast<int32>(UnitRow.atk);
+		UnitView.StatDef         = static_cast<int32>(UnitRow.def);
+		UnitView.StatMove        = static_cast<int32>(UnitRow.move);
+		UnitView.StatRangeMin    = static_cast<int32>(UnitRow.rangeMin);
+		UnitView.StatRangeMax    = static_cast<int32>(UnitRow.rangeMax);
 		UnitView.Hex             = HexPoint(Source.hex);
 		UnitView.Hp              = static_cast<int32>(Source.hp);
 		UnitView.HpMax           = static_cast<int32>(Source.hpMax);
@@ -655,4 +696,98 @@ void StratComposeForecastView(const FStratAttackForecast& Source,
 	                                          : INDEX_NONE;
 
 	OutForecast = Built;
+}
+
+// ---------------------------------------------------------------------------
+// §2.11.2's info panel, at the decoration seam.
+// ---------------------------------------------------------------------------
+
+void StratDecorateInfoPanel(FStratViewModel& Model)
+{
+	// BUILT ASIDE AND ASSIGNED ON THE LAST LINE, which here is not only the house
+	// all-or-nothing rule: this function reads `Model` and writes into `Model`, so a
+	// running write would let a half-filled panel be read by the very lookups that fill
+	// the rest of it. A local removes the question rather than answering it.
+	FStratInfoPanelView Built;
+
+	// NOT HOVERING IS THE ANSWER "no panel", not a reason to return early. See the
+	// declaration's UNCONDITIONAL note: the assignment below must happen on this path too,
+	// or a cursor leaving the board leaves its last panel on screen.
+	if (Model.Hover.bHasHoveredHex)
+	{
+		const FIntPoint Hovered = Model.Hover.HoveredHex;
+
+		// FOUND IN THE MODEL'S OWN HEX LIST, AND THE ABSENCE IS AN ANSWER. `Hexes` is in
+		// canonical order and this is a linear find rather than an index computed from
+		// board dimensions -- a q/r-to-index formula would be this file deciding the
+		// board's shape, which is `strat::buildUiSnapshot`'s to decide and would be wrong
+		// silently on any board whose emission order changed.
+		const FStratHexView* const HexView = Model.Hexes.FindByPredicate(
+			[Hovered](const FStratHexView& Candidate) { return Candidate.Hex == Hovered; });
+
+		if (HexView != nullptr)
+		{
+			Built.bHasHex = true;
+			Built.Hex     = HexView->Hex;
+
+			// SELECTED, NOT LOOKED UP. These three came off one terrain row in
+			// `StratBuildViewModel`; nothing here reaches a table, and the panel therefore
+			// cannot name a different row than the board is drawn from.
+			Built.TerrainId         = HexView->TerrainId;
+			Built.TerrainMoveCost   = HexView->TerrainMoveCost;
+			Built.TerrainDefensePct = HexView->TerrainDefensePct;
+
+			// `Data.h`'s §4.8 sentinel, read and not invented. See the field's own block
+			// for why the comparison is here and not in the widget, and why it is not the
+			// arithmetic the census forbids.
+			Built.bTerrainImpassable = (HexView->TerrainMoveCost == 0);
+
+			// §2.11.2's fourth readout. `bHexCapturable` is the table's own flag and is
+			// NOT `HexOwner != INDEX_NONE`: a neutral Factory and a Plains hex carry the
+			// same owner, so that inference would put `· neutral` beside every Plains hex
+			// on the board. `HexOwner` stays a SIDE -- the yours/enemy reading is the widget's
+			// against `Model.ViewingSide`, on `FStratForecastView::RiskedFlagSide`'s rule.
+			Built.bHexCapturable = HexView->bTerrainCapturable;
+			Built.HexOwner       = HexView->Owner;
+			Built.HexIncomeFame  = HexView->TerrainIncomeFame;
+
+			// THE UNIT IS FOUND BY THE HEX, which is what makes the two rows of §2.11.2
+			// describe the same place by construction. `Units` is by ascending id and a
+			// hex holds at most one unit, so the first match is the only match.
+			const FStratUnitView* const UnitView = Model.Units.FindByPredicate(
+				[Hovered](const FStratUnitView& Candidate) { return Candidate.Hex == Hovered; });
+
+			if (UnitView != nullptr)
+			{
+				Built.bHasUnit  = true;
+				Built.UnitId    = UnitView->UnitId;
+				Built.UnitSide  = UnitView->Side;
+				Built.UnitDefId = UnitView->DefId;
+
+				// TWO NUMBERS AND NO RATIO. §2.11.2 asks for `12/20`; the slash is the
+				// widget's. See the fields' own block.
+				Built.UnitHp    = UnitView->Hp;
+				Built.UnitHpMax = UnitView->HpMax;
+
+				// §2.11.2's `Atk/Def/Move/Range`. Selected from the §2.4 row this unit
+				// already carries -- no table is reached from here, so the panel's stats
+				// are the model's stats by construction.
+				Built.UnitStatAtk      = UnitView->StatAtk;
+				Built.UnitStatDef      = UnitView->StatDef;
+				Built.UnitStatMove     = UnitView->StatMove;
+				Built.UnitStatRangeMin = UnitView->StatRangeMin;
+				Built.UnitStatRangeMax = UnitView->StatRangeMax;
+
+				// THE PRESENTATION BLOCK'S DONE BIT AND NOT `bHasMoved && bHasActed`.
+				// §2.11.2 rules on this by name -- "a waited unit reads `done` while its
+				// act flag is unspent" -- so the two snapshot flags are deliberately not
+				// consulted, and this is the field the selection machine wrote a moment
+				// earlier on this same seam.
+				Built.bUnitDone   = UnitView->bDone;
+				Built.bUnitIsFlag = UnitView->bIsFlag;
+			}
+		}
+	}
+
+	Model.InfoPanel = Built;
 }

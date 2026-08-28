@@ -676,9 +676,36 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// NO REASON STRING AND NO RETURN VALUE TO IGNORE. `PushGuidance` is void: with no strip
 	// configured there is nothing to do and nothing went wrong, which is a different thing
 	// from the scoreboard's refusable refresh in `RefreshPresentation`.
+	// ---- Sec 2.11.2's hover info panel --------------------------------------
+	// THE FOURTH SURFACE RECONCILED FROM THIS ONE VALUE, on the same line as the strip and
+	// through the same HUD lookup, so the two cannot fall out of step with each other or with
+	// the board. `Model.InfoPanel` was written by `StratDecorateInfoPanel` before this call --
+	// `AStratPlayerController::RefreshFromMachine` decorates, and its own block records that
+	// the info-panel decoration must run after the selection machine has written this frame's
+	// DONE bits -- and is default-constructed on any path that did not decorate, which is
+	// Sec 2.11.2's empty panel and the honest reading of a model that states no hover.
+	//
+	// UNCONDITIONAL, WITH NO BRANCH ON `bHasHex`. Skipping the push when nothing is hovered
+	// would leave the last hovered hex's readout on screen after the cursor left the board --
+	// the delta-shaped thinking this whole function is written to exclude, and the one outcome
+	// Sec 2.11.2's "Empty when nothing is hovered" cannot produce.
+	//
+	// `Model.ViewingSide` AND NOT THE HUD'S OWN. Sec 2.11.2's `yours` / `neutral` / `enemy`
+	// clause is viewer-relative and `FStratInfoPanelView` deliberately carries a SIDE rather
+	// than a boolean -- its "NOT IN THIS ROUND" block rules on that -- so the resolution needs
+	// the seat this model was rendered for. Both operands are fields of the one value being
+	// applied, which is what makes the panel rebuildable from the view model alone.
+	//
+	// THROUGH THE HUD BECAUSE THE HUD OWNS THE WIDGET, and the module-arrow argument the strip
+	// records above applies here word for word: `AStratScoreboardHUD::PushInfoPanel` takes a
+	// reflected struct and an `int32`, so this module needs none of `UMG`, `Slate` or
+	// `SlateCore`. Its own header records the debt that arrangement creates.
+	//
+	// NO REASON STRING AND NO RETURN VALUE TO IGNORE, on `PushGuidance`'s reasoning.
 	if (AStratScoreboardHUD* const HUD = FindScoreboardHUD())
 	{
 		HUD->PushGuidance(Model.Guidance);
+		HUD->PushInfoPanel(Model.InfoPanel, Model.ViewingSide);
 	}
 
 	// CACHED AFTER THE FACT AND NEVER READ BACK. See `GetViewModel`: this is a record of

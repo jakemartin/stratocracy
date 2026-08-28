@@ -1,6 +1,6 @@
 ---
 name: strat-integration-reviewer
-description: Read-only architecture gate for Stratocracy. Audits changes against the recorded constraints — module dependency arrows, no strat:: call crossing a module boundary, no vendored-header exposure to UHT, no /Game/ literal in C++, no widget-side arithmetic, vendored StratRules/ and Data/ byte-untouched, new modules registered in the .uproject. Ends every report with a literal VERDICT: PASS or VERDICT: BLOCK line. Run between phases, never during one.
+description: 'Read-only architecture gate for Stratocracy. Audits changes against the recorded constraints — module dependency arrows, no strat:: call crossing a module boundary, no vendored-header exposure to UHT, no /Game/ literal in C++, no widget-side arithmetic, vendored StratRules/ and Data/ byte-untouched, new modules registered in the .uproject. Ends every report with a literal VERDICT: PASS or VERDICT: BLOCK line. Run between phases, never during one.'
 tools: Read, Grep, Glob, Bash, Skill, mcp__jcodemunch__find_references, mcp__jcodemunch__get_dependency_graph, mcp__jcodemunch__get_layer_violations, mcp__jcodemunch__search_text, mcp__jcodemunch__get_changed_symbols
 model: opus
 color: red

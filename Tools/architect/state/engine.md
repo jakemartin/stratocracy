@@ -13,6 +13,101 @@
 
 ## NEXT
 
+- **2026-08-28, `strat-gameplay-engineer` -- §2.11.2's INFO PANEL, WIDGET-SIDE. THE
+  PROJECTION WAS BUILT, PINNED AND REACHABLE BY NOTHING; A WBP AUTHORED AGAINST IT WOULD HAVE
+  BEEN INERT.** In the integration tree `E:/MultiAgent/Stratocracy`, from `63433e7`. Two files
+  added and three modified, all mine and all under `Source/`: added
+  `Source/StratUI/StratInfoPanelWidget.h` and `Source/StratUI/StratInfoPanelWidget.cpp`;
+  modified `Source/StratUI/StratScoreboardHUD.h`, `Source/StratUI/StratScoreboardHUD.cpp` and
+  `Source/StratPlay/StratMatchSubsystem.cpp`. Nothing committed, nothing staged, no asset, no
+  `Content/`, no `Config/`, no test, nothing under any `Tests/` directory, no `.Build.cs`, no
+  `.uproject`. No suite figure is stated here; `global.md` owns that and owns any verdict.
+  - **THE BUILD, IN THIS TREE.** `Build.bat StratocracyEditor Win64 Development` against
+    `E:\MultiAgent\Stratocracy\Stratocracy.uproject` with `-waitmutex`, editor closed
+    (`tasklist | grep -i UnrealEditor` empty before the run, which is the control the write-lock
+    failure mode needs). The tool's own last lines are `Result: Succeeded` and
+    `Total execution time: 18.09 seconds`, over 21 actions with `StratInfoPanelWidget.cpp`,
+    `StratScoreboardHUD.cpp`, `StratMatchSubsystem.cpp` and `Module.StratUI.gen.cpp` all named
+    among the compiles -- so the green is over the edited translation units and over UHT's
+    regenerated reflection, not over an up-to-date tree. Zero warnings, zero errors, first
+    attempt. `-NoHotReloadFromIDE` was NOT needed and was not passed: this is the integration
+    tree with the editor closed, not a linked worktree racing the engine-keyed Live Coding
+    mutex. **18 s and not the ~216 s a slot costs**, because only two modules relinked.
+  - **THE SYMBOLS ADDED**, cited by name because a `file:NNN` written during a diff is
+    invalidated by that same diff. New in `StratInfoPanelWidget.h`: `EStratHexOwnership`,
+    `FStratInfoPanelModel`, `StratComposeInfoPanelModel`, `UStratInfoPanelWidget` with
+    `UStratInfoPanelWidget::PushInfoPanel`, `UStratInfoPanelWidget::Model` and
+    `UStratInfoPanelWidget::OnInfoPanelRefreshed`. New on `AStratScoreboardHUD`:
+    `InfoPanelWidgetClass`, `InfoPanelZOrder`, `InfoPanel`, `CreateInfoPanelWidget`,
+    `PushInfoPanel`, `DeliverLatestInfoPanel`, `LastPushedInfoPanel`,
+    `LastPushedInfoPanelViewingSide`, `bInfoPanelEverPushed`.
+  - **THE BRIEF NAMED A TYPE THAT DOES NOT EXIST, AND THE TREE WON.** It offered
+    `EStratScoreboardOwner { None, You, Enemy }` in `Source/StratUI/StratScoreboardWidget.h` as
+    an existing enum to consider reusing. `grep -rn "EStratScoreboardOwner\|ScoreboardOwner"
+    Source/` returns NOTHING; the control is `grep -rn "enum class EStrat" Source/`, which
+    returns eleven enums, none of them that one. The real neighbour is `EStratScoreColumn` in
+    that file. This is the fabricated-name shape this project has recorded before -- a plausible
+    name fused from real neighbours, which reads as ordinary and is ungreppable. Every other
+    figure in the brief checked out: `FStratInfoPanelView` exists with 22 `UPROPERTY` fields,
+    `FStratViewModel::InfoPanel` is a `UPROPERTY`, `AStratPlayerController` does reach
+    `StratDecorateInfoPanel`, and the two-grep control for the routing absence reproduces.
+  - **THE DESIGN CALL: A NEW FOUR-VALUED `EStratHexOwnership`, NOT A REUSE OF
+    `EStratScoreColumn`.** §2.11.2's clause is `yours` / `neutral` / `enemy` and
+    `FStratInfoPanelView::HexOwner` is a SIDE, which that struct's "NOT IN THIS ROUND" block
+    refuses to collapse into a boolean because "the comparison rests on the viewer". So the
+    resolution moved into C++ on `FStratMatchResultModel::bViewerWon`'s precedent -- "computed
+    once here so no graph computes it" -- and `FStratInfoPanelModel` carries the view WHOLE,
+    `ViewingSide` beside it, and `HexOwnership` already resolved. What killed reuse of
+    `EStratScoreColumn`: its `None` means "neither column", the chevron's ABSENCE, whereas
+    §2.11.2's `neutral` is a real held state a word is printed for; and this panel needs a
+    FOURTH state, `NotCapturable`, because a neutral Factory and a Plains hex both carry
+    `HexOwner == INDEX_NONE` and only `bHexCapturable` tells them apart. A three-valued enum
+    would force the WBP to COMBINE the enumerator with `bHexCapturable`, which is the
+    unobservable-by-combination shape no clause covers.
+  - **THE WORDS DID NOT MOVE.** `yours`, `neutral`, `enemy`, the `·` separators, the `%`
+    glyph, `12/20`'s slash, `ready`/`done`, and the flag's sentence are spelled nowhere in
+    either new file. Only the RESOLUTION crossed into C++.
+  - **THE PUSH SITE IS `UStratMatchSubsystem::ApplyView`, ON THE STRIP'S OWN LINE.** The same
+    `FindScoreboardHUD()` block that pushes `Model.Guidance` now also calls
+    `HUD->PushInfoPanel(Model.InfoPanel, Model.ViewingSide)` -- unconditional, no branch on
+    `bHasHex`, both operands fields of the one value being applied. `AStratScoreboardHUD` was
+    chosen over the subsystem for the module arrow that block already records: `StratPlay`
+    would have to name `UMG`, `Slate` and `SlateCore` to call `CreateWidget`, and `StratUI`
+    already declares all three privately.
+  - **THE FIRST-DELIVERY CACHE IS CARRIED, AND FOR THE MEASURED CAUSE RATHER THAN BY
+    SYMMETRY.** `AStratPlayerController::BeginPlay` reaches `ApplyView` before
+    `AStratScoreboardHUD::BeginPlay` creates a widget -- measured for the strip in five PIE
+    sessions on 2026-08-21 -- and that ordering is a property of the two `BeginPlay`s, not of
+    which widget is downstream. So `CreateInfoPanelWidget` ends in `DeliverLatestInfoPanel`.
+    `bInfoPanelEverPushed` is a separate bool because a default-constructed
+    `FStratInfoPanelView` is §2.11.2's ORDINARY state -- the unhovered panel -- and so "the
+    cache equals the default" is the commonest TRUE reading of a live panel, which is a sharper
+    version of the `FStratMatchConfig::SaveSlotName` trap.
+  - **THE TWO INPUTS ARE CACHED, NOT THE COMPOSED MODEL**, so `StratComposeInfoPanelModel` has
+    exactly one author and a replay cannot assert a resolution made against a viewing side that
+    has since moved. And `PushInfoPanel` reads its `InViewingSide` ARGUMENT, never
+    `AStratScoreboardHUD::ViewingSide` -- those are two different values, a Blueprint camera
+    default and the seat the model was rendered for, and conflating them would misresolve the
+    yours/enemy clause the moment a hot-seat hand-over moved one and not the other.
+  - **NO `strat::` CALL, NO `StratBridge.h` IN A REFLECTED HEADER, NO `/Game/` LITERAL.**
+    `StratInfoPanelWidget.h` declares a `UCLASS`, a `USTRUCT` and a `UENUM` and includes only
+    `StratViewModel.h`, this module's own reflected header. `StratComposeInfoPanelModel` takes
+    values and reaches no bridge, no snapshot and no table -- one step further than
+    `StratBuildMatchResultModel`, which does take a bridge -- so it is total and infallible and
+    returns no `bool`.
+  - **THE DEBT, WRITTEN INTO `StratScoreboardHUD.h` WITH ITS DISCHARGE CONDITION.** Nine more
+    members on a class whose name covers none of them, making it the FIFTH surface it hosts.
+    The condition that discharges it is the one already stated there for the guidance seven and
+    the result seven: when a §2.11 UI-layer owner exists, all nine move unchanged, and
+    `PushInfoPanel` was given a signature that survives the move -- a reflected struct by const
+    reference plus an `int32`, touching no member outside its own nine and never `GetBridge()`.
+  - **WHAT IS NOT BUILT AND IS NOT MINE.** No `WBP_InfoPanel` asset exists, so nothing is on
+    screen yet; the class is a parent and the reparent bakes
+    `/Script/StratUI.StratInfoPanelWidget` irreversibly, which is `strat-editor-builder`'s
+    call to make. `InfoPanelWidgetClass` is unset on every Blueprint default, which is a
+    legitimate configuration the HUD reports at `Log` level and does not refuse over. And no
+    clause pins any of this -- see the handoff to `strat-test-author` in the same report.
+
 - **2026-08-27, `strat-gameplay-engineer` -- WAVE 2: §2.11.2's INFO PANEL, MODEL-SIDE. THE
   TERRAIN AND §2.4 ROWS THE PANEL READS WERE HELD BY THE BRIDGE AND PROJECTED NOWHERE; `Hp` /
   `HpMax` WERE PROJECTED AND READ BY NOTHING OUTSIDE `Tests/`.** In the lane worktree

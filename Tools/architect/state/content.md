@@ -37,6 +37,158 @@
 
 ## NEXT
 
+- **GDD SEC 2.11.2'S HOVER INFO PANEL IS BUILT, COMPILES CLEAN AND IS WIRED TO THE HUD -- AND
+  NOTHING HAS SEEN IT DRAW A REAL HEX, BECAUSE ONLY A HUMAN'S MOUSE CAN MAKE ONE.** 2026-08-28,
+  written by `strat-editor-builder` over `mcp__unreal-editor-direct__execute_script`, which was on
+  the tool surface from this session's FIRST call -- **THE FALLBACK CONDITION IN THIS FILE'S HEADER
+  WAS NOT MET and the coordinator did not write this entry.** `print(project_dir())` answered
+  `E:/MultiAgent/Stratocracy/` before anything was touched, so this is the integration tree and not
+  a worktree. `playtest_status()` reported `has_pie_world=false, playing=false` and **no PIE was
+  started at any point**, which is what makes `open_asset` on a Widget Blueprint safe here -- this
+  file's own recorded crash. `global.md` carries any count or verdict; this file states neither.
+  - **THE ASSETS, AND THE MODULE PRE-FLIGHT THAT GOVERNS THE IRREVERSIBLE HALF.**
+    `/Game/UI/WBP_InfoPanel` is NEW, reparented to `/Script/StratUI.StratInfoPanelWidget`;
+    `BP_StratScoreboardHUD` gained exactly one Blueprint default. The parent class is declared in
+    `Source/StratUI/StratInfoPanelWidget.h` -- verified by locating the declaring FILE, and
+    `StratUI` is the module its directory names, which is what the reparent bakes in permanently.
+    `UStratInfoPanelWidget`'s own header block states the same thing and gives the reason.
+  - **THE C++ SURFACE WAS VERIFIED LIVE WITH A NEGATIVE CONTROL BEFORE ANYTHING DERIVED FROM IT.**
+    `class_properties("/Script/StratUI.StratInfoPanelWidget")` returns **30 entries**, while
+    `/Script/StratUI.StratNoSuchWidgetXYZ` **fails to resolve** -- so the lookup is shown able to
+    refuse a name before its success on the real one is read as evidence. All 22 fields of
+    `FStratInfoPanelView` were then read off the `Break Strat Info Panel View` node's own output
+    pins rather than trusted from the brief.
+  - **THE DISPATCH BRIEF NAMED A HUD BLUEPRINT THAT DOES NOT EXIST, AND THE TREE WON.** The
+    engineer's handoff called it `BP_StratHUD`. `open_asset("/Game/UI/BP_StratHUD")` answers
+    **`asset not found`**; `/Game/UI/BP_StratScoreboardHUD` opens with parent
+    `StratScoreboardHUD`. The default was set on the latter. **The read that proves `None` was a
+    real absence rather than a broken read is the control beside it:**
+    `ScoreboardWidgetClass` returned a live `WBP_Scoreboard_C` from the same call in which
+    `InfoPanelWidgetClass` returned `None`, and it still returns it after the write.
+  - **TWO EDGE CASES THE GDD DOES NOT SPECIFY. BOTH CALLS ARE THIS LANE'S, NOT THE GDD'S.**
+    - **Plains, `DefensePct 0`: the clause is RENDERED, as `def +0%`, not suppressed.** A
+      fixed-shape line is scannable at a glance, suppression would make Plains structurally
+      different from every other hex, and `+0%` states "no bonus here" rather than leaving a
+      reader to infer it from an absence. It also needs no conditional, so there is one less
+      branch that could be wrong.
+    - **Water, `bTerrainImpassable`: the move clause is REPLACED, giving `Water - impassable -
+      def +0%`.** `MoveCost 0` is a sentinel and rendering it literally as `move 0` would read as
+      "free to enter", which is the exact opposite of the truth. Replacing only that clause keeps
+      the line's three-clause shape and never prints the misleading number.
+  - **NO WIDGET-SIDE ARITHMETIC, AND THE TWO PLACES IT WAS NEARLY NEEDED WERE DESIGNED OUT.**
+    - **The signed `def` is `To Text (Integer)` with `Always Sign` TRUE -- there is no comparison
+      anywhere.** The obvious build is "if Pct >= 0 prefix a `+`", which is a widget deciding
+      something about a number it was handed. The conversion node renders `+0`, `+20` and `-10`
+      by itself, so the sign glyph costs zero branches. `Use Grouping` is set FALSE so no value
+      can ever acquire a thousands separator.
+    - **The range pair is the ONE comparison in the asset, and it is `Equal (Integer)` on
+      `UnitStatRangeMin` against `UnitStatRangeMax` feeding a `Select`.** It derives no game
+      number -- both arrive resolved and it chooses between two RENDERINGS of the same pair,
+      `N` and `Min-Max`. Artillery at `2..3` is the only row that exercises it. A widget fed only
+      `Min` is right on three unit rows and wrong on the one whose range matters.
+  - **THE OWNERSHIP CLAUSE IS ONE TOTAL SWITCH ON `EStratHexOwnership` AND `bHexCapturable` IS
+    NEVER READ.** A `Select` node driven by an enum expands into one pin per enumerator --
+    `Not Capturable`, `Neutral`, `Yours`, `Enemy` -- and it is PURE, which an exec `Switch` is
+    not and so could not have been used in a binding at all. `NotCapturable` carries the empty
+    string, so the not-capturable case needs no second field and the combination-shaped defect
+    `UStratInfoPanelWidget`'s header warns about cannot be written here.
+  - **SIX MEASURED FACTS ABOUT THE NeoStack API, EVERY ONE OF WHICH COST A ROUND.**
+    - **`find_nodes`'s FIRST argument is the QUERY, not the asset path.** `find_nodes(path,"Model")`
+      returns `0 results` with an `[OK]` -- indistinguishable from "no such node exists".
+    - **`create_asset`'s `parent_class` option is IGNORED for a WidgetBlueprint.** It reports
+      `[OK] created` and the asset comes back parented to `UserWidget`. `bp:reparent(...)` is a
+      separate, required call, and the parent must be re-read to confirm.
+    - **A binding function's return type must be declared as the ENUM, not `byte`.**
+      `add_function(..., type="byte")` compiles the function fine and then fails the BLUEPRINT
+      with `the sigatnures don't match` (sic) against `VisibilityDelegate`. `type="ESlateVisibility"`
+      is what binds. **The read cannot tell them apart** -- both return pins read `:byte`, and so
+      does the working one on `WBP_DirectiveStrip`, so only a compile distinguishes them.
+    - **A `Select`'s option pins stay `wildcard` until a TYPED SOURCE is wired into one**, and
+      `set_pin` on a wildcard pin FAILS loudly (`Unsupported type Wildcard`). Wiring only the
+      `Index` and the output is not enough; the output stays wildcard too and surfaces later as
+      `Pin 'State' has an unexpected type: wildcard`. Order that works: connect `Index` first to
+      mint the pins, then a typed source into one option, then `set_pin` the literal ones, then
+      connect the output onward. `Make Literal Text` is the way to resolve it when BOTH options
+      are literals.
+    - **`add_node("Equal ( == )")` places a node titled `Equal (GameplayTagContainer)`.** It is a
+      wildcard operator and retitles itself to `Equal (Integer)` once ints are wired to `A`/`B`;
+      the alarming initial title is not a wrong node.
+    - **`Format Text` mints its argument pins from the format string, and INSERTS SPACES into
+      their names.** `{MoveClause}` becomes a pin named `Move Clause`. Set `Format` BEFORE
+      connecting arguments, and connect by the SPACED name.
+  - **THE RECORD WRITE ITSELF ALMOST CORRUPTED THIS FILE, AND THE CONTROL IS THE ONLY REASON IT
+    DID NOT.** `Edit` is disabled on this session's tool surface, so the write went through the
+    editor's own `write_file`. **`write_file` IN TEXT MODE WRITES UTF-16, AND `bytes_written`
+    COUNTS CHARACTERS RATHER THAN DISK BYTES.** A round-trip of this file's own bytes reported
+    `141969 bytes` and left **283842** on disk -- exactly 2x -- and passing `{encoding="utf8"}`
+    explicitly changed NOTHING. **So this file's previously recorded control, that `bytes_written`
+    matched the source length, does not detect this failure; only `file_info().size` does.**
+    The route that IS byte-exact is `{encoding="binary"}` with base64, confirmed on a 95-byte
+    CRLF fixture (95 == 95) before being used here, and `append=true` works in binary and is
+    byte-exact too. This file is **CRLF** -- measured, not assumed: `read_file` NORMALISES CR
+    AWAY (it reports zero CRLF pairs), so the endings were measured indirectly as
+    `file_info().size` minus the summed normalised length, giving 1617 CR bytes for 1618 lines.
+    `read_file` also silently caps at **500 lines**, so a whole-file read of this record needs
+    four calls and a naive one truncates it to a third. A byte-exact `copy_file` backup was taken
+    first and verified at 141969 == 141969.
+    **And one search trap worth carrying:** `s:find("## NEXT")` matches the phrase
+    "`## NEXT` is swept as live" in this file's own HEADER prose, 2700 bytes above the real
+    heading. The token this record uses to mark its live section appears inside the sentence
+    describing that section.
+  - **WHAT WAS VERIFIED, AND IT IS DESIGN-TIME ONLY.** `compile()` reports `0 errors, 0 warnings`,
+    and the graph was then re-read FRESH from the saved asset rather than trusted from the green
+    compile: all 8 binding functions have both `execute` and `Return Value` linked, all 8 bindings
+    are present, and every literal survived -- the `-` separators intact, `Always Sign` TRUE on the
+    def% conversion and FALSE on the range one, and the four enumerator pins carrying empty /
+    ` - neutral` / ` - enemy` / the formatted yours clause. The ONLY unlinked-and-defaultless pin
+    in the whole asset is `Select.Not Capturable`, which is the intended empty status clause.
+    On disk: `WBP_InfoPanel.uasset` 533449 bytes, `BP_StratScoreboardHUD.uasset` 25850 bytes.
+  - **[STAMPED 2026-08-28, LATER THE SAME DAY -- TWO SENTENCES OF THE BULLET BELOW ARE NOW FALSE,
+    SUPERSEDED BY THE HUMAN OBSERVATIONS RECORDED TWO BULLETS DOWN. They are named here rather
+    than left for a reader to notice, and the block is restated flat rather than corrected inside
+    itself. The first read: "Nothing here is a runtime observation and no hex has ever been drawn
+    by this panel." The second read: "Every string this entry describes is a graph that has not
+    yet run." Both were true when written and neither is true now. Everything else in that bullet
+    stands -- what the DESIGNER preview shows, and that a human at the mouse is the only
+    instrument that could close any of this.]**
+  - **WHAT WAS NOT OBSERVED WHEN THIS ENTRY WAS FIRST WRITTEN, AS FIRST WRITTEN.** The designer
+    preview confirms the PLACEMENT only -- bottom-left, compact, clear of the board's lower-centre,
+    the flag line red -- and it shows the `Text Block` placeholders, because property bindings do
+    not evaluate in the designer. The panel is driven by `AStratScoreboardHUD::PushInfoPanel` off
+    the hover, and this file already records that no automation in this project reaches
+    `UPlayerInput`, so **a human at the mouse is the only instrument that can close it.**
+  - **A HUMAN DROVE THE MOUSE. THE HEX LINE AND THE UNIT LINE BOTH PAINT, AND THE RANGE PAIR IS
+    WITNESSED ON ITS ONLY FALSIFYING CASE.** 2026-08-28, later the same day. Three observations,
+    all HUMAN observations at the mouse, which is the only instrument that could have produced
+    them -- injection never reaches `UPlayerInput`, so nothing in this project's automation can
+    drive a hover. (1) Verbatim and in full: *"I can confirm hex rollover works, ui output works,
+    ui updates works"*. (2) Unit rollover works. (3) **An Artillery unit was hovered and its range
+    read `2-3`.**
+  - **WHY THE ARTILLERY READING IS THE LOAD-BEARING ONE, AND WHY IT IS STRONGER THAN "A UNIT WAS
+    HOVERED".** Artillery is the ONLY unit in `units.csv` whose range is a band. Infantry, Tank
+    and Recon are all `1..1` and render `1` correctly **even if `UnitStatRangeMax` is never read at
+    all** -- so a Min-only defect is invisible on three of the four rows and visible on exactly
+    one. That one has now been seen reading `2-3`. So `GetUnitStatsText`'s `Equal (Integer)` on
+    `UnitStatRangeMin` against `UnitStatRangeMax`, and the `Select` it drives, are attested on the
+    single case that can falsify them rather than on a case that would have passed either way.
+  - **WHAT THE THREE OBSERVATIONS ESTABLISH, WITH THE SUBJECT NAMED EXACTLY.** For the HEX half:
+    `Panel.bHasHex` driving `GetPanelVisibility`, the terrain clause built by `GetHexLineText`, and
+    the live push through `AStratScoreboardHUD::PushInfoPanel` and `UStratMatchSubsystem::ApplyView`
+    work end to end, and the panel UPDATES as the cursor moves. For the UNIT half: `Panel.bHasUnit`
+    driving `GetUnitVisibility`, and `GetUnitStatsText` including its range pair. **The stated
+    evidence bar for this asset -- a human seeing it paint both a hex line and a unit line, with an
+    Artillery so the band is exercised -- is MET.** That is a statement about which observations
+    exist, not a verdict on the section; `global.md` carries any verdict and this file carries none.
+  - **WHAT IS STILL NOT WITNESSED, AND ITEMS 1-3 MUST NOT BE READ AS "THE PANEL WORKS".** Four
+    branches remain with no observation behind them. **The flag unit's** red edge from
+    `GetPanelEdgeColor` and the appended `FLAG` line from `GetFlagVisibility` -- no flag unit was
+    reported hovered. **The signed Bridge `-10`** -- which terrains were hovered was never stated,
+    so `To Text (Integer)`'s `Always Sign` path is unattested in its negative direction. **Both of
+    this entry's own edge-case calls**, the Plains `def +0%` and the Water `impassable`
+    substitution, for the same reason. And **`ready`/`done`**: "unit rollover works" does not
+    attest WHICH state was shown, so `bUnitDone` is covered structurally by the binding and is
+    observed in neither state specifically.
+
 - **THE TICK ROUTE WORKS UNDER A HUMAN'S MOUSE, AND THE HOVER ASSETS ARE GONE BECAUSE NOTHING
   REFERENCES THEM ANY MORE.** 2026-08-27, later the same day, same live editor session reopened
   on the rebuilt binary. **Attribution, separately:** the ACTING is the `coordinator` under

@@ -218,6 +218,47 @@
 // FROM THE BRIDGE; the strip is HANDED a value that came from the view model. They have
 // different sources on purpose and there is no path below on which one can become the
 // other's input -- `PushGuidance` never touches `GetBridge()`.
+//
+// AND A FIFTH SURFACE HAS NOW JOINED THEM: GDD Sec 2.11.2's HOVER INFO PANEL.
+// `InfoPanelWidgetClass`, `InfoPanelZOrder`, `InfoPanel`, `CreateInfoPanelWidget`,
+// `PushInfoPanel`, `DeliverLatestInfoPanel`, `LastPushedInfoPanel`,
+// `LastPushedInfoPanelViewingSide` and `bInfoPanelEverPushed` below -- NINE members. It is
+// here for the module-arrow reason the guidance strip, the production menu and the
+// end-of-match screen are all here, measured once and restated rather than re-argued:
+// `StratPlay.Build.cs` would have to name `UMG`, `Slate` and `SlateCore` for
+// `UStratMatchSubsystem` to create a widget, and StratUI already declares all three.
+//
+// IT IS THE GUIDANCE STRIP'S LIFETIME AND NOT THE RESULT SCREEN'S. Created at `BeginPlay`,
+// alive all match, reconciled on every `ApplyView` -- because Sec 2.11.2's panel is
+// hover-driven and "empty when nothing is hovered" is a STATE OF THE PANEL rather than the
+// panel's absence. A panel created on demand when a hex is hovered and destroyed when it is
+// not would make `bHasHex` false unrepresentable, and that bool is what the WBP binds
+// visibility to.
+//
+// IT CARRIES THE SAME FIRST-DELIVERY CACHE, AND FOR THE MEASURED REASON RATHER THAN BY
+// SYMMETRY. The defect the guidance cache exists for -- `AStratPlayerController::BeginPlay`
+// reaching `ApplyView` before this class's `BeginPlay` has created a widget to receive it --
+// is a property of the ORDER of those two `BeginPlay`s, not of which widget is downstream.
+// So `LastPushedInfoPanel` and `bInfoPanelEverPushed` are `LastPushedGuidance` and
+// `bGuidanceEverPushed` for Sec 2.11.2, and `bInfoPanelEverPushed` is a separate bool for the
+// same reason: a default-constructed `FStratInfoPanelView` is a REAL state -- it is the
+// unhovered panel, the state the surface spends most of its life in -- so "the cache equals
+// the default" cannot mean "nothing has been cached".
+//
+// THE VIEWING SIDE IS CACHED BESIDE IT AND IS NOT THIS CLASS'S `ViewingSide` PROPERTY. Those
+// are two different values and conflating them would be a silent defect: this class's
+// `ViewingSide` is a Blueprint default -- a camera, set once -- while `PushInfoPanel` is
+// handed `FStratViewModel::ViewingSide`, which is the value the model was actually rendered
+// for and the one Sec 2.11.2's yours/enemy resolution must rest on. Reading the member here
+// instead of the argument would resolve the panel against a seat the model was not drawn for
+// the moment a hot-seat hand-over moved one and not the other.
+//
+// THE SAME CONDITION DISCHARGES IT. When a Sec 2.11 UI-layer owner exists, these nine move
+// there unchanged alongside the guidance seven and the result seven, and `PushInfoPanel` was
+// given a signature that survives the move: it takes a reflected struct by const reference
+// and an `int32`, touches no member of this class other than its own nine, and never touches
+// `GetBridge()`. Relocating it is a cut and paste plus one call-site edit in
+// `UStratMatchSubsystem::ApplyView`.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -239,6 +280,7 @@
 class FStratBridge;
 class UDataTable;
 class UStratGuidanceWidget;
+class UStratInfoPanelWidget;
 class UStratMatchResultWidget;
 class UStratScoreboardWidget;
 class UUserWidget;
@@ -528,6 +570,107 @@ public:
 	 */
 	bool bGuidanceEverPushed = false;
 
+	// ---- Sec 2.11.2's hover info panel --------------------------------------
+
+public:
+	/**
+	 * Hands GDD Sec 2.11.2's panel to the widget, composing the viewer-relative part on the
+	 * way.
+	 *
+	 * NOT A UFUNCTION, and for `PushGuidance`'s reason rather than `AdoptBridge`'s: every
+	 * argument here is reflectable, so nothing FORCES this to be plain C++. It is plain C++
+	 * so that Blueprint has no way to write a panel value at all -- see
+	 * `UStratInfoPanelWidget::PushInfoPanel`, which refuses reflection one layer down for the
+	 * same reason and states it in full.
+	 *
+	 * VOID AND UNREFUSABLE, matching `PushGuidance` and `UStratMatchSubsystem::ApplyView`,
+	 * which is its only caller. With no panel configured there is nothing to do and nothing
+	 * went wrong -- a different thing from the scoreboard's refusable `RefreshScoreboard`. An
+	 * unset `InfoPanelWidgetClass` is a legitimate configuration.
+	 *
+	 * THE COMPOSITION HAPPENS HERE AND IN NO OTHER PLACE. `StratComposeInfoPanelModel` is
+	 * called from this function's body and from nowhere else in shipped code, so the
+	 * yours/neutral/enemy resolution has exactly one author. It is done at THIS boundary
+	 * rather than at the call site because the caller lives in StratPlay and the composed
+	 * type lives in StratUI beside the widget that consumes it; and it is done here rather
+	 * than inside the widget because a widget composing its own model is the second-author
+	 * shape `UStratScoreboardWidget` was built to avoid.
+	 *
+	 * @param InPanel        `FStratViewModel::InfoPanel`, already built by
+	 *                       `StratDecorateInfoPanel`. Crosses whole and unmodified.
+	 * @param InViewingSide  `FStratViewModel::ViewingSide` -- the value the model was
+	 *                       rendered for. NOT this class's `ViewingSide` member; see the
+	 *                       header block on why reading the member here would be a defect.
+	 */
+	void PushInfoPanel(const FStratInfoPanelView& InPanel, int32 InViewingSide);
+
+	/**
+	 * Brings the panel up to the last value `PushInfoPanel` was handed.
+	 *
+	 * EXISTS FOR THE MEASURED FIRST-DELIVERY DEFECT, not by symmetry with
+	 * `DeliverLatestGuidance`. See the header block: the ordering of the two `BeginPlay`s is
+	 * what drops the session's first push, and it drops it for any widget this class creates.
+	 *
+	 * IDEMPOTENT, and the flag is not cleared. This is a replay of the current value rather
+	 * than the consumption of a queued event -- calling it twice pushes the same value twice,
+	 * and `UStratInfoPanelWidget::PushInfoPanel` assigns unconditionally, so the second call
+	 * changes nothing except that `OnInfoPanelRefreshed` fires again.
+	 *
+	 * @return true when a value was delivered -- there is a panel AND something has been
+	 *         pushed. False distinguishes "no panel" and "nothing pushed yet" from
+	 *         "delivered an unhovered view", which a caller cannot tell apart from the
+	 *         widget's contents because a default-constructed `FStratInfoPanelView` is a
+	 *         real, meaningful state.
+	 */
+	bool DeliverLatestInfoPanel();
+
+	/** Sec 2.11.2's info panel, or null when none was configured or setup refused.
+	 *  Read-only for the same reason `Scoreboard` and `GuidanceStrip` are: this HUD creates
+	 *  and owns it, and a second creator is a second lifetime to reason about. */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Info")
+	TObjectPtr<UStratInfoPanelWidget> InfoPanel;
+
+	/**
+	 * The last panel `PushInfoPanel` was handed, whether or not a widget existed to receive
+	 * it, and the viewing side it arrived with.
+	 *
+	 * TWO MEMBERS AND NOT A COMPOSED `FStratInfoPanelModel`, deliberately. Caching the
+	 * composed model would put a SECOND call to `StratComposeInfoPanelModel` in this class --
+	 * or, worse, would let `DeliverLatestInfoPanel` replay a resolution made against a
+	 * viewing side that has since moved. Caching the two INPUTS means the composition is
+	 * performed once per delivery from the values that were actually handed over, and the
+	 * function stays single-authored.
+	 *
+	 * ONE WRITER, `PushInfoPanel`, AND ONE READER, `DeliverLatestInfoPanel`. Nothing else in
+	 * this class consults either, and in particular `PushInfoPanel` does NOT compare against
+	 * them to skip a forward.
+	 *
+	 * NOT `UPROPERTY`s, and deliberately not `BlueprintReadOnly`, for `LastPushedGuidance`'s
+	 * two stated reasons: `FStratInfoPanelView` holds no object references, and publishing
+	 * one would give a Widget Blueprint a SECOND place to read the panel from, one whose
+	 * freshness depends on when it asked. `UStratInfoPanelWidget::Model` is the one a WBP
+	 * binds to and these are not rivals for it.
+	 */
+	FStratInfoPanelView LastPushedInfoPanel;
+
+	int32 LastPushedInfoPanelViewingSide = 0;
+
+	/**
+	 * Whether `PushInfoPanel` has ever run. NOT whether a hex is hovered.
+	 *
+	 * A SEPARATE BOOL BECAUSE THE VALUE CANNOT SIGNAL ITS OWN ABSENCE, and here the point is
+	 * sharper than it is for guidance: a default-constructed `FStratInfoPanelView` is
+	 * `bHasHex` false, which is Sec 2.11.2's ORDINARY state -- "empty when nothing is
+	 * hovered" -- and not an absence at all. "The cache equals the default" is therefore the
+	 * commonest true reading of a live panel. Without this bool, `DeliverLatestInfoPanel` on
+	 * a fresh HUD would fire `OnInfoPanelRefreshed` at a Blueprint to announce a reconcile
+	 * that never happened. This project has already paid once for treating a real default as
+	 * an unset marker, in `FStratMatchConfig::SaveSlotName`.
+	 *
+	 * IT NEVER GOES BACK TO FALSE. There is no un-push.
+	 */
+	bool bInfoPanelEverPushed = false;
+
 	/**
 	 * Why there is no scoreboard, when there is none. Empty on success.
 	 *
@@ -791,6 +934,31 @@ protected:
 	int32 GuidanceZOrder = 10;
 
 	/**
+	 * The WBP_ asset deriving from UStratInfoPanelWidget -- Sec 2.11.2's hover panel.
+	 *
+	 * A `TSubclassOf` set on a Blueprint default, never a ConstructorHelpers path literal,
+	 * for the reason the scoreboard's copy of this property gives.
+	 *
+	 * UNSET IS A LEGITIMATE CONFIGURATION AND NOT AN ERROR, exactly as `GuidanceWidgetClass`
+	 * is. A session that wants the match to run with no hover readout leaves it empty; the
+	 * .cpp says so in the log at Log level and finishes setup. Note what this does NOT do:
+	 * leaving it unset does not stop `StratDecorateInfoPanel` filling
+	 * `FStratViewModel::InfoPanel` every refresh, because the projection is not a property of
+	 * the screen. It only means nothing draws it.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Info")
+	TSubclassOf<UStratInfoPanelWidget> InfoPanelWidgetClass;
+
+	/** Viewport Z-order for the info panel. Defaults BELOW `GuidanceZOrder` -- and it is the
+	 *  only surface here that sits under the strip -- because Sec 2.11.2's panel is
+	 *  persistent bottom-left chrome and Sec 2.11.6-B's directive is a foreground
+	 *  instruction that must not be occluded by it. Above `ScoreboardZOrder` only so the two
+	 *  panels have a defined order at all; both remain properties so the layering is a
+	 *  designer's call, not this file's. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Info")
+	int32 InfoPanelZOrder = 5;
+
+	/**
 	 * The WBP_ asset for §2.11.5's production menu -- `WBP_ProductionMenu`.
 	 *
 	 * A `TSubclassOf` set on a Blueprint default, never a `ConstructorHelpers` path
@@ -880,6 +1048,13 @@ protected:
 	 *  HUD is not the thing that runs one. It stays showing whatever its own defaults draw
 	 *  until `UStratMatchSubsystem::ApplyView` reconciles it for the first time. */
 	bool CreateGuidanceWidget(FString& OutFailureReason);
+
+	/** Creates the configured info panel and adds it to the viewport, then delivers the last
+	 *  pushed value to it if there is one -- `CreateGuidanceWidget`'s shape exactly, and for
+	 *  the measured reason recorded there rather than by imitation. A session with no push
+	 *  yet delivers nothing and leaves the panel on its own defaults, which for Sec 2.11.2 is
+	 *  the correct empty panel rather than a blank surface waiting for data. */
+	bool CreateInfoPanelWidget(FString& OutFailureReason);
 
 	/** Creates the configured production menu and adds it to the viewport. Does NOT refresh
 	 *  it and CANNOT: `RefreshMenu` is a Blueprint custom event on the WBP and this class

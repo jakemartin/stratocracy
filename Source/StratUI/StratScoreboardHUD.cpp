@@ -66,6 +66,9 @@
 #include "StratScoreboardHUD.h"
 
 #include "StratGuidanceWidget.h"
+// IWYU: this file names `UStratInfoPanelWidget`, `FStratInfoPanelModel` and
+// `StratComposeInfoPanelModel` directly. The header forward declares only the class.
+#include "StratInfoPanelWidget.h"
 #include "StratMatchResultWidget.h"
 
 #include "StratScoreboardWidget.h"
@@ -267,6 +270,28 @@ void AStratScoreboardHUD::BeginPlay()
 		// and Sec 2.11.6-B's End Turn gate lives on the selection machine rather than on
 		// this widget, so nothing becomes unreachable when the strip is absent.
 		UE_LOG(LogStratUI, Warning, TEXT("No guided-opening strip this session: %s"), *FailureReason);
+	}
+
+	// Sec 2.11.2'S INFO PANEL, CREATED HERE AND FOR `CreateGuidanceWidget`'S STATED REASON
+	// RATHER THAN BY POSITION. It sits above every one of the scoreboard's early returns so
+	// that an unset `ScoreboardWidgetClass` -- a statement about Sec 2.11.4 -- cannot silently
+	// make Sec 2.11.2's panel conditional on it. It sits below the bridge and viewing-side
+	// checks because those two mean no match will be drawn at all, and a hover readout over a
+	// board that never seeded would describe hexes that do not exist.
+	if (InfoPanelWidgetClass == nullptr)
+	{
+		// Log, and `LastFailureReason` untouched, on the guidance branch's reason: that member
+		// answers "why is there no scoreboard".
+		UE_LOG(LogStratUI, Log,
+			TEXT("No hover info panel requested: no InfoPanelWidgetClass is set on this HUD's Blueprint defaults."));
+	}
+	else if (!CreateInfoPanelWidget(FailureReason))
+	{
+		// NOT A RETURN, and Warning rather than Error, matching the strip. The match remains
+		// fully playable without the panel: it is a readout and never an input, nothing is
+		// gated on it, and Sec 2.11.2's own "never-modal" wording is the reason it can be
+		// absent without anything becoming unreachable.
+		UE_LOG(LogStratUI, Warning, TEXT("No hover info panel this session: %s"), *FailureReason);
 	}
 
 	// §2.11.5'S MENU IS REPORTED HERE AND CREATED NOWHERE NEAR HERE, and the split is
@@ -644,6 +669,124 @@ bool AStratScoreboardHUD::DeliverLatestGuidance()
 	// THE FLAG IS NOT CLEARED. This is a replay of the current value, not the consumption of
 	// a queued event; see the declaration on why idempotence is the property wanted here.
 	GuidanceStrip->PushGuidance(LastPushedGuidance);
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// GDD Sec 2.11.2's hover info panel.
+// ---------------------------------------------------------------------------
+
+bool AStratScoreboardHUD::CreateInfoPanelWidget(FString& OutFailureReason)
+{
+	// Same shape as `CreateGuidanceWidget` above, deliberately, so that a reader who has
+	// understood one has understood both. Unset is handled by BeginPlay as a configuration
+	// rather than an error; reaching here with it null means someone called this directly,
+	// and that IS an error.
+	if (InfoPanelWidgetClass == nullptr)
+	{
+		OutFailureReason = TEXT("InfoPanelWidgetClass is unset");
+		return false;
+	}
+
+	APlayerController* const OwningPlayer = GetOwningPlayerController();
+	if (OwningPlayer == nullptr)
+	{
+		OutFailureReason = TEXT("this HUD has no owning player controller to parent the info panel to");
+		return false;
+	}
+
+	UStratInfoPanelWidget* const Created =
+		CreateWidget<UStratInfoPanelWidget>(OwningPlayer, InfoPanelWidgetClass);
+	if (Created == nullptr)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("CreateWidget returned null for InfoPanelWidgetClass '%s'"),
+			*GetNameSafe(InfoPanelWidgetClass));
+		return false;
+	}
+
+	Created->AddToViewport(InfoPanelZOrder);
+
+	// Assigned only after it is on screen, so `InfoPanel != nullptr` and "there is a panel"
+	// never disagree.
+	InfoPanel = Created;
+
+	// BROUGHT UP TO THE LAST VALUE THIS HUD WAS HANDED, for the measured reason recorded
+	// against `CreateGuidanceWidget` and the header block: `AStratPlayerController::BeginPlay`
+	// reaches `UStratMatchSubsystem::ApplyView` with the session's first decorated model
+	// before this function has run. It assumes NO ordering -- a push arriving after this point
+	// takes the ordinary route through `PushInfoPanel`, one that arrived before it is
+	// delivered here, and a session with no push at all delivers nothing.
+	//
+	// NOTHING IS LOST WHEN IT DELIVERS NOTHING, unlike the strip. The panel's own defaults ARE
+	// Sec 2.11.2's empty panel -- `bHasHex` false, nothing hovered -- so a fresh widget with
+	// no delivery is showing the correct thing rather than a stale or blank one. The delivery
+	// still matters because the first model applied may already carry a hover.
+	DeliverLatestInfoPanel();
+
+	return true;
+}
+
+void AStratScoreboardHUD::PushInfoPanel(const FStratInfoPanelView& InPanel, int32 InViewingSide)
+{
+	// RECORDED FIRST, UNCONDITIONALLY, AND WITHOUT COMPARING, on `PushGuidance`'s reasoning:
+	// the widget may not exist yet, so the value is kept before the forward rather than only
+	// when the forward can happen. No equality test against the stored value and no early-out
+	// on "unchanged" -- that would be the delta-shaped thinking
+	// `UStratMatchSubsystem::ApplyView` refuses at the other end of this same call, and the
+	// hover moves every frame the mouse does, which is precisely when an "optimisation" here
+	// would look most tempting and would make the panel's contents a function of the history
+	// of calls instead of the current model.
+	//
+	// THE ARGUMENT IS CACHED, NOT THIS CLASS'S `ViewingSide` MEMBER. See the header block:
+	// those are two different values -- a Blueprint camera default and the side the model was
+	// actually rendered for -- and reading the member here would resolve Sec 2.11.2's
+	// yours/enemy clause against a seat the model was not drawn for.
+	LastPushedInfoPanel            = InPanel;
+	LastPushedInfoPanelViewingSide = InViewingSide;
+	bInfoPanelEverPushed           = true;
+
+	// THE REST IS A NULL CHECK, ONE COMPOSITION AND A FORWARD. No panel is a configuration,
+	// not a refusal, so there is nothing to report and nothing to log -- a log line here would
+	// fire once per reconcile for the whole of a correctly configured session.
+	//
+	// NO BRANCH ON THE VALUE. This function does not read `InPanel.bHasHex`, does not show or
+	// hide the widget, and decides nothing about the panel's appearance. `FStratInfoPanelView`
+	// carries `bHasHex` precisely so the widget can bind visibility to it; a
+	// `RemoveFromParent` here would be this file forming a second opinion about when the panel
+	// is empty, and Sec 2.11.2's "empty when nothing is hovered" is a state of the projection
+	// rather than this class's fact.
+	if (InfoPanel != nullptr)
+	{
+		FStratInfoPanelModel Composed;
+		StratComposeInfoPanelModel(InPanel, InViewingSide, Composed);
+		InfoPanel->PushInfoPanel(Composed);
+	}
+}
+
+bool AStratScoreboardHUD::DeliverLatestInfoPanel()
+{
+	// TWO CONDITIONS, AND THEY ARE DIFFERENT QUESTIONS. `InfoPanel` answers "is there anywhere
+	// to deliver to"; `bInfoPanelEverPushed` answers "is there anything to deliver". The
+	// second cannot be read off `LastPushedInfoPanel` itself -- a default-constructed
+	// `FStratInfoPanelView` is the ordinary unhovered panel and not an absence, see the
+	// member's declaration -- and delivering one anyway would fire `OnInfoPanelRefreshed` at a
+	// Widget Blueprint to announce a reconcile that never happened.
+	if (InfoPanel == nullptr || !bInfoPanelEverPushed)
+	{
+		return false;
+	}
+
+	// COMPOSED HERE FROM THE CACHED INPUTS rather than replayed from a cached model. See the
+	// members' declaration: caching the two inputs is what keeps
+	// `StratComposeInfoPanelModel` single-authored and stops a replay asserting a resolution
+	// made against a viewing side that has since moved.
+	//
+	// THE FLAG IS NOT CLEARED. This is a replay of the current value, not the consumption of a
+	// queued event.
+	FStratInfoPanelModel Composed;
+	StratComposeInfoPanelModel(LastPushedInfoPanel, LastPushedInfoPanelViewingSide, Composed);
+	InfoPanel->PushInfoPanel(Composed);
 	return true;
 }
 

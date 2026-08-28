@@ -376,7 +376,7 @@ while IFS= read -r f; do
         exit 1
     fi
     if ! git show ":$f" > "$dst" 2>/dev/null; then
-        echo "COMMIT REFUSED: could not read the staged $f, so the record was NOT swept."
+        echo "COMMIT REFUSED: could not read $f from the index, so the record was NOT swept."
         echo "The file list came from this commit's own index, so this is an index anomaly"
         echo "rather than a missing file. Re-stage and try again."
         exit 1
@@ -394,7 +394,8 @@ OUTPUT=$($PY "$SWEEP" "${SWEEP_ARGS[@]}" 2>&1)
 STATUS=$?
 
 if [ $STATUS -eq 0 ]; then
-    echo "banner sweep: clean (${#SWEEP_ARGS[@]} staged file(s) under $STATE_DIR_REL)"
+    echo "banner sweep: clean (${#SWEEP_ARGS[@]} record file(s) under $STATE_DIR_REL, from the"
+    echo "index -- the whole tracked set there, not just this commit's staged files)"
     exit 0
 fi
 
@@ -402,7 +403,9 @@ echo ""
 echo "$OUTPUT"
 echo ""
 echo "--------------------------------------------------------------------------"
-echo "COMMIT REFUSED: the staged record under $STATE_DIR_REL contradicts itself or the tree."
+echo "COMMIT REFUSED: the record under $STATE_DIR_REL contradicts itself or the tree. The"
+echo "sweep read every tracked file there from the index and judged them together, so the"
+echo "contradiction may be in a file this commit never staged."
 echo ""
 echo "This is the check that '11fd9ae' made a memory job and that 185e88f then got"
 echo "wrong -- a banner claiming one thing while the record claims another. Since the"

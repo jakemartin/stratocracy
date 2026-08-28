@@ -12,6 +12,177 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-28 (local; this pass's runs stamp UTC `2026.08.28-00.00.07` and `-00.02.17` for the
+  first nine clauses and their mutation, then `-00.18.43` and `-00.20.00` after the gate's
+  finding added the tenth, and the FINAL run `-00.32.37` after the re-gate's two comment
+  observations. THAT LAST ONE IS THE REPORT THAT BACKS THIS ENTRY; every earlier stamp is quoted
+  as history and describes different bytes, a comment edit included) — WAVE 2's SEC 2.11.2 INFO PANEL IS
+  PINNED BY TEN CLAUSES, ALL UNDER `GATE-INFOPANEL`, AND THREE OF THEM EXIST BECAUSE THE OBVIOUS
+  VERSION OF THE CLAUSE CANNOT FAIL.** Written in the lane tree `E:/MultiAgent/Strat-wt/slot-1` on
+  `feat/info-panel`. Three new files, all inside `Tests/`:
+  `Source/StratUI/Tests/StratInfoPanelSourceParity.cpp` (2),
+  `Source/StratUI/Tests/StratInfoPanelClauses.cpp` (6), and
+  `Source/StratPlay/Tests/StratInfoPanelRouting.cpp` (2). The clause-name set grew by exactly ten
+  and NOTHING was removed or renamed, measured by MULTILINE SET DIFFERENCE on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` between `master`'s git objects and the worktree, with both
+  sides guarded as non-empty — never by an acceptance-ID grep, and never by a single-line one,
+  which returns zero here because the macro's argument sits on the next line. The live suite
+  figure is `global.md`'s and is not restated here.
+  - **THE ID IS `GATE-INFOPANEL` AND IT MINTS NOTHING, and the two IDs that were refused are
+    recorded because both were nearly taken.** `T-UI-03`'s own GDD sentence is about the LIVE
+    STANDINGS SCOREBOARD and its four side-level readouts; the info panel is a different surface,
+    and a clause riding an ID whose own text excludes its subject is unfalsifiable by
+    construction. `T-UI-05` asks whether the snapshot tells the truth about the module's state —
+    and the four snapshot mirrors this wave finally gives a reader (`Hp`, `HpMax`, `bIsFlag`,
+    `Owner`) are ALREADY asserted against the module in `StratViewModelParity.cpp`, verified in
+    this pass at the assertion sites, so a second clause would be duplication and not coverage.
+    `GATE-BUILDMENU` is the precedent for the `GATE-` form and each new file states the reasoning
+    in its own header block.
+  - **THE TREE DID NOT CARRY THE RULING THE DISPATCH CITED, and the dispatch was followed anyway
+    because `GATE-` claims nothing.** The brief said the user had ruled W2's acceptance IDs and
+    that `global.md`'s topmost `## NEXT` entry carried the ruling. It does not: the topmost entry
+    is W3's, and the ID ruling inside it closes with `STILL UNRULED: W2, W4, W5, W6 and W8`.
+    Recorded because the discrepancy is the kind that later reads as a ruling that was made.
+  - **WHICH CLAUSE PINS WHICH BEHAVIOUR.**
+    - `Stratocracy.StratUI.GATE-INFOPANEL.HexTerrainFactsAreTheTerrainRowAtTheSnapshotsIndex` —
+      every hex's `TerrainMoveCost`, `TerrainDefensePct`, `bTerrainCapturable` and
+      `TerrainIncomeFame` equal `strat::TerrainDef`'s at the row the snapshot names, read through
+      `FStratBridge::Tables()`. None of the four has a snapshot source, so the mirror walk in
+      `StratViewModelParity.cpp` cannot see them and never could. Its guards are table reads too:
+      the board must exercise more than one cost, bonus and rate, both capturable states, a
+      NEGATIVE bonus and a ZERO cost.
+    - `Stratocracy.StratUI.GATE-INFOPANEL.UnitStatsAreTheUnitRowAtItsDefIndex` — the five §2.4
+      stats against `strat::UnitDef` at that unit's own `DefIndex`, plus the guard that the
+      projection contains a unit whose band is NOT a point.
+    - `Stratocracy.StratUI.GATE-INFOPANEL.PanelDescribesTheHoveredHexsOwnRow` — two hexes of
+      different terrain, and the panels differ.
+    - `.PanelIsWrittenUnconditionallyAndIsEmptyOffTheBoard` — a model carrying a REAL stale panel
+      (produced by the shipped decorator a line earlier) is cleared when the hover stops and when
+      the hover is off-board. The off-board hex is derived from the board's own extent and then
+      ASSERTED absent.
+    - `.CapturabilityIsTheTerrainFlagAndNotOwnership` — see the trap note below.
+    - `.ImpassableIsTheZeroCostSentinelAndTheCostSurvives` — both arms, and the raw cost still on
+      the panel in both.
+    - `.UnitRowIsTheUnitStandingOnTheHoveredHex` — every unit field is that unit's own, plus the
+      empty-hex arm where `bHasHex` is true and the whole unit half is default.
+    - `Stratocracy.StratPlay.GATE-INFOPANEL.PanelReachesTheModelThroughTheControllersDecorator` —
+      the ROUTE. All six StratUI clauses stay green over a `DecorateForPresentation` that never
+      calls the decorator at all, which is this project's recorded shape for a correct,
+      clause-pinned, unreachable verb.
+  - **THE THREE TRAPS, AND WHY A NAIVE CLAUSE PASSES EACH.**
+    1. **Capturability is not ownership.** `Ui.h` scopes `owner` to capturable hexes, so a NEUTRAL
+       Factory and a Plains hex both project `INDEX_NONE`. A clause that only ever hovered an
+       OWNED capturable hex certifies a `HexOwner != INDEX_NONE` shortcut. The clause shows the
+       neutral-capturable / non-capturable PAIR at the same owner, which is the one observation
+       the shortcut cannot produce.
+    2. **The range band needs Artillery.** Infantry, Tank and Recon are all `1..1` in the shipped
+       table; only Artillery is `2..3`. Over any point-band unit a collapsed band is invisible.
+       Both range clauses find their subject by SEARCHING the projection for `rangeMin` unequal to
+       `rangeMax` rather than by naming a unit.
+    3. **The DONE bit is neither turn flag nor any pair of them.** Driving only the waited unit
+       (`bDone` true, `bHasActed` false) is satisfied by `!bHasActed`, which is a real wrong
+       answer. The clause's decisive pair is two units with IDENTICAL turn flags and OPPOSITE
+       `bDone`, over which no function of the turn flags can be right twice.
+  - **WHAT THESE CLAUSES DO NOT PIN, stated rather than left to be discovered.**
+    - Any widget, any rendered text, and the four snapshot mirrors as fidelity.
+  - **WHERE A CLAUSE ASSERTS RATHER THAN MEASURES, named because this record exists for it.**
+    `DoneIsThePresentationBitAndNotATurnFlag` writes the three bits it then expects. There is no
+    module-side value to read: `Ui.h`'s presentation block has no module-side counterpart and no
+    derivation from one — the same ruling that keeps those members out of T-UI-05's subject — and
+    `StratBuildViewModel` leaves all three at their defaults by design. So what that clause pins
+    is the SELECTION and nothing about what the bit means. Every other clause in the three files
+    compares against a module-side or model-side value read beside the assertion; no terrain name,
+    unit name, cost, stat, hex coordinate or board dimension is typed in any of them.
+  - **[CORRECTED 2026-08-28, SAME PASS, AFTER A `VERDICT: BLOCK` — AND THE STRUCK CLAIM IS THIS
+    LANE'S OWN.** This entry first said the wave was pinned by NINE clauses and that the panel's
+    ordering against `FStratSelectionMachine::DecorateViewModel` could not be pinned at all. THE
+    COUNT IS TEN AND THE ORDERING IS PINNED. The struck sentence and the reason it was wrong are
+    below, stated flat and never nested, because this record has had a false sentence live
+    directly above its own retraction.]**
+  - **WHAT THE GAP BULLET USED TO SAY, STRUCK AND KEPT.** It read:
+    STRUCK> "THAT THE PANEL RUNS AFTER `FStratSelectionMachine::DecorateViewModel`. The
+    STRUCK> constraint is real — `bUnitDone` comes from the machine — and it is NOT OBSERVABLE
+    STRUCK> from any fixture this wave has. With no live match the machine writes `bDone` false
+    STRUCK> on every unit, so a panel decorated before it and one decorated after it are
+    STRUCK> byte-identical, and an assertion over that pair would be green under both orders.
+    STRUCK> Closing the remaining half needs a live `UStratMatchSubsystem` fixture with a unit
+    STRUCK> actually marked done."
+    THAT IS WITHDRAWN IN FULL. **The premise was false and the refutation is one line of the
+    tree:** `FStratSelectionMachine::DecorateViewModel` writes `U.bDone =
+    DoneUnits.Contains(U.UnitId)` in a plain loop over every unit with NO GUARD — an
+    unconditional, destructive assignment, read at its site in
+    `Source/StratPlay/StratSelectionMachine.cpp` in this pass and not taken from the gate's
+    paste. So the two orders agree only when the INCOMING model already carries `bDone` false,
+    and a fixture that owns its model by value controls exactly that. "The machine writes false
+    in this fixture" was true, and was mistaken for "the machine writes nothing observable" —
+    which is a different sentence, and the whole of the error.
+  - **THE TENTH CLAUSE.**
+    `Stratocracy.StratPlay.GATE-INFOPANEL.PanelReadsTheDoneBitTheSelectionMachineWroteThisFrame`
+    seeds `bDone` TRUE on the hovered unit, hands the model to `DecorateForPresentation`, and
+    asserts the machine destroyed the seed and the panel carries the MACHINE'S OWN OUTPUT — the
+    post-decoration `Units[i].bDone`, never a literal — so the clause takes no position on which
+    units the machine considers done. **It runs its own control:** the same seeded model, hovered
+    and handed straight to `StratDecorateInfoPanel`, which is what a panel decorated before the
+    machine would produce, and the clause asserts the two disagree. No live match, no
+    `UStratMatchSubsystem`, no new seam.
+  - **THE OTHER HALF OF THE OLD BULLET STANDS AND IS NOT WITHDRAWN WITH IT.** That the panel
+    reads `bDone` and not a turn flag is genuinely pinned by
+    `Stratocracy.StratUI.GATE-INFOPANEL.DoneIsThePresentationBitAndNotATurnFlag`, headlessly.
+    The routing file pins the two ORDERINGS; that clause pins which bit is read.
+  - **AND A COUNT DEFECT INSIDE A COMMENT, FIXED BY RE-DERIVING RATHER THAN BY PATCHING.**
+    `StratInfoPanelSourceParity.cpp`'s header said the new fields were "seven more of that kind",
+    which is impossible beside its own "nine". Seven survived from `FStratInfoPanelView`'s
+    narrower FIRST shape. The figure was re-derived from `git diff master -- StratViewModel.h`
+    — four reflected fields added to `FStratHexView` and five to `FStratUnitView`, every other
+    added field belonging to the new struct — and the comment now states the SPLIT that produces
+    the total rather than a bare number a later field would silently falsify. The gate supplied
+    a figure and it was deliberately not used as the source.
+  - **[AMENDED 2026-08-28, AFTER THE RE-GATE'S `VERDICT: PASS`, ON TWO NON-GATING COMMENT
+    OBSERVATIONS — AND THE FIRST IS THIS WAVE'S DEFECT FOR THE THIRD TIME.**
+    `StratInfoPanelRouting.cpp` carried a FILE-SCOPE sentence, `The hover is driven through the
+    controller's own public SetHoveredHex / ClearHoveredHex seam, never by writing Model.Hover`.
+    It was true when the file held one clause. The tenth clause's CONTROL leg writes
+    `Model.Hover` directly — disclosed at its own line, with the reason that this lane may not
+    edit the controller — which made the file-scope sentence false, and nothing re-read it. It is
+    now stated PER CLAUSE, with the old wording quoted under `NARROWED>` rather than deleted.
+    **Three instances of one species in one wave:** a struck ordering claim, a stale field count,
+    and this. The rule that catches it is to re-read every unqualified file-scope sentence when a
+    file gains a second clause — not to write more carefully.]**
+  - **AND ONE OVERCLAIM THIS LANE INTRODUCED WHILE FIXING THE SECOND OBSERVATION, caught by
+    re-reading its own new sentence against the code it cited.** The narrowed scope note first
+    said the fixture's premise `is therefore asserted false a few lines below, so that premise
+    fails at its own line`. **That is wrong:** the `TestFalse` it pointed at guards
+    `StratBuildViewModel` leaving `bDone` false, and would keep PASSING if the machine ever began
+    reporting the subject unit done, because the builder runs before the machine and the machine
+    never touches that model. The comment now says the premise is NOT separately guarded, tells a
+    reader to check the machine's answer before concluding the ordering broke, and names
+    `StratSelectionMachineParity.cpp` as where guarding it would belong. Recorded because a
+    correction that cites the wrong line reads exactly as authoritative as one that does not.
+  - **FALSIFIABILITY FOR THE TENTH, instrument-side like the other nine.** The reordering was
+    simulated in the test — the panel value a controller that decorated before the machine would
+    leave on the model, driven through both of the clause's ordering assertions — and the red set
+    was EXACTLY that one clause, with both assertions firing: `the panel's bUnitDone is the bDone
+    the machine left on the model this frame ...: The two values are not equal` and `the shipped
+    order and the reordered control disagree ...: The two values are equal`. Restored by `sha256`
+    against a copy held outside the repository, rebuilt, re-run green. The limit is the same one
+    stated for the first nine: instrument-side mutation proves each assertion reachable and
+    sensitive to the quantity it names, not that the clause catches an arbitrary defect.
+  - **FALSIFIABILITY, AND THE PROOF STATES ITS OWN LIMIT.** Nine simultaneous mutations, one per
+    clause, gave the red set EXACTLY the nine added names with no pre-existing clause moving; the
+    restore was verified by `sha256` against copies held outside the repository and the tree
+    re-run green. **EVERY MUTATION WAS INSTRUMENT-SIDE**, because this lane may not edit the code
+    under test even temporarily. Three of the nine implement the WRONG RULE over the clause's own
+    fixture rather than merely breaking an assertion, which is the stronger form: the ownership
+    shortcut evaluated over the neutral capturable hex printed `Expected 'the neutral capturable
+    hex (q 3, r 1) reports bHexCapturable' to be true`; reading `bHasActed` in place of `bDone`
+    reddened two of the four fixture units; and collapsing `StatRangeMin` onto `rangeMax` reddened
+    ONLY the two units at definition row 2, which is the measurement that says Artillery is
+    load-bearing. That proves each assertion reachable and sensitive to the quantity it names; it
+    does NOT prove the clause would catch an arbitrary defect in the shipped function.
+  - **THE FAILING RUN'S EXIT CODE WAS 255 AND THE GREEN RUNS' WAS 0**, captured on the line after
+    the redirect and never through a pipe. Recorded as a measurement of this harness on this box,
+    not as a rule.
+
 - **2026-08-27 (local; this pass's runs stamp UTC `2026.08.27-20.56.24`, `-20.57.47`,
   `-20.59.19` and the final restored-tree run `-21.02.15`) — WAVE 3's PERSISTENT-HUD MODEL SURFACE IS PINNED BY FIVE CLAUSES, ACROSS TWO
   EXISTING ACCEPTANCE IDS, AND TWO SURFACES OF THAT SAME WAVE ARE DELIBERATELY LEFT UNPINNED.**

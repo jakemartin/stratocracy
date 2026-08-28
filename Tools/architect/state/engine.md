@@ -13,6 +13,124 @@
 
 ## NEXT
 
+- **2026-08-27, `strat-gameplay-engineer` -- WAVE 2: §2.11.2's INFO PANEL, MODEL-SIDE. THE
+  TERRAIN AND §2.4 ROWS THE PANEL READS WERE HELD BY THE BRIDGE AND PROJECTED NOWHERE; `Hp` /
+  `HpMax` WERE PROJECTED AND READ BY NOTHING OUTSIDE `Tests/`.** In the lane worktree
+  `E:/MultiAgent/Strat-wt/slot-1`, branch `feat/info-panel`, from `a45a7d9`. Three files
+  modified and none added, all mine: `Source/StratUI/StratViewModel.h`,
+  `Source/StratUI/StratViewModel.cpp`, `Source/StratPlay/StratPlayerController.cpp`. Nothing
+  committed, nothing staged, no asset, no `Content/`, no `Config/`, no test, nothing under any
+  `Tests/` directory, no `.Build.cs`, no `.uproject`, no widget. No suite figure is stated here;
+  `global.md` owns that and owns any verdict.
+  - **THE BUILD, IN THIS TREE.** `Build.bat StratocracyEditor Win64 Development` against
+    `E:\MultiAgent\Strat-wt\slot-1\Stratocracy.uproject` with `-waitmutex -NoHotReloadFromIDE
+    -MaxParallelActions=10`, redirected to a file and never piped. `REAL_EXIT=0` and the tool's
+    own line is `Result: Succeeded`, over 59 actions with `StratViewModel.cpp` and
+    `StratPlayerController.cpp` both named among the compiles -- so the green is over the
+    edited translation units and not over an up-to-date tree. Zero warnings. The branch was
+    proved by `git -C … rev-parse --abbrev-ref HEAD` -> `feat/info-panel` rather than by the
+    toplevel echo, which this project has measured lying 6/6.
+  - **THE SYMBOLS ADDED**, cited by name because a `file:NNN` written during a diff is
+    invalidated by that same diff. On `FStratHexView`: `TerrainMoveCost`, `TerrainDefensePct`,
+    `bTerrainCapturable`, `TerrainIncomeFame`. On `FStratUnitView`: `StatAtk`, `StatDef`,
+    `StatMove`, `StatRangeMin`, `StatRangeMax`. New reflected struct `FStratInfoPanelView`, new
+    field `FStratViewModel::InfoPanel`, new free function `StratDecorateInfoPanel`. The call
+    site is the last line of `AStratPlayerController::DecorateForPresentation`.
+  - **THE PLACEMENT CALL: THE TABLE ROWS LAND ON THE BOARD STRUCTS, NOT ON THE PANEL.** The
+    terrain facts sit on `FStratHexView` beside `TerrainId`, and the §2.4 stats on
+    `FStratUnitView` beside `DefId` -- in each case the SAME row at the SAME index in the SAME
+    loop, bound to one reference and read once. The alternative considered was a self-contained
+    panel struct filled from its own lookup; what killed it is that a second read of the same
+    row is a second chance to read a DIFFERENT row, which is the defect
+    `FStratAttackForecast`'s terrain block already refuses from the other side ("so the bonus
+    shown IS the bonus `resolveDamage` was handed"). It also puts the terrain cost on every hex
+    rather than only the hovered one, which is what §2.5's path-preview tick will want.
+  - **AND THE PANEL ITSELF REACHES NOTHING.** `StratDecorateInfoPanel` takes
+    `FStratViewModel&` and no bridge, no snapshot, no table and no query interface, so every
+    number it can possibly write is already a field of the model. That is why it needs no
+    clause in the header's no-arithmetic census: it cannot introduce a number the screen could
+    not otherwise have shown. It is spelled as a decorator rather than a compose because it
+    writes one field of a model it also reads, and a compose with an out-parameter would invite
+    the caller to alias the model against its own field.
+  - **NO NEW `FStratBridge` METHOD, AND NO `strat::` FUNCTION CALLED FROM ANY NEW LINE.** The
+    two new table reads happen inside `StratBuildViewModel`, which already held
+    `Bridge.Tables()` for the `TerrainId` / `DefId` lookups; the new fields are more fields off
+    the rows it had already bound and range-checked. `strat::TerrainDef` and `strat::UnitDef`
+    are NAMED in `StratViewModel.cpp`, which is legal -- naming a vendored type is free and
+    calling a vendored free function from `StratUI` is the `LNK2019` the constraint is about.
+  - **THE `ready` / `done` TRAP WAS AVOIDED BY READING THE PRESENTATION BLOCK.**
+    `FStratInfoPanelView::bUnitDone` is `FStratUnitView::bDone` and nothing else. It is NOT
+    `bHasActed`, and NOT any pair of the two turn flags: `Ui.h` states the DONE bit "is
+    DERIVABLE FROM NEITHER turn flag nor from any pair of them", and §2.11.2 gives the case --
+    a waited unit reads `done` while its act flag is unspent. Both flags remain on
+    `FStratUnitView` and neither is consulted here.
+  - **`bTerrainCapturable` IS A SEPARATE FIELD BECAUSE `Owner` CANNOT ANSWER THAT QUESTION.**
+    `Ui.h` scopes `UiHexView::owner` to "capturable hexes only; OWNER_NEUTRAL elsewhere", so a
+    NEUTRAL Factory and a Plains hex both project `INDEX_NONE`. Inferring capturability from
+    `Owner` would print `neutral` beside every Plains hex on the board -- a defect that would
+    read as a formatting choice. The flag is read off `TerrainDef::capturable` instead.
+  - **TWO COMPARISONS, ONE ADMITTED INTO THE MODEL AND ONE REFUSED, on a distinction stated in
+    the header rather than left implicit.** `bTerrainImpassable` is `TerrainMoveCost == 0` and
+    IS in the model, because `Data.h` declares 0 to MEAN impassable (the §4.8 sentinel) and a
+    widget performing that test would be a widget holding a rules constant. The
+    yours/neutral/enemy reading is `HexOwner` against `FStratViewModel::ViewingSide` and is NOT
+    in the model, because that compares two fields of this same model and means only what it
+    says -- and baking it would carry the premise that the viewer is fixed through a hot-seat
+    hand-over, which `FStratForecastView::RiskedFlagSide` already refuses for its own colour.
+    Neither is arithmetic; the file's single declared arithmetic exception
+    (`FStratBuildOptionView::Shortfall`) did not move, and the .cpp's census block says so in
+    its own words.
+  - **THE ORDERING CONSTRAINT IS REAL IN BOTH ARMS, unlike the forecast's.**
+    `StratDecorateInfoPanel` must follow `FStratHoverState::DecorateViewModel` (it reads
+    `Model.Hover` for which hex) AND `FStratSelectionMachine::DecorateViewModel` (it reads
+    `bDone`). `StratDecorateForecast`'s selection arm is incidental because it takes the
+    selection through `GetSelectedUnitId` rather than off the model; this one has no such
+    escape. It is placed last in `DecorateForPresentation`, after the forecast, which the two
+    do not need of each other -- last is where a decorator that only restates the model belongs.
+  - **NO FAILURE CHANNEL, AND THE ABSENCE IS DESIGNED.** There is no input the decorator can be
+    handed that has no answer: not hovering, hovering a hex absent from `Model.Hexes`, and
+    hovering an empty hex are all `bHasHex` / `bHasUnit` false. It writes `Model.InfoPanel`
+    unconditionally, so a cursor leaving the board cannot leave the previous hover's panel on
+    screen, and it fills a local and assigns on the last line -- which here also removes the
+    read-while-writing question rather than answering it.
+  - **THE SCOPE WAS CORRECTED MID-TASK AND THE FIRST SHAPE IS RECORDED, NOT ERASED.** The
+    dispatch brief described §2.11.2 as three terrain readouts and an HP line; the GDD's own
+    subsection names four hex readouts (including the capturable status and its income rate)
+    and a unit line carrying Atk/Def/Move/Range and the DONE bit. The narrow shape built green
+    first, WITH ITS DEFERRALS DECLARED ON `FStratInfoPanelView`'s block together with the
+    condition that would discharge each; the corrected spec turned out to be exactly those
+    conditions, and both were taken by the route the deferral had named. That is why the second
+    pass was an extension of the same branch and not a rewrite, and the block still carries the
+    history.
+  - **NOT DONE, DELIBERATELY, AND EACH WITH WHAT DISCHARGES IT.** (1) No widget and no
+    `Content/` -- the panel has a complete model side and nothing draws it; discharged by the
+    integration tree's asset tail. (2) No `UStratViewModelLibrary` accessor -- `InfoPanel` is a
+    `BlueprintReadOnly` field on the model exactly as `Forecast` is, and a UMG binding reaches
+    it without one; discharged only if a widget needs a query the field cannot answer. (3) No
+    text, no separators and no `12/20` slash anywhere in the model; those are the widget's and
+    formatting them here would put a player-facing string in a struct a clause compares field
+    for field. (4) NO FILING WAS OPENED AGAINST `Source/StratRules/` and none was needed: every
+    number this wave shows already existed module-side, in `TerrainDef`, in `UnitDef`, in the
+    snapshot, or in the presentation block whose owner is the selection machine.
+  - **THE RANGE IS CARRIED AS A BAND, AND ONE SENTENCE OF THE DISPATCH WAS WRONG ABOUT WHICH
+    FIELD REACHES THE ROW.** `StatRangeMin` and `StatRangeMax` are both carried and nothing
+    collapses them; `Data/units.csv` (read, not edited) has Artillery at `2..3` and the other
+    three at `1..1`, so a scalar `Range` would have been right on three rows out of four and
+    wrong on the only unit whose range is interesting. The dispatch also said
+    `FStratUnitView::UnitId` is the UE-side counterpart of `strat::UiUnitView::unitId`, the §2.4
+    row index. THE TREE SAYS OTHERWISE and the tree wins: `UnitId` is assigned from
+    `UiUnitView::id`, the INSTANCE id, and the row index is `FStratUnitView::DefIndex`, assigned
+    from `UiUnitView::unitId` -- a naming collision the existing field comment already flags
+    ("whatever its spelling suggests"). The stat read goes through `DefIndex`. Indexing the
+    definition table with `UnitId` would have compiled, would have been in range on this
+    scenario's ten units, and would have shown the wrong unit's stats.
+  - **UNPINNED SURFACE, NAMED SO THE HOLE IS VISIBLE RATHER THAN INFERRED.** Per the
+    coordinator's ruling: `Owner` and `bIsFlag` ride `T-UI-05` alongside `Hp` / `HpMax` as
+    unmarked snapshot mirrors; the DONE bit rides NOTHING, because `Ui.h` says in terms that
+    the presentation block "is NOT in T-UI-05's subject"; and the four §2.4 stat reads ride
+    nothing either, being `UnitDef` table rows. The mint request is filed upstream and is the
+    steward's. I wrote no test and name none as written.
+
 - **2026-08-27, `strat-gameplay-engineer` -- WAVE 3: §2.11.2's THREE HUD NUMBERS AND ITS END TURN
   VERB, MODEL-SIDE. THE FAME POOL AND THE INCOME LINE WERE ALREADY IN THE MODEL AND HAD NO WAY
   TO REACH A WIDGET; THE IDLE COUNT DID NOT EXIST IN ANY FORM AND STRUCTURALLY CANNOT.** In the

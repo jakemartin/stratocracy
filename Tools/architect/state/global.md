@@ -39,9 +39,19 @@ is not provenance: the banner below states the lane as its tree and this entry s
 Two further runs of that wave, at 258/258 and an earlier 259/259, are stamped in that banner.]**
 THE NARROW RE-GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS on the lane, and the full gate
 before it returned `VERDICT: BLOCK` on two findings, both fixed and both named in the banner
-below. **NO GATE HAS RUN ON THIS TREE SINCE THE MERGE, and that is stated rather than left to be
-assumed** -- a `VERDICT: PASS` describes a tree and a merge is a post-pass change, so the
-post-merge re-gate is owed and is not claimed here. What IS measured here is the build, the
+below. **[STAMPED 2026-08-28, LATER THE SAME DAY: THE SENTENCE THAT FOLLOWED HERE IS NOW FALSE
+AND IS STAMPED RATHER THAN DELETED. STRUCK: `NO GATE HAS RUN ON THIS TREE SINCE THE MERGE, and
+that is stated rather than left to be assumed -- a VERDICT: PASS describes a tree and a merge is
+a post-pass change, so the post-merge re-gate is owed and is not claimed here.` THE POST-MERGE
+RE-GATE HAS SINCE RUN ON THIS TREE AND RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, and THAT is
+the verdict for this merge. Its primary subject was the one thing a merge can break behind a
+green suite: `global.md` was written on BOTH sides -- the lane's banner in `d432df7` and the
+ruling in `acaef2c` -- and auto-merged. It verified per line that ZERO lines were lost from
+either parent, that this file asserts exactly ONE live suite figure, and that
+`git diff --stat d432df7 HEAD -- Source/` is EMPTY, so the merge moved no source line. THE
+IDENTICAL SENTENCE IN `8193ba9`'s COMMIT MESSAGE IS NOT WRONG AND CANNOT BE STAMPED: it was true
+when written and a commit message is immutable. It is superseded FROM HERE, which is the only
+place it can be.]** What IS measured here is the build, the
 suite and the delta, each named above with the instrument that produced it.
 WHAT THIS WAVE DOES NOT DO: no widget binds `FStratViewModel::InfoPanel`. Sec 2.11.2's panel has
 a complete model side and nothing draws it, so the asset tail is owed on this tree in an editor

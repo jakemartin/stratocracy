@@ -605,15 +605,18 @@
     already finished, where over-claiming at least gets caught by someone looking for the
     feature. Both landed, in the commit this entry is about. The filter is in
     `AStratUnitActor::ApplyUnitView`, which gained a non-defaulted third parameter `int32
-    ViewingSide`; verified present at `Source/StratPlay/StratUnitActor.h:119` and
-    `Source/StratPlay/StratUnitActor.cpp:98`. The predicate is `View.bIsGuidedMarked && View.Side
-    == ViewingSide`, matching the comment at `Source/StratPlay/StratUnitActor.h:190`. The side is
-    read from `FStratViewModel::ViewingSide` (verified present, `Source/StratUI/StratViewModel.h:738`)
-    off the same model, deliberately NOT `UStratMatchSubsystem::GetViewingSide` (verified present,
-    `Source/StratPlay/StratMatchSubsystem.h:749`) — on that field's own recorded reasoning
-    (`Source/StratPlay/StratUnitActor.h:107` and `:216`) that a viewing side held beside the model
-    is a second input, and a stale member would put the mark on the wrong seat with a green
-    build. The clause `Stratocracy.StratPlay.T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex`
+    ViewingSide`; verified present in that function's declaration in
+    `Source/StratPlay/StratUnitActor.h` and its definition in
+    `Source/StratPlay/StratUnitActor.cpp`. The predicate is `View.bIsGuidedMarked && View.Side
+    == ViewingSide`, matching the doc comment on `AStratUnitActor::GuidedMarker` in that same
+    header. The side is read from `FStratViewModel::ViewingSide` (verified present, declared on
+    `FStratViewModel` in `Source/StratUI/StratViewModel.h`) off the same model, deliberately NOT
+    `UStratMatchSubsystem::GetViewingSide` (verified present, declared on `UStratMatchSubsystem`
+    in `Source/StratPlay/StratMatchSubsystem.h`) — on that field's own recorded reasoning (the
+    `AStratUnitActor` header block, and the doc comment on `AStratUnitActor::GuidedMarker`) that
+    a viewing side held beside the model is a second input, and a stale member would put the mark
+    on the wrong seat with a green build. The clause
+    `Stratocracy.StratPlay.T-UI-02.GuidedMarkerFollowsTheMarkedBitAndNotTheHex`
     is updated and green per the coordinator's report; it now pins three populations, each
     asserted non-empty, and adds a third frame that re-applies the same model with only
     `FStratViewModel::ViewingSide` changed to the other seat, requiring the marker to move — the
@@ -628,14 +631,14 @@
     `EditDefaultsOnly` properties" figure two sentences above is wrong, and the coordinator's own
     correction was checked before being copied in, because it had already been wrong once on this
     exact sentence. It is THREE asset references that ship unset, not four properties. Read
-    directly: `AStratBoardActor::ObjectiveMaterial` (`Source/StratPlay/StratBoardActor.h:408`,
-    `TObjectPtr<UMaterialInterface> ObjectiveMaterial;`, no initialiser),
-    `AStratUnitActor::GuidedMarkerMesh` (`Source/StratPlay/StratUnitActor.h:237`,
-    `TObjectPtr<UStaticMesh> GuidedMarkerMesh;`, no initialiser), and
-    `AStratUnitActor::GuidedMarkerMaterial` (`Source/StratPlay/StratUnitActor.h:241`,
+    directly: `AStratBoardActor::ObjectiveMaterial` (declared in
+    `Source/StratPlay/StratBoardActor.h`, `TObjectPtr<UMaterialInterface> ObjectiveMaterial;`, no
+    initialiser), `AStratUnitActor::GuidedMarkerMesh` (declared in
+    `Source/StratPlay/StratUnitActor.h`, `TObjectPtr<UStaticMesh> GuidedMarkerMesh;`, no
+    initialiser), and `AStratUnitActor::GuidedMarkerMaterial` (declared in the same header,
     `TObjectPtr<UMaterialInterface> GuidedMarkerMaterial;`, no initialiser) all ship with no
     default and are therefore null until a Blueprint default sets them. The fourth,
-    `AStratUnitActor::GuidedMarkerZOffset` (`Source/StratPlay/StratUnitActor.h:246`), is `float
+    `AStratUnitActor::GuidedMarkerZOffset` (declared in the same header), is `float
     GuidedMarkerZOffset = 150.0f;` — a numeric with a real default, unrelated to whether anything
     draws. The SUBJECT of the earlier sentence was wrong, not its scope; narrowing "all" would not
     have caught it. **The load-bearing conclusion is unchanged:** nothing draws, because the three
@@ -643,6 +646,18 @@
     `BP_StratBoardActor` / `BP_StratUnitActor` are still owed; nobody has seen a ring or a marker
     on a screen; §2.11.6-B does not close. This correction does not state a suite count or a phase
     verdict — see `state/global.md` for the live figure.]**
+    **[STAMPED 2026-08-28, BY THE COORDINATOR, ON THE PASS THAT REPLACED THIS ENTRY'S LINE
+    CITATIONS WITH SYMBOL CITATIONS — the `150.0f` quoted inside the correction above was this
+    tree's value when that correction was written at `4ee36dd`, and is not this tree's value now.
+    `42576b2` ("The marker sat on top of the unit it named, and the number that lifts it clear is
+    derived rather than guessed") set `AStratUnitActor::GuidedMarkerZOffset` to `300.0f`. The
+    correction's POINT is untouched — that property is still a numeric with a real default, and
+    still not one of the three unset asset references — so its claim stands and only its quoted
+    literal is superseded. Stamped here rather than rewritten in place, because the measurement
+    was correct on the day it was made, and stamped OUTSIDE the block it is about rather than
+    inside it, because a correction nested in a correction leaves a false sentence standing
+    directly above its own retraction. This stamp does not state a suite count or a phase verdict
+    — see `state/global.md` for the live figure.]**
   - **This entry does not state a suite count or a phase verdict** — both stay in
     `state/global.md` only; see that file for the live figure.
 
@@ -658,13 +673,15 @@
      **ordered, deterministic event list** -- `Moved(path)`, `Damaged`, `Destroyed`, `Captured`,
      `Spawned`, `BuildWaiting`, `Repaired`, `IncomePaid`, `MatchEnded(tier)` -- with actors and
      widgets animating "from events and the view-model only". This project's presentation layer is
-     built on the opposite posture, by explicit and repeated rule: `StratMatchSubsystem.h:37-38`
-     states "PRESENTATION IS RECONCILED, NOT EVENTED. `ApplyView` spawns, moves and destroys actors
-     to match `FStratViewModel` on every refresh, and there is no incremental path beside it";
-     `:691` restates it verbatim ("Reconciled, not evented"); `StratScoreboardHUD.h:453-460`
-     refuses queue and one-shot-latch semantics by name ("NOT A CATCH-UP QUEUE. It replays the
-     LATEST value and never a backlog... A one-shot latch was the alternative and was rejected");
-     and `StratGuidanceWidget.h:18-24` independently states the same property for the directive
+     built on the opposite posture, by explicit and repeated rule: `StratMatchSubsystem.h`'s file
+     header block states "PRESENTATION IS RECONCILED, NOT EVENTED. `ApplyView` spawns, moves and
+     destroys actors to match `FStratViewModel` on every refresh, and there is no incremental path
+     beside it"; the doc comment on `UStratMatchSubsystem::ApplyView` restates it verbatim
+     ("Reconciled, not evented"); the doc comment on
+     `AStratScoreboardHUD::DeliverLatestGuidance` refuses queue and one-shot-latch semantics by
+     name ("NOT A CATCH-UP QUEUE. It replays the LATEST value and never a backlog... A one-shot
+     latch was the alternative and was rejected"); and `StratGuidanceWidget.h`'s file header block
+     independently states the same property for the directive
      strip ("the value is PUSHED here on the reconcile path, it is never PULLED... that is the same
      property `UStratMatchSubsystem::ApplyView` is built on -- 'presentation is reconciled, not
      evented'"). **One correction to how this question was raised, made because the tree outranks
@@ -690,8 +707,8 @@
      neighbour (`if (w.board.occupantAt(adj[i]) == OCCUPANT_NONE) return false;`, inside a loop
      over every neighbour) -- so the displaced case reads byte-identically to "nothing was blocked
      at all" through this one boolean, and `bSpawnBlocked` cannot carry the distinction because the
-     rules-side answer it mirrors never makes it. And `FStratFactoryView`
-     (`Source/StratUI/StratViewModel.h:369-401`) is confirmed a complete, field-for-field mirror of
+     rules-side answer it mirrors never makes it. And `FStratFactoryView` (declared in
+     `Source/StratUI/StratViewModel.h`) is confirmed a complete, field-for-field mirror of
      `strat::UiFactoryView` -- `Hex`, `Owner`, `bHasBuiltThisTurn`, `bBuildWaiting`,
      `bSpawnBlocked`, each doc-commented "Mirrors `UiFactoryView::...`" -- with no field of any
      kind for "spawned somewhere other than the factory hex". Nothing on either side of the
@@ -957,14 +974,38 @@
     quoted from that field's own doc comment, not from a line coordinate, because W2 inserts
     roughly 400 lines above this file's existing content and a bare number here would be stale
     the moment that wave merges.
-    `FStratBridge::Forecast` already carries `DefenderTerrainDefensePct` and `DefenderTerrainId`
-    off the same §4.8 `TerrainDef` table (`Source/StratBridge/StratBridge.h:235-236`, populated at
-    `Source/StratBridge/StratBridge.cpp:1046-1047`, and asserted field-by-field against the loaded
-    row in `Source/StratBridge/Tests/StratForecastCardParity.cpp:855-868` under the `T-UI-01`
-    label that test already carries). Move cost has no such symbol yet on this side -- the info
-    panel would be the first consumer -- but the mechanism (a §4.8 table read reached the same way)
-    is proven twice over for the other two readouts, which is why this filing is a request for an
-    ID and not a request for a capability.
+    `FStratBridge::AttackForecast` already carries `DefenderTerrainDefensePct` and
+    `DefenderTerrainId` off the same §4.8 `TerrainDef` table -- both declared on
+    `FStratAttackForecast` in `Source/StratBridge/StratBridge.h`, both populated in that method's
+    body in `Source/StratBridge/StratBridge.cpp`, and both asserted field-by-field against the
+    loaded row by `Stratocracy.StratBridge.T-UI-01.ForecastTerrainBonusIsTheDefenderRows` in
+    `Source/StratBridge/Tests/StratForecastCardParity.cpp`, which is the `T-UI-01` label that test
+    already carries.
+    Move cost has no such symbol yet on this side -- the info panel would be the first consumer
+    -- but the mechanism (a §4.8 table read reached the same way) is proven twice over for the
+    other two readouts, which is why this filing is a request for an ID and not a request for a
+    capability.
+    **[CORRECTED 2026-08-28, BY THE COORDINATOR, ON THE PASS THAT REPLACED THIS ENTRY'S LINE
+    CITATIONS WITH SYMBOL CITATIONS -- the `FStratBridge` sentence in this bullet, the second of
+    its two, named `FStratBridge::Forecast` until now, and that method carries neither field. It
+    read:
+    RETRACTED> "`FStratBridge::Forecast` already carries `DefenderTerrainDefensePct` and
+    RETRACTED>  `DefenderTerrainId` off the same §4.8 `TerrainDef` table"
+    `FStratBridge::Forecast` fills a `strat::UiForecast` out-parameter and mentions neither name
+    anywhere in its body; `FStratBridge::AttackForecast` fills an `FStratAttackForecast`, which is
+    the struct both fields are declared on and the method both assignments sit in. THE SUBJECT WAS
+    WRONG, NOT THE SCOPE -- and this bullet's own header says "both symbols verified present
+    before being cited". On either reading of "both symbols" the FIELD names do check out; the
+    METHOD said to carry them was never asked about at all. This bridge has two forecast entry
+    points whose names differ only by a prefix, and a presence check on the field names cannot
+    tell them apart. IT WAS WRONG WHEN WRITTEN, not made wrong since: the two fields landed
+    2026-08-27 in `dca1478`, already inside `AttackForecast`, and this entry was written the day
+    after in `acaef2c`, so no earlier tree exists in which the retracted sentence was true.
+    **The load-bearing conclusion is unchanged:** the §4.8 table read is still proven twice over
+    on this side, still through a bridge symbol reached the same way, so this filing is still a
+    request for an ID and not a request for a capability -- only the name of the symbol that
+    proves it changes. This correction does not state a suite count or a phase verdict -- see
+    `state/global.md` for the live figure.]**
   - **The same evidence, checked for the §2.4 side rather than assumed to carry over.**
     `FStratUnitView::UnitId` (in `Source/StratUI/StratViewModel.h`, cited by symbol and not by
     line for the same reason as the paragraph above) is the same shape as

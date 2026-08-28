@@ -14,7 +14,15 @@
 _Last run 2026-08-28 (WAVE 2 LANDS ON MASTER: SEC 2.11.2'S INFO PANEL HAS A MODEL SIDE, AND THE
 FIGURE WAS MEASURED ON THIS TREE RATHER THAN CARRIED OVER FROM THE LANE THAT PRODUCED IT.
 Written by the `coordinator`, whose file this is.
-THE PROVENANCE IS THE INTEGRATION TREE: this run was made in `E:/MultiAgent/Stratocracy` on
+THE PROVENANCE IS THE INTEGRATION TREE. **[STAMPED 2026-08-28 -- THE TREE-AND-BRANCH CLAIM IN
+THE NEXT SENTENCE IS A STATEMENT ABOUT A PAST RUN ON THE MACHINE THAT MADE IT, AND IS NOT
+VERIFIABLE FROM ANY OTHER CHECKOUT. It is stamped because CI runs this sweep in
+`/home/runner/work/stratocracy/stratocracy`, where a claim naming a developer's absolute path
+can never equal the running tree -- so the check reads it as the 78ea508 defect. IT IS NOT THAT
+DEFECT: that one cited an integration report while saying the figure came from a LANE tree, and
+the two disagreed. Here they agree, and the report named below was opened on the same tree this
+sentence names. The stamp marks the sentence as history, which it is; it does not withdraw
+it.]** This run was made in `E:/MultiAgent/Stratocracy` on
 branch `master`, AFTER the `--no-ff` merge of `feat/info-panel`. NO REBASE WAS PERFORMED AND NONE
 WAS NEEDED -- the branch's merge-base and `master` both read `a45a7d9`, so it was already on
 master's head, and `git merge` reported `Automatic merge went well` with ZERO conflicts. The

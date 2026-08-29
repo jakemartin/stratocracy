@@ -99,7 +99,7 @@ slots ship unset, so both markers toggle correctly on every refresh and draw not
 `AiPlaybackStepSeconds` ships at `0.0f` with Sec 2.11.2's 0.5 deliberately not written in C++, so
 the tour is compiled, reasoned about and has never been seen. Both need one editor batch on
 `BP_StratUnit` and the GameMode Blueprint default, and `unreal-editor-direct` did not connect
-during this session.)
+during this session. **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`: EVERY CLAIM IN THIS PARAGRAPH ABOUT THE ASSET TAILS IS NOW FALSE OF THIS TREE, AND IS STAMPED WHERE IT SITS RATHER THAN DELETED SO THAT A READER ARRIVING BY A CITATION LANDS ON THE CORRECTION. The editor batch landed the same day: `BP_StratUnit`'s four art slots are SET, `AiPlaybackStepSeconds` is `0.5` on BOTH GameMode Blueprints, and a PIE capture shows all three markers drawing. The claim that `unreal-editor-direct` did not connect REMAINS TRUE of that session and of this one -- it never reconnects inside a session, and `NeoStack_Connect` latched beside it -- so the editor was driven over its own HTTP endpoint from Bash instead, which raises a permission question this file does not settle. `content.md`'s topmost `## NEXT` entry is the authority on the batch and holds every measurement; nothing is restated here. WHAT REMAINS OPEN IS THE DISCHARGE CONDITION AND NOT THE WORK: no human has yet confirmed at the keyboard that three markers 40 uu apart read as three things at the shipped camera pitch.]**)
 
 _Last run 2026-08-29 (TWO RULINGS AND ONE RENAME: THE ACCEPTANCE IDS FOR W4, W5, W6 AND W8; THE
 RULING THAT `T-UI-05` STOPS AT THE SNAPSHOT; AND THE FOUR CLAUSE NAMES THAT RULING MOVED TO
@@ -2729,7 +2729,16 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     a player**: W4's markers toggle correctly and draw nothing, and W5's tour has never been seen
     by anyone. `unreal-editor-direct` failed to connect throughout this session, so the batch needs
     that fixed, or the NeoStack route, or `CLAUDE.md`'s editor-driver clause. OWNED: coordinator,
-    to schedule.
+    to schedule. **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`: THIS ITEM IS
+    DISCHARGED AND THE `OWNED ... to schedule` LINE ABOVE IS NO LONGER AN OPEN OBLIGATION.
+    The batch ran on 2026-08-29 -- and it was an AUTHORING batch, not the assignment batch this
+    bullet anticipated, because all four of W4's art assets had to be created first; they did not
+    exist. `content.md`'s topmost `## NEXT` entry is the authority. The third route this bullet
+    named is the one that was taken, with a wrinkle it did not foresee: `CLAUDE.md`'s
+    editor-driver clause covered the acting, but the route to the editor was Bash over HTTP
+    rather than either MCP client, and whether that satisfies this record's fallback condition
+    is the user's to rule. WHAT IS NOT DISCHARGED is the human confirmation of marker
+    placement at the shipped camera pitch, which no capture can stand in for.]**
   - **A NON-GATING FINDING HANDED FORWARD TO THE ENGINEER.**
     `UStratMatchSubsystem::SkipAiPlayback`'s log line reads the cursor AFTER `SkipToEnd()` has
     already moved it, so it always prints `skipped at step N of N` and can never report where the

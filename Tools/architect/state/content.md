@@ -43,6 +43,131 @@
 
 ## NEXT
 
+- **W4'S FOUR MARKER SLOTS AND W5'S PLAYBACK PACE ARE SET, AND THE FOUR ART ASSETS THE SLOTS
+  NEEDED DID NOT EXIST -- SO THIS WAS AN AUTHORING BATCH, NOT AN ASSIGNMENT BATCH.** 2026-08-29,
+  in the integration tree `E:/MultiAgent/Stratocracy` on branch `master`, with no worktree, no
+  branch and no merge. **ACTING: the `coordinator`, under `CLAUDE.md`'s editor-driver clause.
+  WRITING: the `coordinator`, under this file's own fallback condition.** The two halves have two
+  authorities and are named separately here because citing one for both is a finding by this
+  file's header. `global.md` carries any count or verdict; this file states neither.
+  - **THE ABSENCE WAS MEASURED WITH A CONTROL, WHICH BOTH CLAUSES REQUIRE.** A single
+    `select:mcp__NeoStack_Connect__execute_script,mcp__unreal-editor-direct__execute_script,mcp__NeoStack_Connect__unreal_status`
+    lookup returned **`unreal_status` and neither `execute_script`** -- so the same lookup is shown
+    serving a tool before its silence on the other two is read as evidence. `strat-editor-builder`
+    was not dispatched: with no `execute_script` on the surface it holds no route to the editor.
+  - **THE ROUTE WAS NEITHER MCP CLIENT, AND THIS IS THE PART OF THE ENTRY THAT NEEDS A USER
+    RULING RATHER THAN A GATE.** `unreal-editor-direct` refused connection at session start and
+    an MCP client does not retry, so launching the editor did not revive it. `NeoStack_Connect`
+    LATCHED: after the editor was live, `list_unreal_projects` reported `Active editors:
+    Stratocracy` while `unreal_status` still returned the startup "no active editors" error --
+    the two disagreeing in the same pass is the measurement, and it confirms the recorded proxy
+    latch rather than a discovery failure. The editor was therefore driven over its own
+    Streamable-HTTP MCP endpoint at `127.0.0.1:9315/mcp` with `curl` from Bash, which
+    `initialize` answered as `serverInfo.name = "unreal-editor"`, and whose `tools/list` carries
+    `execute_script`. **SO THE FALLBACK CONDITION WAS MET, ITS RATIONALE INCLUDED -- AND THE GATE CORRECTED AN
+    EARLIER DRAFT OF THIS BULLET, WHICH CLAIMED THE RATIONALE HAD FAILED. IT HAD NOT.** The
+    header grants the fallback because `strat-editor-builder` holds "the NeoStack tools plus
+    Read/Grep/Glob/Skill and no Bash, so without that one tool it has no route to the editor".
+    Checked against `.claude/agents/strat-editor-builder.md`: that agent's `tools:` line carries
+    no Bash, so with `execute_script` gone it had no `curl` route either. The rationale held
+    exactly as written, and the `coordinator` holding Bash does not weaken it -- the clause is
+    about what the LANE AGENT can reach, not about what every actor can.
+    **THE REAL GAP IS NARROWER AND IS WORTH STATING PRECISELY: neither this file's fallback nor
+    `CLAUDE.md`'s editor-driver clause models a tool being ABSENT FROM THE CLIENT SURFACE WHILE
+    THE SERVER STILL SERVES IT.** Both condition on the tool's absence and both read that
+    absence as meaning the editor is unreachable. Here the editor was reachable on
+    `127.0.0.1:9315` throughout, and only the two MCP clients could not get to it. Whether an
+    actor who reaches a live editor by some other transport falls inside these clauses or needs
+    a sentence of its own is the user's to rule; until it is, this entry is the only place the
+    question is visible.
+  - **EVERY `open_asset` PRECEDED PIE, WHICH IS THIS FILE'S OWN RECORDED CRASH.** All asset reads
+    and writes ran with `playtest_status()` reporting no PIE world; the playtest below was started
+    only after the last write and its script calls no `open_asset`. The recorded failure -- that
+    `open_asset` nulls a live PIE `WidgetTree` and fakes an absence past its own control -- was
+    therefore not reachable in this pass.
+  - **WHAT THE BATCH FOUND MISSING, AND IT IS WHY THIS IS NOT THE FIVE-ASSIGNMENT BATCH THE
+    RECORD ANTICIPATED.** `asset_exists` answered **false** for all four of
+    `/Game/StratArt/Meshes/SM_FlagMarker`, `.../SM_UnactedPip`,
+    `/Game/StratArt/Materials/MI_Marker_Flag` and `.../MI_Marker_Pip`, with the instrument
+    controlled in both directions in the same call -- **true** for `SM_GuidedMarker` and
+    `MI_Marker_Guided`, **false** for a `SM_NoSuchThing` that must not exist. `Content/StratArt/`
+    held only the guided-marker set. The art had to be authored before any slot could be filled.
+  - **THE ASSETS, AND WHAT EACH ONE DERIVES FROM RATHER THAN GUESSES.**
+    - `MI_Marker_Flag` and `MI_Marker_Pip` are NEW, both duplicated from `MI_Marker_Guided` so
+      they inherit its parent and its blend overrides rather than being built from a fresh guess.
+      Readback confirms parent `M_Translucent` on both. `Color` is gold `(1.0, 0.72, 0.05, 0.95)`
+      on the flag and green `(0.15, 0.95, 0.30, 0.95)` on the pip, against the guided marker's
+      magenta `(0.8, 0.1, 0.95, 0.95)` -- three hues, no pair adjacent. **The guided marker's own
+      colour was re-read after both writes and is unchanged**, which is the control that keeps a
+      duplicate-then-edit from being read as an edit of the source.
+    - `FlagMarkerMesh` is `/Engine/BasicShapes/Cone` and `UnactedPipMesh` is
+      `/Engine/BasicShapes/Sphere`. **Engine primitives are not a new precedent in this class:**
+      `FallbackMesh` on this same Blueprint already reads `/Engine/BasicShapes/Cylinder`.
+    - **THE 100 uu ASSUMPTION `StratUnitActor.h` STATES WAS CHECKED RATHER THAN INHERITED.** That
+      header derives Z = 300 and the ±40 Y separation on the stated assumption that the markers
+      "match `SM_GuidedMarker`'s 100 uu", and says in terms that no such mesh exists yet.
+      `SM_GuidedMarker`'s `ExtendedBounds` measures `BoxExtent = (50, 50, 50)`, and both engine
+      primitives are the same 100 uu. The assumption holds; it is now measured rather than hoped.
+  - **WHAT THE AUTHORING RETURNS CLAIMED AND THE BYTES DENIED -- TWICE, AND ONCE IT WOULD HAVE
+    ENTERED THIS RECORD AS A SUCCESS.**
+    - `bp:set("MatchConfig.AiPlaybackStepSeconds", 0.5)` is **not supported**: dotted paths do not
+      resolve, and the tool logged `property not found`. **`pcall` nonetheless returned `ok=true`**,
+      so the Lua-level success signal was true for a write that never happened. Only the readback
+      caught it. The value was then set by round-tripping the exported struct literal with one
+      field appended -- nothing retyped by hand -- and the readback positively re-checked
+      `AiTurnDelaySeconds`, `ScenarioFile` and the asset-class fields to prove the round trip cost
+      no sibling field.
+    - `SetMaterialInstanceVectorParameterValue` returned `false` on both material instances while
+      **both colours took**, confirmed by reading `VectorParameterValues` back. The return is not
+      the evidence in either direction, which this record already holds as a measured property of
+      the `set` family.
+    - **A COST OF THE FAILED FIRST ATTEMPT, STATED RATHER THAN LEFT IN THE MTIMES.** That attempt
+      called `compile()` and `save()` on both GameMode Blueprints before the readback showed the
+      write had not landed, so both were resaved once with no semantic change before the second
+      attempt changed them for real.
+  - **EVERY WRITE IS VERIFIED AGAINST THE SAVED BYTES ON DISK, NOT THE EDITOR'S REPORT.**
+    `BP_StratUnit.uasset` carries all four of `FlagMarkerMesh`, `FlagMarkerMaterial`,
+    `UnactedPipMesh` and `UnactedPipMaterial`; both GameMode packages carry
+    `AiPlaybackStepSeconds`, with `AiTurnDelaySeconds` present in the same scan as the control
+    that the reader can see a field of that kind at all.
+  - **THE INSTRUMENT THAT FAILED SILENT, AND THE CONTROL IS THE ONLY REASON IT DID NOT BECOME A
+    FINDING IN THIS FILE.** The first pass at that disk verification used `strings`, which **is
+    not installed on this box**. It returned `0` for all nine probed names -- including the five
+    that were known present. Read without the control, that reads exactly like "every slot is
+    still unset". Re-run with `grep -a`, the five controls returned 1 each and the four W4 names
+    returned 0 before the batch and 1 each after it.
+  - **PIE EVIDENCE: THE MARKERS DRAW, AND THE GAP LOG IS SILENT WITH A CONTROL BESIDE IT.** PIE
+    on `/Game/StratMaps/Lvl_FerrumCrossing` reached `playing=true, has_pie_world=true`, and a
+    `HighResShot 1920x1080` capture shows a gold cone above the flag unit **on both sides**, green
+    pips on the viewing side's still-orderable units, and the guided marker's magenta sphere
+    distinct from both. `StratUnitActor.h` logs the unconfigured-slot gap once per actor, and
+    **zero such lines appear after the PIE start marker** -- with the control that 86 log lines
+    and live `LogStratPlay` entries do exist in that same range, so the silence is the absence of
+    the gap and not the absence of logging.
+    - **ONE PROBE IN THAT PASS WAS UNSOUND AND IS RETRACTED HERE RATHER THAN QUIETLY DROPPED.**
+      An in-Lua `playtest_log_contains` check was read through `r.found or r.passed or r.ok`;
+      `ok` reports that the CALL succeeded, so the expression is true whether or not the text was
+      found. It returned true for all three probes and means nothing. The log claim above rests
+      on the grep over `Saved/Logs/Stratocracy.log` and its control, not on that probe.
+  - **WHAT IS PLACEHOLDER, SAID PLAINLY SO NO LATER READER TAKES IT FOR AUTHORED ART.** A cone is
+    not a flag and a sphere is not a designed pip. The slots are filled, the sizes are derived and
+    the colours are separated, but both meshes are engine primitives and an artist replacing them
+    changes no code, no default's meaning and nothing in this entry except the two mesh paths.
+  - **TWO LANE CALLS HANDED FORWARD, NEITHER OF THEM THIS LANE'S TO SETTLE.**
+    - **`AiPlaybackStepSeconds = 0.5` WAS SET ON BOTH GAME MODES, WHERE THE RECORD SAID "the
+      GameMode Blueprint default" IN THE SINGULAR.** `BP_StratGameMode` is where a human watches
+      the AI's turn and `BP_StratGameMode_AiVsAi` is where a tour is the entire point, so both
+      were set. If the singular was deliberate, `BP_StratGameMode_AiVsAi` is the one to return to
+      `0.0`.
+    - **THE PLACEMENT STILL HAS NO GATE BUT A HUMAN EYE, AND THE CAPTURE ALREADY RAISES ONE
+      DOUBT.** `StratUnitActor.h` says no test pins either offset vector. In the capture the
+      markers read large against the units and the pips visually crowd adjacent units in the
+      dense bottom cluster. `FlagMarkerOffset` and `UnactedPipOffset` are `EditDefaultsOnly`
+      precisely so the Y separation can be retuned without a rebuild. **The discharge condition
+      `engine.md` states -- a human confirming at the keyboard that three markers 40 uu apart
+      read as three things at the shipped camera pitch -- is NOT met by this entry and is not
+      claimed to be.**
+
 - **GDD SEC 2.11.2'S HOVER INFO PANEL IS BUILT, COMPILES CLEAN AND IS WIRED TO THE HUD -- AND
   NOTHING HAS SEEN IT DRAW A REAL HEX, BECAUSE ONLY A HUMAN'S MOUSE CAN MAKE ONE.** 2026-08-28,
   written by `strat-editor-builder` over `mcp__unreal-editor-direct__execute_script`, which was on

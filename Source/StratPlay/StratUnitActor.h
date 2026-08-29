@@ -48,13 +48,36 @@
 //   says what IS, not what HAPPENED, and driving a slide off a position difference would be
 //   inferring an event from a state, which is exactly the conflation that header warns
 //   about.
-// - The DONE / locked visual. The bits exist on `FStratUnitView` and nothing produces them
-//   until phase 4's selection machine does. This class reads them and applies no treatment;
-//   phase 5 decides what "done" looks like. NOTE THE CONTRAST WITH THE §2.11.6-B MARKER
-//   ADDED 2026-08-23, which this class DOES apply a treatment for: `bIsGuidedMarked` names
-//   one unit for the whole match and its directive is unreadable without it, where `bDone`
-//   and `bLockedThisTurn` change several times a turn and §2.11 has not said what they look
-//   like. See `GuidedMarker`.
+// - [HALF-DISCHARGED 2026-08-29 BY W4. THE CORRECTION IS WRITTEN FLAT, AND THE HALF THAT
+//   STILL STANDS IS NAMED SEPARATELY, because a bullet that is true of one bit and false of
+//   the other reads as wholly true to whoever greps for either.] It said:
+//   RETRACTED> "The DONE / locked visual. The bits exist on `FStratUnitView` and nothing
+//   RETRACTED>  produces them until phase 4's selection machine does. This class reads them
+//   RETRACTED>  and applies no treatment; phase 5 decides what 'done' looks like. NOTE THE
+//   RETRACTED>  CONTRAST WITH THE §2.11.6-B MARKER ADDED 2026-08-23, which this class DOES
+//   RETRACTED>  apply a treatment for: `bIsGuidedMarked` names one unit for the whole match
+//   RETRACTED>  and its directive is unreadable without it, where `bDone` and
+//   RETRACTED>  `bLockedThisTurn` change several times a turn and §2.11 has not said what
+//   RETRACTED>  they look like."
+//   `bDone` NOW HAS A TREATMENT -- §2.11.2's unacted pip, `UnactedPip` below -- so the
+//   sentence is false of it, and so is the reason it gave. §2.11 DID say what done looks
+//   like: the earn-your-pixels row reads `Unacted pip on own units | Which units I can
+//   still give an order to | §2.1 per-unit loop, via the DONE bit of §2.11.1's machine,
+//   carried in the view-model's presentation block`, which names the bit AND the seam. The
+//   retracted clause was written when the selection machine did not exist, and was never
+//   re-read against §2.11.2 once it did.
+//   `bLockedThisTurn` STILL HAS NO TREATMENT AND THAT HALF STANDS UNCHANGED. §2.11.2's
+//   table has no row for a lock, and drawing one by analogy with the pip's row would be
+//   this file inventing a content rule the GDD did not state -- the thing the whole "the
+//   engine asks, it never decides" posture exists to stop. It stays a cached field with no
+//   reader in this class.
+// - The §2.11.2 MARKERS' ART. `FlagMarker` and `UnactedPip` ship with no mesh and no
+//   material, exactly as `GuidedMarkerMesh` shipped before 2026-08-24: `EditDefaultsOnly`,
+//   no initializer, and no `/Game/` path in this file. Until the content lane assigns them
+//   the components exist, are positioned, and are toggled correctly on every refresh, and
+//   they draw nothing. That is a content gap and not a match failure, and `BeginPlay` says
+//   so once per actor for each -- because an unconfigured marker and a unit that simply is
+//   not marked are indistinguishable on screen and have entirely different fixes.
 // - Health bars, damage numbers, hit flashes. All presentation over an event stream that
 //   does not exist yet, and none of it is named by an acceptance ID in this milestone.
 // - Any `/Game/` path. Every mesh and material is an EditDefaultsOnly property.
@@ -182,6 +205,36 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Unit")
 	bool IsGuidedMarkerVisible() const;
+
+	/**
+	 * Whether §2.11.2's flag `H` marker is showing on this unit.
+	 *
+	 * OFF THE COMPONENT AND NOT OFF `LastAppliedView.bIsFlag`, for `IsGuidedMarkerVisible`'s
+	 * reason exactly and not a weaker one: answering from the cached view would report what
+	 * this actor was TOLD and would pass whether or not anything reached the component --
+	 * the lazily-armed-subject shape that makes a clause unable to fail.
+	 *
+	 * AND IT INHERITS THAT FUNCTION'S CORRECTED LIMIT RATHER THAN RE-LEARNING IT AT COST.
+	 * `USceneComponent::IsVisible` consults `bHiddenInGame`, the visible flag and the cached
+	 * level collection and NOT the static mesh, which is the measured correction that
+	 * function's block carries. So this answers TRUE for the flag unit of a Blueprint with no
+	 * `FlagMarkerMesh` assigned, which draws nothing. **IT REPORTS A FLAG, NOT PIXELS.**
+	 * There is no headless gate on "a player can see the H", none is available from this
+	 * class, and anything claiming one off this function is over-reading it.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Unit")
+	bool IsFlagMarkerVisible() const;
+
+	/**
+	 * Whether §2.11.2's unacted pip is showing on this unit.
+	 *
+	 * SAME SEAM AND SAME LIMIT AS `IsFlagMarkerVisible` -- off the component, never off
+	 * `LastAppliedView.bDone`, and a flag rather than pixels. The two are stated separately
+	 * rather than by cross-reference alone because they answer about different components and
+	 * a reader arriving at one must not have to find the other to learn what it cannot do.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Unit")
+	bool IsUnactedPipVisible() const;
 
 protected:
 	/**
@@ -321,6 +374,167 @@ protected:
 	float GuidedMarkerZOffset = 300.0f;
 
 	/**
+	 * §2.11.2's flag `H` marker: "what to protect, what to hunt".
+	 *
+	 * WHAT GAP THIS CLOSES. `FStratUnitView::bIsFlag` has been published since phase 2 and,
+	 * outside the rules module, was written by `StratBuildViewModel` and mirrored into the
+	 * info panel and read by nothing that draws. §2.11.2 lists the on-map `H` among the four
+	 * surfaces that carry "the four standing decisions of every turn", and the one it answers
+	 * -- *what must I protect* -- was answerable only by opening the info panel on each unit
+	 * in turn. This actor was handed the bit on every refresh and threw it away.
+	 *
+	 * ITS VISIBILITY IS A PASS-THROUGH OF ONE PUBLISHED FIELD AND IT IS NOT ANDed WITH
+	 * ANYTHING. `ApplyUnitView` sets it from `View.bIsFlag` and from nothing else. **THE
+	 * ABSENCE OF A SIDE TEST IS THE SPECIFICATION AND NOT AN OVERSIGHT**, and it is stated
+	 * here because `GuidedMarker` twenty lines up HAS one and a reader will otherwise carry
+	 * it across. §2.11.2's earn-your-pixels row is `Flag \`H\` marker (both sides, always
+	 * visible) | What to protect, what to hunt | §2.4 flag death ends the match; *Conflict*'s
+	 * \`H\` convention`. "Both sides" rules out `View.Side == ViewingSide`; "always visible"
+	 * rules out any window bit. The guided marker's side filter was a USER RULING about a
+	 * marker that says "select this", and a marker that says "this is the flag" is a
+	 * different claim about a unit the player is meant to hunt.
+	 *
+	 * ITS OPERAND SET IS MATCH-CONSTANT, WHICH IS THE EXACT SHAPE OF THE 2026-08-24 DEFECT,
+	 * AND HERE IT IS CORRECT. `GuidedMarker`'s block records the durable finding -- "**THE
+	 * BOTH-DIRECTIONS DISCIPLINE HAD BEEN APPLIED TO THE WRITE AND NOT TO THE OPERAND SET**"
+	 * -- and `bIsFlag` never moves either. The difference is that a permanent marker is what
+	 * §2.11.2 ASKS FOR here ("always visible"), where §2.11.6 said in terms that the turn-1a
+	 * marker clears. SO THE QUESTION THAT FINDING REALLY POSES -- *by what route does this
+	 * ever stop drawing?* -- IS ANSWERED RATHER THAN DUCKED: **the flag unit's death destroys
+	 * the actor.** `FStratViewModel::Units` is every LIVING unit, and
+	 * `UStratMatchSubsystem::ApplyView` destroys the actor for any id the model no longer
+	 * carries. The hide path is actor destruction, not a visibility write, and it is
+	 * therefore not this component's to arrange. §2.4 ends the match in the same breath.
+	 *
+	 * IT ADDS NO STATE THE MODEL DOES NOT HOLD, per the header block's sharpest constraint.
+	 * Component visibility is a rendering of a field of the applied model, overwritten
+	 * totally on every `ApplyUnitView`, remembered nowhere.
+	 *
+	 * NO COLLISION, for `Body`'s reason: the cursor must reach the tile underneath, and the
+	 * flag's hex is one a player has particular reason to click.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
+	TObjectPtr<UStaticMeshComponent> FlagMarker;
+
+	/** The flag marker's mesh -- §2.11.2's `H`. UNSET IS THE STATE THIS SHIPS IN and the
+	 *  content lane fills it, exactly as `GuidedMarkerMesh` was unset until 2026-08-24; this
+	 *  file must not name a `/Game/` path, which is why it is `EditDefaultsOnly` with no
+	 *  initializer. Unset means the marker never draws, and `IsFlagMarkerVisible` STILL
+	 *  ANSWERS TRUE for the flag unit -- see that function. `BeginPlay` logs the gap once per
+	 *  actor because the LOG is the only place "unconfigured" is distinguishable from "not
+	 *  the flag". */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	TObjectPtr<UStaticMesh> FlagMarkerMesh;
+
+	/** Optional material override for the flag marker. Unset leaves the mesh's own. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	TObjectPtr<UMaterialInterface> FlagMarkerMaterial;
+
+	/**
+	 * §2.11.2's unacted pip: "which units I can still give an order to".
+	 *
+	 * WHAT GAP THIS CLOSES. `FStratSelectionMachine::DecorateViewModel` has written
+	 * `U.bDone` onto the model since phase 4 and the only readers were the controller, the
+	 * idle count and the info panel's text. Nothing on the BOARD said which units were still
+	 * live, so the answer required tabbing through them.
+	 *
+	 * ITS VISIBILITY IS A PASS-THROUGH OF TWO PUBLISHED FIELDS. `ApplyUnitView` sets it from
+	 * `!View.bDone && View.Side == ViewingSide` and from nothing else -- both off ONE model,
+	 * nothing computed, nothing looked up, no hex compared.
+	 *
+	 * `bDone` AND NOT `bHasMoved && bHasActed`, AND THE GDD PICKED IT, NOT THIS FILE.
+	 * §2.11.1: "Every surface in §2.11 that says a unit *has not acted* binds to the
+	 * machine's bit: ... the idle count and the unacted pip (§2.11.2)". §2.11.2's own row
+	 * binds it "via the DONE bit of §2.11.1's machine, carried in the view-model's
+	 * presentation block". The turn flags are the alternative and are WRONG here for the
+	 * reason `StratSelectionMachine.h` gives: a WAIT reaches DONE without spending either
+	 * flag, so a flag-derived pip would stay lit on a unit the player has retired -- and the
+	 * §2.11.1 quote says exactly that ("a waited unit would keep its pip").
+	 *
+	 * `bLockedThisTurn` IS DELIBERATELY NOT AN OPERAND, and it is named so the omission does
+	 * not read as an oversight. A §2.11.6-B locked unit cannot be ordered either, so the
+	 * conjunction is tempting -- but §2.11.2's row names the DONE bit and only the DONE bit,
+	 * §2.11.1's enumeration of pip-bearing surfaces likewise, and adding a second operand
+	 * would be this class deciding a content rule. If the GDD later says a locked unit shows
+	 * no pip, that is one `&& !View.bLockedThisTurn` and a `GATE-MAPMARKERS` clause.
+	 *
+	 * THE SIDE TEST IS THE ROW'S OWN WORDS -- "Unacted pip on **own units**" -- and
+	 * `ViewingSide` is `FStratViewModel::ViewingSide` off the same model `View` came from,
+	 * never `UStratMatchSubsystem::GetViewingSide`, for the reason that field's block states:
+	 * a viewing side held beside the model is a second input and T-INT-05 would then be about
+	 * two things.
+	 *
+	 * ITS OPERAND SET HAS A REAL FALSE-GOER, which is the check `GuidedMarker`'s 2026-08-24
+	 * correction demands of every new marker on this actor and which `FlagMarker` above
+	 * answers differently. `bDone` moves several times a turn and resets at the turn
+	 * boundary, so this conjunction goes false and true again inside one match under normal
+	 * play; the write is unconditional in both directions AND the operands can take both
+	 * values, which is the pair of properties that finding says must be checked together.
+	 *
+	 * IT ADDS NO STATE THE MODEL DOES NOT HOLD. `bDone` stays a field OF THE VIEW MODEL --
+	 * `StratPlayerController.h` records that "a copy of `bDone` on an actor is precisely what
+	 * `T-INT-05.NoActorHoldsPresentationBits` forbids", and nothing here copies it: the
+	 * component's visibility is recomputed from the incoming view on every call and read back
+	 * by nobody who decides anything.
+	 *
+	 * NO COLLISION, for `Body`'s reason.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
+	TObjectPtr<UStaticMeshComponent> UnactedPip;
+
+	/** The pip's mesh. Unset is the shipping state and the content lane fills it; see
+	 *  `FlagMarkerMesh`, which states the same terms and the same accessor caveat. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	TObjectPtr<UStaticMesh> UnactedPipMesh;
+
+	/** Optional material override for the pip. Unset leaves the mesh's own. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	TObjectPtr<UMaterialInterface> UnactedPipMaterial;
+
+	/**
+	 * Where the flag marker sits relative to the body, and where the pip does.
+	 *
+	 * A FULL `FVector` AND NOT A SCALAR Z, WHICH DEPARTS FROM `GuidedMarkerZOffset` ABOVE
+	 * DELIBERATELY. That property's own block had to be rewritten once when 150 turned out to
+	 * occlude the unit, and it records the residual cost of a Z-only placement: a marker at
+	 * positive Z "draws over the LOWER BODY OF THE UNIT ON THE HEX BEHIND". With THREE
+	 * markers available on one actor, a Z-only axis makes them collinear up-screen and each
+	 * new one stacks further into the row behind. A vector lets them be separated on the one
+	 * axis that costs nothing, and lets the content lane re-place them without a code change.
+	 *
+	 * Y IS THAT AXIS, AND IT IS DERIVED FROM THE NUMBERS `GuidedMarkerZOffset` ALREADY
+	 * ESTABLISHED RATHER THAN EYEBALLED. `AStratCameraPawn` looks down `ArmPitch` = -60 with
+	 * no yaw on any path, so in body space screen-up is `0.866*x + 0.5*z` and depth is
+	 * `0.5*x - 0.866*z`. **NEITHER EXPRESSION CONTAINS y.** A Y offset therefore moves a
+	 * marker horizontally across the screen without changing its height or its depth sort --
+	 * the only axis of the three for which that is true.
+	 *
+	 * THE MAGNITUDES. Z is 300 on both, which is `GuidedMarkerZOffset`'s derived clearance
+	 * (a 100 uu centred mesh's base rim clears the body's silhouette at Z = 273.2; 300 clears
+	 * by 13.4) and it carries over because the same camera and the same body are underneath.
+	 * Y is -40 and +40, with the guided marker at 0, giving three markers 40 uu apart in a
+	 * row. 40 is bounded by the tile: `AStratBoardActor::LocalLocationOfHex` documents
+	 * `HexSize` as the CENTRE-TO-CENTRE distance between adjacent hexes and it defaults to
+	 * 100, so a marker 40 uu off centre is still 10 uu inside the halfway point to the
+	 * neighbouring unit.
+	 *
+	 * **THE Z IS DERIVED AND THE Y SEPARATION IS DERIVED; THE MARKERS' OWN SIZES ARE NOT
+	 * KNOWN TO THIS FILE AND THE ARITHMETIC ASSUMES THEY MATCH `SM_GuidedMarker`'S 100 uu.**
+	 * No such mesh exists yet. That is why these are defaults and not constants, and it is
+	 * why the honest gate on the final placement is a human eye, exactly as it was for the
+	 * guided marker -- NO TEST PINS EITHER VECTOR. The Y derivation also assumes the board
+	 * actor is unrotated in yaw, which is true of every path that spawns one today and is not
+	 * enforced anywhere.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	FVector FlagMarkerOffset = FVector(0.0, -40.0, 300.0);
+
+	/** See `FlagMarkerOffset`, which derives both vectors and states what neither is pinned
+	 *  by. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	FVector UnactedPipOffset = FVector(0.0, 40.0, 300.0);
+
+	/**
 	 * Mesh per §2.4 definition `id` ("Infantry", "Tank", ...).
 	 *
 	 * KEYED BY NAME. See the header block: DT_Units' row order is pinned by
@@ -351,12 +565,44 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
 	float BodyZOffset = 0.0f;
 
-	/** Applies the marker's Blueprint-default mesh, material and offset. Overridden for the
-	 *  reason `AStratBoardActor::BeginPlay` gives: a constructor reading a Blueprint default
-	 *  runs on the CDO and sets it on the wrong object. */
+	/** Applies ALL THREE markers' Blueprint-default meshes, materials and offsets -- the
+	 *  §2.11.6-B guided marker, §2.11.2's flag `H` and §2.11.2's unacted pip. Overridden for
+	 *  the reason `AStratBoardActor::BeginPlay` gives: a constructor reading a Blueprint
+	 *  default runs on the CDO and sets it on the wrong object. THE THREE ARE APPLIED BY ONE
+	 *  HELPER AND NOT BY THREE COPIES OF THE SAME NINE LINES -- see `ConfigureMarker`. */
 	virtual void BeginPlay() override;
 
 private:
+	/**
+	 * Places one marker component and applies its Blueprint-default mesh and material,
+	 * logging once if the mesh is unset.
+	 *
+	 * ONE HELPER RATHER THAN THREE COPIES, AND THE REASON IS THE LOG AND NOT BREVITY. The
+	 * missing-mesh log is the ONLY place "this marker is unconfigured" is distinguishable
+	 * from "this unit is not marked" -- `IsGuidedMarkerVisible`'s block records that
+	 * measurement and `IsFlagMarkerVisible` inherits it. Three hand-copied blocks are three
+	 * chances for the fourth marker's author to place a component and omit its log, and the
+	 * absence of a log is silent by construction.
+	 *
+	 * THE OFFSET IS A VECTOR FOR ALL THREE even though `GuidedMarkerZOffset` is a scalar; the
+	 * call site widens it, so the guided marker's shipped placement is bit-identical to what
+	 * it was before this helper existed and `FlagMarkerOffset`'s block does not have to
+	 * describe two placement paths.
+	 *
+	 * @param Marker      the component. Null is tolerated and returns, because a Blueprint
+	 *                    can fail to construct one and a match should not.
+	 * @param Mesh        the `EditDefaultsOnly` mesh. Null logs and leaves the component
+	 *                    meshless, which draws nothing.
+	 * @param Material    optional override; null leaves the mesh's own.
+	 * @param Offset      relative to `Body`. See `FlagMarkerOffset` on how the defaults were
+	 *                    derived and on what is not pinned.
+	 * @param MarkerName  names the marker in the log. A literal at each call site rather than
+	 *                    `Marker->GetName()`, so the message says which GDD surface is
+	 *                    unconfigured rather than which subobject.
+	 */
+	void ConfigureMarker(UStaticMeshComponent* Marker, UStaticMesh* Mesh, UMaterialInterface* Material,
+	                     const FVector& Offset, const TCHAR* MarkerName);
+
 	/** See `GetUnitId`. Written only by `ApplyUnitView`. */
 	UPROPERTY(Transient)
 	int32 UnitId = INDEX_NONE;

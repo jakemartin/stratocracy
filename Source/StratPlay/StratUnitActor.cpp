@@ -56,43 +56,106 @@ AStratUnitActor::AStratUnitActor()
 	GuidedMarker->SetGenerateOverlapEvents(false);
 	GuidedMarker->SetCastShadow(false);
 
+	// §2.11.2's TWO on-map markers, added 2026-08-29. Constructed exactly like `GuidedMarker`
+	// above -- attached to `Body` so they follow the unit through `SetActorLocation` with no
+	// second placement path, and HIDDEN BY DEFAULT for that component's stated reason: a unit
+	// that is never observed is a unit with no marker, where defaulting to visible would put
+	// an `H` on all ten units for the whole of any path that spawns an actor without applying
+	// a view.
+	//
+	// THE THREE COLLISION SETTINGS ARE REPEATED PER COMPONENT AND NOT INHERITED FROM
+	// `SetActorEnableCollision(false)` BELOW, which is the discipline the constructor comment
+	// twenty lines up asked for by name: "clearing the actor-level flags stops a later
+	// component added to this actor from quietly reintroducing a blocker". These are two more
+	// such components and they get the settings explicitly.
+	FlagMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlagMarker"));
+	FlagMarker->SetupAttachment(Body);
+	FlagMarker->SetVisibility(false);
+	FlagMarker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	FlagMarker->SetCollisionProfileName(TEXT("NoCollision"));
+	FlagMarker->SetCanEverAffectNavigation(false);
+	FlagMarker->SetGenerateOverlapEvents(false);
+	FlagMarker->SetCastShadow(false);
+
+	UnactedPip = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("UnactedPip"));
+	UnactedPip->SetupAttachment(Body);
+	UnactedPip->SetVisibility(false);
+	UnactedPip->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	UnactedPip->SetCollisionProfileName(TEXT("NoCollision"));
+	UnactedPip->SetCanEverAffectNavigation(false);
+	UnactedPip->SetGenerateOverlapEvents(false);
+	UnactedPip->SetCastShadow(false);
+
 	SetActorEnableCollision(false);
+}
+
+void AStratUnitActor::ConfigureMarker(UStaticMeshComponent* const Marker, UStaticMesh* const Mesh,
+                                      UMaterialInterface* const Material, const FVector& Offset,
+                                      const TCHAR* const MarkerName)
+{
+	// NULL IS TOLERATED AND RETURNS. A Blueprint can fail to construct a component; a match
+	// should not end because one did. This mirrors the guard `BeginPlay` carried inline
+	// before this helper existed.
+	if (Marker == nullptr)
+	{
+		return;
+	}
+
+	Marker->SetRelativeLocation(Offset);
+
+	if (Mesh != nullptr)
+	{
+		Marker->SetStaticMesh(Mesh);
+		if (Material != nullptr)
+		{
+			Marker->SetMaterial(0, Material);
+		}
+		return;
+	}
+
+	// ONCE PER ACTOR AT SPAWN, not once per `ApplyUnitView`, which runs on every refresh for
+	// every unit. Logged at all because an unconfigured marker and a unit that simply is not
+	// marked are indistinguishable on screen -- `IsGuidedMarkerVisible` measured that: the
+	// accessor answers TRUE for a marked unit whose marker has no mesh, because
+	// `USceneComponent::IsVisible` never consults the static mesh. THIS LOG IS THEREFORE THE
+	// ONLY DISCRIMINATOR THE PROJECT HAS, and it is why the three markers share one helper
+	// rather than three hand-copied blocks: an omitted log is silent by construction.
+	//
+	// AT Log AND NOT Warning, for the reason the missing-body-mesh line gives: an unassigned
+	// mesh is a content-lane configuration gap, not a failure of the match.
+	UE_LOG(LogStratPlay, Log,
+		TEXT("Unit actor '%s' has no mesh set for its %s marker; it will not draw."),
+		*GetName(), MarkerName);
 }
 
 void AStratUnitActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// The marker's mesh and material are applied here rather than in the constructor because
-	// the properties they read are Blueprint defaults, and a constructor running on the CDO
-	// sets them on the wrong object -- the reason `AStratBoardActor::BeginPlay` gives for the
-	// overlays. Unset is a content-lane gap and not a match failure.
-	if (GuidedMarker == nullptr)
-	{
-		return;
-	}
+	// The markers' meshes and materials are applied here rather than in the constructor
+	// because the properties they read are Blueprint defaults, and a constructor running on
+	// the CDO sets them on the wrong object -- the reason `AStratBoardActor::BeginPlay` gives
+	// for the overlays. Unset is a content-lane gap and not a match failure.
+	//
+	// [RESHAPED 2026-08-29. The guided marker's nine lines used to sit inline here, opening
+	// with an EARLY `return` on `GuidedMarker == nullptr`. That return was correct while there
+	// was one marker and became a HAZARD the moment there were three: a null guided marker
+	// would have skipped the flag marker's and the pip's placement entirely, silently, with a
+	// green build. The guard is now per-marker inside `ConfigureMarker` and there is no early
+	// exit from this function.]
+	//
+	// THE GUIDED MARKER'S PLACEMENT IS UNCHANGED. `GuidedMarkerZOffset` is still the scalar
+	// it was and is widened at this call site, so the shipped offset is bit-identical to what
+	// `BP_StratUnit` produced before -- see `FlagMarkerOffset` on why the two NEW markers take
+	// a vector instead.
+	ConfigureMarker(GuidedMarker, GuidedMarkerMesh, GuidedMarkerMaterial,
+		FVector(0.0, 0.0, static_cast<double>(GuidedMarkerZOffset)), TEXT("guided-opening turn-1a"));
 
-	GuidedMarker->SetRelativeLocation(FVector(0.0, 0.0, static_cast<double>(GuidedMarkerZOffset)));
+	ConfigureMarker(FlagMarker, FlagMarkerMesh, FlagMarkerMaterial, FlagMarkerOffset,
+		TEXT("flag H"));
 
-	if (GuidedMarkerMesh != nullptr)
-	{
-		GuidedMarker->SetStaticMesh(GuidedMarkerMesh);
-		if (GuidedMarkerMaterial != nullptr)
-		{
-			GuidedMarker->SetMaterial(0, GuidedMarkerMaterial);
-		}
-	}
-	else
-	{
-		// ONCE PER ACTOR AT SPAWN, not once per `ApplyUnitView`, which runs on every refresh
-		// for every unit. Logged at all because an unconfigured marker and an unmarked unit
-		// are indistinguishable on screen and have entirely different fixes -- the same
-		// argument the missing-mesh line above it makes.
-		UE_LOG(LogStratPlay, Log,
-			TEXT("Unit actor '%s' has no GuidedMarkerMesh set; the guided opening's turn-1a marker will "
-			     "not draw."),
-			*GetName());
-	}
+	ConfigureMarker(UnactedPip, UnactedPipMesh, UnactedPipMaterial, UnactedPipOffset,
+		TEXT("unacted pip"));
 }
 
 void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation, int32 ViewingSide,
@@ -195,10 +258,80 @@ void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& W
 	{
 		GuidedMarker->SetVisibility(bGuidanceActive && View.bIsGuidedMarked && View.Side == ViewingSide);
 	}
+
+	// §2.11.2's flag `H`. ONE PUBLISHED FIELD, NOT ANDed WITH ANYTHING, and the absence of a
+	// side test is the specification: the earn-your-pixels row is `Flag `H` marker (both
+	// sides, always visible)`. "Both sides" rules out `View.Side == ViewingSide`; "always
+	// visible" rules out any window bit. The line directly above HAS a side test, so the
+	// contrast is stated here rather than left for a reader to infer -- that filter was a user
+	// ruling about a marker that says "select this", and this one says "this is the flag",
+	// about a unit the other seat is meant to HUNT.
+	//
+	// ITS OPERANDS ARE MATCH-CONSTANT AND THAT IS CORRECT HERE, WHICH IS THE ONE CLAIM ON
+	// THIS LINE THAT HAD TO BE ARGUED. The 2026-08-24 defect above was a conjunction that
+	// could not go false; `bIsFlag` cannot either. The difference is that §2.11.2 ASKS for a
+	// permanent marker here where §2.11.6 said the turn-1a marker clears. The question that
+	// finding really poses -- by what route does this ever stop drawing? -- is answered and
+	// not ducked: THE FLAG UNIT'S DEATH DESTROYS THE ACTOR. `FStratViewModel::Units` is every
+	// LIVING unit and `UStratMatchSubsystem::ApplyView` destroys the actor for any id the
+	// model no longer carries, so the hide path is actor destruction rather than a visibility
+	// write, and §2.4 ends the match in the same breath.
+	//
+	// SET UNCONDITIONALLY IN BOTH DIRECTIONS ANYWAY, like every other line in this function.
+	// The write costs nothing and a writer that only ever SHOWS is a writer whose hide can be
+	// missed on a path nobody has thought of yet.
+	if (FlagMarker != nullptr)
+	{
+		FlagMarker->SetVisibility(View.bIsFlag);
+	}
+
+	// §2.11.2's unacted pip. TWO PUBLISHED FIELDS -- `!View.bDone` and `View.Side ==
+	// ViewingSide` -- both off the ONE model this function was handed. Nothing computed,
+	// nothing looked up, no hex compared.
+	//
+	// `bDone` AND NOT `bHasMoved && bHasActed`, AND THE GDD PICKED IT. §2.11.1: "Every surface
+	// in §2.11 that says a unit *has not acted* binds to the machine's bit: ... the idle count
+	// and the unacted pip (§2.11.2)", and it names the failure of the alternative in the same
+	// breath -- "a waited unit would keep its pip". A WAIT reaches DONE without spending
+	// either turn flag (`StratSelectionMachine.h`), so a flag-derived pip would stay lit on a
+	// unit the player has already retired, which is the exact opposite of what the row
+	// promises: *which units I can still give an order to*.
+	//
+	// `bLockedThisTurn` IS NOT AN OPERAND, and the omission is deliberate rather than missed.
+	// See the declaration of `UnactedPip`: §2.11.2's row and §2.11.1's enumeration both name
+	// the DONE bit and only the DONE bit, and adding a second would be this class deciding a
+	// content rule the GDD did not state.
+	//
+	// THE SIDE TEST IS THE ROW'S OWN WORDS -- "Unacted pip on OWN UNITS" -- and `ViewingSide`
+	// is `FStratViewModel::ViewingSide` off the same model `View` came from, for the reason
+	// the marker above it gives.
+	//
+	// THIS OPERAND SET HAS A REAL FALSE-GOER, which is the check the 2026-08-24 correction
+	// demands of every new marker here: `bDone` moves several times a turn and resets at the
+	// turn boundary, so this conjunction goes false and true again inside one match under
+	// ordinary play. Both directions is a property of the operands and not only of the writer.
+	if (UnactedPip != nullptr)
+	{
+		UnactedPip->SetVisibility(!View.bDone && View.Side == ViewingSide);
+	}
 }
 
 bool AStratUnitActor::IsGuidedMarkerVisible() const
 {
 	// Off the component and never off `LastAppliedView` -- see the declaration.
 	return GuidedMarker != nullptr && GuidedMarker->IsVisible();
+}
+
+bool AStratUnitActor::IsFlagMarkerVisible() const
+{
+	// Off the component and never off `LastAppliedView.bIsFlag` -- see the declaration, which
+	// also states the measured limit this inherits: `IsVisible` never consults the static
+	// mesh, so this reports a flag and not pixels.
+	return FlagMarker != nullptr && FlagMarker->IsVisible();
+}
+
+bool AStratUnitActor::IsUnactedPipVisible() const
+{
+	// Off the component and never off `LastAppliedView.bDone` -- see the declaration.
+	return UnactedPip != nullptr && UnactedPip->IsVisible();
 }

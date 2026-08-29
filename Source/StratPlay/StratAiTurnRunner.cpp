@@ -9,6 +9,7 @@
 
 #include "StratAiTurnRunner.h"
 
+#include "StratAiPlayback.h"
 #include "StratBridge.h"
 #include "StratPlay.h"
 
@@ -247,7 +248,8 @@ bool FStratBridgeAiTurnPort::Submit(const FStratAiCommand& Command, FString& Out
 // no double counting, and `FStratBridge::RecordedCommandCount()` is the sum.
 // ---------------------------------------------------------------------------
 
-FStratAiTurnOutcome FStratAiTurnRunner::RunTurn(IStratAiTurnPort& Port)
+FStratAiTurnOutcome FStratAiTurnRunner::RunTurn(IStratAiTurnPort& Port,
+                                                FStratAiPlaybackReel* OutReel)
 {
 	FStratAiTurnOutcome Outcome;
 
@@ -314,6 +316,30 @@ FStratAiTurnOutcome FStratAiTurnRunner::RunTurn(IStratAiTurnPort& Port)
 		}
 
 		++Outcome.CommandsApplied;
+
+		// ---- The recording -----------------------------------------------
+		// AFTER THE ACCEPTANCE AND NEVER BEFORE IT, which is the property that makes this a
+		// record rather than a plan. `Port.Submit` has returned true, so the rules module has
+		// applied exactly this command; a step appended before the call would be a prediction,
+		// and a reel of predictions is the mid-turn mirror `StratAiPlayback.h` refuses.
+		//
+		// WRITE-ONLY, AND THIS LOOP NEVER READS IT BACK. That is what keeps the header block's
+		// "NOT IN THIS ROUND -- PACING" ruling intact: nothing about what the AI does next
+		// depends on the reel, so this runner is not one command more resumable than it was.
+		// Take the pointer away and the turn plays identically, which is the test of it.
+		//
+		// OPTIONAL, AND THE NULL IS THE ORDINARY CASE FOR A TEST. Every existing caller that
+		// does not care about presentation passes nothing and pays for nothing.
+		//
+		// `TurnBefore` AND `SideBefore` RATHER THAN `Outcome.Turn`/`Outcome.Side`, which is not
+		// a distinction without a difference: those two were read once at entry, while these
+		// were read immediately before this submission. For every command but the EndTurn they
+		// agree; for the EndTurn they are the values the log line beside them carries, so a
+		// step and its `STRAT-AI applied` line can never disagree about which turn it was.
+		if (OutReel != nullptr)
+		{
+			OutReel->Record(Command, SideBefore, TurnBefore);
+		}
 
 		UE_LOG(LogStratPlay, Log,
 			TEXT("STRAT-AI applied kind=%s unit=%d hex=%d,%d def=%d target=%d turn=%d ")

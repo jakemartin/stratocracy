@@ -706,6 +706,57 @@ bool AStratPlayerController::HandleSelectionEvent(EStratSelectionEvent Event,
 		return false;
 	}
 
+	// ---- §2.11.2's skip, ahead of every other gate in this function ------
+	// "Any click or Esc skips to the end state." Both arrive here: `SelectAction` becomes
+	// `HexPrimary` and `CancelAction` -- secondary click OR Escape -- becomes `Cancel`, so
+	// gating the FUNCTION rather than two named events is what makes the GDD's "any" true
+	// without enumerating an input set that has already grown twice.
+	//
+	// BEFORE THE BRIDGE LOOKUP AND BEFORE `StratMatchAcceptsPlayerCommands`, AND THAT ORDERING
+	// IS THE POINT RATHER THAN TIDINESS. The AI's own command is how §2.8's primary win most
+	// often lands -- measured 2026-08-23, the AI's turn-7 ninth command killed side 0's flag --
+	// so the single most interesting hand-over to watch is the one after which the match is
+	// OVER. The concluded-match gate below returns `false` for every event once that happens.
+	// Placed after it, this skip would be unreachable in exactly the case it matters most and
+	// the player would be stuck watching a tour they could not stop.
+	//
+	// IT NEEDS NO BRIDGE AND NO VIEW MODEL, which is what makes that placement legal rather
+	// than merely desirable. `UStratMatchSubsystem::SkipAiPlayback` reads a cursor over a list
+	// of things that already happened; it cannot be asked at a moment when its answer is not
+	// yet knowable.
+	//
+	// `true` AND NOT `false`, UNLIKE THE Q27 GATES BELOW. Those refuse an input that was inert
+	// and owe the player a sentence saying why nothing happened. This is not a refusal:
+	// something DID happen -- the tour stopped -- and there is nothing to explain. Returning
+	// `false` would put a failure string in front of a click that did what the player asked.
+	//
+	// AND IT CONSUMES THE INPUT, WHICH IS A DECISION AND NOT A CONSEQUENCE. The click that
+	// stops the tour does not also select whatever is under the cursor, and the Escape that
+	// stops it does not also drop the selection. §2.11.2 gives that input one job here.
+	// `UStratMatchSubsystem::SkipAiPlayback` returns false when nothing was playing, so at any
+	// quiet moment this block is invisible and every event falls through untouched.
+	//
+	// [CORRECTED 2026-08-29. THE SENTENCE THAT STOOD HERE ADDED "-- which is every moment in
+	// the shipped default configuration, where `AiPlaybackStepSeconds` is zero", AND THAT WAS
+	// FALSE ON THE TREE IT WAS WRITTEN ON. It is struck and not merely amended, because the
+	// two claims cannot both stand: at the shipped default this block was invisible at NO
+	// moment after an AI hand-over. The reel was filled on every hand-over while only the
+	// timer was gated, so the cursor sat at 0 over a non-empty list, `SkipAiPlayback`
+	// succeeded, and this block consumed the first click or Esc after every AI turn. The
+	// comment asserted the exact property the code did not have, which is the worst way for a
+	// prose block to be wrong -- it reads as the reason not to go and check.
+	//
+	// WHAT MAKES THE REMAINING SENTENCE TRUE IS A CHANGE IN `UStratMatchSubsystem` AND NOT A
+	// REWORDING HERE. `BeginAiPlayback` now retires the reel on every path where it declines
+	// to arm a timer, so the cursor is at the end unless a tour is genuinely under way, and
+	// `SkipAiPlayback` reports false in the default configuration because there is nothing to
+	// skip. Nothing in THIS file changed with that fix; this call site was always correct
+	// about what it does and was wrong only about when it would fire.]
+	if (Match->SkipAiPlayback())
+	{
+		return true;
+	}
+
 	FStratBridge* const Bridge = Match->GetBridge();
 	if (Bridge == nullptr)
 	{

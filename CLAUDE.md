@@ -48,6 +48,45 @@ editor-builder's, `data.md` and `decisions.md` the steward's, `global.md` the co
 the steward's. So "the steward owns `Tools/architect/`" holds for everything in that directory
 **except** those three files. Each file names its writer in its own header.
 
+**The transcription clause. USER RULING, 2026-08-29.** **Five of the six sole-writer lines**
+in `Tools/architect/state/` -- `engine.md`, `tests.md`, `data.md`, `decisions.md` and
+`content.md`, and NOT `global.md`, per limit (4) below -- now read *except that the `coordinator` transcribes lane-authored
+entries after a merge, attributing acting and writing separately.* It is a documented rule
+rather than a per-write exception, and it exists because the per-write alternative was measured
+and found fragile: on 2026-08-29 the hand-written exception blocks **drifted between `engine.md`
+and `tests.md` inside one commit, by one author, on the same day and the same axis a gate had
+blocked for that morning** -- `tests.md` credited the writing to the agent that had not written
+those bytes. **The cost the user named in ruling it: it removes that drift risk, and costs a
+little of the strictness that makes ownership legible.**
+
+> **What it licenses, and the four limits that make the trade pay.** (1) **Transcription only.**
+> It carries across what the lane agent already wrote and delivered as a draft entry; it does
+> NOT license the `coordinator` to author a lane's record content. (2) **After a merge only** --
+> the condition that creates the need, since two lanes editing one record file conflict on
+> rebase, so lanes are told not to write these files in their trees. **The entry MUST NAME THE
+> MERGE COMMIT it follows**, or the condition is satisfied forever after any past merge, which
+> is no condition at all; naming it costs nothing, as both entries written under this clause
+> already did. (3) **Acting and writing
+> attributed separately, INLINE in the entry** -- `2026-08-29, X (ACTING; entry TRANSCRIBED by
+> the coordinator)` -- and inline is load-bearing rather than stylistic: a reader arriving by a
+> citation lands on the entry, not on any header above it, so an entry that names only one actor
+> is an affirmative false claim about authorship and is a finding. **This is the legibility the
+> ruling trades a little strictness for; it is not optional.** (4) It does not touch
+> `global.md`, whose writer is already the `coordinator` and the steward.
+>
+> **AND LIMIT (1) IS UNFALSIFIABLE FROM A CHECKOUT, STATED HERE RATHER THAN LEFT TO BE
+> DISCOVERED.** Nothing requires the lane's draft to exist as an artifact, so a `coordinator`
+> who authored an entry wholesale and opened it `X (ACTING; entry TRANSCRIBED by the
+> coordinator)` is **indistinguishable from a real transcription by every instrument in this
+> tree**. No wording fixes that; only an artifact does -- persist the lane's draft under
+> `Tools/architect/` and have the entry cite it, which would close the identical gate-report
+> gap this record already carries as open. Until then limit (3) rests on a grep and limit (1)
+> rests on the agent's honesty, and a reader is entitled to know which is which.
+
+This is a different clause from `content.md`'s fallback writer below, and the two must not be
+conflated: that one is triggered by an ABSENT TOOL and licenses AUTHORING; this one is triggered
+by A MERGE and licenses only carrying across what a lane already wrote.
+
 `content.md` has one standing exception, added 2026-08-23: the `coordinator` is its **fallback
 writer** when `execute_script` is absent from the session's tool surface, because without that
 tool `strat-editor-builder` has no route to the editor and cannot write anything. The condition

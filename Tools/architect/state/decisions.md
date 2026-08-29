@@ -1,6 +1,8 @@
 # Stratocracy state — decisions
 
-> **Sole writer: `strat-data-steward (append-only)`.** Split out of `Tools/architect/state.md` on 2026-08-20, which is now
+> **Sole writer: `strat-data-steward (append-only)`, except that the `coordinator` transcribes
+> lane-authored entries after a merge, attributing acting and writing separately (user ruling,
+> 2026-08-29; the clause and its limits are stated in `CLAUDE.md`, which is the authority).** Split out of `Tools/architect/state.md` on 2026-08-20, which is now
 > FROZEN as the historical record of closed milestones. This directory is the live record.
 >
 > **Holds:** Director rulings, upstream filings against `stratocracy-crew`, and scope calls. **Never rewritten** — an entry that has moved is stamped in place.

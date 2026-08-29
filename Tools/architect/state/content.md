@@ -1,6 +1,12 @@
 # Stratocracy state — content
 
-> **Writer: `strat-editor-builder`; fallback writer `coordinator`, under the one condition below.**
+> **Writer: `strat-editor-builder`; fallback writer `coordinator`, under the one condition below --
+> and separately, as in the four other lane-owned files here (NOT `global.md`), the `coordinator`
+> transcribes lane-authored entries after
+> a merge, attributing acting and writing separately (user ruling, 2026-08-29). THE TWO ARE
+> DIFFERENT AND MUST NOT BE CONFLATED: the fallback below is triggered by an ABSENT TOOL and
+> licenses the `coordinator` to AUTHOR this file's content; the transcription clause is triggered
+> by A MERGE and licenses only carrying across what the lane agent already wrote.**
 > Split out of `Tools/architect/state.md` on 2026-08-20, which is now
 > FROZEN as the historical record of closed milestones. This directory is the live record.
 >

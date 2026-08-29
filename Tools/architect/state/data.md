@@ -1,6 +1,8 @@
 # Stratocracy state — data
 
-> **Sole writer: `strat-data-steward`.** Split out of `Tools/architect/state.md` on 2026-08-20, which is now
+> **Sole writer: `strat-data-steward`, except that the `coordinator` transcribes
+> lane-authored entries after a merge, attributing acting and writing separately (user ruling,
+> 2026-08-29; the clause and its limits are stated in `CLAUDE.md`, which is the authority).** Split out of `Tools/architect/state.md` on 2026-08-20, which is now
 > FROZEN as the historical record of closed milestones. This directory is the live record.
 >
 > **Holds:** `Config/`, DataTables, the gates and hooks under `Tools/architect/`, evidence slicing practice, and checked-in fixtures.

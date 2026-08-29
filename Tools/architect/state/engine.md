@@ -1,6 +1,8 @@
 # Stratocracy state — engine
 
-> **Sole writer: `strat-gameplay-engineer`.** Split out of `Tools/architect/state.md` on 2026-08-20, which is now
+> **Sole writer: `strat-gameplay-engineer`, except that the `coordinator` transcribes
+> lane-authored entries after a merge, attributing acting and writing separately (user ruling,
+> 2026-08-29; the clause and its limits are stated in `CLAUDE.md`, which is the authority).** Split out of `Tools/architect/state.md` on 2026-08-20, which is now
 > FROZEN as the historical record of closed milestones. This directory is the live record.
 >
 > **Holds:** The `StratBridge` / `StratPlay` / `StratUI` C++ record — module arrows, deliberate absences, deferred production surface, and the branches a citation must name.
@@ -34,7 +36,16 @@
 > DAYS** -- `content.md` has a standing fallback writer, `tests.md` took one on 2026-08-29
 > earlier the same day, and this is the third. A third exception is a clause forming rather than
 > three coincidences, and whether `Tools/architect/state/` should say plainly that the
-> `coordinator` transcribes lane-authored entries after a merge is the user's to rule.
+> `coordinator` transcribes lane-authored entries after a merge was the user's to rule.
+> **[RULED 2026-08-29 BY THE USER, LATER THE SAME DAY. THE QUESTION THIS BLOCK LEFT OPEN IS NOW
+> CLOSED AND THE SENTENCE ABOVE IS STAMPED RATHER THAN DELETED.** This file's sole-writer line
+> now carries the exception in the user's own words -- the `coordinator` transcribes
+> lane-authored entries after a merge, attributing acting and writing separately -- so a future
+> transcription no longer needs a block of its own, and this one stands as the account of how
+> the clause came to exist. **THE COST THE USER NAMED IN RULING IT:** it removes the drift risk
+> this pass measured, and costs a little of the strictness that makes ownership legible. The
+> separate-attribution requirement is what buys that legibility back, and it is not optional.
+> `CLAUDE.md` is the authority on the clause's limits.]**
 
 - **2026-08-29, `strat-gameplay-engineer` (ACTING; entry TRANSCRIBED by the `coordinator` under
   the block above) -- W5: SEC 2.11.2'S AI TURN PLAYBACK. THE HEADLESS AI RESOLVED ITS TURN

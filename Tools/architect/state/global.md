@@ -2605,6 +2605,51 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-29, COORDINATOR -- USER RULING: THE TRANSCRIPTION CLAUSE IS NOW A DOCUMENTED RULE,
+  AND THE QUESTION THE ENTRY BELOW DECLINED TO SETTLE IS CLOSED.** **FIVE OF THE SIX**
+  sole-writer lines in `Tools/architect/state/` gain, in the user's own words: *except that the `coordinator`
+  transcribes lane-authored entries after a merge, attributing acting and writing separately.*
+  Applied to `engine.md`, `tests.md`, `data.md`, `decisions.md` and `content.md`. **The clause and
+  its limits are stated in `CLAUDE.md`, where lanes are defined, and the headers point there** --
+  the same placement the editor-driver clause took on 2026-08-26, and for the same reason: a
+  permission inferred from a record file's header is a permission nobody can find.
+  - **THE USER NAMED THE COST IN RULING IT, AND IT IS RECORDED AS THE USER STATED IT RATHER THAN
+    SOFTENED:** the clause removes the drift risk, and **costs a little of the strictness that
+    makes ownership legible.** That is a trade and not a free win. What buys the legibility back
+    is limit (3) -- acting and writing attributed separately, INLINE in the entry -- and it is
+    stated as not optional precisely because it is the half doing the work.
+  - **WHAT MADE THE PER-WRITE ALTERNATIVE UNTENABLE WAS MEASURED IN THIS SAME PASS AND IS THE
+    REASON THE RULING IS SOUND RATHER THAN MERELY CONVENIENT.** The hand-written blocks drifted
+    between `engine.md` and `tests.md` INSIDE ONE COMMIT, by one author, on the same day and on
+    the exact axis a gate had blocked for that morning: `tests.md` opened both entries `Written
+    by strat-test-author`, crediting the writing to the agent that had not written those bytes,
+    while `engine.md` beside it carried the correct form. **A safeguard that has to be
+    hand-copied is FRAGILE** -- and `fragile` is the honest word rather than `will be copied
+    wrong`, which asserts an inevitability off a single instance. What was MEASURED is that it
+    WAS copied wrong once, in the least forgiving circumstances available: one author, one
+    commit, one day, on an axis a gate had blocked that morning. The gate that caught it said
+    the asymmetry was itself the evidence.
+  - **THE FOUR LIMITS, so the trade is not quietly widened later.** Transcription only, never
+    authoring; after a MERGE only; acting and writing attributed separately and INLINE, because a
+    reader arriving by citation lands on the entry rather than on any header above it; and it does
+    not touch `global.md`, whose writer is already the `coordinator` and the steward.
+  - **IT IS A DIFFERENT CLAUSE FROM `content.md`'S FALLBACK WRITER AND THE TWO MUST NOT BE
+    CONFLATED**, which is why `content.md`'s header now names both and says how they differ: the
+    fallback is triggered by an ABSENT TOOL and licenses AUTHORING; this one is triggered by A
+    MERGE and licenses only carrying across what a lane already wrote. Conflating a file-write
+    permission with an acting permission is a mistake this project has already made once, which
+    is what the 2026-08-26 editor-driver clause exists to prevent.
+  - **AND ONE CARVE-OUT IS PUT TO THE USER RATHER THAN SETTLED HERE: `decisions.md`.** The gate
+    raised it and the argument is the same shape as the one that carved out `global.md`. The other
+    four amended files record ENGINEERING facts, which a build, a suite or a grep can contradict.
+    `decisions.md` holds DIRECTOR RULINGS, upstream filings and scope calls, is append-only, and
+    **nothing in the tree can contradict a decision** -- so combined with limit (1)'s
+    unfalsifiability, the clause now lets the `coordinator` add rulings attributed to the steward
+    with no checkable provenance. **UNRULED. The user's.**
+  - **THE THREE SENTENCES THAT CALLED THIS OPEN ARE STAMPED, NOT DELETED** -- in `engine.md`,
+    `tests.md` and the entry directly below -- so a reader arriving at any of them by citation
+    learns the answer where they land, and the account of how the clause came to exist survives.
+
 - **2026-08-29, COORDINATOR -- W4 AND W5 LAND. THE POST-MERGE GATE RETURNED `VERDICT: BLOCK` ON
   ONE FINDING, THE FINDING WAS THIS FILE, AND THE RE-GATE ON THE FIXED RECORD IS THE VERDICT FOR
   THIS PASS.** Two lanes ran concurrently for the first time in this milestone and both merged
@@ -2697,8 +2742,13 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     the acting and the writing attributed separately -- which is the shape an earlier gate BLOCKED
     for lacking, on the morning of this same day. `content.md` already carries a standing fallback
     writer. **Whether `Tools/architect/state/` should say plainly that the `coordinator`
-    transcribes lane-authored entries after a merge is the user's to rule**; until it does, each
-    such write needs its own block and the count keeps rising.
+    transcribes lane-authored entries after a merge WAS the user's to rule**; until it did, each
+    such write needed its own block and the count kept rising.
+    **[RULED 2026-08-29 BY THE USER, LATER THE SAME DAY, AND STAMPED HERE RATHER THAN DELETED.
+    THE ANSWER WAS YES.** Five of the six sole-writer lines in this directory now carry the
+    exception in the user's own words -- all but `global.md`'s, whose writer is already the
+    `coordinator`, so the exception would be vacuous there. The entry directly below this one records the ruling and what it
+    costs; `CLAUDE.md` is the authority on the clause's limits.]**
 
 - **2026-08-29, COORDINATOR -- THE RE-GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, AND THAT
   IS THE VERDICT FOR THIS PASS.** It read the working tree against `HEAD` with nothing staged and

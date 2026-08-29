@@ -313,12 +313,25 @@
       `UStratMatchSubsystem::ProductionMenuFameTotal` across four stations of one cycle: never
       opened, open, AFTER A BUILD (the panel stays open and the header must have moved), and
       closed. The build station is the one a write-once member fails.
-    - `Stratocracy.StratUI.T-UI-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange` —
+    - `Stratocracy.StratUI.T-INT-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange` —
+      **[RENAMED 2026-08-29. This clause and the one below it were written as
+      `Stratocracy.StratUI.T-UI-05.<same clause>` and are recorded here under the names they
+      carry NOW, because a record that names a clause that no longer exists sends the next
+      reader to a grep that returns nothing. Only the ID moved: no assertion, expectation or
+      fixture changed, and the suite count did not move. The ruling is `global.md`'s — `T-UI-05`
+      stops at the snapshot, and a clause whose comparison crosses the bridge is `T-INT-05`'s.
+      Neither this entry's account of what the two clauses assert, nor wave 3's, is otherwise
+      affected.]** **[AND THE ACTOR IS NAMED HERE RATHER THAN ONLY IN `global.md`: this file
+      was edited by the `coordinator`, NOT by `strat-test-author`, on the user's direct
+      instruction. This file's header declares a sole writer and that writer did not make this
+      edit; the user instruction is the only thing licensing it, so the file that RECEIVED the
+      write is where it has to be readable. The same applies to the two other markers dated
+      2026-08-29 below.]**
       `GetSideView` yields `Model.Sides[i]`; an out-of-range side, a negative side, a model whose
       own `ViewingSide` is out of range and an empty model all REFUSE and leave `OutSide`
       default-constructed. `GetViewingSideView` agrees with `GetSideView(Model.ViewingSide, ...)`
       on both the answer and the refusal.
-    - `Stratocracy.StratUI.T-UI-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove` —
+    - `Stratocracy.StratUI.T-INT-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove` —
       on a model rendered for side 1 while side 0 is to move, the selector returns the VIEWER's
       row and provably not the side-to-move's. This is the clause that protects the `+X/turn`
       line, because `FStratSideView::IncomePerTurn` had ZERO readers before this wave and this
@@ -1101,7 +1114,11 @@
   - **THE FILES.** `Source/StratBridge/Tests/StratMatchResultClauses.cpp` (T-TURN-02, -04,
     -05), `Source/StratBridge/Tests/StratSpawnBlockedClauses.cpp` (T-UI-04, T-UI-05),
     `Source/StratBridge/Tests/StratCaptureCommandClauses.cpp` (T-FAME-05),
-    `Source/StratUI/Tests/StratMatchResultRouting.cpp` (two T-UI-05, two T-UI-03),
+    `Source/StratUI/Tests/StratMatchResultRouting.cpp` (two T-INT-05 — **[RENAMED
+    2026-08-29 from T-UI-05 by `global.md`'s ruling; the twelve-name delta this bullet reports
+    is unaffected, since a rename adds and removes nothing. Edited by the `coordinator` and not
+    by this file's declared sole writer, on the user's direct instruction -- same marker, same
+    instruction, same author as the one in the wave-3 clause list above]** — two T-UI-03),
     `Source/StratPlay/Tests/StratViewingSideHandoverClauses.cpp` (two T-UI-03).
   - **THE ONE CLAUSE THE WHOLE OF ITEM 1 TURNS ON, AND WHAT IT ARRANGES.**
     `T-TURN-04.CappedMatchNamesTheKeyThatDiffered` is the only clause in this suite where
@@ -1795,7 +1812,11 @@
           because it mirrors nothing IN the snapshot and is not a field of `FStratViewModel`.
           There is therefore no parity clause to write and its absence is not a gap. What
           needed pinning was the ROUTING — one bridge, one frame, all four fields — and
-          `Stratocracy.StratUI.T-UI-05.MatchResultViewRoutesTheBridgeAnswer` is it.
+          `Stratocracy.StratUI.T-INT-05.MatchResultViewRoutesTheBridgeAnswer` is it. **[RENAMED
+          2026-08-29 from `T-UI-05` by `global.md`'s ruling. The sentence's point is untouched:
+          the routing is what needed pinning and this clause is still the one that pins it.
+          Edited by the `coordinator` and not by this file's declared sole writer, on the user's
+          direct instruction -- same marker, same instruction, same author as the two above.]**
     - **THE CONTROLLER-SIDE GATES.** `AStratPlayerController::HandleSelectionEvent`,
       `ToggleProductionMenu`'s open branch and `SubmitProductionChoice` all now call
       `StratMatchAcceptsPlayerCommands`, and **not one of those three CALL SITES is pinned

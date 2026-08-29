@@ -6,12 +6,22 @@
 // for, and that the side asked for by `GetViewingSideView` is `FStratViewModel::ViewingSide`
 // and never `FStratMatchView::SideToMove`.
 //
-// WHY `T-UI-05`, WHICH IS SNAPSHOT FIDELITY. `FStratSideView` is mirrored one-for-one from
-// `strat::UiSideView`, and the question "does the snapshot's side row reach a reader
-// truthfully" is exactly T-UI-05's. The `+X/turn` income line §2.11.2 draws is
-// `FStratSideView::IncomePerTurn`, a snapshot field, and this selector is now its only route
+// WHY `T-INT-05`. Its subject is "every member of the view-model", and these two clauses
+// select over `FStratViewModel` -- the engine side of the bridge. The `+X/turn` income line
+// §2.11.2 draws is `FStratSideView::IncomePerTurn`, and this selector is now its only route
 // to a widget: `IncomePerTurn` had ZERO readers before this wave outside the parity clauses.
 // No acceptance ID is invented here.
+//
+// AND WHY NOT `T-UI-05`, WHICH THESE TWO CLAUSES CARRIED UNTIL 2026-08-29. The reason recorded
+// here was: `FStratSideView` is mirrored one-for-one from `strat::UiSideView`, and the question
+// "does the snapshot's side row reach a reader truthfully" is exactly T-UI-05's. REACHING A
+// READER IS THE HALF THAT IS NOT T-UI-05'S, by the ruling at the top of
+// `Tools/architect/state/global.md`'s `## NEXT`: T-UI-05 STOPS AT THE SNAPSHOT -- both of its
+// compared sides are module-side, the snapshot against the state the module holds, and Stub 8
+// calls it HEADLESS. The paragraph directly below already drew that line the other way round,
+// pointing the field-for-field mirroring at `StratViewModelParity.cpp`, which rides `T-INT-05`.
+// The assertions did not move and neither did the suite count, which is taken by macro and
+// never by an acceptance-ID name.
 //
 // WHAT IS PINNED ELSEWHERE AND NOT RESTATED. That `FStratSideView` mirrors
 // `strat::UiSideView` field for field is `StratViewModelParity.cpp`'s job. This file takes the
@@ -33,7 +43,9 @@
 //  - `CountUnitsAbleToAct` and `CountViewingSideUnitsAbleToAct`. Their subject is `bDone` and
 //    `bLockedThisTurn`, and `StratViewModel.h`'s PRESENTATION BLOCK rules those OUT of
 //    T-UI-05's subject in terms -- they have no module-side counterpart for a fidelity clause
-//    to compare against. No existing acceptance ID covers the idle count, and this lane does
+//    to compare against. That sentence names T-UI-05 and is left as written: it is why no
+//    FIDELITY clause can reach the idle count, and the 2026-08-29 ruling does not touch it.
+//    No existing acceptance ID covers the idle count, and this lane does
 //    not mint one. Recorded in `Tools/architect/state/tests.md` as an unpinned surface.
 //  - Any widget. Nothing below constructs Slate.
 
@@ -202,7 +214,7 @@ namespace StratViewingSideSelectorClauses
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratSideViewSelectorRefusesRatherThanDefaultsTest,
-	"Stratocracy.StratUI.T-UI-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange",
+	"Stratocracy.StratUI.T-INT-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FStratSideViewSelectorRefusesRatherThanDefaultsTest::RunTest(const FString& /*Parameters*/)
@@ -342,7 +354,7 @@ bool FStratSideViewSelectorRefusesRatherThanDefaultsTest::RunTest(const FString&
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratViewingSideSelectorTracksTheViewerTest,
-	"Stratocracy.StratUI.T-UI-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove",
+	"Stratocracy.StratUI.T-INT-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FStratViewingSideSelectorTracksTheViewerTest::RunTest(const FString& /*Parameters*/)

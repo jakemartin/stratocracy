@@ -11,6 +11,46 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-29 (TWO RULINGS AND ONE RENAME: THE ACCEPTANCE IDS FOR W4, W5, W6 AND W8; THE
+RULING THAT `T-UI-05` STOPS AT THE SNAPSHOT; AND THE FOUR CLAUSE NAMES THAT RULING MOVED TO
+`T-INT-05`. Written by the `coordinator`, whose file this is.
+THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE IN THIS PASS: everything below was
+done in `E:/MultiAgent/Stratocracy` on branch `master`, with no worktree, no branch, no rebase
+and no merge, so no figure is carried over from anywhere and there is no lane run to agree or
+disagree with. The suite is
+**267/267**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+THE COUNT DID NOT MOVE AND THAT IS THE HEADLINE RATHER THAN AN OMISSION. A rename moves no
+clause into or out of the set, and the census is taken by `IMPLEMENT_SIMPLE_AUTOMATION_TEST` and
+never by an acceptance-ID name -- 267 before the rename and 267 after it, with the FOUR RENAMED
+NAMES PRESENT UNDER `T-INT-05` and ZERO `T-UI-05` names left anywhere in `Source/` except the
+single one this record rules CONFORMING. That last figure is a POSITIVE result and not an
+absence: the census returns exactly one, and it is the clause whose two compared sides both sit
+below the bridge.
+THE TREE WAS REBUILT HERE BEFORE IT WAS RUN, and the build is evidence rather than a formality,
+because a clause name is a string literal compiled into the module: a suite run against a stale
+binary would say the OLD names are green and prove nothing about the new ones. `Result:
+Succeeded`, with EXACTLY the three edited translation units recompiled --
+`StratViewingSideSelectorClauses.cpp`, `StratMatchResultRouting.cpp` and
+`StratMatchResultClauses.cpp` -- and `UnrealEditor-StratUI.dll`, `UnrealEditor-StratBridge.dll`
+and `UnrealEditor-StratPlay.dll` relinked. The report cited below is the SECOND run of this
+pass, not the first: the gate's Observation 1 sent one comment block back into
+`StratMatchResultRouting.cpp` after the first run, so the tree was rebuilt and the suite re-run
+whole rather than carrying a figure across an edit. Both runs read 267/267 with an empty
+non-Success set; the earlier one was `reportCreatedOn 2026.08.29-13.40.34` and is superseded by
+this one rather than quoted as agreement.
+THE REPORT THAT CERTIFIES THE LIVE FIGURE IS THIS TREE'S AND THE `coordinator` RAN IT ITSELF
+RATHER THAN QUOTING A LANE'S: `reportCreatedOn 2026.08.29-15.26.49`, `succeeded 267`, `failed 0`,
+`notRun 0`, `succeededWithWarnings 0`, 267 entries and a non-Success set that is EMPTY, read
+directly out of `Saved/AutomationReport/index.json`. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS
+LOCAL.
+THE GATE HAS RUN ON THIS TREE TWICE. The first returned `VERDICT: BLOCK` on two findings, both
+record defects of the `coordinator`'s own and both about attributing a lane exception; both were
+fixed, along with one non-gating observation that sent a comment block back into
+`StratMatchResultRouting.cpp`. **THE RE-GATE ON THE FIXED BYTES RETURNED `VERDICT: PASS` WITH
+ZERO FINDINGS, AND THAT IS THE VERDICT FOR THIS PASS.** The two entries at the top of `## NEXT`
+carry both accounts, including what each gate said it did NOT measure -- neither built and
+neither ran the suite.)
+
 _Last run 2026-08-28 (W7 LANDS: SEC 2.9'S DIFFICULTY HANDICAP EXISTS, AND THE GUIDED OPENING'S
 OWN PREMISE ABOUT THE FIRST SESSION IS MET FOR THE FIRST TIME. Written by the `coordinator`,
 whose file this is.
@@ -2469,6 +2509,516 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-08-29, COORDINATOR -- THE RE-GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, AND THAT
+  IS THE VERDICT FOR THIS PASS.** It read the working tree against `HEAD` with nothing staged and
+  `HEAD` unmoved, and it established the changed-since-the-first-gate set ITSELF by mtime rather
+  than taking the `coordinator`'s list -- which is the check that makes a narrow re-gate sound.
+  - **WHAT IT PUT THE HARDEST TEST TO, and it is the fix that most deserved one.** The replaced
+    `WHY T-INT-05` block in `StratMatchResultRouting.cpp` was checked against ground truth rather
+    than against its own argument: `FStratViewModel`'s member list was read out of
+    `StratViewModel.h` and `FStratMatchResultView` is NOT among them, while `Sides` IS. So the
+    block's removal of the `every member of the view-model` leg in THAT file, and its retention in
+    `StratViewingSideSelectorClauses.cpp`, is correct rather than inconsistent -- the leg reaches
+    the selector clauses and not the match-result pair. The gate also checked the replacement does
+    not overclaim in the other direction and found it forbids reading itself as discharging
+    `T-INT-05`'s rebuild-the-screen claim.
+  - **AND IT RE-DERIVED THE NUMBERS RATHER THAN ACCEPTING THEM**: 267 in the worktree and 267 at
+    `HEAD`, zero added, zero removed, four differing and each pairing one-for-one; the report's
+    own name set byte-identical to the tree's after CR-stripping; exactly one surviving `T-UI-05`
+    clause name. It also checked the CHRONOLOGY is consistent with a real rebuild-then-run --
+    source, then the relinked DLL, then the report, in that order -- which is a stronger check
+    than the count, because a count agrees whether or not the binary was rebuilt.
+  - **IT DID NOT BUILD AND DID NOT RUN THE SUITE, IN ITS OWN LIMITS.** So the `Result: Succeeded`
+    line and the suite figure in this file's banner remain the `coordinator`'s readings; the
+    clause count behind the figure is the gate's, independently.
+  - **THE ONE THING IT RAISED THAT THIS RECORD CANNOT CLOSE BY WRITING MORE PROSE, AND IT IS
+    RIGHT.** **NO GATE REPORT IS PERSISTED ANYWHERE IN THIS TREE.** A `strat-integration-reviewer`
+    report exists only in the session that ran it, so every sentence in this file that quotes a
+    gate `in its own words` is UNFALSIFIABLE from a checkout -- including the entry directly below
+    this one. The gate could confirm every MEASUREMENT that entry attributes (59 test `.cpp`, 32
+    vendored blobs, 15 rows over a 6-name field census, 267 = 267 with four renames) and could not
+    confirm the WORDING. That is one drift away from the recorded failure of putting words in a
+    gate's mouth, and no instrument here would catch it. **Stated as an open process gap and
+    deliberately NOT closed in this pass**: gate reports would live under `Tools/architect/`,
+    which is the steward's, and the `coordinator` has already taken two lane exceptions today on
+    the user's instruction -- taking a third unasked, in the same pass whose findings were both
+    about lane attribution, is precisely the drift this record exists to stop. It is the user's
+    call, and it is the highest-value item on this list.
+    **[STAMPED 2026-08-29, LATER THE SAME DAY: CLOSED. The user called it, and BOTH reports of
+    this pass are now persisted at `Tools/architect/evidence/10-acceptance-id-rulings/` --
+    `gate-1-block.md`, `gate-2-pass.md`, and a `README.md` carrying the provenance. This is the
+    THIRD lane exception of the day and the same one this bullet declined to take unasked; it is
+    taken now on the user's direct instruction, by the `coordinator`, and the directory's own
+    `README.md` says so rather than leaving it to be read here. WHAT IT CLOSES AND WHAT IT DOES
+    NOT is stated there too, and the limit matters: the `coordinator` transcribed the text, no
+    hash or signature covers it, so a checkout can now read what the gate SAID but still cannot
+    verify that this is what it said. That is a smaller gap than the one it replaces and it is
+    not zero. NO SWEPT FILE IS AFFECTED -- the two guards read the six `state/` documents and
+    `Tools/architect/*.py`, and neither walks `evidence/`, so the suite figures and the two
+    VERDICT lines inside those transcripts are outside both instruments' subject and take no
+    ownership from this file.]**
+  - **AND ONE ADJACENT GAP IT NAMED, non-gating and carried.** `tests.md`'s three markers attribute
+    the FILE WRITE to the `coordinator` and not the SOURCE RENAME -- the act inside
+    `strat-test-author`'s own lane -- which is recorded only here. The acting IS recorded, plainly,
+    in the `coordinator`'s own file; but acting and writing are two permissions this project has
+    conflated before, which is why `CLAUDE.md`'s editor-driver clause separates them, and the same
+    shape is latent here.
+  - **NOTHING ELSE MOVED.** Eleven checks re-derived and passed, vendored bytes untouched with the
+    manifests' own `rulesCommit`/`dataCommit` as the authority, module graph unchanged, no
+    `strat::` call crossing a boundary, no vendored header in front of UHT, no `/Game/` literal
+    outside the two standing exceptions, and nothing staged.
+
+- **2026-08-29, COORDINATOR -- THE GATE RAN AND RETURNED `VERDICT: BLOCK` ON TWO FINDINGS, BOTH
+  THE `coordinator`'S OWN AND BOTH IN THE RECORD'S ATTRIBUTION RATHER THAN IN THE CODE. BOTH ARE
+  FIXED, ONE NON-GATING OBSERVATION IS FIXED WITH THEM, AND THE TREE WAS REBUILT AND THE SUITE
+  RE-RUN BECAUSE THAT FIX TOUCHED A SOURCE COMMENT. NO PHASE VERDICT IS STATED HERE AND THE
+  RE-GATE IS OWED** -- a `VERDICT: PASS` describes a tree, and these are not the bytes the gate
+  read.
+  - **WHAT THE GATE CONFIRMED BY RE-DERIVING IT, and this is recorded because a gate that only
+    reports findings reads as though it checked nothing else.** Eleven checks passed. It re-took
+    the clause delta by multiline set-difference with BOTH corpora collected by one function over
+    one path filter -- `git ls-files` over 59 test files, HEAD side from `git show`, worktree side
+    from `cat`, CR-stripped -- and got **267 = 267, zero added, zero removed, four differing, each
+    pairing on an UNCHANGED C++ test-class name**, which is what makes them renames rather than a
+    substitution. It read the whole `Source/` diff and confirmed no assertion, expectation,
+    fixture, seed or flag set moved. It compared all 32 vendored files by HEAD blob SHA against
+    `git hash-object` of the worktree -- CRLF-immune, not a worktree diff -- and found zero drift.
+    It derived the module graph as 15 rows over 5 modules with a 6-name field census. And it
+    checked the ruling against the GDD's own §4.7 Stub 8 text and did not dispute it.
+  - **WHAT THE GATE DID NOT MEASURE, IN ITS OWN WORDS AND CARRIED HERE RATHER THAN LEFT IN ITS
+    REPORT: it did not build and did not run the suite.** It cross-checked that the sweep had read
+    a 267-entry all-Success report and that its own macro census agreed at 267, and it says
+    plainly that this is a consistency check and not an execution. So the `Result: Succeeded` and
+    the suite figure in this file's banner are the `coordinator`'s own readings and are NOT
+    confirmed by the reviewer; the clause count behind the figure is, independently.
+  - **F1, AND IT IS THE SHARPER OF THE TWO.** `tests.md` declares `strat-test-author` its sole
+    writer in its own header; the `coordinator` wrote it; and **none of its three markers said
+    so** -- a grep of that file's added lines for `coordinator|on the user|instruction|lane`
+    returned ZERO. `engine.md` and `decisions.md` both carried the attribution sentence, so the
+    one file whose header names a different writer was the one that lacked it. **The pass had
+    already argued this point against itself**: the earlier bullet in this file says writing
+    another lane's record is something `no clause in CLAUDE.md licenses`, and the only thing
+    legitimising it is the user instruction -- which the file that RECEIVED the write did not
+    record. Fixed: all three markers now name the actor and the instruction.
+  - **F2, THE SAME DEFECT ONE FILE OVER.** `engine.md`'s SECOND amendment marker named no actor
+    while the first in the same file did, and `decisions.md`'s second handled the identical case
+    correctly with `Same marker, same instruction, same author as the one above`. The pattern
+    existed and was applied inconsistently. Fixed with that same sentence.
+  - **THE OBSERVATION WAS FIXED TOO, AND IT IS THE MOST USEFUL THING THE GATE FOUND EVEN THOUGH
+    IT DID NOT GATE ON IT.** The `WHY T-INT-05` block the `coordinator` wrote into
+    `StratMatchResultRouting.cpp` argued from `T-INT-05`'s subject being `every member of the
+    view-model` -- **and `FStratMatchResultView` is NOT a member of `FStratViewModel`, which that
+    same file states in terms two paragraphs later.** So the one leg of the argument that was
+    cited did not reach the pair it was cited for: a clause riding an ID whose own words exclude
+    its subject is the unfalsifiable shape this record has been caught by, and the first draft of
+    a block written to prevent it committed it. The destination is unchanged and the gate agrees
+    it is right -- `T-UI-05`'s text plainly cannot reach a comparison that crosses the bridge, and
+    `T-INT-05` is this tree's settled ID for the engine side of the presentation stack. What
+    changed is that the block now STATES THE STRETCH instead of citing a clause that does not
+    hold, in the shape the `T-UI-01` ruling set.
+  - **AND THAT FIX IS WHY THERE ARE TWO SUITE RUNS IN THIS PASS.** It edited a source comment, so
+    the tree was rebuilt and the suite re-run whole. The banner carries the SECOND report and
+    names the first as superseded rather than quoting the two as agreement.
+  - **TWO OBSERVATIONS ARE CARRIED RATHER THAN CLOSED, NEITHER THIS PASS'S DOING.** (1) Four
+    headless clauses now ride an ID the GDD marks `(the editor pass)`, while `T-UI-05` is the one
+    it calls headless. The gate is right that this pass WIDENS an existing gap rather than
+    creating it -- most of this tree's `T-INT-05` clause names already ran headlessly before
+    today -- but the gap between the GDD's acceptance wording and this tree's convention is real
+    and belongs in the upstream mint conversation, not in a rename. (2) `.agents/ue-project-context.md`
+    still reads `Last observed here: 140/140, 2026-08-21`; it is date-stamped and its own
+    paragraph sends the reader to the report, so it is history rather than a live claim, and no
+    crew agent owns that file.
+
+- **2026-08-29, COORDINATOR -- THE FOUR NON-CONFORMING CLAUSE NAMES ARE RENAMED TO `T-INT-05`,
+  BUILT AND RE-RUN. THE SUITE IS UNCHANGED AT THE FIGURE THIS FILE'S BANNER CITES AND EVERY
+  RENAMED NAME IS GREEN UNDER ITS NEW NAME. NO PHASE VERDICT IS STATED HERE: the gate has not
+  seen these bytes.** This discharges the debt the ruling below opened, on the user's direct
+  instruction to carry it out in this session.
+  - **WHO ACTED, AND IT WAS NOT THE LANE THE RULING NAMED.** The ruling below assigns the
+    discharge to `strat-test-author`, whose lane `Source/**/Tests/` is. **The `coordinator` made
+    these edits itself**, in the main tree, on the user's direct instruction to rename the four.
+    That is stated plainly rather than left to be inferred from a diff, because the lane rule is
+    real and this is an exception to it, not an amendment of it: nothing here widens any lane, and
+    the next `Tests/` change belongs to `strat-test-author` exactly as before. The ruling's
+    discharge sentence is stamped where it stands.
+  - **WHAT CHANGED, AND IT IS FOUR STRINGS AND THE PROSE THAT EXPLAINS THEM.** In
+    `Source/StratUI/Tests/StratMatchResultRouting.cpp`, `MatchResultViewRoutesTheBridgeAnswer` and
+    `MatchResultRefusesAnUnseededBridge`; in `Source/StratUI/Tests/StratViewingSideSelectorClauses.cpp`,
+    `SideSelectorReturnsTheModelsRowAndRefusesOutOfRange` and
+    `ViewingSideSelectorTracksTheViewerAndNotTheSideToMove`. Each keeps its clause text and its
+    `Stratocracy.StratUI.` prefix and moves only the ID. **NOT ONE ASSERTION, EXPECTATION,
+    FIXTURE, SEED OR C++ TEST-CLASS NAME WAS TOUCHED**, and no file outside those two changed
+    except one comment, below.
+  - **EACH FILE NOW CARRIES THE REASON AT ITS OWN SITE, so the next reader does not have to find
+    this entry to know why.** Both files gained a `WHY T-INT-05` block citing the ruling, and the
+    selector file's block QUOTES its own superseded reason rather than deleting it -- the sentence
+    that said `the question "does the snapshot's side row reach a reader truthfully" is exactly
+    T-UI-05's` now stands beside the finding that REACHING A READER is the half that is not.
+  - **ONE COMMENT OUTSIDE THOSE TWO FILES WAS A STALE CROSS-REFERENCE AND IS FIXED IN THE SAME
+    PASS.** `Source/StratBridge/Tests/StratMatchResultClauses.cpp` said
+    `StratMatchResultRouting.cpp's two T-UI-05 clauses do that`; it now says `T-INT-05`. It was
+    found by grepping every reference to the four clause names, not by reading the two files --
+    a rename that fixes only its own file leaves the citations that point AT it wrong.
+  - **AND ONE T-UI-05 CLAUSE NAME SURVIVES IN `Source/` ON PURPOSE**:
+    `Stratocracy.StratBridge.T-UI-05.ADisplacedSpawnLandsOnANeighbourAndSpawnBlockedStaysFalse`,
+    which the ruling below confirms conforming -- both of its compared sides are below the bridge.
+    A census after the rename returns exactly that one and nothing else, which is the shape the
+    ruling predicts and is stated as a POSITIVE result rather than left as an absence.
+  - **HOW IT WAS MEASURED, AND THE BUILD IS EVIDENCE RATHER THAN A FORMALITY.** A clause name is a
+    string literal compiled into the module, so a suite run against a stale binary would have
+    reported the OLD names green and proved nothing. `Build.bat StratocracyEditor Win64
+    Development` returned `Result: Succeeded` and recompiled EXACTLY the three translation units
+    edited, relinking `UnrealEditor-StratUI.dll`, `UnrealEditor-StratBridge.dll` and
+    `UnrealEditor-StratPlay.dll`. The suite was then run whole, and the four new names are present
+    in the report and Success. The figure and the report identity are in this file's banner and
+    are not restated here.
+  - **THREE CITATIONS IN `tests.md` ARE NOW STALE, AND THEY ARE `strat-test-author`'S TO FIX --
+    THIS ENTRY DOES NOT TOUCH THAT FILE.** Two are the W3 clause list, which names
+    `Stratocracy.StratUI.T-UI-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange` and
+    `...ViewingSideSelectorTracksTheViewerAndNotTheSideToMove` in the present tense; one is the
+    `FStratMatchResultView` note, which ends `Stratocracy.StratUI.T-UI-05.MatchResultViewRoutesTheBridgeAnswer`
+    is it`. **This debt was CREATED deliberately by this pass and is named rather than hidden.**
+    The alternative was for the `coordinator` to write another lane's record file, which no clause
+    in `CLAUDE.md` licenses -- the content-lane fallback is the only one that exists and it is not
+    this. Each of the three is a present-tense claim about a name that no longer exists, so the
+    fix is a rename in place, or a stamp if the entry is read as history.
+    **[STAMPED 2026-08-29, LATER THE SAME DAY. THE COUNT IN THIS BULLET'S OWN HEADING WAS WRONG
+    AND THE DEBT IS DISCHARGED; both halves are corrected here rather than left standing.
+    THERE WERE FOUR, NOT THREE. The fourth is `tests.md`'s file list, which described
+    `Source/StratUI/Tests/StratMatchResultRouting.cpp` as `(two T-UI-05, two T-UI-03)` -- a
+    file-and-ID description rather than a clause name, so the census behind this bullet MISSED
+    IT: that census grepped the four clause NAMES, and a claim about the same clauses phrased a
+    different way is invisible to a name grep. Sweep by CLAIM SHAPE, not by the thing the claim
+    is about. ALL FOUR ARE NOW FIXED, by the `coordinator` on the user's direct instruction --
+    the same exception, and the same attribution, as the rename itself. A FIFTH site of the same
+    class was found by that wider sweep and it was in THIS file, not `tests.md`: W3's landing
+    entry listed two of the renamed clauses in its own five-name clause list, and it is corrected
+    in place with its own marker.]**
+  - **AND THE TWO REMAINING FILES WERE BROUGHT IN LINE IN A THIRD PASS, ALSO ON THE USER'S
+    DIRECT INSTRUCTION AND ALSO BY THE `coordinator` RATHER THAN BY THEIR LANES.** `engine.md`
+    (the engineer's) and `decisions.md` (the steward's) each carried statements PLACING an
+    engine-side readout on `T-UI-05` -- a different class from a stale clause name, because the
+    name they use still exists and it is the RULING behind it that moved. Each is marked in
+    place with `[AMENDED 2026-08-29 ...]` and none is rewritten: two in `engine.md` (W2's four
+    mirrors, and `bSpawnBlocked` described as `T-UI-05`-pinned, which is now pinned under BOTH
+    IDs on the two sides of the bridge) and two in `decisions.md` (the `+X/turn` income line, and
+    the four readouts the upstream mint EXCLUDES as already pinned). **THE UPSTREAM MINT REQUEST
+    IS UNCHANGED BY ANY OF IT** and each marker says so, because a reader meeting an amended
+    filing must not have to work out whether what was FILED moved.
+  - **AND THE HANDOFF SENTENCES OF W2'S AND W3'S OWN RULINGS ARE MARKED IN THIS FILE, which is
+    the half a marker in another file cannot reach.** `decisions.md` cites W2's ruling by its
+    entry TITLE, so a reader following that pointer lands on `THE RULING AS IT STANDS` -- and
+    until this pass that sentence said `T-UI-05` with nothing pointing forward. Both entries'
+    ruling sentences now carry the amendment, and both markers state that only the ID name moved.
+  - **HOW THE WHOLE SET WAS VERIFIED AT THE END, and it is the check that should have been run
+    first.** Every `T-UI-05` occurrence in all five state files, `CLAUDE.md` and `.agents/` was
+    listed with a flag for whether its own PARAGRAPH carries a 2026-08-29 marker. Every unmarked
+    occurrence was then read: all are correct usages -- the ID range `T-UI-01..T-UI-05`, the
+    conforming `spawnBlocked` clause, statements about what `T-UI-05`'s SUBJECT is, and this
+    file's own banner. Nothing stale is left, and that is a read result rather than a grep count.
+
+- **2026-08-29, COORDINATOR -- USER RULING, LATER THE SAME DAY: `T-UI-05` STOPS AT THE SNAPSHOT.
+  EVERYTHING ON THE ENGINE SIDE OF THE BRIDGE IS `T-INT-05`'S. THE TREE IS RIGHT AND W2'S RULING
+  IS AMENDED, NOT THE CLAUSES. RECORD-ONLY; NO SOURCE, NO TEST, NO ASSET AND NO CONFIG FILE WAS
+  TOUCHED; NO SUITE WAS RUN AND NO SUITE FIGURE MOVES -- the live figure is the one this file's
+  banner cites. NO PHASE VERDICT IS STATED HERE and nothing below has been through a gate.**
+  This settles the discrepancy the entry below opened and deliberately left open. It is written
+  FLAT, because a correction that only adds leaves both claims live.
+  - **THE RULE, IN ONE LINE, SO IT CAN BE APPLIED WITHOUT RE-DERIVING IT.** `T-UI-05`'s two
+    compared sides are BOTH module-side; `T-INT-05`'s subject is the engine-side view model. A
+    clause whose comparison crosses the bridge is `T-INT-05`'s. A clause whose comparison lives
+    entirely below it is `T-UI-05`'s.
+  - **THE GDD DECIDES IT, AND BOTH TEXTS SAY SO WITHOUT INFERENCE.** `T-UI-05` is `snapshot
+    fidelity: the snapshot tells the truth about THE STATE THE MODULE HOLDS -- the authoritative
+    strat::GameState, the Sec 4.8 tables and the Stub-7 scenario file it loaded -- field by
+    field`, and it is `Asserted by rebuilding the snapshot after each command of a fixed command
+    sequence`. Snapshot on one side, `GameState` on the other. It names no reader, no engine type
+    and no route, and Stub 8's Acceptance line calls it HEADLESS. `T-INT-05` is `presentation
+    statelessness: after any event sequence, rebuilding all widgets/actors from the current
+    view-model alone ... reproduces the same displayed values`, and states `The subject is every
+    member of the view-model`. `FStratViewModel` and everything reached through it is inside that
+    sentence and outside the other one.
+  - **SO W2'S RULING IS AMENDED ON THE ID NAME AND ON NOTHING ELSE.** That entry rules the
+    per-unit HP pair, the hex's capturable status and the flag marker onto `T-UI-05`. **Those four
+    ride `T-INT-05`.** The entry's SUBSTANCE is untouched and still holds: those four are already
+    asserted against the module, W2 mints no new clause for them, and the other five readouts ride
+    nothing and are covered by `GATE-INFOPANEL`. What changes is the name of the ID they ride, and
+    with it the sentence in that entry reading `so W2 mints no T-UI-05 clause at all` -- W2 mints
+    no clause for them under EITHER ID, which is what that sentence was reaching for.
+  - **NO CLAUSE IS RENAMED FOR W2, BECAUSE THE TREE WAS ALREADY RIGHT -- AND IT WAS RIGHT ON
+    PURPOSE, IN WRITING, BEFORE THE RULING WAS MADE.** `Source/StratUI/Tests/StratViewModelParity.cpp`
+    opens by naming its own ID as `T-INT-05  the screen is rebuildable FROM THE VIEW MODEL ALONE,
+    and the view model is the snapshot in engine types with nothing transformed beyond a width
+    cast`, and its NOT ASSERTED HERE list names the other side of the line explicitly: `Whether
+    the snapshot is faithful to the state it projects. That is strat::uiCheckSnapshotFidelity,
+    T-UI-05's subject`. The ruling above is that file's distinction promoted to a rule; it is not
+    a new idea and it is not the `coordinator`'s.
+  - **AND `T-UI-05`'S OWN CHECK DOES RUN IN THIS TREE, WHICH THE FINDING BELOW DID NOT SAY.**
+    `FStratBridge::CheckSnapshotFidelity` routes `strat::uiCheckSnapshotFidelity`, and
+    `Stratocracy.StratUI.T-UI-03.SnapshotFidelity` calls it over the same projection the
+    scoreboard binds. So the picture is not that `T-UI-05` is absent here -- it is that its check
+    is called by a clause whose own CLAIM is about the panel, which is a different thing from a
+    clause that rides the ID. The finding below is accurate that no clause carries `T-UI-05` for
+    W2's four mirrors, and incomplete in leaving that impression about the ID as a whole.
+  - **TWO CLAUSE NAMES ARE CONFIRMED CONFORMING AND MUST NOT BE SWEPT UP BY THIS RULE.**
+    (1) `Stratocracy.StratBridge.T-UI-05.ADisplacedSpawnLandsOnANeighbourAndSpawnBlockedStaysFalse`
+    asserts what `strat::spawnHexesBlocked` reports -- a DECLARED DERIVED snapshot field's
+    derivation, both sides below the bridge, `T-UI-05` clause (b) exactly.
+    (2) `Stratocracy.StratUI.T-UI-03.SnapshotFidelity` rides `T-UI-03` and is right to: its own
+    site says `IT IS NOT REIMPLEMENTED HERE, and must not be: T-UI-05 owns that check as its
+    subject and the rules module owns the check itself. This file calls it`, and the clause's
+    claim is that the PANEL is telling the truth. Naming the owner of a mechanism is not claiming
+    its ID, and that is the discipline this record asks for, done correctly.
+  - **FOUR CLAUSE NAMES ARE NON-CONFORMING, AND THAT IS A DEBT WITH A NAMED DISCHARGE RATHER THAN
+    A DEFECT IN ANY ASSERTION.** Every one of them asserts something true and asserts it well; the
+    ID in the name is what this ruling moves. In `Source/StratUI/Tests/StratMatchResultRouting.cpp`:
+    `Stratocracy.StratUI.T-UI-05.MatchResultViewRoutesTheBridgeAnswer` and
+    `Stratocracy.StratUI.T-UI-05.MatchResultRefusesAnUnseededBridge` -- the site's own words are
+    `FStratMatchResultView is exactly what the bridge said, in engine types`, which is a
+    comparison that crosses the bridge. In `Source/StratUI/Tests/StratViewingSideSelectorClauses.cpp`:
+    `Stratocracy.StratUI.T-UI-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange` and
+    `Stratocracy.StratUI.T-UI-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove` -- that
+    file's stated reason is `the question "does the snapshot's side row reach a reader truthfully"
+    is exactly T-UI-05's`, and REACHING A READER is the half this ruling assigns to `T-INT-05`.
+    Its own next paragraph draws the same line the other way round -- `That FStratSideView mirrors
+    strat::UiSideView field for field is StratViewModelParity.cpp's job` -- and that file rides
+    `T-INT-05`. **THE DISCHARGE: `strat-test-author` renames those four to
+    `Stratocracy.StratUI.T-INT-05.<same clause>` and amends the two files' ID rationales to cite
+    this ruling. Nothing else changes.** **[STAMPED 2026-08-29, LATER THE SAME DAY: DISCHARGED,
+    AND NOT BY THE LANE THIS SENTENCE NAMES. The `coordinator` made the four renames itself, in
+    the main tree, on the user's direct instruction; the entry at the top of `## NEXT` carries the
+    build and the suite run and states the attribution. The prediction this sentence makes about
+    the count HELD and was measured: 267 before and after. This is an exception to the lane rule
+    and not an amendment of it.]** No assertion moves, no expectation moves, and the suite
+    count does not move -- the sweep counts by `IMPLEMENT_SIMPLE_AUTOMATION_TEST` and never by an
+    acceptance-ID name, so four renames are invisible to it. That is stated because a rename that
+    LOOKED like it moved the count is exactly the kind of change a lane would otherwise hold back.
+  - **THIS ALSO AMENDS W3'S RULING, AND SAYING SO IS THE POINT.** Two of those four are among the
+    five clauses W3's entry lists as the wave's own, and that entry named them under `T-UI-05`. A
+    rule adopted in one place and not the other is unsound in exactly the way this record has
+    already paid for; so the rule is tree-wide, W3's entry is amended on the same narrow ground as
+    W2's -- the ID name and nothing else -- and both entries are left standing with this one
+    supplying the correction.
+  - **WHAT THIS RULING DOES NOT DO.** It mints no acceptance ID and claims none. It does not touch
+    the five `GATE-INFOPANEL` readouts, the `GATE-` names authorized by the entry below, or any
+    clause's assertions. It does not move `T-UI-05` out of this project -- the ID keeps
+    `ADisplacedSpawnLandsOnANeighbourAndSpawnBlockedStaysFalse` and keeps being CALLED by
+    `T-UI-03.SnapshotFidelity`. And it changes nothing about the W4 ruling below, which put the
+    on-map markers on `T-INT-05` before this rule existed and is the same reading.
+
+- **2026-08-29, COORDINATOR -- USER RULING: W4, W5, W6 AND W8 GET THEIR ACCEPTANCE IDS. NO NEW
+  ACCEPTANCE ID IS MINTED AND NONE IS CLAIMED; FOUR LOCAL `GATE-` NAMES ARE AUTHORIZED WHERE NO
+  ID'S OWN TEXT OWNS THE SUBJECT. RECORD-ONLY; NO SOURCE, NO TEST, NO ASSET AND NO CONFIG FILE
+  WAS TOUCHED; NO SUITE WAS RUN AND NO SUITE FIGURE MOVES -- the live figure is the one this
+  file's banner cites, in the run block below the record-only block at its top. NO PHASE VERDICT
+  IS STATED HERE and nothing below has been through a gate.** These were the last four waves with
+  no ID, and with them the wave plan's `For W2, W3, W4, W5, W6 and W8 there is still no ID and no
+  ruling` is discharged for every wave it names. This entry is written FLAT, because a correction
+  that only adds leaves both claims live and a nested one has already let a false sentence survive
+  directly above its own retraction in this file.
+  - **THE ASSIGNMENT IS PER CLAUSE SUBJECT, AND THIS ENTRY STATES NO QUANTIFIER OVER ANY WAVE'S
+    CLAUSE SET.** None of those four sets exists yet. The W7 ruling directly below had its own
+    first wording struck for exactly that -- `Every W7 clause is named Stratocracy.<Module>.T-FAME-02.<Clause>`
+    was written before a clause had been proposed, so its quantifier ranged over a set the
+    `coordinator` had not seen. What follows names an ID per SUBJECT and says, for each, what a
+    clause under it must assert. A clause whose subject is not listed here has not been ruled on,
+    and by this record's own standard an omission is a gap and not a grant.
+  - **THE SPECIFICATION WAS READ, NOT THE WAVE PLAN'S SUMMARY OF IT.** Every subject below is
+    taken from the GDD -- Sec 2.11.2's three information layers and its earn-your-pixels table,
+    Sec 2.11.5's screen list, and the Sec 4.7 Stub 8 invariant texts -- and not from the wave-plan
+    bullets further down this file. Those bullets were the recorded cause of W2's ruling having to
+    be widened the same day it was made.
+  - **AND THE WAVE PLAN IS WRONG ABOUT TWO THINGS, MEASURED ON THIS TREE WHILE RULING.** (1) Its
+    W4 bullet names `AStratUnitActor::ApplyView`. **THERE IS NO SUCH METHOD.** The reconcile
+    method is `UStratMatchSubsystem::ApplyView`, and `AStratUnitActor`'s own header says so in
+    terms -- it describes the actor as spawned, moved and destroyed BY that subsystem method. A
+    proposed symbol greps exactly like a defined one, which is a failure this record has already
+    been caught by; the bullet is left as it stands and this entry supplies the correction.
+    (2) Its W8 bullet calls all six items `THE TRANSIENT LAYER`. Sec 2.11.2 puts only two of them
+    there: the income and kill toasts and the turn banner are layer 3 (transient), while the path
+    preview, the capture pip and the repair pip are layer 2 (CONTEXTUAL, selection-driven), and
+    the BUILD pulse belongs to Sec 2.11.5's production menu. The wave is still one batch; the
+    label is a summary and it decides no ID below.
+
+  - **W4 -- THE ON-MAP MARKERS. THE DRAWING RIDES `T-INT-05`, AND THIS IS THE TIGHTEST FIT ON
+    THIS LIST -- W4 IS INSIDE THAT ID'S NAMED SUBJECT RATHER THAN STRETCHED ONTO IT.** `T-INT-05`
+    is `presentation statelessness: after any event sequence, rebuilding all widgets/actors from
+    the current view-model alone -- Sec 4.7 Stub 8's snapshot plus its presentation block --
+    reproduces the same displayed values (nothing lives only in a widget)`. It says ACTORS, and
+    W4 is the actor half of exactly that rebuild. Sec 2.11.2's earn-your-pixels row for the
+    unacted pip closes the loop from the other side: it binds the pip `via the DONE bit of
+    Sec 2.11.1's machine, carried in the view-model's presentation block`, and `T-INT-05`'s own
+    text names that DONE bit as satisfying the gate from the block.
+    - **AND THE STRETCH IS STATED RATHER THAN HIDDEN, on the standard the `T-UI-01` ruling set.**
+      `T-INT-05`'s claim is about the WHOLE screen. A W4 clause asserts one actor's share of it --
+      that re-running the reconcile from the same view model reproduces the same mesh, material
+      and marker state, and that nothing about a marker lives only in the actor -- and must not be
+      written as though W4 discharged the ID.
+    - **`T-INT-05` IS EDITOR-PASS MARKED, AND THE ONE CONSTRAINT THAT RIDES WITH THAT IS
+      SATISFIED.** Sec 4.11's dagger note is that a marked ID may not guard a rules invariant. W4
+      draws; it guards none.
+    - **W4 MINTS NO MIRROR CLAUSE, AND THAT IS A GOOD OUTCOME RATHER THAN A GAP.** `bIsFlag` and
+      `bIsGuidedMarked` are already asserted against the module, by name, in
+      `Stratocracy.StratUI.T-INT-05.MirrorsSnapshotFieldForField`. An unstated `already covered`
+      reads exactly like an oversight to the next author, who would otherwise write a second
+      clause asserting what the first one does.
+    - **WHICH UNITS GET A MARKER IS A DIFFERENT SUBJECT AND NO ID OWNS IT: IT RIDES
+      `GATE-MAPMARKERS`.** Sec 2.11.2 states the content rules -- the flag `H` marker is shown for
+      BOTH sides and always, the unacted pip only on the player's own units -- and `T-INT-05`
+      asserts that a rebuild reproduces a displayed value, not that the mapping from field to
+      drawing is the one Sec 2.11.2 specifies. A `GATE-` name mints no acceptance ID and claims
+      none; it is this project's standing convention for a specified surface with no ID, with
+      `GATE-BUILDMENU` and `GATE-INFOPANEL` the precedents already in this tree.
+    - **THE ASSET TAIL CARRIES NO ID AND NONE IS CLAIMED.** The flag marker's and the pip's
+      material and mesh work is art; no acceptance ID in the GDD has an art asset in its subject.
+
+  - **W5 -- THE AI'S TURN PLAYBACK. THE EQUALITY HALF RIDES `T-TURN-09`; THE PACING HALF CARRIES
+    NO ACCEPTANCE ID AND RIDES `GATE-AITURN`.** Sec 2.11.2 settles what kind of wave this is, in
+    its own words: `the headless AI resolves instantly; the presentation layer replays its action
+    list at a watchable fixed pace (~0.5 s per action, camera stepping to each) ... this is
+    presentation pacing only, no rules change. Any click or Esc skips to the end state.` So the
+    wave's one correctness claim is an EQUALITY claim over the state, and `T-TURN-09` is the ID
+    whose own text owns it: `determinism: the same command sequence from the same scenario ->
+    identical result tier and identical state at every step`. A paced replay IS the same command
+    sequence, and `at every step` is the half a paced replay newly exposes. Three dispositions
+    must land on the same state -- resolved with no playback, watched to the end, and skipped
+    part-way -- and that triple is what a clause under this ID asserts.
+    - **AND THE STRETCH IS STATED.** `T-TURN-09`'s own concern is the turn loop's determinism.
+      A W5 clause reaches only its state-equality half and must not be written as though the ID's
+      result-tier claim were re-asserted by a presentation wrapper.
+    - **`T-AI-06` IS REFUSED, AND IT IS NAMED BECAUSE IT IS THE ID A W5 AUTHOR REACHES FOR
+      FIRST.** Its text is `determinism: same state -> same move; every scoring tie is broken by a
+      stated deterministic rule`, and its subject is the TIE-BREAK RULE -- canonical hex order for
+      position and target, ascending cost for builds. A playback wrapper asserts nothing about
+      tie-breaking. A clause riding an ID whose own words exclude its subject is unfalsifiable by
+      construction, which is the shape this record has been caught by.
+    - **`T-INT-05` IS REFUSED TODAY AND BECOMES OWED IF THE WAVE MAKES IT SO, and that is a
+      design consequence stated before the lane starts rather than after.** The camera position
+      and the playback cursor are not view-model members in this tree, so `T-INT-05` has nothing
+      to rebuild them from. But its subject is `every member of the view-model` -- so if W5 puts a
+      playback cursor INTO the view model, that member enters this ID's subject by its own words
+      and a clause is then owed under it.
+    - **THE HAZARD IS NAMED BEFORE THE LANE STARTS.** `FStratAiTurnRunner`'s own header states
+      that the runner runs a whole turn synchronously. Splitting the PRESENTATION is what Sec
+      2.11.2 asks for; splitting the EXECUTION is what it forbids, in the words quoted above. The
+      playback must therefore replay a RECORDED action list and must not drive the runner step by
+      step. If a lane paces the runner instead, the `T-TURN-09` clause is the thing that catches
+      it -- which is why that half carries an acceptance ID and the pacing does not.
+
+  - **W6 -- THE TITLE/MENU SCREEN. THE SCREEN AND ITS ROUTES CARRY NO ACCEPTANCE ID AND RIDE
+    `GATE-TITLEMENU`. AN UPSTREAM MINT IS WORTH FILING AND IS NOT FILED BY THIS ENTRY.** Sec
+    2.11.5 fixes the list -- `That is the complete screen list for the prototype: title/menu,
+    briefing, match, result` -- and no acceptance ID in the GDD has a screen, a navigation route
+    or a default map in its subject. This is W2's shape one surface over: a specified element with
+    no ID, covered locally rather than shipped bare.
+    - **TWO CLAUSES DO HAVE AN ID, AND EACH IS CONDITIONAL ON THE WAVE ACTUALLY BUILDING THE
+      THING.** (1) If the menu exposes the difficulty tier, the clause that the tier chosen on the
+      menu is the tier the match opens at rides **`T-FAME-02`**, by the W7 ruling below and by
+      that ID's own closing instruction, `so the gate asserts each side's configured value and
+      never a literal 200`. (2) If the menu offers new-match or restart, the clause that a restart
+      re-seeds the state a fresh boot seeds rides **`T-TURN-09`**, whose `same scenario ->
+      identical state` is that claim with an empty command prefix; the stretch is that a restart
+      clause reaches only its seeding half.
+    - **AND THE GDD DOES NOT SAY THE MENU IS WHERE THE TIER IS CHOSEN. THAT SENTENCE IS THIS
+      FILE'S, AND IT IS THE `coordinator`'S READING.** Sec 2.7 and Sec 2.9 specify the handicap and
+      say nothing about where it is set; Sec 2.11.5 fixes the screen list and budgets `No settings
+      screen beyond volume + resolution is budgeted`. W7's own banner block says `selecting it is
+      W6's screen work`, and that is an inference from those two facts, not a quotation. Whether
+      W6 builds a tier control at all is the user's, and ruling (1) is inert until it does.
+    - **THE DATA-LANE HALF CARRIES NO ID EITHER, AND `T-DATA-05` IS REFUSED BY NAME SO NOBODY
+      REACHES FOR IT.** Moving `GameDefaultMap` off `Lvl_FerrumCrossing` in
+      `Config/DefaultEngine.ini` is the steward's file. `T-DATA-01..06` are the Sec 2.3 and Sec 2.4
+      tables and the DataTable import -- `T-DATA-05` is `every imported DataTable row equals the
+      CSV field-for-field` -- and an engine config key is in none of their subjects.
+
+  - **W8 -- THE SIX ITEMS DO NOT SHARE AN ID AND ARE RULED ONE BY ONE.**
+    - **(1) PATH PREVIEW WITH COST TICKS -> `T-UI-02`, AND IT IS A FIT RATHER THAN A STRETCH.**
+      The ID is `the reachable-hex highlight displays exactly the T-MOVE-01 set -- the UI queries
+      the module and never recomputes movement`. The route and its per-hex cost ticks are that
+      second clause exactly. **AND THE ROUTE IS NOT REACHABLE FROM THIS TREE: that is the hazard
+      on this item.** `strat::findPath` exists in the vendored `Move.h` and is routed through NO
+      `FStratBridge` method -- measured, zero occurrences of that name outside
+      `Source/StratRules/`. `FStratBridge::ReachableHexes` returns the reachable hexes with their
+      costs and no route. So W8 needs a new bridge method, and computing the route engine-side is
+      the one thing this ID forbids in its own words.
+    - **(2) CAPTURE-PROGRESS PIP -> `GATE-TRANSIENT`, AND NO MIRROR CLAUSE IS MINTED.**
+      `CaptureProgress` is already asserted against `strat::UiUnitView::captureProgress` by
+      `Stratocracy.StratUI.T-INT-05.MirrorsSnapshotFieldForField`. The pip's own subject -- that
+      it shows on the capturing unit and exactly while progress is non-zero -- is owned by no ID.
+      **`T-FAME-05` IS REFUSED**: it is the capture RULE, including the reset when the Infantry
+      leaves or dies, and a pip clause asserts nothing about the reset.
+    - **(3) REPAIR-ELIGIBILITY PIP -> `T-TURN-08` IF AND ONLY IF THE PREDICATE COMES FROM THE
+      MODULE, AND THIS ITEM IS NOT BUILDABLE TODAY.** Sec 2.11.2's own row gives the predicate:
+      owned tile, damaged unit selected, no adjacent enemy. **There is no snapshot field for it
+      and no bridge method for it** -- measured, `Repair` does not occur in `StratBridge.h` or in
+      `StratViewModel.h` at all. Upstream it is worse than absent: `Combat.h`'s `repairAmount`
+      TAKES `onOwnedObjective` and `enemyAdjacent` as arguments rather than deriving them, and
+      `Turn.h`'s `applyStartOfTurnRepair` takes a caller-supplied subject list, so no module-side
+      `is this unit repair-eligible now` predicate exists to bind to. Deriving those two board
+      facts engine-side is presentation-layer board arithmetic -- the thing `T-UI-02`'s
+      never-recompute clause and `T-UI-03`'s no-widget-side-arithmetic clause both exist to
+      forbid, one table over. **The two honest routes are a new `FStratBridge` method that derives
+      the two facts and calls the verified `repairAmount`, or an upstream field; the second is a
+      re-vendor request and is not this project's to write.** This is a scope finding, not an ID
+      question, and it is the one item on this list that can silently become widget arithmetic.
+    - **(4) BUILD PULSE ON AN AFFORDABLE FACTORY -> `T-UI-04`.** Sec 2.11.5 puts the pulse in the
+      production menu's own section and states its condition: `When any unit is affordable and the
+      factory has not built this turn`. The first half is `T-UI-04`'s subject in that ID's own
+      words -- `the buildlist derived from the four Stub-2 unit rows plus current fameTotal` --
+      and the second reads the per-factory `hasBuiltThisTurn`, which is already mirrored and
+      already pinned by the clause named in (2). **`GATE-BUILDMENU` is the neighbouring precedent
+      and a lane should read its clauses first**: an affordability clause may already exist there,
+      and W2's ruling is the recorded case of a wave nearly writing a second clause asserting what
+      the first one did.
+    - **(5) INCOME AND KILL TOASTS -> `GATE-TRANSIENT`. `T-FAME-02` AND `T-FAME-07` ARE
+      REFUSED.** Sec 2.11.2 says each transient fact has a durable home -- income toasts restate
+      the Fame widget's `+X/turn`, kill toasts restate the scoreboard's Destroyed row -- and both
+      of those homes are snapshot fields already pinned. A toast clause asserts that a receipt
+      fired with the module's number, not that an award was computed correctly; riding `T-FAME-07`
+      would put a clause under an ID whose own words, `exactly half the victim's Sec 2.4 cost`, it
+      does not test.
+    - **(6) THE `YOUR TURN` / `ENEMY TURN` BANNER -> `GATE-TRANSIENT`.** It follows
+      `FStratMatchView::SideToMove`, already asserted against `strat::UiMatchView::sideToMove` by
+      the clause named in (2). **`T-TURN-01` IS REFUSED** for (5)'s reason: the banner asserts
+      nothing about strict alternation, it follows a mirror of it. **`T-UI-03` IS THE TRAP ON THIS
+      ITEM and is refused too**: it enumerates `turn vs cap`, which IS a readout and looks like a
+      turn-banner clause's home, but its subject is the standings scoreboard's four readouts and
+      `sideToMove` is not among them. That is the same shape as `surviving units/HP` reading like
+      a per-unit HP readout in the W2 ruling below.
+
+  - **WHAT THIS RULING DOES NOT DO.** It mints no acceptance ID and claims none. It files no
+    upstream mint -- two are named as worth filing, Sec 2.11.5's screen list and the
+    repair-eligibility predicate, and filing them is the steward's next pass and not this entry.
+    It authorizes four local `GATE-` names and no more: `GATE-MAPMARKERS`, `GATE-AITURN`,
+    `GATE-TITLEMENU` and `GATE-TRANSIENT`. It covers W4, W5, W6 and W8 alone and widens no other
+    wave; in particular it does not touch W2's ruling below, whose `T-UI-05` half is the subject
+    of the finding directly beneath this entry. **[STAMPED 2026-08-29, LATER THE SAME DAY: that
+    finding has since been RULED, at the top of `## NEXT`, and W2's ruling IS amended by it -- on
+    the ID name alone. This sentence was accurate when written and is left because the rest of it
+    still binds: this entry itself widened no other wave.]**
+
+- **2026-08-29, COORDINATOR -- A FINDING FOUND WHILE RULING, AND IT IS THE USER'S TO SETTLE
+  RATHER THAN MINE: W2'S RULING SAYS ITS FOUR MIRRORS ARE ALREADY ASSERTED, AND THE CLAUSES THAT
+  ASSERT THEM CARRY A DIFFERENT ID.** W2's entry below rules that the per-unit HP pair, the hex's
+  capturable status and the flag marker ride `T-UI-05`, and then says those four `ARE ALREADY
+  PINNED, so W2 mints no T-UI-05 clause at all`, citing
+  `Source/StratUI/Tests/StratViewModelParity.cpp`. **The assertions are there and they are exactly
+  the four named. The clauses carrying them are named `Stratocracy.StratUI.T-INT-05.<Clause>`, not
+  `T-UI-05`** -- measured on this tree by the clause names in that file. So the ruling's `already
+  covered` sentence is true about the ASSERTIONS and not about the ID: under W2's own ruling those
+  four ride `T-UI-05`, and no clause in this tree carries that ID for them. **This entry does not
+  resolve it, and deliberately.** Either reading is defensible -- that the ruling should follow
+  the tree, or that the clauses should be renamed to follow the ruling -- and picking one silently
+  is how a ruling gets widened by an agent instead of by the user. It is recorded here so the next
+  author meets it before writing a clause under either ID, and W2's entry is left as it stands.
+  **[STAMPED 2026-08-29, LATER THE SAME DAY: RESOLVED BY USER RULING, AND THIS PARAGRAPH'S
+  `does not resolve it` IS NOW HISTORY. The ruling is the entry at the top of `## NEXT`: `T-UI-05`
+  stops at the snapshot and the engine side is `T-INT-05`'s, so the TREE was right and W2's ruling
+  is amended on the ID name alone. This paragraph also left an incomplete impression it is worth
+  correcting here rather than only there: `T-UI-05`'s own check DOES run in this tree, through
+  `FStratBridge::CheckSnapshotFidelity`, called by `Stratocracy.StratUI.T-UI-03.SnapshotFidelity`.
+  What is true is the narrow claim -- no clause carries `T-UI-05` for W2's four mirrors.]**
+
 - **2026-08-28, COORDINATOR -- USER RULING: W7'S CLAUSES RIDE `T-FAME-02`. NO ID IS MINTED AND
   NONE IS CLAIMED. RECORD-ONLY; NO SOURCE, NO TEST, NO ASSET AND NO CONFIG FILE WAS TOUCHED; NO
   SUITE WAS RUN AND NO SUITE FIGURE MOVES -- the live figure is the one this file's topmost
@@ -2593,7 +3143,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     item ships it unpinned without saying so. It is quoted here rather than left standing,
     because a correction that only adds leaves both claims live.
   - **THE RULING AS IT STANDS, WIDENED 2026-08-27 BY USER RULING, AND IT IS THE WHOLE PANEL.**
-    Four readouts ride `T-UI-05`: the **per-unit HP** pair, the hex's **capturable status**
+    Four readouts ride `T-UI-05` **[AMENDED 2026-08-29 BY USER RULING: they ride `T-INT-05`. The
+    ID name moves and NOTHING ELSE IN THIS RULING DOES -- the same four readouts, still already
+    pinned, still minting no new clause, and the same five still riding nothing. `T-UI-05` stops
+    at the snapshot, and these four are read across the bridge. The ruling is at the top of
+    `## NEXT` and the argument below for WHY these four and not the other five is untouched by
+    it.]**: the **per-unit HP** pair, the hex's **capturable status**
     (`strat::UiHexView::owner`), and the **flag marker** (`strat::UiUnitView::isFlag`). Five ride
     NOTHING and land **unpinned**: the **terrain name**, the **move cost**, the **defense bonus**,
     the unit's **Atk/Def/Move/Range**, and the **`ready`/`done`** bit. The upstream mint filed
@@ -2674,7 +3229,9 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     `DefenderTerrainId` -- but a rule that binds an implementation is not an ID that pins a clause,
     and this entry does not let the one stand in for the other.
   - **STILL UNRULED: W4, W5, W6 and W8.** Each is the user's to rule the same way, or to mint
-    upstream.
+    upstream. **[STAMPED 2026-08-29: NO LONGER TRUE, AND STAMPED RATHER THAN DELETED. All four
+    were ruled on 2026-08-29 by the entry at the top of `## NEXT`. This sentence was accurate
+    when written.]**
 
 
 - **2026-08-27, COORDINATOR -- W3 LANDS: SEC 2.11.2'S PERSISTENT HUD HAS A MODEL SIDE, AND A TURN
@@ -2692,8 +3249,14 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     `Stratocracy.StratUI.T-UI-04.ReturnedPurseIsTheOneEveryShortfallWasComputedAgainst`,
     `Stratocracy.StratUI.T-UI-04.TheFiveArgumentFormIsTheSixArgumentFormMinusThePurse`,
     `Stratocracy.StratPlay.T-UI-04.PublishedHeaderPurseIsTheOpenMenusPurseAndZeroWhenClosed`,
-    `Stratocracy.StratUI.T-UI-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange`,
-    `Stratocracy.StratUI.T-UI-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove`.
+    `Stratocracy.StratUI.T-INT-05.SideSelectorReturnsTheModelsRowAndRefusesOutOfRange`,
+    `Stratocracy.StratUI.T-INT-05.ViewingSideSelectorTracksTheViewerAndNotTheSideToMove`.
+    **[RENAMED 2026-08-29, AND THE LAST TWO NAMES ARE WRITTEN HERE AS THEY STAND NOW RATHER THAN
+    AS THIS ENTRY FIRST WROTE THEM. Both were `Stratocracy.StratUI.T-UI-05.<same clause>` until
+    the ruling at the top of `## NEXT` moved them; a clause list that names something no longer
+    in the tree sends its next reader to an empty grep, which is the failure this record has
+    already been caught by. Only the ID moved. The other three names in this list are unchanged,
+    and nothing else in this entry is affected.]**
   - **TWO SURFACES SHIP DELIBERATELY UNPINNED, and the gap is named rather than hidden.**
     `AStratPlayerController::RequestEndTurn` and
     `UStratViewModelLibrary::CountUnitsAbleToAct` / `CountViewingSideUnitsAbleToAct` carry NO
@@ -2812,6 +3375,13 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     rides `T-UI-05`. The **End Turn surface** and the **idle count** ride NOTHING and land
     **unpinned**, and an upstream mint is filed against `stratocracy-content` for an ID covering
     Sec 2.11.2's HUD verbs and per-unit presentation state.
+    **[AMENDED 2026-08-29 BY USER RULING, ON ONE ID NAME AND NOTHING ELSE: the `+X/turn` income
+    line's ENGINE-SIDE clauses ride `T-INT-05`. `T-UI-05` stops at the snapshot -- it owns
+    whether `incomePerTurn` is faithfully projected, which is still true and is still the reason
+    the line is covered at all -- and the selector that carries it across the bridge to a widget
+    is `T-INT-05`'s. This entry's two clause names were renamed accordingly and are marked at
+    the list above. The purse's `T-UI-04`, the End Turn surface and the idle count are UNTOUCHED,
+    and so is the upstream mint. The ruling is at the top of `## NEXT`.]**
   - **WHY THE TWO THAT HOLD, HOLD.** `T-UI-04`'s own GDD sentence is `the production menu binds to
     the buildlist derived from the four Stub-2 unit rows plus current fameTotal` -- the purse IS
     `fameTotal`, named in the ID's own text, so that half is not a stretch at all. The income rate
@@ -2846,7 +3416,9 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     `AStratPlayerController::RequestEndTurn` and the idle-count selector ship with no clause. That
     is a real coverage gap and it is stated as one.
   - **STILL UNRULED: W2, W4, W5, W6 and W8.** Each is the user's to rule the same way, or to mint
-    upstream. This ruling covers W3 alone and widens nothing.
+    upstream. This ruling covers W3 alone and widens nothing. **[STAMPED 2026-08-29: NO LONGER
+    TRUE, AND STAMPED RATHER THAN DELETED. W2 was ruled 2026-08-27 and W4, W5, W6 and W8 on
+    2026-08-29, by the entries above. This sentence was accurate when written.]**
 
 - **2026-08-27, COORDINATOR -- W0'S HOVER NOW REACHES THE GAME. THE INPUT ROUTE WAS THE DEFECT,
   IT IS REPLACED, AND A HUMAN HAS SEEN IT WORK.** The entry below records the playtest that found
@@ -3094,7 +3666,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     - For W2, W3, W4, W5, W6 and W8 there is still no ID and no ruling, and **inventing one in a
       test name is a failure this record has already recorded**: a proposed identifier greps
       exactly like a defined one. Each is the user's to rule the same way, or to mint upstream in
-      the GDD.
+      the GDD. **[STAMPED 2026-08-29: THE FIRST CLAUSE IS NO LONGER TRUE AND IS STAMPED RATHER
+      THAN DELETED. Every wave this sentence names now has a ruling -- W2 and W3 on 2026-08-27,
+      W4, W5, W6 and W8 on 2026-08-29 -- and W7, which this sentence does not name, on
+      2026-08-28. The second clause, that inventing an ID in a test name is a recorded failure,
+      is NOT withdrawn and still binds: the rulings name existing upstream IDs and local `GATE-`
+      names, and mint nothing.]**
   - **AND THE ORDERING IS A JUDGEMENT, NOT A MEASUREMENT** -- the same caveat the audit ended on,
     undischarged by cutting the list into waves. The sequence is by what the player loses without
     each item, with W0 first only because two waves cannot start without it. This record still

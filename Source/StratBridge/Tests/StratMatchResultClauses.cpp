@@ -43,7 +43,7 @@
 //     is read back through `strat::uiMatchResult` -- the exact function
 //     `FStratBridge::MatchResult` calls, and the only one between the rules and the screen.
 //     WHAT THEY DO NOT PIN, stated rather than implied: they do not exercise
-//     `FStratBridge::MatchResult`'s own body. `StratMatchResultRouting.cpp`'s two T-UI-05
+//     `FStratBridge::MatchResult`'s own body. `StratMatchResultRouting.cpp`'s two T-INT-05
 //     clauses do that, and the clause above drives it on a concluded match.
 //
 // WHERE EVERY EXPECTATION COMES FROM.

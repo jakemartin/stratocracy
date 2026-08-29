@@ -832,6 +832,14 @@
     naming the purse field directly. `T-UI-05` covers the `+X/turn` income line -- the income
     rate is a snapshot field by `Source/StratRules/Ui.h`'s own accounting (the presentation-block
     header at that file, quoted below, draws the line at exactly this boundary).
+    **[AMENDED 2026-08-29 BY USER RULING, ON THE ID NAME AND NOT ON THE ARGUMENT. `T-UI-05` STOPS
+    AT THE SNAPSHOT: it owns whether `incomePerTurn` is faithfully PROJECTED, and the engine-side
+    line that BINDS it -- `FStratSideView::IncomePerTurn` reached through the selector -- is
+    `T-INT-05`'s, whose subject is "every member of the view-model". The two W3 clauses that
+    cover this line were renamed from `T-UI-05` to `T-INT-05` on the same day. This bullet's
+    reasoning about WHY the income line is covered at all, and its `Ui.h` boundary quote, are
+    untouched. The ruling is at the top of `state/global.md`'s `## NEXT`; this file was corrected
+    by the `coordinator` on the user's direct instruction rather than by this lane.]**
   - **Why the other two cannot ride either ID, quoted from `Ui.h` rather than argued around.**
     `Ui.h`'s `UiPresentationUnit` struct (`done` and `lockedThisTurn`, the idle-count inputs) sits
     under a comment block reading: *"It is NOT in T-UI-05's subject. That invariant asks whether
@@ -921,6 +929,13 @@
     unit's HP (`12/20`) and FLAG text are excluded because `state/global.md`'s ruling already
     places them on `T-UI-05` (`strat::UiHexView::owner`, `strat::UiUnitView::hp`/`hpMax`/`isFlag`)
     -- they are pinned, and this filing covers only what rides nothing.
+    **[AMENDED 2026-08-29 BY USER RULING: those four ride `T-INT-05`, not `T-UI-05` -- the ID
+    name moves and NOTHING ELSE DOES. THE UPSTREAM MINT REQUEST THIS ENTRY FILES IS UNCHANGED,
+    which is the half worth stating plainly: the four excluded readouts are still PINNED and
+    still excluded, and the five requested are still unpinned and still requested. The reason
+    for the ID move is that `T-UI-05` stops at the snapshot -- both of its compared sides are
+    module-side -- while these four are read across the bridge. Same marker, same instruction,
+    same author as the one above.]**
   - **The two IDs that could plausibly be argued, quoted from the GDD and from `Ui.h` rather than
     argued around, matching `state/global.md`'s own account.** `T-UI-05` (`:2513-2530`) is
     *"snapshot fidelity: the snapshot tells the truth about the state the module holds ... field by

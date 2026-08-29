@@ -1,5 +1,26 @@
 // GDD §2.8 / §2.11.4 / §2.11.5 -- the two projections `FStratViewModel` deliberately does
-// not carry. T-UI-05 (the match result) and T-UI-03 (the production menu's shortfall).
+// not carry. T-INT-05 (the match result) and T-UI-03 (the production menu's shortfall).
+//
+// WHY T-INT-05 AND NOT T-UI-05, RULED 2026-08-29 AND CITED HERE RATHER THAN RE-DERIVED.
+// T-UI-05 STOPS AT THE SNAPSHOT: both of its compared sides are module-side -- the snapshot
+// against the state the module holds -- and Stub 8 calls it HEADLESS. The two clauses below
+// compare `strat::UiMatchResult` against `FStratMatchResultView`, a comparison that CROSSES
+// the bridge, so T-UI-05's own text cannot reach them. They were named T-UI-05 until that
+// ruling; the assertions did not move and neither did the suite count, which is taken by macro
+// and never by an acceptance-ID name. The ruling is at the top of
+// `Tools/architect/state/global.md`'s `## NEXT`.
+//
+// AND THE STRETCH IS STATED RATHER THAN HIDDEN, because the obvious argument for T-INT-05 does
+// NOT hold for THIS pair and a gate caught the first draft of this block making it. T-INT-05's
+// subject is "every member of the view-model" -- and `FStratMatchResultView` is NOT a member of
+// `FStratViewModel`, which the very next paragraph of this file says in terms. So that half of
+// the ID does not reach these two clauses, and citing it would be the unfalsifiable shape this
+// record has been caught by before. What carries them is the OTHER half: T-INT-05 is the ID for
+// the engine side of the presentation stack -- `StratViewModelParity.cpp` and 40-odd other
+// clause names already ride it there -- and a routing clause asserts the property that ID
+// exists to protect, that what a surface displays came from the model rather than from itself.
+// A clause here must assert THAT and must not be written as though T-INT-05's own
+// rebuild-the-screen claim were discharged by it.
 //
 // WHY THESE FOUR CLAUSES ARE ROUTING CLAUSES AND NOT PARITY CLAUSES, and it is a ruling
 // rather than a gap. `StratViewModelParity.cpp` walks `FStratViewModel` field by field
@@ -147,7 +168,7 @@ namespace StratMatchResultRouting
 }
 
 // ---------------------------------------------------------------------------
-// T-UI-05 -- `FStratMatchResultView` is exactly what the bridge said, in engine types.
+// T-INT-05 -- `FStratMatchResultView` is exactly what the bridge said, in engine types.
 //
 // ONE BRIDGE, ONE FRAME, FOUR FIELDS. The comparison is `FStratBridge::MatchResult`'s
 // `strat::UiMatchResult` against `StratBuildMatchResult`'s `FStratMatchResultView`, asked of
@@ -169,7 +190,7 @@ namespace StratMatchResultRouting
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratMatchResultViewRoutesTheBridgeAnswerTest,
-	"Stratocracy.StratUI.T-UI-05.MatchResultViewRoutesTheBridgeAnswer",
+	"Stratocracy.StratUI.T-INT-05.MatchResultViewRoutesTheBridgeAnswer",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FStratMatchResultViewRoutesTheBridgeAnswerTest::RunTest(const FString& /*Parameters*/)
@@ -266,7 +287,7 @@ bool FStratMatchResultViewRoutesTheBridgeAnswerTest::RunTest(const FString& /*Pa
 }
 
 // ---------------------------------------------------------------------------
-// T-UI-05 -- an unseeded bridge is REFUSED, and the caller's value is left exactly as it was.
+// T-INT-05 -- an unseeded bridge is REFUSED, and the caller's value is left exactly as it was.
 //
 // WHY REFUSING MATTERS MORE HERE THAN ANYWHERE ELSE IN THAT FILE. `strat::uiMatchResult`
 // answers a world with no turn state `InProgress` / `SIDE_NONE`, which is INDISTINGUISHABLE
@@ -289,7 +310,7 @@ bool FStratMatchResultViewRoutesTheBridgeAnswerTest::RunTest(const FString& /*Pa
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratMatchResultRefusesAnUnseededBridgeTest,
-	"Stratocracy.StratUI.T-UI-05.MatchResultRefusesAnUnseededBridge",
+	"Stratocracy.StratUI.T-INT-05.MatchResultRefusesAnUnseededBridge",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FStratMatchResultRefusesAnUnseededBridgeTest::RunTest(const FString& /*Parameters*/)

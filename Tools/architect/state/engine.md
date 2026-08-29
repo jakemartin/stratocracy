@@ -349,7 +349,15 @@
     scenario's ten units, and would have shown the wrong unit's stats.
   - **UNPINNED SURFACE, NAMED SO THE HOLE IS VISIBLE RATHER THAN INFERRED.** Per the
     coordinator's ruling: `Owner` and `bIsFlag` ride `T-UI-05` alongside `Hp` / `HpMax` as
-    unmarked snapshot mirrors; the DONE bit rides NOTHING, because `Ui.h` says in terms that
+    unmarked snapshot mirrors **[AMENDED 2026-08-29 BY USER RULING, AND ON THE ID NAME ALONE:
+    those four ride `T-INT-05`. `T-UI-05` STOPS AT THE SNAPSHOT -- both of its compared sides are
+    module-side -- and the engine side of the bridge is `T-INT-05`'s, whose subject is "every
+    member of the view-model". Everything else this bullet says is untouched: the four are still
+    unmarked snapshot mirrors, they are still already pinned, and the hole this bullet exists to
+    make visible is still exactly the DONE bit and the four §2.4 stat reads. The ruling is at the
+    top of `global.md`'s `## NEXT`; this file was corrected by the `coordinator` on the user's
+    direct instruction rather than by this lane.]**; the DONE bit rides NOTHING, because `Ui.h`
+    says in terms that
     the presentation block "is NOT in T-UI-05's subject"; and the four §2.4 stat reads ride
     nothing either, being `UnitDef` table rows. The mint request is filed upstream and is the
     steward's. I wrote no test and name none as written.
@@ -1110,7 +1118,15 @@
     `Tests/` returned exactly TWO sites: the declaration in `StratViewModel.h` and the single
     assignment in `StratViewModel.cpp`. Nothing read it. The field sits on `FStratFactoryView`,
     reachable only through `FStratViewModel::Factories`, and `UStratMatchSubsystem::GetViewModel`
-    is deliberately not a `UFUNCTION`. So a correct, gated, T-UI-05-pinned field had no player
+    is deliberately not a `UFUNCTION`. So a correct, gated, T-UI-05-pinned field **[AMENDED
+    2026-08-29: read this as pinned on BOTH sides of the bridge under two IDs rather than one.
+    `bSpawnBlocked`'s module-side derivation is `T-UI-05`'s and is asserted by
+    `Stratocracy.StratBridge.T-UI-05.ADisplacedSpawnLandsOnANeighbourAndSpawnBlockedStaysFalse`,
+    which that ruling confirms CONFORMING; the engine-side mirror on `FStratFactoryView` is
+    `T-INT-05`'s. The point this sentence is making -- that a pinned field had no reader -- does
+    not depend on which of the two it named. Same marker, same instruction, same author as the
+    one earlier in this file: edited by the `coordinator` on the user's direct instruction rather
+    than by this lane.]** had no player
     behind it -- the same shape as `SkipGuidance` having no caller, and the check that finds it
     is the ROUTE and not the mechanism.
   - **THE TWO CLOCKS ARE REAL AND THEY DIVERGE ON THE ONE SEQUENCE THIS FOOTER IS ABOUT.**

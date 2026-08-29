@@ -12,6 +12,237 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+> **[OUT-OF-LANE WRITE, 2026-08-29, AND THE SECOND ONE THIS FILE HAS TAKEN IN A SINGLE DAY. THE
+> TWO ENTRIES DIRECTLY BELOW WERE WRITTEN INTO THIS FILE BY THE `coordinator`, WHOSE FILE THIS IS
+> NOT.** This file's header names `strat-test-author` its sole writer, and that rule is not
+> weakened by what follows.
+> **THE ACTING AND THE WRITING ARE ATTRIBUTED SEPARATELY, because they were done by different
+> agents and naming one while leaving the other unnamed is itself a finding.** The clauses, the
+> fixtures, the builds, the suite runs, the falsifiability probes and the prose of both entries
+> are `strat-test-author`'s, produced in two lane worktrees and delivered as draft record entries
+> in its lane reports; the `coordinator` transcribed them here and wrote this block. The user
+> directed it in those terms on 2026-08-29, after the merge, having been offered the alternative
+> of four lane dispatches writing into two shared files.
+> **THE REASON THE DRAFTS EXISTED AT ALL is a lane-concurrency constraint:** two test-author lanes
+> ran at once against one `tests.md`, so both were instructed NOT to write this file in their
+> trees, because two lanes editing one record file conflict on rebase. The merge protocol already
+> puts the record entry after the merge, on the integration tree, so the instruction cost nothing.
+> **WHAT THIS BLOCK DOES NOT DO:** it licenses this transcription and nothing else. It is not a
+> standing fallback writer for this file. **AND THE REPETITION IS THE POINT.** An earlier
+> out-of-lane write into this file, on the morning of the same day, produced a `VERDICT: BLOCK`
+> for the single reason that its markers did not say so -- the finding was that **the file that
+> RECEIVES an out-of-lane write is where the exception has to be readable**, not only in the
+> coordinator's own file. This block exists because of that finding. Two exceptions in one day in
+> one file, and a third in `engine.md` beside it, is a clause forming rather than three
+> coincidences; whether `Tools/architect/state/` should say plainly that the `coordinator`
+> transcribes lane-authored entries after a merge is the user's to rule.
+
+- **2026-08-29 (local; the runs that back this entry stamp UTC `2026.08.29-18.15.33` and its
+  confirming re-run `2026.08.29-18.16.21`, both in the LANE tree) -- W5'S SEC 2.11.2 AI TURN
+  PLAYBACK IS PINNED BY NINE CLAUSES IN ONE NEW FILE, AND TWO OF THEM EXIST BECAUSE THE WAVE
+  SHIPPED THE SAME DEFECT TWICE.** `strat-test-author` ACTING; ENTRY TRANSCRIBED by the `coordinator` under the block
+  above -- the clauses, the fixtures, the runs and this entry's prose are the test author's,
+  produced in the lane worktree
+  `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/ai-turn-playback`, against the engineer's
+  uncommitted C++; landed on `master` in merge commit `69d0029`. One new file inside `Tests/`:
+  `Source/StratPlay/Tests/StratAiPlaybackClauses.cpp` (9). The clause-name set grew by exactly
+  nine over the wave and NOTHING was removed or renamed, measured by MULTILINE SET DIFFERENCE on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- never by a single-line grep, and never by an
+  acceptance-ID grep, which once undercounted 8 as 5. The live suite figure is `global.md`'s and
+  is not restated here.
+  - **THE DEFECT THIS WAVE HAD TWICE, because the clauses are only legible against it, and
+    because the second instance is the more interesting one.**
+    - **INSTANCE 1 -- THE SHIPPED DEFAULT.** `RunAiTurnsNow` fills `AiPlaybackReel` on EVERY
+      hand-over while only the TIMER was gated on `AiPlaybackStepSeconds`. At the default of zero
+      the cursor sat at 0 over a non-empty reel: `IsAiPlaybackRunning()` true, `SkipAiPlayback()`
+      true, and the first click or Esc after every AI hand-over consumed. **FOUND BY A CLAUSE THAT
+      PASSED WHILE MEASURING IT** -- `SkipIsReachableAfterTheMatchConcludes` had reached "a reel
+      playing" THROUGH the defect, so it was green and the state it was green about was wrong.
+    - **INSTANCE 2 -- THE RESEED, AND THE PROSE ASSERTED THE PROPERTY THE CODE LACKED.**
+      `BeginAiPlayback`'s invariant covered every reason not to ARM and said nothing about the
+      reasons to STOP. `StopAiPlaybackTimer` cleared the clock and left the cursor;
+      `TearDownPresentation` and `Deinitialize` both ended tours that way, and `StartMatchInternal`
+      calls the former unconditionally with `LoadMatchFromSlot` reaching it through the same
+      function. So a new match or slot load taken mid-tour began with a stranded cursor over the
+      PREVIOUS match's step list, and swallowed the new match's first input. Found by
+      `strat-integration-reviewer`, not by a clause. Fixed by making the verb `EndAiPlaybackTour`,
+      which clears and retires atomically.
+    - **THE LESSON THIS LANE SHOULD KEEP: an invariant stated on the function that establishes
+      half of it reads as covering all of it. Grep the CALL SITES of the verb, not the prose.**
+  - **WHAT EACH CLAUSE PINS, AND WHAT IT DOES NOT.**
+    - `Stratocracy.StratPlay.T-TURN-09.PlaybackDispositionsAgreeOnState` reaches `T-TURN-09`'s
+      STATE-EQUALITY half ONLY. It re-asserts nothing about Sec 2.8's result tier or which side
+      won. The equality is cheap BY CONSTRUCTION -- the board is reconciled to the final view
+      model before a tour begins -- and the clause's value is that the cheapness is STRUCTURAL:
+      `FStratAiPlaybackReel` holds no `FStratBridge`, and the clause reddens the day something
+      gives it one. **DELIBERATELY NOT rewritten onto `AdvanceAiPlaybackOneStep`** when that seam
+      appeared: it needs no clock, no world and no subsystem today, and routing it through one
+      would make it MORE contingent, not less.
+    - `GATE-AITURN` is a LOCAL GATE NAME. It mints no acceptance ID and claims none. `T-AI-06` was
+      REFUSED for this wave -- its subject is the TIE-BREAK RULE and a playback wrapper asserts
+      nothing about tie-breaking -- and `T-INT-05` never became owed, because `FStratViewModel`
+      gained no member.
+    - `GATE-AITURN.ReelDoesNotChangeTheTurn` is THE KEYSTONE: without it,
+      `StratAiTurnRunner.h`'s amended PACING bullet ("delete the parameter and every turn plays
+      identically") is unfalsifiable prose. **Its comparators are PROVED able to say no** by a
+      control arm that genuinely differs -- the report's own entries carry `'bOk differs'` and
+      `'lengths differ: 8 vs 2'` -- so a comparator that always answered "equal" fails the clause
+      before it reaches the claim. **BUT THE MUTANTS THAT WOULD REDDEN IT WERE NEVER EXECUTED:**
+      each is an edit to `StratAiTurnRunner.cpp`, outside this lane. They are named at the clause
+      and flagged there as unexecuted.
+    - `GATE-AITURN.ReelRecordsEveryAcceptedCommandInOrder` pins one step per accepted command in
+      submission order, the closing `EndTurn` included with `bHasHex == false`, and NOTHING
+      appended on the refusal arm or the bound arm. Its expectation comes from an INDEPENDENT
+      recorder in the scripted port, appended one stack frame below the reel's own append.
+    - `GATE-AITURN.SkipReturnsTrueOnlyWhilePlaying` pins the FALSE arm on both quiet states, and
+      pins `Num()` as the ONLY discriminator between a skipped tour and a reel never filled -- the
+      two agree on `IsPlaying()`, on `GetCursor() == Num()` and on `Peek()`. A `SkipToEnd`
+      rewritten to `Steps.Reset()` passes every other assertion in that clause and fails that one.
+      **THAT SURVIVAL GUARANTEE IS SCOPED TO A TOUR ENDING, NOT A MATCH BOUNDARY** --
+      `TearDownPresentation` zeroes the list on purpose, and `ReseedMidTourLeavesNoStuckTour` pins
+      the zero. The halves are split because forgetting to retire SWALLOWS A CLICK while forgetting
+      to clear only misleads a readout.
+    - `GATE-AITURN.SkipIsReachableAfterTheMatchConcludes` pins a PLACEMENT, not a behaviour, and is
+      the only clause that can see it. It drives `HandleSelectionEvent` and NOT `SkipAiPlayback`,
+      because the subsystem method does not consult the match's conclusion and would pass with the
+      gate moved anywhere. Its negative control -- the second identical Esc, refused by the
+      concluded-match gate -- is what makes the first `true` a statement about the gate's position.
+    - `GATE-AITURN.DefaultConfigConsumesNoInput` and `SkipIsReachableAfterTheMatchConcludes` are A
+      MATCHED PAIR: identical fixtures but for `AiPlaybackStepSeconds`, with OPPOSITE expectations
+      of the same `HandleSelectionEvent(Cancel, ...)` call. Neither is meaningful alone, and a
+      change making both true, or both false, fails one of them.
+    - `GATE-AITURN.NoWorldLeavesNoStuckTour` is what distinguishes the instance-1 fix from the
+      REJECTED alternative (gating `SkipAiPlayback` on the config), which repairs the zero case and
+      leaves a positive interval with no world reporting a phantom tour. It asserts
+      `GetWorld() == nullptr` as its own control BEFORE reading anything into the quiet. **The gate
+      confirmed it separates the two repairs only on the third exit** -- neither it nor its pair
+      covers the reseed path, which is instance 2's.
+    - `GATE-AITURN.StepFocusesAndStopsOnTheLast` is the FIRST thing to execute the camera-stepping
+      half at all. It asserts the TIMER's behaviour rather than a copy of it, because
+      `OnAiPlaybackTimer` is one line calling the same method. It made 155 calls over a 156-step
+      reel; the loop is bounded by the recorded count, so a method returning `true` forever ends
+      the clause with a failure rather than a hang.
+    - `GATE-AITURN.ReseedMidTourLeavesNoStuckTour` is instance 2's regression clause and FAILS ON
+      THE PRE-FIX CODE at all three of its assertions.
+  - **A FALSE-PASS TRAP THAT WOULD HAVE MADE THE RESEED CLAUSE GREEN ON THE BUG, AND THE SHARPEST
+    THING IN THIS ENTRY.** `BeginAiPlayback` shows the FIRST step IMMEDIATELY rather than one
+    interval later, so a hand-over whose reel holds ONE action -- and a turn that only ends gives
+    exactly one, since the closing `EndTurn` is itself recorded -- SELF-COMPLETES BEFORE
+    `RunAiTurnsNow` RETURNS. A reseed clause fixtured that way reseeds an ALREADY-RETIRED reel and
+    asserts nothing. `Num() >= 2` is mandatory, and the positive control -- `IsAiPlaybackRunning()`
+    required TRUE immediately before the reseed, which fired at `1 of 156` -- is what tells "the
+    reseed retired a live tour" from "no tour ever started". **Every assertion after a reseed is an
+    ABSENCE, and an absence proves nothing until the instrument is shown able to speak.** Both
+    guards are HARD `return false` early exits in the body, not soft assertions that would let the
+    clause continue and report green on the rest.
+  - **A CORRECTION THIS LANE MADE AGAINST ITSELF, RECORDED BECAUSE THE ERROR IS REUSABLE.** After
+    instance 1 was fixed, this lane reported that "any fix to the swallow reddens
+    `SkipIsReachableAfterTheMatchConcludes`, so the fix and a re-ruling of the clause's subject
+    belong in one pass". **That was wrong, and the error was SUBJECT-VS-SCOPE committed against
+    its own clause:** what was named as the clause's SUBJECT was the FIXTURE'S ROUTE to a playing
+    reel. The subject is the placement of the skip gate ahead of `StratMatchAcceptsPlayerCommands`,
+    which the 2026-08-29 ruling ordered and which the fix did not touch --
+    `HandleSelectionEvent`'s control flow is byte-identical across it. Only the fixture moved, to
+    a positive interval in a world, and the clause is STRONGER for it: it now tests the placement
+    against a tour that genuinely armed instead of the phantom the defect was handing it. The
+    2026-08-29 ruling stands unamended. The concession is written into the clause's own comment in
+    the tree, not only into a lane report.
+  - **NOT COVERED, AND IT IS A HOLE RATHER THAN A CHOICE.** (1) **"No timer handle is armed after
+    the last step" is UNOBSERVABLE from `Tests/`:** every `FTimerManager` query is keyed on an
+    `FTimerHandle` and `UStratMatchSubsystem::AiPlaybackTimer` is private. It is also without
+    behavioural consequence -- the null-`Peek` arm ends the tour too -- so the clause asserts the
+    observable consequences and says this at its head. A `bool IsAiPlaybackTimerArmed() const` seam
+    would close it and NONE WAS ADDED. (2) **`FocusPlaybackStep` is now EXECUTED but exits at the
+    camera cast every time.** The no-board arm, the no-player-controller arm, the WRONG-PAWN arm
+    and the successful arm each need a possessed pawn of a specific class in a fixture level, and
+    the successful arm additionally needs `AStratBoardActor::WorldLocationOfHex` on a board with a
+    real tile set. That is a level-and-possession fixture, not a headless one. Stated as a debt,
+    not reached for.
+  - **A HARNESS TRAP THAT COST A RED RUN AND IS WORTH THE LINE.**
+    `AddExpectedMessagePlain(..., Occurrences 0)` means **"fail if there were NO occurrences"**
+    (`AutomationTest.h`, the `EAutomationExpectedMessageFlags` overload), NOT "any number including
+    zero". A speculative declaration is itself an assertion and reddens a clean clause. Declare
+    only what a MEASURED run attributed to that clause -- this lane ran first, read the exact
+    warnings the report attributed to each clause, then declared only those.
+  - **KNOWN FLAKES.** None observed. Every figure in this pass was confirmed by a second run on
+    identical bytes.
+
+- **2026-08-29 (local; the run that backs this entry stamps UTC `2026.08.29-17.27.23` in the LANE
+  tree) -- W4'S TWO SEC 2.11.2 ON-MAP MARKERS ARE PINNED BY THREE CLAUSES, AND THE LANE PROVED
+  FALSIFIABILITY BY THE ONLY ROUTE OPEN TO IT.** `strat-test-author` ACTING; ENTRY TRANSCRIBED by the `coordinator` under the
+  block above -- the clauses, the fixtures, the runs and this entry's prose are the test
+  author's, produced in the lane worktree `E:/MultiAgent/Strat-wt/slot-2` on branch `feat/map-markers`, against the engineer's
+  uncommitted C++; landed on `master` in merge commit `4084df6`. One new file inside `Tests/`:
+  `Source/StratPlay/Tests/StratMapMarkerClauses.cpp` (3), CRLF and no BOM. **NOT "matching its neighbours" --
+  that gloss was written and is withdrawn here before it landed: `Source/StratPlay/Tests/`
+  splits SIXTEEN CRLF to THIRTEEN LF-only and `StratMatchReconcile.cpp` next door is LF-only,
+  so this file matches a MAJORITY and not a convention.** The two measured facts stand; the
+  claim about the directory did not. The clause-name set grew by exactly three and NOTHING was removed, by multiline set
+  difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST`. The live suite figure is `global.md`'s and is
+  not restated here.
+  - **WHAT EACH CLAUSE PINS.**
+    - `Stratocracy.StratPlay.T-INT-05.MarkersRebuildFromTheViewModelAlone` -- the two marker
+      components are a function of the LAST applied model alone. Four passes: pass 1 records, pass
+      2 inverts `bIsFlag`/`bDone` on every unit, pass 3 re-applies pass 1's model and every actor
+      must answer identically, pass 4 leaves nothing lit. **Pass 3's expectation is PASS 1'S OWN
+      RECORDED READING, per unit id, so no marker rule is re-derived anywhere in the clause**, and
+      pass 4 kills a latch of the `if (X) Set(true);`-with-no-else shape. **THIS IS A STRETCH OF
+      `T-INT-05` ONTO NEW SURFACE, NOT A DISCHARGE OF IT.** The ID's claim is about the WHOLE
+      screen; this is one actor's two components' share. W4 leaves the ID exactly as open as it
+      found it, one surface narrower.
+    - `Stratocracy.StratPlay.GATE-MAPMARKERS.FlagMarkerShowsForBothSidesAlways` -- Sec 2.11.2's
+      "both sides, always visible" forecloses a `ViewingSide` filter. **The decisive control is the
+      scenario's side-1 flag unit viewed from side 0** -- the `bIsFlag && Side != ViewingSide` pair
+      -- produced by the rules module and decorated by nothing, and its evaluation is COUNTED
+      (`SawEnemyFlag == 1`) so the assertion cannot be green-and-empty. `GATE-MAPMARKERS` is a
+      LOCAL GATE NAME: it mints no acceptance ID and claims none.
+    - `Stratocracy.StratPlay.GATE-MAPMARKERS.UnactedPipIsOwnSideAndTheDoneBit` -- units B and C
+      carry **identical `bHasMoved`/`bHasActed` and opposite `bDone`**, so no function of the turn
+      flags can answer both; C is additionally `bLockedThisTurn` while lit, so an added lock term
+      reddens it; E is the side term's control.
+  - **WHERE THE EXPECTATIONS COME FROM, AND THE ONE PLACE A TYPED EXPECTATION APPEARS.** `bIsFlag`
+    is MODULE-SIDE and is read, never written -- `StratBuildViewModel` takes it from the snapshot's
+    `UiUnitView::isFlag`. **`bDone` has no module-side value BY RULING** (the rules module has no
+    DONE bit and no snapshot field mirrors it), so in the pip clause it is the INPUT and the
+    required outcome is Sec 2.11.2's own words. That is the file's one typed expectation and its
+    header says so in terms. **No assertion restates `!bDone && Side == ViewingSide` as an
+    expression.**
+  - **W4 MINTS NO MIRROR CLAUSE AND THAT IS A GOOD OUTCOME RATHER THAN A GAP.** `bIsFlag` and
+    `bIsGuidedMarked` are already asserted against the module by name in
+    `Stratocracy.StratUI.T-INT-05.MirrorsSnapshotFieldForField`. An unstated "already covered"
+    reads to the next author exactly like an oversight. This file asserts a COMPONENT against the
+    model and deliberately does not re-assert the model against the snapshot.
+  - **FALSIFIABILITY WAS MEASURED, NOT ARGUED -- AND THE LIMIT OF WHAT THAT MEASURED IS STATED.**
+    The lane may not mutate `StratUnitActor.cpp`, so "what one-line edit reddens this?" was
+    unanswerable from inside it. The probe ran the OTHER way: five assertions inverted inside this
+    file alone, rebuilt, three clauses red with the expected messages, then the file restored
+    BYTE-FOR-BYTE and re-run. It established that the enemy flag unit really reads visible, that
+    the own-side and other-side pip readings differ, that pass 1's recording is real, and -- worth
+    keeping -- that **`TestNotEqual` on two `bool`s does fail when they are equal**, so the B/C
+    premise guard is not inert. **THE GATE NARROWED WHAT THIS PROVES AND THE NARROWING IS RIGHT:**
+    inverting an assertion proves the line EXECUTES and its subject holds a determinate value --
+    that the clause is not VACUOUS. It does NOT prove the clause is sensitive to the code under
+    test; only a mutation of `ApplyUnitView` would. What carries the mutation-sensitivity here is
+    STRUCTURAL rather than executed: the counted controls (`FlagsMoved > 0`, `PipsMoved > 0`,
+    `SawEnemyFlag == 1`, `SawOwnFlag == 1`) and the identical-turn-flags pair, which make the
+    decisive cases provably reached.
+  - **WHAT THESE CLAUSES DO NOT PIN.** (1) **Pixels.** `IsFlagMarkerVisible` and
+    `IsUnactedPipVisible` read `USceneComponent::IsVisible`, which NEVER consults the static mesh
+    -- the limit `IsGuidedMarkerVisible` already carried. Both answer TRUE for a marker with no
+    mesh, drawing nothing, and in this headless fixture every marker is meshless, so all three
+    clauses run entirely on that flag. **Green here does not mean a player sees a marker, and no
+    headless clause can mean that.** (2) **Placement.** Nothing reads a transform;
+    `FlagMarkerOffset` and `UnactedPipOffset` stay unpinned, as their own declarations say. (3)
+    **The flag marker's hide path.** That it stops drawing by ACTOR DESTRUCTION on the flag unit's
+    death depends on `UStratMatchSubsystem::ApplyView`'s destruction loop, which lives in a
+    different file; if that loop were weakened, no clause in this file would notice.
+  - **AN INSTRUMENT FINDING, NEW AND TREE-WIDE.** A non-ASCII character inside a `TEXT()` message
+    literal does NOT round-trip into `Saved/AutomationReport/index.json` -- a section sign came
+    back as `U+FFFD`. Harmless to a verdict, but **it corrupts the exact message a reader quotes
+    off a RED run**. Message literals in this file are ASCII and its comments keep the sign. Other
+    test files have the same exposure and were not touched.
+  - **KNOWN FLAKES.** None observed; this file's clauses were green on two independent full runs.
+
 - **2026-08-28 (local; this pass's runs stamp UTC `2026.08.28-22.17.49`, `-22.19.51` and the
   FINAL `2026.08.28-22.22.24`. THE LAST ONE IS THE REPORT THAT BACKS THIS ENTRY -- the first
   described a clause carrying an undeclared Warning, the second the declaration that removed it,

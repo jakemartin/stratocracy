@@ -11,14 +11,110 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-29 (W4 AND W5 LAND TOGETHER, THE FIRST TIME TWO LANES HAVE RUN CONCURRENTLY
+AND MERGED IN ONE PASS: SEC 2.11.2'S ON-MAP MARKERS AND ITS AI TURN PLAYBACK. Written by the
+`coordinator`, whose file this is.
+THE PROVENANCE IS TWO LANE WORKTREES AND TWO MERGES, WHICH IS WHAT MAKES THIS PASS DIFFERENT
+FROM EVERY BANNER BELOW IT. W4 was built in `E:/MultiAgent/Strat-wt/slot-2` on branch
+`feat/map-markers` and W5 in `E:/MultiAgent/Strat-wt/slot-1` on branch `feat/ai-turn-playback`,
+both from `b58a827`, each landing on `master` as a `--no-ff` merge -- `4084df6` and `69d0029`.
+**SO THERE ARE LANE FIGURES HERE, AND NOT ONE OF THEM IS THE FIGURE BELOW.** W4's lane measured
+270 in its own tree and W5's measured 276 in its own, both against the same 267 baseline, and
+neither is what this tree carries. The suite is
+**279/279**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+THE CENSUS IS 267 -> 270 -> 279, TWELVE NEW CLAUSES, AND IT IS RECORDED HERE BECAUSE THE FIRST
+ATTEMPT AT IT WAS WRONG IN A WAY THAT WILL RECUR. A first set-difference put the `b58a827`
+baseline at **277** rather than 267 -- not because the code disagreed, but because THE TWO SIDES
+WERE GATHERED BY DIFFERENT COLLECTORS. One matched `Tests/.*\.cpp` anywhere in the repo and
+reached `Tools/architect/evidence/02-scoreboard-widget/generated/Source/StratUI/Tests`, ten
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` macros in generated evidence that no target compiles and no
+suite runs; the other was `Source`-scoped. **A difference between two corpora gathered by
+different filters measures the filters, not the code.** Re-derived with ONE collector scoped to
+`^Source/.*Tests/.*\.cpp` across all three revisions: 267 at `b58a827`, 270 at `4084df6`, 279
+here. The suite's own 279 agrees with the macro census, so the compiled set and the executed set
+are the same set, and `strat_banner_sweep.py` -- which derives the tree count independently and
+refused this file while it still said 267 -- is a third agreement arrived at by a tool written
+for another purpose.
+AND THE SWEEP REFUSED THIS BANNER A SECOND TIME, FOR A REASON THAT IS A PROPERTY OF THE
+INSTRUMENT RATHER THAN OF THIS ENTRY, AND WILL RECUR. `strat_banner_sweep.py` treats a
+`reportCreatedOn <date>` citation as a STAMP MARKER, and looks for one within `_STAMP_WINDOW`
+-- **220 characters** -- on either side of a figure. So placing the certifying report stamp
+NEXT TO the figure it certifies makes the live figure read as a QUOTED historical one, and the
+sweep then reports LIVE COUNT MISSING on a banner that has a perfectly good live count. **That
+is the natural thing for an author to do** -- putting the stamp beside the figure is what every
+banner in this file is reaching for -- which is why it is worth a paragraph rather than a
+shrug. THE DURABLE FACT IS THE 220-CHARACTER WINDOW AND NOT THE DISTANCE THIS ENTRY HAPPENS TO
+USE: that distance is an accident of how long the paragraph between them runs, and a later
+author reading it as a threshold to hit would be learning the wrong lesson. **AND THE STAMP OUTRANKS AN EXPLICIT LIVE ASSERTION, WHICH IS WHAT MAKES THIS SURPRISING RATHER
+THAN MERELY FIDDLY.** `is_stamped(window)` is tested FIRST and only then does the verb decide --
+the script says so at the site, that an explicit stamp is a deliberate act by the maintainer and
+outranks everything. So writing `The suite is **279/279**` in plain live tense does NOT protect
+the figure from a citation sitting 220 characters away. Put prose between the figure and its
+citation.
+**AND DO NOT EXPECT THE SWEEP'S OWN MESSAGE TO TELL YOU THIS, WHICH IS THE CORRECTION THIS
+PARAGRAPH MOST NEEDED.** An earlier draft of it ended `it names this failure mode in the message
+it prints`, AND THAT WAS FALSE -- caught by the gate, checked against the source, and struck
+here rather than reworded, because it is the very failure this pass's own lesson is about: the
+PROSE ASSERTED A PROPERTY THE CODE LACKS, one level up from W5's, with the message text in the
+place of the verb nobody grepped. What `LIVE COUNT MISSING` actually names is the OTHER cause --
+a reporting verb such as `reads`, `claim` or `defect` in the figure's own sentence -- and never
+`reportCreatedOn` or the window. `--explain` does not close the gap either: it prints which
+claim read as stamped and never why. **So an author who hits the stamp-window trap and trusts
+the diagnostic goes hunting for a reporting verb that is not there.** That is the single most
+useful sentence in this paragraph and it is only here because a gate refused the paragraph that
+vouched for the instrument instead.
+THE `coordinator` RAN IT ITSELF, ON THE MERGED TREE, AFTER BOTH MERGES: `reportCreatedOn
+2026.08.29-18.31.03`, `succeeded 279`, `failed 0`, `notRun 0`, `succeededWithWarnings 0`, read
+directly out of `Saved/AutomationReport/index.json`. THAT STAMP IS UTC AND THIS ENTRY'S DATE IS
+LOCAL. A separate run after the FIRST merge alone read `270/270` at `reportCreatedOn
+2026.08.29-18.28.21`, and that figure is `4084df6`'s own and is stated in that merge commit; it
+is superseded here rather than quoted as agreement.
+THE TREE WAS BUILT BEFORE EACH RUN, WITHOUT `-NoHotReloadFromIDE`, and the flag's absence is the
+evidence rather than a detail: that flag is the LANE trees' -- the Live Coding mutex is
+machine-wide, so a lane needs it to build while an editor is open elsewhere -- and using it on
+the integration tree would try to overwrite DLLs an editor holds. No editor was running. Both
+builds are the tool's own `Result: Succeeded` with `REAL_EXIT=0`, redirected to a file and never
+piped, and a case-insensitive count of `warning|error` lines over the whole log returns 0.
+AND THE GATE MEASURED THAT HAZARD FURTHER THAN THE `coordinator` DID, WHICH IS WORTH MORE THAN
+THE FIX. Exactly one macro-bearing path outside `Source/` is GIT-TRACKED, so +10 is right for a
+git-scoped collector -- but `Tools/architect/runs/20260811-165313/` and
+`.../20260811-170748/` hold two further UNTRACKED copies of the same ten macros, so a collector
+that walks the FILESYSTEM inflates by **+30**, and by a figure that varies with whatever is
+sitting in `runs/` on the day. Two collectors differing only in git-versus-filesystem disagree by
+20 on identical committed code. **Anchor the pattern at `^Source/` and gather both sides of any
+difference with one function.**
+THE GATE HAS RUN FOUR TIMES ACROSS THIS PASS, AND THE VERDICT FOR THE PASS IS THE FOURTH.
+W4's lane gate returned `VERDICT: PASS` with zero findings on the first round. W5's lane gate
+returned `VERDICT: BLOCK` on one finding -- the reseed path, the second instance of W5's own
+input-swallow defect -- and `VERDICT: PASS` with zero findings on the re-gate after the repair.
+The POST-MERGE gate on this tree then returned `VERDICT: BLOCK` on one finding, and **that
+finding was this file**: the banner directly below still asserted a live `267/267` of `master`
+by name, which the merge had made false. The code, the assets and the module graph were entirely
+clean in that pass. **THE RE-GATE ON THE FIXED RECORD IS THE PASS VERDICT AND IS RECORDED IN THE
+TOPMOST `## NEXT` ENTRY**, which also carries what each gate said it did NOT measure -- the
+post-merge gate neither built nor ran the suite, and says so.
+BOTH WAVES SHIP WITH THEIR ASSET TAILS UNBUILT AND NEITHER IS A DEFECT, BUT THE CONSEQUENCE IS
+BLUNT: **NOTHING EITHER WAVE ADDS IS VISIBLE TO A PLAYER YET.** W4's four `EditDefaultsOnly` art
+slots ship unset, so both markers toggle correctly on every refresh and draw nothing; W5's
+`AiPlaybackStepSeconds` ships at `0.0f` with Sec 2.11.2's 0.5 deliberately not written in C++, so
+the tour is compiled, reasoned about and has never been seen. Both need one editor batch on
+`BP_StratUnit` and the GameMode Blueprint default, and `unreal-editor-direct` did not connect
+during this session.)
+
 _Last run 2026-08-29 (TWO RULINGS AND ONE RENAME: THE ACCEPTANCE IDS FOR W4, W5, W6 AND W8; THE
 RULING THAT `T-UI-05` STOPS AT THE SNAPSHOT; AND THE FOUR CLAUSE NAMES THAT RULING MOVED TO
 `T-INT-05`. Written by the `coordinator`, whose file this is.
 THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE IN THIS PASS: everything below was
 done in `E:/MultiAgent/Stratocracy` on branch `master`, with no worktree, no branch, no rebase
 and no merge, so no figure is carried over from anywhere and there is no lane run to agree or
-disagree with. The suite is
-**267/267**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+disagree with. **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`: THE FIGURE
+IN THIS PARAGRAPH IS NO LONGER LIVE AND IS STAMPED RATHER THAN DELETED. W4 and W5 landed
+after it in `4084df6` and `69d0029`, and the live figure is the topmost banner's. The
+provenance sentence above -- no lane, no branch, no merge -- remains TRUE OF THE PASS IT
+DESCRIBES and false of the tree as it now stands; that is why it is stamped where it sits
+rather than reworded, since a reader arriving by a citation lands here and not on the
+banner above.]** The suite WAS **267/267** at that pass, every entry Success, zero failed,
+zero notRun, zero succeededWithWarnings.
 THE COUNT DID NOT MOVE AND THAT IS THE HEADLINE RATHER THAN AN OMISSION. A rename moves no
 clause into or out of the set, and the census is taken by `IMPLEMENT_SIMPLE_AUTOMATION_TEST` and
 never by an acceptance-ID name -- 267 before the rename and 267 after it, with the FOUR RENAMED
@@ -2508,6 +2604,101 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-29, COORDINATOR -- W4 AND W5 LAND. THE POST-MERGE GATE RETURNED `VERDICT: BLOCK` ON
+  ONE FINDING, THE FINDING WAS THIS FILE, AND THE RE-GATE ON THE FIXED RECORD IS THE VERDICT FOR
+  THIS PASS.** Two lanes ran concurrently for the first time in this milestone and both merged
+  here: `feat/map-markers` (W4) as `4084df6` and `feat/ai-turn-playback` (W5) as `69d0029`, both
+  from `b58a827`. The live suite figure and the build provenance are the topmost banner's and are
+  not restated here.
+  - **WHAT EACH OF THE FOUR GATE RUNS SAID, AND WHAT EACH SAID IT DID NOT MEASURE.**
+    - **W4's lane gate: `VERDICT: PASS`, zero findings, first round.** It re-derived the module
+      graph rather than trusting it, pulled both Sec 2.11.2 rows out of the GDD itself rather than
+      trusting the quotes in the dispatch or the code, and confirmed `ArmPitch = -60` and
+      `HexSize = 100` so the marker-separation derivation held. It did not build and did not run
+      the suite. **It also caught its own instrument mid-pass:** its first set-difference used two
+      different collectors and fabricated ten phantom removals, which it discarded and re-collected
+      with one extractor -- the same failure this record has recorded before and the same one the
+      `coordinator` then walked into independently at the merge.
+    - **W5's lane gate: `VERDICT: BLOCK`, one finding**, on the reseed path. See the defect account
+      below. It did not build and did not run the suite.
+    - **W5's re-gate after the repair: `VERDICT: PASS`, zero findings.** It re-derived every check
+      rather than carrying the first pass forward, and closed its own finding STRUCTURALLY rather
+      than by inspection -- see below.
+    - **The post-merge gate on this tree: `VERDICT: BLOCK`, one finding, and the finding was this
+      file's own banner.** The code, the assets and the module graph were entirely clean; the
+      defect was that the banner then at the top still asserted a live `267/267` OF `master` BY
+      NAME, which the merge had made false. It is stamped in place below rather than deleted. **It
+      did not build and did not run the suite**, and says so -- the figures it checked are the
+      `coordinator`'s own, reproduced independently.
+  - **THE TWO WAVES DO NOT TOUCH EACH OTHER, AND THE MERGED TREE IS WHERE THAT COULD FIRST BE
+    CHECKED.** Their file sets are disjoint -- verified before the merge -- but disjoint files are
+    not disjoint semantics, and the post-merge gate checked the semantics: `RefreshPresentation`
+    runs BEFORE `BeginAiPlayback` in `RunAiTurnsUntilHumanOrEnd`, so W4's markers are reconciled to
+    the final view model before W5's tour starts and the tour never re-enters reconcile. **AND THE
+    COLLISION THAT WOULD HAVE BEEN HIDDEN DID NOT HAPPEN:** W4 added both markers INSIDE the
+    existing `AStratUnitActor::ApplyUnitView` and left its signature alone, so the sole call site --
+    which lives in a W5 file -- needed no edit. Had that signature moved, git would still have
+    reported "automatic merge went well" and the tree would not have compiled.
+  - **W5 SHIPPED THE SAME DEFECT TWICE AND NEITHER INSTANCE WAS FOUND BY ITS AUTHOR.** Instance 1,
+    the shipped default, was found by `strat-test-author` -- **by a clause that PASSED while
+    measuring it**, having reached "a reel playing" through the defect itself. Instance 2, the
+    reseed, was found by `strat-integration-reviewer` and is the one worth carrying: **the prose
+    asserted the property the code lacked.** `BeginAiPlayback` claimed to own the invariant because
+    it was "the only one in a position to know" -- true of ARMING, false of DISARMING, while the
+    state it constrains was mutated from two other functions. In both instances the player's first
+    click or Esc after an AI hand-over was silently consumed. The engine-side account, both fixes
+    and the six-call-site census are `engine.md`'s; the clauses are `tests.md`'s.
+    - **THE DURABLE LESSON, and it is not about timers:** an invariant stated on the function that
+      establishes half of it reads as covering all of it. **Grep the CALL SITES of the verb, not
+      the prose.** The second fix is a RENAME for exactly this reason -- `EndAiPlaybackTour` clears
+      the timer and retires the reel atomically, and the re-gate closed the finding structurally by
+      showing `AiPlaybackTimer` is touched by exactly TWO statements in the whole tree, so there is
+      no route to the handle that bypasses retirement and a later call site cannot reopen it.
+  - **A CENSUS DEFECT THE `coordinator` COMMITTED AND CAUGHT BEFORE IT REACHED A COMMIT MESSAGE**,
+    recorded because the hazard is standing and larger than first measured. A first set-difference
+    put the `b58a827` baseline at 277 rather than 267, because the two sides were gathered by
+    DIFFERENT COLLECTORS -- one reaching a generated evidence directory whose macros nothing
+    compiles. The arithmetic and the correction are in the banner. **The gate then measured the
+    hazard further:** +10 for a git-scoped collector, but **+30 for a filesystem walk**, because
+    `Tools/architect/runs/` holds two untracked copies of the same ten macros, and that figure
+    varies with whatever is sitting there on the day. **Anchor at `^Source/`; gather both sides
+    with one function.**
+  - **THE WAVE LIST: W0, W1, W2, W3, W4, W5 AND W7 HAVE LANDED. W6 AND W8 REMAIN**, and both keep
+    every constraint the 2026-08-29 acceptance-ID ruling put on them. W6 is still the only wave with
+    a data-lane half (`GameDefaultMap` in `Config/DefaultEngine.ini`) and still gates the packaged
+    build; **whether it builds a difficulty-tier control at all is still the user's to rule, and
+    the `T-FAME-02` clause that ruling WOULD OWE is PROSPECTIVE -- it does not exist and will not
+    until W6 builds the control. **It must not be read as a statement about
+    `Stratocracy.StratBridge.T-FAME-02.HandicapMovesTheScenariosConfiguredFameByTheDelta`,
+    which exists, compiles and is green inside the figure above** -- in a record where `inert`
+    means a clause that CANNOT FAIL, pairing that word with a live ID invites exactly the wrong
+    conclusion.** W8 is still six items of which
+    **two are not buildable as specified**: the path preview needs a new `FStratBridge` method
+    because `strat::findPath` is routed through none, and the repair pip has NO module-side
+    predicate at all, so deriving its two board facts engine-side is the presentation-layer
+    arithmetic `T-UI-02` and `T-UI-03` both exist to forbid.
+  - **WHAT NEITHER WAVE DELIVERED, AND IT IS THE SAME THING FOR BOTH.** Every asset tail. W4's
+    flag-marker and pip meshes and materials, W5's `AiPlaybackStepSeconds = 0.5` on the GameMode
+    Blueprint default. Until one editor batch lands both, **nothing either wave adds is visible to
+    a player**: W4's markers toggle correctly and draw nothing, and W5's tour has never been seen
+    by anyone. `unreal-editor-direct` failed to connect throughout this session, so the batch needs
+    that fixed, or the NeoStack route, or `CLAUDE.md`'s editor-driver clause. OWNED: coordinator,
+    to schedule.
+  - **A NON-GATING FINDING HANDED FORWARD TO THE ENGINEER.**
+    `UStratMatchSubsystem::SkipAiPlayback`'s log line reads the cursor AFTER `SkipToEnd()` has
+    already moved it, so it always prints `skipped at step N of N` and can never report where the
+    skip actually happened -- the one fact the message exists to record. Verbose-only, no clause
+    depends on it, and it is not worth opening the file for on its own; fix it whenever
+    `StratMatchSubsystem.cpp` is next open.
+  - **THREE OUT-OF-LANE WRITES IN TEN DAYS IS A CLAUSE FORMING, AND THIS ENTRY DECLINES TO SETTLE
+    IT.** `engine.md` and `tests.md` both received `coordinator`-transcribed lane entries in this
+    pass, on the user's direct instruction, each stating the exception in the RECEIVING file with
+    the acting and the writing attributed separately -- which is the shape an earlier gate BLOCKED
+    for lacking, on the morning of this same day. `content.md` already carries a standing fallback
+    writer. **Whether `Tools/architect/state/` should say plainly that the `coordinator`
+    transcribes lane-authored entries after a merge is the user's to rule**; until it does, each
+    such write needs its own block and the count keeps rising.
 
 - **2026-08-29, COORDINATOR -- THE RE-GATE RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, AND THAT
   IS THE VERDICT FOR THIS PASS.** It read the working tree against `HEAD` with nothing staged and

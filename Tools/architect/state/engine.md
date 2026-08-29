@@ -13,6 +13,276 @@
 
 ## NEXT
 
+> **[OUT-OF-LANE WRITE, 2026-08-29. THE TWO ENTRIES DIRECTLY BELOW WERE WRITTEN INTO THIS FILE
+> BY THE `coordinator`, WHOSE FILE THIS IS NOT.** This file's header names
+> `strat-gameplay-engineer` its sole writer, and that rule is not weakened by what follows.
+> **THE ACTING AND THE WRITING ARE ATTRIBUTED SEPARATELY, because they were done by different
+> agents and naming one while leaving the other unnamed is itself a finding.** The C++, the
+> builds, the design decisions and the prose of both entries are `strat-gameplay-engineer`'s,
+> produced in two lane worktrees and delivered as draft record entries in its lane reports; the
+> `coordinator` transcribed them here and wrote this block. The user directed it in those terms
+> on 2026-08-29, after the merge, having been offered the alternative of four lane dispatches
+> writing into two shared files.
+> **THE REASON THE DRAFTS EXISTED AT ALL is a lane-concurrency constraint and is worth keeping:**
+> two engineer lanes ran at once against one `engine.md`, so both were instructed NOT to write
+> this file in their trees, because two lanes editing one record file conflict on rebase. The
+> merge protocol already puts the record entry after the merge, on the integration tree, so the
+> instruction cost nothing and removed a conflict.
+> **WHAT THIS BLOCK DOES NOT DO:** it licenses this transcription and nothing else. It is not a
+> standing fallback writer for this file, and it does not cover a `coordinator` writing an entry
+> it authored itself. **AND IT IS THE THIRD OUT-OF-LANE WRITE RECORDED IN THIS DIRECTORY IN TEN
+> DAYS** -- `content.md` has a standing fallback writer, `tests.md` took one on 2026-08-29
+> earlier the same day, and this is the third. A third exception is a clause forming rather than
+> three coincidences, and whether `Tools/architect/state/` should say plainly that the
+> `coordinator` transcribes lane-authored entries after a merge is the user's to rule.
+
+- **2026-08-29, `strat-gameplay-engineer` (ACTING; entry TRANSCRIBED by the `coordinator` under
+  the block above) -- W5: SEC 2.11.2'S AI TURN PLAYBACK. THE HEADLESS AI RESOLVED ITS TURN
+  INSTANTLY AND THREW THE SEQUENCE AWAY; THE ONLY TRACE A HAND-OVER LEFT WAS A RUN OF
+  `STRAT-AI applied` LOG LINES, AND A LOG LINE IS NOT SOMETHING A CAMERA CAN STEP TO.** In the
+  lane tree `E:/MultiAgent/Strat-wt/slot-1`, branch `feat/ai-turn-playback`, from `b58a827`,
+  landed on `master` in merge commit `69d0029`. FIVE FILES MODIFIED AND TWO ADDED, all the
+  engineer's and all under `Source/StratPlay/`: added `StratAiPlayback.h` and
+  `StratAiPlayback.cpp`; modified `StratAiTurnRunner.h`, `StratAiTurnRunner.cpp`,
+  `StratMatchSubsystem.h`, `StratMatchSubsystem.cpp` and `StratPlayerController.cpp`. No asset,
+  no `Content/`, no `Config/`, no `Data/`, nothing under `Source/StratRules/`, no test, nothing
+  under any `Tests/` directory, no `.Build.cs`, no `.uproject`.
+  `Source/StratPlay/Tests/StratAiPlaybackClauses.cpp` in that tree is `strat-test-author`'s and
+  is recorded in `tests.md`. NO SUITE FIGURE AND NO VERDICT IS STATED HERE; `global.md` owns
+  both, and this entry links to it rather than restating it.
+  - **THE BUILD, IN THE LANE TREE, AFTER THE SECOND FIX BELOW.** `Build.bat StratocracyEditor
+    Win64 Development -project="E:\MultiAgent\Strat-wt\slot-1\Stratocracy.uproject" -waitmutex
+    -NoHotReloadFromIDE -MaxParallelActions=10`, redirected to a file with `$?` captured on the
+    next line, never piped. The tool's own line is `Result: Succeeded`, `Total execution time:
+    23.74 seconds`; a case-insensitive `grep -c "warning|error"` over the whole 49-line log
+    returns **0**. `-NoHotReloadFromIDE` is the LANE TREE's flag -- the Live Coding mutex is
+    machine-wide -- and would be WRONG on the integration tree. The merged tree was built and run
+    separately by the `coordinator`; that is `global.md`'s.
+  - **THE SYMBOLS ADDED**, cited by name because a `file:NNN` written during a diff is
+    invalidated by that same diff. New types: `FStratAiPlaybackStep`, `FStratAiPlaybackReel`. New
+    on `UStratMatchSubsystem`: `SkipAiPlayback`, `IsAiPlaybackRunning`, `GetAiPlaybackStepCount`,
+    `GetAiPlaybackCursor`, `AdvanceAiPlaybackOneStep`, `BeginAiPlayback`, `OnAiPlaybackTimer`,
+    `EndAiPlaybackTour`, `FocusPlaybackStep`, and the members `AiPlaybackTimer` and
+    `AiPlaybackReel`. New on `FStratMatchConfig`: `AiPlaybackStepSeconds`.
+    `FStratAiTurnRunner::RunTurn` gained a defaulted `FStratAiPlaybackReel*`.
+  - **THE SHAPE: THE PRESENTATION IS SPLIT AND THE EXECUTION IS NOT, AND THE PARAMETER THAT LOOKS
+    LIKE A REVERSAL IS WHAT MAKES THE SEPARATION POSSIBLE.** `StratAiTurnRunner.h` refuses a
+    per-command delay in terms -- "resumable state is a mirror of the rules state by another
+    name" -- and that ruling is untouched: the reel is WRITTEN and never read inside `RunTurn`, so
+    nothing about what the AI does next depends on it and the turn still resolves in one
+    synchronous call. Pass `nullptr` and the match is bit-identical, which is the falsifiable form
+    of the claim. That bullet in `StratAiTurnRunner.h` now carries a dated amendment beside it
+    rather than reading as contradicted.
+  - **AND THE BOARD DOES NOT REWIND, WHICH IS THE LOAD-BEARING CALL.** Playback starts after
+    `RefreshPresentation` has reconciled the actors to the FINAL view model, so Sec 2.11.2's
+    "camera stepping to each" is a tour of the hexes the AI acted on, over a finished board. THE
+    ALTERNATIVE WAS A PER-STEP BOARD and it was rejected: the only way to draw it is a mid-turn
+    copy of the rules state to reconcile against, and that copy is the mirror both this runner and
+    `FStratSelectionMachine` refuse. Sec 2.11.2's own "presentation pacing only, no rules change"
+    licenses the reading and names the camera as the thing that steps. **The consequence is stated
+    rather than hidden:** "any click or Esc skips to the end state" is satisfied TRIVIALLY here,
+    because the end state was never absent -- the skip abandons a tour and fast-forwards no
+    simulation.
+  - **IT IS A RECORDING AND NOT AN INFERENCE.** `StratUnitActor.h` records that Sec 4.9 part 2's
+    ordered event list is not built in this tree and that reconstructing an event by diffing two
+    states is the conflation `StratBridge.h` warns about; that was re-checked on this tree before
+    the design was fixed and was still true. Nothing here diffs anything -- a step is appended at
+    the instant `Port.Submit` returned true, so every entry is a command that was submitted rather
+    than one someone worked out must have been.
+  - **`T-INT-05` DID NOT BECOME OWED, AND THE EVIDENCE IS A FILE THAT DOES NOT APPEAR IN THE
+    DIFF.** The 2026-08-29 ruling made that ID conditional on W5 putting a playback cursor into
+    the view model. It did not: the reel and cursor live on `UStratMatchSubsystem` beside the
+    timer, and `Source/StratUI/StratViewModel.h` is untouched. The rejected alternative -- a
+    `PlaybackCursor` on the presentation block so a widget could bind -- would have bought a
+    progress readout and cost a clause under an ID whose claim is about rebuilding the screen.
+  - **THE SKIP GATES THE WHOLE OF `HandleSelectionEvent` AND SITS AHEAD OF THE CONCLUDED-MATCH
+    GATE, WHICH IS AN ORDERING DECISION AND NOT TIDINESS.** Gating the function rather than two
+    events by name is what makes the GDD's "any" true over an input set that has grown twice.
+    Sec 2.8's primary win most often lands on the AI's own command, so the most interesting
+    hand-over to watch is the one after which the match is over -- and the concluded gate refuses
+    every event once it is. Below that gate the skip would be unreachable in exactly the case it
+    matters most.
+  - **AND IT SHIPPED THE SAME DEFECT TWICE. BOTH WERE FOUND IN THIS PASS, BOTH BY SOMEONE OTHER
+    THAN ITS AUTHOR, AND THE SECOND IS THE MORE INSTRUCTIVE.**
+    - **INSTANCE 1, THE SHIPPED DEFAULT, FOUND BY `strat-test-author` AND CONFIRMED AT THE SOURCE
+      BEFORE THE FIX.** `RunAiTurnsNow` passes the reel UNCONDITIONALLY so the count answers in
+      any configuration, while only the TIMER was gated on `AiPlaybackStepSeconds`. At the
+      default of zero the reel therefore ended each hand-over non-empty with the cursor at 0:
+      `IsAiPlaybackRunning()` read true, `SkipAiPlayback()` succeeded, and
+      `AStratPlayerController::HandleSelectionEvent` CONSUMED THE PLAYER'S FIRST CLICK OR ESC
+      AFTER EVERY AI TURN. **AND THE ENGINEER'S OWN COMMENT IN THAT FILE ASSERTED THE OPPOSITE** --
+      that the block was invisible "in the shipped default configuration" -- which is the worst
+      way for a prose block to be wrong, because it reads as the reason not to go and check. That
+      sentence is STRUCK AND QUOTED at its site, not silently reworded. Fixed by giving
+      `BeginAiPlayback` the invariant that the cursor is at the end unless a tour is actually
+      under way, retiring the reel on all three paths where it declines to arm a timer.
+      **GATING `SkipAiPlayback` ON THE CONFIG WAS THE ALTERNATIVE AND WAS REJECTED BECAUSE OF THE
+      THIRD PATH:** a positive interval with NO WORLD leaves the same stuck cursor, and that is
+      how a headless caller reaches it.
+    - **INSTANCE 2, THE RESEED, FOUND BY `strat-integration-reviewer`, WHICH BLOCKED ON IT -- AND
+      THE PROSE IS THE DIAGNOSIS RATHER THAN AN AFTERTHOUGHT.** `BeginAiPlayback` claimed to own
+      the invariant because it was "the only one in a position to know". **That is TRUE OF ARMING
+      AND FALSE OF DISARMING**, and the invariant constrains both: `StopAiPlaybackTimer` cleared
+      only the clock, and of its call sites `Deinitialize` and `TearDownPresentation` ended tours
+      that way. `StartMatchInternal` calls the latter unconditionally and `LoadMatchFromSlot`
+      reaches it through the same function. So a match at a positive `AiPlaybackStepSeconds` with
+      a tour mid-reel, followed by a NEW MATCH OR A SLOT LOAD, began with a stranded cursor over
+      the PREVIOUS match's step list: on a brand-new match `IsAiPlaybackRunning()` read true and
+      the skip gate swallowed the first input again. The same swallow, reinstated through a door
+      the prose said did not exist. The false sentence is struck and quoted in three places.
+    - **THE SECOND FIX IS A RENAME AND NOT AN ADDED CALL, AND THE RENAME IS THE LOAD-BEARING
+      PART.** `StopAiPlaybackTimer` is now `UStratMatchSubsystem::EndAiPlaybackTour`, which clears
+      the timer AND retires the reel, always. **THERE IS NO LONGER A VERB IN THIS CLASS THAT STOPS
+      THE CLOCK ALONE**, and the gate's re-audit put that structurally rather than by inspection:
+      `AiPlaybackTimer` is touched by exactly TWO statements in the whole tree, `SetTimer` in
+      `BeginAiPlayback` and `ClearTimer` in `EndAiPlaybackTour`, so there is no route to the
+      handle that bypasses retirement and a later call site cannot reopen the gap. Retiring inside
+      a function still named for the clock would have left a name promising less than its body,
+      which is exactly how the next site gets added wrong.
+    - **THE CALL-SITE CENSUS WAS SIX AND NOT FIVE, AND THE ENGINEER CORRECTED THE GATE ON IT.**
+      `AdvanceAiPlaybackOneStep` holds two -- its null-`Peek` arm and its last-step arm -- which is
+      where a count of five collapses them. The conclusion did not depend on the count, but "every
+      site is safe" is a claim about EVERY site, so the set had to be right; the per-site check is
+      recorded on the declaration rather than asserted about the function, and the reviewer
+      accepted the correction on re-gate.
+    - **`TearDownPresentation` ALSO `Reset()`s THE REEL, AND THAT HALF IS DELIBERATELY NOT IN THE
+      VERB.** Retiring alone leaves the previous match's step list readable through
+      `GetAiPlaybackStepCount()` on a new match. **THE SPLIT IS BY CONSEQUENCE:** failing to retire
+      the cursor SWALLOWS THE PLAYER'S INPUT, so that half is inside the verb and cannot be
+      forgotten by a new call site; failing to clear `Steps` can only make a readout report the
+      wrong match's count, so that half is one explicit line at the one place a match boundary is
+      crossed. Folding it in would break the three sites that need the count to survive a tour
+      ending, which is the one discriminator between a tour cut short and a reel never filled.
+    - **THE DURABLE LESSON, AND IT IS NOT ABOUT TIMERS:** an invariant stated on the function that
+      establishes half of it reads as covering all of it. Grep the CALL SITES of the verb, not the
+      prose.
+  - **AND THE CAMERA-STEPPING HALF WAS EXECUTED BY NOTHING, SO IT GOT A SEAM.**
+    `OnAiPlaybackTimer` was reachable only through `FTimerManager`, so `FocusPlaybackStep`,
+    `EndAiPlaybackTour` and the arming path had no coverage at all. The body MOVED to a public
+    `AdvanceAiPlaybackOneStep` and the timer callback is now one line calling it -- ONE driver with
+    two entry points, not two implementations. A test-only stepping path would have been the
+    substitution `T-UI-02` exists to catch, applied to Sec 2.11.2.
+  - **IT SHIPS INERT AND THAT IS A DEBT.** `AiPlaybackStepSeconds` is `0.0f` and Sec 2.11.2's 0.5
+    is deliberately NOT written in C++ -- a second place the pace is stated would make the
+    designer-facing Blueprint default the one nobody could find. **DISCHARGED WHEN** an editor
+    batch sets `0.5` on the GameMode Blueprint default and a human watches one AI hand-over. Until
+    then the camera path is compiled and reasoned about and has NOT been seen. OWNED: coordinator,
+    to schedule. `unreal-editor-direct` did not connect during the session that built this.
+  - **THE OTHER DEBTS, EACH WITH ITS DISCHARGE CONDITION.** (a) No on-screen affordance says the
+    tour can be skipped; Sec 2.11.2 states the behaviour and not a prompt, so nothing is out of
+    spec, but a player who does not know to click will wait. DISCHARGED WHEN the Sec 2.11 UI-layer
+    owner binds a hint to `IsAiPlaybackRunning()` / `GetAiPlaybackCursor()`, which are reflected
+    for exactly that. (b) No highlight on the stepped hex: `AStratBoardActor`'s three overlay
+    components are each spoken for and `ShowObjective`'s own comment rules that a new use gets a
+    NEW component, which needs a material. DISCHARGED WHEN an editor batch can author the fourth
+    overlay; the C++ hook is `FocusPlaybackStep`, which already has the hex. (c)
+    `FocusPlaybackStep`'s camera-resolution arms are still unexecuted -- no board, no player
+    controller, a possessed pawn that is not an `AStratCameraPawn`. `AdvanceAiPlaybackOneStep`
+    makes the STEPPING reachable; it does not make a wrong-pawn level reachable. DISCHARGED WHEN a
+    clause stands up a world with a non-camera pawn. (d) `FStratAiPlaybackReel::Peek` returns a
+    pointer into a `TArray`; closed today by ordering, DISCHARGED WHEN a second writer of the reel
+    appears.
+
+- **2026-08-29, `strat-gameplay-engineer` (ACTING; entry TRANSCRIBED by the `coordinator` under
+  the block above) -- W4: SEC 2.11.2'S ON-MAP MARKERS. THE FLAG `H` AND THE UNACTED PIP. THE VIEW
+  MODEL HAS PUBLISHED BOTH BITS SINCE PHASE 2 AND PHASE 4 AND NO DRAWING CODE READ EITHER; A
+  PLAYER COULD LEARN WHICH UNIT WAS THE FLAG, AND WHICH OF THEIR OWN UNITS WERE STILL LIVE, ONLY
+  BY OPENING THE INFO PANEL ON EACH UNIT IN TURN.** In the lane worktree
+  `E:/MultiAgent/Strat-wt/slot-2` on branch `feat/map-markers`, from `b58a827`, landed on `master`
+  in merge commit `4084df6`. TWO FILES MODIFIED, NO FILE ADDED, both the engineer's and both under
+  `Source/StratPlay/`: `StratUnitActor.h` and `StratUnitActor.cpp`. No asset, no `Content/`, no
+  `Config/`, no `Data/`, nothing under `Source/StratRules/`, no test, nothing under any `Tests/`
+  directory, no `.Build.cs`, no `.uproject`.
+  `Source/StratPlay/Tests/StratMapMarkerClauses.cpp` is `strat-test-author`'s and is recorded in
+  `tests.md`. NO SUITE FIGURE AND NO VERDICT IS STATED HERE; `global.md` owns both.
+  - **THE BUILD, IN THE LANE TREE.** `Build.bat StratocracyEditor Win64 Development
+    -project="E:\MultiAgent\Strat-wt\slot-2\Stratocracy.uproject" -waitmutex -NoHotReloadFromIDE
+    -MaxParallelActions=10`, redirected to a file and never piped, `$?` captured on the next line.
+    `REAL_EXIT=0` and the tool's own `Result: Succeeded`, `Total execution time: 67.33 seconds`.
+    The green is over the edited translation unit rather than an up-to-date tree -- the log names
+    `[81/84] Compile [x64] StratUnitActor.cpp`, `[43/84] Compile [x64] Module.StratPlay.gen.cpp`
+    (UHT's regenerated reflection for the two new `UFUNCTION`s) and `[83/84] Link [x64]
+    UnrealEditor-StratPlay.dll`. A case-insensitive `grep -c "warning|error"` over the whole
+    captured log returns **0**.
+  - **THE SYMBOLS ADDED**, cited by name because a `file:NNN` written during a diff is invalidated
+    by that diff: `AStratUnitActor::FlagMarker`, `FlagMarkerMesh`, `FlagMarkerMaterial`,
+    `FlagMarkerOffset`, `UnactedPip`, `UnactedPipMesh`, `UnactedPipMaterial`, `UnactedPipOffset`,
+    `IsFlagMarkerVisible`, `IsUnactedPipVisible`, and the private `ConfigureMarker`.
+    `ApplyUnitView`'s SIGNATURE IS UNCHANGED and `UStratMatchSubsystem` was not touched: both
+    markers read only `FStratUnitView` fields plus the `ViewingSide` that call already passed, so
+    no second driver and no new operand entered the subsystem.
+  - **AND THE WAVE PLAN'S OWN BULLET NAMED A METHOD THAT DOES NOT EXIST.** `global.md`'s W4
+    bullet says `AStratUnitActor::ApplyView`; the per-unit method is `ApplyUnitView`, and
+    `ApplyView` is `UStratMatchSubsystem`'s, a layer up. Confirmed absent in the lane tree. The
+    2026-08-29 ruling entry already carried the correction and left the bullet standing; it is
+    recorded again here because a proposed symbol greps exactly like a defined one.
+  - **THE WAVE WAS ALSO NARROWER THAN THAT BULLET READS, AND THE MEASUREMENT IS WHY.**
+    Mesh-by-`DefId`, the side material and the guided marker were ALREADY built and applied by
+    `ApplyUnitView`. What remained were the two bits projected and read by no drawing code:
+    `bIsFlag`, written at `StratViewModel.cpp`'s unit projection, mirrored into the info panel and
+    otherwise read only in `Tests/`; and `bDone`, produced by `FStratSelectionMachine` and consumed
+    by the controller, the forecast query and the idle count. `StratUnitActor.h` named `bDone`
+    three times in prose and read it nowhere.
+  - **THE FLAG MARKER TAKES NO SIDE TEST AND THAT IS THE SPECIFICATION, NOT AN OVERSIGHT.**
+    Sec 2.11.2's earn-your-pixels row is `Flag "H" marker (both sides, always visible)`. "Both
+    sides" forecloses `View.Side == ViewingSide` and "always visible" forecloses any window bit.
+    `GuidedMarker`'s side filter -- the adjacent line in the same function -- was a USER RULING
+    about a marker that says "select this"; this one says "this is the flag", about a unit the
+    other seat is meant to HUNT. The contrast is stated in the code because two adjacent visibility
+    writes invite a reader to carry the filter across.
+  - **ITS OPERAND SET IS MATCH-CONSTANT, WHICH IS THE EXACT SHAPE OF THE 2026-08-24 LATCH, AND THE
+    QUESTION THAT FINDING POSES IS ANSWERED RATHER THAN DUCKED.** `bIsFlag` can no more go false
+    than `bIsGuidedMarked` could. What makes it correct here is that Sec 2.11.2 ASKS for permanence
+    where Sec 2.11.6 said the turn-1a marker clears -- and the route by which it stops drawing
+    exists and is not a visibility write: **the flag unit's death destroys the actor.**
+    `FStratViewModel::Units` is every LIVING unit and `UStratMatchSubsystem::ApplyView` destroys the
+    actor for any id the model no longer carries; Sec 2.4 ends the match in the same breath. The
+    gate confirmed that destruction loop against the code rather than accepting the reasoning, and
+    noted honestly that it remains an UNPINNED reasoning step: it lives in a different file, and if
+    that loop were ever weakened no clause in `StratMapMarkerClauses.cpp` would notice.
+  - **THE PIP IS `!bDone && Side == ViewingSide`, AND `bLockedThisTurn` IS DELIBERATELY NOT AN
+    OPERAND.** Sec 2.11.2 binds the pip "via the DONE bit of Sec 2.11.1's machine" and Sec 2.11.1
+    enumerates it among the DONE-bound surfaces while naming the alternative's failure in the same
+    sentence -- "a waited unit would keep its pip". A locked unit also cannot be ordered, which
+    makes the conjunction tempting; adding it would be this class deciding a content rule the GDD
+    did not state. The omission is NAMED on the component so it does not read as missed. THIS
+    OPERAND SET HAS A REAL FALSE-GOER -- `bDone` moves several times a turn -- which is the check
+    the 2026-08-24 correction demands of every new marker on this actor, and which the flag marker
+    answers differently.
+  - **`BeginPlay`'S EARLY `return` WAS A LIVE HAZARD THE MOMENT THERE WERE THREE MARKERS.** It read
+    `if (GuidedMarker == nullptr) { return; }` -- correct with one marker, and with three it would
+    have silently skipped the flag marker's and the pip's placement WITH A GREEN BUILD. The guard is
+    now per-marker inside `ConfigureMarker` and there is no early exit. ONE HELPER RATHER THAN THREE
+    COPIES, AND THE REASON IS THE LOG: the missing-mesh log is the only discriminator the project
+    has between an unconfigured marker and an unmarked unit (`IsGuidedMarkerVisible` measured that
+    `IsVisible` never consults the static mesh), and an omitted log is silent by construction.
+  - **THE OFFSETS ARE `FVector` AND THE SEPARATION AXIS IS DERIVED, NOT EYEBALLED.** At
+    `ArmPitch = -60` with no yaw, body-space screen-up is `0.866x + 0.5z` and depth is
+    `0.5x - 0.866z`; NEITHER CONTAINS `y`, so Y is the one axis that moves a marker across the
+    screen without changing its height or its depth sort. Guided at `(0, 0, 300)` UNCHANGED (the
+    scalar is widened at the call site, so its shipped placement is bit-identical), flag at
+    `(0, -40, 300)`, pip at `(0, 40, 300)`. 40 is bounded by the tile:
+    `AStratBoardActor::LocalLocationOfHex` documents `HexSize` as the CENTRE-TO-CENTRE distance and
+    it defaults to 100. **THE Z ASSUMES A 100 uu CENTRED MESH THAT DOES NOT EXIST YET** and the Y
+    assumes an unrotated board; both are stated on the property, NO TEST PINS EITHER VECTOR, and the
+    gate on the final placement is a human eye as it was for the guided marker.
+  - **THE HEADER'S "NOT IN THIS ROUND" BULLET WAS HALF FALSE AND IS RETRACTED FLAT, NOT NESTED.**
+    It said phase 5 decides what "done" looks like and that "Sec 2.11 has not said". Both are false
+    of `bDone`: Sec 2.11.2's row named the bit AND the seam all along, and the bullet was written
+    before the selection machine existed and never re-read against Sec 2.11.2 after.
+    `bLockedThisTurn` still has no treatment and that half stands verbatim, named separately,
+    because a bullet true of one bit and false of the other reads as wholly true to whoever greps
+    for either.
+  - **WHAT THIS DOES NOT DO.** Four `EditDefaultsOnly` slots ship UNSET -- `FlagMarkerMesh`,
+    `FlagMarkerMaterial`, `UnactedPipMesh`, `UnactedPipMaterial` -- exactly as `GuidedMarkerMesh`
+    shipped before 2026-08-24, with no `/Game/` path in this file. Both markers are constructed,
+    positioned and correctly toggled on every refresh and DRAW NOTHING until the content lane
+    assigns them. `IsFlagMarkerVisible` and `IsUnactedPipVisible` inherit the measured limit
+    `IsGuidedMarkerVisible` carries: **they report a flag, not pixels**, and there is no headless
+    gate on "a player can see the `H`". DISCHARGED WHEN an editor batch sets the four slots on
+    `BP_StratUnit` and a human confirms at the keyboard that three markers 40 uu apart read as three
+    things at the shipped camera pitch.
+
 - **2026-08-28, `strat-gameplay-engineer` -- W7: SEC 2.9'S DIFFICULTY HANDICAP. THE GDD HAS
   SPECIFIED IT SINCE THE PROTOTYPE DOCUMENT AND `Source/` IMPLEMENTED NONE OF IT; A DESIGNER
   COULD SET NO TIER AND EVERY MATCH OPENED ON THE SCENARIO'S OWN BASELINE.** In the integration

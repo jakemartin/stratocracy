@@ -15,6 +15,134 @@
 
 ## NEXT
 
+- **2026-08-29, `strat-gameplay-engineer` -- THE TILES FLICKERED UNDER THE CURSOR, AND THE CAUSE
+  WAS A PER-TURN REBUILD THAT HAD SILENTLY BECOME A PER-HOVER ONE. `ApplyHexes` CLEARED AND
+  RE-ADDED ALL 99 TILE INSTANCES EVERY TIME THE CURSOR CROSSED A HEX BOUNDARY.** In the
+  integration tree `E:/MultiAgent/Stratocracy` on branch `master`, from `1a3520b`. TWO FILES
+  MODIFIED, both under `Source/StratPlay/`: `StratBoardActor.h` and `StratBoardActor.cpp`. No
+  test, nothing under any `Tests/` directory, no asset, no `Content/`, no `Config/`, no `Data/`,
+  nothing under `Source/StratRules/`, no `.Build.cs`, no `.uproject`.
+  - **THE USER'S REPORT, IN THEIR WORDS:** *"when mousing over the hex tiles, they flicker in
+    what seems to me a switch between visible and hidden"*.
+  - **THE CALL CHAIN, MEASURED IN THIS TREE RATHER THAN TAKEN FROM THE DISPATCH.**
+    `AStratPlayerController::Tick` calls `UpdateHoverFromCursor` unconditionally every frame;
+    that ends at `ApplyHoverChange`, which early-outs ONLY when the resolved hex is unchanged
+    and otherwise calls `RefreshFromMachine`; which calls `UStratMatchSubsystem::ApplyView`;
+    which calls `AStratBoardActor::ApplyHexes`; which calls `ClearInstances` on every terrain
+    layer and then `AddInstance` per hex. So one hex crossing rebuilt every tile instance on the
+    board. Confirmed at each hop by reading the symbols, not by grep alone.
+  - **THE REGRESSION IS DATED AND IT IS NOT `ApplyHexes`'S AUTHOR'S ERROR.** That method's own
+    prose licensed the full rebuild on the grounds that "the cost is paid once" -- true while a
+    refresh happened per turn. Commit `1da4198` (2026-08-27) moved hover off an Enhanced Input
+    handler that had been measured never to fire and onto the `Tick` poll, which is what turned
+    a per-turn rebuild into a per-hover one. **NO CLAUSE CAUGHT IT AND NO CLAUSE COULD:** every
+    automation test here runs headless with no viewport and no cursor, so nothing in the suite
+    calls `ApplyHexes` twice with the same model and asks what it did.
+  - **ONE PART OF THE DIAGNOSIS I WAS HANDED IS RECORDED AS UNMEASURED, NOT AS FACT.** That the
+    HISM's async cluster-tree rebuild is specifically what makes the churn present as
+    *visible/hidden* rather than merely as cost is an INFERENCE. It was handed to me as an
+    inference and I did not measure it: it needs a viewport, and this box's instruments are
+    headless. What IS measured is the churn itself and the chain above. `bAutoRebuildTreeOnInstanceChanges`,
+    `BuildTreeIfOutdated` and cull distances are set nowhere in this tree -- re-checked, still
+    true -- so nothing tunes the rebuild and nothing needed to be untuned to fix it.
+  - **THE FIX IS AN IDEMPOTENT RECONCILE, AND IT IS IN THE BOARD RATHER THAN IN THE HOVER PATH.**
+    New private `AStratBoardActor::DrawsExactlyTheseHexes` walks the model with one cursor per
+    terrain layer and answers whether each layer's `InstanceHexes` already spells exactly that
+    sequence, with the component's own `GetInstanceCount()` agreeing. `ApplyHexes` asks it first
+    and returns `true` having touched nothing when the answer is yes; a `false` runs the
+    identical whole-board rebuild it always ran. **NO NEW STATE AND NO CACHED MODEL** -- the
+    comparison reads only the arrays picking already depends on, so a "yes" is a statement about
+    what is on screen rather than about what was last requested, and there is nothing that can
+    go stale against a model.
+  - **WHY NOT IN `ApplyHoverChange`.** A hover-only bypass was the other available shape and it
+    was refused: `AStratPlayerController` states that one refresh decision, not one per caller,
+    is load-bearing, and `RefreshFromMachine`'s block gives the reason -- a second, subtly
+    different sequence is what the next caller writes when there is no first one to call. The
+    board-side fix also gives the no-op to every other refresh path rather than to the one
+    caller that revealed the need.
+  - **THE THREE INVARIANTS THE FIX HAD TO SURVIVE, AND HOW EACH DOES.** (1) *Reconciled, not
+    evented*: `ApplyView` still runs in full on every refresh and what is drawn after
+    `ApplyHexes` is a function of `Hexes` alone; the method became idempotent, not incremental
+    -- it computes no delta and applies no patch, so `FStratTerrainLayer`'s "REBUILT WHOLE,
+    NEVER PATCHED" rule is intact with a second outcome added ("not touched"). (2) *Picking*:
+    `InstanceHexes` is never written on the early-out path, so `HexAtInstance`'s index map is
+    the one the last rebuild produced and `StratBoardPicking.cpp` is unaffected. (3) *No rules
+    answer moves into the engine* -- this class still asks nothing.
+  - **THE EARLY-OUT IS CONSERVATIVE BY CONSTRUCTION, AND OF THE THREE WAYS IT COULD HAVE LIED,
+    TWO ARE CLOSED IN THE COMPARISON AND THE THIRD IS CLOSED ONLY AS FAR AS THE COMPARISON
+    REACHES.** [CORRECTED 2026-08-29, LATER THE SAME DAY, BY `strat-gameplay-engineer` -- MY
+    OWN ENTRY, MY OWN LANE, MY OWN FILE -- on `strat-integration-reviewer`'s F1, gate report
+    `Tools/architect/gate_reports/2026-08-29-boardchurn-hover-flicker.md`, VERDICT: BLOCK. The
+    heading above said all three were CLOSED, and this bullet ended:
+    RETRACTED>  "A terrain whose mesh was unset contributed no instances, so its first hex runs
+    RETRACTED>   off an empty array and the rebuild runs -- which is what makes a mesh assigned
+    RETRACTED>   later take effect on the next refresh instead of never."
+    **THE FINAL CLAUSE IS FALSE OF THE BOARD AND I FOUND IT MYSELF BEFORE THE GATE DID.** I
+    reported the `LayerFor` defect to the coordinator as blocked-and-not-fixed and then wrote
+    the record as though it were not there -- the failure is not that the defect was missed, it
+    is that a bullet listing what the early-out cannot swallow SWALLOWED IT. `tests.md`, written
+    in the same change set, recorded the same fact as OPEN, so the record contradicted itself
+    across two files in one pass, and `strat-test-author` confirmed the board does not draw.]
+    **WHAT IS TRUE.** A terrain whose mesh was unset contributed no instances, so its first hex
+    runs off an empty array and `DrawsExactlyTheseHexes` returns `false` -- the early-out never
+    remembers an undrawn board as drawn, which is the part that is mine and is closed. THE
+    REBUILD THEN RUNS AND STILL DRAWS NOTHING: `LayerFor` returns an existing layer by
+    `TerrainId` before reaching its `SetStaticMesh` calls, so a component created during an
+    unmeshed apply keeps a null mesh for the life of the actor, and `ApplyHexes` skips and
+    re-reports every hex of that terrain. **THE DEFECT IS OLDER THAN THIS EARLY-OUT AND IS
+    UNCHANGED BY IT** -- it behaves today exactly as it did at `1a3520b`.
+    A layer still holding instances for a terrain the model dropped fails the end-of-layer
+    cursor check; a component cleared behind this class's back fails the instance-count
+    agreement; both of those ARE closed. Any doubt answers `false` and costs exactly one
+    rebuild, which is what every call cost before today.
+  - **`LayerFor` IS DELIBERATELY NOT FIXED IN THIS PASS, AND THE DECISION IS MINE AND IS
+    RECORDED RATHER THAN LEFT AS SILENCE.** The gate did not require the fix and the coordinator
+    put the call to me. THE FIX IS THREE LINES: `LayerFor`, on the early-return path for an
+    existing layer, re-reads `TerrainMeshes` / `FallbackTerrainMesh` and calls `SetStaticMesh`
+    when the component currently has none -- narrowed to the null case precisely so it can
+    never disturb a component that is already drawing instances. **WHY NOT NOW, in order of
+    weight.** (1) `strat-integration-reviewer`'s Observation 4 measures that
+    `GATE-BOARDCHURN.AnUnmeshedBoardIsNeverRememberedAsDrawn` is an `if/else` over the branch
+    the board took and asserts on both, so **the suite contains no clause that would go red the
+    day `LayerFor` is fixed** -- landing an unpinned behaviour change during a BLOCK
+    remediation is the scope creep the coordinator asked me not to commit without a decision.
+    (2) It is not reachable on any shipping path: production meshes are Blueprint defaults set
+    before the first `ApplyHexes`, so only a fixture or a runtime editor assignment can reach
+    it, which is why it has survived unnoticed since phase 3. **DISCHARGED WHEN** a clause under
+    `Source/StratPlay/Tests/` asserts that a board applied unmeshed, given a mesh, and applied
+    again DRAWS -- red over today's `LayerFor` -- and the three lines land with it.
+  - **THE OVERLAYS GOT THE SAME GUARD, AND THAT IS A DELIBERATE SCOPE EXTENSION.** `FillOverlay`
+    cleared and refilled `ReachOverlay`, `TargetOverlay` and `ObjectiveOverlay` on every refresh
+    too, and the reach and target sets are a function of the SELECTION -- so a hover crossing
+    repainted all three with content that had not changed, the identical defect on three more
+    HISMs. It now takes its caller's drawn-hex cache (`ReachDrawnHexes`, `TargetDrawnHexes`,
+    `ObjectiveDrawnHexes`) and returns early on an exact match, and it is no longer `const`.
+    **THE CACHE RECORDS WHAT WAS DRAWN AND NEVER WHAT WAS REQUESTED**: an overlay with no
+    `OverlayMesh` resets it, because caching the request there would make an `OverlayMesh`
+    assigned afterwards -- which is what `BeginPlay` and several fixtures do -- draw nothing
+    forever behind an early-out that believed a highlight was already on screen. The overlays
+    carry `NoCollision`, so none of this touches picking.
+  - **BUILD AND SUITE.** `Build.bat StratocracyEditor Win64 Development` with the absolute
+    `.uproject` and `-waitmutex`: `Result: Succeeded`, 25 actions, no warning naming either
+    file. Rebuilt before the suite. The suite was re-run and no clause changed state; **the
+    count is `global.md`'s to state and this change did not move it** -- no clause was added or
+    removed here, because `Tests/` is not this lane's.
+  - **WHAT THIS DOES NOT DO, AND THE CLAUSE IT NEEDS.** Nothing here proves the flicker is gone
+    to a human eye -- that is a viewport observation and this lane has no viewport. What IS
+    headlessly provable and is NOT yet proved is the property the fix rests on: that a second
+    `ApplyHexes` with the same model adds no instance and preserves the index map.
+    `strat-test-author` was dispatched for it separately; until that clause exists, **the
+    early-out is protected by nothing but this entry**. **AND THE CLAUSE MUST PIN THE CHURN AND
+    NOT THE OUTCOME, WHICH IS THE HARD PART AND IS WHY IT IS WRITTEN DOWN HERE.** The old code
+    and the new code agree on every OUTCOME a headless assertion can read -- same instance
+    count, same `InstanceHexes`, same `HexAtInstance` answers -- because a full rebuild from the
+    same model produces exactly what it produced before. An assertion over those passes over the
+    defect, which is the shape this project has been caught by before. What distinguishes them
+    is whether the renderer was touched at all: the identity of the instance transforms across
+    the second call, or an `AddInstance`/`ClearInstances` count. DISCHARGED WHEN a clause under
+    `Source/StratPlay/Tests/` goes red over a build with the `DrawsExactlyTheseHexes` early-out
+    removed.
+
 > **[OUT-OF-LANE WRITE, 2026-08-29. THE TWO ENTRIES DIRECTLY BELOW WERE WRITTEN INTO THIS FILE
 > BY THE `coordinator`, WHOSE FILE THIS IS NOT.** This file's header names
 > `strat-gameplay-engineer` its sole writer, and that rule is not weakened by what follows.
@@ -293,6 +421,26 @@
     gate on "a player can see the `H`". DISCHARGED WHEN an editor batch sets the four slots on
     `BP_StratUnit` and a human confirms at the keyboard that three markers 40 uu apart read as three
     things at the shipped camera pitch.
+    **[DISCHARGED 2026-08-29, BOTH HALVES, STAMPED HERE RATHER THAN DELETED. WRITTEN BY
+    `strat-gameplay-engineer`, WHOSE FILE THIS IS -- ATTRIBUTION ADDED LATER THE SAME DAY ON
+    `strat-integration-reviewer`'s F3, gate report
+    `Tools/architect/gate_reports/2026-08-29-boardchurn-hover-flicker.md`, VERDICT: BLOCK. THIS
+    IS NOT AN OUT-OF-LANE WRITE AND NO CLAUSE LICENSES IT, because none is needed: the file's
+    sole writer wrote it, in its own lane, in its own tree, and the `coordinator` did not edit
+    this file in this pass. It went unattributed because it reads like somebody else's news --
+    the discharging FACTS are content-lane and coordinator-facing (an asset batch, and a human
+    at the keyboard) even though the DEBT is engine-lane and the entry carrying it is mine. That
+    is exactly the case where a stamp must name its writer rather than rely on the header, since
+    a reader arriving by citation lands here and not on any header above.** The editor batch
+    landed in `1a3520b` -- which had to author all four assets first, because not one of them
+    existed -- and it sets the four slots on `BP_StratUnit`. The human confirmation is the
+    user's, at the keyboard, in these words: *"I can confirm all markers and they are good where
+    they are. Camera pitch looks good."* **THE MEASURED LIMIT ABOVE IS NOT DISCHARGED WITH IT
+    AND STANDS VERBATIM:** `IsFlagMarkerVisible` and `IsUnactedPipVisible` still report a flag
+    rather than pixels, and there is still no headless gate on "a player can see the `H`" --
+    what was discharged is the SLOTS BEING UNSET and the SEPARATION BEING UNCONFIRMED, which is
+    what the condition asked for and all it asked for. A reader arriving here for the visibility
+    limit has not had their question answered by this stamp.]
 
 - **2026-08-28, `strat-gameplay-engineer` -- W7: SEC 2.9'S DIFFICULTY HANDICAP. THE GDD HAS
   SPECIFIED IT SINCE THE PROTOTYPE DOCUMENT AND `Source/` IMPLEMENTED NONE OF IT; A DESIGNER

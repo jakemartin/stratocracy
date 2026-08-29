@@ -11,6 +11,65 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-29 (A USER-REPORTED BUG, AND THE FIX WAS ONE CONDITIONAL WHILE THE
+INTERESTING PART WAS THAT NOTHING COULD HAVE CAUGHT IT. Written by the `coordinator`, whose
+file this is.
+THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE: everything below was done in
+`E:/MultiAgent/Stratocracy` on branch `master` from `1a3520b`, with no worktree, no branch and
+no rebase, so no figure is carried over from anywhere. The suite is
+now **286/286**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+It was run by the `coordinator` in this tree after both lanes reported and is not quoted from
+either of them, and the macro census agrees at 286.
+THE COUNT MOVED 279 -> 286, SEVEN NEW CLAUSES, ALL `GATE-BOARDCHURN`. A user reported hex
+tiles flickering between visible and hidden under the cursor. `AStratPlayerController::Tick`
+polls the hover every frame, and every hover change ran `RefreshFromMachine` -> `ApplyView` ->
+`ApplyHexes`, which cleared and re-added EVERY TILE INSTANCE ON THE BOARD. `AStratBoardActor`
+is now idempotent -- `DrawsExactlyTheseHexes` is asked before anything is cleared, and
+`FillOverlay` got the same guard for all three overlays, which were churning identically and
+which the dispatch brief did not name.
+**IT IS A REGRESSION FROM THIS PROJECT'S OWN FIX, AND THAT IS THE LESSON RATHER THAN THE
+CONDITIONAL.** `1da4198` (2026-08-27) moved the hover from an Enhanced Input handler MEASURED
+NEVER TO FIRE to a Tick poll. `ApplyHexes` had a comment permitting the whole-board rebuild
+because it was "a per-turn cost" -- true while the hover never fired, false the moment it did.
+**A dead code path made a comment true, and reviving the path made it false without touching
+the line.** Nothing caught it: no automation test has a viewport or a cursor, and this record
+already concedes its visibility accessors report a flag and not pixels. The reporter was a
+human at the keyboard, which is the same instrument that discharged the marker debt in the
+pass directly below.
+THE CLAUSES PIN THE CHURN AND NOT THE OUTCOME, WHICH IS THE ONLY REASON THEY ARE WORTH SEVEN.
+Old and new code agree on every outcome a headless assertion can read -- same instance count,
+same `InstanceHexes`, same `HexAtInstance` answers -- because a rebuild from an identical model
+reproduces exactly what it produced. The instrument is a transform marker planted in a HISM
+behind the board's back: survival proves the renderer was never touched, and each clause is
+paired with a control demanding the marker DIE when the model really changes. Every one was
+proved RED against a built mutant on a disposable tree copy, not by argument.
+TWO THINGS REMAIN OPEN AND ARE NAMED IN `## NEXT` RATHER THAN CLOSED HERE: a late-assigned
+terrain mesh still never draws, and it is `LayerFor` and not the new early-out that prevents
+it. **An earlier draft of this sentence continued "-- while `DrawsExactlyTheseHexes`'s own
+comment claims the stronger property", which a re-gate BLOCKED as false: that comment had
+already retracted the property by name, BEFORE THIS BANNER'S FIRST DRAFT, in the remediation
+this writer had itself dispatched. The re-gate measured the gap at 5m43s by mtime; that
+figure is attributed to ITS measurement and not left to be re-derived here, because this
+file's own later edits have moved its mtime and a reader recomputing it would get a
+different number -- a record must not state a measurement of itself that it goes on to
+invalidate.** The clause is cut rather than reworded, and
+the failure is worth more than the sentence: a withdrawn claim gets re-asserted by the person
+who withdrew it, because the retraction landed in a file they did not re-read. And one half
+of `FillOverlay`'s two overlay-cache guards cannot be reddened alone.
+THE REPORT BEHIND THE FIGURE ABOVE is `reportCreatedOn 2026.08.29-22.32.28`, and it is cited
+here rather than beside the figure ON PURPOSE: `strat_banner_sweep.py` treats a
+`reportCreatedOn` INSIDE its stamp window as an explicit stamp -- "history in present tense,
+and the timestamp is the tell" -- so citing it next to the count silently marks the live
+figure historical and empties the sweep. Measured in this pass: the sweep answered
+`LIVE COUNT MISSING` and its message blamed a reporting verb, which was NOT the cause.
+THE RUN IDENTITY IN THAT CITATION MOVED TWICE AND THE FIGURE NEVER DID. `22.09.14` was
+superseded by the engineer's post-remediation re-run and then by this writer's own re-run at
+`22.32.28`; all three read 286 succeeded, 0 failed, 0 notRun. It is restamped rather than left
+because a citation naming a report that is no longer the one on disk is a stale claim about
+WHICH RUN backs the figure, which `strat_banner_sweep.py` catches as REPORT PROVENANCE -- and
+it is restamped to a run THIS WRITER PERFORMED, because the sentence above says the figure was
+not quoted from either lane and citing the engineer's run would have made that false.)
+
 _Last run 2026-08-29 (W4 AND W5 LAND TOGETHER, THE FIRST TIME TWO LANES HAVE RUN CONCURRENTLY
 AND MERGED IN ONE PASS: SEC 2.11.2'S ON-MAP MARKERS AND ITS AI TURN PLAYBACK. Written by the
 `coordinator`, whose file this is.
@@ -22,6 +81,12 @@ both from `b58a827`, each landing on `master` as a `--no-ff` merge -- `4084df6` 
 270 in its own tree and W5's measured 276 in its own, both against the same 267 baseline, and
 neither is what this tree carries. The suite is
 **279/279**, every entry Success, zero failed, zero notRun, zero succeededWithWarnings.
+**[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`: THIS FIGURE IS NO LONGER
+LIVE AND IS STAMPED RATHER THAN DELETED. The hover-flicker fix and its seven
+`GATE-BOARDCHURN` clauses landed after it; the live figure is the topmost banner's. Every
+other sentence in this paragraph remains TRUE OF THE PASS IT DESCRIBES -- the two lane
+worktrees, the two merges, and the census that reached into an evidence directory -- which
+is why the paragraph is stamped where it sits rather than reworded.]**
 THE CENSUS IS 267 -> 270 -> 279, TWELVE NEW CLAUSES, AND IT IS RECORDED HERE BECAUSE THE FIRST
 ATTEMPT AT IT WAS WRONG IN A WAY THAT WILL RECUR. A first set-difference put the `b58a827`
 baseline at **277** rather than 267 -- not because the code disagreed, but because THE TWO SIDES
@@ -99,7 +164,7 @@ slots ship unset, so both markers toggle correctly on every refresh and draw not
 `AiPlaybackStepSeconds` ships at `0.0f` with Sec 2.11.2's 0.5 deliberately not written in C++, so
 the tour is compiled, reasoned about and has never been seen. Both need one editor batch on
 `BP_StratUnit` and the GameMode Blueprint default, and `unreal-editor-direct` did not connect
-during this session. **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`: EVERY CLAIM IN THIS PARAGRAPH ABOUT THE ASSET TAILS IS NOW FALSE OF THIS TREE, AND IS STAMPED WHERE IT SITS RATHER THAN DELETED SO THAT A READER ARRIVING BY A CITATION LANDS ON THE CORRECTION. The editor batch landed the same day: `BP_StratUnit`'s four art slots are SET, `AiPlaybackStepSeconds` is `0.5` on BOTH GameMode Blueprints, and a PIE capture shows all three markers drawing. The claim that `unreal-editor-direct` did not connect REMAINS TRUE of that session and of this one -- it never reconnects inside a session, and `NeoStack_Connect` latched beside it -- so the editor was driven over its own HTTP endpoint from Bash instead, which raises a permission question this file does not settle. `content.md`'s topmost `## NEXT` entry is the authority on the batch and holds every measurement; nothing is restated here. WHAT REMAINS OPEN IS THE DISCHARGE CONDITION AND NOT THE WORK: no human has yet confirmed at the keyboard that three markers 40 uu apart read as three things at the shipped camera pitch.]**)
+during this session. **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`: EVERY CLAIM IN THIS PARAGRAPH ABOUT THE ASSET TAILS IS NOW FALSE OF THIS TREE, AND IS STAMPED WHERE IT SITS RATHER THAN DELETED SO THAT A READER ARRIVING BY A CITATION LANDS ON THE CORRECTION. The editor batch landed the same day: `BP_StratUnit`'s four art slots are SET, `AiPlaybackStepSeconds` is `0.5` on BOTH GameMode Blueprints, and a PIE capture shows all three markers drawing. The claim that `unreal-editor-direct` did not connect REMAINS TRUE of that session and of this one -- it never reconnects inside a session, and `NeoStack_Connect` latched beside it -- so the editor was driven over its own HTTP endpoint from Bash instead, which raises a permission question this file does not settle. `content.md`'s topmost `## NEXT` entry is the authority on the batch and holds every measurement; nothing is restated here. WHAT REMAINS OPEN IS THE DISCHARGE CONDITION AND NOT THE WORK: no human has yet confirmed at the keyboard that three markers 40 uu apart read as three things at the shipped camera pitch.]** **[STAMPED AGAIN 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`, FLAT AND NOT NESTED INSIDE THE STAMP ABOVE: THAT DISCHARGE CONDITION IS NOW MET. The user confirmed at the keyboard -- "I can confirm all markers and they are good where they are. Camera pitch looks good." -- so the last open half of W4's asset tail is closed and no offset was changed to get there. `content.md`'s topmost `## NEXT` entry carries the confirmation and the retraction of this pass's own crowding reservation.]**)
 
 _Last run 2026-08-29 (TWO RULINGS AND ONE RENAME: THE ACCEPTANCE IDS FOR W4, W5, W6 AND W8; THE
 RULING THAT `T-UI-05` STOPS AT THE SNAPSHOT; AND THE FOUR CLAUSE NAMES THAT RULING MOVED TO
@@ -2739,6 +2804,20 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     rather than either MCP client, and whether that satisfies this record's fallback condition
     is the user's to rule. WHAT IS NOT DISCHARGED is the human confirmation of marker
     placement at the shipped camera pitch, which no capture can stand in for.]**
+    **[STAMPED AGAIN 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`, FLAT AND NOT
+    NESTED INSIDE THE STAMP ABOVE: IT IS NOW DISCHARGED.** The user confirmed at the keyboard
+    -- "I can confirm all markers and they are good where they are. Camera pitch looks good."
+    The capture indeed could not stand in for it, and the capture's own reading -- that the
+    pips crowd adjacent units -- was wrong; see `content.md`'s topmost `## NEXT` entry, which
+    retracts it. `engine.md` states that condition in the sentence beginning *"DISCHARGED WHEN
+    an editor batch sets the four slots on `BP_StratUnit`"* -- **cited by its own words and
+    NOT by a line number**, because a citation into a file that grows ABOVE it is stale by the
+    next entry, and an earlier draft of this very stamp carried a dead `engine.md:293` that a
+    gate caught: 92 lines were appended above it in this same change set and the number moved.
+    That file is the `strat-gameplay-engineer`'s and not this writer's, so this stamp NAMES
+    the condition rather than editing it -- **and the engineer has SINCE stamped it discharged
+    in its own file, so an earlier draft's claim that the line was "named here rather than
+    edited" is false of this tree and is corrected rather than left standing.**]**
   - **A NON-GATING FINDING HANDED FORWARD TO THE ENGINEER.**
     `UStratMatchSubsystem::SkipAiPlayback`'s log line reads the cursor AFTER `SkipToEnd()` has
     already moved it, so it always prints `skipped at step N of N` and can never report where the

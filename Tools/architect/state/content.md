@@ -167,6 +167,26 @@
       `engine.md` states -- a human confirming at the keyboard that three markers 40 uu apart
       read as three things at the shipped camera pitch -- is NOT met by this entry and is not
       claimed to be.**
+      **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator` UNDER THIS FILE'S OWN
+      FALLBACK CONDITION -- the licence is cited because a write under it that names no
+      authority is indistinguishable from a lane violation, and obligation (1) is discharged
+      at the end of this block rather than assumed: THE CONDITION IS NOW MET AND THE DOUBT
+      THIS BULLET RAISED WAS NOT BORNE OUT.** The user confirmed at the
+      keyboard, in their own words: "I can confirm all markers and they are good where they
+      are. Camera pitch looks good." That is the human eye this bullet said was the only
+      available gate, and it is the discharge `engine.md` names. **THE RESERVATION ABOVE WAS
+      THIS RECORD'S OWN AND IS RETRACTED RATHER THAN LEFT STANDING:** the reading that the
+      pips crowd adjacent units in the dense cluster came from a single 1920x1080 capture and
+      did not survive contact with the running game. No offset was changed; `FlagMarkerOffset`
+      and `UnactedPipOffset` ship at the vectors `StratUnitActor.h` derived. WHAT REMAINS
+      TRUE is that no TEST pins either vector -- the discharge is a human's word, which is
+      what the condition asked for and is not a headless gate.
+      **OBLIGATION (1), THE CONTROL, MEASURED IN THIS SESSION AND NOT INHERITED FROM THE ENTRY
+      ABOVE:** one `select:` lookup naming
+      `mcp__NeoStack_Connect__execute_script`, `mcp__unreal-editor-direct__execute_script` and
+      `mcp__NeoStack_Connect__unreal_status` together returned **`unreal_status` and neither
+      `execute_script`** -- the same lookup shown serving a tool before its silence on the
+      other two is read as evidence.]**
 
 - **GDD SEC 2.11.2'S HOVER INFO PANEL IS BUILT, COMPILES CLEAN AND IS WIRED TO THE HUD -- AND
   NOTHING HAS SEEN IT DRAW A REAL HEX, BECAUSE ONLY A HUMAN'S MOUSE CAN MAKE ONE.** 2026-08-28,

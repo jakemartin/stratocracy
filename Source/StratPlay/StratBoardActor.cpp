@@ -180,9 +180,100 @@ FStratTerrainLayer& AStratBoardActor::LayerFor(FName TerrainId)
 	return TerrainLayers[Added];
 }
 
+bool AStratBoardActor::DrawsExactlyTheseHexes(const TArray<FStratHexView>& Hexes) const
+{
+	// A CURSOR PER LAYER, WALKED IN THE MODEL'S ORDER. `ApplyHexes` appends each hex to its
+	// terrain's layer in the order the model lists it, so the drawn state equals the model
+	// exactly when consuming the model that way lands on each layer's array element by
+	// element and finishes every one of them. Inline for seven terrain kinds; the board is
+	// 99 hexes and Ferrum Crossing is the SMALL one, so this is a walk of the same length as
+	// the rebuild it is deciding whether to skip -- and it adds nothing to the renderer.
+	TArray<int32, TInlineAllocator<8>> Cursors;
+	Cursors.SetNumZeroed(TerrainLayers.Num());
+
+	for (const FStratTerrainLayer& Layer : TerrainLayers)
+	{
+		// A LAYER WITH NO COMPONENT CANNOT VOUCH FOR WHAT IS ON SCREEN, and neither can one
+		// whose component disagrees with the parallel array -- that is the exact condition
+		// `ApplyHexes` keeps true by construction, so if it is false here something outside
+		// this class cleared the component and the rebuild must run.
+		if (Layer.Tiles == nullptr || Layer.Tiles->GetInstanceCount() != Layer.InstanceHexes.Num())
+		{
+			return false;
+		}
+	}
+
+	for (const FStratHexView& Hex : Hexes)
+	{
+		int32 LayerIndex = INDEX_NONE;
+		for (int32 Index = 0; Index < TerrainLayers.Num(); ++Index)
+		{
+			if (TerrainLayers[Index].TerrainId == Hex.TerrainId)
+			{
+				LayerIndex = Index;
+				break;
+			}
+		}
+
+		// A terrain kind this board has never drawn -- the first call, or a scenario with a
+		// kind the last one lacked. `LayerFor` creates it during the rebuild.
+		if (LayerIndex == INDEX_NONE)
+		{
+			return false;
+		}
+
+		const FStratTerrainLayer& Layer = TerrainLayers[LayerIndex];
+		int32& Cursor = Cursors[LayerIndex];
+
+		// COVERS THE UNMESHED CASE WITHOUT NAMING IT, AND COVERS IT ONLY AS FAR AS THIS
+		// PROCEDURE REACHES. A terrain whose mesh was unset when the board was last drawn
+		// contributed no instances at all, so its first hex runs off the end of an empty
+		// array here and this returns false. THE REBUILD THEN RUNS AND STILL DRAWS NOTHING,
+		// and the sentence that used to stand here said otherwise:
+		// RETRACTED>  "-- which is what makes a mesh assigned after the fact take effect on
+		// RETRACTED>   the very next refresh."
+		// That is true of the EARLY-OUT and false of the BOARD. `LayerFor` returns an
+		// existing layer by `TerrainId` before it reaches its `SetStaticMesh` calls, so a
+		// component created during an unmeshed apply keeps a null mesh for the life of the
+		// actor, and `ApplyHexes`'s `GetStaticMesh() == nullptr` arm skips every hex of that
+		// terrain again -- reporting the id again, which is the only part that works. The
+		// defect is `LayerFor`'s and it is OLDER THAN THIS EARLY-OUT; what this block must
+		// not do is deny it. Deliberately not fixed in the pass that found it: see
+		// `Tools/architect/state/engine.md` for the fix and the clause it needs.
+		if (!Layer.InstanceHexes.IsValidIndex(Cursor) || Layer.InstanceHexes[Cursor] != Hex.Hex)
+		{
+			return false;
+		}
+
+		++Cursor;
+	}
+
+	for (int32 Index = 0; Index < TerrainLayers.Num(); ++Index)
+	{
+		// Instances the model no longer accounts for. Without this a shrinking board would
+		// keep drawing -- and keep PICKING -- hexes the rules module has stopped describing.
+		if (Cursors[Index] != TerrainLayers[Index].InstanceHexes.Num())
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 bool AStratBoardActor::ApplyHexes(const TArray<FStratHexView>& Hexes, FString& OutFailureReason)
 {
 	OutFailureReason.Reset();
+
+	// ASKED BEFORE ANYTHING IS CLEARED. The declaration carries the measurement and the
+	// regression that made this necessary; the shape to keep in mind while reading below is
+	// that this is NOT a delta path -- it does not compute what changed and apply the
+	// difference. It answers one yes/no question, and a "no" runs the identical whole-board
+	// rebuild this method has always run.
+	if (DrawsExactlyTheseHexes(Hexes))
+	{
+		return true;
+	}
 
 	// CLEARED WHOLE AND RE-ADDED. The header records why: removing a single instance from
 	// a HISM renumbers every instance after it, so a parallel array patched in place
@@ -291,9 +382,19 @@ bool AStratBoardActor::HexAtInstance(const UPrimitiveComponent* Component, int32
 	return false;
 }
 
-void AStratBoardActor::FillOverlay(UHierarchicalInstancedStaticMeshComponent* Overlay, const TArray<FIntPoint>& Hexes) const
+void AStratBoardActor::FillOverlay(UHierarchicalInstancedStaticMeshComponent* Overlay,
+	TArray<FIntPoint>& DrawnHexes, const TArray<FIntPoint>& Hexes)
 {
 	if (Overlay == nullptr)
+	{
+		return;
+	}
+
+	// ALREADY DRAWING EXACTLY THIS. `ApplyHexes`'s early-out, in the one line the overlays
+	// need it in -- they keep no index map, so the cached list IS the whole of the state.
+	// The instance-count agreement is the same guard the tiles use: it catches a component
+	// cleared behind this class's back, which is the only way the cache can be a lie.
+	if (Overlay->GetInstanceCount() == DrawnHexes.Num() && DrawnHexes == Hexes)
 	{
 		return;
 	}
@@ -305,6 +406,12 @@ void AStratBoardActor::FillOverlay(UHierarchicalInstancedStaticMeshComponent* Ov
 		// Nothing to instance. Silent here rather than logged per call: BeginPlay already
 		// said so once, and a highlight request per cursor move would say it thousands of
 		// times.
+		//
+		// AND THE CACHE RECORDS THE EMPTINESS, NOT THE REQUEST. Caching `Hexes` here would
+		// make an `OverlayMesh` assigned afterwards -- which is exactly what `BeginPlay`
+		// and every fixture that sets the property do -- draw nothing forever, on an
+		// early-out that believed a highlight was already on screen.
+		DrawnHexes.Reset();
 		return;
 	}
 
@@ -316,26 +423,29 @@ void AStratBoardActor::FillOverlay(UHierarchicalInstancedStaticMeshComponent* Ov
 
 		Overlay->AddInstance(FTransform(Local), /*bWorldSpace=*/false);
 	}
+
+	// WHAT WAS DRAWN, AND ONLY REACHED WHEN A MESH EXISTED. See the miss case above.
+	DrawnHexes = Hexes;
 }
 
 void AStratBoardActor::ShowReach(const TArray<FIntPoint>& Hexes)
 {
-	FillOverlay(ReachOverlay, Hexes);
+	FillOverlay(ReachOverlay, ReachDrawnHexes, Hexes);
 }
 
 void AStratBoardActor::ClearReach()
 {
-	FillOverlay(ReachOverlay, TArray<FIntPoint>());
+	FillOverlay(ReachOverlay, ReachDrawnHexes, TArray<FIntPoint>());
 }
 
 void AStratBoardActor::ShowTargets(const TArray<FIntPoint>& Hexes)
 {
-	FillOverlay(TargetOverlay, Hexes);
+	FillOverlay(TargetOverlay, TargetDrawnHexes, Hexes);
 }
 
 void AStratBoardActor::ClearTargets()
 {
-	FillOverlay(TargetOverlay, TArray<FIntPoint>());
+	FillOverlay(TargetOverlay, TargetDrawnHexes, TArray<FIntPoint>());
 }
 
 void AStratBoardActor::ShowObjective(FIntPoint Hex)
@@ -343,12 +453,12 @@ void AStratBoardActor::ShowObjective(FIntPoint Hex)
 	// ONE HEX, THROUGH THE SAME `FillOverlay` THE OTHER TWO USE, so the ring cannot drift
 	// from the highlights in how it clears or how it is offset off the tile plane. See the
 	// declaration on why the parameter is a hex and not a set.
-	FillOverlay(ObjectiveOverlay, TArray<FIntPoint>({ Hex }));
+	FillOverlay(ObjectiveOverlay, ObjectiveDrawnHexes, TArray<FIntPoint>({ Hex }));
 }
 
 void AStratBoardActor::ClearObjective()
 {
-	FillOverlay(ObjectiveOverlay, TArray<FIntPoint>());
+	FillOverlay(ObjectiveOverlay, ObjectiveDrawnHexes, TArray<FIntPoint>());
 }
 
 int32 AStratBoardActor::GetObjectiveOverlayCount() const

@@ -48,6 +48,122 @@
 > separate-attribution requirement is what buys that legibility back, and it is not optional.
 > `CLAUDE.md` is the authority on the clause's limits.]**
 
+- **2026-08-29 (local; the run that backs this entry stamps UTC `2026.08.29-22.04.45`, in the MAIN
+  tree `E:/MultiAgent/Stratocracy` on `master`) -- THE BOARD'S NO-CHURN EARLY-OUT IS PINNED BY
+  SEVEN CLAUSES, AND EVERY ONE OF THEM WAS PROVED RED BY BUILDING A MUTANT THAT BREAKS IT.**
+  `strat-test-author`, in the main tree, against `strat-gameplay-engineer`'s UNCOMMITTED fix in
+  `Source/StratPlay/StratBoardActor.{h,cpp}`. One new file inside `Tests/`:
+  `Source/StratPlay/Tests/StratBoardChurnClauses.cpp` (7). **Clause delta +7**, by MULTILINE set
+  difference on `IMPLEMENT_SIMPLE_AUTOMATION_TEST` over `^Source/**/*.cpp` at `1a3520b` versus the
+  working tree, collected by ONE function on both sides; nothing was removed or renamed. The live
+  suite figure is `global.md`'s and is not restated here.
+
+  **WHAT MADE THIS HARD, STATED FIRST BECAUSE IT IS THE WHOLE POINT.** The fix
+  (`AStratBoardActor::DrawsExactlyTheseHexes`, asked before `ApplyHexes` clears anything, plus the
+  same guard in `FillOverlay`) changes NO OUTCOME a headless assertion can read: same instance
+  count, same `InstanceHexes`, same `HexAtInstance` answers, because a rebuild from the same model
+  reproduces exactly what it produced. **A clause asserting the resulting count or the picking
+  answers passes identically with the fix reverted and pins nothing** -- this record already
+  carries that failure shape under "a pin that asserts a copy of its subject". The only
+  distinguishing fact is WHETHER THE RENDERER WAS TOUCHED.
+
+  **THE INSTRUMENT IS A MUTATION PLANTED BEHIND THE BOARD'S BACK.** Instance 0 of each component
+  is moved to Z = 1000 through `UpdateInstanceTransform` -- a write the class never performs and,
+  decisively, NEVER READS: `DrawsExactlyTheseHexes` compares `InstanceHexes` and instance COUNTS
+  and never a transform, so the probe cannot steer the decision it measures. The same call is then
+  made again; survival is possible only if `ClearInstances` was never called. Every survival clause
+  is paired with a POSITIVE CONTROL that demands the marker die, because a probe that cannot see a
+  real rebuild passes exactly like an inert clause.
+
+  **THE ID IS `GATE-BOARDCHURN`, A LOCAL GATE NAME. It mints no acceptance ID and claims none**
+  (`GATE-MAPMARKERS` / `GATE-INFOPANEL` precedent). **`T-UI-02` WAS PROPOSED BY THE ENGINEER AND
+  IS REFUSED**, on the acceptance set's own text: §4.11 states T-UI-02 as *"the reachable-hex
+  highlight displays exactly the T-MOVE-01 set"*, and `StratBoardPicking.cpp` stretches it to the
+  axial->world map and its inverse. Both are claims about WHAT IS DRAWN. Nothing in the new file
+  has what-is-drawn as its subject -- every clause is about whether the RENDERER WAS TOUCHED while
+  what is drawn stayed identical, which no GDD acceptance ID covers. Filing it under T-UI-02 would
+  make that ID's discharge depend on a property it was never written to carry. (The dispatch brief
+  described T-UI-02 as "presentation-layer arithmetic"; that is `T-UI-03`. Neither fits.)
+
+  **THE SEVEN CLAUSES, ALL `Stratocracy.StratPlay.GATE-BOARDCHURN.*`:**
+    - `ReapplyingTheSameHexesTouchesNoTileInstance` -- the identical model applied twice leaves
+      every tile layer's planted marker in place. THE CLAUSE THE FIX EXISTS FOR.
+    - `AChangedHexListRebuildsAndPickingFollowsIt` -- control: one hex dropped, every marker dies,
+      the drawn count is the SHORTENED MODEL'S OWN count, every instance sits at the board's own
+      `WorldLocationOfHex`, and the dropped hex is named by no instance.
+    - `AReorderedHexListRebuildsAndPickingFollowsIt` -- control: same length, two SAME-TERRAIN
+      entries swapped, markers die and `HexAtInstance` walks the reordered order. Same-terrain is
+      load-bearing: swapping two hexes of DIFFERENT kinds leaves each layer's own sequence
+      untouched, so the drawing is identical and the early-out is RIGHT to fire.
+    - `AnUnmeshedBoardIsNeverRememberedAsDrawn` -- the board never reports a clean draw it has not
+      performed.
+    - `ReshowingTheSameOverlayHexesTouchesNoInstance` -- the same property for `ShowReach`,
+      `ShowTargets` and `ShowObjective`, all three markers surviving.
+    - `AChangedOverlaySetRebuilds` -- control for the three overlays.
+    - `AnOverlayMeshArrivingLateStillDraws` -- `FillOverlay` caches what was DRAWN, so an
+      `OverlayMesh` arriving at `BeginPlay` after a request makes the identical request draw.
+
+  **WHERE THE EXPECTATIONS COME FROM.** The hex list is `FStratViewModel::Hexes` off a bridge
+  seeded with the shipped scenario; the two changed models are that model with one edit each, so
+  the changed expectation IS the changed model. Every "the marker died" location is
+  `Board->WorldLocationOfHex(...)` for the hex `HexAtInstance` names -- the axial->world formula is
+  read, never repeated. Overlay counts are read BY NAME through `GetTargetOverlayCount` /
+  `GetObjectiveOverlayCount`. Tile layers are identified by `HexAtInstance` answering for them and
+  overlays by which single component's count MOVES under its own call -- positive identification,
+  never by component name and never by elimination. **The one invented value is the marker Z**, and
+  it is a FIXTURE value, not an expectation: it is planted and then looked for, and no module-side
+  value exists for "a Z the board would never write".
+
+  **FALSIFIABILITY, MEASURED AND NOT ARGUED.** Five mutants were built and run on a DISPOSABLE COPY
+  of the tree at `E:/MultiAgent/Strat-mutant` (since deleted); no file under test was edited in
+  this repository at any point. The pristine copy ran first as a control and was green there. Then,
+  each mutant applied alone to `StratBoardActor.cpp`, rebuilt, and the gate re-run:
+    - **M1**, the tile early-out call deleted -> `ReapplyingTheSameHexesTouchesNoTileInstance` RED
+      on all 7 layers.
+    - **M2**, the `FillOverlay` early-out deleted -> `ReshowingTheSameOverlayHexesTouchesNoInstance`
+      RED on all 3 overlays.
+    - **M3**, an early-out that treats an unmeshed layer as already satisfied ->
+      `AnUnmeshedBoardIsNeverRememberedAsDrawn` RED: *"a board reporting a clean draw has drawn
+      every hex of the model' to be 99, but it was 0"*.
+    - **M4**, an early-out that fires for ANY model once the board has been drawn once (tiles and
+      overlays) -> `AChangedHexListRebuildsAndPickingFollowsIt`,
+      `AReorderedHexListRebuildsAndPickingFollowsIt` and `AChangedOverlaySetRebuilds` RED. The
+      controls are live.
+    - **M5b**, `FillOverlay` caching the REQUEST and its instance-count agreement dropped ->
+      `AnOverlayMeshArrivingLateStillDraws` RED.
+
+  **WHAT M5 FOUND, AND IT IS A FACT ABOUT THE CODE RATHER THAN THE TEST.** M5 -- the cache
+  recording the request, with the count agreement LEFT IN -- turned NOTHING red. `FillOverlay`
+  carries two independent protections and either one alone defeats that bug: the count agreement
+  `Overlay->GetInstanceCount() == DrawnHexes.Num()` already refuses a cache that claims a highlight
+  the component is not drawing. So `AnOverlayMeshArrivingLateStillDraws` pins the CONJUNCTION and
+  not each half; removing either one alone leaves it green. Anyone deleting one of those two
+  conditions as redundant should know the suite will not stop them.
+
+  **WHAT `AnUnmeshedBoardIsNeverRememberedAsDrawn` DOES NOT PIN, AND WHY -- THIS IS A FINDING.**
+  The brief asked for "apply with `FallbackTerrainMesh` unset, assign it, apply the same model, the
+  board must draw". **IT DOES NOT DRAW, and the early-out is not the reason.**
+  `AStratBoardActor::LayerFor` assigns a layer component's static mesh ONCE, at creation, so a
+  layer created during an unmeshed apply keeps a null mesh forever; the second apply DOES rebuild
+  (`DrawsExactlyTheseHexes` correctly returns false) and skips every hex again. The clause's own
+  run output records which branch it took: *"the second apply reported the gap again"*. Asserting
+  "0 drawn" would have frozen that gap into the suite and gone red the day it is fixed, so the
+  clause asserts the invariant that holds on both sides of the fix. **Closing it needs a code
+  change this lane may not make:** `LayerFor` (or `ApplyHexes`) must re-apply
+  `TerrainMeshes`/`FallbackTerrainMesh` to an existing layer whose component has no mesh. The
+  class's own `DrawsExactlyTheseHexes` block currently claims the stronger property -- *"which is
+  what makes a mesh assigned after the fact take effect on the very next refresh"* -- and that
+  sentence is true of the EARLY-OUT and false of the BOARD.
+
+  **AN INSTRUMENT TRAP MEASURED HERE, WORTH MORE THAN THE CLAUSES.** The first M1 run came back
+  GREEN ON EVERY CLAUSE with the fix deleted, and the mutant was real. A copied tree that carries
+  its `Intermediate/` carries GENERATED BUILD RULES FULL OF ABSOLUTE PATHS TO THE TREE IT WAS
+  COPIED FROM: the build launched with `-project=E:/MultiAgent/Strat-mutant/...` compiled the MAIN
+  tree's sources and wrote the MAIN tree's `Binaries/`, so the run measured pristine code and said
+  so convincingly. It was caught by the DLL timestamps -- the mutant tree's binary was older than
+  the main tree's. **Delete `Intermediate/` and `Binaries/` in any copied tree before building
+  it**, and check that the copy's own DLL is the one that moved.
+
 - **2026-08-29 (local; the runs that back this entry stamp UTC `2026.08.29-18.15.33` and its
   confirming re-run `2026.08.29-18.16.21`, both in the LANE tree) -- W5'S SEC 2.11.2 AI TURN
   PLAYBACK IS PINNED BY NINE CLAUSES IN ONE NEW FILE, AND TWO OF THEM EXIST BECAUSE THE WAVE

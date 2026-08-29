@@ -111,6 +111,13 @@ class UStaticMesh;
  * by every caller remembering to keep two containers in step. Removing a single instance
  * from a HISM renumbers the ones after it, which is precisely the bug a parallel array
  * patched in place would acquire.
+ *
+ * [AMENDED 2026-08-29. There are now TWO outcomes and not one: rebuilt whole, or NOT
+ * TOUCHED AT ALL. `ApplyHexes` compares the model it is handed against these arrays first
+ * and returns without clearing anything when they already agree -- see that method's own
+ * block for the per-frame churn that made the third possibility, "patched", still the one
+ * this struct refuses. Nothing above is retracted: an array that is either rewritten in
+ * full or left exactly as it was cannot acquire the off-by-one either.]
  */
 USTRUCT()
 struct FStratTerrainLayer
@@ -148,13 +155,52 @@ public:
 	/**
 	 * Rebuilds every tile from the view model's hex list.
 	 *
-	 * A COMPLETE REBUILD ON EVERY CALL, and that is the reconciliation posture rather
-	 * than a shortcut. `StratViewModel.h` states that the model "is a COMPLETE DESCRIPTION
-	 * OF WHAT SHOULD BE ON SCREEN AND NEVER A DELTA"; a board that patched itself towards
-	 * the model would be correct only if every previous frame had also been correct, which
-	 * is the property T-INT-05 exists to make structurally impossible to lose. Terrain does
-	 * not change during a match today, so the cost is paid once; when a §2.7 capture starts
-	 * repainting a hex, this call already handles it with no new path.
+	 * RECONCILED AGAINST THE MODEL, NEVER PATCHED TOWARDS IT. `StratViewModel.h` states
+	 * that the model "is a COMPLETE DESCRIPTION OF WHAT SHOULD BE ON SCREEN AND NEVER A
+	 * DELTA"; a board that patched itself towards the model would be correct only if every
+	 * previous frame had also been correct, which is the property T-INT-05 exists to make
+	 * structurally impossible to lose. What is drawn after this call is therefore a
+	 * function of `Hexes` ALONE and of no earlier call.
+	 *
+	 * AND IT IS IDEMPOTENT WITHOUT TOUCHING THE RENDERER. [AMENDED 2026-08-29.] This block
+	 * used to read:
+	 * RETRACTED>  "A COMPLETE REBUILD ON EVERY CALL, and that is the reconciliation posture
+	 * RETRACTED>   rather than a shortcut. ... Terrain does not change during a match today,
+	 * RETRACTED>   so the cost is paid once"
+	 * The last clause was the load-bearing error, and it was TRUE WHEN WRITTEN: a refresh
+	 * happened once per turn. Commit `1da4198` (2026-08-27) moved hover resolution off an
+	 * Enhanced Input handler that was measured never to fire and onto
+	 * `AStratPlayerController::Tick`, and `ApplyHoverChange` -> `RefreshFromMachine` ->
+	 * `UStratMatchSubsystem::ApplyView` reaches this method -- so the cost became per hover
+	 * change rather than per turn, and the user's report was tiles that "flicker in what
+	 * seems to me a switch between visible and hidden" while the cursor moved over the
+	 * board. `ClearInstances` + N `AddInstance` on a `UHierarchicalInstancedStaticMeshComponent`
+	 * marks its cluster tree outdated, and the tree feeds both the draw and the trace that
+	 * `HexAtInstance` reads.
+	 *
+	 * SO THIS METHOD NOW COMPARES BEFORE IT CLEARS. If every layer's `InstanceHexes`
+	 * already spells exactly the hex sequence in `Hexes` -- same order, same terrain
+	 * grouping, same count, with the component's own instance count agreeing -- it returns
+	 * true having touched nothing. The comparison reads only state the class already kept
+	 * for picking; there is no cached copy of the model and therefore nothing that can go
+	 * stale against one. THE FIX IS HERE AND NOT IN THE HOVER PATH deliberately:
+	 * `ApplyHoverChange` being the single refresh decision is stated as load-bearing by
+	 * `AStratPlayerController`, and a hover-only bypass would have been a second refresh
+	 * sequence -- exactly what `RefreshFromMachine`'s block exists to forbid. Every caller
+	 * gets the cheap no-op, not just the one that revealed the need for it.
+	 *
+	 * WHAT THE EARLY-OUT CANNOT SWALLOW, by construction rather than by care: a terrain
+	 * whose mesh was unset when the board was last drawn contributed no instances, so its
+	 * hexes cannot match and the rebuild runs and reports again -- REPORTS, and does not
+	 * necessarily draw, and the distinction is the subject of the retraction in
+	 * `DrawsExactlyTheseHexes`: assigning `TerrainMeshes` after a layer's component exists
+	 * does not reach that component, because `LayerFor` sets a mesh only at creation. That
+	 * is an older defect this early-out neither causes nor cures, and no sentence in this
+	 * class may imply otherwise. A layer holding instances for a terrain the new model
+	 * dropped fails the end-of-layer check; and anything that cleared a component behind
+	 * this class's back fails the instance-count agreement. When a §2.7 capture starts
+	 * repainting a hex, the hex list changes and this call already handles it with no new
+	 * path.
 	 *
 	 * A HEX WHOSE `TerrainId` HAS NO MESH IS STILL DRAWN, using `FallbackTerrainMesh`, and
 	 * it is REPORTED. Skipping it would leave a hole in the board that reads as a rules
@@ -429,6 +475,48 @@ private:
 	TArray<FStratTerrainLayer> TerrainLayers;
 
 	/**
+	 * The hexes each overlay component is currently drawing, in the order they were added.
+	 *
+	 * THE OVERLAYS' EQUIVALENT OF `FStratTerrainLayer::InstanceHexes`, and they exist for
+	 * `ApplyHexes`'s reason rather than for picking: the overlays carry NO collision (see
+	 * the constructor), so nothing traces against them and nothing needs to map an instance
+	 * index back to a hex. `FillOverlay` reads these only to answer "am I being asked to
+	 * draw what is already drawn?", which on a hover crossing it is -- the reach and target
+	 * sets are a function of the SELECTION, and `RefreshFromMachine` repaints all three
+	 * every time the cursor changes hex.
+	 *
+	 * WRITTEN FROM WHAT WAS DRAWN AND NEVER FROM WHAT WAS REQUESTED. An overlay with no
+	 * `OverlayMesh` draws nothing, and caching the request in that case would make a mesh
+	 * assigned afterwards never take effect -- so the miss case resets these to empty.
+	 */
+	UPROPERTY()
+	TArray<FIntPoint> ReachDrawnHexes;
+
+	/** As `ReachDrawnHexes`, for `TargetOverlay`. */
+	UPROPERTY()
+	TArray<FIntPoint> TargetDrawnHexes;
+
+	/** As `ReachDrawnHexes`, for `ObjectiveOverlay`. */
+	UPROPERTY()
+	TArray<FIntPoint> ObjectiveDrawnHexes;
+
+	/**
+	 * Is the board already drawing exactly this hex list?
+	 *
+	 * TRUE ONLY WHEN A REBUILD WOULD BE A NO-OP, and it is deliberately conservative: any
+	 * doubt answers false and costs one rebuild, which is the cost this class paid on every
+	 * call until 2026-08-29. It checks the sequence, not a set or a count -- `InstanceHexes`
+	 * is `HexAtInstance`'s index map, so two boards with the same hexes in a different order
+	 * are genuinely different drawings and only the sequence proves the map survives.
+	 *
+	 * READS NO STATE THIS CLASS DID NOT ALREADY KEEP. There is no remembered model here; the
+	 * answer is derived from the components and the parallel arrays that picking depends on,
+	 * so a "yes" is a statement about what is on screen rather than about what was last
+	 * requested.
+	 */
+	bool DrawsExactlyTheseHexes(const TArray<FStratHexView>& Hexes) const;
+
+	/**
 	 * The axial -> local-space conversion, and now the ONLY copy of the formula.
 	 *
 	 * WHY THIS EXISTS AT ALL, recorded because it closes a finding rather than adding a
@@ -459,6 +547,16 @@ private:
 	 *  "two overlays", WHICH IT NEVER CONTAINED. It said "The shared tail of `ShowReach` and
 	 *  `ShowTargets`, so the two cannot drift" -- an overlay-count claim spelled as a caller
 	 *  list, invisible to a sweep for the wording anyone would think to grep. `ShowObjective`
-	 *  calls this too.] */
-	void FillOverlay(UHierarchicalInstancedStaticMeshComponent* Overlay, const TArray<FIntPoint>& Hexes) const;
+	 *  calls this too.]
+	 *
+	 *  IT TAKES ITS CALLER'S CACHE AND IS NO LONGER `const`. [AMENDED 2026-08-29, with
+	 *  `ApplyHexes`.] Handed the hexes it is already drawing it returns without clearing,
+	 *  for the tiles' reason: a hover crossing repaints all three overlays with content
+	 *  that did not change, and a `ClearInstances` + re-add is not free on a component
+	 *  whose cluster tree the renderer is reading. The cache is passed IN rather than
+	 *  selected here by comparing `Overlay` against the three members, because that
+	 *  comparison would be a fourth place that knows which component means what -- the
+	 *  header block's "one meaning per component" rule read backwards. */
+	void FillOverlay(UHierarchicalInstancedStaticMeshComponent* Overlay,
+		TArray<FIntPoint>& DrawnHexes, const TArray<FIntPoint>& Hexes);
 };

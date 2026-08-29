@@ -124,6 +124,7 @@
 #include "Templates/PimplPtr.h"
 #include "Templates/SubclassOf.h"
 
+#include "StratAiPlayback.h"
 #include "StratViewModel.h"
 
 #include "StratMatchSubsystem.generated.h"
@@ -448,6 +449,34 @@ struct FStratMatchConfig
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
 	float AiTurnDelaySeconds = 0.0f;
+
+	/**
+	 * §2.11.2's playback: seconds the camera rests on each of the AI's actions afterwards.
+	 *
+	 * THE OTHER HALF OF THE FIELD ABOVE AND NOT A SECOND SPELLING OF IT. `AiTurnDelaySeconds`
+	 * waits BEFORE the turn, so a human sees the board they handed over; this one steps the
+	 * camera through what the AI did AFTER the turn has entirely resolved. Both may be set,
+	 * neither implies the other, and §2.11.2 asks for this one: "the headless AI resolves
+	 * instantly; the presentation layer replays its action list at a watchable fixed pace
+	 * (~0.5 s per action, camera stepping to each)".
+	 *
+	 * ZERO PLAYS NOTHING AND IS THE DEFAULT, for `AiTurnDelaySeconds`' reason exactly: the
+	 * synchronous path is the tested one and an automation test has no ticking world to step a
+	 * camera in. So this ships inert and a Blueprint default turns it on.
+	 *
+	 * §2.11.2's 0.5 IS NOT WRITTEN HERE, AND THE OMISSION IS DELIBERATE RATHER THAN AN
+	 * OVERSIGHT. A C++ default of 0.5 would be a second place the pace is stated, and the
+	 * designer-facing one on the GameMode Blueprint would be the one nobody could find when
+	 * they disagreed. It would also change the path every existing test runs down, which is
+	 * the change this field exists to avoid making. The GDD's figure belongs on the Blueprint
+	 * default; this is the switch and not the setting.
+	 *
+	 * IT PACES PRESENTATION AND NOTHING ELSE. No command is submitted while it runs, no
+	 * `FStratBridge` method is called, and the board already shows the final state -- see
+	 * `StratAiPlayback.h`, which is where that reading of §2.11.2 is argued.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
+	float AiPlaybackStepSeconds = 0.0f;
 
 	// ---- §4.10 save identity ---------------------------------------------
 	// The two header fields `FStratSaveIdentity` says are SUPPLIED and never recomputed --
@@ -1570,9 +1599,230 @@ public:
 	 */
 	bool RunAiTurnsNow(FString& OutFailureReason);
 
+	// ---- §2.11.2's playback ----------------------------------------------
+	// THE WHOLE PUBLIC SURFACE IS THREE READS AND ONE VERB, AND NONE OF THEM CAN MOVE THE
+	// MATCH. Nothing below submits a command, touches `FStratBridge` or writes
+	// `FStratViewModel`; the most any of them does is stop a camera. That is the property a
+	// `T-TURN-09` clause about the three dispositions pins, and it is structural rather than
+	// a promise -- see `StratAiPlayback.h`.
+
+	/**
+	 * §2.11.2's "any click or Esc skips to the end state". True only if it was playing.
+	 *
+	 * THE RETURN IS WHAT LETS THE INPUT BE CONSUMED EXACTLY ONCE.
+	 * `AStratPlayerController::HandleSelectionEvent` calls this first and returns early on a
+	 * `true`, so the click that stopped the tour does not ALSO select a unit -- and a click
+	 * arriving at a quiet moment gets the `false` and falls through to the selection machine
+	 * untouched. A `void` skip was the other shape and would have forced that caller to ask
+	 * `IsAiPlaybackRunning()` first, which is the same question answered a call earlier and
+	 * therefore a second thing that can disagree with it.
+	 *
+	 * "THE END STATE" IS ALREADY ON SCREEN WHEN THIS IS CALLED. It stops a camera tour; it
+	 * fast-forwards nothing. `StratAiPlayback.h` argues why that is what §2.11.2 asks of a
+	 * presentation layer that is reconciled rather than evented.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|AI")
+	bool SkipAiPlayback();
+
+	/**
+	 * True while the camera still has recorded actions to step to.
+	 *
+	 * IT ANSWERS "IS A TOUR RUNNING" AND NOT "DID THE AI DO ANYTHING", AND FOR ONE DIFF IT
+	 * ANSWERED THE SECOND. [CORRECTED 2026-08-29, and the correction is in the code rather
+	 * than only here -- see `BeginAiPlayback`.] This is a cursor-versus-count read, and the
+	 * reel is filled on EVERY hand-over whatever the configuration, so at the shipped
+	 * `AiPlaybackStepSeconds` of zero it returned true for a tour that was never armed and
+	 * never would be. `SkipAiPlayback` then succeeded and `HandleSelectionEvent` consumed the
+	 * first click or Esc after every AI turn in the default configuration. Measured by the
+	 * test author and confirmed at the source before the fix.
+	 *
+	 * WHAT MAKES THE CURSOR SUFFICIENT IS AN INVARIANT AND NOT A SECOND QUESTION ASKED HERE,
+	 * AND IT HAS TWO OWNERS RATHER THAN ONE. `BeginAiPlayback` arms the timer and retires the
+	 * reel on every path where it declines to; `EndAiPlaybackTour` is the only thing that
+	 * stops the timer and it retires the reel every time, so a tour cannot be disarmed and
+	 * leave a live cursor behind it. [AMENDED 2026-08-29, second fix: this paragraph named
+	 * `BeginAiPlayback` alone, which covered the arming half only -- see that function on the
+	 * reseed defect that gap allowed.] So `IsPlaying()` is false unless a tour is genuinely
+	 * under way, and this stays a one-line read of one fact.
+	 *
+	 * ASKING `FTimerManager::IsTimerActive` INSTEAD WAS THE OTHER SHAPE AND IS STILL REJECTED,
+	 * for the reason it always was: the timer stays armed for one interval after the final
+	 * action is shown, so it would answer true after the tour visibly ended. Gating this call
+	 * on `ActiveConfig.AiPlaybackStepSeconds` was the third shape and was rejected because it
+	 * fixes only the configured case -- a positive interval with no world to time against
+	 * leaves the same stuck cursor, and that path is how a headless caller reaches it.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|AI")
+	bool IsAiPlaybackRunning() const;
+
+	/**
+	 * How many actions the last hand-over recorded. Survives the tour and survives a skip.
+	 *
+	 * EXPOSED BECAUSE THE ALTERNATIVE IS UNOBSERVABLE FROM OUTSIDE, which is the same hole
+	 * `AStratBoardActor::GetTargetOverlayCount` was added to close: with only
+	 * `IsAiPlaybackRunning()`, a reel that recorded nothing and a reel that was skipped read
+	 * identically, so no clause could tell "the AI's actions were listed and the tour was cut
+	 * short" from "nothing was ever listed".
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|AI")
+	int32 GetAiPlaybackStepCount() const;
+
+	/** How far the tour got. Equals `GetAiPlaybackStepCount()` once finished or skipped. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|AI")
+	int32 GetAiPlaybackCursor() const;
+
+	/**
+	 * Shows the action at the cursor and moves past it. Returns false when there was none.
+	 *
+	 * WHAT GAP THIS CLOSES. `OnAiPlaybackTimer` is reachable only through `FTimerManager`, so
+	 * the whole camera-stepping half of §2.11.2 -- the focus, the advance, the stop on the
+	 * last step -- could be executed only by a test that owned a ticking world and waited out
+	 * a real interval. In practice that meant executed by nothing. This is the same body
+	 * behind a name a caller can reach, and the timer callback is now one line calling it.
+	 *
+	 * IT IS NOT A SECOND DRIVER OF THE REEL, WHICH IS THE THING IT HAD TO AVOID BEING. There
+	 * is one implementation of stepping and the timer is a caller of it, not a peer -- so a
+	 * clause asserting what a step does is asserting what the timer does, rather than
+	 * asserting a copy that could drift from it. A separate test-only stepping path would
+	 * have been the substitution `T-UI-02` exists to catch, applied to §2.11.2.
+	 *
+	 * IT DOES NOT ARM, RE-ARM OR REQUIRE A TIMER, and it does stop one that is running when it
+	 * takes the last step -- so hand-driving a tour to its end leaves exactly the state that
+	 * letting the clock do it leaves. It also does not check `AiPlaybackStepSeconds`: the
+	 * cursor is retired at the shipped default (see `BeginAiPlayback`), so at that default
+	 * this returns false because there is nothing at the cursor, and not because it asked.
+	 *
+	 * SAFE TO CALL AT ANY TIME. Nothing here submits a command, touches `FStratBridge` or
+	 * writes `FStratViewModel`; the most it does is point a camera. Called with no tour under
+	 * way it returns false and does nothing.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|AI")
+	bool AdvanceAiPlaybackOneStep();
+
 private:
 	/** `RunAiTurnsNow`, reached from the pacing timer. Its refusal is logged, not returned. */
 	void OnAiTurnTimer();
+
+	/**
+	 * Starts the camera tour over whatever `AiPlaybackReel` holds, if one is configured.
+	 *
+	 * CALLED ON THE WAY OUT OF `RunAiTurnsNow`, AFTER THE REFRESH AND ON THE REFUSAL PATH TOO.
+	 * The AI moved whether or not its turn finished, and the actions it got through are worth
+	 * watching either way; a tour that only ran on the happy path would go missing in exactly
+	 * the situation a player most wants to see what happened.
+	 *
+	 * IT OWNS THE ARMING HALF OF THE INVARIANT THE REST OF THIS SECTION READS: **the reel's
+	 * cursor is at the end unless a tour is actually under way.** It is the only function that
+	 * arms `AiPlaybackTimer`, and on every path where it decides NOT to arm one it retires the
+	 * reel -- `FStratAiPlaybackReel::SkipToEnd` -- so that `IsAiPlaybackRunning()` and
+	 * `SkipAiPlayback()` cannot report a tour that will never run.
+	 *
+	 * [CORRECTED 2026-08-29, SECOND FIX. THE SENTENCE HERE READ "IT IS THE ONLY FUNCTION THAT
+	 * ARMS `AiPlaybackTimer`, SO IT IS THE ONLY ONE IN A POSITION TO KNOW", AND WENT ON TO
+	 * CLAIM THIS FUNCTION OWNED THE INVARIANT. That was true of ARMING and false of
+	 * DISARMING, and the invariant constrains both. The clock was stopped from five other
+	 * places, and two of them -- `Deinitialize` and `TearDownPresentation` -- stopped it
+	 * WITHOUT retiring. So a match played at a positive `AiPlaybackStepSeconds` with a tour
+	 * mid-reel, followed by a new match or a slot load, left the cursor stranded: on a
+	 * brand-new match `IsAiPlaybackRunning()` reported true, `SkipAiPlayback()` returned true,
+	 * and the skip gate swallowed the player's first click or Esc -- carrying the PREVIOUS
+	 * match's step list. That is the same swallow this function was written to fix, reinstated
+	 * through a door the prose said did not exist. Found by the W5 gate.
+	 *
+	 * THE FIX IS THAT NO FUNCTION STOPS THE CLOCK WITHOUT RETIRING, because there is no longer
+	 * one that can: `StopAiPlaybackTimer` is now `EndAiPlaybackTour` and does both, atomically,
+	 * at all six call sites. So the disarming half is closed the way the arming half is --
+	 * in one place, covering call sites nobody has written yet -- and this block no longer
+	 * claims a sole ownership the code does not give it. **The invariant has two owners and
+	 * they are named: this function arms, `EndAiPlaybackTour` disarms.**]
+	 *
+	 * [ADDED 2026-08-29 AS A DEFECT FIX AND NOT AS TIDYING. Before it, the reel was filled on
+	 * every hand-over while only the TIMER was gated, so at the shipped `AiPlaybackStepSeconds`
+	 * of zero the cursor sat at 0 with a non-empty reel: `IsAiPlaybackRunning()` was true,
+	 * `SkipAiPlayback()` succeeded, and `AStratPlayerController::HandleSelectionEvent`
+	 * consumed the first click or Esc after EVERY AI hand-over in the default configuration.
+	 * Gating `SkipAiPlayback` on the config was the alternative and was rejected: it fixes the
+	 * zero case and leaves the no-world case, where a positive interval still arms nothing.
+	 * Establishing the invariant where the arming decision is made fixes both, because there
+	 * is one decision and it is here.]
+	 *
+	 * RETIRING IS NOT CLEARING, AND THE DIFFERENCE IS LOAD-BEARING. `SkipToEnd` moves the
+	 * cursor and keeps `Steps`, so `GetAiPlaybackStepCount()` still reports what the AI did
+	 * even at the shipped default -- which is the one discriminator between "a tour was cut
+	 * short" and "a reel was never filled", and the thing a clause asserting the skip landed
+	 * needs in order to tell them apart.
+	 *
+	 * DOES NOTHING WITH AN EMPTY REEL, WITH A NON-POSITIVE `AiPlaybackStepSeconds`, OR WITH NO
+	 * WORLD. Each is an ordinary state and none is reported: the first is an AI that did
+	 * nothing, the second is the shipped default, and the third is a headless test. All three
+	 * now leave the reel retired rather than merely un-toured.
+	 */
+	void BeginAiPlayback();
+
+	/**
+	 * One tick of the tour, driven by `AiPlaybackTimer`. A ONE-LINE CALL TO
+	 * `AdvanceAiPlaybackOneStep` AND NOTHING ELSE.
+	 *
+	 * IT HOLDS NO LOGIC OF ITS OWN ON PURPOSE. The step-and-stop behaviour used to live here,
+	 * where the only way to execute it was to own a ticking world and wait out an interval --
+	 * so `FocusPlaybackStep`, `EndAiPlaybackTour` and the arming path were executed by no
+	 * test at all. The body moved to the public method below and this became its caller, so
+	 * there is ONE driver of the reel with two entry points rather than two implementations
+	 * that can drift.
+	 */
+	void OnAiPlaybackTimer();
+
+	/**
+	 * Ends a tour: clears `AiPlaybackTimer` AND retires the reel. The one place that does
+	 * either, and it always does both.
+	 *
+	 * IT WAS `StopAiPlaybackTimer` AND IT CLEARED ONLY THE CLOCK, WHICH IS WHAT MADE THE
+	 * RESEED DEFECT POSSIBLE. `Deinitialize` and `TearDownPresentation` both called it to stop
+	 * a tour and neither retired the reel, so a reseed mid-tour left the cursor stranded
+	 * mid-reel with no timer to advance it -- and `IsAiPlaybackRunning()`, which reads the
+	 * cursor, reported a running tour on a brand-new match. See `BeginAiPlayback` for the full
+	 * account.
+	 *
+	 * THE RENAME IS THE FIX AND NOT DECORATION. Retiring inside the old function while it was
+	 * still called `StopAiPlaybackTimer` would have left a name that promises less than the
+	 * body does, which is how the SEVENTH call site gets added by someone who wanted only to
+	 * stop a clock. There is now no verb in this class for stopping the clock alone, so the
+	 * disarming half of `BeginAiPlayback`'s invariant cannot be reopened by a call site that
+	 * does not exist yet -- which is the property that made putting the arming half on
+	 * `BeginAiPlayback` right in the first place.
+	 *
+	 * CHECKED AT ALL SIX CALL SITES BEFORE THE BODY CHANGED, because "retiring is harmless
+	 * here" is a claim about each of them and not about the function. Three were already at
+	 * the end and are unaffected: `AdvanceAiPlaybackOneStep`'s null-`Peek` arm, its last-step
+	 * arm, and `SkipAiPlayback` after its own `SkipToEnd`. One -- `RunAiTurnsNow` -- calls
+	 * `FStratAiPlaybackReel::Reset` on the very next line, which subsumes it. The remaining
+	 * two, `Deinitialize` and `TearDownPresentation`, are the defect and are the reason for
+	 * the change.
+	 *
+	 * IT RETIRES AND DOES NOT `Reset()`, so `GetAiPlaybackStepCount()` still answers after a
+	 * tour ends -- which `AdvanceAiPlaybackOneStep` and `SkipAiPlayback` both need, and which
+	 * is the only discriminator between a tour cut short and a reel never filled. Clearing
+	 * `Steps` at a MATCH boundary is a separate concern and is done explicitly in
+	 * `TearDownPresentation`; see there for why that half is not folded in here.
+	 */
+	void EndAiPlaybackTour();
+
+	/**
+	 * Points the camera at one recorded action.
+	 *
+	 * ASKS THE BOARD FOR THE WORLD LOCATION AND COMPUTES NO LAYOUT OF ITS OWN.
+	 * `AStratBoardActor::WorldLocationOfHex` is documented as the ONE hex -> world conversion
+	 * in the project, "because two copies of a layout constant is a board whose units are half
+	 * a tile off"; and `AStratCameraPawn` is documented as knowing nothing about hexes, which
+	 * is why the conversion happens on this side of the call rather than behind a `FocusHex`.
+	 *
+	 * DEGRADES SILENTLY AND DOES NOT REFUSE. A step with no hex (the closing EndTurn), no
+	 * board, or a possessed pawn that is not an `AStratCameraPawn` all leave the camera where
+	 * it is and let the tour continue. None of those is a fault: the tour is decoration, and a
+	 * decoration that reported into the match's failure channel would put presentation text in
+	 * front of a player whose game is fine.
+	 */
+	void FocusPlaybackStep(const FStratAiPlaybackStep& Step) const;
 
 	/**
 	 * Hands the seeded bridge to the scoreboard HUD, if there is one.
@@ -1787,6 +2037,33 @@ private:
 
 	/** The pacing timer, when `AiTurnDelaySeconds` is positive. Cleared in `Deinitialize`. */
 	FTimerHandle AiTurnTimer;
+
+	/** §2.11.2's playback timer, when `AiPlaybackStepSeconds` is positive. A SECOND HANDLE
+	 *  and never a second use of `AiTurnTimer`: both can be pending at once in an AI-vs-AI
+	 *  game -- the tour of turn 7 is still running when turn 8 is scheduled -- and one handle
+	 *  would silently cancel whichever was armed first. Cleared in `Deinitialize` and in
+	 *  `TearDownPresentation`, beside the other one. */
+	FTimerHandle AiPlaybackTimer;
+
+	/**
+	 * §2.11.2's recorded action list for the LAST hand-over, and the cursor over it.
+	 *
+	 * NOT A `UPROPERTY` AND NOT REFLECTED, on `AStratPlayerController::SelectionMachine`'s
+	 * line: `FStratAiPlaybackReel` is a plain struct on purpose, for the testability reason
+	 * its own header gives, and it holds no `UObject` for the collector to care about.
+	 *
+	 * AND IT IS NOT IN `FStratViewModel`, WHICH WAS RULED ON BEFORE THIS WAVE STARTED.
+	 * `T-INT-05`'s subject is every member of the view model, so a playback cursor placed
+	 * there would enter that ID's subject by its own words and owe a clause under it. It is
+	 * here instead, beside the timer that drives it, and `FStratViewModel` gains no member --
+	 * so `T-INT-05` stays refused for W5, and the screen is still rebuildable from the model
+	 * alone because nothing drawn on the board depends on this.
+	 *
+	 * IT IS NOT A MIRROR OF RULES STATE, on `bAiTurnRunning`'s distinction exactly. It is a
+	 * list of things that have ALREADY happened plus how far a camera has got through looking
+	 * at them; nothing reads it to decide what is true of the match.
+	 */
+	FStratAiPlaybackReel AiPlaybackReel;
 
 	/**
 	 * Guards against re-entering the AI loop.

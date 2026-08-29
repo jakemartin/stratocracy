@@ -26,6 +26,7 @@
 
 #include "StratAiTurnRunner.h"
 #include "StratBoardActor.h"
+#include "StratCameraPawn.h"
 #include "StratPlay.h"
 #include "StratSaveGame.h"
 #include "StratUnitActor.h"
@@ -106,6 +107,12 @@ void UStratMatchSubsystem::Deinitialize()
 	{
 		World->GetTimerManager().ClearTimer(AiTurnTimer);
 	}
+
+	// AND THE PLAYBACK TIMER, WHICH IS A WEAKER CASE AND IS CLEARED ANYWAY. `OnAiPlaybackTimer`
+	// submits nothing and never touches the bridge, so it could not corrupt anything the way
+	// `OnAiTurnTimer` could; it does dereference `Board` and the possessed pawn, and a callback
+	// running while those are being torn down four lines below is a crash for a decoration.
+	EndAiPlaybackTour();
 
 	// TORN DOWN IN THE ORDER THINGS DEPEND ON EACH OTHER, even though nothing here
 	// currently does. The unit actors hold no pointer into the bridge and the board holds
@@ -1265,6 +1272,19 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 	FStratAiTurnRunner Runner;
 	Runner.MaxCommandsPerTurn = ActiveConfig.AiMaxCommandsPerTurn;
 
+	// ---- §2.11.2's action list -------------------------------------------
+	// RESET ONCE, HERE, AND NOT PER TURN. A reel spans one HAND-OVER, and this loop is the
+	// hand-over: an AI-vs-AI block plays several turns inside this call and the player watches
+	// the whole stretch as one. `FStratAiTurnRunner::RunTurn` only ever appends, for exactly
+	// this reason -- clearing there would throw away every turn but the last.
+	//
+	// A RUNNING TOUR IS STOPPED BEFORE THE LIST IT IS TOURING IS DESTROYED. `Peek()` returns a
+	// pointer into `Steps`, and `Reset()` is what invalidates it; a timer that fired between
+	// the two would read freed memory. This is the only place the two can race, and it is
+	// closed by ordering rather than by a flag.
+	EndAiPlaybackTour();
+	AiPlaybackReel.Reset();
+
 	FStratBridgeAiTurnPort Port(Live);
 
 	int32       TurnsRun     = 0;
@@ -1290,7 +1310,20 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 			break;
 		}
 
-		const FStratAiTurnOutcome Outcome = Runner.RunTurn(Port);
+		// THE REEL IS AN OUT-PARAMETER AND CHANGES NOTHING ABOUT THE TURN. The runner writes it
+		// and never reads it -- `StratAiTurnRunner.h`'s amended PACING bullet is the ruling --
+		// so the turn resolves in this one synchronous call exactly as it did before §2.11.2
+		// had a presentation half. Pass `nullptr` and the match is bit-identical.
+		//
+		// PASSED UNCONDITIONALLY AND NOT GATED ON `AiPlaybackStepSeconds`, WHICH IS A CHOICE
+		// AND WAS ONCE HALF OF A DEFECT. Recording costs a few structs and makes
+		// `GetAiPlaybackStepCount()` answer "what did the AI just do" in every configuration,
+		// including the shipped default where no tour runs -- which is worth having. What was
+		// wrong was never this line: it was that nothing then told the reel it would not be
+		// toured, so a filled reel with an un-advanced cursor read as a tour in progress.
+		// `BeginAiPlayback` closes that below by retiring the reel whenever it declines to arm
+		// a timer. Gate this line instead and the count goes away with the defect.
+		const FStratAiTurnOutcome Outcome = Runner.RunTurn(Port, &AiPlaybackReel);
 		++TurnsRun;
 
 		if (!Outcome.bOk)
@@ -1362,6 +1395,19 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 	FString RefreshReason;
 	const bool bRefreshed = RefreshPresentation(RefreshReason);
 
+	// ---- §2.11.2's playback, AFTER the reconcile and before any return ----
+	// AFTER, WHICH IS THE ORDERING THE WHOLE DESIGN RESTS ON. `RefreshPresentation` has just
+	// put the actors where the FINAL view model says they are, so the tour steps a camera over
+	// a finished board rather than an unfolding one. `StratAiPlayback.h` argues why that is
+	// what §2.11.2 asks of a presentation layer that is reconciled rather than evented, and
+	// what the alternative would have cost.
+	//
+	// ON EVERY PATH OUT, INCLUDING BOTH FAILURES BELOW. What the AI got through is worth
+	// watching whether or not its turn finished and whether or not the refresh did -- and a
+	// tour that went missing on the refusal path would go missing in exactly the case a player
+	// most wants to see. It is inert unless `AiPlaybackStepSeconds` is positive.
+	BeginAiPlayback();
+
 	if (!StopReason.IsEmpty())
 	{
 		OutFailureReason = StopReason;
@@ -1375,6 +1421,259 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 	}
 
 	return true;
+}
+
+// ---------------------------------------------------------------------------
+// §2.11.2's playback. Six functions, and not one of them can move the match:
+// nothing below constructs an `FStratAiTurnRunner`, names an `IStratAiTurnPort`,
+// calls an `FStratBridge` method or writes an `FStratViewModel`. The most any of
+// them does is point a camera. That is the property `T-TURN-09`'s state-equality
+// half is asserted over, and it is structural -- there is no route from here to a
+// command -- rather than a promise this file is making about its own behaviour.
+// ---------------------------------------------------------------------------
+
+void UStratMatchSubsystem::BeginAiPlayback()
+{
+	// ---- THE ARMING HALF OF THE INVARIANT ---------------------------------
+	// THE CURSOR IS AT THE END UNLESS A TOUR IS ACTUALLY UNDER WAY. This is the only function
+	// that arms `AiPlaybackTimer`, and every exit below that declines to arm one retires the
+	// reel before returning.
+	//
+	// [CORRECTED 2026-08-29, SECOND FIX. THIS BLOCK WAS HEADED "THE INVARIANT THIS FUNCTION
+	// OWNS" AND SAID THIS FUNCTION WAS "THE ONLY ONE IN A POSITION TO KNOW". That was true of
+	// ARMING and false of DISARMING: the clock was stopped from five other places and two of
+	// them -- `Deinitialize` and `TearDownPresentation` -- stopped it without retiring, so a
+	// reseed mid-tour stranded the cursor and reinstated the swallow on a brand-new match.
+	// The disarming half now lives in `EndAiPlaybackTour`, which is the only thing that stops
+	// the clock and always retires. TWO OWNERS, BOTH NAMED. A prose block that asserts a
+	// sole-owner property the code does not have is the same failure as the one struck in
+	// `StratPlayerController.cpp`, and it is corrected here rather than only reported.]
+	//
+	// IT IS A DEFECT FIX AND THE DEFECT IS WORTH NAMING RATHER THAN QUIETLY REPAIRING. The
+	// reel is filled on EVERY hand-over -- `RunAiTurnsNow` passes it to the runner
+	// unconditionally, deliberately, so `GetAiPlaybackStepCount()` answers whatever the
+	// configuration -- while only the timer was gated. So at the shipped
+	// `AiPlaybackStepSeconds` of zero the reel ended each hand-over non-empty with the cursor
+	// at 0, `IsAiPlaybackRunning()` read true, `SkipAiPlayback()` succeeded, and
+	// `AStratPlayerController::HandleSelectionEvent` consumed the first click or Esc after
+	// every single AI turn. Measured by the test author and confirmed at the source.
+	//
+	// GATING `SkipAiPlayback` ON THE CONFIG WAS THE ALTERNATIVE AND IT WAS REJECTED. It
+	// repairs the zero case and leaves the third exit below -- a positive interval with no
+	// world -- reporting a tour that nothing will ever step. Putting the invariant where the
+	// arming decision is made covers every reason not to arm, including reasons nobody has
+	// written yet, because there is one decision and it is here.
+	//
+	// `RetireReel` AND NOT `AiPlaybackReel.Reset()`. Retiring moves the cursor and KEEPS
+	// `Steps`, so the count survives; `Reset()` would throw away the one fact that
+	// distinguishes a tour that was cut short from a reel that was never filled. `Reset()`
+	// belongs to the START of a hand-over and to a MATCH boundary, and is called from exactly
+	// those two places.
+	const auto RetireReel = [this]()
+	{
+		AiPlaybackReel.SkipToEnd();
+	};
+
+	if (ActiveConfig.AiPlaybackStepSeconds <= 0.0f)
+	{
+		// THE SHIPPED DEFAULT, AND ORDINARY. See the field: zero plays nothing, so every
+		// existing caller and every automation test runs down the path it always did -- which
+		// now includes the input path, because a retired reel consumes no click.
+		RetireReel();
+		return;
+	}
+
+	if (AiPlaybackReel.Num() <= 0)
+	{
+		// The AI did nothing this hand-over -- a side with no units, or a turn that refused on
+		// its first command. Not a fault and nothing to tour. Retired for form and for the
+		// next reader rather than out of need: an empty reel is already not playing, and an
+		// exit here that did not retire would be the one exception someone later has to
+		// re-derive.
+		RetireReel();
+		return;
+	}
+
+	UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		// CONFIGURED FOR PLAYBACK WITH NO WORLD TO TIME AGAINST, which is `RunAiTurnsIfDue`'s
+		// case and gets the same treatment for the same reason: presentation degrades and the
+		// match does not. The reel keeps its CONTENTS, so `GetAiPlaybackStepCount()` still
+		// answers; the cursor is retired, so nothing waits on a clock that does not exist.
+		// THIS IS THE EXIT A CONFIG GATE ON `SkipAiPlayback` WOULD HAVE MISSED.
+		RetireReel();
+		return;
+	}
+
+	// ONE TIMER, RESET RATHER THAN STACKED, on `RunAiTurnsIfDue`'s line. The reset above
+	// already cleared it; this is the arming.
+	World->GetTimerManager().SetTimer(AiPlaybackTimer, this,
+		&UStratMatchSubsystem::OnAiPlaybackTimer,
+		ActiveConfig.AiPlaybackStepSeconds, /*bLoop=*/true);
+
+	// THE FIRST STEP IS SHOWN IMMEDIATELY AND NOT ONE INTERVAL LATER. A looping timer fires
+	// first at `Rate`, so without this the camera would sit still for half a second at the
+	// start of every hand-over -- which reads as the playback having failed to start rather
+	// than as pacing.
+	OnAiPlaybackTimer();
+}
+
+void UStratMatchSubsystem::OnAiPlaybackTimer()
+{
+	// ONE LINE, AND THE WHOLE POINT OF IT IS THAT IT IS ONE LINE. See the declaration: the
+	// step-and-stop body used to live here, where nothing without a ticking world could reach
+	// it, and so nothing did. It is `AdvanceAiPlaybackOneStep` now and this is a caller of it
+	// rather than a second copy of it.
+	AdvanceAiPlaybackOneStep();
+}
+
+bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
+{
+	const FStratAiPlaybackStep* const Step = AiPlaybackReel.Peek();
+	if (Step == nullptr)
+	{
+		// NOTHING AT THE CURSOR. Three ways to be here and all are ordinary: the last
+		// `Advance()` ran off the end, `SkipAiPlayback` moved the cursor there between two
+		// ticks, or `BeginAiPlayback` retired the reel because no tour was ever going to run
+		// -- which is the shipped default and is how this reads for a caller that hand-drives
+		// a subsystem nobody configured for playback.
+		//
+		// STOPS THE TIMER ANYWAY. Usually there is none, and clearing an unarmed handle is
+		// free; when there IS one it is the arm that stops a tour that outlived its reel.
+		EndAiPlaybackTour();
+		return false;
+	}
+
+	// A COPY AND NOT THE POINTER, because `FocusPlaybackStep` reaches actors and this
+	// function calls `Advance()` afterwards. Neither can reallocate `Steps` today -- nothing
+	// on either path records -- and the copy is six ints, so the cost of not having to
+	// re-establish that argument after some later change is zero.
+	const FStratAiPlaybackStep Current = *Step;
+
+	FocusPlaybackStep(Current);
+	AiPlaybackReel.Advance();
+
+	if (!AiPlaybackReel.IsPlaying())
+	{
+		// STOPPED HERE RATHER THAN ON THE NEXT TICK, so the timer does not sit armed for one
+		// more interval after the last action was shown. THIS IS ALSO WHAT MAKES HAND-DRIVING
+		// EQUIVALENT TO LETTING THE CLOCK RUN: a caller that steps this to the end leaves
+		// exactly the state the timer would have left, with no armed handle behind it.
+		EndAiPlaybackTour();
+	}
+
+	return true;
+}
+
+void UStratMatchSubsystem::EndAiPlaybackTour()
+{
+	// THE CLOCK FIRST AND THE CURSOR SECOND, which is ordering and not style: `Peek()` hands
+	// out a pointer into `Steps` and a timer callback holds one for the length of a tick. The
+	// cursor move below cannot reallocate anything, so this order is not load-bearing today --
+	// it is written this way so that a later change which DOES touch `Steps` here has an
+	// obvious place to be wrong in, on `Deinitialize`'s stated principle.
+	if (UWorld* const World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(AiPlaybackTimer);
+	}
+
+	// THE HALF THAT USED TO BE MISSING. See the declaration: stopping the clock and leaving a
+	// live cursor is what let a reseed mid-tour swallow the first input of the NEXT match, and
+	// there is deliberately no verb in this class that does one without the other.
+	//
+	// A NO-OP AT FOUR OF THE SIX CALL SITES AND THAT IS THE POINT. `SkipToEnd` returns false
+	// and changes nothing when the cursor is already at the end, so the three sites that
+	// arrive here finished pay nothing, and `RunAiTurnsNow` -- which `Reset()`s on its next
+	// line -- is unaffected. The cost of the guarantee is one comparison on the paths that
+	// did not need it.
+	AiPlaybackReel.SkipToEnd();
+}
+
+void UStratMatchSubsystem::FocusPlaybackStep(const FStratAiPlaybackStep& Step) const
+{
+	if (!Step.bHasHex)
+	{
+		// THE CLOSING EndTurn. It is recorded -- the list is "what the AI did" and ending the
+		// turn is one of the things it did -- and it has no hex to look at. See
+		// `FStratAiPlaybackStep::bHasHex` on why `Hex` cannot be trusted to say so itself.
+		return;
+	}
+
+	if (Board == nullptr)
+	{
+		return;
+	}
+
+	const UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+
+	const APlayerController* const PC = World->GetFirstPlayerController();
+	if (PC == nullptr)
+	{
+		return;
+	}
+
+	// THE POSSESSED PAWN AND NOT A `TActorIterator`, which was the other shape. A level with
+	// two camera pawns in it would give an iterator no way to choose, and the one the player is
+	// looking through is by definition the one they are possessing. A level where the pawn is
+	// something else gets no camera motion and no complaint -- see the declaration on why this
+	// degrades instead of refusing.
+	AStratCameraPawn* const Camera = Cast<AStratCameraPawn>(PC->GetPawn());
+	if (Camera == nullptr)
+	{
+		return;
+	}
+
+	// THE BOARD OWNS THE CONVERSION. See the declaration: `WorldLocationOfHex` is the one
+	// hex -> world map in the project and this file does not get a second one.
+	Camera->FocusWorldLocation(Board->WorldLocationOfHex(Step.Hex));
+}
+
+bool UStratMatchSubsystem::SkipAiPlayback()
+{
+	// THE REEL DECIDES WHETHER ANYTHING HAPPENED, NOT THE TIMER. `FStratAiPlaybackReel::SkipToEnd`
+	// returns false when the cursor was already at the end, which is the same question
+	// "was a tour running" asked of the thing that actually knows -- a timer handle can be
+	// armed for one more tick after the last action was shown.
+	if (!AiPlaybackReel.SkipToEnd())
+	{
+		return false;
+	}
+
+	EndAiPlaybackTour();
+
+	// NOTHING IS RECONCILED HERE AND NOTHING NEEDS TO BE. §2.11.2's "skips to the end state"
+	// is already satisfied: `RunAiTurnsNow` reconciled to the final view model before the tour
+	// began, so the end state has been on screen the whole time. A `RefreshPresentation` call
+	// here would repaint an unchanged screen and would be the first thing to look at when
+	// somebody later believes this function moves the board. It does not.
+	UE_LOG(LogStratPlay, Verbose,
+		TEXT("STRAT-AI playback skipped at step %d of %d"),
+		AiPlaybackReel.GetCursor(), AiPlaybackReel.Num());
+
+	return true;
+}
+
+bool UStratMatchSubsystem::IsAiPlaybackRunning() const
+{
+	// ASKED OF THE REEL AND NOT OF `FTimerManager::IsTimerActive`, for `SkipAiPlayback`'s
+	// reason: the cursor is the fact and the timer is a consequence of it, and a caller that
+	// consulted the timer would get `true` for one interval after the final action was shown.
+	return AiPlaybackReel.IsPlaying();
+}
+
+int32 UStratMatchSubsystem::GetAiPlaybackStepCount() const
+{
+	return AiPlaybackReel.Num();
+}
+
+int32 UStratMatchSubsystem::GetAiPlaybackCursor() const
+{
+	return AiPlaybackReel.GetCursor();
 }
 
 // ---------------------------------------------------------------------------
@@ -1911,6 +2210,37 @@ void UStratMatchSubsystem::TearDownPresentation()
 	{
 		World->GetTimerManager().ClearTimer(AiTurnTimer);
 	}
+
+	// AND THE PLAYBACK TOUR, FOR A REASON THIS FUNCTION OWNS RATHER THAN INHERITS: it is about
+	// to `Destroy()` every unit actor and drop `Board`, and `FocusPlaybackStep` reads `Board`.
+	// A tour left running across a reseed would also be panning around the OLD match's hexes on
+	// the new one's board, which is the more visible of the two failures.
+	//
+	// THIS CALL SITE IS ONE OF THE TWO THE RESEED DEFECT CAME THROUGH, and it is fixed by
+	// `EndAiPlaybackTour` retiring rather than by anything written here -- which is the whole
+	// point of moving the guarantee into the verb. `StartMatchInternal` calls this function
+	// unconditionally and `LoadMatchFromSlot` reaches it through that, so this is the path a
+	// player takes between two matches.
+	EndAiPlaybackTour();
+
+	// AND THE LIST ITSELF, WHICH IS THIS FUNCTION'S ALONE AND IS NOT FOLDED INTO THE VERB
+	// ABOVE. `EndAiPlaybackTour` deliberately keeps `Steps` -- `AdvanceAiPlaybackOneStep` and
+	// `SkipAiPlayback` both need `GetAiPlaybackStepCount()` to survive a tour ending, and it is
+	// the only thing that tells a tour cut short from a reel never filled. But a MATCH boundary
+	// is different in kind from a tour ending: this is the previous match's scratchpad, nobody
+	// can tour it and nobody should read it, so it goes.
+	//
+	// THE SPLIT IS DELIBERATE AND THE TWO HALVES ARE NOT EQUALLY DANGEROUS TO FORGET. Failing
+	// to retire the cursor SWALLOWS THE PLAYER'S INPUT, so that half is inside the verb and
+	// cannot be forgotten by a new call site. Failing to clear `Steps` can only make a readout
+	// report the wrong match's count until the next hand-over's `Reset()`, so that half is one
+	// explicit line at the one place a match boundary is crossed. Folding it into the verb
+	// would break the three sites that need the count to survive.
+	//
+	// AFTER THE CALL ABOVE AND NEVER BEFORE IT: `Reset()` is what invalidates a `Peek()`
+	// pointer, and the timer that could be holding one is cleared on the line above. Same
+	// ordering as `RunAiTurnsNow`, for the same reason.
+	AiPlaybackReel.Reset();
 
 	for (const TPair<int32, TObjectPtr<AStratUnitActor>>& Entry : UnitActors)
 	{

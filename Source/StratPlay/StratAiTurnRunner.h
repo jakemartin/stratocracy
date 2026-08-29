@@ -71,6 +71,15 @@
 //   `UStratMatchSubsystem`'s, because a delay needs a world and this struct deliberately does
 //   not have one. A per-command delay would make this an incremental machine with resumable
 //   state, and resumable state is a mirror of the rules state by another name.
+//   [STILL TRUE 2026-08-29, AND `RunTurn` NOW TAKES AN `FStratAiPlaybackReel*` ANYWAY. That
+//   is not a softening of this bullet and the difference is the whole of §2.11.2's wave:
+//   the reel is WRITTEN and never read here, so nothing about what the AI does next depends
+//   on it and the turn still resolves in one synchronous call. §2.11.2 asks that "the
+//   presentation layer replays its action list" -- so the PRESENTATION is split and the
+//   EXECUTION is not, and this parameter is what makes that separation possible instead of
+//   forcing the other one. The pacing timer lives on `UStratMatchSubsystem`, beside the
+//   between-turns one, and runs entirely after this function has returned. Delete the
+//   parameter and every turn plays identically; that is the test of the claim.]
 // - CHOOSING WHICH SIDE IS AI. That is configuration, and it arrives on
 //   `FStratMatchConfig::AiSides` from a Blueprint default.
 #pragma once
@@ -83,6 +92,11 @@
 enum class EStratAiCommandKind : uint8;
 struct FStratAiCommand;
 class FStratBridge;
+
+// Declared in `StratAiPlayback.h`, which this header deliberately does not include: a caller
+// that does not want a recording never names the type, and the default argument below lets it
+// not name it. Callers that DO record include that header themselves.
+struct FStratAiPlaybackReel;
 
 /**
  * The rules side of one AI turn, and nothing else.
@@ -257,8 +271,23 @@ struct STRATPLAY_API FStratAiTurnRunner
 	 * belongs to `UStratMatchSubsystem::RunAiTurnsNow` because only that function has the
 	 * outer loop it bounds, and it reaches this file's format string through
 	 * `StratLogAiTurnRefusal` below rather than writing a second one.
+	 *
+	 * @param OutReel  optional. When non-null, one `FStratAiPlaybackStep` is appended for
+	 *                  each command the rules module ACCEPTED, in submission order, the
+	 *                  closing EndTurn included. WRITTEN AND NEVER READ BY THIS FUNCTION --
+	 *                  see the header block's amended PACING bullet, which is the ruling this
+	 *                  parameter had to be shaped around. NOT CLEARED HERE: a reel spans a
+	 *                  whole hand-over and `RunTurn` plays one turn of it, so clearing would
+	 *                  throw away the earlier turns of an AI-vs-AI block. `FStratAiPlaybackReel::Reset`
+	 *                  is the caller's to call, once, before its loop.
+	 *
+	 *                  NOTHING IS APPENDED ON A REFUSAL OR ON THE BOUND, and that is not an
+	 *                  omission: those two arms return without the rules module having applied
+	 *                  anything, so there is no action to replay. Whatever was applied before
+	 *                  the refusal is in the reel and stands, exactly as it stands on the
+	 *                  board -- the runner cannot undo a command and neither can this list.
 	 */
-	FStratAiTurnOutcome RunTurn(IStratAiTurnPort& Port);
+	FStratAiTurnOutcome RunTurn(IStratAiTurnPort& Port, FStratAiPlaybackReel* OutReel = nullptr);
 };
 
 /**

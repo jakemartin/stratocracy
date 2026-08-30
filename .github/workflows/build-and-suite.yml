@@ -7,11 +7,31 @@
 # and declines to pretend otherwise. So this one requires a SELF-HOSTED Windows runner on a
 # machine that already has the engine.
 #
-# UNTIL SUCH A RUNNER IS REGISTERED, THIS WORKFLOW QUEUES AND NEVER STARTS. That is the honest
-# failure mode and it is deliberately not softened: an `if:` guard that skipped the job when no
-# runner was available would paint a green tick on a suite nobody ran, which is precisely the
-# class of lie the gate below exists to catch. A queued job is visibly not-yet-run. A skipped
-# job looks passed.
+# A RUNNER IS REGISTERED: `stratocracy-ue-box`, labels `self-hosted, Windows, X64, unreal`,
+# on the machine this project is developed on. Before 2026-08-30 there was none, and this
+# header said so -- the workflow QUEUED AND NEVER STARTED, which was the honest failure mode and
+# was deliberately not softened. That reasoning still governs if the runner goes away: an `if:`
+# guard that skipped the job when no runner was available would paint a green tick on a suite
+# nobody ran, which is precisely the class of lie the gate below exists to catch. **A queued job
+# is visibly not-yet-run. A skipped job looks passed.** So there is still no guard.
+#
+# THE RUNNER MAKES THIS REPOSITORY'S TRIGGER LIST A SECURITY BOUNDARY, AND THIS IS THE FILE
+# WHERE SOMEONE WOULD BREAK IT. `jakemartin/stratocracy` is PUBLIC. A self-hosted runner on a
+# public repository is the one configuration GitHub warns against, because a fork's pull request
+# can run arbitrary code on the runner machine -- which here is a developer's box carrying the
+# engine, the project and its credentials.
+#
+# WHAT KEEPS IT SAFE TODAY IS THE `on:` BLOCK BELOW AND NOTHING ELSE: `push` to `master` and
+# `workflow_dispatch`, both of which require write access. There is no `pull_request` trigger,
+# so a fork PR cannot reach the runner. `banner-sweep.yml` does take `pull_request`, and it runs
+# on `ubuntu-latest` -- hosted, never this machine. **ADDING `pull_request` HERE, OR CHANGING
+# `runs-on` IN A WORKFLOW THAT HAS ONE, HANDS FORK AUTHORS CODE EXECUTION ON THAT BOX.** Do not
+# do it without deciding that deliberately.
+#
+# A SECOND LAYER, ADDED THE SAME DAY AND NAMED BECAUSE IT IS A MITIGATION AND NOT A FIX: the
+# repository's Actions policy was moved from `first_time_contributors` to
+# `all_external_contributors`, so every outside-contributor run needs manual approval. That
+# makes the mistake above fail SAFE rather than silent. It does not make it impossible.
 #
 # WHAT A GREEN RUN HERE MEANS, AND WHAT IT DOES NOT. It means the editor target COMPILED and
 # every clause the tree declares RAN and SUCCEEDED, on a checkout rather than on someone's

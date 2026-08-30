@@ -11,9 +11,14 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
-_Last run 2026-08-30 (CI BUILDS AND RUNS THE SUITE NOW, AND THE WORKFLOW IS INERT UNTIL A
-SELF-HOSTED RUNNER EXISTS -- WHICH IS SAID FIRST BECAUSE IT DECIDES WHAT THE GREEN TICK BELOW
-IS WORTH. Written by the `coordinator`, whose file this is.
+_Last run 2026-08-30 (CI BUILDS AND RUNS THE SUITE NOW, ON A SELF-HOSTED RUNNER THAT IS
+REGISTERED AND ONLINE -- AND THAT RUNNER MAKES THIS REPOSITORY'S TRIGGER LIST A SECURITY
+BOUNDARY, WHICH IS SAID IN THE HEADLINE BECAUSE IT IS THE PART A READER MUST NOT MISS. Written
+by the `coordinator`, whose file this is. **THIS HEADLINE SAID "THE WORKFLOW IS INERT UNTIL A
+SELF-HOSTED RUNNER EXISTS" UNTIL THE RUNNER WAS REGISTERED LATER THE SAME DAY**, and it was the
+LAST of five sites asserting that -- found by a shape sweep after the paragraph below it had
+already been corrected, which is this session's recurring defect landing on the title line of
+the entry that records it.
 THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE: everything below was done in
 `E:/MultiAgent/Stratocracy` on branch `master` from `6b8c8e3`, with no worktree, no branch and
 no rebase, on the user's direct instruction to add a CI workflow that builds and runs the
@@ -31,11 +36,18 @@ each across this file, the workflow and the gate script, and it is the fifth res
 in two days -- this one self-referential, in the same file as the four-round lesson about it.
 The mechanisms are cut from this banner rather than reworded. What a reader needs from HERE is
 below; the reasoning is the gate script's.
-**IT CANNOT RUN TODAY AND THERE IS NO `if:` GUARD MAKING THAT LOOK OTHERWISE.** No self-hosted
-runner is registered -- `gh api repos/jakemartin/stratocracy/actions/runners` answered
-`total_count: 0` -- so the job queues and never starts. **A queued job is visibly not-yet-run;
-a skipped job looks passed**, and an availability guard would have manufactured exactly the
-green tick this project keeps catching itself painting.
+**IT COULD NOT RUN WHEN THIS BANNER WAS FIRST WRITTEN, AND IT CAN NOW.** The paragraph here said
+no self-hosted runner was registered -- `gh api repos/jakemartin/stratocracy/actions/runners`
+answered `total_count: 0` -- so the job queued and never started, and there was deliberately no
+`if:` guard, because **a queued job is visibly not-yet-run while a skipped job looks passed.**
+**[STAMPED 2026-08-30, LATER THE SAME DAY: A RUNNER IS REGISTERED AND ONLINE** --
+`stratocracy-ue-box`, labels `self-hosted, Windows, X64, unreal`, on this box, started on the
+user's instruction. The no-guard decision is unchanged and still governs if it goes away.
+**THE RUNNER TURNS THIS REPOSITORY'S TRIGGER LIST INTO A SECURITY BOUNDARY** -- the repo is
+public, and a fork PR reaching a self-hosted runner is code execution on a developer machine.
+`build-and-suite.yml`'s header is the authority on what keeps that closed and on the one edit
+that would open it; it is NOT restated here, because this pass has already been blocked twice
+for copying a mechanism instead of pointing at it.]**
 **WHAT WAS MEASURED BEFORE BEING WIRED IN, RATHER THAN ASSUMED.** `Build.bat` exits **6** on a
 compile error and **0** on success -- observed by breaking `StratBoardActor.cpp` on purpose,
 building, reading the code, restoring and rebuilding. This project already records a gate that
@@ -2844,16 +2856,18 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 ## NEXT
 
 - **2026-08-30, COORDINATOR (ACTING AND WRITING) -- CI NOW BUILDS AND RUNS THE SUITE, AND IT
-  CANNOT RUN UNTIL A SELF-HOSTED RUNNER IS REGISTERED. THAT IS STATED FIRST BECAUSE IT IS THE
-  ONLY THING THAT DECIDES WHAT THE NEW WORKFLOW IS WORTH TODAY: NOTHING, UNTIL THEN.** Two new
+  COULD NOT RUN UNTIL A SELF-HOSTED RUNNER EXISTED. **[STAMPED 2026-08-30, LATER THE SAME DAY:
+  ONE IS REGISTERED AND ONLINE -- see the closing bullet of this entry, which carries the
+  account and the security consequence.]** Two new
   files, `.github/workflows/build-and-suite.yml` and `Tools/architect/strat_suite_report_gate.py`
   (the latter an out-of-lane write into the steward's directory, declared in the file's own
   header, on the user's direct instruction -- no lane, no merge, NOT the transcription clause).
   - **WHY IT MUST BE SELF-HOSTED, AND WHY THERE IS NO `if:` GUARD.** A hosted runner has no
     Unreal Engine and no MSVC, and the engine is far too large to install per job --
     `banner-sweep.yml`'s own header said so before this pass and still does. So the job is
-    `runs-on: [self-hosted, windows, unreal]` and, with no runner registered
-    (`gh api .../actions/runners` -> `total_count: 0`, measured), it QUEUES AND NEVER STARTS.
+    `runs-on: [self-hosted, windows, unreal]` and, with no runner registered at the time
+    (`gh api .../actions/runners` -> `total_count: 0`, measured then), it QUEUED AND NEVER
+    STARTED.
     **A queued job is visibly not-yet-run; a skipped job looks passed.** An availability guard
     would paint a green tick on a suite nobody ran, which is the exact class of claim the gate
     below exists to refuse.
@@ -2938,9 +2952,24 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     matters. Nobody here has executed a GitHub Actions runner to find out. The pin stays,
     because it is the right defence for a `clean: false` runner or a report written outside the
     workspace; what changed is that the gate script now says which half of that is measured.
-  - **NOT DONE, AND IT IS THE USER'S TO DO:** registering a self-hosted Windows runner with the
-    labels `self-hosted, windows, unreal` on a machine carrying UE 5.8 and MSVC. Until then the
-    workflow is correct, self-tested, and inert.
+  - **DONE 2026-08-30, ON THE USER'S INSTRUCTION AND WITH THE USER'S RULING ON THE EXPOSURE:
+    `stratocracy-ue-box` IS REGISTERED AND ONLINE** -- labels `self-hosted, Windows, X64,
+    unreal`, runner v2.337.0 at `E:/actions-runner`, outside this repository. The earlier
+    version of this bullet said registering it was NOT DONE and was the user's to do.
+    - **THE ARCHIVE WAS HASH-CHECKED BEFORE IT WAS EXTRACTED, and the check was written to
+      refuse.** `actions-runner-win-x64-2.337.0.zip`, 103,528,051 bytes, SHA256
+      `1150692a...1b85cfc` matching the value published on the release. The registration token
+      was never printed, was written to a file only for the `config.cmd` call, and was deleted
+      immediately after; the deletion is confirmed rather than assumed.
+    - **THE USER RULED ON THE PUBLIC-REPO EXPOSURE RATHER THAN HAVING IT DECIDED FOR THEM**,
+      choosing to proceed AND to tighten the policy: the repository's Actions fork-PR approval
+      moved from `first_time_contributors` to `all_external_contributors`, verified by
+      re-reading the API. **That is a mitigation and not a fix, and it is recorded as one.**
+      `build-and-suite.yml`'s header is the authority on the boundary and on the single edit
+      that would breach it; nothing about it is restated here.
+    - **IT IS NOT A SERVICE AND WILL NOT SURVIVE A REBOOT.** Installing one is a system-settings
+      change the `coordinator` declined to make on the user's machine; the runner is running
+      interactively and the user holds the two-command install line.
 
 - **2026-08-29, COORDINATOR -- `LayerFor` IS FIXED AND PINNED, AND THE ONE OPEN ITEM THIS FILE
   CARRIED FROM THE FLICKER PASS IS CLOSED.** The banner at the top of this file is the account and

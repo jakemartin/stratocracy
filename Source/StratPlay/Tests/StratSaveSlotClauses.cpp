@@ -989,3 +989,128 @@ bool FStratLoadRefusesUnconfiguredSubsystemTest::RunTest(const FString& /*Parame
 
 	return true;
 }
+
+// ---------------------------------------------------------------------------------------
+// The loader reports the restorability predicate's own words.
+//
+// WHY THIS CLAUSE IS IN THIS FILE. It needs a configured `UStratMatchSubsystem` -- the loader
+// refuses on unconfigured definition tables long before it looks at a payload -- and the world,
+// slot and config fixtures that make one live here. Its SUBJECT, though, is the shared-authority
+// property W6 created, so it rides `GATE-TITLEMENU` and not this file's usual `T-SAVE-06`.
+//
+// AND NOT `T-SAVE-04`, FOR THE REASON RECORDED IN `StratShellRouteClauses.cpp`: that ID is
+// "refusal: any header mismatch (version/rules/data/scenario hash)", and the payload this
+// clause feeds the loader has a VALID, CURRENT header. Its body is empty. That is not a header
+// mismatch, and an ID whose sentence excludes the subject cannot gate it.
+//
+// WHAT IT PINS THAT NOTHING ELSE DOES. `LoadMatchFromSlot` and the title menu now ask ONE
+// function -- `IsPayloadRestorable` -- rather than each testing the conditions itself. This
+// asserts the loader's failure text CONTAINS THE PHRASE THAT FUNCTION RETURNED for the very
+// same payload, so a loader that quietly went back to restating the conditions in its own
+// words goes red even if its new words are perfectly correct.
+//
+// THE EXPECTATION IS DERIVED, NOT RETYPED, AND THAT IS THE WHOLE DESIGN OF IT. The refusal
+// phrase is never spelled in this file: it is read out of `IsPayloadRestorable`'s own
+// out-parameter and then looked for in the loader's message. A clause that typed
+// "carries no §4.10 text" would be asserting a copy of its subject and would stay green under
+// any edit applied to both places -- which is exactly why the earlier, cruder version of this
+// idea was declined.
+//
+// THE COMPOSITION IS PINNED WITHOUT PINNING THE TEMPLATE. The clause asserts the message
+// carries BOTH the slot name AND the predicate's phrase, rather than asserting equality against
+// a re-typed `slot '%s' %s`. The template is the subject; the two things it must join are the
+// property.
+//
+// CASE-SENSITIVE `Contains` THROUGHOUT, because `FString` comparison in this engine is not, and
+// a loader that lower-cased what it composed would otherwise read as faithful.
+// ---------------------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratLoaderSpeaksTheRestorabilityPredicatesWordsTest,
+	"Stratocracy.StratPlay.GATE-TITLEMENU.TheLoaderRefusesInTheRestorabilityPredicatesOwnWords",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratLoaderSpeaksTheRestorabilityPredicatesWordsTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratSaveSlotClauses;
+
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+	// The loader's own refusal, declared rather than suppressed: this clause exists to provoke
+	// exactly one, and `Occurrences = 1` asserts that it provoked exactly one.
+	AddExpectedMessagePlain(TEXT("Load refused"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 1);
+
+	FSlotScope Slot;
+	FTestWorldScope Scope;
+	if (!TestNotNull(TEXT("a transient world was created"), Scope.World))
+	{
+		return false;
+	}
+
+	UStratMatchSubsystem* const Subsystem = Scope.World->GetSubsystem<UStratMatchSubsystem>();
+	if (!TestNotNull(TEXT("the world has a match subsystem"), Subsystem))
+	{
+		return false;
+	}
+
+	// CONFIGURED, because the loader refuses on unconfigured definition tables before it ever
+	// reads a payload -- and this clause is about the payload arm.
+	FStratMatchConfig Config;
+	FString Error;
+	if (!TestTrue(TEXT("the match config assembles"), MakeConfig(Config, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	Subsystem->StartMatch(Config, Error);
+	if (!TestTrue(TEXT("the match is live, so the loader is past its configuration gate"),
+			Subsystem->IsMatchLive()))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// The payload the completion recorder writes: current header, no match text.
+	UStratSaveGame* const Payload =
+		Cast<UStratSaveGame>(UGameplayStatics::CreateSaveGameObject(UStratSaveGame::StaticClass()));
+	if (!TestNotNull(TEXT("a payload was created"), Payload))
+	{
+		return false;
+	}
+	Payload->bHasCompletedAMatch = true;
+
+	TestTrue(TEXT("premise: its header is current, so no header-mismatch arm can be what "
+		"refuses it"),
+		Payload->SavedDataVersion == UStratSaveGame::kCurrentSavedDataVersion);
+	TestTrue(TEXT("premise: it carries no match text"), Payload->SaveText.IsEmpty());
+
+	// THE ORACLE. The phrase is taken from the module, never typed here.
+	FText PredicatePhrase;
+	TestFalse(TEXT("premise: the predicate refuses this payload"),
+		UStratMatchSubsystem::IsPayloadRestorable(Payload, PredicatePhrase));
+	TestFalse(TEXT("premise: and gives a phrase to look for"), PredicatePhrase.IsEmpty());
+
+	if (!TestTrue(TEXT("the fixture slot was written"),
+			UGameplayStatics::SaveGameToSlot(Payload, kTestSlotName, kUserIndex)))
+	{
+		return false;
+	}
+
+	FString Reason;
+	TestFalse(TEXT("the loader refuses a slot holding a completion-only payload"),
+		Subsystem->LoadMatchFromSlot(FString(kTestSlotName), Reason));
+
+	// THE SUBJECT: the loader's sentence is the predicate's sentence.
+	TestTrue(
+		*FString::Printf(
+			TEXT("the loader speaks the predicate's own words (predicate: '%s', loader: '%s')"),
+			*PredicatePhrase.ToString(), *Reason),
+		Reason.Contains(PredicatePhrase.ToString(), ESearchCase::CaseSensitive));
+
+	// AND joins them to the slot -- the composition, pinned without retyping the template.
+	TestTrue(
+		*FString::Printf(TEXT("and names the slot it refused (loader: '%s')"), *Reason),
+		Reason.Contains(FString(kTestSlotName), ESearchCase::CaseSensitive));
+
+	return true;
+}

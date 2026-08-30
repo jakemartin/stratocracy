@@ -102,6 +102,18 @@ jobs:
         with:
           lfs: true
 
+      # `lfs: true` FETCHES THE OBJECTS BUT DOES NOT REWRITE THE WORKING TREE, which is why this
+      # step exists and why the first attempt at the fix ALSO went red. The action's own log
+      # shows the order: it writes the working tree first, THEN runs `git lfs install --local`
+      # and `git lfs fetch`. The smudge filter is not active while the files are being written,
+      # so every `.uasset` lands as a pointer and the fetched objects sit unused in `.git/lfs`.
+      # `git lfs checkout` is what replaces the pointers with the objects already downloaded.
+      - name: smudge the LFS working tree
+        shell: powershell
+        run: |
+          git lfs checkout
+          if ($LASTEXITCODE -ne 0) { Write-Host "git lfs checkout failed"; exit 1 }
+
       # AND THE SMUDGE IS VERIFIED RATHER THAN TRUSTED, because `lfs: true` failing quietly
       # returns this job to the exact state above -- a silent input corruption that presents as
       # hundreds of unrelated clause failures. A pointer file starts with the LFS spec URL and
@@ -266,7 +278,20 @@ jobs:
         if: always()
         shell: powershell
         run: |
-          python Tools/architect/strat_suite_report_gate.py --not-before $env:SUITE_NOT_BEFORE
+          # THE STAMP CAN BE ABSENT HERE, AND HANDLING THAT IS WHAT `if: always()` COSTS. If a
+          # step above failed, the stamp step never ran, `SUITE_NOT_BEFORE` is empty, and passing
+          # it bare made argparse exit 2 with `--not-before: expected one argument` -- a
+          # MISDIAGNOSIS, reporting a CLI error for a run whose real problem was upstream.
+          # Measured on run 33311155381. With no stamp the gate still runs and still refuses
+          # everything else; only the freshness pin is unavailable, and that is said out loud
+          # rather than dropped quietly.
+          if ([string]::IsNullOrWhiteSpace($env:SUITE_NOT_BEFORE)) {
+            Write-Host "NO RUN-START STAMP: a step above this one did not complete, so freshness"
+            Write-Host "cannot be pinned. Gating the report on everything else."
+            python Tools/architect/strat_suite_report_gate.py
+          } else {
+            python Tools/architect/strat_suite_report_gate.py --not-before $env:SUITE_NOT_BEFORE
+          }
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
       # ALWAYS, INCLUDING ON RED -- a failing run is the one where the per-clause detail is

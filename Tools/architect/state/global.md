@@ -2960,11 +2960,23 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
       2440/3430/3875-byte packages -- measured by comparing the runner's checkout against this
       tree. Nothing errored: the checkout was clean and the build succeeded. Every fixture that
       loads a DataTable was reading a text stub. **1890 of the 1907 tracked files under
-      `Content/` were pointers.** `lfs: true` is now set, AND the smudge is PROVED by a step
-      that reads the first line of every `.uasset` and refuses on the LFS spec URL -- because
-      `lfs: true` failing quietly returns the job to exactly this state, and this failure mode
-      presents as hundreds of clause failures with nothing naming the real reason. The guard was
-      tested BOTH WAYS: 0 pointers in this tree, 1890 in the runner's checkout.
+      `Content/` were pointers.**
+      **`lfs: true` ALONE DOES NOT FIX IT, AND THE SECOND RED RUN (`33311155381`) IS THE PROOF.**
+      The action FETCHES the objects but does not rewrite a working tree it has already written:
+      its own log shows the order -- files written, THEN `git lfs install --local`, THEN
+      `git lfs fetch`. The smudge filter is not active while the files are being written, so
+      every `.uasset` still lands as a pointer and the fetched objects sit unused in `.git/lfs`.
+      An explicit `git lfs checkout` step is what replaces them, and it was **proved against the
+      runner's own failing checkout before being wired in**: `Checking out LFS objects: 100%
+      (1914/1914), 931 MB`, after which the pointer census read **0 of 1890** and the three
+      DataTables matched this tree byte-for-byte.
+      The smudge is also PROVED at runtime by a step that reads the first line of every `.uasset`
+      and refuses on the LFS spec URL -- because an LFS step failing quietly returns the job to
+      exactly this state, and this failure mode presents as hundreds of clause failures with
+      nothing naming the real reason. That guard was tested BOTH WAYS before it shipped: 0
+      pointers in this tree, 1890 in the runner's checkout. **IT IS WHAT CAUGHT THE INCOMPLETE
+      FIX** -- without it, run `33311155381` would have gone red on 249 clauses again with the
+      cause one layer further away.
       **THIS IS STRUCTURALLY INVISIBLE LOCALLY** -- a dev tree's LFS files are always smudged,
       so no local run of any kind could have produced it.
     - **AND THE WORKFLOW'S OWN COMMENT WAS FALSE, WHICH THE RED RUN ALSO EXPOSED.** It said the
@@ -2975,6 +2987,12 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
       result had to be recovered by downloading an artifact by hand. Fixed by making the claim
       TRUE -- an explicit `exit 0` -- and by putting `if: always()` on the gate, since the gate
       is the verdict and the one run where its output matters most is a failing one.
+      **AND `if: always()` HAS A COST THAT THE NEXT RED RUN CHARGED IMMEDIATELY.** With the
+      stamp step skipped by an upstream failure, `SUITE_NOT_BEFORE` was empty and the gate was
+      invoked with a bare `--not-before`, so argparse exited 2 with *"expected one argument"* --
+      **a MISDIAGNOSIS, reporting a CLI error for a run whose real problem was three steps
+      earlier.** The gate step now branches: with no stamp it says so out loud and gates
+      everything except freshness, rather than dropping the pin quietly or dying on it.
     - **THE EDITOR'S EXIT CODE IS NOW MEASURED IN BOTH DIRECTIONS, which it was not when the
       workflow was written:** **0** on an all-green suite, **255** when clauses fail. So it is a
       real signal -- but it cannot distinguish a failed suite from a crashed editor from a suite

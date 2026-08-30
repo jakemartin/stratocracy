@@ -2952,6 +2952,34 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     matters. Nobody here has executed a GitHub Actions runner to find out. The pin stays,
     because it is the right defence for a `clean: false` runner or a report written outside the
     workspace; what changed is that the gate script now says which half of that is measured.
+  - **THE FIRST REAL CI RUN WENT RED, AND IT FOUND A DEFECT NO AMOUNT OF LOCAL TESTING COULD
+    HAVE. THAT IS THE ENTIRE RETURN ON BUILDING IT.** Run `33310819728`, 2m38s: build
+    `Result: Succeeded`, then **249 of 287 clauses FAILED**.
+    - **THE CAUSE WAS `actions/checkout`'s `lfs: false` DEFAULT.**
+      `Content/StratData/DT_*.uasset` arrived as **129-byte LFS POINTER FILES** instead of the
+      2440/3430/3875-byte packages -- measured by comparing the runner's checkout against this
+      tree. Nothing errored: the checkout was clean and the build succeeded. Every fixture that
+      loads a DataTable was reading a text stub. **1890 of the 1907 tracked files under
+      `Content/` were pointers.** `lfs: true` is now set, AND the smudge is PROVED by a step
+      that reads the first line of every `.uasset` and refuses on the LFS spec URL -- because
+      `lfs: true` failing quietly returns the job to exactly this state, and this failure mode
+      presents as hundreds of clause failures with nothing naming the real reason. The guard was
+      tested BOTH WAYS: 0 pointers in this tree, 1890 in the runner's checkout.
+      **THIS IS STRUCTURALLY INVISIBLE LOCALLY** -- a dev tree's LFS files are always smudged,
+      so no local run of any kind could have produced it.
+    - **AND THE WORKFLOW'S OWN COMMENT WAS FALSE, WHICH THE RED RUN ALSO EXPOSED.** It said the
+      editor's exit code was *"recorded, not gated on"*. GitHub's `powershell` shell appends
+      `exit $LASTEXITCODE` to every step, so the code WAS the step's verdict regardless of what
+      the file claimed: a 255 failed the suite step and **SKIPPED THE GATE**, so a 249-clause
+      regression surfaced as a bare `Process completed with exit code 1` and the per-clause
+      result had to be recovered by downloading an artifact by hand. Fixed by making the claim
+      TRUE -- an explicit `exit 0` -- and by putting `if: always()` on the gate, since the gate
+      is the verdict and the one run where its output matters most is a failing one.
+    - **THE EDITOR'S EXIT CODE IS NOW MEASURED IN BOTH DIRECTIONS, which it was not when the
+      workflow was written:** **0** on an all-green suite, **255** when clauses fail. So it is a
+      real signal -- but it cannot distinguish a failed suite from a crashed editor from a suite
+      that never ran, and this project already records the editor asserting on exit after the
+      subsystem closed. That is why it is recorded and not obeyed.
   - **DONE 2026-08-30, ON THE USER'S INSTRUCTION AND WITH THE USER'S RULING ON THE EXPOSURE:
     `stratocracy-ue-box` IS REGISTERED AND ONLINE** -- labels `self-hosted, Windows, X64,
     unreal`, runner v2.337.0 at `E:/actions-runner`, outside this repository. The earlier

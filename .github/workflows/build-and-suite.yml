@@ -93,7 +93,36 @@ jobs:
       UE_ROOT: ${{ vars.UE_ROOT || 'C:\Program Files\Epic Games\UE_5.8' }}
 
     steps:
+      # `lfs: true` IS LOAD-BEARING AND ITS ABSENCE COST THE FIRST REAL RUN. `actions/checkout`
+      # defaults to `lfs: false`, so `Content/StratData/DT_*.uasset` arrive as 129-byte LFS
+      # POINTER FILES rather than the 2.4-3.9 KB packages. Nothing errors: the checkout is
+      # clean, the build succeeds, and then 249 of 287 clauses fail because every fixture that
+      # loads a DataTable is reading a text stub. Measured on run 33310819728.
       - uses: actions/checkout@v5
+        with:
+          lfs: true
+
+      # AND THE SMUDGE IS VERIFIED RATHER THAN TRUSTED, because `lfs: true` failing quietly
+      # returns this job to the exact state above -- a silent input corruption that presents as
+      # hundreds of unrelated clause failures. A pointer file starts with the LFS spec URL and
+      # is ~130 bytes; a real package does not and is not.
+      - name: prove the LFS assets are real files and not pointers
+        shell: powershell
+        run: |
+          $bad = @()
+          Get-ChildItem -Recurse -Filter *.uasset 'Content' | ForEach-Object {
+            $head = Get-Content $_.FullName -TotalCount 1 -ErrorAction SilentlyContinue
+            if ($head -match 'git-lfs\.github\.com') { $bad += $_.FullName }
+          }
+          if ($bad.Count -gt 0) {
+            Write-Host "$($bad.Count) .uasset file(s) are still LFS POINTERS, not packages:"
+            $bad | Select-Object -First 10 | ForEach-Object { Write-Host "  $_" }
+            Write-Host ""
+            Write-Host "The checkout did not smudge LFS. Every clause that loads a DataTable"
+            Write-Host "will fail for a reason that has nothing to do with the code under test."
+            exit 1
+          }
+          Write-Host "all .uasset files under Content/ are real packages"
 
       # EVERY TOOL IS LOCATED AND PROVED PRESENT BEFORE ANYTHING IS BUILT, because a missing
       # tool discovered halfway through reads as a build failure. `Build.bat` in particular is
@@ -210,14 +239,31 @@ jobs:
           $out  = Join-Path $env:GITHUB_WORKSPACE 'Saved\AutomationReport'
           & $cmd $proj '-ExecCmds=Automation RunTests Stratocracy;Quit' `
                  -unattended -nopause -nosplash -nullrhi "-ReportExportPath=$out"
-          Write-Host "editor exit code: $LASTEXITCODE (recorded, not gated on -- see the gate step)"
+          Write-Host "editor exit code: $LASTEXITCODE (recorded, NOT the verdict -- the gate step is)"
+          # SWALLOWED DELIBERATELY, AND THE COMMENT ABOVE USED TO BE FALSE BECAUSE OF THIS LINE'S
+          # ABSENCE. GitHub's `powershell` shell appends `exit $LASTEXITCODE` to every step, so
+          # the editor's code WAS the step's verdict no matter what this file claimed -- and on
+          # run 33310819728 a 255 failed the step and SKIPPED the gate, so the per-clause result
+          # had to be recovered by downloading an artifact by hand. Measured the same day: the
+          # editor exits 0 on an all-green suite and 255 when clauses fail, so the code is a real
+          # signal -- but it cannot tell a failed suite from a crashed editor from a suite that
+          # never ran, and this project already records the editor asserting on exit AFTER the
+          # subsystem closed. The gate below distinguishes all three; this line stops the
+          # coarser signal from pre-empting it.
+          exit 0
 
       # THE ACTUAL VERDICT. Per-clause results, the report's own counters cross-checked against
       # its entries, every clause identified BY NAME against the set the tree declares, and the
       # report pinned to this run rather than to whatever was on the runner's disk. The gate
       # script states what each check is for; this comment names them so a reader knows what a
       # red run here can be about, and nothing more.
+      #
+      # `if: always()` BECAUSE THE GATE IS THE VERDICT. If any step above fails, the interesting
+      # question is still what the report says -- and on the first real run this step was SKIPPED
+      # by an upstream failure, which is how a 249-clause regression got reported as a bare
+      # "Process completed with exit code 1".
       - name: gate the exported suite report
+        if: always()
         shell: powershell
         run: |
           python Tools/architect/strat_suite_report_gate.py --not-before $env:SUITE_NOT_BEFORE

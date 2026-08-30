@@ -36,6 +36,18 @@ the line.** Nothing caught it: no automation test has a viewport or a cursor, an
 already concedes its visibility accessors report a flag and not pixels. The reporter was a
 human at the keyboard, which is the same instrument that discharged the marker debt in the
 pass directly below.
+**THE FIX IS CONFIRMED BY THE INSTRUMENT THAT FOUND THE BUG, WHICH IS THE ONLY ONE THAT
+COULD.** The user reported it at the keyboard and confirmed it there after the fix landed in
+`136f863`, in these words: *"flicker is gone and hovering is smooth now."* That closes it.
+**IT IS RECORDED BECAUSE THE COMMIT ITSELF COULD NOT SAY SO.** `136f863`'s message states, as
+the honest position at the time, that nobody had moved a mouse across the board since the fix
+and that the change was confirmed by construction, by seven clauses and by two gates but NOT
+by the instrument that found it. A commit message cannot be amended after it is pushed, so
+that sentence stands there forever and this is the only place a reader learns it was answered.
+`engine.md`'s "nothing here proves the flicker is gone to a human eye" also STANDS -- it is
+true of the pass it describes, which had no viewport, and it is not stamped for that reason.
+**WHAT IS STILL UNVERIFIED IS UNCHANGED BY THIS:** the mutant falsifiability proof is not
+reproducible from this checkout, and neither gate built or ran the suite.
 THE CLAUSES PIN THE CHURN AND NOT THE OUTCOME, WHICH IS THE ONLY REASON THEY ARE WORTH SEVEN.
 Old and new code agree on every outcome a headless assertion can read -- same instance count,
 same `InstanceHexes`, same `HexAtInstance` answers -- because a rebuild from an identical model

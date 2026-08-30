@@ -64,16 +64,17 @@
 // by name -- the conversion `StratBoardPicking.cpp` already records as load-bearing now that a
 // third overlay exists.
 //
-// NOT PINNED HERE, and the reason is a finding rather than a preference:
+// SPLIT ACROSS TWO CLAUSES ON PURPOSE, and the history is worth the four lines:
 //   `AnUnmeshedBoardIsNeverRememberedAsDrawn` was asked for as "apply with FallbackTerrainMesh
-//   unset, assign it, apply the same model -- the board must draw". IT DOES NOT DRAW, and the
-//   early-out is not why. `AStratBoardActor::LayerFor` assigns a layer component's static mesh
-//   ONCE, at creation; a layer created during the unmeshed apply keeps a null mesh forever, so
-//   the second apply rebuilds (correctly -- the early-out returns false) and still skips every
-//   hex. The clause below therefore pins what the early-out is accountable for and what stays
-//   true after that gap is closed: THE BOARD NEVER REPORTS A CLEAN DRAW IT HAS NOT PERFORMED.
-//   An early-out that believed a request rather than what was drawn would report exactly that.
-//   Asserting "0 drawn" instead would freeze the defect into the suite.
+//   unset, assign it, apply the same model -- the board must draw". ON THE DAY IT WAS WRITTEN
+//   THE BOARD DID NOT DRAW, and the early-out was not why: `AStratBoardActor::LayerFor`
+//   assigned a layer component's static mesh ONCE, at creation, so a layer created during the
+//   unmeshed apply kept a null mesh forever and the second apply rebuilt (correctly -- the
+//   early-out returned false) and still skipped every hex. Asserting "0 drawn" would have
+//   frozen that defect into the suite, so clause 4 pins only what the early-out is accountable
+//   for and what stays true on both sides of the fix: THE BOARD NEVER REPORTS A CLEAN DRAW IT
+//   HAS NOT PERFORMED. `LayerFor` is fixed now, and the draw it was traded away for is clause
+//   8 -- which asserts it unconditionally and is red over the old `LayerFor`.
 //
 // NOTHING BELOW ASKS A RULES QUESTION. No `strat::` free function is called -- LNK2019 outside
 // StratBridge and StratRules, measured 8x -- and the only bridge methods used are
@@ -163,6 +164,14 @@ namespace StratBoardChurn
 	static UStaticMesh* PlaceholderMesh()
 	{
 		return LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+	}
+
+	/** A SECOND engine shape, so "the mesh CHANGED" is distinguishable from "the mesh is set".
+	 *  Its identity is the whole of what is asked of it -- nothing here cares that it is a
+	 *  sphere, only that it is not the cube. */
+	static UStaticMesh* SecondPlaceholderMesh()
+	{
+		return LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere"));
 	}
 
 	/**
@@ -844,14 +853,18 @@ bool FStratBoardChurnReorderedListTest::RunTest(const FString& /*Parameters*/)
 // work is already done. That board would stay blank forever, on a "yes" about a request.
 //
 // WHAT THIS CLAUSE ASSERTS AND WHY IT IS NOT "THE BOARD DRAWS". The brief for this pass asked
-// for "assign the mesh, apply the same model, the board must draw". IT DOES NOT DRAW, and the
-// early-out is not the reason: `AStratBoardActor::LayerFor` sets a layer component's static mesh
-// ONCE, at creation, so a layer created during an unmeshed apply keeps a null mesh and the
-// second apply -- which DOES rebuild, the early-out correctly returning false -- skips every hex
-// again. Asserting "0 drawn" would freeze that gap into the suite and go red the day it is
-// fixed. So the invariant asserted is the one that holds on both sides of that fix and that only
-// a request-believing early-out can break: THE BOARD NEVER REPORTS A CLEAN DRAW IT HAS NOT
-// PERFORMED. The branch taken is stated in the run's own output.
+// for "assign the mesh, apply the same model, the board must draw". ON THAT DAY IT DID NOT DRAW,
+// and the early-out was not the reason: `AStratBoardActor::LayerFor` set a layer component's
+// static mesh ONCE, at creation, so a layer created during an unmeshed apply kept a null mesh
+// and the second apply -- which DOES rebuild, the early-out correctly returning false -- skipped
+// every hex again. Asserting "0 drawn" would have frozen that gap into the suite and gone red
+// the day it was fixed. So the invariant asserted here is the one that holds on BOTH SIDES of
+// that fix and that only a request-believing early-out can break: THE BOARD NEVER REPORTS A
+// CLEAN DRAW IT HAS NOT PERFORMED. The branch taken is stated in the run's own output.
+//
+// THE DRAW ITSELF IS CLAUSE 8'S, ADDED WITH THE `LayerFor` FIX. It asserts unconditionally what
+// this clause deliberately leaves open, so the else arm below now describes a board that can
+// still not draw for some OTHER reason -- it is no longer the arm this fixture takes.
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratBoardChurnUnmeshedTest,
@@ -1313,6 +1326,175 @@ bool FStratBoardChurnOverlayMeshLateTest::RunTest(const FString& /*Parameters*/)
 	Board->ShowTargets(TargetSet);
 	TestEqual(TEXT("the identical request draws once the mesh exists -- the cache recorded what was drawn, not what was asked for"),
 		Board->GetTargetOverlayCount(), TargetSet.Num());
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// 8. A TILE mesh arriving late still draws -- the sibling of clause 7, and the clause the
+//    `LayerFor` fix was held for.
+//
+// WHAT THIS PINS, AND WHY IT DID NOT EXIST UNTIL THE FIX DID. `AStratBoardActor::LayerFor`
+// used to assign a layer component's static mesh ONCE, at creation, and its find path returned
+// an existing layer without ever looking at the mesh again. A board applied before its meshes
+// existed therefore kept null-meshed components for the life of the actor: the second apply
+// rebuilt -- `DrawsExactlyTheseHexes` correctly returning false -- and `ApplyHexes` skipped and
+// re-reported every hex of that terrain, forever. Clause 4 is the early-out's own half of that
+// case and is deliberately agnostic about this one, so the suite carried NO clause that would
+// go red the day the gap was closed or the day it reopened. This is that clause: it is red over
+// the old `LayerFor` and green over the new one.
+//
+// IT ASSERTS THE DRAW UNCONDITIONALLY, which is the whole point -- an `if/else` over the branch
+// the board took would pass on either behaviour and pin neither.
+//
+// TWO HALVES, AND THE SECOND ONE EXISTS BECAUSE A GATE BLOCKED THE FIRST SHAPE OF THE FIX. The
+// find path was first written to re-read the configuration ONLY when the component had no mesh,
+// justified by a claim about instance churn that `strat-integration-reviewer` measured as false
+// of this call site. Widening it to an unconditional re-read is a behaviour change, so it is
+// pinned rather than merely argued: the second half CHANGES `FallbackTerrainMesh` on a board that
+// is already drawing and requires every layer to follow. It applies a CHANGED model to get there,
+// because a mesh reconfiguration is not a model change and the early-out would otherwise -- quite
+// correctly -- never call `LayerFor` at all.
+//
+// IT READS THE COMPONENTS, NOT ONLY THE COUNT. `GetDrawnHexCount` sums `InstanceHexes`, the
+// parallel array; a fix that populated that array without ever giving the components a mesh
+// would satisfy it and leave the board blank. So the tile layers are gathered by the board's
+// own `HexAtInstance` answer and their instance counts and meshes are read directly.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratBoardChurnTileMeshLateTest,
+	"Stratocracy.StratPlay.GATE-BOARDCHURN.AMeshAssignedAfterAnUnmeshedApplyDrawsOnTheNextApply",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratBoardChurnTileMeshLateTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratBoardChurn;
+
+	FStratBridge Bridge;
+	FString Error;
+	if (!TestTrue(TEXT("bridge seeds"), SeedBridge(Bridge, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	FStratViewModel Model;
+	if (!TestTrue(TEXT("the view model builds from the seeded bridge"),
+			StratBuildViewModel(Bridge, kFirstSide, Model, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+	if (!TestTrue(TEXT("the model has hexes"), Model.Hexes.Num() > 0))
+	{
+		return false;
+	}
+
+	UStaticMesh* const Mesh = PlaceholderMesh();
+	if (!TestNotNull(TEXT("a placeholder mesh loaded"), Mesh))
+	{
+		return false;
+	}
+
+	FTestWorldScope Scope;
+	if (!TestNotNull(TEXT("a transient world was created"), Scope.World))
+	{
+		return false;
+	}
+
+	AStratBoardActor* const Board = Scope.World->SpawnActor<AStratBoardActor>();
+	if (!TestNotNull(TEXT("the board spawned"), Board))
+	{
+		return false;
+	}
+	Board->DispatchBeginPlay();
+
+	// ---- THE PRECONDITION, asserted rather than assumed --------------------
+	// The layer components must actually come into existence during an apply that has no mesh
+	// to give them. If this first apply drew anything, the fixture would not be reaching the
+	// path the clause is about, and the assertion below would pass for the wrong reason.
+	FString FirstReason;
+	const bool bFirstOk = Board->ApplyHexes(Model.Hexes, FirstReason);
+
+	TestFalse(TEXT("the unmeshed apply reports the gap"), bFirstOk);
+	TestTrue(TEXT("and names what was missing"), !FirstReason.IsEmpty());
+	TestEqual(TEXT("and drew nothing -- so the layers below were created without a mesh"),
+		Board->GetDrawnHexCount(), 0);
+
+	// ---- The mesh arrives after the components already exist ---------------
+	if (!TestTrue(TEXT("the fixture assigns a fallback tile mesh after the first apply"),
+			SetObjectProperty(Board, TEXT("FallbackTerrainMesh"), Mesh, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// ---- THE CLAUSE: the IDENTICAL model now draws -------------------------
+	FString SecondReason;
+	const bool bSecondOk = Board->ApplyHexes(Model.Hexes, SecondReason);
+
+	TestTrue(TEXT("the identical model applies cleanly once the mesh exists"), bSecondOk);
+	TestEqual(TEXT("and reports no missing terrain"), SecondReason, FString());
+	TestEqual(TEXT("and every hex of the model is drawn"),
+		Board->GetDrawnHexCount(), Model.Hexes.Num());
+
+	// The components themselves, asked of the board rather than found by name.
+	TArray<UHierarchicalInstancedStaticMeshComponent*> Layers;
+	GatherTileLayers(Board, Layers);
+
+	TestTrue(TEXT("at least one tile layer identifies itself to the board"), Layers.Num() > 0);
+
+	int32 InstanceTotal = 0;
+	for (UHierarchicalInstancedStaticMeshComponent* const Layer : Layers)
+	{
+		TestTrue(TEXT("a drawing tile layer has a static mesh"),
+			Layer->GetStaticMesh() != nullptr);
+		InstanceTotal += Layer->GetInstanceCount();
+	}
+
+	TestEqual(TEXT("and the renderer holds one instance per hex of the model"),
+		InstanceTotal, Model.Hexes.Num());
+
+	// ---- THE SECOND HALF: THE MESH IS CHANGED, NOT MERELY SUPPLIED --------
+	// A layer that already wears a mesh is the case the first version of this fix skipped, on
+	// a justification a gate measured as false. A CHANGED model is used deliberately: a mesh
+	// reconfiguration is not a model change, so `DrawsExactlyTheseHexes` would early-out on the
+	// identical list and `LayerFor` would never be reached -- which is a real remaining gap,
+	// recorded in `Tools/architect/state/engine.md`, and NOT the one this half is about. One
+	// hex is dropped so the rebuild runs, exactly as `AChangedHexListRebuildsAndPickingFollowsIt`
+	// does it.
+	UStaticMesh* const SecondMesh = SecondPlaceholderMesh();
+	if (!TestNotNull(TEXT("a SECOND, distinct placeholder mesh loaded"), SecondMesh))
+	{
+		return false;
+	}
+	if (!TestTrue(TEXT("the two placeholder meshes are different objects"), SecondMesh != Mesh))
+	{
+		return false;
+	}
+
+	if (!TestTrue(TEXT("the fixture changes the fallback mesh on a board that is already drawing"),
+			SetObjectProperty(Board, TEXT("FallbackTerrainMesh"), SecondMesh, Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	TArray<FStratHexView> Shorter = Model.Hexes;
+	Shorter.Pop();
+
+	FString ThirdReason;
+	TestTrue(TEXT("the changed model applies cleanly"), Board->ApplyHexes(Shorter, ThirdReason));
+	TestEqual(TEXT("and reports no missing terrain"), ThirdReason, FString());
+
+	GatherTileLayers(Board, Layers);
+	TestTrue(TEXT("the board still has tile layers"), Layers.Num() > 0);
+
+	for (UHierarchicalInstancedStaticMeshComponent* const Layer : Layers)
+	{
+		TestTrue(TEXT("every drawing tile layer now wears the CHANGED mesh"),
+			Layer->GetStaticMesh() == SecondMesh);
+	}
 
 	return true;
 }

@@ -129,12 +129,64 @@ FVector AStratBoardActor::WorldLocationOfHex(FIntPoint Hex) const
 	return GetActorTransform().TransformPosition(LocalLocationOfHex(Hex, 0.0));
 }
 
+void AStratBoardActor::AssignTerrainMesh(
+	UHierarchicalInstancedStaticMeshComponent& Component, FName TerrainId) const
+{
+	// THE ONLY PLACE THAT DECIDES WHICH MESH A TILE LAYER WEARS, extracted rather than
+	// repeated because the defect this closes WAS two sites disagreeing about that: creation
+	// assigned a mesh and the find path did not, so a component created before its mesh
+	// existed never acquired one. Two call sites reading one procedure cannot drift again.
+	if (const TObjectPtr<UStaticMesh>* const Configured = TerrainMeshes.Find(TerrainId))
+	{
+		Component.SetStaticMesh(*Configured);
+	}
+	else if (FallbackTerrainMesh != nullptr)
+	{
+		Component.SetStaticMesh(FallbackTerrainMesh);
+	}
+}
+
 FStratTerrainLayer& AStratBoardActor::LayerFor(FName TerrainId)
 {
 	for (FStratTerrainLayer& Existing : TerrainLayers)
 	{
 		if (Existing.TerrainId == TerrainId)
 		{
+			// THE FIND PATH RE-READS THE MESH CONFIGURATION TOO, WHICH IT DID NOT USED TO.
+			// This method assigned a mesh at creation and nowhere else, so `TerrainMeshes` or
+			// `FallbackTerrainMesh` set after a layer's component existed -- by a fixture, or
+			// by an editor assignment on a live board -- reached no component, and `ApplyHexes`
+			// skipped and re-reported every hex of that terrain on every refresh thereafter.
+			// That defect predates the `DrawsExactlyTheseHexes` early-out and was neither
+			// caused nor cured by it; it is cured here.
+			//
+			// UNCONDITIONAL, AND THE COST IS MEASURED RATHER THAN ASSUMED. This runs once per
+			// HEX, not once per layer, so "is it free when nothing changed" is the only
+			// question worth asking. `UStaticMeshComponent::SetStaticMesh` opens with
+			// `if (NewMesh == GetStaticMesh()) { return false; }` (UE 5.8,
+			// `StaticMeshComponent.cpp`), so an unchanged configuration costs one `TMap::Find`
+			// and one pointer compare and touches neither the component nor the renderer.
+			//
+			// AND THERE IS NO INSTANCE STATE HERE TO DISTURB, which is the other thing a reader
+			// will want to check before widening or narrowing this: the ONLY caller is
+			// `ApplyHexes`, below, which returns at its early-out before reaching this and then
+			// runs `ClearInstances()` on every layer before the loop that calls it. A no-op
+			// refresh never executes this line at all.
+			//
+			// AN EARLIER VERSION OF THIS GUARD READ `... && GetStaticMesh() == nullptr` and
+			// justified itself with the opposite of both facts above -- that an unconditional
+			// re-read would hit components "already drawing instances on every hex of every
+			// refresh" and that a HISM drops its instances when its mesh is set. The first is
+			// false of this call site by the ordering just described; the second is not
+			// supported by any override in `InstancedStaticMesh.cpp`, which does not touch the
+			// mesh-change path at all. `strat-integration-reviewer` blocked on it. It is
+			// recorded here rather than merely deleted because the narrowing it argued for
+			// would have left half the defect standing.
+			if (Existing.Tiles != nullptr)
+			{
+				AssignTerrainMesh(*Existing.Tiles, TerrainId);
+			}
+
 			return Existing;
 		}
 	}
@@ -163,14 +215,7 @@ FStratTerrainLayer& AStratBoardActor::LayerFor(FName TerrainId)
 	Component->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	Component->SetCanEverAffectNavigation(false);
 
-	if (const TObjectPtr<UStaticMesh>* const Configured = TerrainMeshes.Find(TerrainId))
-	{
-		Component->SetStaticMesh(*Configured);
-	}
-	else if (FallbackTerrainMesh != nullptr)
-	{
-		Component->SetStaticMesh(FallbackTerrainMesh);
-	}
+	AssignTerrainMesh(*Component, TerrainId);
 
 	Component->RegisterComponent();
 
@@ -225,21 +270,35 @@ bool AStratBoardActor::DrawsExactlyTheseHexes(const TArray<FStratHexView>& Hexes
 		const FStratTerrainLayer& Layer = TerrainLayers[LayerIndex];
 		int32& Cursor = Cursors[LayerIndex];
 
-		// COVERS THE UNMESHED CASE WITHOUT NAMING IT, AND COVERS IT ONLY AS FAR AS THIS
-		// PROCEDURE REACHES. A terrain whose mesh was unset when the board was last drawn
-		// contributed no instances at all, so its first hex runs off the end of an empty
-		// array here and this returns false. THE REBUILD THEN RUNS AND STILL DRAWS NOTHING,
-		// and the sentence that used to stand here said otherwise:
+		// COVERS THE UNMESHED CASE WITHOUT NAMING IT, AND COVERS ONLY ITS OWN HALF OF IT.
+		// A terrain whose mesh was unset when the board was last drawn contributed no
+		// instances at all, so its first hex runs off the end of an empty array here and this
+		// returns false -- the early-out never remembers an undrawn board as drawn, and that
+		// is the whole of what this procedure is accountable for in the unmeshed case.
+		//
+		// WHAT THE REBUILD THEN DOES IS `LayerFor`'S AND NOT THIS BLOCK'S. The history is kept
+		// because the sentence that once stood here claimed the second half from the first:
 		// RETRACTED>  "-- which is what makes a mesh assigned after the fact take effect on
 		// RETRACTED>   the very next refresh."
-		// That is true of the EARLY-OUT and false of the BOARD. `LayerFor` returns an
-		// existing layer by `TerrainId` before it reaches its `SetStaticMesh` calls, so a
-		// component created during an unmeshed apply keeps a null mesh for the life of the
-		// actor, and `ApplyHexes`'s `GetStaticMesh() == nullptr` arm skips every hex of that
-		// terrain again -- reporting the id again, which is the only part that works. The
-		// defect is `LayerFor`'s and it is OLDER THAN THIS EARLY-OUT; what this block must
-		// not do is deny it. Deliberately not fixed in the pass that found it: see
-		// `Tools/architect/state/engine.md` for the fix and the clause it needs.
+		// That was TRUE OF THE EARLY-OUT AND FALSE OF THE BOARD on the day it was written:
+		// `LayerFor` returned an existing layer by `TerrainId` before it reached its
+		// `SetStaticMesh` calls, so a component created during an unmeshed apply kept a null
+		// mesh for the life of the actor and `ApplyHexes`'s `GetStaticMesh() == nullptr` arm
+		// skipped and re-reported every hex of that terrain on every refresh thereafter. THE
+		// BOARD NOW DOES TAKE A LATE MESH -- `LayerFor`'s find path re-reads the mesh
+		// configuration, and `GATE-BOARDCHURN.AMeshAssignedAfterAnUnmeshedApplyDrawsOnTheNextApply`
+		// goes red if that stops being true -- but it is still not this block that provides it,
+		// and no sentence here may claim it. **THE CONDITION UNDER WHICH IT RE-READS IS NOT
+		// RESTATED HERE, DELIBERATELY.** An earlier draft of this sentence spelled it out, the
+		// condition then changed, and this line went stale without any diff touching it -- twice,
+		// in consecutive gates. NO OTHER COMMENT IN THIS CLASS RESTATES THE CONDITION --
+		// `LayerFor`'s declaration and definition are the only two, and they are the same
+		// function. THE QUANTIFIER IS "IN THIS CLASS" AND NOT "IN THE TREE", because that is
+		// what was actually established: `Tools/architect/state/global.md`'s banner states the
+		// condition too, correctly and in present tense, and a record entry describing what a
+		// pass changed is the right home for it -- but it is a copy, and it needs stamping the
+		// day this moves. An earlier draft of this sentence claimed the tree-wide property and
+		// was over-broad by exactly one site.
 		if (!Layer.InstanceHexes.IsValidIndex(Cursor) || Layer.InstanceHexes[Cursor] != Hex.Hex)
 		{
 			return false;

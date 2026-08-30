@@ -48,6 +48,72 @@
 > separate-attribution requirement is what buys that legibility back, and it is not optional.
 > `CLAUDE.md` is the authority on the clause's limits.]**
 
+> **[OUT-OF-LANE WRITE, 2026-08-29, AND IT IS NOT A TRANSCRIPTION -- STATED FIRST BECAUSE THE
+> CLAUSE THAT NOW SITS IN THIS FILE'S SOLE-WRITER LINE DOES NOT COVER IT. The entry directly
+> below was ACTED AND WRITTEN BY THE `coordinator`, WHOSE FILE THIS IS NOT.** There was no lane
+> agent, no worktree, no merge and no lane-authored draft: the user instructed the `coordinator`
+> directly, in the main tree on `master`, to fix `LayerFor` and the clause that pins it. The
+> transcription clause licenses carrying across what a lane already wrote, AFTER A MERGE; neither
+> condition holds here, so this block and not that clause is what makes the write readable.
+> **ACTING AND WRITING ARE ATTRIBUTED SEPARATELY EVEN THOUGH THEY ARE THE SAME AGENT**, because
+> the point of the requirement is that a reader can tell, and "both were the `coordinator`" is
+> the fact rather than an omission. **WHAT THIS BLOCK DOES NOT DO:** it licenses this write and
+> nothing else, and it does not make the `coordinator` a fallback writer for this file.]**
+
+- **2026-08-29 (local; the run that backs this entry stamps UTC `2026.08.30-03.48.37`, in the MAIN
+  tree `E:/MultiAgent/Stratocracy` on `master`) -- THE CLAUSE THAT WAS OWED FOR `LayerFor` EXISTS
+  NOW, AND IT WAS PROVED RED BY REBUILDING THE DEFECT IT PINS.** Acted and written by the
+  `coordinator` (see the block above; there was no lane). One clause added to the existing
+  `Source/StratPlay/Tests/StratBoardChurnClauses.cpp`:
+  `Stratocracy.StratPlay.GATE-BOARDCHURN.AMeshAssignedAfterAnUnmeshedApplyDrawsOnTheNextApply`.
+  **Clause delta +1**, by MULTILINE set difference on `IMPLEMENT_(SIMPLE|COMPLEX)_AUTOMATION_TEST`
+  over `Source/**/*.cpp`, collected by ONE function on both sides -- HEAD `d3efe78` versus the
+  working tree; nothing was removed or renamed. The live suite figure is `global.md`'s and is not
+  restated here.
+  - **TWO HALVES, AND THE SECOND ONE EXISTS BECAUSE `strat-integration-reviewer` BLOCKED THE
+    FIRST SHAPE OF THE FIX** (gate report
+    `Tools/architect/gate_reports/2026-08-29-layerfor-late-mesh.md`). The find path was first
+    written to re-read the mesh configuration ONLY when the component had none; the gate measured
+    that justification as false and the remediation removed the guard. Widening it is a behaviour
+    change, so it is PINNED and not merely argued: the second half changes `FallbackTerrainMesh`
+    on a board that is already drawing and requires every tile layer to follow. It applies a
+    CHANGED model to get there -- one hex popped, the idiom
+    `AChangedHexListRebuildsAndPickingFollowsIt` already uses -- because a mesh reconfiguration is
+    not a model change, so on an identical list `DrawsExactlyTheseHexes` would early-out and
+    `LayerFor` would never be reached. **THAT IS A REAL REMAINING GAP AND THE CLAUSE IS SHAPED SO
+    AS NOT TO ASSERT IT AWAY;** it is carried in `engine.md`, not here.
+  - **WHAT THE FIRST HALF ASSERTS, AND WHY IT IS UNCONDITIONAL.** A board is applied with no tile mesh at all
+    (so its layer components are created null-meshed -- asserted as a PRECONDITION, not assumed:
+    the first apply must report the gap and must draw zero, or the fixture is not on the path the
+    clause is about); `FallbackTerrainMesh` is then assigned by the same reflection helper the
+    neighbouring clauses use; the IDENTICAL model is applied again and MUST draw. No `if/else`
+    over the branch the board took -- that shape is exactly what
+    `strat-integration-reviewer`'s Observation 4 measured as unpinnable, and it is what clause 4
+    deliberately keeps for its own subject.
+  - **IT READS THE COMPONENTS AND NOT ONLY THE COUNT.** `GetDrawnHexCount` sums `InstanceHexes`,
+    the parallel array; a fix that populated that array while leaving every component meshless
+    would satisfy it and leave the board blank. So the tile layers are gathered by the board's own
+    `HexAtInstance` answer -- the identification rule this file already records -- and each one's
+    `GetStaticMesh()` and `GetInstanceCount()` are read directly, with the instance total required
+    to equal the model's hex count.
+  - **THE FALSIFIABILITY PROOF IS TWO MUTANTS, ONE PER HALF, AND EACH REDDENS ITS OWN HALF AND
+    NOTHING ELSE.** Both were built in the MAIN tree, `Result: Succeeded` each time, with the
+    eight `GATE-BOARDCHURN` clauses re-run over each.
+    **M1 -- the pre-fix find path** (`return Existing;` with no re-read): the clause went `Fail`
+    on BOTH halves -- *"Expected 'and every hex of the model is drawn' to be 99, but it was 0"*,
+    *"...to be "", but it was "no tile mesh for terrain Bridge, Factory, Mountains, Plains, Town,
+    Water, Woods ..."*, and then *"Expected 'the changed model applies cleanly' to be true"*.
+    **M2 -- the NARROWED guard the gate blocked** (`&& GetStaticMesh() == nullptr` restored): the
+    clause went `Fail` on the SECOND HALF ONLY, seven times, once per tile layer, every one
+    *"Expected 'every drawing tile layer now wears the CHANGED mesh' to be true"* -- and the first
+    half stayed green, which is what proves the two halves are not measuring the same thing.
+    **Under BOTH mutants exactly one of the eight clauses moved**, clause 4
+    (`AnUnmeshedBoardIsNeverRememberedAsDrawn`) among the seven that stayed `Success`, confirming
+    it holds on both sides of the fix exactly as it was written to. The fix was restored from a
+    byte copy taken before each mutation, rebuilt, and the full suite re-run.
+    **NOT REPRODUCIBLE FROM THIS CHECKOUT** -- all three mutants were built and discarded in
+    place, and only this paragraph records that they existed.
+
 - **2026-08-29 (local; the run that backs this entry stamps UTC `2026.08.29-22.04.45`, in the MAIN
   tree `E:/MultiAgent/Stratocracy` on `master`) -- THE BOARD'S NO-CHURN EARLY-OUT IS PINNED BY
   SEVEN CLAUSES, AND EVERY ONE OF THEM WAS PROVED RED BY BUILDING A MUTANT THAT BREAKS IT.**
@@ -139,6 +205,20 @@
   the component is not drawing. So `AnOverlayMeshArrivingLateStillDraws` pins the CONJUNCTION and
   not each half; removing either one alone leaves it green. Anyone deleting one of those two
   conditions as redundant should know the suite will not stop them.
+
+  **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator` (out-of-lane; see the block at
+  the top of this file). THE PARAGRAPH DIRECTLY BELOW IS NOW HISTORY AND IS STAMPED WHERE IT SITS
+  RATHER THAN DELETED, so a reader arriving by a citation lands on the correction.** Its account
+  of what was true is accurate as of the pass it describes. What has changed: `LayerFor`'s find
+  path now re-reads `TerrainMeshes`/`FallbackTerrainMesh`, so **THE BOARD DOES DRAW**; the code change the paragraph says "this lane may not make" was made by the
+  `coordinator` on the user's direct instruction; and the `DrawsExactlyTheseHexes` sentence the
+  paragraph quotes as "currently claim[ing] the stronger property" does not stand in the code and
+  did not at `d3efe78` either -- it is a `RETRACTED>` line there, and the paragraph reads as
+  though it were live prose. WHETHER IT WAS ALREADY RETRACTED WHEN THAT PARAGRAPH WAS WRITTEN IS
+  NOT SETTLED HERE: the retraction was committed in `136f863` at 23:29 UTC and the run backing
+  that entry stamps 22:04:45 UTC, but the entry says it worked against an UNCOMMITTED fix, so the
+  commit time does not answer it and this stamp does not pretend otherwise. The clause that pins
+  the draw is the topmost entry in this file.]**
 
   **WHAT `AnUnmeshedBoardIsNeverRememberedAsDrawn` DOES NOT PIN, AND WHY -- THIS IS A FINDING.**
   The brief asked for "apply with `FallbackTerrainMesh` unset, assign it, apply the same model, the

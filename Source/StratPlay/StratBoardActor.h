@@ -191,16 +191,23 @@ public:
 	 *
 	 * WHAT THE EARLY-OUT CANNOT SWALLOW, by construction rather than by care: a terrain
 	 * whose mesh was unset when the board was last drawn contributed no instances, so its
-	 * hexes cannot match and the rebuild runs and reports again -- REPORTS, and does not
-	 * necessarily draw, and the distinction is the subject of the retraction in
-	 * `DrawsExactlyTheseHexes`: assigning `TerrainMeshes` after a layer's component exists
-	 * does not reach that component, because `LayerFor` sets a mesh only at creation. That
-	 * is an older defect this early-out neither causes nor cures, and no sentence in this
-	 * class may imply otherwise. A layer holding instances for a terrain the new model
-	 * dropped fails the end-of-layer check; and anything that cleared a component behind
-	 * this class's back fails the instance-count agreement. When a §2.7 capture starts
-	 * repainting a hex, the hex list changes and this call already handles it with no new
-	 * path.
+	 * hexes cannot match and the rebuild runs and reports again -- REPORTS, and the fact
+	 * that it now also DRAWS is `LayerFor`'s and not this early-out's, which is the subject
+	 * of the retraction in `DrawsExactlyTheseHexes`. Assigning `TerrainMeshes` after a
+	 * layer's component exists used to reach no component, because `LayerFor` set a mesh
+	 * only at creation; its find path now re-reads the configuration. **THE CONDITION IS NOT
+	 * RESTATED HERE and this sentence does not claim to know where it is stated -- it says
+	 * only where to READ it: `LayerFor`'s DEFINITION, which carries the measurement behind
+	 * it.** An earlier draft said the declaration was "the only place that says under what
+	 * condition", which was false twice over -- the definition says it too, and so does
+	 * `Tools/architect/state/global.md`'s banner -- and a shape restated in this paragraph has
+	 * already gone stale once. That was an older defect this early-out neither caused
+	 * nor cured, and no
+	 * sentence in this class may claim the cure for it. A layer holding instances for a
+	 * terrain the new model dropped fails the end-of-layer check; and anything that cleared
+	 * a component behind this class's back fails the instance-count agreement. When a §2.7
+	 * capture starts repainting a hex, the hex list changes and this call already handles it
+	 * with no new path.
 	 *
 	 * A HEX WHOSE `TerrainId` HAS NO MESH IS STILL DRAWN, using `FallbackTerrainMesh`, and
 	 * it is REPORTED. Skipping it would leave a hole in the board that reads as a rules
@@ -537,7 +544,31 @@ private:
 	 */
 	FVector LocalLocationOfHex(FIntPoint Hex, double LocalZ) const;
 
-	/** Finds or creates the layer for a terrain id, registering the component. */
+	/**
+	 * Points a tile layer's component at the mesh its terrain id is configured with --
+	 * `TerrainMeshes` first, `FallbackTerrainMesh` second, and nothing at all if neither is
+	 * set, which `ApplyHexes` reports rather than treats as a failure.
+	 *
+	 * ONE PROCEDURE BECAUSE THE DEFECT IT CLOSES WAS TWO SITES DISAGREEING. `LayerFor`
+	 * assigned a mesh when it created a component and nowhere else, so a board applied
+	 * before its meshes existed kept null-meshed components for the life of the actor. The
+	 * find path calls this too now; two call sites reading one procedure cannot drift again.
+	 */
+	void AssignTerrainMesh(
+		UHierarchicalInstancedStaticMeshComponent& Component, FName TerrainId) const;
+
+	/**
+	 * Finds or creates the layer for a terrain id, registering the component.
+	 *
+	 * BOTH PATHS RE-READ THE MESH CONFIGURATION, the find path unconditionally. It runs once
+	 * per HEX, and `UStaticMeshComponent::SetStaticMesh` returns immediately when the mesh is
+	 * unchanged, so the common case is a `TMap::Find` and a pointer compare; and the only
+	 * caller reaches it after `ApplyHexes` has already cleared every layer's instances, so
+	 * there is no instance state to disturb. The definition carries the measurement and the
+	 * false justification an earlier narrowing of it was blocked on. Pinned by
+	 * `GATE-BOARDCHURN.AMeshAssignedAfterAnUnmeshedApplyDrawsOnTheNextApply`, in both of its
+	 * halves -- the mesh arriving where there was none, and the mesh being CHANGED.
+	 */
 	FStratTerrainLayer& LayerFor(FName TerrainId);
 
 	/** Points an overlay component at exactly these hexes. The shared tail of `ShowReach`,

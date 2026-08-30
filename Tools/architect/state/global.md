@@ -11,6 +11,107 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-29 (THE LAST OPEN HALF OF THE FLICKER PASS IS CLOSED: `LayerFor` TAKES A LATE
+MESH NOW, AND THE CLAUSE ITS DEFERRAL WAS CONDITIONED ON EXISTS AND IS RED OVER THE OLD CODE.
+Written by the `coordinator`, whose file this is.
+THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE: everything below was done in
+`E:/MultiAgent/Stratocracy` on branch `master` from `d3efe78`, with no worktree, no branch and
+no rebase, on the user's direct instruction to fix `LayerFor` and the clause that pins it. The
+suite is now **287/287**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings. It was run by the `coordinator` in this tree and is not quoted from
+anyone, and the macro census agrees at 287.
+THE COUNT MOVED 286 -> 287, ONE NEW CLAUSE,
+`GATE-BOARDCHURN.AMeshAssignedAfterAnUnmeshedApplyDrawsOnTheNextApply`.
+`AStratBoardActor::LayerFor` assigned a layer component's static mesh ONCE, at creation, and its
+find path returned an existing layer without ever looking again -- so a board applied before its
+meshes existed kept null-meshed components for the life of the actor and `ApplyHexes` skipped and
+re-reported every hex of that terrain forever. The find path now re-reads
+`TerrainMeshes`/`FallbackTerrainMesh` on every layer that has a component.
+**AN EARLIER DRAFT OF THIS BANNER NARROWED THAT TO "AND ONLY WHEN THE COMPONENT HAS NONE" AND
+JUSTIFIED IT WITH A CLAIM THAT WAS FALSE TWICE OVER; IT IS QUOTED RATHER THAN QUIETLY REPLACED,
+because the gate report that blocked it is persisted and cites it:**
+RETRACTED>  "a HISM drops its instances when its mesh is set, so an unconditional re-read would
+RETRACTED>   have reintroduced the very whole-board churn the pass below removed, one layer
+RETRACTED>   deeper where no clause would have named it."
+`LayerFor`'s only caller reaches it AFTER the early-out and AFTER `ClearInstances()`, so there is
+never an instance to disturb there; and UE 5.8's `InstancedStaticMesh.cpp` overrides no
+mesh-change hook at all, so the HISM premise was invented rather than measured. `engine.md`'s
+topmost entry carries both refutations and the control that made the second one a measurement.
+What actually makes the unconditional form free is `UStaticMeshComponent::SetStaticMesh`'s own
+`if (NewMesh == GetStaticMesh()) return false;`.
+**THE INTERESTING PART IS THAT THE DEFERRAL WORKED EXACTLY AS WRITTEN, WHICH IS RARE ENOUGH TO
+SAY.** The pass below declined this fix and recorded a falsifiable discharge condition -- a clause
+asserting the draw, red over the then-current `LayerFor`, landing with the code. All three halves
+were met on their own terms and the bullet is stamped rather than argued with. The reason the
+condition mattered is that the suite could not have caught the fix either way: the existing
+`AnUnmeshedBoardIsNeverRememberedAsDrawn` is an `if/else` over the branch the board took and
+asserts on both, so it was green before and is green after. The mutant measured that directly --
+the three-line re-read was reverted, rebuilt and re-run, and **exactly one of the eight
+`GATE-BOARDCHURN` clauses moved**, which is both halves of the proof: the new clause goes red, and
+it is the only thing that does. **THAT PROOF WAS RUN TWICE MORE AFTER THE GATE, ONCE PER HALF OF
+THE FIX.** M1 restores the pre-fix find path and reddens both halves of the clause; M2 restores
+the NARROWED guard the gate blocked and reddens ONLY the second half -- seven assertions, one per
+tile layer, all of the form *"every drawing tile layer now wears the CHANGED mesh"*. Exactly one
+clause moved under each. A mutant that reddens the half it is aimed at and nothing else is the
+only evidence that the two halves pin different things.
+**WHAT THIS DOES NOT CHANGE, AND IT IS THE SAME CAVEAT THE DEFERRAL CARRIED:** the fix is not
+reachable on any shipping path. Production meshes are Blueprint defaults set before the first
+`ApplyHexes`, so only a fixture or a runtime editor assignment reaches it. Nothing a human can see
+at the keyboard changes today, and no viewport was opened in this pass. The mutants are NOT
+reproducible from this checkout -- all three were built and discarded in place.
+**AND ONE THING THE FIX CANNOT REACH, NAMED HERE RATHER THAN LEFT TO BE DISCOVERED:** a mesh
+reconfiguration is not a model change, so on an UNCHANGED hex list `DrawsExactlyTheseHexes`
+early-outs and `LayerFor` is never called -- reassigning a mesh on a live board does nothing until
+the model itself moves. That is not a `LayerFor` defect and is not fixable there; the board has no
+invalidation path for a configuration change. It is carried as debt in `engine.md` with a
+discharge condition, and the clause's second half uses a CHANGED model precisely so that it does
+not assert this away.
+**THE GATE BLOCKED THIS PASS TWICE, BOTH TIMES ENTIRELY IN PROSE THIS WRITER HAD AUTHORED, AND
+BOTH TIMES BY THE SAME MECHANISM -- WHICH IS THE PART WORTH KEEPING AND IS WORTH MORE THAN THE
+FIX.** **A GUARD'S SHAPE WAS RESTATED AT FOUR SITES INSTEAD OF LINKED TO, THE SHAPE CHANGED, AND
+ALL FOUR WENT STALE WITHOUT A DIFF TOUCHING THEM. THEN THE REMEDIATION DID IT AGAIN, IN THE SAME
+PASS, WHILE THE BANNER ABOVE IT NAMED THAT EXACT MECHANISM AS THE LESSON.** Round 1: the
+justification for narrowing the re-read was false, copied into `.cpp`, `.h`, `engine.md` and this
+banner. Round 2: the guard was REMOVED, and four DIFFERENT sites -- three of them written in the
+remediation itself -- still said it re-read "when the component has none", including a header
+whose own sibling paragraph correctly said "unconditionally". **THE REMEDY IS NOT PROOFREADING.**
+Every one of those sites now states the OUTCOME and points at `LayerFor` for the condition, and
+**NO COMMENT OUTSIDE `LayerFor` STATES THE CONDITION -- ITS DECLARATION AND ITS DEFINITION,
+WHICH ARE ONE FUNCTION -- AND THE QUANTIFIER IS "IN THE CLASS" AND NOT "IN THE TREE", BECAUSE
+LINE 29 OF THIS BANNER STATES IT TOO.** An earlier draft of this very sentence said `LayerFor`
+was "the only place in the tree that describes its own shape", which is the retracted tree-wide
+claim, written into the paragraph whose subject is that claim being restated. That is the fourth
+occurrence and it is left recorded rather than quietly fixed, because a lesson paragraph that
+committed its own lesson is worth more than the sentence it replaced. A restated mechanism is a
+copy that no compiler, no clause and no diff can keep honest; the previous round's own conclusion
+-- *"it was propagated by being restated rather than linked"* -- was written and then not acted
+on, which is the second-order failure and the reason this is in the banner rather than a bullet.
+**A SECOND, NARROWER LESSON FROM ROUND 2:** the correction quoted "30 other overrides" as the
+control proving an absence was measured. The 30 was a `head -30` on this writer's own pipeline.
+The uncapped scan returns 75, the reviewer could not reconcile the figure, and a control nobody
+can reproduce is a control in name only. `engine.md` now states the commands and both figures.
+**WHAT THE GATE PASSED, BOTH TIMES:** `strat-integration-reviewer` passed all twelve structural
+every structural check, both rounds -- module arrows, no `strat::` crossing, no vendored header
+before UHT, vendored bytes untouched, lane discipline, the clause's precondition, its component
+identification, and on the re-gate the widening's safety and both engine premises re-derived from
+the UE 5.8 source by the reviewer rather than taken from the brief. **IT IS THE SAME DEFECT CLASS
+THIS WHOLE MILESTONE EXISTS AROUND -- a comment falsified by the code beside it -- except that
+here the comments were NEW and were false the moment they were written.** The round-1 remediation
+removed the guard rather than re-arguing it, which closed half of a residual the reviewer had
+raised only as an observation. The gate report is persisted at
+`Tools/architect/gate_reports/2026-08-29-layerfor-late-mesh.md` and carries both rounds.
+**AN OUT-OF-LANE WRITE, DECLARED IN THE FILES THAT RECEIVED IT AND NOT ONLY HERE.** The
+`coordinator` acted and wrote in `engine.md` and `tests.md`, which are the engineer's and the
+test-author's. It is NOT the transcription clause: that licenses carrying across what a lane
+already wrote, after a merge, and there was no lane, no draft and no merge. Both files carry their
+own block saying so at the top, because recording an out-of-lane write only in this file is the
+finding a gate has already raised once.
+THE REPORT BEHIND THE FIGURE ABOVE is `reportCreatedOn 2026.08.30-03.48.37` -- UTC, which is
+2026-08-29 23:48 local and why this entry is dated the 29th -- and it is cited here rather than
+beside the count on purpose: `strat_banner_sweep.py` treats a `reportCreatedOn` inside its stamp
+window as an explicit stamp, so citing it next to the figure would silently mark the live figure
+historical.)
+
 _Last run 2026-08-29 (A USER-REPORTED BUG, AND THE FIX WAS ONE CONDITIONAL WHILE THE
 INTERESTING PART WAS THAT NOTHING COULD HAVE CAUGHT IT. Written by the `coordinator`, whose
 file this is.
@@ -57,7 +158,13 @@ paired with a control demanding the marker DIE when the model really changes. Ev
 proved RED against a built mutant on a disposable tree copy, not by argument.
 TWO THINGS REMAIN OPEN AND ARE NAMED IN `## NEXT` RATHER THAN CLOSED HERE: a late-assigned
 terrain mesh still never draws, and it is `LayerFor` and not the new early-out that prevents
-it. **An earlier draft of this sentence continued "-- while `DrawsExactlyTheseHexes`'s own
+it. **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`: THE FIRST OF THOSE TWO IS
+NOW FALSE OF THIS TREE. A late-assigned terrain mesh DOES draw -- `LayerFor`'s find path re-reads
+the mesh configuration -- and the topmost banner in this file is the account. It is NOT the only
+place the condition is stated, and an earlier draft of this stamp said it was: `LayerFor`'s
+declaration and definition state it too, in `StratBoardActor.h` and `StratBoardActor.cpp`. It is stamped where it sits and not deleted, and the attribution of the cause is left
+standing because it was correct: it was `LayerFor` and never the early-out. The SECOND thing named
+in this sentence, the un-reddenable overlay-cache half, is untouched and remains open.]** **An earlier draft of this sentence continued "-- while `DrawsExactlyTheseHexes`'s own
 comment claims the stronger property", which a re-gate BLOCKED as false: that comment had
 already retracted the property by name, BEFORE THIS BANNER'S FIRST DRAFT, in the remediation
 this writer had itself dispatched. The re-gate measured the gap at 5m43s by mtime; that
@@ -2681,6 +2788,39 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-29, COORDINATOR -- `LayerFor` IS FIXED AND PINNED, AND THE ONE OPEN ITEM THIS FILE
+  CARRIED FROM THE FLICKER PASS IS CLOSED.** The banner at the top of this file is the account and
+  is not restated. What belongs here is the ledger movement: **of the two things the flicker pass
+  left open, the late-assigned terrain mesh is CLOSED and the un-reddenable half of `FillOverlay`'s
+  two overlay-cache guards REMAINS OPEN.** `engine.md`'s topmost entry holds the code account and
+  `tests.md`'s holds the clause and its mutant proof; both were written by the `coordinator`
+  out-of-lane, declared in those files, and NOT under the transcription clause -- there was no
+  lane, no draft and no merge.
+  - **CARRIED DEBT, UNCHANGED AND RESTATED SO IT IS NOT READ AS CLOSED BY ASSOCIATION.**
+    `FillOverlay` carries two independent protections -- the drawn-hex cache and the
+    `GetInstanceCount()` agreement -- and either alone defeats the bug
+    `AnOverlayMeshArrivingLateStillDraws` was written for, so that clause pins the CONJUNCTION and
+    removing either half alone leaves the suite green. Nothing in this pass touched it.
+  - **NEW DEBT OPENED BY THIS PASS, AND IT IS A GAP THE FIX CANNOT REACH RATHER THAN A PIECE OF
+    IT LEFT UNDONE.** A mesh reconfiguration is not a model change, so on an unchanged hex list
+    `DrawsExactlyTheseHexes` early-outs and `LayerFor` is never called; the board has no
+    invalidation path for a configuration change at all. `engine.md`'s topmost entry holds it with
+    a discharge condition. Raised as an observation by `strat-integration-reviewer`.
+  - **A TOOLING OVERCLAIM RAISED BY `strat-integration-reviewer` IN ROUND 5, RECORDED RATHER THAN
+    FIXED BECAUSE `strat_banner_sweep.py` IS THE STEWARD'S AND THIS PASS IS NOT ITS LANE.** The
+    sweep prints `SWEEP CLEAN -- no self-contradiction found`. Its actual subject is suite claims
+    and banner stamps; it does not read prose. In this pass it printed that line over a `global.md`
+    that contradicted itself twice -- correctly, since neither contradiction was in its subject --
+    and the reviewer notes this is the second time a reader could take that sentence as coverage it
+    never had. **The message, not the check, is what is wrong.** Nobody should cite `SWEEP CLEAN` as
+    evidence that a record's prose agrees with itself.
+  - **NOT VERIFIED BY THIS PASS, STATED BECAUSE THE ABSENCE IS THE INTERESTING PART:** no viewport
+    was opened, and the fix is unreachable on any shipping path
+    (production meshes are Blueprint defaults set before the first `ApplyHexes`). The clause and
+    the mutants are the whole of the evidence, and none of the three is reproducible from this
+    checkout. A gate DID run, blocked once on prose, and its report is persisted at
+    `Tools/architect/gate_reports/2026-08-29-layerfor-late-mesh.md`.
 
 - **2026-08-29, COORDINATOR -- USER RULING: THE TRANSCRIPTION CLAUSE IS NOW A DOCUMENTED RULE,
   AND THE QUESTION THE ENTRY BELOW DECLINED TO SETTLE IS CLOSED.** **FIVE OF THE SIX**

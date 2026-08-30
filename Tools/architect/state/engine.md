@@ -15,6 +15,104 @@
 
 ## NEXT
 
+> **[OUT-OF-LANE WRITE, 2026-08-29, AND IT IS NOT A TRANSCRIPTION -- SAID FIRST BECAUSE THE
+> CLAUSE IN THIS FILE'S SOLE-WRITER LINE DOES NOT COVER IT. The entry directly below was ACTED
+> AND WRITTEN BY THE `coordinator`, WHOSE FILE THIS IS NOT.** No lane agent, no worktree, no
+> merge, no lane-authored draft: the user instructed the `coordinator` directly, in the main tree
+> on `master`, to fix `LayerFor` and the clause that pins it. The transcription clause licenses
+> carrying across what a lane already wrote, AFTER A MERGE; neither condition holds, so this
+> block and not that clause is what makes the write readable. **Acting and writing are attributed
+> separately even though they are the same agent** -- that both were the `coordinator` is the
+> fact, not an omission. It licenses this write and nothing else.]**
+
+- **2026-08-29, `coordinator` (ACTING AND WRITING; see the block above) -- THE DEBT THE PASS
+  BELOW DEFERRED IS PAID. `LayerFor`'S FIND PATH NOW RE-READS THE MESH CONFIGURATION, AND THE
+  CLAUSE ITS DEFERRAL WAS CONDITIONED ON LANDED WITH IT.** The bullet below states the discharge
+  condition as *"a clause under `Source/StratPlay/Tests/` asserts that a board applied unmeshed,
+  given a mesh, and applied again DRAWS -- red over today's `LayerFor` -- and the three lines land
+  with it."* All three halves are met and the bullet is stamped where it sits.
+  - **WHAT CHANGED, AND IT IS FOUR LINES RATHER THAN THREE BECAUSE THE MESH DECISION WAS
+    EXTRACTED FIRST.** `AssignTerrainMesh(UHierarchicalInstancedStaticMeshComponent&, FName)` is
+    the only place that decides which mesh a tile layer wears -- `TerrainMeshes` first,
+    `FallbackTerrainMesh` second, neither is legitimate -- and both `LayerFor` paths call it. The
+    creation path is unchanged in behaviour; the find path calls it for any layer that has a
+    component. **THE EXTRACTION IS THE POINT AND NOT TIDINESS:
+    the defect WAS two sites disagreeing about the mesh** -- creation assigned one and the find
+    path did not -- so leaving two copies of the `TerrainMeshes`/`FallbackTerrainMesh` decision
+    would have re-created the shape that produced it.
+  - **THE FIND PATH RE-READS UNCONDITIONALLY, AND THE FIRST VERSION OF THIS ENTRY SAID THE
+    OPPOSITE AND WAS BLOCKED FOR IT. THE RETRACTED CLAIM IS QUOTED RATHER THAN QUIETLY REPLACED,
+    because a persisted gate report cites it and a reader must be able to find what was said.**
+    RETRACTED>  "NARROWED TO THE NULL CASE, AND THE REASON IS A CHURN REGRESSION AND NOT
+    RETRACTED>   CAUTION. A HISM DROPS ITS INSTANCES WHEN ITS MESH IS SET. An unconditional
+    RETRACTED>   re-read would therefore call `SetStaticMesh` on every already-drawing layer on
+    RETRACTED>   every `ApplyHexes`, turning the no-op refresh the pass below built into a full
+    RETRACTED>   repopulate ... A component that has a mesh is not touched."
+    **`strat-integration-reviewer` BLOCKED ON IT AND WAS RIGHT ON BOTH HALVES**, gate report
+    `Tools/architect/gate_reports/2026-08-29-layerfor-late-mesh.md`, and the same false claim had
+    been written into FOUR places at once -- the `.cpp`, the `.h`, this entry and `global.md`'s
+    banner. **(1) "Already drawing instances" is false of that call site.** `LayerFor`'s ONLY
+    caller is `ApplyHexes`, which returns at `DrawsExactlyTheseHexes` before reaching it and then
+    runs `ClearInstances()` on every layer before the loop that calls it -- so a no-op refresh
+    never executes the line at all and the component holds nothing when it does. **(2) "A HISM
+    drops its instances when its mesh is set" is not supported by the engine.** Neither
+    `UInstancedStaticMeshComponent` nor `UHierarchicalInstancedStaticMeshComponent` overrides
+    `SetStaticMesh` in UE 5.8. **THE COMMAND IS STATED SO THE CONTROL REPRODUCES**, because the
+    first version of this bullet quoted a control figure that did not:
+    RETRACTED>  "(measured with a control: the same scan lists 30 other
+    RETRACTED>   `UInstancedStaticMeshComponent::` overrides in that file, so it was able to
+    RETRACTED>   speak)"
+    **THE 30 WAS A `head -30` ON MY OWN PIPELINE, QUOTED AS THOUGH IT WERE A COUNT.** The same
+    scan without the cap returns 75. `strat-integration-reviewer` caught it on the re-gate and
+    could not reconcile the figure from the record, which is the whole objection: a control
+    nobody can reproduce is a control in name only, and this one carried the entire weight of
+    "measured" rather than "asserted".
+    SUBJECT, over `UE_5.8/Engine/Source/Runtime/Engine/{Private/InstancedStaticMesh.cpp,
+    Private/HierarchicalInstancedStaticMesh.cpp, Classes/Components/InstancedStaticMeshComponent.h,
+    Classes/Components/HierarchicalInstancedStaticMeshComponent.h}`:
+    `grep -rn "SetStaticMesh" <those four>` -> **0 hits**.
+    CONTROL, same two `.cpp` files:
+    `grep -c "UInstancedStaticMeshComponent::\|UHierarchicalInstancedStaticMeshComponent::"` ->
+    **171** and **74**. The scan is amply able to speak; the hook is absent. I had asserted an
+    engine behaviour I had no instrument for, in a file whose house style is to record
+    measurements as measurements -- and then reached for a truncated pipeline to make the
+    correction look measured.
+  - **SO THE GUARD WAS REMOVED RATHER THAN RE-ARGUED, AND THAT IS A BEHAVIOUR CHANGE WITH ITS
+    OWN PIN.** What actually makes the unconditional form free is measured and quoted in the code:
+    `UStaticMeshComponent::SetStaticMesh` opens with `if (NewMesh == GetStaticMesh()) return
+    false;`, so an unchanged configuration costs one `TMap::Find` and one pointer compare per hex.
+    The widening closes half of what the narrowing would have left standing -- a terrain whose
+    `TerrainMeshes` entry or fallback CHANGES after its layer exists now follows -- and
+    `tests.md`'s clause gained a second half asserting exactly that, proved red against a mutant
+    that restores the narrowed guard.
+  - **WHAT IS STILL NOT CLOSED, AND IT IS THE OTHER HALF OF THE REVIEWER'S OBSERVATION.** A mesh
+    reconfiguration is NOT a model change, so on an UNCHANGED hex list `DrawsExactlyTheseHexes`
+    early-outs and `LayerFor` is never reached -- reassign `TerrainMeshes` or `FallbackTerrainMesh`
+    on a live board and nothing happens until the model itself moves. **THIS IS NOT A `LayerFor`
+    DEFECT AND CANNOT BE FIXED THERE**: the board has no invalidation path for a configuration
+    change at all, which is a larger question than this pass. The clause's second half uses a
+    CHANGED model precisely so that it pins the widening and does NOT accidentally assert this
+    away. **DISCHARGED WHEN** the board grows a way to be told its mesh configuration moved, with
+    a clause over it; until then a mesh reassigned on a live board is a restart.
+  - **THREE PROSE SITES THAT WOULD HAVE GONE FALSE ARE CORRECTED IN THE SAME CHANGE, WHICH IS THE
+    HAZARD THIS PROJECT HAS ALREADY BEEN BITTEN BY: a comment that no diff touches can be
+    falsified by the change beside it.** `DrawsExactlyTheseHexes`'s block, `ApplyHexes`'s
+    declaration paragraph, and `LayerFor`'s own declaration all asserted the defect as live. The
+    `RETRACTED>` lines are KEPT and the surrounding sentences moved to the past tense, so the
+    record of what was false on the day it was written survives; the block still refuses to claim
+    the cure for itself, because it is `LayerFor`'s and not the early-out's.
+  - **BUILD AND SUITE.** `Build.bat StratocracyEditor Win64 Development` with the absolute
+    `.uproject`, `-waitmutex` and `-NoHotReloadFromIDE`: `Result: Succeeded`. Rebuilt before the
+    suite -- and again after each mutant and again after restoring, since a clause NAME is
+    compiled. The live suite figure and its report identity are `global.md`'s and are not
+    restated here. The clause's own red-over-the-mutant proof is `tests.md`'s topmost entry, and
+    there are TWO mutants now, one per half of the fix.
+  - **STILL TRUE AND NOT CLOSED BY THIS:** the fix is not reachable on any shipping path.
+    Production meshes are Blueprint defaults set before the first `ApplyHexes`, so only a fixture
+    or a runtime editor assignment reaches the find path with a null mesh -- which is why the
+    defect survived unnoticed since phase 3, and why nothing a human can see at the keyboard
+    changes today. The clause is the whole of the evidence.
+
 - **2026-08-29, `strat-gameplay-engineer` -- THE TILES FLICKERED UNDER THE CURSOR, AND THE CAUSE
   WAS A PER-TURN REBUILD THAT HAD SILENTLY BECOME A PER-HOVER ONE. `ApplyHexes` CLEARED AND
   RE-ADDED ALL 99 TILE INSTANCES EVERY TIME THE CURSOR CROSSED A HEX BOUNDARY.** In the
@@ -95,6 +193,12 @@
     cursor check; a component cleared behind this class's back fails the instance-count
     agreement; both of those ARE closed. Any doubt answers `false` and costs exactly one
     rebuild, which is what every call cost before today.
+  - **[STAMPED 2026-08-29, LATER THE SAME DAY, BY THE `coordinator` (out-of-lane; see the block at
+    the top of this file). THE BULLET DIRECTLY BELOW IS DISCHARGED, and is stamped where it sits
+    rather than deleted so that a reader arriving by a citation lands on the discharge.** Its
+    reasoning stands as written and its condition was met on its own terms: the clause exists, it
+    is red over the old `LayerFor`, and the code change landed with it. The topmost entry in this
+    file is the account.]**
   - **`LayerFor` IS DELIBERATELY NOT FIXED IN THIS PASS, AND THE DECISION IS MINE AND IS
     RECORDED RATHER THAN LEFT AS SILENCE.** The gate did not require the fix and the coordinator
     put the call to me. THE FIX IS THREE LINES: `LayerFor`, on the early-return path for an

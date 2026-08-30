@@ -11,6 +11,60 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-30 (CI BUILDS AND RUNS THE SUITE NOW, AND THE WORKFLOW IS INERT UNTIL A
+SELF-HOSTED RUNNER EXISTS -- WHICH IS SAID FIRST BECAUSE IT DECIDES WHAT THE GREEN TICK BELOW
+IS WORTH. Written by the `coordinator`, whose file this is.
+THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE: everything below was done in
+`E:/MultiAgent/Stratocracy` on branch `master` from `6b8c8e3`, with no worktree, no branch and
+no rebase, on the user's direct instruction to add a CI workflow that builds and runs the
+suite. The suite is now **287/287**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings. It was run by the `coordinator` in this tree, is not quoted from
+anywhere, and the macro census agrees at 287. THE COUNT DID NOT MOVE and nothing under
+`Source/` changed: this pass is CI and tooling only.
+TWO NEW FILES. `.github/workflows/build-and-suite.yml` builds `StratocracyEditor` and runs the
+full suite on a SELF-HOSTED Windows runner; `Tools/architect/strat_suite_report_gate.py` is
+what decides whether that run passed and is the AUTHORITY on why each of its checks exists.
+**AN EARLIER DRAFT OF THIS BANNER SAID "this banner does not restate it -- a pointer, because a
+restated mechanism is the defect the pass below spent four gate rounds on", AND THEN RESTATED
+ALL FOUR MECHANISMS THIRTEEN LINES LATER.** `strat-integration-reviewer` counted four copies of
+each across this file, the workflow and the gate script, and it is the fifth restatement defect
+in two days -- this one self-referential, in the same file as the four-round lesson about it.
+The mechanisms are cut from this banner rather than reworded. What a reader needs from HERE is
+below; the reasoning is the gate script's.
+**IT CANNOT RUN TODAY AND THERE IS NO `if:` GUARD MAKING THAT LOOK OTHERWISE.** No self-hosted
+runner is registered -- `gh api repos/jakemartin/stratocracy/actions/runners` answered
+`total_count: 0` -- so the job queues and never starts. **A queued job is visibly not-yet-run;
+a skipped job looks passed**, and an availability guard would have manufactured exactly the
+green tick this project keeps catching itself painting.
+**WHAT WAS MEASURED BEFORE BEING WIRED IN, RATHER THAN ASSUMED.** `Build.bat` exits **6** on a
+compile error and **0** on success -- observed by breaking `StratBoardActor.cpp` on purpose,
+building, reading the code, restoring and rebuilding. This project already records a gate that
+SKIPPED and exited 2, and another whose `$?` read a pipe rather than the tool, so an exit code
+wired in unmeasured is a known way to ship an inert gate. The step matches `^Result: Succeeded`
+as well as the code, so an engine that changes its conventions turns RED and not silently
+green.
+**THE PART WORTH KEEPING IS WHAT THE GATE REFUSES TO READ: not the log, and not the editor's
+exit code.** Each of those is an instrument this project has already caught lying, and the gate
+script's docstring names which lie and when it was measured. It reads the exported report,
+identifies every clause by NAME against the tree, and pins the report to the run being gated.
+**THE GATE ITSELF WAS BLOCKED ON ITS CENTRAL INVARIANT AND IS BETTER FOR IT:** it compared
+CARDINALITY where IDENTITY was free, and the reviewer proved it with a fixture -- a report of
+three OLD clause names against a tree declaring three NEW ones returned `SUITE REPORT GATE
+CLEAN`, exit 0, which is exactly the stale-binary case the check's own error text claimed to
+catch. It is now a set difference in both directions, that fixture is kept in the self-test,
+and the probe that passed before now exits 1.
+**THE SWEEP CAUGHT THIS BANNER'S ABSENCE BEFORE A READER DID, AND THAT IS WORTH RECORDING
+BECAUSE IT IS THE FIRST TIME IN TWO DAYS A GUARD BEAT THE WRITER TO A DEFECT.** The `## NEXT`
+entry below was written dated 2026-08-30 under a banner still saying `_Last run 2026-08-29`;
+`strat_banner_sweep.py` failed with `BANNER DATE FRESHNESS`. The suite was then re-run so this
+banner's figure is backed by a run performed in this tree today rather than carried over from
+last night.
+THE REPORT BEHIND THE FIGURE ABOVE is `reportCreatedOn 2026.08.30-04.21.41` -- UTC, which is
+2026-08-30 00:21 local -- and it is the first report in this project certified by
+`strat_suite_report_gate.py` rather than read by eye. It is cited here rather than beside the
+count on purpose: the sweep treats a `reportCreatedOn` inside its stamp window as an explicit
+stamp, so citing it next to the figure would silently mark the live figure historical.)
+
 _Last run 2026-08-29 (THE LAST OPEN HALF OF THE FLICKER PASS IS CLOSED: `LayerFor` TAKES A LATE
 MESH NOW, AND THE CLAUSE ITS DEFERRAL WAS CONDITIONED ON EXISTS AND IS RED OVER THE OLD CODE.
 Written by the `coordinator`, whose file this is.
@@ -2788,6 +2842,105 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-08-30, COORDINATOR (ACTING AND WRITING) -- CI NOW BUILDS AND RUNS THE SUITE, AND IT
+  CANNOT RUN UNTIL A SELF-HOSTED RUNNER IS REGISTERED. THAT IS STATED FIRST BECAUSE IT IS THE
+  ONLY THING THAT DECIDES WHAT THE NEW WORKFLOW IS WORTH TODAY: NOTHING, UNTIL THEN.** Two new
+  files, `.github/workflows/build-and-suite.yml` and `Tools/architect/strat_suite_report_gate.py`
+  (the latter an out-of-lane write into the steward's directory, declared in the file's own
+  header, on the user's direct instruction -- no lane, no merge, NOT the transcription clause).
+  - **WHY IT MUST BE SELF-HOSTED, AND WHY THERE IS NO `if:` GUARD.** A hosted runner has no
+    Unreal Engine and no MSVC, and the engine is far too large to install per job --
+    `banner-sweep.yml`'s own header said so before this pass and still does. So the job is
+    `runs-on: [self-hosted, windows, unreal]` and, with no runner registered
+    (`gh api .../actions/runners` -> `total_count: 0`, measured), it QUEUES AND NEVER STARTS.
+    **A queued job is visibly not-yet-run; a skipped job looks passed.** An availability guard
+    would paint a green tick on a suite nobody ran, which is the exact class of claim the gate
+    below exists to refuse.
+  - **THE GATE READS THE EXPORTED REPORT AND NOTHING ELSE, AND EACH OF ITS CHECKS IS A LIE THIS
+    PROJECT HAS ALREADY MEASURED.** (1) The LOG undercounts by exactly one, every time -- the
+    last clause's `Test Completed` line is never flushed before the process exits, which on
+    2026-08-29 read as 286 of 287 with zero failures and looked exactly like a clause that had
+    stopped registering. (2) The editor's exit code is not read at all, so its trustworthiness
+    never has to be argued. (3) A report from an EARLIER run can be sitting on a self-hosted
+    runner's reused workspace, so the gate refuses any report older than a UTC stamp taken
+    before the suite launched. **Whether `Saved/` actually survives `actions/checkout` is
+    UNVERIFIED -- its `clean: true` default runs `git clean -ffdx` and `-x` removes ignored
+    files -- and the gate script says so where it reasons the pin. An earlier version of this
+    item asserted the persistence as fact.** (4) **Every clause is identified BY NAME**: the
+    set of names the tree declares must equal the set the report lists, MISSING and EXTRA
+    reported separately. **An earlier version of this item said "the entry count must equal the
+    census", which is what the gate did before `strat-integration-reviewer` proved a report of
+    three DIFFERENT names passed it.** This is the only check that can see a clause which never
+    registered, since absence is invisible to every results check. (5) A COMPLEX macro emits one
+    entry per row, so it would surface as EXTRA rather than as a diagnosis; the gate FAILS
+    LOUDLY on the first one rather than letting that happen.
+  - **MEASURED BEFORE BEING WIRED IN, NOT ASSUMED.** `Build.bat` exits **6** on a compile error
+    and **0** on success -- observed by breaking `StratBoardActor.cpp` on purpose, building,
+    reading the code, restoring and rebuilding, rather than inferred. The step checks the exit
+    code AND matches `^Result: Succeeded`, so an engine version that changes its conventions
+    turns red instead of silently green. The gate's fixtures each prove ONE check can FAIL,
+    the healthy path among them, and the gate was additionally run against the REAL report from
+    this tree: exit 0 clean, exit 1 when pinned to a later stamp.
+  - **WHAT A GREEN RUN WILL AND WILL NOT MEAN**, recorded now so nobody has to infer it later:
+    that the editor target compiled and every clause the tree declares ran and succeeded, on a
+    checkout rather than someone's working directory. **NOT that anything was seen on screen.**
+    No clause in this project has a viewport or a cursor. A human at the keyboard remains the
+    only instrument that can confirm the game looks right, exactly as the flicker pass records.
+  - **THE GATE BLOCKED THIS PASS ON THREE FINDINGS AND TWO OF THEM CHANGED THE ARTEFACTS RATHER
+    THAN THE PROSE.** Report: `Tools/architect/gate_reports/2026-08-30-ci-build-and-suite.md`.
+    **(1) `Content/**` WAS MISSING FROM THE WORKFLOW'S PATH FILTER while the filter's own
+    comment claimed "only what can change the answer".** `Content/StratData/DT_Units.uasset`,
+    `DT_Terrain.uasset` and `DT_Effectiveness.uasset` are TRACKED and **54 test source files**
+    load them through `/Game/StratData/DT_*` -- both figures re-derived here. `Content/` is the
+    editor-builder's lane and asset-only commits are a normal phase, so an asset commit that
+    broke the DataTables would have shipped without CI ever building. Added broad rather than
+    `Content/StratData/**`: a Blueprint default is an input to behaviour too, and being wrong
+    in this direction costs an unnecessary build instead of an unnoticed regression.
+    **(2) THE GATE'S CENTRAL INVARIANT COMPARED CARDINALITY WHERE IDENTITY WAS FREE**, and the
+    reviewer proved it rather than arguing it: a report listing three OLD clause names against
+    a tree declaring three NEW ones returned `SUITE REPORT GATE CLEAN`, exit 0 -- the exact
+    stale-binary case the check's own error text said it caught, since a clause NAME is
+    compiled and a rename leaves the count untouched. The census now captures the macro's name
+    argument and the check is a set difference in both directions, reporting MISSING and EXTRA
+    separately because they mean different things. **The probe that passed now exits 1**, and it
+    is kept as a fixture. **FIVE fixtures added, 22 in total** -- the tool's own `--self-test`
+    output is the authority and prints 22 `[OK]` lines. An earlier version of this sentence said
+    six, from `grep -c 'case('`, which also counts the `def case(...)` helper; the anchored
+    `grep -c '^    case('` agrees with the tool at 22. Two collectors differing by one filter,
+    subtracted against each other -- the same shape as the `head -30` figure the previous pass
+    was blocked for, in the pass that recorded it. **(3) THE BANNER ABOVE SAID IT DID NOT RESTATE THE MECHANISM AND THEN RESTATED
+    IT** thirteen lines later; four mechanisms stood in four copies each. Cut from the banner
+    and from the workflow's step comments, leaving two homes -- the gate script, which reasons
+    them, and this entry, which records the pass.
+  - **ROUND 3 BLOCKED ON TWO MORE, AND THE FIRST IS THE MOST INSTRUCTIVE THING IN THIS PASS.**
+    **THE RETIRED COUNT INVARIANT SURVIVED IN THE GATE SCRIPT'S OWN DOCSTRING -- the single
+    place `build-and-suite.yml` and this banner both point at INSTEAD OF REPEATING.** It said
+    *"the number of entries in the report must equal the number of clause macros in the tree"*,
+    unqualified and present tense, describing the check a fixture had already broken. **MY
+    SURVIVOR SWEEP COULD NOT HAVE FOUND IT: I searched for the three PHRASINGS I had used, and
+    that sentence shares no vocabulary with any of them** -- no "entry count", no
+    "entries-equal-macros", no "census". The reviewer's shape-based scan -- a quantity word
+    within ~70 characters of `census|macro|entries|entry` -- surfaced it immediately. **THIS
+    PROJECT ALREADY RECORDS THAT A CLAIM-SHAPE SWEEP BEATS A PHRASE SWEEP, AND THE SWEEP THAT
+    MISSED IT WAS RUN IN THE PASS THAT WAS BLOCKED TWICE FOR RESTATEMENT.** The pointer
+    discipline adopted here is right, and this is its failure mode stated plainly: **a single
+    authority that rots takes every pointer with it, silently, and nothing in the tree can
+    notice.** Retracted in place rather than deleted, for exactly that reason.
+    **SECOND: `The gate's 17 fixtures` survived twenty-five lines above `22 in total`** -- the
+    third copy of that numeral, in the one bullet the previous rewrite did not revisit, which is
+    the identical cause as round 2's findings. The numeral is now GONE rather than corrected,
+    following `build-and-suite.yml`'s pattern: the tool prints its own count and a figure here
+    could only ever be wrong.
+  - **AND ONE PREMISE IS NOW MARKED UNVERIFIED RATHER THAN ASSERTED**, on the reviewer's
+    observation: `actions/checkout` defaults to `clean: true`, which runs `git clean -ffdx`, and
+    `-x` removes ignored files -- so it may delete `Saved/` before the freshness pin ever
+    matters. Nobody here has executed a GitHub Actions runner to find out. The pin stays,
+    because it is the right defence for a `clean: false` runner or a report written outside the
+    workspace; what changed is that the gate script now says which half of that is measured.
+  - **NOT DONE, AND IT IS THE USER'S TO DO:** registering a self-hosted Windows runner with the
+    labels `self-hosted, windows, unreal` on a machine carrying UE 5.8 and MSVC. Until then the
+    workflow is correct, self-tested, and inert.
 
 - **2026-08-29, COORDINATOR -- `LayerFor` IS FIXED AND PINNED, AND THE ONE OPEN ITEM THIS FILE
   CARRIED FROM THE FLICKER PASS IS CLOSED.** The banner at the top of this file is the account and

@@ -1,0 +1,218 @@
+# Builds StratocracyEditor and runs the full UE automation suite, then gates the EXPORTED
+# REPORT rather than the run's exit code or its log.
+#
+# THIS WORKFLOW CANNOT RUN ON A GITHUB-HOSTED RUNNER, AND THAT IS NOT A CONFIGURATION CHOICE.
+# It needs an Unreal Engine 5.8 install and MSVC; hosted images carry neither, and the engine
+# is far too large to install per job. `banner-sweep.yml` says the same thing in its own header
+# and declines to pretend otherwise. So this one requires a SELF-HOSTED Windows runner on a
+# machine that already has the engine.
+#
+# UNTIL SUCH A RUNNER IS REGISTERED, THIS WORKFLOW QUEUES AND NEVER STARTS. That is the honest
+# failure mode and it is deliberately not softened: an `if:` guard that skipped the job when no
+# runner was available would paint a green tick on a suite nobody ran, which is precisely the
+# class of lie the gate below exists to catch. A queued job is visibly not-yet-run. A skipped
+# job looks passed.
+#
+# WHAT A GREEN RUN HERE MEANS, AND WHAT IT DOES NOT. It means the editor target COMPILED and
+# every clause the tree declares RAN and SUCCEEDED, on a checkout rather than on someone's
+# working directory. It does NOT mean anything was seen on screen -- no clause in this project
+# has a viewport or a cursor, the record says so repeatedly, and a human at the keyboard is
+# still the only instrument that can confirm the game looks right.
+
+name: build and suite
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      # Only what can change the answer. A record-only or documentation commit does not need a
+      # ten-minute engine build, and `banner-sweep.yml` already covers those on every push.
+      #
+      # `Content/**` IS HERE BECAUSE THE SUITE READS ASSETS, WHICH THE FIRST VERSION OF THIS
+      # LIST MISSED WHILE CLAIMING "only what can change the answer". `Content/StratData/
+      # DT_Units.uasset`, `DT_Terrain.uasset` and `DT_Effectiveness.uasset` are TRACKED, and 54
+      # test source files load them through `/Game/StratData/DT_*`. `Content/` is the
+      # editor-builder's lane and asset-only commits are a normal phase in this project, so the
+      # omission meant a commit that broke the DataTables would ship without CI ever building.
+      # `strat-integration-reviewer` found it. Broad rather than `Content/StratData/**`: a
+      # Blueprint default is also an input to behaviour, and the cost of being wrong in this
+      # direction is an unnecessary build rather than an unnoticed regression.
+      - 'Source/**'
+      - 'Content/**'
+      - 'Data/**'
+      - 'Config/**'
+      - 'Stratocracy.uproject'
+      - '.github/workflows/build-and-suite.yml'
+      - 'Tools/architect/strat_suite_report_gate.py'
+
+permissions:
+  contents: read
+
+# ONE AT A TIME, AND THE REASON IS AN ENGINE CONSTRAINT RATHER THAN THRIFT. Unreal's Live
+# Coding mutex is machine-global: two builds on one box block each other even from separate
+# directories. `-NoHotReloadFromIDE` below defeats the mutex an OPEN EDITOR holds, but nothing
+# defeats two of these jobs racing. `cancel-in-progress` is false because a half-finished build
+# leaves `Intermediate/` in a state the next job pays for.
+concurrency:
+  group: unreal-build-and-suite
+  cancel-in-progress: false
+
+jobs:
+  build-and-suite:
+    # `unreal` is the label that matters -- `self-hosted` and `windows` alone would also match a
+    # box with no engine, and this job's first step would then fail on a machine that was never
+    # meant to answer for it.
+    runs-on: [self-hosted, windows, unreal]
+    timeout-minutes: 60
+
+    env:
+      # Overridable per runner without editing this file. Set a repository variable `UE_ROOT`
+      # if the engine lives elsewhere; the default is where it sits on the machine this project
+      # is developed on.
+      UE_ROOT: ${{ vars.UE_ROOT || 'C:\Program Files\Epic Games\UE_5.8' }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # EVERY TOOL IS LOCATED AND PROVED PRESENT BEFORE ANYTHING IS BUILT, because a missing
+      # tool discovered halfway through reads as a build failure. `Build.bat` in particular is
+      # NOT on PATH on this project's own machine -- that is measured and recorded in
+      # `.agents/ue-project-context.md` -- and every agent handed the bare name has silently
+      # done something else instead.
+      - name: locate the engine and refuse to continue without it
+        shell: powershell
+        run: |
+          $build = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          $cmd   = Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $missing = @()
+          if (-not (Test-Path $build)) { $missing += $build }
+          if (-not (Test-Path $cmd))   { $missing += $cmd }
+          if ($missing.Count -gt 0) {
+            Write-Host "ENGINE NOT FOUND. Missing:"
+            $missing | ForEach-Object { Write-Host "  $_" }
+            Write-Host ""
+            Write-Host "UE_ROOT is '$env:UE_ROOT'. Set the repository variable UE_ROOT if the"
+            Write-Host "engine lives elsewhere on this runner. This step fails rather than"
+            Write-Host "skipping: a suite that did not run must never look like one that passed."
+            exit 1
+          }
+          # `python` is required by the gate step. Proved here, with the rest, rather than
+          # discovered nine minutes later.
+          $py = Get-Command python -ErrorAction SilentlyContinue
+          if ($null -eq $py) { Write-Host "python not on PATH on this runner."; exit 1 }
+          Write-Host "Build.bat:          $build"
+          Write-Host "UnrealEditor-Cmd:   $cmd"
+          Write-Host "python:             $($py.Source)"
+
+      # THE TOOL IS CHECKED BEFORE ITS VERDICT IS TRUSTED, the same rule `banner-sweep.yml`
+      # applies to its own gates. Inline fixtures, each proving ONE check can FAIL -- and the
+      # healthy path among them, because a guard tested only on the ways it should fail is a
+      # guard nobody has shown will stay quiet. NO COUNT IS WRITTEN HERE: the step runs whatever
+      # the script declares and fails if any fixture is wrong, so a number here could only ever
+      # be wrong, never load-bearing. `banner-sweep.yml` writes one and has had to amend it
+      # three times.
+      - name: suite report gate self-test (prove the tool can fail)
+        shell: powershell
+        run: |
+          python Tools/architect/strat_suite_report_gate.py --self-test
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      # STAMPED BEFORE THE SUITE LAUNCHES, AND THE ORDER IS THE WHOLE POINT: the gate refuses
+      # any report older than this stamp, so a report written before this step ran cannot be
+      # offered as evidence for this run. Deleting the directory below is belt-and-braces --
+      # the stamp is what makes a stale report unmistakable even if the delete silently fails.
+      #
+      # WHY A STALE REPORT IS POSSIBLE AT ALL is reasoned in `strat_suite_report_gate.py`'s
+      # docstring, which is also honest about the part of that premise nobody here has
+      # measured. Not restated: this pass has already been blocked once for copying a mechanism
+      # instead of pointing at it.
+      #
+      # UTC, to match `reportCreatedOn`, which the editor writes in UTC. This project has
+      # already put a wrong date in its record by reading one as local.
+      - name: stamp the run start and clear any previous report
+        shell: powershell
+        run: |
+          $stamp = (Get-Date).ToUniversalTime().ToString('yyyy.MM.dd-HH.mm.ss')
+          "SUITE_NOT_BEFORE=$stamp" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "run start (UTC): $stamp"
+          $report = Join-Path $env:GITHUB_WORKSPACE 'Saved\AutomationReport'
+          if (Test-Path $report) {
+            Remove-Item -Recurse -Force $report
+            Write-Host "removed a pre-existing $report"
+          } else {
+            Write-Host "no pre-existing report directory"
+          }
+
+      # BOTH PATHS ABSOLUTE, AND THAT IS MEASURED RATHER THAN STYLISTIC. A bare
+      # "Stratocracy.uproject" makes the engine exit in about a second with "Project file not
+      # found", BEFORE log init, so it dies without writing a log. `cd`-ing first does not help.
+      #
+      # `-NoHotReloadFromIDE` defeats the Live Coding mutex an open editor holds. On a dedicated
+      # runner nothing is open, but this project is developed on the same class of machine and
+      # the flag costs nothing.
+      #
+      # THE EXIT CODE IS CHECKED **AND** THE OUTPUT IS MATCHED, because neither alone has been
+      # enough here. Measured 2026-08-30 on this project: `Build.bat` exits **6** on a
+      # compile error and **0** on success, with `Result: Failed (OtherCompilationError)` and
+      # `Result: Succeeded` respectively -- both observed on a real broken build, not inferred.
+      # The code is trustworthy on that evidence; the string match is kept anyway so that a
+      # future engine version changing its exit conventions turns into a red run rather than a
+      # silent green.
+      - name: build StratocracyEditor
+        shell: powershell
+        run: |
+          $build = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          $proj  = Join-Path $env:GITHUB_WORKSPACE 'Stratocracy.uproject'
+          & $build StratocracyEditor Win64 Development "-project=$proj" -waitmutex -NoHotReloadFromIDE |
+            Tee-Object -FilePath build.log
+          $code = $LASTEXITCODE
+          Write-Host "Build.bat exit code: $code"
+          if ($code -ne 0) { exit 1 }
+          if (-not (Select-String -Path build.log -Pattern '^Result: Succeeded' -Quiet)) {
+            Write-Host "Build.bat exited 0 but never printed 'Result: Succeeded'."
+            Write-Host "Refusing to treat that as a build: the two disagree and one of them is wrong."
+            exit 1
+          }
+
+      # NEITHER THIS STEP'S EXIT CODE NOR THE ENGINE'S LOG IS READ. `-ReportExportPath` is what
+      # makes that possible, which is the only reason it appears here rather than as a
+      # convenience. WHY those two are refused -- each is an instrument measured lying, one of
+      # them by exactly one clause, every time -- is reasoned once, in
+      # `strat_suite_report_gate.py`'s docstring. Pointed at rather than repeated: a mechanism
+      # restated in a second place is a copy that goes stale silently, and this pass has already
+      # been blocked for doing it.
+      - name: run the automation suite
+        shell: powershell
+        run: |
+          $cmd  = Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $proj = Join-Path $env:GITHUB_WORKSPACE 'Stratocracy.uproject'
+          $out  = Join-Path $env:GITHUB_WORKSPACE 'Saved\AutomationReport'
+          & $cmd $proj '-ExecCmds=Automation RunTests Stratocracy;Quit' `
+                 -unattended -nopause -nosplash -nullrhi "-ReportExportPath=$out"
+          Write-Host "editor exit code: $LASTEXITCODE (recorded, not gated on -- see the gate step)"
+
+      # THE ACTUAL VERDICT. Per-clause results, the report's own counters cross-checked against
+      # its entries, every clause identified BY NAME against the set the tree declares, and the
+      # report pinned to this run rather than to whatever was on the runner's disk. The gate
+      # script states what each check is for; this comment names them so a reader knows what a
+      # red run here can be about, and nothing more.
+      - name: gate the exported suite report
+        shell: powershell
+        run: |
+          python Tools/architect/strat_suite_report_gate.py --not-before $env:SUITE_NOT_BEFORE
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      # ALWAYS, INCLUDING ON RED -- a failing run is the one where the per-clause detail is
+      # worth having, and this project has already lost a diagnosis to logs it could see the
+      # conclusion of but not the cause.
+      - name: upload the suite report and build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-report
+          path: |
+            Saved/AutomationReport/**
+            build.log
+          if-no-files-found: warn
+          retention-days: 14

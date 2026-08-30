@@ -17,7 +17,9 @@
 #
 # It does not build the project and does not run the UE suite. Neither is possible on a hosted
 # runner without an engine install, and pretending otherwise would make a green tick mean less
-# than it does.
+# than it does. `build-and-suite.yml` does that half, on a SELF-HOSTED runner; this comment
+# points at it rather than describing it, because a restated mechanism is a copy that goes
+# stale the day the other file changes and nothing here would notice.
 
 name: banner sweep
 

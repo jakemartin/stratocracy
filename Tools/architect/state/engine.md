@@ -15,6 +15,116 @@
 
 ## NEXT
 
+- **2026-08-31, the `coordinator` (ACTING -- the C++ below is this lane's and was written OUT OF
+  LANE, in the integration tree, on the user's explicit instruction in session) and
+  `strat-gameplay-engineer` (WRITING; this entry and nothing else in the pass) -- THE TITLE
+  SCREEN WAS SWITCHING GAME INPUT OFF FOR THE REST OF THE SESSION, AND THE REPAIR IS A CLAIM THE
+  CONTROLLER MAKES RATHER THAN A GIFT THE HUD GIVES BACK.**
+  - **WHOSE WRITE THIS IS, SAID FIRST, BECAUSE TWO ACTORS ARE INVOLVED AND ONLY ONE OF THEM
+    TOUCHED THE CODE.** The user reported the defect from a live session, was given the diagnosis
+    and the proposed repair, and instructed that it be written in the integration tree there and
+    then; the `coordinator` wrote `StratPlayerController.h` and `.cpp`, built them and ran the
+    suite. This lane wrote none of those bytes and adopts none of those measurements as its own.
+    **THIS IS NOT THE TRANSCRIPTION CLAUSE AND THE DIFFERENCE IS NOT A TECHNICALITY:** that
+    clause is triggered by A MERGE and licenses only carrying across a draft a lane already
+    wrote, and here there was no lane, no worktree, no branch, no merge and no draft. What this
+    entry is instead is the receiving file recording an out-of-lane write, which is the shape
+    this project's own note names -- an out-of-lane write is attributed in the file that RECEIVED
+    it, not only in the coordinator's own.
+    **IT IS THE THIRD SUCH WRITE IN THIS FILE, WHICH IS THE FACT WORTH FILING RATHER THAN THE
+    APOLOGY.** The 2026-08-29 `LayerFor` discharge was the first, the shell HUD entry immediately
+    below this one was the second and said so in terms, and this is the third -- three inside
+    three days, on a rule whose own precedent note says that declaring "not a precedent" twice is
+    how a lane rule stops describing practice. No clause is proposed here; the observation is
+    filed for the user, who owns the ruling.
+  - **WHAT WAS WRONG, AND WHY IT IS A LEVEL-TRAVEL DEFECT RATHER THAN AN INPUT DEFECT.**
+    `AStratShellHUD::ApplyMenuInputMode` sets `FInputModeUIOnly` for the title menu, and
+    `FInputModeUIOnly::ApplyInputMode` calls `SetIgnoreInput(true)` on the
+    `UGameViewportClient`. That client is owned by the GameInstance and SURVIVES `OpenLevel`, so
+    the flag the title screen set was still set on the match's viewport, and every key and mouse
+    button was dropped there -- upstream of `UPlayerInput`, and therefore upstream of every
+    binding, every mapping context and everything `StratPlayerControllerTick.cpp` protects. The
+    engine-side reasoning recorded at the code site is that `bIgnoreInput` is written in exactly
+    four places in the UE 5.8 source -- the two viewport-client constructors, which default it
+    false, and the three `FInputMode*::ApplyInputMode` overrides -- and level travel is not one
+    of them. Nothing in this module's selection path was wrong at any point.
+  - **IT PRESENTED AS "HOVER WORKS, CLICKING DOES NOT", AND THAT IS THE SYMPTOM THIS LANE SHOULD
+    RECOGNISE NEXT TIME.** The hover is not an input event: `Tick` polls
+    `UpdateHoverFromCursor`, which reads the cursor off the viewport directly and never consults
+    `bIgnoreInput`. So the one surviving part of the interface was precisely the part wave 0 had
+    moved OFF Enhanced Input for unrelated reasons, and the surviving half made the dead half
+    look like a selection bug. A reader who meets a live session where the board highlights under
+    the cursor and refuses every click should suspect the viewport before suspecting anything in
+    `HandleSelectionEvent`.
+  - **WHAT WAS ADDED, BY SYMBOL.** `AStratPlayerController::RestoreProjectInputState`, public and
+    `static`, taking a `UGameViewportClient&`; `AStratPlayerController::ClaimGameInput`, private,
+    called once from `BeginPlay` before the mapping context is added; the unreflected member
+    `LastInputClaim`, of the new plain (NOT `UENUM`) `enum class EStratInputClaim` with arms
+    `NotAttempted` / `NoViewport` / `Claimed`; and the inline accessor
+    `AStratPlayerController::GetLastInputClaim`. No new module, no module arrow moved, nothing
+    added to `Stratocracy.uproject`, and no `UPROPERTY` anywhere in the change.
+  - **`AStratShellHUD` WAS NOT TOUCHED, AND THAT IS THE LOAD-BEARING CALL.** The obvious repair
+    is to make the HUD put back what it took. It was rejected on two grounds recorded at the code
+    site: the HUD dies with the title map during travel, so the give-back would run inside world
+    teardown; and it would cover exactly one route into a match, missing a direct launch, a
+    console `open`, and any later map that raises a UI-only screen at all. A controller that
+    asserts its own input state on `BeginPlay` is correct under all of them. The cost of the call
+    is that the title menu's `FInputModeUIOnly` is still live and unchanged -- the defect's
+    ORIGIN is untouched and only its persistence is repaired -- which is the right trade only for
+    as long as every UI-only screen is followed by a controller that claims input back.
+  - **IT IS NOT AN `FInputMode*`, AND THAT IS NOT THE REJECTION ALREADY RECORDED ON `Tick`.**
+    The `Tick` block rejects capture-based input modes as a way to FEED THE MOUSE AXIS and stands
+    untouched. `RestoreProjectInputState` restores the capture and lock modes from
+    `GetDefault<UInputSettings>()` -- the same object `UGameViewportClient::Init` reads -- so
+    `Config/DefaultInput.ini` remains the single source of those values and a later change to it
+    moves this code with no edit here. `FInputModeGameAndUI` would have imposed
+    `CaptureDuringMouseDown` and `DoNotLock`, which are not this project's defaults and would
+    make a click land differently depending on whether the player came through the title screen.
+    The `FApp::CanEverRender()` guard on the two mouse modes mirrors `Init`'s own headless rule
+    rather than inventing one; `SetIgnoreInput(false)` sits ABOVE that guard and is
+    unconditional, because that is the field the defect is actually about.
+  - **THE UNREFLECTED MEMBER EXISTS FOR THE ROUTE, NOT FOR THE MECHANISM, AND WITHOUT IT THE CALL
+    SITE WOULD BE DELETABLE IN SILENCE.** A headless world has no `UGameViewportClient` at all,
+    so `ClaimGameInput` can only take its `NoViewport` arm there and would otherwise leave no
+    mark on any object reachable from a clause. `NotAttempted` and `NoViewport` are therefore
+    distinct values on purpose: the first means `BeginPlay` never asked, the second means it
+    asked and there was no viewport. That is this project's recorded
+    correct-mechanism-with-no-caller defect being paid for in advance rather than after. It is
+    read by nothing on screen and it must not become reflected -- it is a fact about this
+    object's call history, in the same family as `bGuidanceArmed`.
+  - **WHAT NO INSTRUMENT IN THIS TREE CAN CONFIRM, STATED SO IT IS NOT MISTAKEN FOR MEASURED.**
+    `bIgnoreInput` is not a `UPROPERTY`, so `GetAll` cannot read it and there is no `ke` getter
+    for it; the end-to-end fact that clicking works again in a live session is the USER'S HUMAN
+    PLAYTEST, reported after the change, and is not re-executable from a checkout. What IS
+    re-executable is the clause set over the seam, and that is why the seam was cut static.
+  - **NO COUNT AND NO VERDICT IS STATED HERE.** `Tools/architect/state/global.md` owns both; its
+    topmost `## NEXT` entry carries the live figure for this pass and the set difference that
+    moved it, and this entry links there rather than restating it. One fact that is this entry's
+    to state and not that file's: the pass ADDS clauses rather than leaving the count still, so
+    unlike the shell HUD pass immediately below it the count move here is not empty by
+    construction.
+  - **WHAT IS OWED, AND IT IS ALREADY WRITTEN RATHER THAN OUTSTANDING -- WHICH IS ITSELF A
+    FINDING FOR ANOTHER LANE'S FILE.** Three clauses ride `T-UI-02` and mint no new acceptance
+    ID, in the new file `Source/StratPlay/Tests/StratInputClaimClauses.cpp`:
+    `TheInputClaimClearsAViewportsIgnoreInput`, `TheInputClaimRestoresTheProjectsOwnMouseModes`
+    and `BeginPlayMakesTheInputClaim`. **`Tests/` IS `strat-test-author`'S LANE AND THOSE BYTES
+    WERE WRITTEN BY THE `coordinator` TOO**, in the same out-of-lane pass and on the same
+    instruction; `Tools/architect/state/tests.md` is not this lane's to write and carries no
+    entry for them at the time this is written, so it is named here as a handoff rather than left
+    to be discovered.
+    **[STAMPED 2026-08-31, LATER THE SAME DAY -- THE SENTENCE ABOVE IS SUPERSEDED, AND IS KEPT
+    BECAUSE IT WAS TRUE WHEN IT WAS WRITTEN AND BECAUSE DELETING IT WOULD HIDE HOW SHORT ITS LIFE
+    WAS.** `Tools/architect/state/tests.md` NOW CARRIES THE ENTRY for these three clauses. It was
+    written by `strat-test-author` ITSELF, in its own lane and its own file, and it attributes the
+    clause bytes to the `coordinator` acting out of lane while claiming only the writing -- the
+    same two-actor shape this entry uses. It landed CONCURRENTLY with this entry rather than after
+    it: the two lanes were writing at the same time, which is why the bullet above could go false
+    inside the hour and why its "at the time this is written" qualifier did not save it. A reader
+    arriving by a grep lands on the sentence and not on the qualifier's intent. **Stamped and not
+    deleted, on this record's own convention, and because under-claiming is the more expensive
+    error of the two: it sends the next reader to redo work that is already finished.** No count
+    and no verdict moves here -- `global.md` still owns both.]
+
 - **2026-08-31, `strat-gameplay-engineer` (ACTING AND WRITING) -- `StratShellHUD.h`'S
   ROUND-SCOPED PROSE IS STAMPED, BECAUSE AN ASSET CHANGE FALSIFIED IT AND NO DIFF ON THIS
   MODULE SHOWED THE LINE. COMMENT-ONLY, AND PURELY ADDITIVE: 49 ADDED LINES, 0 DELETED.**

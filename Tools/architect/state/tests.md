@@ -14,6 +14,70 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-31 (local), in the INTEGRATION tree, base `edda819`, committed as `810c366`, editor
+  closed for the build -- THE TITLE SCREEN'S INPUT MODE IS PINNED BY THREE CLAUSES, AND THE FIRST
+  MUTANT ROUND FOUND THE DEFECT IN THE CLAUSES RATHER THAN IN THE CODE.** **ACTING: the
+  `coordinator`, OUT OF LANE, on the user's explicit instruction in session -- it wrote the clause
+  bytes, and `Tests/` is `strat-test-author`'s lane. WRITING THIS ENTRY: `strat-test-author`, in
+  lane, in its own file.** Two actors, both named, because an entry naming one where two acted is
+  a false claim about authorship. **This is NOT the transcription clause and is deliberately not
+  dressed as one:** that clause is triggered by a MERGE and licenses only carrying a lane's draft
+  across, and there was no worktree, no branch, no merge and no draft here. No suite figure, no
+  count move and no verdict is stated in this file; `global.md`'s topmost banner owns all three
+  and this entry links to it rather than restating any of them.
+  - **THE THREE CLAUSES.** All ride `T-UI-02` -- the same acceptance ID as
+    `StratPlayerControllerTick.cpp`, for the reason that file gives: T-UI-02 is the
+    click-to-hex-to-reach chain, and this is the link before its first one. They mint no new ID
+    and live in the new file `Source/StratPlay/Tests/StratInputClaimClauses.cpp`:
+    `TheInputClaimClearsAViewportsIgnoreInput`,
+    `TheInputClaimRestoresTheProjectsOwnMouseModes` and
+    `BeginPlayMakesTheInputClaim`. Derived here by set difference on
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` over `Source/**/*.cpp`, multiline, both sides collected by
+    one function -- `edda819` read through `git show`, `810c366` likewise -- and it returns
+    exactly those three names with nothing removed.
+  - **WHAT EACH ONE PINS, AND THEY DO NOT RE-ASSERT EACH OTHER'S SUBJECT.** (1) the repair itself:
+    `AStratPlayerController::RestoreProjectInputState` clears `bIgnoreInput` UNCONDITIONALLY,
+    which is the field the reported defect is about. (2) that the restore reads the PROJECT'S
+    `UInputSettings` rather than imposing an `FInputMode*`'s opinion, and that its
+    `FApp::CanEverRender()` arm mirrors `UGameViewportClient::Init`'s headless rule instead of
+    inventing one. (3) the ROUTE -- that `BeginPlay` calls `ClaimGameInput()` at all. (3) exists
+    because this project has already paid for the mirror-image defect once: a correct mechanism
+    with no caller reads as built from every other instrument.
+  - **WHERE THE EXPECTATIONS COME FROM.** Clause (2) takes BOTH expectations from
+    `GetDefault<UInputSettings>()`, the same object `Init` reads, so a project that changes its
+    capture mode moves the clause with it rather than reddening it; nothing retypes
+    `Config/DefaultInput.ini`. Its planted values are DERIVED to differ from the expected ones --
+    if the project ever adopted `NoCapture` as its own default, planting `NoCapture` would make
+    the restore arm pass by coincidence. Clause (1)'s `false` is a literal and is the shape in
+    which a literal is correct: no Stratocracy value produces it, the engine's input pipeline
+    imposes it.
+  - **THE FINDING WORTH CARRYING: AN ASSERTION THAT COULD NOT FAIL, CAUGHT BY ITS OWN MUTANT.**
+    The trailing `bIgnoreInput` assertion in clause (2) originally read a bare
+    `UGameViewportClient` whose flag was already false from its own constructor, so it passed
+    regardless of what the restore did -- the `SetIgnoreInput` mutant reddened clause (1) and left
+    clause (2) GREEN. It now plants the flag before the call. **An assertion that cannot fail is
+    worse than an absent one, because it reads as cover** -- and note that the clause looked
+    complete on inspection and only a mutant separated the two.
+  - **THE FALSIFIABILITY, MEASURED.** Three mutants, each built IN PLACE in this tree and never in
+    a copy -- a copied tree's cached `Intermediate/Build` resolves the ORIGINAL sources and
+    reports `Result: Succeeded` for a build that compiled nothing. Dropping `SetIgnoreInput(false)`
+    reddened (1) and (2); defeating the `CanEverRender` guard reddened (2) alone; deleting the
+    `ClaimGameInput()` call from `BeginPlay` reddened (3) alone.
+  - **WHY (3) NEEDS THE UNREFLECTED `EStratInputClaim LastInputClaim`.** A headless world has no
+    `UGameViewportClient`, so the claim can only take its no-viewport arm and leaves no other mark
+    on any object a clause could reach. `NotAttempted` and `NoViewport` are distinct values on
+    purpose and the clause reads the difference; without that member the deleted call site would
+    redden nothing. Nothing on screen reads it and it is not reflected, so it is not the
+    presentation bit T-INT-05 forbids.
+  - **THE BOUNDARY, STATED HONESTLY: NO INSTRUMENT IN THIS TREE CAN SEE THE END-TO-END BEHAVIOUR.**
+    `bIgnoreInput` is not a `UPROPERTY`, so `GetAll` cannot read it out of a live PIE session and
+    there is no `ke` getter for it. These clauses pin the DECISION headlessly and nothing more.
+    What confirmed that clicking works again after travel was **the user's own human playtest**,
+    which is not re-executable from a checkout and is therefore not a gate. Also unpinned: that
+    `FInputModeUIOnly` is what set the flag in the first place (the clauses plant it at its
+    setter, not through Slate); the viewport client surviving `OpenLevel`; and any assertion that
+    a click reaches `UPlayerInput` or a hex.
+
 - **2026-08-31 (local), in the INTEGRATION tree, base `da06812`, editor closed -- THE CALL-SITE
   GAP IS CLOSED, AND THE CLAIM THAT IT NEEDED PIE WAS MY OWN, WAS NEVER MEASURED, AND WAS
   HALF WRONG.** ACTING AND WRITING are both the `coordinator`, OUT OF LANE, on the user's

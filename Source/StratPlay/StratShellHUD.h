@@ -10,6 +10,13 @@
 // class with a widget slot, which would match the convention and is an engineer-lane item;
 // it was not taken and the user was told."* This class is that item.
 //
+// STAMPED 2026-08-31 -- THE GRAPH-SIDE CREATION DESCRIBED IN THE PARAGRAPH ABOVE IS GONE, and
+// `BP_StratShellGameMode`'s `HUDClass` now names `BP_StratShellHUD_C`. The paragraph is kept in
+// its original tense rather than rewritten, because it is the record of the gap this class was
+// written to close and a reader who saw the old claim is entitled to see it superseded rather
+// than vanished. What is true NOW, with the measurements that establish it, is stated in full
+// under `NOT IN THIS ROUND` below; that block is the one place to read for the current state.
+//
 // THE HALF THAT IS NOT COSMETIC, AND IT IS THE WHOLE POINT. `AStratShellGameMode::BeginPlay`
 // calls `Super::BeginPlay()` -- which is what fires a Blueprint's `Event BeginPlay` -- and
 // only afterwards calls `ConfigureMatchDestination`. A menu created off `Event BeginPlay`
@@ -29,6 +36,12 @@
 //   including the repair of moving `ConfigureMatchDestination` ahead of `Super::BeginPlay()`,
 //   which would make the wait zero ticks and change no clause. That is the shape this
 //   project's own note asks for: pin the requirement, not the hazard.
+//
+//   STAMPED 2026-08-31: THE ONE-TICK HOP IS GONE WITH THE REST OF THE GRAPH-SIDE CREATION, so
+//   the sentence above describes a workaround that no longer exists rather than one running on
+//   the title map today. Nothing in the argument changes -- the ordering it worked around is
+//   still there in `AStratShellGameMode::BeginPlay`, and this class still handles it by asking
+//   WHETHER the shell is configured rather than by asserting WHEN it was.
 //
 // WHY THE SHELL GREW `HasMatchDestinationBeenConfigured` RATHER THAN THIS CLASS INFERRING IT.
 // Every value the configuration carries has a legal default that a configured shell can also
@@ -61,6 +74,31 @@
 //   single-commit asset change, it is stated here rather than left to be discovered, and
 //   this class is inert until an asset points at it -- nothing spawns a HUD that no
 //   `HUDClass` names.
+//
+//   STAMPED 2026-08-31 -- DONE. IT LANDED AS ONE SAVE, AND THIS CLASS IS NO LONGER INERT.
+//   `BP_StratShellGameMode`'s `HUDClass` is
+//   `/Game/UI/BP_StratShellHUD.BP_StratShellHUD_C`, and the `Create Widget` /
+//   `AddToViewport` / input-mode / cursor chain has been removed from that Blueprint's
+//   EventGraph. Both halves in the same save, confirmed against the HEAD LFS blob by one
+//   scanner run over both sides. THE MEASUREMENTS IN THIS STAMP ARE THE `coordinator`'S, taken
+//   on the asset change and passed to this lane; this module measured none of them and does
+//   not restate them as its own.
+//
+//   THE CONDITIONAL SENTENCE ABOVE IS NOT RETRACTED, AND DELETING IT WOULD THROW AWAY THE
+//   WARNING THAT MADE THIS CHANGE SAFE. *"Until it is removed and `HUDClass` is set, adopting
+//   this class would put two menus on screen"* is a statement about what happens when only one
+//   half lands. It is conditional, not round-scoped, and it stays true of ANY FUTURE MAP that
+//   adopts this class while its GameMode graph still builds a menu of its own. What is
+//   superseded is only the round-scoped framing around it -- that the removal is not in this
+//   round, and that nothing points at this class yet.
+//
+//   THE TWO-MENU HAZARD IS CLOSED BY COUNT ON THE TITLE MAP, WHICH IS A STRONGER CHECK THAN
+//   READING THE GRAPH. Live PIE on `/Game/StratMaps/Lvl_Title`:
+//   `obj list class=WBP_TitleMenu_C` returns `1 Objects`, and this HUD's `MenuWidget` names
+//   that same instance -- so there is one menu on screen and it is the one this class created,
+//   which is what the two-menu sentence was warning about and is measured rather than
+//   inferred. `bMenuDrewOnAConfiguredShell` read True and `LastFailureReason` was empty in the
+//   same session, so the requirement this class exists to make true held on the shipped path.
 // - A MENU WIDGET BASE CLASS. `WBP_TitleMenu` is a plain `UUserWidget` that binds to the
 //   subsystem's reflected surface by index; the slot below is typed `UUserWidget` so it
 //   accepts that asset as it stands. A `UStratShellMenuWidget` with `BindWidget` members
@@ -166,6 +204,17 @@ public:
 	 * the actor iteration, is absorbed rather than discovered by a player. Nothing here
 	 * depends on the exact value: at zero the class still draws, on the `CreateUnconfigured`
 	 * arm, which is why that arm exists.
+	 *
+	 * STAMPED 2026-08-31 -- THE C++ ROUTE NEEDS ZERO TICKS, AND THAT IS THE RACE BEING REMOVED
+	 * RATHER THAN WAITED OUT. Measured by the `coordinator` on the live title map once
+	 * `HUDClass` was set: `ConfigurationTicksWaited = 0`. This HUD's `BeginPlay` lands after
+	 * `AStratShellGameMode::BeginPlay` has RETURNED, so the shell already reports configured on
+	 * the very first pass and `DecideMenuTiming` answers `CreateNow` -- there is no hop, and
+	 * nothing to absorb. The sentence above about what "the shipped Blueprint graph needs
+	 * today" is the record of a route that has since been deleted from that graph; it is kept
+	 * because it is the reason four was chosen. The budget is now UNTOUCHED SLACK, held for the
+	 * reason it was given -- a HUD spawned earlier in the frame, or a GameMode reached later in
+	 * the actor iteration -- and `CreateUnconfigured` is still what makes a zero budget safe.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Shell", meta = (ClampMin = "0"))
 	int32 MaxConfigurationWaitTicks = 4;

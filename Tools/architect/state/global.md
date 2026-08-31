@@ -64,10 +64,31 @@ is not a test.
 THE EDITOR-LANE DEBT IS UNCHANGED: `HUDClass` on `BP_StratShellGameMode` must be set in the
 SAME commit that removes the graph's own Create Widget, Add to Viewport, input mode and cursor
 nodes, or the title screen draws TWO MENUS.
-THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn
-2026.08.31-14.56.52` -- UTC, which is 2026-08-31 10:56 local, and this entry is dated by the
-local day as the record always is -- 318 entries, 318 succeeded, 0 failed, 0 notRun, 0
-succeededWithWarnings, read from the exported report rather than from the log.
+**[STAMPED 2026-08-31, LATER THE SAME DAY -- THAT DEBT IS DISCHARGED AND THE SENTENCE ABOVE IS
+SUPERSEDED. It was true when written and was left standing while this same entry was edited later
+the same day, which is the *a correction that only adds leaves both claims live* failure this
+record already names -- a reader consulting the ledger was being sent to do work that is done.
+`HUDClass` now reads `/Game/UI/BP_StratShellHUD.BP_StratShellHUD_C` and the six menu-building
+nodes are gone from the EventGraph, BOTH IN ONE SAVE, which is what the debt required. Verified
+from bytes against the HEAD LFS blob with a positive control, and in live PIE where
+`obj list class=WBP_TitleMenu_C` returned a single object that the HUD's `MenuWidget` names.
+ACTING: `strat-editor-builder` on the GameMode; the `coordinator` OUT OF LANE and under no clause
+on `BP_StratShellHUD` itself, at the user's explicit direction, as `content.md` records.
+THE CONDITIONAL HAZARD IS NOT RETRACTED: setting one half without the other still draws two
+menus, and that stays true of any future map adopting this class. The twin of this sentence
+lower in this file is stamped in the same pass.]**
+THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn 2026.08.31-16.32.53`
+-- UTC, which is 2026-08-31 12:32 local, and this entry is dated by the local day as the record
+always is -- 318 entries, 318 succeeded, 0 failed, 0 notRun, 0 succeededWithWarnings, read from
+the exported report rather than from the log.
+**[STAMPED 2026-08-31, LATER THE SAME DAY: this sentence first cited `reportCreatedOn
+2026.08.31-14.56.52`, and that run is SUPERSEDED RATHER THAN WRONG. The `coordinator` re-ran the
+full suite after wiring the title screen's `HUDClass` to `BP_StratShellHUD` and removing the
+GameMode graph's own menu-building nodes; the re-run overwrote `Saved/AutomationReport/index.json`
+and left the older id naming a run no longer on disk, which `strat_banner_sweep.py` caught as
+REPORT PROVENANCE. THE FIGURE ABOVE DID NOT MOVE -- that change adds and removes no clause, and
+the later run re-read it with `SUITE REPORT GATE CLEAN`. A suite re-run moves the report id, never
+the count, and this file has now had a live citation invalidated by its own re-run more than once.]**
 AND IT IS THE SECOND RUN OF THAT FIGURE, WHICH IS WORTH THE SENTENCE BECAUSE A GATE FOUND THE
 FIRST ONE. The retraction edits above were made to `StratShellMenuTimingClauses.cpp` AFTER the
 run that first produced 318, so `strat_banner_sweep.py` refused the report as REPORT IDENTITY:
@@ -151,6 +172,11 @@ be set in the SAME commit that removes the graph's own Create Widget, Add to Vie
 mode and cursor nodes, or the title screen draws TWO MENUS. That is `Content/`, the editor
 lane's, and the editor was closed for this entire pass. Nothing is broken meanwhile, because
 nothing spawns a HUD no `HUDClass` points at.
+**[STAMPED 2026-08-31, LATER THE SAME DAY -- DISCHARGED. THE EVIDENCE IS ON THE TWIN OF THIS
+SENTENCE IN THE TOPMOST ENTRY OF THIS FILE. This entry is date-scoped history and its sentence
+was true when written; it is stamped rather than deleted because a reader arriving HERE by a
+citation never sees the topmost entry -- the same half-adopted-marker defect this tree fixed in
+`content.md` for `GameDefaultMap` on this same day. The conditional hazard is not retracted.]**
 THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn
 2026.08.31-14.19.06` -- UTC, which is 2026-08-31 10:19 local, and this entry is dated by the
 local day as the record always is -- 315 entries, 315 succeeded, 0 failed, 0 notRun, 0

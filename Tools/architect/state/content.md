@@ -43,6 +43,189 @@
 
 ## NEXT
 
+- **THE SHELL GAMEMODE NOW POINTS AT THE SHELL HUD AND HAS STOPPED BUILDING THE MENU ITSELF, AND
+  THE TWO HALVES ARE ONE CHANGE RATHER THAN TWO.** 2026-08-31, in the integration tree
+  `E:/MultiAgent/Stratocracy` on branch `master`, with no worktree and no merge. **ACTING AND
+  WRITING: `strat-editor-builder`, this file's own lane, under no exception at all.** Said
+  explicitly because this file's header makes it load-bearing: `execute_script` WAS on the tool
+  surface -- `mcp__unreal-editor-direct__execute_script` answered from the first call, with
+  `project_dir()` returning `E:/MultiAgent/Stratocracy/` -- so **THE FALLBACK CONDITION WAS NOT
+  MET, the editor-driver clause was not invoked, and the `coordinator` wrote none of this entry.**
+  `playtest_status()` reported `has_pie_world=false, playing=false` for the whole of the asset
+  work and no PIE was started by this lane, which is what makes `open_asset` safe here -- this
+  file's own recorded crash. (PIE was run AFTERWARDS by the `coordinator`; see the observation
+  bullet below, which is explicitly not this lane's measurement.)
+  `global.md` carries any count or verdict; this file states neither.
+  - **WHY THIS IS ONE COMMIT AND NOT TWO, WHICH IS THE WHOLE POINT OF THE ENTRY.**
+    `Source/StratPlay/StratShellHUD.h` states the hazard in terms: *"UNTIL IT IS REMOVED AND
+    `HUDClass` IS SET, ADOPTING THIS CLASS WOULD PUT TWO MENUS ON SCREEN."* Setting `HUDClass`
+    without stripping the graph gives the player the HUD's menu AND the graph's menu; stripping
+    the graph without setting `HUDClass` gives a title screen with no menu at all. Neither
+    intermediate state is shippable, so both landed in a single `compile()`/`save()`.
+  - **HALF (a): `HUDClass` MOVED FROM THE ENGINE DEFAULT TO THE SHELL HUD.** Baseline read before
+    any write was `/Script/Engine.HUD` -- the engine default, never overridden. It now reads
+    `/Game/UI/BP_StratShellHUD.BP_StratShellHUD_C`.
+  - **HALF (b): SIX OF THE SEVEN MENU-BUILDING NODES ARE GONE, AND THE SEVENTH COULD NOT BE
+    DELETED BY ANY ROUTE THIS API OFFERS.** `DelayUntilNextTick`, `GetPlayerController`,
+    `Create Widget`, `AddToViewport`, `Set Input Mode UI Only` and `Set bShowMouseCursor` were
+    each removed and each returned `true`. **`Event BeginPlay` REFUSED:** `delete_node` answered
+    *"is an override event node and cannot be deleted. Use override_function() to manage
+    overrides."* `override_function` is not a global; on the Blueprint object it ADDS an override
+    and there is no inverse. All three of `remove("event","Event BeginPlay")`,
+    `remove("event","BeginPlay")` and `remove("function","ReceiveBeginPlay")` answered *"not
+    found as component, function, variable, or timeline"*, and the graph was re-read after them
+    to confirm the failed attempts changed nothing.
+    **WHAT REMAINS IS AN INERT STUB AND IS NOT A PARTIAL FIX.** `Event BeginPlay` now has ZERO
+    connections on every pin, so it creates nothing, adds nothing to the viewport and touches no
+    input mode -- an empty Blueprint `BeginPlay` override does not suppress the native path, it
+    simply runs an empty ubergraph entry. It is the same kind of object as the `Event Tick` stub
+    that was deliberately left, and the required outcome -- *the EventGraph no longer creates the
+    title menu* -- is met. Asset surgery to remove it was NOT attempted and should not be.
+  - **`Event Tick` WAS LEFT ALONE, AS THE TASK REQUIRED.** It is pre-existing, it had zero
+    connections before this batch and it has zero connections now. Removing it was out of scope.
+  - **`BP_StratShellHUD` WAS NOT CREATED BY THIS LANE, AND THIS ENTRY FIRST CITED THE WRONG CLAUSE
+    FOR WHO DID CREATE IT. THE CITATION IS WITHDRAWN HERE RATHER THAN QUIETLY REPLACED, BECAUSE
+    NAMING A CLAUSE THAT WAS NOT IN FORCE CLAIMS COVER THAT DID NOT EXIST.**
+    **AS FIRST WRITTEN, 2026-08-31, AND IT IS FALSE:** *"It was authored earlier in this same
+    session by the `coordinator` under `CLAUDE.md`'s editor-driver clause."* The `coordinator`
+    half is right and stands. The clause is wrong: **the editor-driver clause triggers on
+    `execute_script` being ABSENT from the session's tool surface, and it was PRESENT on the
+    `coordinator`'s** -- that asset was created and verified with
+    `mcp__unreal-editor-direct__execute_script`, THE SAME TOOL THIS LANE THEN USED. The clause's
+    condition was never met, so it covers nothing here.
+    **WHAT ACTUALLY HAPPENED, RECORDED IN ITS OWN TERMS.** The `coordinator` made an OUT-OF-LANE
+    WRITE TO `Content/` WITH THE EDITOR REACHABLE, UNDER NO CLAUSE AT ALL, at the user's explicit
+    direction -- the user had been told this session is configured not to dispatch subagents
+    unless asked, was told `Content/` is `strat-editor-builder`'s lane, and chose it anyway.
+    Later the Claude Code auto-mode classifier blocked the `coordinator`'s `execute_script`
+    (twice, including on a read-only script), and the user then directed that
+    `strat-editor-builder` be dispatched, which is why the second half of this work is in-lane.
+    **THIS IS RECORDED AS A STANDING-CONDITION SHAPE RATHER THAN AS A ONE-OFF, which is this
+    project's own rule about repeated exceptions: THIS IS THE SECOND EXCEPTION IN TWO DAYS IN
+    WHICH THE LANE RULE BENT AROUND THE `coordinator`'S TOOL SURFACE** -- once because the tool
+    was absent, once because the tool was present but blocked. Declaring each a non-precedent is
+    how a lane rule stops describing practice. Whether an actor whose tool is BLOCKED BY THE
+    CLIENT, rather than absent from it, falls inside any existing clause is the user's to rule;
+    the entry below this one already raised the mirror-image gap and it is still open.
+    **WHAT THIS BATCH DID WITH THAT ASSET IS UNCHANGED: IT VERIFIED IT READ-ONLY AND RE-AUTHORED
+    NOTHING.** Parent `StratShellHUD`, `MenuWidgetClass = /Game/UI/WBP_TitleMenu.WBP_TitleMenu_C`,
+    and `MenuZOrder = 0`, `bTakeUiOnlyInputMode = True`, `MaxConfigurationWaitTicks = 4` -- the
+    last three identical to the C++ defaults `StratShellHUD.h` declares, so the properties keep
+    ONE author. Its file mtime is `15:25:42Z`, BEFORE this batch's first write at `15:37:22Z`,
+    which is the independent evidence that nothing here touched it.
+  - **THE MODULE PRE-FLIGHT, AND IT TURNED UP AN INCONSISTENCY WORTH HANDING TO THE ENGINEER.**
+    `AStratShellHUD` is declared `STRATPLAY_API` in `Source/StratPlay/StratShellHUD.h`, so the
+    module baked into `BP_StratShellHUD` is **StratPlay** -- confirmed live with a negative
+    control, `/Script/StratPlay.StratShellHUD` resolving while `/Script/StratUI.StratShellHUD`
+    and a `StratNoSuchClassXYZ` both fail to resolve, so the lookup is shown able to refuse a
+    name before its success is read as evidence. **BUT ITS OWN CONVENTION SIBLING LIVES
+    ELSEWHERE:** `AStratScoreboardHUD` is `STRATUI_API` in `Source/StratUI/StratScoreboardHUD.h`.
+    Two `AHUD` subclasses that cite each other's design sit in two different modules. Nothing
+    here is blocked by it -- the parent was already baked before this batch -- and it is named
+    rather than left for whoever next wonders which module a HUD belongs in.
+  - **THE VERIFICATION THAT IS NOT THE AUTHORING CALL'S RETURN, because `set` has lied in both
+    directions in this project.** A FRESH `read_graph` returns **2 nodes**, `Event BeginPlay` and
+    `Event Tick`, both with zero connections. And the strongest read is one that never touches
+    the graph API at all: **`get_dependencies` on the saved GameMode returns exactly
+    `Lvl_FerrumCrossing`, `/Script/StratPlay` and `/Game/UI/BP_StratShellHUD` -- `WBP_TitleMenu`
+    IS GONE FROM ITS IMPORTS**, while the control, `get_dependencies` on `BP_StratShellHUD`,
+    DOES still name `/Game/UI/WBP_TitleMenu`. So the instrument is shown able to see that
+    reference before its absence on the GameMode is read as evidence, and the menu now reaches
+    the screen by exactly one route: GameMode -> HUD -> widget. The `coordinator` afterwards
+    re-confirmed `HUDClass`, the 2-node graph and an untouched `MatchLevel`/`SaveSlotName`
+    independently of this lane.
+  - **ON DISK.** `Content/StratPlay/BP_StratShellGameMode.uasset` went **45119 -> 22476 bytes**,
+    mtime `2026-08-31T03:48:02Z -> 15:37:22Z`. The shrink is the six removed nodes and their
+    `WBP_TitleMenu` import. Nothing was staged or committed; the user owns staging.
+  - **FIVE MEASURED LIMITS OF THE NeoStack API, EACH OF WHICH COST A ROUND.**
+    - **`delete_node` REFUSES OVERRIDE EVENT NODES** and names `override_function()` as the
+      remedy, which does not exist as a global and has no inverse on the Blueprint object.
+      There is no route here to remove an `Event BeginPlay`.
+    - **`pcall` RETURNED `ok=true` FOR THE FAILED `delete_node` AND FOR ALL THREE FAILED
+      `remove` CALLS.** The `[OK]`/`[FAIL]` trace line is the discriminator; the Lua-level
+      success signal is not. This file already records that hazard and it recurred verbatim.
+    - **`class_properties` RETURNS `value = nil` FOR EVERY ENTRY; THE VALUE IS IN `default`.**
+      Read through `.value` the new `HUDClass` reads `nil`, which is indistinguishable from
+      unset and would have been recorded as a failed write. `bp:get("self", name)` is the
+      other working read and the two agree.
+    - **`read_file` REFUSES A `.uasset` OUTRIGHT** -- *"binary asset rejected"* -- so this
+      lane has no byte-grep of a saved package from inside Lua, and no Bash. `file_info` size
+      and mtime plus `get_dependencies` are the available disk evidence.
+    - **A `.md` CAN BE SPLICED IN BASE64 SPACE WITHOUT DECODING IT, which is how this entry was
+      written.** `read_file(path, {encoding="binary"})` returns base64 in `.content`. Cutting
+      at a byte offset that is a MULTIPLE OF 3 makes the base64 split exact, so
+      `b64:sub(1, k/3*4) .. enc(new) .. b64:sub(k/3*4+1)` is byte-exact provided `#new % 3 == 0`
+      -- pad the inserted text with spaces on a blank line to reach it. The ragged 1-2 bytes
+      between the multiple of 3 and the real line boundary are prepended to the inserted text
+      rather than re-encoded. This avoids the UTF-16 text-mode hazard this file already records
+      entirely, and the encoder was proved by re-encoding a decoded 8190-byte prefix and
+      comparing it to the file's own base64 before being used. **The recorded `## NEXT` search
+      trap held again:** a literal find hits the header prose at byte 3279; the real heading is
+      at 3401 and needs the `\r\n## NEXT\r\n` form. The same splice was then used a SECOND time
+      to correct this entry in place, replacing the whole inserted block and re-proving prefix
+      and suffix byte-identity against a fresh backup.
+  - **[STAMPED 2026-08-31, LATER THE SAME DAY -- THE "NOTHING WAS RUN IN PIE" CLAIM BELOW IS NOW
+    HISTORY, AND IT IS STAMPED RATHER THAN DELETED because a stale status line runs both ways
+    and an under-claiming record sends the next reader to redo work that is done. PIE HAS RUN
+    AND THE MENU WAS OBSERVED. THE MEASUREMENT IS THE `coordinator`'S, NOT THIS LANE'S, and is
+    attributed to it rather than absorbed.** On `/Game/StratMaps/Lvl_Title`
+    (`UEDPIE_0_Lvl_Title`):
+    - **EXACTLY ONE MENU EXISTS, AND THE HAZARD IS CLOSED BY COUNT RATHER THAN BY ARGUMENT.**
+      `obj list class=WBP_TitleMenu_C` reports a single object, `WBP_TitleMenu_C_0`, and
+      `GetAll StratShellHUD MenuWidget` reports `BP_StratShellHUD_C_0.MenuWidget` pointing at
+      that same `WBP_TitleMenu_C_0` -- so the one menu that exists is the HUD's. That is the
+      two-menu hazard `StratShellHUD.h` names, measured as absent rather than reasoned as absent.
+    - **THE REQUIREMENT THE CLASS EXISTS FOR HOLDS ON A LIVE SURFACE:**
+      `bMenuDrewOnAConfiguredShell = True` with `LastFailureReason` empty, so the menu drew on a
+      configured shell and did not take the `CreateUnconfigured` arm.
+    - **`ConfigurationTicksWaited = 0`, WHICH IS A RESULT AND NOT A DETAIL.** The Blueprint graph
+      needed its one-tick hop because it fired off `Event BeginPlay`, ahead of
+      `ConfigureMatchDestination`. The HUD's `BeginPlay` lands after the GameMode's has returned,
+      so the wait is zero: **the C++ route removes the race rather than tolerating it**, and the
+      hop this record spent three screenshots proving in W6 is now unnecessary rather than merely
+      unasserted.
+    - **THE SCREEN.** `playtest_console("shot showui")` ->
+      `Saved/Screenshots/WindowsEditor/ScreenShot00074.png`: one menu, four rows -- `New Match`
+      enabled and unexplained, `Continue` greyed *"No saved match."*, `Return to Title` greyed
+      *"No match in progress."*, `Quit` enabled. Identical to W6's recorded routes, now reached
+      through the HUD. The Outliner shows `BP_StratShellHUD0` spawned beside
+      `BP_StratShellGameMode0`. **`playtest_observe` returned a viewport with NO widgets
+      composited in the same pass, and that is this file's own recorded capture limitation rather
+      than an absent menu** -- `shot showui` is the only editor capture that composites UMG, and
+      it is the control that keeps the blank frame from reading as a finding.
+  - **[STAMPED 2026-08-31, LATER THE SAME DAY -- THE `GameDefaultMap` SENTENCE IN THE BULLET
+    BELOW WAS FALSE WHEN WRITTEN, AND IT IS RETRACTED HERE RATHER THAN DELETED BECAUSE IT MADE A
+    FALSE CLAIM ABOUT ANOTHER LANE'S FILE AND A READER WHO SAW IT IS ENTITLED TO SEE IT
+    WITHDRAWN.** As first written: *"`GameDefaultMap` still points at `Lvl_FerrumCrossing`;
+    moving it is `Config/DefaultEngine.ini` and therefore `strat-data-steward`'s lane, not this
+    one."* **BOTH HALVES OF THAT ARE WRONG.** `Config/DefaultEngine.ini` already reads
+    `GameDefaultMap=/Game/StratMaps/Lvl_Title.Lvl_Title` and `EditorStartupMap` likewise; both
+    were moved by `strat-data-steward` on 2026-08-30 and shipped in commit `e4a21b0`. **THE
+    THREE INI LINES WERE RE-READ BY THIS LANE DIRECTLY FROM `Config/DefaultEngine.ini`
+    RATHER THAN TAKEN ON REPORT; the 2026-08-30 date and the commit id are the
+    `coordinator`'s, and this lane holds no git tool with which to check them.**
+    `GlobalDefaultGameMode` remains `BP_StratGameMode_C`. **THERE IS NO HANDOFF AND NO WORK FOR
+    THE STEWARD HERE; the handoff is withdrawn.** Where `Lvl_FerrumCrossing` legitimately appears
+    is as `MatchLevel` on `BP_StratShellGameMode` -- the destination "New Match" travels to --
+    which this lane read correctly in its own baseline. **The defect was naming that value as
+    `GameDefaultMap`: a correct reading of one setting was written up as a claim about a
+    different setting in a file this lane never opened.** 
+    **THE TWIN OF THIS STAMP IS ON THE W6 ENTRY'S OWN `WHAT THIS BATCH DID NOT DO` BULLET
+    FURTHER DOWN THIS FILE**, which asserted the same handoff on 2026-08-30 and is stamped there
+    too. The two are linked in both directions deliberately: a retraction that covers one copy of
+    a claim and not its twin in the same file leaves a reader arriving at the other copy seeing
+    only the false claim, which is the half-adopted-marker failure this project has already paid
+    for. Everything else in the bullet below stands as history.]**
+  - **WHAT THIS BATCH DID NOT DO, AS FIRST WRITTEN 2026-08-31 -- SEE THE TWO STAMPS ABOVE; THE
+    PIE SENTENCE IS SUPERSEDED AND THE `GameDefaultMap` SENTENCE IS RETRACTED.** Nothing was run
+    in PIE, so **no observation exists of the shell HUD actually drawing the menu** -- the
+    evidence here is design-time and on-disk only. A human launching
+    `/Game/StratMaps/Lvl_Title` and seeing exactly ONE menu is the observation that would close
+    it, and this entry does not claim it. `GameDefaultMap` still points at `Lvl_FerrumCrossing`;
+    moving it is `Config/DefaultEngine.ini` and therefore **`strat-data-steward`'s lane, not
+    this one**.
+
+
 - **W6'S ASSET TAIL: THE TITLE SCREEN EXISTS, IS REACHABLE AND IS DRIVEN BY THE MODULE RATHER
   THAN BY ANYTHING THIS WIDGET SPELLS.** 2026-08-30, in the integration tree
   `E:/MultiAgent/Stratocracy` on branch `master`, after the W6 merge `40609e7`. **ACTING: the
@@ -127,7 +310,25 @@
     mode, cursor. It needs no C++ and stays in this lane. **The alternative is a shell HUD class with
     a widget slot, which would match the convention and is an engineer-lane item; it was not taken
     and the user was told.**
-  - **WHAT THIS BATCH DID NOT DO.** `GameDefaultMap` still points at `Lvl_FerrumCrossing`. Moving it
+  - **[STAMPED 2026-08-31 BY `strat-editor-builder` -- THE FIRST TWO SENTENCES OF THE BULLET BELOW
+    WERE TRUE WHEN WRITTEN ON 2026-08-30 AND ARE SUPERSEDED, NOT WRONG. THEY ARE STAMPED RATHER
+    THAN DELETED, and the stamp sits HERE and not only ninety lines above because A RETRACTION
+    THAT COVERS ONE COPY OF A CLAIM AND NOT ITS TWIN IN THE SAME FILE IS THE HALF-ADOPTED-MARKER
+    FAILURE THIS PROJECT HAS ALREADY PAID FOR** -- a reader arriving at THIS entry by a citation
+    would otherwise land on a live false claim and never see the withdrawal.
+    `strat-data-steward` moved BOTH map lines later the same day and shipped them in commit
+    `e4a21b0`, so `Config/DefaultEngine.ini` now reads
+    `GameDefaultMap=/Game/StratMaps/Lvl_Title.Lvl_Title` and
+    `EditorStartupMap=/Game/StratMaps/Lvl_Title.Lvl_Title`. **The ini lines were re-read directly
+    from that file by this lane; the 2026-08-30 date and the commit id are the `coordinator`'s,
+    and this lane holds no git tool with which to check them.** So the handoff this bullet makes
+    to the steward IS DISCHARGED AND THERE IS NO WORK THERE FOR ANYONE, and the open question it
+    leaves about `EditorStartupMap` is answered: it moved too, on the line beside it.
+    **THE TWIN OF THIS STAMP IS IN THE 2026-08-31 SHELL-HUD ENTRY ABOVE**, which withdrew the
+    identical sentence in its own copy. The two are linked in both directions deliberately,
+    because the whole defect was that a reader landing on one copy could not see the other.]**
+  - **WHAT THIS BATCH DID NOT DO, AS WRITTEN 2026-08-30 -- SEE THE STAMP DIRECTLY ABOVE; THE FIRST
+    TWO SENTENCES ARE SUPERSEDED.** `GameDefaultMap` still points at `Lvl_FerrumCrossing`. Moving it
     to `Lvl_Title` is a `Config/DefaultEngine.ini` change and therefore **`strat-data-steward`'s
     lane, not this one**, and it must land AFTER the level exists -- which it now does.
     `EditorStartupMap` sits on the line beside it and whether that moves too is the steward's call.

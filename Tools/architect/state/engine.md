@@ -15,6 +15,77 @@
 
 ## NEXT
 
+- **2026-08-31, `strat-gameplay-engineer` (ACTING AND WRITING) -- `StratShellHUD.h`'S
+  ROUND-SCOPED PROSE IS STAMPED, BECAUSE AN ASSET CHANGE FALSIFIED IT AND NO DIFF ON THIS
+  MODULE SHOWED THE LINE. COMMENT-ONLY, AND PURELY ADDITIVE: 49 ADDED LINES, 0 DELETED.**
+  - **WHAT WENT STALE, AND HOW IT WENT STALE WITHOUT ANYONE TOUCHING THIS FILE.** The title
+    screen was wired to `AStratShellHUD` as ASSET work in the same working tree: `HUDClass` on
+    `BP_StratShellGameMode` now names `BP_StratShellHUD_C`, and the graph-side menu chain was
+    removed. Nothing in `Source/` changed, so four prose claims in `StratShellHUD.h` became
+    false with no line in any C++ diff to point at them --
+    `strat-integration-reviewer` observed it, and the user ruled it fixed in the same commit
+    rather than deferred. This is the tree's recorded failure mode (*a dead path made a comment
+    true*) running in the other direction: a LIVE path made a comment false.
+  - **THE FOUR SITES, AND WHY IT WAS FOUR RATHER THAN THE ONE I WAS POINTED AT.** The brief
+    named the `NOT IN THIS ROUND` bullet. Reading the rest of the file for the same
+    falsification found three more, all of which described the graph-side creation in the
+    PRESENT TENSE: the `WHAT GAP THIS CLOSES` opening paragraph (*"is created from
+    `BP_StratShellGameMode`'s own graph"*), the `THE HALF THAT IS NOT COSMETIC` block (*"The
+    graph works around it by hopping one tick"*), and `MaxConfigurationWaitTicks`'s doc comment
+    (*"One tick is what the shipped Blueprint graph needs today"*). Each carries its own stamp
+    naming what became true; the `NOT IN THIS ROUND` block is named in the other three as the
+    single place to read for current state, so the stamps do not have to stay in agreement with
+    each other.
+  - **STAMPED, NOT DELETED -- AND ONE SENTENCE INSIDE THE STALE BULLET IS NOT STALE AT ALL.**
+    *"Until it is removed and `HUDClass` is set, adopting this class would put two menus on
+    screen"* is CONDITIONAL, not round-scoped: it states what happens when only one half lands,
+    and it stays true of any FUTURE map that adopts this class over a GameMode graph that still
+    builds its own menu. Deleting it would have thrown away the warning that made this change
+    safe. What is superseded is only the framing around it. The distinction was the whole task
+    and it is recorded because the same bullet will read stale again to the next reader who
+    skims it.
+  - **THE MEASUREMENTS IN THOSE STAMPS ARE THE `coordinator`'S, NOT THIS LANE'S, AND THE
+    HEADER SAYS SO IN TERMS.** They were taken on the asset change and passed to me; I re-ran
+    none of them and this entry does not adopt them as mine. `HUDClass` =
+    `/Game/UI/BP_StratShellHUD.BP_StratShellHUD_C` with the `Create Widget` / `AddToViewport` /
+    input-mode / cursor chain removed, both halves in one save, confirmed against the HEAD LFS
+    blob by one scanner over both sides; live PIE on `/Game/StratMaps/Lvl_Title` with
+    `obj list class=WBP_TitleMenu_C` returning `1 Objects` and this HUD's `MenuWidget` naming
+    that instance; `bMenuDrewOnAConfiguredShell = True` with `LastFailureReason` empty.
+  - **THE ZERO-TICK RESULT ANSWERS A QUESTION THE HEADER ITSELF RAISED, WHICH IS WHY IT GOT A
+    STAMP RATHER THAN A FOOTNOTE.** `ConfigurationTicksWaited = 0`. The C++ route does not wait
+    the ordering race out -- it REMOVES it: this HUD's `BeginPlay` lands after
+    `AStratShellGameMode::BeginPlay` has RETURNED, so the shell already reports configured on
+    the first pass and `DecideMenuTiming` answers `CreateNow`. `MaxConfigurationWaitTicks` is
+    therefore untouched slack, held for the reason it was given, and `CreateUnconfigured` is
+    still what makes a zero budget safe. No code changed and no clause moves: the four-tick
+    default, the decider and every arm are byte-identical.
+  - **HOW COMMENT-ONLY WAS PROVED RATHER THAN ASSERTED.** `git diff --numstat` reports
+    `49 0` on `Source/StratPlay/StratShellHUD.h` and `git diff -U0 | grep -cE '^-[^-]'`
+    reports `0`, so nothing was removed and every added line survives a filter that strips
+    `//`, `*`, `/*` and `*/` prefixes leaving an empty set. **The filter was controlled** --
+    fed a synthetic diff containing `int32 MaxConfigurationWaitTicks = 4;` it prints that line,
+    so its silence on the real diff is a measurement and not an inert grep. CRLF was preserved
+    and checked by count: 291 lines, 291 `\r`.
+  - **THE BUILD IS NOT GREEN AND THE REASON IS THE EDITOR, MEASURED IN TWO STAGES.** Plain
+    `Build.bat` refused before running any action --
+    `Unable to build while Live Coding is active` -- so **it compiled nothing and proves
+    nothing**. Re-run with `-NoHotReloadFromIDE`, which `.agents/ue-project-context.md` records
+    as defeating the Live Coding MUTEX and explicitly NOT the editor's DLL write lock, all four
+    compile actions succeeded -- `StratShellHUD.cpp`, `StratShellHudCallSiteClauses.cpp`,
+    `StratShellMenuTimingClauses.cpp` and `Module.StratPlay.gen.cpp` -- and only the link
+    failed, exactly the recorded editor-open signature: `UbaSessionServer - ERROR opening file
+    ...UnrealEditor-StratPlay.dll for write`, then
+    `LINK : fatal error LNK1104: cannot open file`. **That is the evidence that mattered here**:
+    a malformed comment delimiter is a COMPILE failure, and both translation units that include
+    this header plus the UHT-generated `Module.StratPlay.gen.cpp` compiled clean. The link is
+    blocked by `UnrealEditor.exe` pid 33680 and by nothing in this change.
+  - **THE BRIEF I WAS HANDED WAS WRONG ABOUT `-NoHotReloadFromIDE` AND THE TREE WON.** It
+    called the flag "this project's recorded defeat" for the editor-open case; the architecture
+    note says in capitals that it is NOT an exemption on THIS tree and only makes the failure
+    later and stranger, which is precisely what was observed. Recorded because the same wrong
+    premise will be handed to the next agent unless the dispatch is fixed.
+
 - **2026-08-31, the `coordinator` (ACTING AND WRITING; OUT OF LANE, on the user's explicit
   instruction in session -- the ownership note is the first bullet below rather than a header
   above, because a reader arriving by a citation lands here) -- THE SHELL HUD EXISTS. THE THING

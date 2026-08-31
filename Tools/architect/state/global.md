@@ -11,6 +11,77 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-31 (THE CALL-SITE GAP IS CLOSED, AND THE HEADLINE IS THAT THE CLAIM IT
+NEEDED PIE WAS OURS, WAS NEVER MEASURED, AND WAS HALF WRONG -- THE DECISION IS REACHABLE
+HEADLESSLY AND ONLY THE DRAWING IS NOT. Written by the `coordinator`, whose file this is; the
+CLAUSES are `strat-test-author`'s lane and were written by the `coordinator` OUT OF LANE on the
+user's explicit instruction in session, attributed inline in `tests.md`. THERE IS NO LANE AND
+NO MERGE: everything below was done over base `da06812`, with no worktree, no branch and no
+rebase, and with the editor closed throughout. The absolute tree and branch are named only in
+the stamped provenance at the foot of this entry, never in a live sentence.
+The suite is now **318/318**, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of this tree agrees at 318.
+THE COUNT MOVED 315 -> 318 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 3,
+REMOVED 0 -- both sides collected by one function, the collector controlled as before. The
+three clauses ride `GATE-TITLEMENU`, mint no acceptance ID, and live in the new file
+`Source/StratPlay/Tests/StratShellHudCallSiteClauses.cpp`:
+`AnUnconfiguredShellMakesTheSpawnedHudWaitInsteadOfDrawing`,
+`AConfiguredShellMakesTheSpawnedHudAskForItsMenuAtOnce` and
+`AHudWithNoMenuClassConsultsTheShellNotAtAll`.
+WHAT WAS RETRACTED, AND IT IS RETRACTED IN FOUR PLACES BECAUSE IT WAS ASSERTED IN FOUR. The
+entry below, `tests.md`, and `StratShellMenuTimingClauses.cpp`'s own header each said that
+reaching `AStratShellHUD::ResolveMenuTiming` needed *"a PIE-shaped fixture and not a headless
+one"*. All three now carry a stamped `RETRACTED>` quote of it. THE FOURTH IS `da06812`'S COMMIT
+MESSAGE, WHICH IS PUSHED AND CANNOT BE AMENDED -- this sentence is the answer to it, recorded
+where a reader will find it, exactly as this project already had to do once before for a
+caveat it could not edit.
+HOW IT WAS FALSIFIED: BY PROBE, NOT BY ARGUMENT. A transient world, a
+`UGameInstance::InitializeStandalone` whose subsystem collection IS live -- measured null
+before that call and a real object after -- a spawned `APlayerController` assigned to
+`AHUD::PlayerOwner`, and `AActor::DispatchBeginPlay` reach the call site for real, with no PIE,
+no `InitializeActorsForPlay` and no `UWorld::BeginPlay`. The discriminator between the two
+paths is `ConfigurationTicksWaited`, 1 for the wait arm and 0 for the create arm.
+THREE ROUTES TO A GENUINELY SUCCESSFUL CREATE WERE MEASURED AND ALL THREE REJECTED, recorded so
+nobody re-walks them. A local player via `CreateInitialPlayer` works and makes `CreateWidget`
+on the shipped `WBP_TitleMenu_C` SUCCEED -- and trips a HANDLED ENSURE on
+`IsDedicatedServerInstance()`. A concrete native widget class in the test file cannot exist:
+UHT does not parse `.cpp` files, measured as `fatal error C1083`. The shipped Blueprint without
+a local player fails exactly as the native class does. **So the fixture needs no `/Game/` path
+and declines the `Tests/` exception it is entitled to.**
+FALSIFIABILITY, AND MUTANT D IS THE POINT RATHER THAN A CONTROL. Three mutants, each built in
+place with its own unit confirmed recompiled. (D) `ResolveMenuTiming` stops consulting
+`DecideMenuTiming` and always creates -> the unconfigured clause ALONE went red. (E) the call
+site always waits -> the configured clause ALONE. (F) `BeginPlay` loses its early return on an
+unset menu class -> the no-menu-class clause ALONE. In all three rounds THE FOUR OLD DECIDER
+CLAUSES STAYED GREEN, and under (D) that is the whole demonstration: (D) is the exact rewrite
+those four were documented as blind to, and this file catches it. Reverted, rebuilt, re-run
+green.
+WHAT IS STILL UNREACHED, AND THE LIST IS NOW SHORT AND HONEST: the menu ever APPEARING, since
+no viewport exists and `IsMenuLive()` is false on every path the suite can enter; the re-arming
+timer FIRING, since the fixture's world never ticks; and `ApplyMenuInputMode`, which runs only
+after a create that cannot succeed here. Only a live PIE session sees a menu, and a screenshot
+is not a test.
+THE EDITOR-LANE DEBT IS UNCHANGED: `HUDClass` on `BP_StratShellGameMode` must be set in the
+SAME commit that removes the graph's own Create Widget, Add to Viewport, input mode and cursor
+nodes, or the title screen draws TWO MENUS.
+THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn
+2026.08.31-14.56.52` -- UTC, which is 2026-08-31 10:56 local, and this entry is dated by the
+local day as the record always is -- 318 entries, 318 succeeded, 0 failed, 0 notRun, 0
+succeededWithWarnings, read from the exported report rather than from the log.
+AND IT IS THE SECOND RUN OF THAT FIGURE, WHICH IS WORTH THE SENTENCE BECAUSE A GATE FOUND THE
+FIRST ONE. The retraction edits above were made to `StratShellMenuTimingClauses.cpp` AFTER the
+run that first produced 318, so `strat_banner_sweep.py` refused the report as REPORT IDENTITY:
+*"predates a test-defining source file ... this report is evidence about a PAST tree, not the
+current one, whatever its count happens to say."* The edits were comments and could not have
+moved a clause, and that argument was NOT taken -- the suite was rebuilt and re-run instead,
+because a gate that can be talked out of its objection is not a gate. Both runs read 318.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the probes,
+the three mutant rounds and the suite runs behind the figure above were performed in
+`E:/MultiAgent/Stratocracy` on branch `master`, on this developer box, by the `coordinator`. A
+sweep running anywhere else -- CI runs in `/home/runner/work/stratocracy/stratocracy` -- is
+reading a different tree, which is why this sentence is stamped and the live figure above
+carries no path at all.]**)
+
 _Last run 2026-08-31 (THE SHELL HUD'S DECIDER IS PINNED, AND THE FOUR CLAUSES WERE PROVED BY
 THREE BUILT MUTANTS THAT EACH REDDENED EXACTLY THE CLAUSES PREDICTED AND NOTHING ELSE.
 Written by the `coordinator`, whose file this is. The CLAUSES are `strat-test-author`'s lane
@@ -20,8 +91,10 @@ lands. THERE IS NO LANE AND NO MERGE: everything below was done over base `ee4ac
 worktree, no branch and no rebase, and with the editor closed throughout. The absolute tree
 and branch are named only in the stamped provenance at the foot of this entry, never in a live
 sentence, because a live sentence naming this machine's path is a claim CI can never satisfy.
-The suite is now **315/315**, every entry Success, zero failed, zero notRun,
-zero succeededWithWarnings, and the macro census of this tree agrees at 315.
+**[STAMPED 2026-08-31 -- SUPERSEDED BY THE ENTRY ABOVE, which carries this record's live
+figure.]** The suite was **315/315** when this entry was written, every entry Success, zero
+failed, zero notRun, zero succeededWithWarnings, and the macro census of that tree agreed
+at 315.
 THE COUNT MOVED 311 -> 315 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 4,
 REMOVED 0 -- with BOTH SIDES COLLECTED BY ONE FUNCTION over a multiline pattern, because two
 corpora gathered by different filters fabricate findings. The collector was itself controlled:
@@ -63,9 +136,16 @@ THE GAP IS NAMED IN THE FILE'S OWN HEADER AND IS NAMED AGAIN HERE, because it is
 reader would otherwise assume closed: NOTHING PINS THAT `AStratShellHUD::ResolveMenuTiming`
 ACTUALLY CONSULTS `DecideMenuTiming`. The clauses pin the decider, not the call site, and a
 `ResolveMenuTiming` rewritten to create the menu unconditionally would leave all four GREEN.
-Reaching it needs a spawned HUD with an owning player controller and a live game instance,
-which is a PIE-shaped fixture and not a headless one. The decider was extracted so the
-DECIDING could be pinned when the DRAWING could not; this is the half that stays open.
+**[STAMPED 2026-08-31 -- THE TWO SENTENCES THAT FOLLOWED WERE FALSE, and they are quoted
+rather than deleted because a reader arriving by a citation must learn what was claimed. The
+entry ABOVE this one carries the measurement that falsified them and the fixture that closed
+the gap.]**
+RETRACTED>  "Reaching it needs a spawned HUD with an owning player controller and a live game
+RETRACTED>   instance, which is a PIE-shaped fixture and not a headless one. The decider was
+RETRACTED>   extracted so the DECIDING could be pinned when the DRAWING could not; this is the
+RETRACTED>   half that stays open."
+The first sentence was never measured -- it was inferred from the arm ending in `CreateWidget`
+-- and it conflated the DECISION with the DRAWING. The decision is reachable headlessly.
 THE OTHER DEBT IS UNCHANGED AND IS NOT THIS LANE'S: `HUDClass` on `BP_StratShellGameMode` must
 be set in the SAME commit that removes the graph's own Create Widget, Add to Viewport, input
 mode and cursor nodes, or the title screen draws TWO MENUS. That is `Content/`, the editor

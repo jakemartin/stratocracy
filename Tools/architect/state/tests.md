@@ -14,6 +14,60 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-31 (local), in the INTEGRATION tree, base `da06812`, editor closed -- THE CALL-SITE
+  GAP IS CLOSED, AND THE CLAIM THAT IT NEEDED PIE WAS MY OWN, WAS NEVER MEASURED, AND WAS
+  HALF WRONG.** ACTING AND WRITING are both the `coordinator`, OUT OF LANE, on the user's
+  explicit instruction in session; not a transcription, and not dressed as one -- that clause
+  needs a merge and a lane's draft, and there was neither. No suite figure and no verdict is
+  stated in this file; `global.md` owns both.
+  - **THE THREE CLAUSES**, in the new file `Source/StratPlay/Tests/StratShellHudCallSiteClauses.cpp`,
+    all riding `GATE-TITLEMENU`:
+    `AnUnconfiguredShellMakesTheSpawnedHudWaitInsteadOfDrawing`,
+    `AConfiguredShellMakesTheSpawnedHudAskForItsMenuAtOnce` and
+    `AHudWithNoMenuClassConsultsTheShellNotAtAll`.
+  - **WHAT WAS WRONG WITH THE OLD CLAIM.** The entry below says reaching `ResolveMenuTiming`
+    needs "a PIE-shaped fixture and not a headless one". That was inferred from the fact that
+    the arm ends in `CreateWidget`, never measured, and it conflated the DECISION with the
+    DRAWING. A probe measured them apart: a transient world, a `UGameInstance::
+    InitializeStandalone` whose subsystem collection IS live, a spawned `APlayerController`
+    assigned to `AHUD::PlayerOwner`, and `AActor::DispatchBeginPlay` reach the call site for
+    real, with no PIE, no `InitializeActorsForPlay` and no `UWorld::BeginPlay`.
+  - **THE DISCRIMINATOR IS `ConfigurationTicksWaited`** -- 1 when the wait arm ran, 0 when the
+    create arm ran. That single integer separates the two paths through the call site, and it
+    is why the property exists on the class. The unconfigured clause additionally asserts
+    `LastFailureReason` is EMPTY, which is the assertion that kills the unconditional-create
+    rewrite: entering the create arm in a viewport-less run always leaves a reason behind, so
+    an empty one is positive evidence the arm was never entered.
+  - **THREE ROUTES TO A GENUINELY SUCCESSFUL CREATE WERE MEASURED AND ALL THREE REJECTED**, and
+    they are recorded so nobody re-walks them. (1) A local player via
+    `UGameInstance::CreateInitialPlayer` works and `CreateWidget` on the shipped
+    `WBP_TitleMenu_C` then SUCCEEDS -- but the call trips a HANDLED ENSURE on
+    `IsDedicatedServerInstance()`, and a fixture that trips an engine ensure is not worth what
+    it buys. (2) A concrete native widget class declared in the test file, to dodge the
+    engine's refusal to construct `UUserWidget` itself ("Abstract, Deprecated or Replaced
+    classes are not allowed"): UHT does not parse `.cpp` files, measured as `fatal error C1083`
+    on a `.generated.h` that cannot exist. (3) The shipped `WBP_TitleMenu_C` without a local
+    player: loads from its package fine, fails to create exactly as the native class does. **So
+    the fixture needs no `/Game/` path, and declines the `Tests/` exception it is entitled to.**
+  - **TWO EXPECTED-MESSAGE DECLARATIONS, AND THEY ARE DIFFERENT KINDS OF THING.** Mine, at
+    EXACTLY ONE occurrence, is an ASSERTION -- zero means the create arm was never entered, two
+    means it created twice, and both redden. The engine's "Only Local Player Controllers can be
+    assigned to widgets" is a SUPPRESSION at any count, labelled as one, because pinning an
+    engine message would make the clause fail on a reword and that finding would be about
+    nothing.
+  - **FALSIFIABILITY, AND MUTANT D IS THE ONE THAT MATTERS.** Three mutants, each built in place
+    in this tree with its own unit confirmed recompiled. (D) `ResolveMenuTiming` stops
+    consulting `DecideMenuTiming` and always creates -> the unconfigured clause alone went red.
+    (E) the call site always waits -> the configured clause alone went red. (F) `BeginPlay`
+    loses its early return on an unset menu class -> the no-menu-class clause alone went red.
+    **IN ALL THREE ROUNDS THE FOUR OLD DECIDER CLAUSES STAYED GREEN** -- and under (D) that is
+    not a control, it is the point: (D) is the exact rewrite those four were documented as
+    blind to, and it is now caught. Reverted, rebuilt, re-run green.
+  - **WHAT IS STILL UNREACHED.** The menu ever APPEARING -- no viewport exists, so `IsMenuLive()`
+    is false on every path here and no clause asserts otherwise. The re-arming timer FIRING; the
+    world never ticks. `ApplyMenuInputMode`, which runs only after a create that cannot succeed.
+    Only a live PIE session sees a menu, and a screenshot is not a test.
+
 - **2026-08-31 (local), in the INTEGRATION tree, base `ee4acf5`, editor closed -- THE SHELL
   HUD'S DECIDER IS PINNED BY FOUR CLAUSES, AND THE MUTANT RUN FALSIFIED A CLAIM IN MY OWN
   COMMENT BEFORE IT PROVED ANYTHING ABOUT THE CODE.** This entry's ACTING AND WRITING are both
@@ -72,12 +126,18 @@
   - **WHAT NO CLAUSE HERE REACHES, AND IT IS THE BIGGEST ONE.** **Nothing pins that
     `AStratShellHUD::ResolveMenuTiming` ACTUALLY CONSULTS `DecideMenuTiming`.** These clauses
     pin the decider, not the call site; a `ResolveMenuTiming` rewritten to create the menu
-    unconditionally leaves all four GREEN. Reaching it needs a spawned HUD with an owning
-    player controller and a live game instance carrying the subsystem, which is a PIE-shaped
-    fixture and not a headless one. Also unreached: the created widget and its Z-order, the
-    UI-only input mode's effect on the controller, the re-arming next-tick timer, and
-    `bMenuDrewOnAConfiguredShell` and `ConfigurationTicksWaited` as WRITTEN values -- all of
-    them on the path no headless clause enters.
+    unconditionally leaves all four GREEN -- re-measured since as mutant D, which did exactly
+    that and left all four green.
+    **[STAMPED 2026-08-31 -- THE NEXT SENTENCE WAS FALSE. It is quoted rather than deleted,
+    and the entry ABOVE this one carries the measurement that falsified it.]**
+    RETRACTED>  "Reaching it needs a spawned HUD with an owning player controller and a live
+    RETRACTED>   game instance carrying the subsystem, which is a PIE-shaped fixture and not a
+    RETRACTED>   headless one."
+    It was inferred rather than measured, and it was half wrong: the DECISION is reachable
+    headlessly and only the DRAWING is not. `StratShellHudCallSiteClauses.cpp` closes this gap
+    without PIE. Still unreached, and now the whole of it: the menu ever APPEARING, the created
+    widget and its Z-order, the UI-only input mode's effect on the controller, and the
+    re-arming next-tick timer FIRING.
 
 - **2026-08-31 (local), in the INTEGRATION tree `E:/MultiAgent/Stratocracy` on `master`, base
   `e4a21b0`, editor closed -- W6'S ASSET TAIL EARNED TWO CLAUSES AND ONLY ONE OF THEM IS

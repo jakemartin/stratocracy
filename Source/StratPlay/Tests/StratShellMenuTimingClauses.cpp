@@ -49,12 +49,23 @@
 //
 //   - **THAT `AStratShellHUD::ResolveMenuTiming` ACTUALLY CONSULTS `DecideMenuTiming`.** These
 //     clauses pin the decider. They do not pin the CALL SITE. A `ResolveMenuTiming` rewritten
-//     to create the menu unconditionally would leave every clause below GREEN. Reaching it
-//     needs a spawned HUD with an owning player controller and a live game instance carrying
-//     the subsystem, which is a PIE-shaped fixture and not a headless one. The decider was
-//     extracted precisely so that the DECIDING could be pinned when the DRAWING could not, and
-//     this is the half that remains unpinned. It is the same shape `UStratShellSubsystem`
-//     records for `ExecuteRoute`'s travelling arm.
+//     to create the menu unconditionally would leave every clause below GREEN. That much is
+//     still true and was re-measured: mutant D in the run described below did exactly that
+//     rewrite, and all four clauses in THIS file stayed green under it.
+//     **[STAMPED 2026-08-31 -- THE SENTENCE THAT FOLLOWED WAS FALSE AND IS QUOTED RATHER THAN
+//     DELETED, because a reader who arrives here by a citation must learn what it claimed.]**
+//     RETRACTED>  "Reaching it needs a spawned HUD with an owning player controller and a live
+//     RETRACTED>   game instance carrying the subsystem, which is a PIE-shaped fixture and not
+//     RETRACTED>   a headless one. ... this is the half that remains unpinned."
+//     IT WAS NEVER MEASURED -- it was inferred from the arm ending in `CreateWidget` -- and it
+//     was HALF WRONG. The decision is reachable headlessly and only the DRAWING is not: a
+//     transient world, a `UGameInstance::InitializeStandalone` whose subsystem collection is
+//     live, a spawned controller and `DispatchBeginPlay` reach `ResolveMenuTiming` for real,
+//     with no PIE anywhere. `StratShellHudCallSiteClauses.cpp` is that fixture and it closes
+//     this gap; its header records the three routes to a genuinely successful create that were
+//     measured and rejected. What remains unreachable is the menu ever APPEARING, which needs a
+//     viewport. That narrower statement is the same shape `UStratShellSubsystem` records for
+//     `ExecuteRoute`'s travelling arm.
 //   - The created widget, its Z-order, and `bTakeUiOnlyInputMode`'s effect on the player
 //     controller. All three need a viewport.
 //   - The re-arming next-tick timer. A headless clause has no tick to re-arm on.

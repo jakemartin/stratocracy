@@ -14,6 +14,71 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-31 (local), in the INTEGRATION tree, base `ee4acf5`, editor closed -- THE SHELL
+  HUD'S DECIDER IS PINNED BY FOUR CLAUSES, AND THE MUTANT RUN FALSIFIED A CLAIM IN MY OWN
+  COMMENT BEFORE IT PROVED ANYTHING ABOUT THE CODE.** This entry's ACTING AND WRITING are both
+  the `coordinator`, OUT OF LANE, on the user's explicit instruction in session. **It is NOT a
+  transcription and is deliberately not dressed as one:** that clause is triggered by a MERGE
+  and licenses only carrying across a draft `strat-test-author` already wrote, and there was no
+  lane, no worktree, no branch, no merge and no draft here. No suite figure and no verdict is
+  stated in this file; `global.md` owns both and this entry links to it rather than restating
+  it.
+  - **THE FOUR CLAUSES.** All ride `GATE-TITLEMENU`, mint no acceptance ID -- there is no
+    acceptance ID for this screen and inventing one would put a string in a test name that
+    greps exactly like a defined one -- and live in the new file
+    `Source/StratPlay/Tests/StratShellMenuTimingClauses.cpp`:
+    `AConfiguredShellIsDrawnFromAtEveryPointInTheWaitBudget`,
+    `AnUnconfiguredShellIsWaitedForUntilItsShippedBudgetIsSpent`,
+    `AZeroWaitBudgetDrawsTheMenuRatherThanWaitingForATick` and
+    `TheShellsConfiguredFlagRecordsTheCallAndNotItsArguments`.
+  - **WHAT THEY PIN, AND WHY THE OBVIOUS CLAUSE IS STILL REFUSED.** The 2026-08-31 entry below
+    records this lane refusing to pin `BP_StratShellGameMode`'s one-tick hop, because a clause
+    asserting the CURRENT ordering pins a hazard as a requirement and reddens on its own
+    repair. That refusal stands. `ee4acf5` made the honest clause writable by building
+    `AStratShellHUD`, which asks whether the shell HAS BEEN CONFIGURED rather than assuming an
+    ordering; what is pinned is that a configured shell is drawn from at once and an
+    unconfigured one is waited for to a budget. Moving `ConfigureMatchDestination` ahead of
+    `Super::BeginPlay()` keeps every clause green, which is the property that makes them worth
+    having.
+  - **WHERE THE EXPECTATIONS COME FROM.** The wait budget is READ FROM `AStratShellHUD`'s class
+    default object, never typed, so this file is not a second author of a shipped number. The
+    three arms are compared as ENUM VALUES and never as text -- `FString` comparison in this
+    engine is case-insensitive for `==`, `Contains` and `TestEqual` alike, which once shipped a
+    clause here that could not fail -- and arm names are reflected out of `StaticEnum` for the
+    FAILURE MESSAGE only, where being wrong costs readability and not a verdict.
+  - **THE VACUITY GUARD IS LOAD-BEARING IN THE BOUNDARY CLAUSE.** It loops over `[0, Budget)`.
+    At a budget of zero that body would never run and the clause would pass having observed
+    NOTHING, which is this project's recorded "a clause can pass while measuring the defect"
+    shape. The budget is therefore asserted positive BEFORE the loop, so a zero budget reddens
+    the clause instead of silencing it -- and the zero case is covered by its own clause.
+  - **THE FALSIFIABILITY, MEASURED.** Three mutants, each edited INTO THIS TREE and rebuilt in
+    place. Never in a copied tree: a cached `Intermediate/Build` there resolves the ORIGINAL
+    sources and `Result: Succeeded` stops being evidence that anything was compiled, so each
+    round asserted its own mutated translation unit was named in its own build log before the
+    run was trusted. (A) budget consulted BEFORE the configured flag -> the first clause alone
+    went red. (B) the subsystem flag tidied into `return !MatchLevel.IsNull();` -> the fourth
+    clause alone went red. (C) `<=` for `<` -> the boundary and zero-budget clauses went red
+    and no others. **In all three rounds the 24 pre-existing `GATE-TITLEMENU` clauses stayed
+    green**, which is the control that the new clauses caught each defect rather than the suite
+    reacting to a broken build. Reverted, rebuilt, re-run green, and `git diff` against
+    `ee4acf5` empty.
+  - **A CLAIM IN MY OWN COMMENT WAS FALSE AND MUTANT (C) IS WHAT FOUND IT.** The zero-budget
+    clause's comment said no other clause in the file would see an off-by-one. The boundary
+    clause sees it too, at `Waited == Budget`, for as long as the shipped budget is positive.
+    That is an over-broad claim about a clause's subject. The comment was narrowed to what the
+    clause is actually worth -- the ONE configuration the boundary clause cannot observe, a
+    budget of zero, where its loop runs no iterations -- and the correction was made BEFORE the
+    mutants were run for record rather than left to be discovered by a gate.
+  - **WHAT NO CLAUSE HERE REACHES, AND IT IS THE BIGGEST ONE.** **Nothing pins that
+    `AStratShellHUD::ResolveMenuTiming` ACTUALLY CONSULTS `DecideMenuTiming`.** These clauses
+    pin the decider, not the call site; a `ResolveMenuTiming` rewritten to create the menu
+    unconditionally leaves all four GREEN. Reaching it needs a spawned HUD with an owning
+    player controller and a live game instance carrying the subsystem, which is a PIE-shaped
+    fixture and not a headless one. Also unreached: the created widget and its Z-order, the
+    UI-only input mode's effect on the controller, the re-arming next-tick timer, and
+    `bMenuDrewOnAConfiguredShell` and `ConfigurationTicksWaited` as WRITTEN values -- all of
+    them on the path no headless clause enters.
+
 - **2026-08-31 (local), in the INTEGRATION tree `E:/MultiAgent/Stratocracy` on `master`, base
   `e4a21b0`, editor closed -- W6'S ASSET TAIL EARNED TWO CLAUSES AND ONLY ONE OF THEM IS
   HONEST.** `strat-test-author`, acting and writing. No worktree, no merge and no commit, so no

@@ -11,6 +11,78 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-31 (THE SHELL HUD'S DECIDER IS PINNED, AND THE FOUR CLAUSES WERE PROVED BY
+THREE BUILT MUTANTS THAT EACH REDDENED EXACTLY THE CLAUSES PREDICTED AND NOTHING ELSE.
+Written by the `coordinator`, whose file this is. The CLAUSES are `strat-test-author`'s lane
+and were written by the `coordinator` OUT OF LANE on the user's explicit instruction in
+session; `tests.md` carries that attribution inline, where a reader of the clause inventory
+lands. THERE IS NO LANE AND NO MERGE: everything below was done over base `ee4acf5`, with no
+worktree, no branch and no rebase, and with the editor closed throughout. The absolute tree
+and branch are named only in the stamped provenance at the foot of this entry, never in a live
+sentence, because a live sentence naming this machine's path is a claim CI can never satisfy.
+The suite is now **315/315**, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of this tree agrees at 315.
+THE COUNT MOVED 311 -> 315 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 4,
+REMOVED 0 -- with BOTH SIDES COLLECTED BY ONE FUNCTION over a multiline pattern, because two
+corpora gathered by different filters fabricate findings. The collector was itself controlled:
+it returns zero names on a blob with no macro and the single name `A.B.C` on one hand-written
+macro, so an empty answer would have been distinguishable from a broken instrument. The four
+clauses all ride `GATE-TITLEMENU`, mint no acceptance ID, and live in the new file
+`Source/StratPlay/Tests/StratShellMenuTimingClauses.cpp`:
+`AConfiguredShellIsDrawnFromAtEveryPointInTheWaitBudget`,
+`AnUnconfiguredShellIsWaitedForUntilItsShippedBudgetIsSpent`,
+`AZeroWaitBudgetDrawsTheMenuRatherThanWaitingForATick` and
+`TheShellsConfiguredFlagRecordsTheCallAndNotItsArguments`.
+WHAT THEY PIN, AND IT IS THE REQUIREMENT RATHER THAN THE HAZARD. The entry below records this
+lane REFUSING to pin the title menu's one-tick hop, on the grounds that a clause asserting the
+current ordering would go red the day the ordering was repaired. `ee4acf5` built
+`AStratShellHUD` so the honest clause became writable: the HUD asks whether the shell HAS BEEN
+CONFIGURED and draws only then, so the assertable property is that a configured shell is drawn
+from at once and an unconfigured one is waited for -- which survives the repair, since moving
+`ConfigureMatchDestination` ahead of `Super::BeginPlay()` merely makes the wait zero ticks.
+THE FALSIFIABILITY IS MEASURED AND NOT ARGUED. Three mutants, each edited INTO THIS TREE and
+rebuilt in place -- never in a copied tree, where a cached `Intermediate/Build` resolves the
+original sources and makes a mutant a silent no-op -- and each round asserted its own mutated
+translation unit was named in its own build log before the run was trusted. (A) consulting the
+budget BEFORE the configured flag reddened
+`AConfiguredShellIsDrawnFromAtEveryPointInTheWaitBudget` ALONE. (B) tidying the subsystem flag
+into `return !MatchLevel.IsNull();` reddened
+`TheShellsConfiguredFlagRecordsTheCallAndNotItsArguments` ALONE. (C) an off-by-one, `<=` for
+`<`, reddened the boundary and zero-budget clauses and no others. In all three rounds the 24
+pre-existing `GATE-TITLEMENU` clauses stayed GREEN, which is the control that the NEW clauses
+are what caught each defect rather than the suite reacting to a broken build; the tree was
+reverted, rebuilt and re-run green, and `git diff` against `ee4acf5` is empty.
+A CLAIM IN THE NEW FILE WAS WRONG AND THE MUTANT RUN IS WHAT FOUND IT, WHICH IS WORTH MORE
+THAN THE CLAUSES. The zero-budget clause's comment claimed no other clause in the file would
+see an off-by-one. Mutant (C) shows the boundary clause sees it too, at `Waited == Budget`,
+for as long as the shipped budget is positive. That is an over-broad claim about a clause's
+subject -- a shape this project has been bitten by -- and the comment was narrowed to what the
+clause is actually worth BEFORE the mutants were run for record, rather than being left to be
+discovered.
+THE GAP IS NAMED IN THE FILE'S OWN HEADER AND IS NAMED AGAIN HERE, because it is the one a
+reader would otherwise assume closed: NOTHING PINS THAT `AStratShellHUD::ResolveMenuTiming`
+ACTUALLY CONSULTS `DecideMenuTiming`. The clauses pin the decider, not the call site, and a
+`ResolveMenuTiming` rewritten to create the menu unconditionally would leave all four GREEN.
+Reaching it needs a spawned HUD with an owning player controller and a live game instance,
+which is a PIE-shaped fixture and not a headless one. The decider was extracted so the
+DECIDING could be pinned when the DRAWING could not; this is the half that stays open.
+THE OTHER DEBT IS UNCHANGED AND IS NOT THIS LANE'S: `HUDClass` on `BP_StratShellGameMode` must
+be set in the SAME commit that removes the graph's own Create Widget, Add to Viewport, input
+mode and cursor nodes, or the title screen draws TWO MENUS. That is `Content/`, the editor
+lane's, and the editor was closed for this entire pass. Nothing is broken meanwhile, because
+nothing spawns a HUD no `HUDClass` points at.
+THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn
+2026.08.31-14.19.06` -- UTC, which is 2026-08-31 10:19 local, and this entry is dated by the
+local day as the record always is -- 315 entries, 315 succeeded, 0 failed, 0 notRun, 0
+succeededWithWarnings, read from the exported report rather than from the log, which
+undercounts by one every run.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the build,
+the three mutant rounds and the suite runs behind the figure above were performed in
+`E:/MultiAgent/Stratocracy` on branch `master`, on this developer box, by the `coordinator`. A
+sweep running anywhere else -- CI runs in `/home/runner/work/stratocracy/stratocracy` -- is
+reading a different tree, which is exactly why this sentence is stamped and the live figure
+above carries no path at all.]**)
+
 _Last run 2026-08-31 (THE ONE CLAUSE W6'S ASSET TAIL GENUINELY EARNED IS WRITTEN, AND THE
 SECOND ONE WAS REFUSED BY THE LANE THAT WAS OFFERED IT -- THE REFUSAL IS THE MORE USEFUL HALF.
 Written by the `coordinator`, whose file this is; the clause, the mutants and the refusal
@@ -20,9 +92,11 @@ worktree, no branch and no rebase, and with the editor closed throughout. The ab
 branch are named in the stamped provenance at the foot of this entry rather than here, because
 an UNSTAMPED sentence naming this machine's path is a claim CI cannot ever satisfy -- it sweeps
 `/home/runner/work/...`, and this entry's first push proved the point by turning the sweep red
-while the suite job stayed green. The suite is now **311/311**, every entry
-Success, zero failed, zero notRun, zero succeededWithWarnings, and the macro census of this
-tree agrees at 311.
+while the suite job stayed green. **[STAMPED 2026-08-31 -- SUPERSEDED BY THE ENTRY ABOVE,
+which carries this record's live figure; the sentence is stamped rather than deleted so a
+reader arriving here by a citation learns what it said and what replaced it.]** The suite was
+**311/311** when this entry was written, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, and the macro census of that tree agreed at 311.
 THE COUNT MOVED 310 -> 311 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 1,
 REMOVED 0 -- derived independently by `strat-test-author` and by the `coordinator`, both
 collecting the two sides with one function. The clause is

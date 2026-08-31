@@ -11,6 +11,79 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-31 (THE TITLE SCREEN WAS TURNING GAME INPUT OFF FOR THE REST OF THE SESSION,
+AND THE HEADLINE IS THAT THE FLAG IT SETS DOES NOT LIVE ON ANYTHING THE TRAVEL DESTROYS.
+Written by the `coordinator`, whose file this is. THE C++ IS `strat-gameplay-engineer`'S LANE AND
+THE CLAUSES ARE `strat-test-author`'S, AND BOTH WERE WRITTEN BY THE `coordinator` OUT OF LANE on
+the user's explicit instruction in session: the user reported the defect, was given the diagnosis
+and the proposed repair, and answered yes to it being written here. THERE IS NO LANE AND NO
+MERGE -- everything below was done over base `edda819`, with no worktree, no branch and no
+rebase, and the editor was closed for the build and reopened afterwards.
+The suite is now **321/321**, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of this tree agrees at 321.
+THE COUNT MOVED 318 -> 321 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 3,
+REMOVED 0 -- both sides collected by one function. The three clauses ride `T-UI-02`, mint no
+acceptance ID, and live in the new file `Source/StratPlay/Tests/StratInputClaimClauses.cpp`:
+`TheInputClaimClearsAViewportsIgnoreInput`, `TheInputClaimRestoresTheProjectsOwnMouseModes`
+and `BeginPlayMakesTheInputClaim`.
+WHAT WAS WRONG. `AStratShellHUD::ApplyMenuInputMode` sets `FInputModeUIOnly`, which calls
+`GameViewportClient.SetIgnoreInput(true)`. The `UGameViewportClient` is owned by the
+GameInstance and SURVIVES `OpenLevel`: in the UE 5.8 source `bIgnoreInput` is written in exactly
+four places -- the two viewport-client constructors, which default it false, and the three
+`FInputMode*::ApplyInputMode` overrides -- and level travel is not one of them. The match's
+freshly spawned controller inherited the title screen's input mode, and every key and button was
+dropped at the viewport, upstream of `UPlayerInput` and therefore upstream of everything
+`StratPlayerControllerTick.cpp` protects.
+IT PRESENTED AS "HOVER WORKS, CLICKING DOES NOT", WHICH IS THE PART WORTH CARRYING FORWARD. The
+hover is not an input event -- `Tick` polls `UpdateHoverFromCursor`, which reads the cursor off
+the viewport directly -- so the one surviving part of the interface was the part wave 0 had moved
+off Enhanced Input for unrelated reasons. Every instrument a reader would reach for said input
+was fine: the reported session logged ZERO `STRAT-CMD` lines with no `is unset` warning and no
+missing-context warning, so every asset was wired and every `BindAction` had run.
+THE REPAIR IS `AStratPlayerController::RestoreProjectInputState`, CALLED FROM `BeginPlay`. The
+claim is made by the controller that needs the input rather than given back by the HUD that took
+it: `AStratShellHUD` dies with the title map during travel, so a give-it-back there would run
+inside world teardown and would still miss a direct launch, a console `open`, or any later map
+that raises a UI-only screen. It is NOT an `FInputMode*`, and that is not the rejection recorded
+on `Tick` -- that block rejects capture-based modes as a way to FEED THE MOUSE AXIS and stands
+untouched. The capture and lock modes are read from `GetDefault<UInputSettings>()`, the same
+object `UGameViewportClient::Init` reads, so a click lands identically whichever route the player
+took into the map; the `FApp::CanEverRender()` guard on those two mirrors `Init`'s own headless
+rule, and `bIgnoreInput` is unconditional.
+EACH CLAUSE WAS PROVED FALSIFIABLE BY A MUTANT BUILT IN PLACE IN THIS TREE, never in a copy --
+a copied tree's cached `Intermediate/Build` resolves the original sources and reports `Result:
+Succeeded` for a build that compiled nothing. Dropping `SetIgnoreInput(false)` reddened
+`TheInputClaimClearsAViewportsIgnoreInput` and `TheInputClaimRestoresTheProjectsOwnMouseModes`;
+defeating the `CanEverRender` guard reddened `TheInputClaimRestoresTheProjectsOwnMouseModes`
+alone; deleting `ClaimGameInput()` from `BeginPlay` reddened `BeginPlayMakesTheInputClaim` alone.
+THE FIRST MUTANT ROUND FOUND A DEFECT IN THE CLAUSES RATHER THAN IN THE CODE, and it is recorded
+because the clause looked complete. Clause (2)'s trailing `bIgnoreInput` assertion read a bare
+viewport client whose flag was already false from its own constructor, so it passed regardless of
+what the restore did -- the first mutant reddened clause (1) and left clause (2) green. It now
+plants the flag first, and the re-run reddens both. An assertion that cannot fail is worse than
+an absent one, because it reads as cover.
+WHAT IS NOT MEASURED HERE, STATED RATHER THAN LEFT TO BE DISCOVERED. `bIgnoreInput` is not a
+`UPROPERTY`: `GetAll` cannot read it and there is no `ke` getter, so NO INSTRUMENT IN THIS TREE
+CAN OBSERVE THE FLAG IN A LIVE PIE SESSION. The three clauses pin the decision headlessly; the
+end-to-end behaviour was confirmed by the USER'S OWN PLAYTEST, reported in session after the
+change, and that confirmation is not re-executable from a checkout.
+THE LANE RECORDS ARE OPEN AND THIS ENTRY DOES NOT CLOSE THEM. `engine.md` and `tests.md` carry no
+entry for this pass. Recording an out-of-lane write ONLY here is a known finding shape in this
+project -- an out-of-lane write is attributed in the file that RECEIVED it, not merely in the
+coordinator's own -- so this sentence names the gap as OPEN rather than implying the record is
+complete. The transcription clause does not cover it: that licenses carrying a lane's draft
+across AFTER A MERGE, and there is no merge here.
+THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn 2026.08.31-18.55.21`
+-- UTC, which is 2026-08-31 14:55 local, and this entry is dated by the local day as the record
+always is -- 321 entries, 321 succeeded, 0 failed, 0 notRun, 0 succeededWithWarnings, read from
+the exported report rather than from the log, on the same bytes this entry describes.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the build,
+the three mutant rounds and the suite runs behind the figure above were performed in
+`E:/MultiAgent/Stratocracy` on branch `master`, on this developer box, by the `coordinator`. A
+sweep running anywhere else -- CI runs in `/home/runner/work/stratocracy/stratocracy` -- is
+reading a different tree, which is why this sentence is stamped and the live figure above
+carries no path at all.]**)
+
 _Last run 2026-08-31 (THE CALL-SITE GAP IS CLOSED, AND THE HEADLINE IS THAT THE CLAIM IT
 NEEDED PIE WAS OURS, WAS NEVER MEASURED, AND WAS HALF WRONG -- THE DECISION IS REACHABLE
 HEADLESSLY AND ONLY THE DRAWING IS NOT. Written by the `coordinator`, whose file this is; the
@@ -19,8 +92,11 @@ user's explicit instruction in session, attributed inline in `tests.md`. THERE I
 NO MERGE: everything below was done over base `da06812`, with no worktree, no branch and no
 rebase, and with the editor closed throughout. The absolute tree and branch are named only in
 the stamped provenance at the foot of this entry, never in a live sentence.
-The suite is now **318/318**, every entry Success, zero failed, zero notRun,
-zero succeededWithWarnings, and the macro census of this tree agrees at 318.
+**[STAMPED 2026-08-31, LATER THE SAME DAY -- SUPERSEDED BY THE ENTRY ABOVE, WHICH MOVED THE
+COUNT TO 321 BY ADDING THREE CLAUSES. The figure in the next sentence was live when written and
+is history now, and it is stamped rather than deleted, which is this record's convention.]**
+The suite was **318/318** at that pass, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of that tree agreed at 318.
 THE COUNT MOVED 315 -> 318 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 3,
 REMOVED 0 -- both sides collected by one function, the collector controlled as before. The
 three clauses ride `GATE-TITLEMENU`, mint no acceptance ID, and live in the new file

@@ -15,9 +15,12 @@ _Last run 2026-08-31 (THE ONE CLAUSE W6'S ASSET TAIL GENUINELY EARNED IS WRITTEN
 SECOND ONE WAS REFUSED BY THE LANE THAT WAS OFFERED IT -- THE REFUSAL IS THE MORE USEFUL HALF.
 Written by the `coordinator`, whose file this is; the clause, the mutants and the refusal
 are `strat-test-author`'s, produced in this tree.
-THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE: everything below was done in
-`E:/MultiAgent/Stratocracy` on branch `master` over base `e4a21b0`, with no worktree, no branch
-and no rebase, with the editor closed throughout. The suite is now **311/311**, every entry
+THERE IS NO LANE AND NO MERGE: everything below was done over base `e4a21b0`, with no
+worktree, no branch and no rebase, and with the editor closed throughout. The absolute tree and
+branch are named in the stamped provenance at the foot of this entry rather than here, because
+an UNSTAMPED sentence naming this machine's path is a claim CI cannot ever satisfy -- it sweeps
+`/home/runner/work/...`, and this entry's first push proved the point by turning the sweep red
+while the suite job stayed green. The suite is now **311/311**, every entry
 Success, zero failed, zero notRun, zero succeededWithWarnings, and the macro census of this
 tree agrees at 311.
 THE COUNT MOVED 310 -> 311 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 1,
@@ -59,7 +62,12 @@ THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn
 2026.08.31-04.21.03` -- UTC, which is 2026-08-31 00:21 local, and this entry is dated by the
 local day as the record always is -- 311 entries, 311 succeeded, 0 failed, 0 notRun, 0
 succeededWithWarnings, certified by `strat_suite_report_gate.py` printing `SUITE REPORT GATE
-CLEAN` at exit 0.)
+CLEAN` at exit 0.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the build
+and the suite run behind the figure above were performed in `E:/MultiAgent/Stratocracy` on
+branch `master`, on this developer box, by the `coordinator`. A sweep running anywhere else --
+CI runs in `/home/runner/work/stratocracy/stratocracy` -- is reading a different tree, which is
+exactly why this sentence is stamped and the live figure above carries no path at all.]**)
 
 _Last run 2026-08-30 (W6 -- THE TITLE/MENU SHELL LANDS IN C++, AND THE HEADLINE IS NOT THE
 SCREEN BUT THE PLAYER-VISIBLE DEFECT THE WAVE FOUND ON ITS WAY THERE: after a

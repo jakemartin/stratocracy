@@ -112,3 +112,68 @@ now stated here, where lanes are defined, rather than inferred from a record fil
 
 Nothing here widens the lane rule for a session where the editor IS reachable — when
 `strat-editor-builder` can work at all, `Content/` is its lane and only its lane.
+
+**A defect reported in a live session has no lane to route it to, and for four passes that was
+handled by writing a fresh exception block each time.** Lanes are assigned per dispatched phase,
+and both defined modes are wave-shaped — `/strat-hotseat` runs the crew phase by phase in one
+tree, `/strat-parallel` across worktrees. Nothing in `.claude/agents/`, `.claude/skills/` or this
+file describes a route for work that arrives mid-session, so in that condition every code write is
+out of lane BY DEFINITION. Four entries said so in nearly the same words — 2026-08-29
+(`LayerFor`), and three on 2026-08-31 over bases `ee4acf5`, `da06812` and `edda819`, each
+recording *"there was no lane, no worktree, no branch, no merge and no draft."* Four identical
+exceptions are a condition, not four accidents:
+
+> **The in-session clause. USER RULING, 2026-08-31.** When the user reports a defect or asks for a
+> change **in a live session with no lane topology standing** — no worktree, no lane branch, no
+> dispatched wave in flight — the `coordinator` may write code in any lane. **The condition is not
+> "the user asked"; it is "the user asked AND there is no lane to ask."** Both halves are
+> checkable: `git worktree list` and the current branch say whether a topology exists.
+>
+> **THIS IS NOT THE EDITOR-DRIVER CLAUSE'S REASONING AND MUST NOT BE READ AS IT.** That clause is
+> triggered by AN ABSENT TOOL: `strat-editor-builder` holds no Bash and no `execute_script`, so it
+> **cannot act at all**. `strat-gameplay-engineer` and `strat-test-author` hold `Read`, `Write`,
+> `Edit`, `Bash` and `PowerShell` and are FULLY CAPABLE of this work. Nothing here rests on
+> incapacity, and no measurement of an absent tool discharges anything below.
+>
+> **THE FOUR OBLIGATIONS.**
+>
+> 1. **OFFER BOTH ROUTES BEFORE ACTING, AND RECORD WHICH THE USER CHOSE.** This is the obligation
+>    the other clauses do not have, and it is here because it is the step that actually produced
+>    all four writes. In each case the `coordinator` offered ITSELF as the writer and the user's
+>    "yes" was then recorded as *"the user's explicit instruction in session"* — a true sentence
+>    about a menu with one item on it. The instruction is only meaningful if dispatching the lane
+>    agent was the other item. **Name the cost of each when offering:** dispatch is slower and
+>    needs a brief the agent cannot check against the conversation, and briefs from this seat have
+>    been measured wrong (2026-08-31: a stale HEAD and a collapsed mutant sequence, both caught by
+>    the agents against the tree); acting in session is faster and skips the brief, and puts the
+>    write outside its lane.
+> 2. **THE RECEIVING FILE GETS THE ENTRY, AND THE LANE AGENT WRITES IT.** The `coordinator` does
+>    NOT author the lane's record entry. Dispatch `strat-gameplay-engineer` for `engine.md` and
+>    `strat-test-author` for `tests.md` after the code lands; recording an out-of-lane write only
+>    in `global.md` is a verdict block. **Dispatch them in SEPARATE messages, not concurrently**
+>    — on 2026-08-31 two lanes run in one message each wrote a true status claim about the
+>    other's file that was false before either finished, and no time qualifier fixes it, because
+>    in a parallel session the qualifier's window can be zero.
+> 3. **ATTRIBUTE ACTING AND WRITING SEPARATELY, INLINE IN THE ENTRY** — the shape is
+>    *2026-08-31, the* `coordinator` *(ACTING; OUT OF LANE, in session) and* `<lane agent>`
+>    *(WRITING)*. Inline is load-bearing for the reason the transcription clause already gives: a
+>    reader arriving by a citation lands on the entry, not on any header above it.
+> 4. **NAME THE BASE COMMIT THE WORK WAS DONE OVER.** Without it the condition reads as satisfied
+>    forever, which is the defect the transcription clause's merge-naming requirement exists to
+>    prevent. All four prior entries already named theirs, so this costs nothing.
+>
+> **WHAT IT DOES NOT LICENSE.** It does not apply when a lane topology IS standing — with a
+> worktree or a wave in flight, `Source/` is the lane's and dispatch is the route. It does not
+> reach `Content/`, which the editor-driver clause governs on its own separate condition. It does
+> not license the `coordinator` to author a lane's RECORD entry, which is obligation (2) and is
+> the line between this clause and the transcription clause. And it is not a licence to skip the
+> reviewer gate.
+>
+> **OBLIGATION (1) IS UNFALSIFIABLE FROM A CHECKOUT, STATED HERE RATHER THAN LEFT TO BE
+> DISCOVERED.** Whether both routes were genuinely offered lives in the session transcript, which
+> no gate reads and no checkout contains. A `coordinator` that offered only itself and then wrote
+> *"the user chose in-session over dispatch"* is **indistinguishable from one that offered both**
+> by every instrument in this tree. No wording fixes that. Obligations (2), (3) and (4) are
+> greppable in the record; (1) rests on the agent's honesty, and a reader is entitled to know
+> which is which — the same split the transcription clause already declares about its own
+> limit (1).

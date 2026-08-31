@@ -44,6 +44,16 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 
+// The input claim's two engine reads. `Engine/GameViewportClient.h` for the client whose
+// `bIgnoreInput` the title screen leaves set, and `GameFramework/InputSettings.h` for the
+// project's own capture and lock defaults -- read rather than copied, so this file holds no
+// second opinion about what `Config/DefaultInput.ini` says. `Misc/App.h` carries
+// `FApp::CanEverRender`, which is the same test `UGameViewportClient::Init` uses to decide
+// whether those two modes apply at all.
+#include "Engine/GameViewportClient.h"
+#include "GameFramework/InputSettings.h"
+#include "Misc/App.h"
+
 AStratPlayerController::AStratPlayerController()
 {
 	// A TURN-BASED GAME IS PLAYED WITH A CURSOR. Set here rather than in `BeginPlay` so a
@@ -96,6 +106,14 @@ AStratPlayerController::AStratPlayerController()
 void AStratPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
+
+
+	// THE INPUT THIS CONTROLLER NEEDS, CLAIMED BEFORE ANYTHING IS BOUND TO IT. Not a
+	// reordering hazard and not an ordering assumption: the claim touches only the viewport
+	// client and the mapping-context add below touches only the local player's Enhanced Input
+	// subsystem, so neither can see the other. It goes first because a reader looking for
+	// "why does no key work" should meet it before three screens of asset warnings.
+	ClaimGameInput();
 
 	// THE MAPPING CONTEXT, IF THERE IS ONE. Null until phase 5 authors the asset, and that
 	// is a supported configuration rather than a tolerated one -- see the header block. The
@@ -164,6 +182,60 @@ void AStratPlayerController::BeginPlay()
 			TEXT("%s could not paint an initial screen (this is ordinary before the match starts): %s"),
 			*GetName(), *RefreshReason);
 	}
+}
+
+// ---------------------------------------------------------------------------
+// The game-input claim. `RestoreProjectInputState` carries the measurement and the reasoning
+// in the header; these two are the whole of the code.
+// ---------------------------------------------------------------------------
+
+void AStratPlayerController::ClaimGameInput()
+{
+	// SET TO THE FAILING VALUE FIRST AND RAISED ONLY ON SUCCESS, so there is no arm through
+	// this function that leaves `NotAttempted` behind. `NotAttempted` means BeginPlay did not
+	// call this, and it must keep meaning only that -- it is the value the call-site clause
+	// reads to tell a live call from a deleted one.
+	LastInputClaim = EStratInputClaim::NoViewport;
+
+	const UWorld* const World = GetWorld();
+	UGameViewportClient* const ViewportClient =
+		World != nullptr ? World->GetGameViewport() : nullptr;
+	if (ViewportClient == nullptr)
+	{
+		// ORDINARY AND SILENT. A headless automation world and the class default object both
+		// arrive here, and neither is a fault; a log line would fire on every suite run.
+		return;
+	}
+
+	RestoreProjectInputState(*ViewportClient);
+	LastInputClaim = EStratInputClaim::Claimed;
+}
+
+void AStratPlayerController::RestoreProjectInputState(UGameViewportClient& ViewportClient)
+{
+	// THE DEFECT, AND IT IS UNCONDITIONAL. Everything below is about how a click FEELS;
+	// this line is about whether one arrives at all.
+	ViewportClient.SetIgnoreInput(false);
+
+	// `UGameViewportClient::Init` forces both modes off when the process cannot render, so a
+	// restore that ignored that test would leave a headless run in a state the engine itself
+	// never puts it in.
+	if (!FApp::CanEverRender())
+	{
+		return;
+	}
+
+	const UInputSettings* const Settings = GetDefault<UInputSettings>();
+	if (Settings == nullptr)
+	{
+		return;
+	}
+
+	// THE SAME TWO FIELDS `Init` READS, FROM THE SAME OBJECT. If a later pass changes
+	// `Config/DefaultInput.ini`, this follows it with no edit here -- which is the whole
+	// reason they are read rather than named.
+	ViewportClient.SetMouseCaptureMode(Settings->DefaultViewportMouseCaptureMode);
+	ViewportClient.SetMouseLockMode(Settings->DefaultViewportMouseLockMode);
 }
 
 void AStratPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)

@@ -179,6 +179,7 @@
 class FStratBridge;
 
 class AStratBoardActor;
+class UGameViewportClient;
 class UInputAction;
 class UInputMappingContext;
 class UStratMatchSubsystem;
@@ -199,6 +200,33 @@ class UStratMatchSubsystem;
  * all three silently -- the only site in that pass corrected without a quote, which the gate
  * caught and which is why the quote is here now.]
  */
+
+/**
+ * What `AStratPlayerController::BeginPlay`'s input claim did, recorded so a clause can read
+ * it. NOT REFLECTED, and it must not become so: it is a fact about this object's own call
+ * history, in the same family as `bGuidanceArmed`, and nothing on screen reads it.
+ *
+ * IT EXISTS BECAUSE THE CLAIM'S CALL SITE IS OTHERWISE UNOBSERVABLE HEADLESSLY. A headless
+ * automation world has no `UGameViewportClient` at all, so the claim can only take its
+ * no-viewport arm there and leaves no trace on any object a clause can reach. Without this
+ * member, deleting the `ClaimGameInput()` line out of `BeginPlay` would redden nothing --
+ * which is the exact shape of defect this project has already paid for once, a correct
+ * mechanism with no route to it. `NoViewport` and `NotAttempted` are therefore different
+ * values on purpose: the first says BeginPlay ran the claim and found no viewport, the
+ * second says BeginPlay never asked.
+ */
+enum class EStratInputClaim : uint8
+{
+	/** `BeginPlay` has not run, or no longer calls `ClaimGameInput`. */
+	NotAttempted,
+
+	/** The claim ran and this world has no game viewport -- the headless and CDO case. */
+	NoViewport,
+
+	/** The claim ran and restored the project's input state on the viewport client. */
+	Claimed
+};
+
 UCLASS(Blueprintable, meta = (DisplayName = "Strat Player Controller"))
 class STRATPLAY_API AStratPlayerController : public APlayerController
 {
@@ -206,6 +234,52 @@ class STRATPLAY_API AStratPlayerController : public APlayerController
 
 public:
 	AStratPlayerController();
+
+	/**
+	 * Puts a `UGameViewportClient` back into the input state `UGameViewportClient::Init`
+	 * leaves it in, and is the repair for a defect that has actually shipped.
+	 *
+	 * WHAT WENT WRONG. `AStratShellHUD::ApplyMenuInputMode` sets `FInputModeUIOnly` for the
+	 * title menu, and `FInputModeUIOnly::ApplyInputMode` calls
+	 * `GameViewportClient.SetIgnoreInput(true)` and `SetMouseCaptureMode(NoCapture)`. THE
+	 * VIEWPORT CLIENT IS OWNED BY THE GAME INSTANCE AND SURVIVES `OpenLevel`: in the engine
+	 * source `bIgnoreInput` is written in exactly four places -- the two viewport-client
+	 * constructors, which default it false, and the three `FInputMode*::ApplyInputMode`
+	 * overrides -- and level travel is not one of them. So the title screen's UI-only mode
+	 * followed the player into the match and every key and mouse button was dropped at the
+	 * viewport, upstream of `UPlayerInput` and therefore upstream of everything phase 6
+	 * measured about `ProcessInputStack`.
+	 *
+	 * IT PRESENTED AS "HOVER WORKS, CLICKING DOES NOT", which is why it is worth stating in
+	 * full here. The hover is not an input event -- `Tick` calls `UpdateHoverFromCursor`,
+	 * which reads the cursor straight off the viewport and never touches `bIgnoreInput` --
+	 * so the one part of the interface that kept working was the part that had been moved
+	 * off Enhanced Input for unrelated reasons. Measured in `Saved/Logs/Stratocracy.log` on
+	 * 2026-08-31: PIE opened on `Lvl_Title`, the shell travelled to `Lvl_FerrumCrossing`, the
+	 * match seeded 99 hexes and 10 units, and the session logged ZERO `STRAT-CMD` lines --
+	 * with no `is unset` warning and no missing-context warning, so every asset was wired and
+	 * every `BindAction` had run.
+	 *
+	 * IT IS NOT AN `FInputMode*`, DELIBERATELY, AND THAT IS NOT THE REJECTION RECORDED ON
+	 * `Tick`. That block rejects capture-based input modes as a way to FEED THE MOUSE AXIS,
+	 * and it stands. This restores three viewport-client fields to the values the project's
+	 * own `Config/DefaultInput.ini` already chose, read through `UInputSettings` rather than
+	 * copied -- `FInputModeGameAndUI` would instead impose `CaptureDuringMouseDown` and
+	 * `DoNotLock`, which are NOT this project's defaults and would make a click land
+	 * differently depending on whether the player came through the title screen.
+	 *
+	 * THE HEADLESS ARM MIRRORS `Init` RATHER THAN INVENTING A RULE. `UGameViewportClient::Init`
+	 * forces `NoCapture` / `DoNotLock` when `!FApp::CanEverRender()`; so this leaves both modes
+	 * alone in that case and restores only `bIgnoreInput`, which is the field the defect is
+	 * actually about and which is unconditional.
+	 *
+	 * STATIC AND TAKING THE CLIENT BY REFERENCE so a clause can plant a state on a bare
+	 * `UGameViewportClient` and read it back with no world, no PIE and no controller.
+	 */
+	static void RestoreProjectInputState(UGameViewportClient& ViewportClient);
+
+	/** What `BeginPlay`'s input claim did. See `EStratInputClaim` for why this is recorded. */
+	EStratInputClaim GetLastInputClaim() const { return LastInputClaim; }
 
 	/**
 	 * Rebuilds the model, decorates it with the presentation bits, reconciles, and repaints
@@ -760,6 +834,18 @@ private:
 	/** The spawned board, or null. Read through the subsystem so there is one owner of it. */
 	AStratBoardActor* GetBoard() const;
 
+	/**
+	 * `BeginPlay`'s one call to `RestoreProjectInputState`, and the recorder of what it did.
+	 *
+	 * THE CLAIM IS MADE BY THE CONTROLLER THAT NEEDS THE INPUT, and not by the HUD that took
+	 * it. `AStratShellHUD` dies with the title map during travel, so a give-it-back there
+	 * would run inside world teardown and would still miss every other route into a match --
+	 * a direct launch, a console `open`, a later map that puts up any UI-only screen at all.
+	 * A controller that asserts its own input state on `BeginPlay` is correct under all of
+	 * them, and is the shape the engine's own samples use.
+	 */
+	void ClaimGameInput();
+
 	// The `EStratSelectionEvent` handlers. Each is one call to `HandleSelectionEvent`; the
 	// only one that reads the cursor is `OnSelect`, because the others are statements about
 	// the selection rather than about a hex. [AMENDED, wave 0: "because the other three are
@@ -868,4 +954,11 @@ private:
 
 	/** Whether the "no input assets" warning has been said. Said once, not per click. */
 	bool bReportedMissingInputAssets = false;
+
+	/**
+	 * What `ClaimGameInput` did on this object. Written once, by `BeginPlay`, and read only
+	 * by `GetLastInputClaim` -- see `EStratInputClaim` for why the no-viewport case has a
+	 * value of its own rather than sharing the unset one.
+	 */
+	EStratInputClaim LastInputClaim = EStratInputClaim::NotAttempted;
 };

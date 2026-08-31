@@ -14,6 +14,234 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-30 (local), in the LANE tree `E:/MultiAgent/Strat-wt/slot-1` on `feat/title-menu`, base
+  `347c722` -- W6'S TITLE/MENU SHELL IS PINNED BY 23 CLAUSES, 22 OF THEM ON THE LOCAL GATE NAME
+  `GATE-TITLEMENU` AND ONE ON `T-TURN-09`.** `strat-test-author`. **This entry is a RECORD-ONLY
+  pass**: it was dispatched with no build, no suite run, no `Source/` edit and no commit, so every
+  figure below that is not marked as my own measurement is somebody else's, and is attributed.
+  **Clause delta +23, REMOVED 0, re-derived by me in this tree** by set difference on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` over `Source/**/*.cpp`, collected by ONE function on both
+  sides -- base `347c722` read through `git show` versus the working tree read from disk. It agrees
+  with the `coordinator`'s census exactly, including the 22/1 split by ID. **The wave's suite figure
+  and its verdict are `global.md`'s topmost banner and are not restated here.** The gate rounds are
+  `Tools/architect/gate_reports/2026-08-30-w6-title-menu.md`, which is the authority on the wave.
+
+  **WHERE THE CLAUSES LIVE.** `Source/StratPlay/Tests/StratShellRouteClauses.cpp` is new and holds
+  22. `Source/StratPlay/Tests/StratSaveSlotClauses.cpp` gains ONE --
+  `GATE-TITLEMENU.TheLoaderRefusesInTheRestorabilityPredicatesOwnWords` -- because it needs a
+  configured `UStratMatchSubsystem` and that file owns the world/slot/config fixtures.
+  `Source/StratPlay/Tests/StratMatchCompletionRecording.cpp` gains **no clause**: its ten added
+  lines are a comment saying that an existing assertion's MESSAGE names the loader while its
+  SUBJECT is the writer, and naming the two new clauses that now back the sentence.
+
+  **WHY THERE IS NO MODULE-SIDE ORACLE HERE, AND WHAT THESE FILES DO INSTEAD.** `strat::` knows
+  nothing about screens and the GDD states no route set, so the ordinary parity shape has no module
+  to ask. The answer taken is to pin RELATIONS BETWEEN TWO INDEPENDENTLY-WRITTEN FUNCTIONS instead
+  of retyping a switch as an expectation: order and length against `StaticEnum<EStratShellRoute>()`;
+  every row's enablement and reason against `UStratShellSubsystem::IsRoutePermitted` under the same
+  facts; every refusal sentence taken FROM the function under test under a fact set where only one
+  refusal is possible, then asserted to appear where both are; `ResolveDestination` against
+  `IsRoutePermitted` rather than against a route-to-level list. **No label, refusal or precondition
+  string is typed anywhere in either file.**
+
+  **THE INVENTORY, BY WHAT EACH GROUP HOLDS DOWN.**
+    - **The model's shape and its one authority (3).** `MenuCarriesEveryDeclaredRouteInReflectedOrder`
+      -- one row per declared route in the enum's own declaration order, in all sixteen fact
+      combinations, which is what entitles every other clause to address a row BY INDEX rather than
+      by matching label text on a case-insensitive engine.
+      `EveryRowsEnablementAndReasonComeFromIsRoutePermitted` -- `BuildMenuModel` carries
+      `IsRoutePermitted`'s answers rather than a second copy of the conditions.
+      `ADisabledReasonIsEmptyExactlyWhenTheRowIsEnabled` -- both directions, with the sweep COUNTING
+      what it saw and failing if it saw only enabled rows or only disabled ones, because a guard
+      goes inert on its own subject. **It pins consistency, NOT correctness** -- the file says so
+      itself so the pair is not mistaken for coverage of the model.
+    - **Refusal precedence, in opposite orders (2).** `ContinueNamesTheMissingLevelAheadOfTheMissingSave`
+      and `ReturnToTitleNamesTheAbsentMatchAheadOfTheAbsentLevel`. Same oracle shape both ways, plus
+      a VACUITY GUARD: the two sentences must DIFFER first, compared case-INsensitively, which is
+      the stricter reading of difference on this engine. Neither can pass with the two checks
+      swapped.
+    - **The exit (1).** `QuitIsPermittedAndUnexplainedInEveryFactCombination` -- permitted and
+      carrying no shortfall sentence in all sixteen combinations, on BOTH surfaces (the direct
+      permission call and the drawn row).
+    - **Destination resolution without loading a level (3).** `PermittedTravelAlwaysResolvesADestination`
+      (the heaviest clause: every travelling route against every configuration of the two pointers,
+      facts derived FROM those pointers), `NewMatchAndContinueResolveToTheOneMatchDestination` (the
+      sameness is the load-bearing half -- two destinations for start and restore would be two
+      answers to the question `T-TURN-09` keeps single), and
+      `ResolveDestinationDecidesWithoutLoadingTheLevel`, which pins the `IsNull()`-and-not-`IsValid()`
+      property: an implementation asking `IsValid()` would refuse every correctly configured
+      destination in a shipped project while every fact-only clause stayed green.
+    - **One label moves, and only one (1).** `OnlyTheLiveMatchLabelMovesWithTheFacts` --
+      `bMatchIsLive` changes the `NewMatch` row's LABEL and nothing else about it, and no other
+      row's label. No label text is typed.
+    - **The pending-load-slot lifecycle (1).** `ThePendingLoadSlotSurvivesOnePeekAndOneConsumeOnly`
+      -- `ArmPendingLoadSlot` writes, `PeekPendingLoadSlot` reads without clearing,
+      `ConsumePendingLoadSlot` answers once and clears. A player who continues and then restarts
+      must not be handed the old save on the second travel.
+    - **The slot pairing, over the extracted static `UStratShellSubsystem::PendingSlotForRoute` (5).**
+      `OnlyTheRestoringRouteCarriesASlotToArm` (routing only -- emptiness against
+      `RouteLoadsSaveSlot`, no string compared), `TheArmedSlotIsTheConfiguredOneAndNotABakedInName`
+      (the value -- the argument byte for byte), `AnUnconfiguredSlotArmsNothingOnEveryRoute` (no
+      default, no fallback, no stand-in; kept separate on purpose so a red names one subject),
+      `ARouteThatDoesNotRestoreClearsAStaleArmedSlot` (a behaviour the follow-up pass CREATED: the
+      arming is now unconditional, so a `NewMatch` route overwrites a stale `Continue` request), and
+      `ARefusedRouteArmsNothing` -- the one clause that calls `ExecuteRoute` for real, pinning the
+      one ordering fact the refusal path makes observable: **the permission check precedes the
+      arming.**
+    - **Restorability -- the four clauses added after the shipped defect (4).**
+      `ACompletionOnlyPayloadIsNotARestorableMatch` (a current header with no match text is not
+      restorable, with the version equality ASSERTED as a premise so a later change would report
+      that the subject moved rather than passing for a new reason),
+      `TheRestorabilityRefusalIsEmptyExactlyWhenRestorable` (the out-parameter contract in both
+      directions over states that actually produce both),
+      `AFinishedButUnsavedMatchLeavesContinueGreyed` (end to end through a real slot file: the file
+      EXISTS and the slot is NOT restorable, and that gap IS the defect -- the only menu clause in
+      the file whose fact is read from the module rather than constructed, and therefore the only
+      one that would have gone red on the shipped tree), and
+      `TheSlotQuestionReturnsThePredicatesRefusalUnchanged`
+      (`DoesSlotHoldARestorableMatch` hands back `IsPayloadRestorable`'s refusal UNCHANGED).
+      Plus, in `StratSaveSlotClauses.cpp`, `TheLoaderRefusesInTheRestorabilityPredicatesOwnWords`:
+      the loader's failure text CONTAINS the phrase the predicate returned FOR THE SAME PAYLOAD,
+      derived not retyped, so a loader that went back to restating the conditions in its own
+      perfectly correct words goes red.
+    - **The derived default (1).** `TheShellsDefaultSlotIsDerivedFromTheMatchConfigsOwn` --
+      `AStratShellGameMode`'s `SaveSlotName` class default EQUALS `FStratMatchConfig`'s because the
+      constructor derives it. It reddens the moment somebody reintroduces a literal, which is the
+      shape that drifts silently.
+    - **`T-TURN-09` (1).** `ARestartRouteRequestsNoSavedStateToSeedFrom`. **THE STRETCH IS STATED AT
+      THE CLAUSE AND MUST NOT BE READ AS DISCHARGING THE ID.** `T-TURN-09` reads *"same scenario ->
+      identical state, with an empty command prefix"*; this clause reaches ONLY the seeding half. It
+      runs no two matches, compares no two state hashes and does not travel. Both directions are
+      asserted (`ContinueMatch` must load a slot, `NewMatch` must not) so a `RouteLoadsSaveSlot`
+      returning false for everything cannot satisfy it.
+
+  **`T-SAVE-04` WAS PROPOSED FOR THE RESTORABILITY CLAUSES AND WAS REFUSED BY THIS LANE, AGAINST
+  THAT ID'S OWN GDD SENTENCE. RECORD THIS OR IT WILL BE PROPOSED AGAIN.** The GDD defines
+  `T-SAVE-04` as *"refusal: any header mismatch (version/rules/data/scenario hash)"* and says it
+  *"refuses on the header alone and never applies a command"*. **A completion-only payload's header
+  is VALID AND CURRENT -- that is the entire reason the defect shipped** -- and an empty body is not
+  a header mismatch under either sentence. A clause riding an ID whose sentence excludes its subject
+  is the unfalsifiable shape this project has already been caught by, so they ride `GATE-TITLEMENU`,
+  which the user's 2026-08-29 ruling puts the screen and its routes on. The version arm's rule
+  remains squarely `T-SAVE-04`'s and keeps its existing clause
+  (`Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAWrongSavedDataVersion`); no new clause restates it.
+  Stated precisely, because a looser sentence stood in the file earlier the same day:
+  `TheRestorabilityRefusalIsEmptyExactlyWhenRestorable` DOES construct a wrong-version payload, as
+  one of four states exercising the OUT-PARAMETER contract, and asserts nothing about the version
+  rule.
+    - **THE GATE REPORT SAYS "all four new clauses ride `GATE-TITLEMENU` instead"; THE TREE CARRIES
+      FIVE UNDER THAT REASONING, AND THE TREE WINS.** The fifth is
+      `TheLoaderRefusesInTheRestorabilityPredicatesOwnWords` in `StratSaveSlotClauses.cpp`, whose
+      own comment restates the same refusal in its own words. The report's sentence sits in its
+      round-3 section and is true of the four in the restorability section; it is not a count of
+      everything the refusal covers. Nothing about the reasoning changes -- only the number of
+      clauses it reaches.
+    - **REPORTED, NOT FIXED, AND CORRECTLY NOT FIXED.** The pre-existing
+      `Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem` is likewise outside that
+      sentence: it refuses BEFORE `LoadGameFromSlot` is called, so there is no header to mismatch.
+      Renaming it is not this wave's change to make, and it is recorded here so the next reader
+      meets a known item rather than a discovery.
+
+  **WHAT IS STILL NOT REACHED, WITH THE DISTINCTION THE GATE BLOCKED TWICE ON.** The five slot
+  clauses pin `UStratShellSubsystem::PendingSlotForRoute` -- **THE STATIC**. *Which slot
+  `ExecuteRoute` arms* -- that it passes that static's answer, and not some other string, to
+  `ArmPendingLoadSlot` -- is a **different subject that no clause reaches**, and so is *that the
+  arming call is unconditional*: putting the `if` back around it reddens nothing.
+  **THESE TWO ITEMS ARE THE SAME SINGLE LINE OF CODE, and a reader who closes one has not closed
+  the other.** Neither does the record now swing to the opposite over-claim: the DECISION is pinned
+  five ways where it was pinned none, which is strictly more than before and is worth what it cost.
+  Also unreached: the permitted arm of `ExecuteRoute` in its entirety (reaching it means travelling,
+  a viewport and a world); `GatherFacts` (it needs a `UGameInstance` with a world and a save file --
+  `ARefusedRouteArmsNothing` causes it to RUN and asserts nothing about what it returns, and
+  executing a function is not pinning it); and any ordering beyond "the permission check precedes
+  the arming".
+
+  **THE CALL-SITE DERIVATION THAT STANDS IN FOR THE MISSING CLAUSE, AND IT IS WORTH MORE THAN THE
+  MUTANT IT REPLACED** because it says WHY nothing catches a change to that line rather than
+  reporting THAT nothing did -- and because a checkout can re-execute a grep and cannot re-execute
+  a mutant somebody ran and discarded. **Re-run from a checkout:**
+
+        grep -rn "ExecuteRoute(" Source/ | grep -v "://" | grep -- "->ExecuteRoute("
+
+  **I ran it in this tree and got ONE line**, the call inside `FStratShellRefusedRouteArmsNothingTest`,
+  whose own fixture asserts the route is REFUSED -- so it returns before `ArmPendingLoadSlot`.
+  **The unfiltered form returned SIX in the same tree, so the middle filter is doing real work**,
+  and the naive form is the self-quoting-census trap this branch already fell into: the test file's
+  own prose contains the token it tells you to search for.
+  **THE TRIGGER THAT VOIDS THE DERIVATION ENTIRELY: a second `ExecuteRoute` caller appearing.**
+  Whoever adds one owns rewriting it. Cited by symbol and never by line, because that call site
+  moved 1421 to 1489 to 1521 inside a single session.
+
+  **THE DEAD MUTANT INSTRUMENT, WHICH IS THE MOST TRANSFERABLE THING THIS WAVE PRODUCED.** Mutants
+  are built in a disposable `robocopy`'d COPY of the tree, because a test author may not edit the
+  code under test even temporarily. **A copied tree carries a copied `Intermediate/Build`, whose
+  cached build graph still resolves paths in the tree it was generated in -- so UBT concludes there
+  is nothing to do and says so successfully.** Every "mutant build" was a no-op printing
+  `Result: Succeeded`, the first mutant run came back GREEN, and the obvious reading -- "these
+  clauses are inert" -- was FALSE and one step from being reported. **Proved three ways rather than
+  inferred:** (1) an unconditional `AddError` planted in the clause never fired and the suite still
+  read all-passing, and a clause that RUNS cannot pass with an unconditional error in it; (2) `grep`
+  on the built `UnrealEditor-StratPlay.dll` found the probe string ABSENT and the clause name
+  PRESENT -- the state in which every name looks right and every behaviour is stale; (3) the DLL was
+  deleted and the build re-run, which reported `Result: Succeeded` AND EMITTED NO DLL AT ALL.
+  **Fixed by clearing `Intermediate/Build` in the copy, FIRST and once, at the cost of a full module
+  rebuild.**
+    - **`Result: Succeeded` IS NOT EVIDENCE THAT A BUILD HAPPENED. THE ARTIFACT IS.** Same species
+      as this project's recorded *"exit code is not a verdict"*, arriving through a different door.
+    - **THE ASYMMETRY, WHICH IS THE PART TO CARRY.** A RED mutant implies the mutation reached the
+      binary -- a no-op build leaves the baseline in place and the baseline is green -- so **red
+      implies a relink incorporating the change, ABSENT A FLAKE**. The qualifier is not decoration;
+      see the flake note below. **A GREEN mutant implies NOTHING WHATEVER until the artifact is
+      checked**: it is equally explained by an inert clause and by a build that never ran.
+    - **AND WHEN YOU GREP THE BINARY, GREP FOR SOMETHING THAT MOVED.** An identifier that has been
+      in the tree for several rounds proves only "some build since that round". The discriminating
+      probe is a string that CHANGED THIS ROUND -- superseded wording zero in source and binary,
+      current wording present in both. Note that only strings that COMPILE can be probed: a `.cpp`
+      comment reaches no binary, so a comment-only round leaves nothing to grep for. A header doc
+      comment above a `UPROPERTY`/`UFUNCTION` DOES survive, as UHT `Comment`/`ToolTip` metadata --
+      which is why the deleted identifier `bSaveSlotExists` still greps in the DLL, as quoted
+      history inside `bSaveSlotIsRestorable`'s tooltip. **A removed identifier found in a binary is
+      alarming and here it meant freshness, not staleness. Check the sense of a hit before reporting
+      it.**
+
+  **THE HONEST LIMITS OF THIS ENTRY'S EVIDENCE, STATED RATHER THAN LEFT TO BE DISCOVERED.**
+    - **The mutant sets M1-M10, N1-N5 and R1-R4 are agent self-reports that a checkout cannot
+      re-execute.** They are not in the tree in any form, and the gate report says in terms that no
+      gate round built the project or ran the suite. Citing that file for a per-clause mutant table
+      would be the same defect one directory over.
+    - **N6 WAS GREEN.** An earlier draft's *"M1-M10, N1-N6 and R1-R4 all produced reds"* was false,
+      and three sites cited it, two of them saying *"measured ... not reasoned"* -- disclaiming the
+      derivation that would have rescued them. The two clauses that leaned on a green mutant now
+      rest on the call-site derivation above instead.
+    - **The test file's claim that every clause in it is justified by a built mutant is a universal
+      quantifier over an agent self-report**, and it was written in the same wave in which two of
+      those runs turned out not to have happened. It is retracted in place and narrowed in the file;
+      read it as narrowed. **What a reader CAN check is the census command, the clause bodies, and
+      the derivations that replaced the two green mutants.**
+    - **One prior state is not re-derivable by anyone from a checkout**: that the shell previously
+      called `UGameplayStatics::DoesSaveGameExist` directly rests on gate readings taken while
+      `StratShellSubsystem.cpp` was untracked.
+    - **WHAT I DID NOT MEASURE IN THIS PASS.** I did not build, did not run the suite, did not run a
+      mutant, and did not edit anything under `Source/`. The clause-name set difference and the two
+      `ExecuteRoute` greps above are mine, taken in this tree; every other figure is attributed to
+      the agent that took it.
+
+  **KNOWN FLAKE, RESTATED BECAUSE THE MUTANT ASYMMETRY DEPENDS ON IT.** This project has recorded a
+  roughly 1-in-4 red flake in the suite. That is why the inference is *red implies relinked, absent
+  a flake* and never the absolute form. Across a mutant set whose every red is semantically matched
+  to its own subject -- the clause that went red is the clause naming the broken property -- a flake
+  is not a credible explanation, but that is the reader's judgement to make.
+
+  **INSTRUMENT CAVEAT THAT APPLIES TO EVERY CLAUSE IN THESE FILES.** `FString` `==`, `Contains` and
+  `TestEqual` are CASE-INSENSITIVE in this engine, measured in this project where it once produced a
+  clause that could not fail. The two files use the comparisons in OPPOSITE directions on purpose:
+  where the claim is SAME, `ESearchCase::CaseSensitive` (the stricter reading of sameness); where
+  the claim is DIFFERENT, the default case-insensitive comparison (the stricter reading of
+  difference, since two strings differing only in case are then reported equal and the clause goes
+  red). **A clause asserting "different" case-sensitively, or "same" case-insensitively, would pass
+  over a capitalisation-only mutation. Neither shape is present -- check that any clause added to
+  these files keeps it.**
+
 > **[OUT-OF-LANE WRITE, 2026-08-29, AND THE SECOND ONE THIS FILE HAS TAKEN IN A SINGLE DAY. THE
 > TWO ENTRIES DIRECTLY BELOW WERE WRITTEN INTO THIS FILE BY THE `coordinator`, WHOSE FILE THIS IS
 > NOT.** This file's header names `strat-test-author` its sole writer, and that rule is not

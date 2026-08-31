@@ -11,6 +11,78 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-30 (W6 -- THE TITLE/MENU SHELL LANDS IN C++, AND THE HEADLINE IS NOT THE
+SCREEN BUT THE PLAYER-VISIBLE DEFECT THE WAVE FOUND ON ITS WAY THERE: after a
+completed-but-unsaved match `Continue` would have drawn ENABLED and silently given turn 1
+instead of a restore. Written by the `coordinator`, whose file this is.
+THE PROVENANCE IS THIS TREE, AFTER THE MERGE. The lane was `E:/MultiAgent/Strat-wt/slot-1` on
+branch `feat/title-menu`, whose `git merge-base HEAD master` was `master` (`347c722`)
+throughout, so NO REBASE WAS NEEDED and none was performed; it was committed there and merged
+`--no-ff` into `master` here. The build and the suite run behind the figure below were then
+performed in `E:/MultiAgent/Stratocracy` ON THE MERGED TREE, with `-NoHotReloadFromIDE` absent
+because that flag is the lane trees' and would be wrong here, and with neither command piped;
+the build reported `Result: Succeeded` at `REAL_EXIT=0`, and 28 actions including a relink of
+UnrealEditor-StratPlay.dll, which is the artifact rather than the exit code and is why the
+29-second build was checked instead of believed.
+The suite is now **310/310**, every entry Success, zero failed,
+zero notRun, zero succeededWithWarnings, and the macro census of this tree agrees at 310.
+THE COUNT MOVED 287 -> 310 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 23,
+REMOVED 0 -- twenty-two riding `GATE-TITLEMENU` and one riding `T-TURN-09`
+(`ARestartRouteRequestsNoSavedStateToSeedFrom`). The clause NAMES in the exported report and in
+the tree are SET-EQUAL IN BOTH DIRECTIONS, 0 and 0, so no clause in the figure is one the tree
+does not declare and none the tree declares went unrun. **`T-SAVE-04` WAS PROPOSED FOR THE FOUR
+SAVE-SLOT CLAUSES AND REFUSED BY THE LANE THAT WAS OFFERED IT**, against that ID's own GDD
+sentence: it refuses on a header mismatch, and a completion-only payload's header is valid and
+current -- which is the whole reason the defect below could ship.
+WHAT THE WAVE BUILT IS C++ ONLY. `UStratShellSubsystem` (a `UGameInstanceSubsystem`) and
+`AStratShellGameMode` under `Source/StratPlay/`, plus edits to `AStratGameMode` and
+`UStratMatchSubsystem`. **NO ASSET AND NO `Config/` CHANGE**, per the parallel-lane rule that a
+branch needing an asset lands its C++ and the asset is authored on the integration tree. STILL
+OWED FOR W6: the title level, the menu WBP, `BP_StratShellGameMode`, `TitleLevel` on
+`BP_StratGameMode`, and the steward's `GameDefaultMap` move -- **which must land AFTER the level
+exists or it breaks the suite for every lane.**
+THE FOUR MENU ROUTES ARE OURS AND THE HEADERS SAY SO. Sec 2.11.5 fixes the screen list and
+stops; `title screen`, `main menu`, `Quit`, `Rematch`, `Restart` and `Return to` are each 0 hits
+document-wide. That count was first run on a broken instrument -- `grep -o -i -F` returns 0 for
+every term including a control the document certainly contains -- and re-run in Python with
+three controls answering 58, 158 and 161.
+THE DEFECT, WHICH IS THE PART A READER MUST NOT MISS. `RecordMatchCompletionOnSave` creates the
+slot file with an EMPTY `SaveText`, so `DoesSaveGameExist` answered true for a slot with no
+match in it. **Neither half was wrong alone**: the completion writer is correct and the shell's
+derived default slot name is correct. Fixed by extracting `UStratMatchSubsystem::IsPayloadRestorable`
+and `DoesSlotHoldARestorableMatch` out of `LoadMatchFromSlot` -- one statement of the refusal
+conditions, two askers -- and renaming `FStratShellFacts::bSaveSlotExists` to
+`bSaveSlotIsRestorable`. The version gate could not have caught it by construction.
+THE GATE ACCOUNT IS `Tools/architect/gate_reports/2026-08-30-w6-title-menu.md` AND IS NOT
+RESTATED HERE. **It persists FIVE rounds, every one a BLOCK, findings 2/2/4/2/1. It also names a
+SIXTH gate twice, as the gate that corrected two of its own sentences -- and that sixth round's
+verdict is NOT IN THE FILE, so the `VERDICT: PASS` this merge rests on is not producible from a
+checkout.** Recorded as a gap rather than quoted, on this project's own rule that a gate you
+cannot produce is unfalsifiable. Eleven of the persisted findings were in prose or in evidence
+and none in the code's behaviour, which the report's closing sentence is careful to say is a
+claim about the gates and not about the wave.
+THE MERGE ITSELF WAS RE-GATED, AND THAT VERDICT IS PRODUCIBLE:
+`Tools/architect/gate_reports/2026-08-30-w6-merge-regate.md`, run against the STAGED and
+UNMINTED `--no-ff --no-commit` merge so a finding would cost an edit rather than a correction
+commit. Twelve structural checks passed, every figure in this banner and in `engine.md` and
+`tests.md` was re-derived independently and confirmed, and it returned `VERDICT: BLOCK` on ONE
+finding -- **which was in the coordinator's drafted merge commit message and nowhere else.** The
+sentence claiming the build ARTIFACT had been checked rather than the exit code believed said
+`five compiles` where `build.log` records 25; the conclusion was right and the warrant was never
+measured, in the one sentence whose whole purpose was to assert that it had been. Remediated
+before the merge was minted, at a cost of one edit and no correction commit -- which is the
+entire reason the gate was run against a staged tree.
+THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn
+2026.08.31-00.01.34` -- UTC, which is 2026-08-30 20:01 local, and this entry is dated by the
+local day as the record always is -- 310 entries, 310 succeeded, 0 failed, 0 notRun, 0
+succeededWithWarnings. It was certified by `strat_suite_report_gate.py`, which read the exported
+report rather than the log or the editor's exit code, matched every clause NAME against the tree
+in both directions, and printed `SUITE REPORT GATE CLEAN` at exit 0.
+**[STAMPED, AND IT IS THE SUPERSEDED RUN RATHER THAN THE LIVE ONE: the lane measured the same
+310/310 in its own tree at `reportCreatedOn 2026.08.30-22.45.48`. That agreement is worth
+nothing on its own -- the figure above may be stated only because it is this tree's own run,
+and it would stand unchanged if the lane had never reported a number at all.]**)
+
 _Last run 2026-08-30 (CI BUILDS AND RUNS THE SUITE NOW, ON A SELF-HOSTED RUNNER THAT IS
 REGISTERED AND ONLINE -- AND THAT RUNNER MAKES THIS REPOSITORY'S TRIGGER LIST A SECURITY
 BOUNDARY, WHICH IS SAID IN THE HEADLINE BECAUSE IT IS THE PART A READER MUST NOT MISS. Written
@@ -22,7 +94,8 @@ the entry that records it.
 THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE: everything below was done in
 `E:/MultiAgent/Stratocracy` on branch `master` from `6b8c8e3`, with no worktree, no branch and
 no rebase, on the user's direct instruction to add a CI workflow that builds and runs the
-suite. The suite is now **287/287**, every entry Success, zero failed, zero notRun, zero
+suite. The suite **was 287/287** at that pass [SUPERSEDED 2026-08-30 by the W6 block above,
+which carries the live figure], every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings. It was run by the `coordinator` in this tree, is not quoted from
 anywhere, and the macro census agrees at 287. THE COUNT DID NOT MOVE and nothing under
 `Source/` changed: this pass is CI and tooling only.

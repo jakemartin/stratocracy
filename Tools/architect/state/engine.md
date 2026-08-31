@@ -15,6 +15,165 @@
 
 ## NEXT
 
+- **2026-08-30, `strat-gameplay-engineer` -- W6, THE TITLE/MENU SHELL, LANDS AS C++ ONLY IN THE
+  LANE TREE `E:/MultiAgent/Strat-wt/slot-1` ON `feat/title-menu`. THE HEADLINE IS NOT THE SCREEN;
+  IT IS THE PLAYER-VISIBLE DEFECT THE SCREEN'S OWN CONFIGURATION SURFACED.** This entry is the
+  engineering record for a wave whose C++ was still uncommitted when it was written. **THE
+  AUTHORITY ON HOW THE WAVE WENT IS THE PERSISTED GATE ACCOUNT**,
+  `Tools/architect/gate_reports/2026-08-30-w6-title-menu.md` -- five rounds, eleven findings,
+  every one of them in prose or in evidence rather than in the code's own behaviour. The suite
+  figure and the census delta for this wave live in `global.md`'s topmost banner, which is the
+  only file that may carry them; they are not restated here.
+  - **WHAT WAS BUILT.** `UStratShellSubsystem`, a `UGameInstanceSubsystem`, and
+    `AStratShellGameMode`, both in `Source/StratPlay/`. **The shell is the first code in this
+    project that opens a level**: before it, `GameDefaultMap` was the only thing that had ever
+    chosen one, so `LoadMatchFromSlot`, a drawn section 2.8 result and a re-seeded scenario were
+    each reachable exactly once per process launch and never again.
+    - **FOUR ROUTES, AND THEY ARE OURS.** `EStratShellRoute` declares `NewMatch`,
+      `ContinueMatch`, `ReturnToTitle`, `QuitGame`. **Restart is `NewMatch` taken from a live
+      world and is deliberately not a fifth route** -- two routes would be two answers to "what
+      does a fresh match seed from", which is the drift `T-TURN-09` exists to forbid. Only the
+      label moves.
+    - **A FACT STRUCT, A MODEL, AND SIX WORLD-FREE DECIDERS.** `FStratShellFacts` carries
+      `bMatchLevelConfigured`, `bTitleLevelConfigured`, `bSaveSlotIsRestorable`, `bMatchIsLive`
+      and nothing from the rules -- no side, no turn, no Fame. `FStratShellOption` and
+      `FStratShellMenuModel` are the drawable shape; the model **always carries all four options
+      in declaration order**, so a clause pins by index rather than by label text, which matters
+      because this project has measured that `FString` comparison is case-insensitive.
+      `UStratShellSubsystem::BuildMenuModel`, `IsRoutePermitted`, `ResolveDestination`,
+      `RouteTravels`, `RouteLoadsSaveSlot` and `PendingSlotForRoute` are all `static` and need no
+      world -- that is what makes the decision half of this class pinnable headlessly.
+    - **THE CROSS-LEVEL HANDOFF IS THREE VERBS AND NOT A MEMBER WRITE.** `ArmPendingLoadSlot`,
+      `PeekPendingLoadSlot`, `ConsumePendingLoadSlot`. **Travel and load cannot be one step**:
+      `UStratMatchSubsystem::LoadMatchFromSlot` needs a seeded match to restore INTO, and that
+      match is seeded by `AStratGameMode::BeginPlay` in a world that does not exist at the moment
+      the route is chosen. `PendingLoadSlot` is what crosses the travel, and it is why the shell
+      is a GameInstance subsystem rather than anything owned by a world. **Consuming rather than
+      reading is a contract and not tidiness** -- a player who continues once and then starts a
+      new match must not be silently handed the old save on the second travel.
+    - **`ExecuteRoute` ROUTES; IT DOES NOT DECIDE.** It asks `IsRoutePermitted`, then
+      `ResolveDestination`, and `RouteTravels` chooses between the two engine calls; it arms
+      through `PendingSlotForRoute` and `ArmPendingLoadSlot` rather than writing the member, so
+      the shipped path and the tested path are the same lines for both the deciding and the
+      storing. **The extraction of `PendingSlotForRoute` was forced by a gate finding**: pulling
+      out the WRITE while leaving the CHOICE of what to write inside `ExecuteRoute` left the half
+      that could actually be wrong sitting on an untested line.
+    - **CONFIGURATION ENTERS FROM THE TWO GAMEMODES AND NEVER FROM A PATH LITERAL.**
+      `AStratShellGameMode::MatchLevel` and `AStratGameMode::TitleLevel` are
+      `EditDefaultsOnly TSoftObjectPtr<UWorld>`; each GameMode holds exactly the one destination
+      its own map is able to route to, so no level reference is duplicated across two Blueprint
+      defaults with nothing asserting they agree. `AStratShellGameMode::BeginPlay` calls
+      `ConfigureMatchDestination`; `AStratGameMode::BeginPlay` calls `ConfigureTitleDestination`
+      and then `ConsumePendingLoadSlot`. **`AStratShellGameMode::SaveSlotName` is DERIVED, not
+      copied** -- the constructor takes it from a default-constructed `FStratMatchConfig`, because
+      `UStratMatchSubsystem::ResolveSaveSlotName` already refuses a second literal author of that
+      string in its own words. `AStratShellGameMode::LastFailureReason` answers why the shell is
+      unconfigured, when it is.
+    - **WHERE THE CONSUME SITS IN `AStratGameMode::BeginPlay`, AND BOTH HALVES ARE LOAD-BEARING.**
+      After `StartMatch`, because a restore needs a seeded match to restore into; **before the
+      opening AI turn**, because running the AI first would move a match the player is about to
+      have overwritten, and would move it twice on the AI-first side. A refused restore logs a
+      Warning and is deliberately NOT folded into `LastFailureReason`: that property answers "why
+      is there no match", and a refused restore leaves a perfectly good freshly seeded match
+      standing behind it.
+  - **THE DEFECT, WHICH IS THE PART A LATER READER MUST NOT MISS, AND IT WOULD HAVE SHIPPED.**
+    `UStratMatchSubsystem::ApplyView` calls `RecordMatchCompletionOnSave`, which creates the slot
+    when none exists and writes a payload with an **empty `SaveText`**. So after a
+    completed-but-unsaved match the slot file exists, `DoesSaveGameExist` answers true,
+    **`Continue` draws ENABLED and silently gives the player turn 1 instead of a restore.**
+    - **NEITHER HALF IS A DEFECT ALONE.** The completion writer is correct. The derived
+      `SaveSlotName` default is correct. The empty default this branch replaced had been HIDING
+      the combination rather than fixing it -- so the improvement is what exposed the defect, and
+      the wave that introduced the improvement is the wave that had to own it.
+    - **THE VERSION GATE CANNOT CATCH IT BY CONSTRUCTION.** `StratSaveGame.h` initialises
+      `SavedDataVersion = kCurrentSavedDataVersion`, so a completion-only payload's header is
+      valid and current. That is also why `T-SAVE-04` was **proposed and refused by the lane it
+      was offered to**: that ID's own GDD sentence scopes it to a header mismatch, and there is no
+      header mismatch here. The new save-slot clauses ride `GATE-TITLEMENU` instead.
+    - **THE SUITE COULD NOT SEE IT BECAUSE THE ERROR WAS IN THE FACT, NOT THE DECISION.**
+      `bSaveSlotExists` said *a file is there* while every consumer of it read *a match can be
+      restored*, and that fact was produced in the one function that needs a world.
+    - **THE FIX.** Three payload refusals were extracted out of `LoadMatchFromSlot` into two
+      world-free statics, `UStratMatchSubsystem::IsPayloadRestorable` and
+      `UStratMatchSubsystem::DoesSlotHoldARestorableMatch`; the loader now CALLS the first rather
+      than keeping a copy -- one statement of the conditions, two askers. The subsystem-state
+      refusals stayed inside `LoadMatchFromSlot` and must: a running AI turn and an unconfigured
+      subsystem are facts about that object at that moment, not facts about a payload.
+      `FStratShellFacts::bSaveSlotExists` was renamed `bSaveSlotIsRestorable`, so the fact's name
+      now says what its consumers were already reading it as. `DoesSaveSlotExist` was **kept, not
+      narrowed** -- "does a file occupy this slot" is a real question; gating an affordance on it
+      is what was wrong.
+  - **AND THE TREE HAD ALREADY WARNED, CORRECTLY, IN CURRENT PROSE, AND NOBODY READ IT. THIS IS
+    THE MOST TRANSFERABLE THING IN THE WAVE.** `StratSaveGame.h` -- unmodified by this branch --
+    carries under the heading **`ONE CONSEQUENCE, WRITTEN DOWN RATHER THAN DISCOVERED`** the
+    sentence that anything offering a "Continue" affordance must gate on a LOADABLE slot and not
+    on `DoesSaveSlotExist`, "which now answers true for a slot with no match in it". **It names
+    the affordance, the wrong function and the right rule, before W6 was written, under a heading
+    claiming it would not have to be discovered. It was discovered.**
+    - **THE LESSON IS NOT "READ MORE CAREFULLY", WHICH IS UNACTIONABLE AND WOULD BE THE THIRD
+      TIME THIS PROJECT WROTE IT.** A warning placed in the header of the TYPE IT CONCERNS is
+      invisible from the CONSUMING end: nothing about writing a menu sends you to a save payload's
+      file comment, and grep finds it only if you already suspect what it warns about. **What
+      would actually have caught it is the clause the arm never had -- a prose warning cannot fail
+      a build and an executable one can.** Two of the three payload arms had no clause at all,
+      measured corpus-wide: systematic, not bad luck on a single arm.
+    - **ONE HYPOTHESIS WAS FORMED AND KILLED, RECORDED SO NOBODY RE-DERIVES IT.** The warning did
+      NOT go unread because it named a stale symbol: `DoesSaveSlotExist` was a real method at
+      `347c722` and the sentence was accurate and greppable.
+    - **THE STANDING CONSEQUENCE FOR THIS LANE**: when a header states a consequence that binds a
+      CONSUMER it does not name, that is the shape that needs a clause, not a better paragraph.
+  - **THE PER-FRAME DEBT, DECLARED IN THE BYTES ON `UStratShellSubsystem::GetMenuModel` AND
+    REPEATED HERE.** `GatherFacts` now asks `DoesSlotHoldARestorableMatch`, which performs a full
+    `LoadGameFromSlot` **deserialize** where it previously read a directory entry -- and a UMG
+    property binding runs every frame. `HasCompletedAMatchOnSave` sets the precedent for a
+    per-call load, so this is not novel; it is worse, because a menu binds per frame and a
+    guidance check does not.
+    - **NO CACHE, AND THE ABSENCE IS A DECISION RATHER THAN AN OVERSIGHT.** A cache with no
+      invalidation would show `Continue` greyed to a player who had just saved -- a stale-read
+      defect this project has already paid for -- and the correct invalidation points are not
+      knowable until the menu asset exists and its refresh cadence is a fact rather than a guess.
+      **An undeclared decision is indistinguishable from an unnoticed one**, which is why it is
+      declared on the node an asset author actually binds.
+    - **DISCHARGED BY EITHER, AND THE FIRST IS PREFERRED**: the WBP refreshing this on demand --
+      on construction, and on the events that can change the answer -- rather than binding it per
+      frame; or this class growing a cache invalidated on `ConfigureMatchDestination`,
+      `ArmPendingLoadSlot` and `ConsumePendingLoadSlot`, which are the writers that can move the
+      answer from inside. Whichever lands, the other stops being owed.
+  - **WHAT IS STILL OWED, AND ONE ITEM HAS AN ORDERING CONSTRAINT THAT BREAKS EVERY LANE IF IT IS
+    IGNORED.** **No asset and no `Config/` change landed in this wave**, per the parallel-lane
+    rule that a branch needing an asset lands its C++ and the asset is authored on the integration
+    tree. Owed: the title level; the menu WBP; `BP_StratShellGameMode`; `TitleLevel` set on
+    `BP_StratGameMode`; and the steward's `GameDefaultMap` move -- **which MUST land AFTER the
+    level exists, or it breaks the suite for every lane.** Until those exist, an unset
+    `TitleLevel` is a configuration and not a fault: `Return to Title` simply comes back from the
+    model greyed with its own reason, and the match map is exactly as playable as it was before
+    the property existed.
+  - **WHAT IS UNPINNED, STATED NARROWLY RATHER THAN WIDELY.** The engine call on `ExecuteRoute`'s
+    permitted arm; the CONDITIONALITY of its arming call; and whatever ordering the refusal clause
+    does not reach. `ExecuteRoute` has **one non-comment call site in `Source/`**, on a fixture
+    whose own assertion is that the route is REFUSED, so the function returns at the permission
+    arm and never reaches the arming line -- which is WHY nothing catches a change to it, rather
+    than a report that nothing did. That derivation is re-executable from a checkout and **is void
+    the moment a second `ExecuteRoute` caller appears**, which is the correct trigger to rewrite
+    it. Also unpinned and named in the bytes: a designer who overrides `SaveSlotName` on EITHER
+    Blueprint re-opens the slot-name drift, and no C++ can see it, because a mismatch and a
+    genuinely unwritten slot both land on "No saved match." -- the ordinary first-run state, so
+    the failure stays quiet. **The discharge is a clause reading both Blueprint CDOs and asserting
+    the two strings equal, once the editor lane has created them.**
+  - **WHAT I DID NOT MEASURE IN THIS PASS, SAID SO THAT NOTHING ABOVE READS AS MY OWN RUN.** This
+    dispatch wrote a record and nothing else: **I did not build, did not run the suite, and edited
+    no file under `Source/`.** Every statement here about the build, the suite, the census delta
+    or the clause-name set equality is **quoted from `global.md`'s banner and from the persisted
+    gate report, both measured by the `coordinator` and by `strat-integration-reviewer` in this
+    lane tree** -- none of it re-derived by me. The symbol names, signatures, route set, property
+    list and call ordering above WERE read out of the working tree's own bytes in this pass. The
+    gate report is itself explicit that **no round built the project or ran the suite**, and that
+    the mutant set behind several clause justifications remains an agent self-report -- one of
+    whose instruments was found dead, because a `robocopy`'d mutant tree's cached
+    `Intermediate/Build` kept resolving the SOURCE tree and printed `Result: Succeeded` for a
+    build that relinked nothing. **`Result: Succeeded` is not evidence that a build happened; the
+    artifact is.**
+
 > **[OUT-OF-LANE WRITE, 2026-08-29, AND IT IS NOT A TRANSCRIPTION -- SAID FIRST BECAUSE THE
 > CLAUSE IN THIS FILE'S SOLE-WRITER LINE DOES NOT COVER IT. The entry directly below was ACTED
 > AND WRITTEN BY THE `coordinator`, WHOSE FILE THIS IS NOT.** No lane agent, no worktree, no

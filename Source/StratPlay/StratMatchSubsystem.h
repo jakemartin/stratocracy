@@ -1363,13 +1363,116 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Save")
 	bool LoadMatchFromSlot(const FString& SlotName, FString& OutFailureReason);
 
-	/** Whether a slot exists. `SlotName` empty means `FStratMatchConfig::SaveSlotName`. */
+	/**
+	 * Whether a slot EXISTS. `SlotName` empty means `FStratMatchConfig::SaveSlotName`.
+	 *
+	 * A MENU MUST NOT ASK THIS TO DECIDE WHETHER TO OFFER CONTINUE. A file exists after any
+	 * completed match, saved or not, because `ApplyView` records §2.11.6's completion flag
+	 * into the same slot with an empty `SaveText`. The question a menu is actually asking is
+	 * `DoesSlotHoldARestorableMatch`.
+	 *
+	 * THE PARAGRAPH ABOVE PREVIOUSLY BLAMED THIS FUNCTION'S OWN DOC FOR THE DEFECT AND WAS
+	 * WRONG AT BOTH ENDS. It is corrected rather than deleted, because it was briefly the
+	 * tree's account of why a player-visible defect shipped and a reader who followed it was
+	 * sent to the wrong declaration.
+	 *   RETRACTED>  "this sentence is here because the doc that stood in its place invited
+	 *   RETRACTED>   exactly that -- it read "Exposed so a menu can label the button", and
+	 *   RETRACTED>   §2.11.5's menu took the invitation and shipped a defect."
+	 * (1) THAT SENTENCE WAS NEVER ON THIS FUNCTION. At `347c722` this doc read, in full:
+	 * "Whether a slot exists. `SlotName` empty means `FStratMatchConfig::SaveSlotName`." --
+	 * neutral, and it invited nothing. The quoted sentence is `ResolveSaveSlotName`'s, one
+	 * declaration below, and it is still there and still fine: labelling a button with a slot
+	 * NAME is not gating an affordance on a slot's CONTENTS.
+	 * (2) THE MENU NEVER CALLED THIS FUNCTION. `DoesSaveSlotExist` has exactly one
+	 * non-declaring call site in the tree and it is a clause. What the shell asked was
+	 * `UGameplayStatics::DoesSaveGameExist` directly -- the same weaker question, one layer
+	 * down, reached without passing this declaration at all. (That prior shell state is
+	 * attested by the agents who read it and is NOT re-derivable from a checkout: the file
+	 * was untracked when it held that call. Said here rather than asserted as though the
+	 * repository could show it.)
+	 * THE REAL ACCOUNT LIVES ON `IsPayloadRestorable` BELOW and is not restated here.
+	 *
+	 * IT IS KEPT, NOT NARROWED, because "does a file occupy this slot" is a real question with
+	 * other askers -- an overwrite prompt is the obvious one -- and folding it into the
+	 * stronger question would leave no way to ask the weaker one.
+	 */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Save")
 	bool DoesSaveSlotExist(const FString& SlotName) const;
 
 	/** The slot a name of `""` resolves to. Exposed so a menu can label the button. */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Save")
 	FString ResolveSaveSlotName(const FString& Requested) const;
+
+	/**
+	 * Whether a loaded payload carries a match THIS BUILD CAN RESTORE.
+	 *
+	 * WHY IT WAS EXTRACTED, AND IT IS A PLAYER-VISIBLE DEFECT AND NOT A TIDY-UP. `DoesSaveSlotExist`
+	 * answers "a file is there". §2.11.5's menu read that as "a match can be restored" and
+	 * the two came apart the moment anything else wrote to the slot -- which
+	 * `ApplyView` does, recording §2.11.6's completion flag through
+	 * `RecordMatchCompletionOnSave` on a match the player never saved. That writer creates a
+	 * payload whose `SaveText` is EMPTY and stamps `SavedDataVersion` with the current
+	 * constant, so the file exists, the version gate cannot catch it -- `UStratSaveGame`
+	 * initialises that member TO the current version, so a freshly created payload is always
+	 * current -- and `LoadMatchFromSlot` refuses one line later on `SaveText.IsEmpty()`. A
+	 * player who finished a match without saving was OFFERED Continue and silently given
+	 * turn 1. Nothing was lost or overwritten; the offer was simply false.
+	 *
+	 * AND THE TREE HAD ALREADY WRITTEN THAT DOWN, IN CURRENT PROSE, BEFORE W6 EXISTED. This is
+	 * the half of the cause that matters and it is stated second only because it is worse.
+	 * `StratSaveGame.h` -- unmodified by this branch, so this is HEAD -- carries it under the
+	 * heading ONE CONSEQUENCE, WRITTEN DOWN RATHER THAN DISCOVERED:
+	 *     "the writer CREATES a slot that does not exist, so a player who finishes a match
+	 *      without ever saving now has a slot carrying an empty `SaveText`. `LoadMatchFromSlot`
+	 *      refuses that by name; anything that offers a "Continue" affordance must gate on a
+	 *      LOADABLE slot and not on `DoesSaveSlotExist`, which now answers true for a slot
+	 *      with no match in it."
+	 * IT NAMES THE AFFORDANCE, THE WRONG FUNCTION AND THE RIGHT RULE. It was not read. So the
+	 * cause has two halves -- an arm no clause pinned, AND a live in-tree warning that the
+	 * agent who needed it never saw -- and an account giving only the first is the same
+	 * species of miss.
+	 *
+	 * THE DURABLE LESSON IS NOT "READ MORE CAREFULLY", WHICH IS UNACTIONABLE AND WOULD BE THE
+	 * THIRD TIME THIS PROJECT WROTE IT. A warning placed in the header of the TYPE IT CONCERNS
+	 * is invisible to someone working from the CONSUMING end: nothing about writing a menu
+	 * sends you to a save-game payload's file comment, and grep only finds it if you already
+	 * suspect the thing it warns about. That is why this project already records "read the
+	 * lane record first" and "a fix instruction encodes a diagnosis -- measure the premise".
+	 * WHAT WOULD ACTUALLY HAVE CAUGHT IT IS THE CLAUSE THE ARM NEVER HAD -- a prose warning
+	 * cannot fail a build and an executable one can, which is the whole argument for this
+	 * function being `static` and reachable rather than a sentence somebody should have read.
+	 *
+	 * THE THREE REFUSALS BELOW USED TO BE WRITTEN INLINE IN `LoadMatchFromSlot` AND ARE NOW
+	 * WRITTEN ONCE. That function CALLS this rather than keeping a copy, which is the whole
+	 * point: a menu that asked "is this restorable" against a second statement of the
+	 * conditions would agree with the loader today and drift from it silently. One authority,
+	 * asked by both. The wording of each refusal is unchanged, and each is a PHRASE that
+	 * completes "slot 'X' ..." so the loader's messages read exactly as they did.
+	 *
+	 * NOT THE SUBSYSTEM-STATE REFUSALS, WHICH STAY IN `LoadMatchFromSlot` AND MUST. A running
+	 * AI turn and an unconfigured subsystem are facts about THIS OBJECT AT THIS MOMENT, not
+	 * about the slot; folding them in here would make a title screen -- which has no match
+	 * subsystem configured at all -- report every slot in the world as unrestorable.
+	 *
+	 * STATIC, AND THAT IS WHAT MAKES IT PINNABLE. It needs no world, no subsystem and no
+	 * disk: a clause constructs a `UStratSaveGame` with `NewObject`, sets the fields it wants
+	 * to test, and asserts the answer. `null` is a legitimate argument and means "the slot did
+	 * not hold one of these".
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Save")
+	static bool IsPayloadRestorable(const UStratSaveGame* Payload, FText& OutRefusalReason);
+
+	/**
+	 * Whether a named slot holds a restorable match. The disk-touching half of the question
+	 * above.
+	 *
+	 * IT RESOLVES NOTHING AND THAT IS DELIBERATE: `ResolveSaveSlotName` is an INSTANCE method
+	 * because the fallback lives in `ActiveConfig`, and this is static so that a caller with no
+	 * match subsystem -- the title screen, which is the caller this exists for -- can ask at
+	 * all. Pass the name you mean. An empty name is refused rather than resolved.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Save")
+	static bool DoesSlotHoldARestorableMatch(const FString& SlotName, FText& OutRefusalReason);
 
 	/**
 	 * §2.11.6: "any completed match on the save skips all guidance automatically."

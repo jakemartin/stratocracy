@@ -897,6 +897,16 @@ bool FStratSaveOverPreservesARecordedCompletionTest::RunTest(const FString& /*Pa
 		{
 			return false;
 		}
+		// THIS ASSERTION IS ABOUT THE WRITER, AND ITS MESSAGE NAMES THE LOADER. That was a
+		// prose claim standing beside an assertion with a different subject -- it read as
+		// coverage of the refusal while pinning only that the payload goes out empty, and on
+		// 2026-08-30 the refusal it names turned out to be pinned NOWHERE, which is how a
+		// player got an enabled `Continue` that restored nothing. The sentence is now backed:
+		// `Stratocracy.StratPlay.GATE-TITLEMENU.ACompletionOnlyPayloadIsNotARestorableMatch`
+		// pins the refusal itself and
+		// `Stratocracy.StratPlay.GATE-TITLEMENU.AFinishedButUnsavedMatchLeavesContinueGreyed`
+		// pins what a menu does with it. The message keeps its wording so a reader arriving
+		// here learns what it once implied and what now enforces it.
 		TestTrue(
 			TEXT("and carrying NO §4.10 text -- the writer's declaration says a payload it creates "
 			     "goes to disk with an empty SaveText, which LoadMatchFromSlot refuses by name"),

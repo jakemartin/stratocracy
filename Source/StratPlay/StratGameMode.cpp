@@ -4,6 +4,13 @@
 // finds the subsystem, and hands it a struct. Everything else about the match belongs to
 // something that is not an actor.
 //
+// **W6 ADDED A SECOND SUBSYSTEM AND NOT A SECOND KIND OF WORK**, said here because the line
+// above is a claim about this file's size and W6 moved it. It now finds `UStratShellSubsystem`
+// too, hands it `TitleLevel`, and consumes any pending `Continue` slot. All three are the
+// same shape as the paragraph above describes: find something that is not an actor, give it a
+// value this actor was configured with. No rules question is asked and no §2.8 outcome is
+// decided in either half.
+//
 // NO `StratBridge.h` INCLUDE AND NONE NEEDED. This file names no `strat::` type and asks
 // no rules question; `FStratMatchConfig` is reflected engine types throughout.
 
@@ -12,7 +19,9 @@
 #include "StratCameraPawn.h"
 #include "StratPlay.h"
 #include "StratPlayerController.h"
+#include "StratShellSubsystem.h"
 
+#include "Engine/GameInstance.h"
 #include "Engine/World.h"
 
 AStratGameMode::AStratGameMode()
@@ -104,6 +113,45 @@ void AStratGameMode::BeginPlay()
 	else
 	{
 		UE_LOG(LogStratPlay, Log, TEXT("Match started by %s."), *GetName());
+	}
+
+	// ---- §2.11.5's shell -----------------------------------------------------
+	// AFTER `StartMatch` AND BEFORE THE AI, AND BOTH HALVES OF THAT POSITION ARE LOAD-BEARING.
+	// After, because a `ContinueMatch` route restores INTO a seeded match and there is nothing
+	// to restore into until `StartMatch` has run. Before the AI, because restoring a save
+	// replaces whose turn it is: running the opening AI turn first would move a match the
+	// player is about to have overwritten, and on the AI-first side it would move it twice.
+	if (UStratShellSubsystem* const Shell = GetGameInstance()
+			? GetGameInstance()->GetSubsystem<UStratShellSubsystem>()
+			: nullptr)
+	{
+		// The title map's return destination. Unset is a configuration and not a fault --
+		// `Return to Title` simply comes back greyed with its own reason.
+		Shell->ConfigureTitleDestination(TitleLevel);
+
+		// CONSUMED, NOT READ. `ConsumePendingLoadSlot` clears as it answers, so a player who
+		// continues once and then restarts is not silently handed the old save on the second
+		// travel. The empty case is every ordinary boot and is not logged.
+		const FString PendingSlot = Shell->ConsumePendingLoadSlot();
+		if (!PendingSlot.IsEmpty() && Match->IsMatchLive())
+		{
+			FString LoadReason;
+			if (!Match->LoadMatchFromSlot(PendingSlot, LoadReason))
+			{
+				// NOT FOLDED INTO `LastFailureReason`, on this file's existing rule: that
+				// property answers "why is there no match, or why is it incompletely drawn",
+				// and a refused restore leaves a perfectly good freshly seeded match behind
+				// it. The player gets turn 1 instead of their save, which is a worse outcome
+				// than they asked for and a better one than an empty screen.
+				UE_LOG(LogStratPlay, Warning,
+					TEXT("Continue could not restore slot '%s': %s -- the freshly seeded match stands."),
+					*PendingSlot, *LoadReason);
+			}
+			else
+			{
+				UE_LOG(LogStratPlay, Log, TEXT("Continue restored slot '%s'."), *PendingSlot);
+			}
+		}
 	}
 
 	// ---- §2.9's opponent, if it moves first ---------------------------------

@@ -1694,6 +1694,78 @@ bool UStratMatchSubsystem::DoesSaveSlotExist(const FString& SlotName) const
 	return UGameplayStatics::DoesSaveGameExist(ResolveSaveSlotName(SlotName), 0);
 }
 
+bool UStratMatchSubsystem::IsPayloadRestorable(const UStratSaveGame* const Payload,
+                                               FText&                      OutRefusalReason)
+{
+	OutRefusalReason = FText::GetEmpty();
+
+	if (Payload == nullptr)
+	{
+		// `LoadGameFromSlot` returns a `USaveGame*` and the cast is the class check. A slot
+		// written by a different game, or by a build in which this class was renamed, lands
+		// here rather than as a crash on the first field read.
+		OutRefusalReason = FText::FromString(TEXT("does not hold a UStratSaveGame"));
+		return false;
+	}
+
+	// THE VERSION GATE, AND IT REFUSES RATHER THAN GUESSES. `UStratSaveGame`'s header states
+	// the contract: a change to the MEANING of a field bumps the version and grows an arm
+	// here. There is one version today, so there is one arm and it is equality -- written
+	// out anyway, because the failure a version exists to prevent is the one where a newer
+	// slot loads into an older build and every new field reads as its default with nothing
+	// said.
+	//
+	// IT CANNOT CATCH A FRESHLY CREATED PAYLOAD AND NEVER COULD, which is worth stating where
+	// a reader might expect it to. `UStratSaveGame::SavedDataVersion` is initialised TO
+	// `kCurrentSavedDataVersion`, so anything this build creates is current by construction.
+	// The check below is what catches a completion-flag-only slot; this one is not.
+	if (Payload->SavedDataVersion != UStratSaveGame::kCurrentSavedDataVersion)
+	{
+		OutRefusalReason = FText::FromString(FString::Printf(
+			TEXT("was written at SavedDataVersion %d and this build reads %d"),
+			Payload->SavedDataVersion, UStratSaveGame::kCurrentSavedDataVersion));
+		return false;
+	}
+
+	// THE ONE THAT ACTUALLY SEPARATES A SAVED MATCH FROM A TOUCHED SLOT.
+	// `RecordMatchCompletionOnSave` writes a payload with an empty `SaveText` on purpose --
+	// its own comment says so -- so a file existing proves only that the player finished a
+	// match, never that they saved one.
+	if (Payload->SaveText.IsEmpty())
+	{
+		OutRefusalReason = FText::FromString(TEXT("carries no §4.10 text"));
+		return false;
+	}
+
+	return true;
+}
+
+bool UStratMatchSubsystem::DoesSlotHoldARestorableMatch(const FString& SlotName,
+                                                        FText&         OutRefusalReason)
+{
+	OutRefusalReason = FText::GetEmpty();
+
+	if (SlotName.IsEmpty())
+	{
+		// REFUSED RATHER THAN RESOLVED. This function is static precisely so a caller with no
+		// configured subsystem can use it, and such a caller has no `ActiveConfig` to fall
+		// back to; inventing one here would be the second author of a slot name that
+		// `ResolveSaveSlotName` refuses in its own words.
+		OutRefusalReason = FText::FromString(TEXT("no slot name was given"));
+		return false;
+	}
+
+	if (!UGameplayStatics::DoesSaveGameExist(SlotName, 0))
+	{
+		OutRefusalReason = FText::FromString(TEXT("no save exists in this slot"));
+		return false;
+	}
+
+	return IsPayloadRestorable(
+		Cast<UStratSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, 0)),
+		OutRefusalReason);
+}
+
 bool UStratMatchSubsystem::HasCompletedAMatchOnSave(const FString& SlotName) const
 {
 	const FString Slot = ResolveSaveSlotName(SlotName);
@@ -2140,36 +2212,18 @@ bool UStratMatchSubsystem::LoadMatchFromSlot(const FString& SlotName, FString& O
 
 	UStratSaveGame* const Payload =
 		Cast<UStratSaveGame>(UGameplayStatics::LoadGameFromSlot(Slot, 0));
-	if (Payload == nullptr)
-	{
-		// `LoadGameFromSlot` returns a `USaveGame*` and the cast is the class check. A slot
-		// written by a different game, or by a build in which this class was renamed, lands
-		// here rather than as a crash on the first field read.
-		OutFailureReason = FString::Printf(
-			TEXT("slot '%s' does not hold a UStratSaveGame"), *Slot);
-		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
-		return false;
-	}
 
-	// THE VERSION GATE, AND IT REFUSES RATHER THAN GUESSES. `UStratSaveGame`'s header states
-	// the contract: a change to the MEANING of a field bumps the version and grows an arm
-	// here. There is one version today, so there is one arm and it is equality -- written
-	// out anyway, because the failure a version exists to prevent is the one where a newer
-	// slot loads into an older build and every new field reads as its default with nothing
-	// said.
-	if (Payload->SavedDataVersion != UStratSaveGame::kCurrentSavedDataVersion)
+	// THE THREE PAYLOAD REFUSALS -- wrong class, wrong version, no §4.10 text -- MOVED TO
+	// `IsPayloadRestorable` AND ARE ASKED HERE RATHER THAN RESTATED. §2.11.5's menu has to ask
+	// the same question before it offers Continue, and a second copy of these conditions is
+	// exactly the drift that let it offer a restore of a completion-flag-only slot. The
+	// messages are unchanged: each refusal is a phrase completing "slot 'X' ...", so this line
+	// produces the sentences this function has always produced.
+	FText Unrestorable;
+	if (!IsPayloadRestorable(Payload, Unrestorable))
 	{
 		OutFailureReason = FString::Printf(
-			TEXT("slot '%s' was written at SavedDataVersion %d and this build reads %d"),
-			*Slot, Payload->SavedDataVersion, UStratSaveGame::kCurrentSavedDataVersion);
-		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
-		return false;
-	}
-
-	if (Payload->SaveText.IsEmpty())
-	{
-		OutFailureReason = FString::Printf(
-			TEXT("slot '%s' carries no §4.10 text"), *Slot);
+			TEXT("slot '%s' %s"), *Slot, *Unrestorable.ToString());
 		UE_LOG(LogStratPlay, Warning, TEXT("Load refused: %s"), *OutFailureReason);
 		return false;
 	}

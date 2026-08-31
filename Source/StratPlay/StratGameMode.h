@@ -47,11 +47,23 @@
 // match that no click can touch reads as an input-asset fault rather than as a missing
 // controller class -- which is the wrong file to send the next reader to.
 //
+// THE SHELL IS CONFIGURED FROM HERE TOO, AS OF W6, AND IT IS THE SAME RELATIONSHIP TWICE.
+// `TitleLevel` below is to `UStratShellSubsystem` exactly what `MatchConfig` is to
+// `UStratMatchSubsystem`: a value a subsystem cannot hold because it has no details panel,
+// living on the one object in the world that does, handed over on `BeginPlay`. This class
+// still owns nothing and still decides nothing; it now passes two structs instead of one.
+//
 // NOT IN THIS ROUND, with reasons:
-// - Turn hand-over, end-of-match, restart. All of them read or move rules state, which is
-//   the subsystem's and the bridge's. A GameMode that ended the match would be deciding a
+// - Turn hand-over and end-of-match. Both read or move rules state, which is the
+//   subsystem's and the bridge's. A GameMode that ended the match would be deciding a
 //   §2.8 outcome the rules module already decides.
-// - Any `/Game/` path. The whole configuration is properties.
+//   **RESTART WAS NAMED ON THIS LINE UNTIL W6 AND IS STAMPED OFF IT, because it is now
+//   reachable and the sentence would otherwise read as a live refusal of a shipped route.**
+//   The reasoning survives intact and is why the route lands where it does: restarting is
+//   `UStratShellSubsystem`'s `NewMatch` route, which opens this map again and lets
+//   `BeginPlay` seed it from `MatchConfig` the way a fresh boot does. No code in this class
+//   ends, resets or re-seeds a match, and none may.
+// - Any `/Game/` path. The whole configuration is properties, `TitleLevel` included.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -60,6 +72,8 @@
 #include "StratMatchSubsystem.h"
 
 #include "StratGameMode.generated.h"
+
+class UWorld;
 
 /**
  * Starts a Stratocracy match in this world.
@@ -87,6 +101,23 @@ public:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Match")
 	FStratMatchConfig MatchConfig;
+
+	/**
+	 * §2.11.5's title/menu map -- the level a `ReturnToTitle` shell route opens.
+	 *
+	 * IT IS HERE AND NOT ON `AStratShellGameMode` BECAUSE THIS IS THE MAP THAT CAN LEAVE.
+	 * `StratShellSubsystem.h` states the split: each GameMode holds exactly the one
+	 * destination it is able to route to, so the two level references are never duplicated
+	 * across two Blueprint defaults with nothing asserting they agree.
+	 *
+	 * A SOFT REFERENCE, NEVER A `/Game/` LITERAL, and it is never loaded by the shell --
+	 * `UStratShellSubsystem::ResolveDestination` asks only whether it is null. Left unset,
+	 * `Return to Title` comes back from the model greyed with "No title level is
+	 * configured." and this map is exactly as playable as it was before the property
+	 * existed.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Shell")
+	TSoftObjectPtr<UWorld> TitleLevel;
 
 	/**
 	 * Why there is no match, when there is none. Empty on success.

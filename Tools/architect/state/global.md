@@ -73,15 +73,66 @@ measured, in the one sentence whose whole purpose was to assert that it had been
 before the merge was minted, at a cost of one edit and no correction commit -- which is the
 entire reason the gate was run against a staged tree.
 THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn
-2026.08.31-00.01.34` -- UTC, which is 2026-08-30 20:01 local, and this entry is dated by the
-local day as the record always is -- 310 entries, 310 succeeded, 0 failed, 0 notRun, 0
-succeededWithWarnings. It was certified by `strat_suite_report_gate.py`, which read the exported
-report rather than the log or the editor's exit code, matched every clause NAME against the tree
-in both directions, and printed `SUITE REPORT GATE CLEAN` at exit 0.
+2026.08.31-00.01.34` **[STAMPED 2026-08-30: this exact report file was superseded on disk by a
+later re-run the same local day; see the steward's entry below. The figures here are
+unchanged.]** -- UTC, which is
+2026-08-30 20:01 local, and this entry is dated by the local day as the record always is -- 310
+entries, 310 succeeded, 0 failed, 0 notRun, 0 succeededWithWarnings. It was certified by
+`strat_suite_report_gate.py`, which read the exported report rather than the log or the editor's
+exit code, matched every clause NAME against the tree in both directions, and printed `SUITE
+REPORT GATE CLEAN` at exit 0.
 **[STAMPED, AND IT IS THE SUPERSEDED RUN RATHER THAN THE LIVE ONE: the lane measured the same
 310/310 in its own tree at `reportCreatedOn 2026.08.30-22.45.48`. That agreement is worth
 nothing on its own -- the figure above may be stated only because it is this tree's own run,
-and it would stand unchanged if the lane had never reported a number at all.]**)
+and it would stand unchanged if the lane had never reported a number at all.]**
+**[REPORT FILE SUPERSEDED 2026-08-30 local (the re-run's `reportCreatedOn` is UTC 2026.08.31, which
+is 2026-08-30 23:52 local, same convention as this banner's own citations), STAMPED RATHER THAN
+REWRITTEN BECAUSE THE CITATION
+ABOVE WAS TRUE OF THE REPORT THAT EXISTED WHEN IT WAS WRITTEN: `strat-data-steward`'s post-edit
+suite re-run (see the entry immediately below, dated the same day) overwrote
+`Saved/AutomationReport/index.json` with a new `reportCreatedOn 2026.08.31-03.52.25`, so
+`strat_banner_sweep.py` now finds a DIFFERENT report at that path than the one this citation
+names. The figures quoted above (310/310, every entry Success) are UNCHANGED and were
+independently reconfirmed by that re-run; only the on-disk artifact this citation points at is
+no longer the one on disk.]**)
+
+_Last run 2026-08-30 (STEWARD -- `GameDefaultMap` MOVED TO THE TITLE LEVEL, AND `EditorStartupMap`
+MOVED WITH IT BY THE STEWARD'S OWN DECISION RATHER THAN BY IMPLICATION FROM THE FIRST. Written by
+`strat-data-steward`.
+PROVENANCE: `E:/MultiAgent/Stratocracy`, branch `master`, HEAD `40609e7` (the W6 merge commit
+above). No rebuild was needed: `git diff --stat a6ebbe2d..HEAD -- Source/` is empty, so the
+binaries built for the W6 merge (dated 2026-08-30 19:59-20:00 local) are current for this
+change, which touches only `Config/`. The editor was confirmed CLOSED before this work began --
+no `UnrealEditor*` process, port 9315 not listening -- so nothing here was measured against a
+live editor.
+THE EDIT, in `Config/DefaultEngine.ini`: line 2, `GameDefaultMap`, was
+`/Game/StratMaps/Lvl_FerrumCrossing.Lvl_FerrumCrossing`, now
+`/Game/StratMaps/Lvl_Title.Lvl_Title`. Line 3, `EditorStartupMap`, moved the same way, same
+before/after values, BY THE STEWARD'S OWN DECISION rather than as a consequence of the
+`GameDefaultMap` move: opening the editor onto the title screen keeps dev/QA iteration on the
+same boot path the shipping build now takes, and a developer who needs the match map directly
+can still open `Lvl_FerrumCrossing` from the Content Browser. Line 4, `GlobalDefaultGameMode`,
+did NOT move and stays `/Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C` -- `Lvl_Title`
+carries its own World Settings GameMode override to `BP_StratShellGameMode_C`, which is what
+boots the shell on that one map while every other map keeps the project default.
+THE FOUR ASSETS THIS DEPENDS ON ARE UNCOMMITTED IN THE WORKING TREE AS OF THIS ENTRY:
+`Content/StratMaps/Lvl_Title.umap` (staged, further modified unstaged),
+`Content/StratPlay/BP_StratGameMode.uasset` (modified unstaged), and
+`Content/StratPlay/BP_StratShellGameMode.uasset` and `Content/UI/WBP_TitleMenu.uasset`
+(untracked) -- all authored by the `coordinator` under the editor-driver clause. **THIS
+`Config/DefaultEngine.ini` EDIT MUST NOT BE COMMITTED WITHOUT THEM**: a fresh checkout, or CI's
+self-hosted runner, would get a `GameDefaultMap` that does not resolve to any package on disk.
+Committing is the user's call, not this agent's.
+SUITE RE-RUN AFTER THE CHANGE: headless run, unpiped, `REAL_EXIT=0`; then
+`strat_suite_report_gate.py` read `Saved/AutomationReport/index.json` at `reportCreatedOn
+2026.08.31-03.52.25` (UTC) and printed `310/310 clauses Success, and every one is a name the
+tree declares.` / `SUITE REPORT GATE CLEAN` at exit 0 -- UNCHANGED from the W6 merge's own
+310/310 recorded above. THE COUNT DID NOT MOVE: this change adds no clause. This overwrote the
+exported report the W6 entry above cites, stamped there rather than silently left to
+contradict the sweep.
+`strat_banner_sweep.py --explain` was then re-run and returned clean, with this entry present.
+NOT MEASURED HERE: PIE behaviour on `Lvl_Title`, the menu flow, or anything content-lane --
+the editor was never opened this pass. That territory is `content.md`'s and `tests.md`'s.
 
 _Last run 2026-08-30 (CI BUILDS AND RUNS THE SUITE NOW, ON A SELF-HOSTED RUNNER THAT IS
 REGISTERED AND ONLINE -- AND THAT RUNNER MAKES THIS REPOSITORY'S TRIGGER LIST A SECURITY

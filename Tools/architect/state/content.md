@@ -43,6 +43,97 @@
 
 ## NEXT
 
+- **W6'S ASSET TAIL: THE TITLE SCREEN EXISTS, IS REACHABLE AND IS DRIVEN BY THE MODULE RATHER
+  THAN BY ANYTHING THIS WIDGET SPELLS.** 2026-08-30, in the integration tree
+  `E:/MultiAgent/Stratocracy` on branch `master`, after the W6 merge `40609e7`. **ACTING: the
+  `coordinator`, under `CLAUDE.md`'s editor-driver clause. WRITING: the `coordinator`, under this
+  file's own fallback condition.** The two halves have two authorities and are named separately
+  because citing one for both is a finding by this file's header. `global.md` carries any count or
+  verdict; this file states neither.
+  - **THE ABSENCE WAS MEASURED WITH A CONTROL, WHICH BOTH CLAUSES REQUIRE.** One ToolSearch over
+    the NeoStack server returned `list_unreal_projects` and `unreal_status` and **neither
+    `execute_script`** -- the same lookup shown serving tools before its silence on the one that
+    matters is read as evidence. `strat-editor-builder` was not dispatched: its `tools:` line
+    carries no Bash, so with `execute_script` gone it holds no `curl` route either, which is the
+    header's stated rationale holding exactly as written.
+  - **THE ROUTE WAS THE EDITOR'S OWN HTTP ENDPOINT, AND THE EDITOR HAD TO BE LAUNCHED FIRST.**
+    `unreal_status` reported no active editors and nothing was listening on `9315`, with a control
+    showing the port query could see ports that WERE listening. The editor was launched, `9315`
+    answered ~40s later, `initialize` returned `serverInfo.name = "unreal-editor"` version
+    `1.0.0-r4254`, and `tools/list` carries **exactly one tool, `execute_script`**.
+    `NeoStack_Connect` then latched as this file already records: `list_unreal_projects` reported
+    `Stratocracy` active while `unreal_status` still returned its startup error, in the same pass.
+  - **THREE INSTRUMENT FAULTS, EACH CAUGHT BY A CONTROL RATHER THAN BY LUCK, RECORDED BECAUSE EACH
+    WOULD HAVE READ AS A TOOL FAILURE.** (1) The endpoint answers **pretty-printed JSON, not SSE**;
+    a line-by-line parser sees only a bare brace, reports nothing, and reads exactly like an empty
+    tool list. (2) The session header is spelled `MCP-Session-Id` and a case-sensitive dict lookup
+    returned nothing, which reads as "the server issues no session". (3) `pcall` returns
+    **`ok=true` for a FAILED editor op** -- every bad `list_properties` target came back
+    `pcall=true` -- so the `[OK]`/`[FAIL]` trace line is the discriminator and the Lua-level success
+    signal is not. That third one is this file's own recorded `set`-return hazard in a new place.
+  - **WHAT WAS BUILT, AND EVERY WRITE IS VERIFIED AGAINST THE SAVED BYTES ON DISK RATHER THAN
+    AGAINST THE AUTHORING CALL'S RETURN.**
+    - `BP_StratShellGameMode` is NEW, parented to `StratShellGameMode`. **The parent was proved
+      twice and the first proof was nearly a false one:** `StratShellGameMode` is a SUBSTRING of the
+      asset's own name `BP_StratShellGameMode`, so a plain byte count returns 20 and means nothing.
+      Discriminated as total-minus-prefixed = **8 bare occurrences, identical to the control sibling
+      `BP_StratGameMode`**, and confirmed independently by the editor reporting
+      `parent_class = StratShellGameMode`. This is the recorded prefix-nesting census trap.
+    - `MatchLevel` on that CDO moved from unset to `/Game/StratMaps/Lvl_FerrumCrossing`, and the
+      saved package carries `MatchLevel` and `Lvl_FerrumCrossing`.
+    - **`SaveSlotName` IS ABSENT FROM THE SAVED PACKAGE, AND THAT IS THE INTENDED STATE, NOT AN
+      OMISSION** -- absence means the CDO equals the C++ default, so the property keeps ONE author.
+      Read back live it is `StratocracyMatch`, which is the engineer's derived-not-copied default
+      arriving intact.
+    - `Lvl_Title` is a NEW basic map. Its World Settings `DefaultGameMode` is
+      `BP_StratShellGameMode_C`; `KillZ` was re-read unchanged as the control that the write touched
+      only what it named. **The override is load-bearing rather than stylistic:**
+      `GlobalDefaultGameMode` is `BP_StratGameMode` PROJECT-WIDE and the match map carries no
+      override of its own (0 occurrences in its bytes), so without this override the title map would
+      boot the match GameMode.
+    - `TitleLevel` on `BP_StratGameMode` moved from unset to `/Game/StratMaps/Lvl_Title`. The
+      control read of `MatchConfig` in the same call shows it untouched -- and incidentally shows
+      `SaveSlotName="StratocracyMatch"` there too, so **the two Blueprints agree on the save slot
+      today, measured.** That is the drift the engineer recorded as invisible to C++ and owed a
+      clause reading both CDOs; it is satisfied at this moment and still unpinned.
+    - `WBP_TitleMenu` is NEW: 16 widgets, 46 graph nodes, compiles with zero errors and zero
+      warnings.
+  - **THE WIDGET SPELLS NO LABEL, NO ENABLEMENT AND NO REASON.** All three are read from
+    `UStratShellSubsystem::GetMenuModel` BY INDEX and written in at Construct, and each button's
+    click pulls its `Route` from **the same option break the row drew from**, so the route a click
+    takes and the label it drew cannot disagree. The design-time placeholder is the visible string
+    `(unbound)` rather than an empty box, deliberately: an unwritten row then reads as broken
+    instead of as plausible.
+  - **AN ORDERING HAZARD WAS FOUND IN THE C++ AND FIXED IN THE GRAPH, AND THE FIX IS PROVED BY A
+    POSITIVE CONTROL RATHER THAN BY THE REASONING THAT FOUND IT.** `AStratShellGameMode::BeginPlay`
+    calls `Super::BeginPlay()` FIRST -- which is what fires the Blueprint's `Event BeginPlay` -- and
+    only afterwards calls `ConfigureMatchDestination`. A widget built directly off `Event BeginPlay`
+    therefore asks `GetMenuModel` before the shell has been given `MatchLevel`. The graph hops one
+    tick before creating the widget. **MEASURED THREE WAYS IN SEQUENCE, not argued:** with the hop,
+    `New Match` draws ENABLED and `Continue` reads *"No saved match."*; with the hop disconnected,
+    `New Match` AND `Continue` both grey out reading *"No match level is configured."*; with the hop
+    reconnected, the first state returns. Screenshots `ScreenShot00071`, `00072` and `00073` under
+    `Saved/Screenshots/WindowsEditor/`, each captured with `playtest_console("shot showui")`, which
+    is the only editor capture that composites UMG. **Delete the hop and the menu is wrong in
+    exactly that one quiet way.**
+  - **PIE EVIDENCE, ON `/Game/StratMaps/Lvl_Title`.** All four routes draw in declaration order;
+    `New Match` and `Quit` are enabled with NO reason line, `Continue` and `Return to Title` are
+    greyed each with its own reason. That is the model's *"reason empty exactly when enabled"*
+    invariant holding on a live surface in both directions at once.
+  - **ONE DEPARTURE FROM THIS PROJECT'S CONVENTION, FLAGGED RATHER THAN BURIED.** Every other widget
+    here reaches the screen through a C++ HUD that owns a widget-class slot
+    (`AStratScoreboardHUD::ProductionMenuWidgetClass`). W6 built no shell HUD, so this menu is
+    created from `BP_StratShellGameMode`'s own graph instead -- Create Widget, Add to Viewport, input
+    mode, cursor. It needs no C++ and stays in this lane. **The alternative is a shell HUD class with
+    a widget slot, which would match the convention and is an engineer-lane item; it was not taken
+    and the user was told.**
+  - **WHAT THIS BATCH DID NOT DO.** `GameDefaultMap` still points at `Lvl_FerrumCrossing`. Moving it
+    to `Lvl_Title` is a `Config/DefaultEngine.ini` change and therefore **`strat-data-steward`'s
+    lane, not this one**, and it must land AFTER the level exists -- which it now does.
+    `EditorStartupMap` sits on the line beside it and whether that moves too is the steward's call.
+    No clause pins any of this batch: the menu's live behaviour is evidenced by screenshots, and a
+    screenshot is not a test.
+
 - **W4'S FOUR MARKER SLOTS AND W5'S PLAYBACK PACE ARE SET, AND THE FOUR ART ASSETS THE SLOTS
   NEEDED DID NOT EXIST -- SO THIS WAS AN AUTHORING BATCH, NOT AN ASSIGNMENT BATCH.** 2026-08-29,
   in the integration tree `E:/MultiAgent/Stratocracy` on branch `master`, with no worktree, no

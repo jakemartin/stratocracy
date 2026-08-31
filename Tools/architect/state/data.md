@@ -15,6 +15,54 @@
 
 ## NEXT
 
+- **DONE, 2026-08-30 -- `GameDefaultMap` and `EditorStartupMap` moved from the match map to the
+  new title level, W6's last asset-tail item, ordinary in-lane `Config/` write, no exception
+  needed.** Working tree: `E:/MultiAgent/Stratocracy`, branch `master`, HEAD `40609e7` (the W6
+  merge commit). No rebuild: `git diff --stat a6ebbe2d..HEAD -- Source/` returned empty, so the
+  binaries the W6 merge itself built and verified (`UnrealEditor-StratPlay.dll` etc., dated
+  2026-08-30 19:59-20:00 local) are current for a `Config/`-only change. Editor confirmed CLOSED
+  first: no `UnrealEditor*` process, port 9315 not listening.
+  **THE EDIT, `Config/DefaultEngine.ini`.** Line 2, `GameDefaultMap`: was
+  `/Game/StratMaps/Lvl_FerrumCrossing.Lvl_FerrumCrossing`, now
+  `/Game/StratMaps/Lvl_Title.Lvl_Title`. Line 3, `EditorStartupMap`: same before value, same new
+  value, moved with it -- **BUT BY A SEPARATE DECISION, NOT BY IMPLICATION FROM LINE 2.**
+  Reasoning: the editor opening onto the title screen keeps dev/QA iteration on the same boot
+  path the shipping build now takes, and this milestone's own headline (the title/menu shell)
+  makes that path the one worth exercising by default; a developer who wants the match map
+  directly can still open `Lvl_FerrumCrossing` from the Content Browser. Line 4,
+  `GlobalDefaultGameMode`, **DID NOT MOVE** and stays
+  `/Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C` -- `Lvl_Title` carries its own World
+  Settings GameMode override to `BP_StratShellGameMode_C`, which is what makes the title map
+  boot the shell while every other map keeps the project default. Read, not assumed: the exact
+  line-3 convention (`Package.Package_C` vs `Package.Package`) was read off the existing lines
+  before editing, not guessed.
+  **THE UNCOMMITTED-ASSET CONSTRAINT, STATED FOR THE USER WHO DOES THE COMMITTING.** The four
+  assets this edit depends on are uncommitted right now:
+  `Content/StratMaps/Lvl_Title.umap` (staged, further modified unstaged),
+  `Content/StratPlay/BP_StratGameMode.uasset` (modified unstaged), and
+  `Content/StratPlay/BP_StratShellGameMode.uasset` / `Content/UI/WBP_TitleMenu.uasset`
+  (untracked) -- all authored by the `coordinator` under `CLAUDE.md`'s editor-driver clause, none
+  of them touched by this agent. **This `Config/DefaultEngine.ini` edit must not be committed
+  without them landing in the same commit or before it**: a fresh checkout, or CI's self-hosted
+  runner, would get a `GameDefaultMap` pointing at a package that does not exist on disk. This
+  agent does not commit; that sequencing is the user's call.
+  **SUITE, RE-RUN AFTER THE EDIT, NOT ASSERTED.** Headless run, unpiped throughout,
+  `REAL_EXIT=0` read on the line after the redirect; then `Tools/architect/strat_suite_report_gate.py`
+  printed `310/310 clauses Success, and every one is a name the tree declares.` /
+  `SUITE REPORT GATE CLEAN` at exit 0, off `Saved/AutomationReport/index.json` at
+  `reportCreatedOn 2026.08.31-03.52.25` (UTC; 2026-08-30 23:52 local). **The count did not
+  move** -- unchanged from the figure `global.md` already carried for this same HEAD before this
+  edit; this change adds no clause, and the live figure and its full provenance live in
+  `global.md`'s banner, not restated here. This agent's own re-run overwrote the report file
+  `global.md`'s existing W6-merge citation names, so that citation was stamped in place there
+  (not rewritten) rather than left to silently disagree with the sweep -- see `global.md`'s
+  banner, both the inline `[STAMPED 2026-08-30 ...]` beside the old citation and the new dated
+  entry immediately below it.
+  `strat_banner_sweep.py --explain` ran clean (`SWEEP CLEAN`, exit 0) after both the config edit
+  and the `global.md` stamps.
+  **NOT MEASURED THIS PASS:** PIE behaviour on `Lvl_Title`, the menu flow, or any content-lane
+  fact -- the editor was never opened. That is `content.md`'s and `tests.md`'s territory, not
+  restated or guessed at here.
 - **FIXED, 2026-08-26 -- two wrong measurements and one missing fixture in
   `strat_banner_sweep.py`'s REPORT PROVENANCE docstring/fixtures, all found by
   `strat-integration-reviewer` on the marker-split repair's own record.** (1) The docstring's

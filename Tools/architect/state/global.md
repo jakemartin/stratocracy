@@ -67,8 +67,25 @@ WHAT IS NOT MEASURED HERE, STATED RATHER THAN LEFT TO BE DISCOVERED. `bIgnoreInp
 CAN OBSERVE THE FLAG IN A LIVE PIE SESSION. The three clauses pin the decision headlessly; the
 end-to-end behaviour was confirmed by the USER'S OWN PLAYTEST, reported in session after the
 change, and that confirmation is not re-executable from a checkout.
+THAT PLAYTEST CAME IN TWO PARTS, AND THE SECOND IS WHAT MAKES THE DIAGNOSIS MEASURED RATHER THAN
+MERELY CONSISTENT WITH THE EVIDENCE. The user confirmed first that CLICKING worked again, and
+separately afterwards that the CANCEL, WAIT and END TURN KEYS did too. Clicking alone was also
+consistent with a narrower fault somewhere in `OnSelect` or in the hex trace; those three keys
+touch neither the cursor nor the board and share nothing with a click except the input path
+itself, so their return is what discriminates between the two readings. It was PREDICTED before
+it was measured -- the fix commit said the keys should come back for the same reason -- and the
+prediction is now discharged by the user rather than left standing as this record's inference.
 THE LANE RECORDS ARE OPEN AND THIS ENTRY DOES NOT CLOSE THEM. `engine.md` and `tests.md` carry no
-entry for this pass. Recording an out-of-lane write ONLY here is a known finding shape in this
+entry for this pass.
+**[STAMPED 2026-08-31, LATER THE SAME DAY -- THE TWO SENTENCES ABOVE ARE SUPERSEDED AND ARE KEPT
+RATHER THAN DELETED. Both lane records now carry an entry, committed as `8c55f49`: `engine.md`
+written by `strat-gameplay-engineer` and `tests.md` by `strat-test-author`, each in its own lane
+and its own file, each attributing the bytes to the `coordinator` acting OUT OF LANE and claiming
+only the writing. The gap this paragraph named as open is closed; the RULING it names below is
+not. NOTE WHAT THIS IS AN INSTANCE OF: a status sentence about another file that went false when
+that file changed -- the same defect `engine.md` recorded against itself in this same pass, and
+this one is the `coordinator`'s, which is why it is stamped here rather than quietly edited
+away.]** Recording an out-of-lane write ONLY here is a known finding shape in this
 project -- an out-of-lane write is attributed in the file that RECEIVED it, not merely in the
 coordinator's own -- so this sentence names the gap as OPEN rather than implying the record is
 complete. The transcription clause does not cover it: that licenses carrying a lane's draft

@@ -24,6 +24,7 @@
 #include "StratBridge.h"
 #include "StratForecastQuery.h"
 #include "StratMatchSubsystem.h"
+#include "StratPathPreviewQuery.h"
 #include "StratPlay.h"
 #include "StratScoreboardHUD.h"
 // IWYU: this file now names `StratDecorateInfoPanel` directly. It arrived transitively
@@ -1174,6 +1175,44 @@ void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
 			UE_LOG(LogStratPlay, Verbose,
 				TEXT("%s could not forecast for the hovered hex (this is ordinary before the match starts): %s"),
 				*GetName(), *ForecastFailureReason);
+		}
+	}
+
+	// §2.11.1'S PATH PREVIEW, AND IT MUST RUN AFTER THE HOVER FOR THE FORECAST'S REASON,
+	// UNCHANGED. `StratDecoratePathPreview` reads `Model.Hover` and writes nothing the hover
+	// reads; placed before it, the route is composed against last frame's hex and the
+	// preview is silently one mouse-move stale.
+	//
+	// IT IS UNORDERED AGAINST THE FORECAST ABOVE. The two touch no common field -- one
+	// writes `Forecast`, the other `PathPreview`, and neither reads the other's -- and they
+	// ask the bridge different questions (`AttackForecast` and `MovePathToHex`). It sits
+	// after only because the hover constraint puts both here and reading them in §2.11
+	// order is easier.
+	//
+	// A SECOND `FStratBridge` LOOKUP RATHER THAN A WIDENED SCOPE ABOVE, deliberately: the
+	// forecast block scopes its bridge pointer, and hoisting it to serve two decorators
+	// would make the next one's lifetime assumption implicit. Both reads are of the same
+	// subsystem inside the same call and cannot disagree.
+	//
+	// A REFUSAL HERE IS ORDINARY AND IS NOT LOGGED AT WARNING, on the forecast's rule: the
+	// commonest cause by far is an unseeded bridge, which is the state every frame before
+	// `StartMatch` finishes. The preview is cleared unconditionally inside the decorator, so
+	// a refusal leaves no stale route to report. AN UNREACHABLE GOAL DOES NOT REACH THIS
+	// BRANCH AT ALL -- it is an answer, not a refusal, and carries no reason to log.
+	{
+		const UStratMatchSubsystem* const Match  = GetMatch();
+		const FStratBridge* const         Bridge = (Match != nullptr) ? Match->GetBridge() : nullptr;
+
+		const FStratBridgePathQuery PathQuery(Bridge);
+
+		FString PathFailureReason;
+		if (!StratDecoratePathPreview(Model, SelectionMachine.GetSelectedUnitId(),
+		                              PathQuery, PathFailureReason)
+			&& !PathFailureReason.IsEmpty())
+		{
+			UE_LOG(LogStratPlay, Verbose,
+				TEXT("%s could not preview a path to the hovered hex (this is ordinary before the match starts): %s"),
+				*GetName(), *PathFailureReason);
 		}
 	}
 

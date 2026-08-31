@@ -1546,6 +1546,119 @@ struct FStratInfoPanelView
 };
 
 /**
+ * §2.11.1's path preview with cost ticks: the route the selected unit would take to the
+ * hovered hex, and what each hex on it costs to have arrived at. T-UI-02's second clause,
+ * wave 8.
+ *
+ * WHAT GAP THIS CLOSES. `FStratHoverView` says where the cursor is and the movement
+ * overlay says which hexes are reachable; between them there was no statement of the ROUTE,
+ * and no field anywhere on this model carried one. The engine side had no source for it
+ * either -- `strat::findPath` was routed through no bridge method at all, measured as zero
+ * occurrences of that name in `Source/` outside `Source/StratRules/` -- so a preview built
+ * before `FStratBridge::MovePathToHex` existed could only have been a walk of the reach set
+ * performed in this engine. That is `Move.h`'s tie-break rule restated by a layer that may
+ * not hold it, and it is the substitution T-UI-02's own words forbid.
+ *
+ * EVERY NUMBER HERE IS `FStratBridge::MovePathToHex`'s, COPIED. `RouteCosts[i]` is
+ * `strat::reachable`'s cost for `RouteHexes[i]` -- the same number the movement overlay was
+ * built from for that same hex -- and `TotalCost` is `strat::findPath`'s own `outCost`.
+ * The bridge requires those two to agree and refuses when they do not; this struct does not
+ * re-check, re-sum or re-derive either. THE HEADER BLOCK'S NO-ARITHMETIC CENSUS IS
+ * UNMOVED BY THIS STRUCT: there is still exactly one arithmetic exception in this pair
+ * (`FStratBuildOptionView::Shortfall`) and it is still outside the model.
+ *
+ * `TotalCost` IS NOT THE SUM OF `RouteCosts`, AND A WIDGET MUST NOT MAKE IT ONE. It is the
+ * last tick -- the cost of arriving at the goal -- as `findPath` reported it, and it is
+ * carried separately rather than left for a binding to compute, precisely because a
+ * `for` loop in a widget adding up the ticks is T-UI-03's forbidden arithmetic wearing a
+ * total's clothes. Draw `RouteCosts[i]` on `RouteHexes[i]`; draw `TotalCost` where §2.11.1
+ * wants the number; add nothing.
+ *
+ * TWO PARALLEL ARRAYS AND NOT AN `FStratRouteStep`, on `FStratBridge::ReachableHexes`'
+ * precedent, which hands its hexes and costs across the same way for the same reason. They
+ * are ALWAYS THE SAME LENGTH -- the bridge fills them in one loop and empties both on every
+ * refusal -- so a consumer that has checked `bHasPath` may index either by the other's
+ * `Num()`.
+ *
+ * `RouteHexes[0]` IS THE UNIT'S OWN HEX AND `.Last()` IS THE GOAL, because `Move.h`'s
+ * `outPath` includes both endpoints and neither the bridge nor this struct trims one. The
+ * first tick is therefore 0, which is the null move's honest cost and not a placeholder.
+ * There is deliberately no second array with the start removed: that would be a second
+ * statement of one route, able to disagree with the first.
+ *
+ * `bHasPath` IS READ FIRST BY EVERY CONSUMER, on `FStratHoverView::bHasHoveredHex`'s rule.
+ * False covers five causes and none of them is a fault: nothing is selected, the cursor is
+ * over no hex, the selected unit has already moved this turn, the goal is out of the unit's
+ * §2.4 allowance or blocked, and the bridge refused (the ordinary state before the match is
+ * seeded). Those are not distinguished here on purpose -- the screen draws no preview in
+ * all five, and a reason code would be a field nothing renders.
+ *
+ * IT IS A STATEMENT AND NOT AN EVENT, exactly as `FStratForecastView` is. Nothing records
+ * that a route APPEARED or that the cursor moved; the preview is on screen on exactly the
+ * frames this says it should be, and is rebuilt from this value like everything else.
+ *
+ * NOT IN THIS ROUND, with reasons:
+ * - NO TEXT. Not `3 / 5 MP`, not a terrain name under a tick. Those are formatted from
+ *   these fields, and putting the sentence here would make this struct the place a
+ *   localisation change lands -- `FStratForecastView`'s own exclusion, held here.
+ * - NO REMAINING-ALLOWANCE FIELD. `Move - TotalCost` is a subtraction, it has no snapshot
+ *   field behind it, and computing it here would be the first arithmetic ever admitted to
+ *   this model. If §2.11.1 turns out to require it, it is a `FStratBridge` method that
+ *   asks the module, not a line in this file.
+ * - NO ARROWHEAD, DASH PHASE, OR ANIMATION STATE. Drawing is the overlay's and the widget's.
+ */
+USTRUCT(BlueprintType)
+struct FStratPathPreviewView
+{
+	GENERATED_BODY()
+
+	/**
+	 * Whether there is a route to draw. READ THIS FIRST -- the two arrays are empty and
+	 * `TotalCost` is 0 when it is false, and 0 is also the honest cost of a route to the
+	 * unit's own hex, so the number can never stand in for this flag.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Path")
+	bool bHasPath = false;
+
+	/**
+	 * The route, start hex first and goal hex last, X = q and Y = r. `strat::findPath`'s
+	 * `outPath` in its own order: §2.5's tie-break among equal-cost routes is the
+	 * lexicographically smallest under canonical hex order and is decided in `Move.h`.
+	 * Nothing in this tree reorders or trims it, which is what makes this the route
+	 * `FStratBridge::SubmitMoveToHex` would actually take.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Path")
+	TArray<FIntPoint> RouteHexes;
+
+	/**
+	 * The cost tick for each hex of `RouteHexes`, same index, same length.
+	 * `strat::reachable`'s cost for that hex -- the CUMULATIVE cost of having arrived
+	 * there, not the cost of the single step onto it, and not a difference this layer
+	 * formed. `RouteCosts[0]` is 0 for the unit's own hex.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Path")
+	TArray<int32> RouteCosts;
+
+	/**
+	 * `strat::findPath`'s `outCost` for the whole route, carried rather than summed. Equal
+	 * to `RouteCosts.Last()` by the bridge's own cross-check, which REFUSES when the
+	 * module's two answers disagree instead of picking one.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Path")
+	int32 TotalCost = 0;
+
+	/**
+	 * The unit the route belongs to, or `INDEX_NONE`. Carried so a consumer never has to
+	 * ask the selection machine which unit a drawn route is about -- the same reason
+	 * `FStratForecastView::AttackerUnitId` is carried beside its numbers rather than looked
+	 * up, and the same guarantee: this id and these hexes were produced by one call about
+	 * one board.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Path")
+	int32 UnitId = INDEX_NONE;
+};
+
+/**
  * The whole view model: everything that should be on screen, in engine types.
  *
  * A VALUE, REBUILT, NEVER PATCHED. Phase 3's `ApplyView` reconciles actors against this
@@ -1691,6 +1804,26 @@ struct FStratViewModel
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	FStratInfoPanelView InfoPanel;
+
+	/**
+	 * §2.11.1's path preview with cost ticks. Wave 8.
+	 *
+	 * WRITTEN BY `StratDecoratePathPreview` (`Source/StratPlay/StratPathPreviewQuery.h`),
+	 * on the decoration seam, and AFTER `FStratHoverState::DecorateViewModel` -- it reads
+	 * `Hover`, the same one-directional constraint `Forecast` carries and for the same
+	 * reason: run before the hover, it composes this frame's selection against last frame's
+	 * hex and the route is silently one mouse-move stale. `StratBuildViewModel` leaves it
+	 * default-constructed, which is "no route", and that default is load-bearing for the
+	 * hover field's reason: every model built for a hand-over, a gate, an AI turn or a
+	 * reconcile nobody hovered during says "no route", which is the truth for all of them.
+	 *
+	 * IT IS THE SECOND DECORATED FIELD THAT REACHES THE BRIDGE, after `Forecast`, and it
+	 * asks a DIFFERENT question of it -- `MovePathToHex` rather than `AttackForecast` -- so
+	 * the two cannot disagree by construction rather than by discipline. Neither reads the
+	 * other's field and neither is ordered against the other.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	FStratPathPreviewView PathPreview;
 };
 
 /**

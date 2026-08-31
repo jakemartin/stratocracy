@@ -14,6 +14,74 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-31 (local), in the INTEGRATION tree `E:/MultiAgent/Stratocracy` on `master`, base
+  `e4a21b0`, editor closed -- W6'S ASSET TAIL EARNED TWO CLAUSES AND ONLY ONE OF THEM IS
+  HONEST.** `strat-test-author`, acting and writing. No worktree, no merge and no commit, so no
+  exception block applies and none is claimed -- this is an ordinary in-lane write to this lane's
+  own file. **Clause delta +1, REMOVED 0, derived by me in this tree** by set difference on
+  `IMPLEMENT_SIMPLE_AUTOMATION_TEST` over `Source/**/*.cpp`, collected by ONE function on both
+  sides -- base `e4a21b0` read through `git show`, the working tree read from disk. **The suite
+  figure and the verdict are `global.md`'s topmost banner and are not restated here**; that banner
+  moves in the same commit that brings this clause in.
+
+  **THE CLAUSE THE ENGINEER RECORDED AS OWED IS PAID.**
+  `Stratocracy.StratPlay.GATE-TITLEMENU.BothShippedGameModeBlueprintsNameOneSaveSlot`, in the new
+  file `Source/StratPlay/Tests/StratShellBlueprintSlotParity.cpp`. It loads both
+  Blueprint-generated classes, reads `SaveSlotName` off the title GameMode's CDO and
+  `MatchConfig.SaveSlotName` off the match GameMode's, and asserts the two strings equal
+  CASE-SENSITIVELY. Neither side is authored in the test: it pins a RELATION between two
+  independent module-side reads and never states what the slot ought to be called, so a rename
+  applied to BOTH assets stays green -- which is correct, because the shipped name is a designer's
+  to choose and the subject is agreement, not identity with a literal. It discharges the debt
+  `StratShellGameMode.h` states in terms under `SaveSlotName` -- *"The discharge is unchanged -- a
+  clause reading both Blueprint CDOs and asserting the two strings equal, once the editor lane has
+  created them"* -- and the same debt `GATE-TITLEMENU.TheShellsDefaultSlotIsDerivedFromTheMatchConfigsOwn`
+  names in its own "does not pin" block. Both effective values read `StratocracyMatch`, re-derived
+  here from the mutant's own failure message rather than carried in from a dispatch brief.
+
+  **WHAT IT DOES NOT PIN**, each stated because each has been mistaken for it: either value
+  against `FStratMatchConfig`'s C++ default -- that is
+  `…TheShellsDefaultSlotIsDerivedFromTheMatchConfigsOwn`'s subject, and asserting it here would
+  redden on a correct rename applied to both assets; `MatchLevel`, `TitleLevel` or any map's World
+  Settings; `BP_StratGameMode_AiVsAi` or any third GameMode; and that anything ever WRITES to the
+  agreed slot. Every lookup failure -- package, generated class, CDO, native-instead-of-Blueprint
+  -- is fatal red and never a skip, on `StratShippedGameModeOptIn.cpp`'s precedent.
+
+  **THE CASE-SENSITIVE COMPARISON IS LOAD-BEARING, AND THAT WAS MEASURED RATHER THAN ARGUED.** Two
+  BUILT mutants, both inside this lane: the drift was injected at the READ of the shell CDO,
+  because `Content/` is the editor lane and a `.uasset` edit was not mine to make. **(A)**
+  uppercasing the shell read reddened the clause, and the framework's own message printed the two
+  values it had read. **(B)** the SAME mutant with the comparison swapped to the naive `==` came
+  back **Success**. So a `TestEqual`/`==` version of this clause would have been INERT over the
+  exact drift it exists to catch -- this project's recorded case-insensitivity hazard, caught this
+  time before it shipped. Both mutant builds recompiled the file and relinked
+  `UnrealEditor-StratPlay.dll`, so neither was the silent no-op a copied tree produces. Reverted
+  from a byte copy taken before mutation, rebuilt, and the reported run is of the reverted tree.
+
+  **THE SECOND CLAUSE WAS REFUSED, AND THE REFUSAL IS THE FINDING.**
+  `AStratShellGameMode::BeginPlay` calls `Super::BeginPlay()` FIRST -- which is what fires a
+  Blueprint's `Event BeginPlay` -- and only afterwards calls `ConfigureMatchDestination`, so a
+  widget built directly off that event reads an unconfigured shell and greys its travelling rows.
+  `BP_StratShellGameMode`'s graph hops one tick past it. Three reasons not to pin it, heaviest
+  first. **(1) A CLAUSE ASSERTING THAT ORDERING WOULD GO RED THE DAY THE ORDERING WAS FIXED.**
+  Move `ConfigureMatchDestination` above `Super::BeginPlay()` and the defect is gone and the
+  clause fails: it would pin a hazard as a requirement and block its own remedy, which is worse
+  than no clause. **(2)** The CONSEQUENCE is already pinned twice --
+  `GATE-TITLEMENU.EveryRowsEnablementAndReasonComeFromIsRoutePermitted` and
+  `GATE-TITLEMENU.ContinueNamesTheMissingLevelAheadOfTheMissingSave`, the second taking the
+  missing-level refusal FROM the function under test as its oracle. A third clause there is a name
+  and no coverage. **(3)** The half that protects the player is the GRAPH's hop, and no clause in
+  this suite has a viewport or a cursor. It rests on `ScreenShot00071`, `00072` and `00073` and a
+  PIE positive control, recorded in `content.md`, and a screenshot is not a test.
+
+  **WHAT WOULD MAKE IT WRITABLE, filed as an engineer-lane request rather than written weaker.**
+  The shell HUD class with an `EditDefaultsOnly` widget-class slot that `content.md` already names
+  as an engineer-lane item, creating the menu from C++ AFTER `ConfigureMatchDestination` has run.
+  That turns the property into *"the shell is configured before the menu is asked for its model"*,
+  which is a requirement rather than a hazard and reddens in the right direction. **Until that
+  seam exists this property is UNPINNED**, and no clause name in this tree may be read as covering
+  it.
+
 - **2026-08-30 (local), in the LANE tree `E:/MultiAgent/Strat-wt/slot-1` on `feat/title-menu`, base
   `347c722` -- W6'S TITLE/MENU SHELL IS PINNED BY 23 CLAUSES, 22 OF THEM ON THE LOCAL GATE NAME
   `GATE-TITLEMENU` AND ONE ON `T-TURN-09`.** `strat-test-author`. **This entry is a RECORD-ONLY

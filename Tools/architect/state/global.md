@@ -11,6 +11,56 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-31 (THE ONE CLAUSE W6'S ASSET TAIL GENUINELY EARNED IS WRITTEN, AND THE
+SECOND ONE WAS REFUSED BY THE LANE THAT WAS OFFERED IT -- THE REFUSAL IS THE MORE USEFUL HALF.
+Written by the `coordinator`, whose file this is; the clause, the mutants and the refusal
+are `strat-test-author`'s, produced in this tree.
+THE PROVENANCE IS THIS TREE AND THERE IS NO LANE AND NO MERGE: everything below was done in
+`E:/MultiAgent/Stratocracy` on branch `master` over base `e4a21b0`, with no worktree, no branch
+and no rebase, with the editor closed throughout. The suite is now **311/311**, every entry
+Success, zero failed, zero notRun, zero succeededWithWarnings, and the macro census of this
+tree agrees at 311.
+THE COUNT MOVED 310 -> 311 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 1,
+REMOVED 0 -- derived independently by `strat-test-author` and by the `coordinator`, both
+collecting the two sides with one function. The clause is
+`Stratocracy.StratPlay.GATE-TITLEMENU.BothShippedGameModeBlueprintsNameOneSaveSlot` in
+`Source/StratPlay/Tests/StratShellBlueprintSlotParity.cpp`. It rides `GATE-TITLEMENU` and
+mints no acceptance ID.
+WHAT IT PINS, AND IT DISCHARGES A DEBT THE ENGINEER WROTE DOWN IN TERMS. It reads
+`BP_StratShellGameMode_C`'s CDO `SaveSlotName` and `BP_StratGameMode_C`'s CDO
+`MatchConfig.SaveSlotName` and asserts the two strings equal, character for character, with
+neither empty. Neither value is authored in the test: both are read module-side, so the clause
+asserts a RELATION and a correct rename applied to both assets stays green.
+`StratShellGameMode.h` named exactly this discharge under `SaveSlotName` -- *"a clause reading
+both Blueprint CDOs and asserting the two strings equal, once the editor lane has created
+them"* -- and the editor lane created them in `e4a21b0`.
+THE CASE-SENSITIVE COMPARISON IS LOAD-BEARING AND THAT WAS MEASURED RATHER THAN ARGUED. Two
+BUILT mutants, both relinking the DLL: uppercasing the shell-side read reddened the clause,
+and the SAME mutant under a naive `==` came back GREEN. This project has already shipped a
+clause that could not fail because `FString` comparison here is case-insensitive; this one was
+proved not to be that.
+THE SECOND CLAUSE WAS REFUSED, AND THE ARGUMENT IS BETTER THAN THE ONE IN THE DISPATCH THAT
+ASKED FOR IT. `AStratShellGameMode::BeginPlay` calls `Super::BeginPlay()` before
+`ConfigureMatchDestination`, so a widget built off `Event BeginPlay` reads an unconfigured
+shell; `BP_StratShellGameMode`'s graph hops one tick past it. **A clause asserting that
+ordering would go RED THE DAY THE ORDERING WAS FIXED** -- it would pin a hazard as a
+requirement and block its own remedy. The consequence is already pinned twice, by
+`EveryRowsEnablementAndReasonComeFromIsRoutePermitted` and by
+`ContinueNamesTheMissingLevelAheadOfTheMissingSave`. And the half that actually protects a
+player is the graph's hop, which no clause in this suite can see: the evidence for it stays
+three screenshots and a PIE positive control, and a screenshot is not a test.
+FILED AS AN ENGINEER-LANE REQUEST RATHER THAN LEFT AS A GAP: a shell HUD class with an
+`EditDefaultsOnly` widget-class slot, creating the menu from C++ AFTER
+`ConfigureMatchDestination` has run. That turns the property into *"the shell is configured
+before the menu is asked for its model"*, which is a requirement rather than a hazard and
+reddens correctly on a reordering. Until it exists the property is UNPINNED and this record
+says so.
+THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn
+2026.08.31-04.21.03` -- UTC, which is 2026-08-31 00:21 local, and this entry is dated by the
+local day as the record always is -- 311 entries, 311 succeeded, 0 failed, 0 notRun, 0
+succeededWithWarnings, certified by `strat_suite_report_gate.py` printing `SUITE REPORT GATE
+CLEAN` at exit 0.)
+
 _Last run 2026-08-30 (W6 -- THE TITLE/MENU SHELL LANDS IN C++, AND THE HEADLINE IS NOT THE
 SCREEN BUT THE PLAYER-VISIBLE DEFECT THE WAVE FOUND ON ITS WAY THERE: after a
 completed-but-unsaved match `Continue` would have drawn ENABLED and silently given turn 1
@@ -24,8 +74,9 @@ because that flag is the lane trees' and would be wrong here, and with neither c
 the build reported `Result: Succeeded` at `REAL_EXIT=0`, and 28 actions including a relink of
 UnrealEditor-StratPlay.dll, which is the artifact rather than the exit code and is why the
 29-second build was checked instead of believed.
-The suite is now **310/310**, every entry Success, zero failed,
-zero notRun, zero succeededWithWarnings, and the macro census of this tree agrees at 310.
+The suite **was 310/310** at that pass [SUPERSEDED 2026-08-31 by the
+block above, which carries the live figure], every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of the tree agreed at 310.
 THE COUNT MOVED 287 -> 310 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 23,
 REMOVED 0 -- twenty-two riding `GATE-TITLEMENU` and one riding `T-TURN-09`
 (`ARestartRouteRequestsNoSavedStateToSeedFrom`). The clause NAMES in the exported report and in

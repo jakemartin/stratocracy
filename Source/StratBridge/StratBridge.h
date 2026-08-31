@@ -51,6 +51,7 @@
 // Vendored rules headers, by short name via StratRules' PublicIncludePaths.
 #include "Ai.h"
 #include "Data.h"
+#include "Move.h"      // Board, ReachEntry, findPath -- `MovePathToHex`'s one call
 #include "Replay.h"
 #include "Save.h"
 #include "Scenario.h"
@@ -1034,6 +1035,157 @@ public:
 	// one the only one reachable from gameplay code.
 	FStratResult ReachableHexes(int32 UnitId, TArray<FIntPoint>& OutHexes,
 	                            TArray<int32>& OutCosts) const;
+
+	// `findPath`, as parallel arrays: the cheapest route this unit would take to
+	// `GoalHex`, and what each hex on it costs to have arrived at. §2.11.1's path
+	// preview with cost ticks, T-UI-02's second clause.
+	//
+	// WHAT GAP THIS CLOSES. `ReachableHexes` above answers WHICH hexes and WHAT
+	// they cost and carries NO ROUTE, and `strat::findPath` -- which has the route
+	// -- was routed through nothing in this file. Measured before this method
+	// landed: zero occurrences of `findPath` anywhere in `Source/` outside
+	// `Source/StratRules/`. So a gameplay-side preview had exactly two options, and
+	// one of them was to walk the reach set greedily downhill from the goal, which
+	// is `Move.h`'s tie-break rule restated by a module that may not hold it. That
+	// substitution is the same shape T-UI-02 measured for the highlight itself --
+	// 122 divergent hexes across 10 of 10 units between the real query and
+	// `distance <= move` -- and this method exists so that it is not reachable.
+	//
+	// AN UNREACHABLE GOAL IS AN EMPTY ANSWER, NOT A REFUSAL, AND THAT FOLLOWS
+	// `AttackTargetHexes` RATHER THAN `ReachableHexes`. The two neighbours above
+	// disagree on purpose and the choice had to be made rather than inherited.
+	// `ReachableHexes` treats empty as impossible -- a successful call always
+	// yields at least the unit's own hex at cost 0 -- so it can read an empty
+	// result as a fault. That property does not transfer: a cursor crossing the
+	// board produces an out-of-range goal on most of its frames, and a mountain,
+	// an occupied hex and a hex six moves past the allowance are all ORDINARY
+	// BOARD POSITIONS, exactly as "nothing in reach" is for attack. Folding them
+	// into the refusal channel would make an ordinary hover read as a broken
+	// bridge, and would leave a caller unable to tell the two apart. So the
+	// channels split the way `Forecast`'s do: the return says whether the question
+	// could be ASKED, and an empty `OutRouteHexes` with `Ok()` says the module
+	// ANSWERED that there is no route. `OutTotalCost` is 0 then, and 0 is not a
+	// sentinel -- it is also the honest cost of a route to the unit's own hex --
+	// so read the array's emptiness, never the number.
+	//
+	// THE REFUSALS ARE `Reachable`'s, IN ITS WORDS, because this method asks it
+	// first and forwards. Definitions not loaded, no scenario, a `defIndex`
+	// outside the loaded table, and an id that is not on the board all arrive
+	// already phrased.
+	//
+	// THE TICKS ARE `reachable`'s COSTS, LOOKED UP BY HEX, AND ARE NOT DERIVED
+	// FROM THE ROUTE. `OutRouteCosts[i]` is the cost `strat::reachable` gave for
+	// `OutRouteHexes[i]` -- the SAME number the movement overlay is already
+	// carrying for that same hex through `ReachableHexes` -- so the tick a player
+	// reads on a hex and the cost the highlight was built from cannot disagree.
+	// Nothing here sums a tick, subtracts two of them, or reads a `TerrainDef`'s
+	// `moveCost`: this method performs no addition at all, and a future edit that
+	// introduces one has moved §2.5's cost model into this file.
+	//
+	// THIS CLAIM IS TRUE OF THE SOURCE AND CANNOT BE PINNED BY ANY TEST. The
+	// block at the foot of this declaration gives the mechanism. Do not file it
+	// as missing coverage -- a pass has already been spent measuring that.
+	//
+	// `OutTotalCost` IS `findPath`'s OWN `outCost` AND IS NOT THE SUM OF THE TICKS.
+	// Those two are required to agree -- the last tick is the cost of arriving at
+	// the goal, which is what `outCost` is -- and the disagreement is CHECKED
+	// rather than assumed: if the module's two answers differ this REFUSES and
+	// says both numbers, because drawing either one would be picking a winner
+	// between two rules answers. The check has never been observed to fire; it is
+	// here because the alternative to noticing is a preview that quietly quotes
+	// the wrong one.
+	//
+	// THIS CLAIM CANNOT BE PINNED BY ANY TEST EITHER, AND THE CAUSE IS THE
+	// CROSS-CHECK DESCRIBED IN THE PARAGRAPH ABOVE. The block at the foot of this
+	// declaration gives the mechanism. Do not file it as missing coverage.
+	//
+	// TWO ARRAYS AND A SCALAR RATHER THAN A STRUCT, on `ReachableHexes`' own
+	// precedent one declaration up. The consumer is `StratPlay`, which may not
+	// spell `strat::Hex`, and an `FStratRouteStep` mirror would be a third
+	// spelling of a value the view model already carries as `FIntPoint`.
+	//
+	// `OutRouteHexes[0]` IS THE UNIT'S OWN HEX AND THE LAST IS THE GOAL, because
+	// `Move.h` says `outPath` includes both endpoints and nothing here trims one.
+	// A drawing layer that wants the goal marker separately reads `.Last()`; it
+	// does not get a second array with the start removed, which would be a second
+	// statement of the same route that could disagree with the first.
+	//
+	// THE ROUTE IS THE ONE `SubmitMoveToHex` WOULD TAKE, and that is `findPath`'s
+	// guarantee rather than this method's: §2.5's tie-break among equal-cost paths
+	// is the lexicographically smallest under canonical hex order, decided in
+	// `Move.h` and restated nowhere in this tree. A preview drawn from any other
+	// route would be a promise the commit does not keep.
+	//
+	// ONE ARGUMENT IS RE-DERIVED HERE AND IT IS A DEBT, STATED RATHER THAN OWNED
+	// QUIETLY. `Ui.h` offers `uiReachable` for the reach set and NO `uiFindPath`
+	// beside it, so unlike `Reachable` -- which forwards to a `Ui.h` entry point
+	// that assembles its own arguments -- this method must look up the unit's
+	// §2.4 `move` allowance itself, exactly as `uiReachable`'s body does. That is
+	// a table read and not a rule, and it is the only thing here that is not a
+	// forward. IT IS DISCHARGED THE DAY A `uiPath` IS VENDORED: this body becomes
+	// a forward to it and no caller changes, which is the same sentence
+	// `AttackTargetHexes` carries about its own enumeration. Until then the
+	// re-derivation is one line and is marked at the line.
+	// TWO CLAIMS IN THIS BLOCK ARE HELD BY INSPECTION AND BY THE CROSS-CHECK AND
+	// NOT BY THE SUITE, STATED HERE RATHER THAN LEFT TO BE DISCOVERED. They are
+	// "THE TICKS ARE `reachable`'s COSTS ... AND ARE NOT DERIVED FROM THE ROUTE"
+	// and "`OutTotalCost` IS `findPath`'s OWN `outCost` AND IS NOT THE SUM OF THE
+	// TICKS", both above. Both are TRUE OF THIS SOURCE; neither is observable from
+	// any output this method can produce. Measured 2026-08-31 by building each
+	// defect in place in this tree and running the whole suite: BOTH MUTANTS
+	// SURVIVED, on a run with zero failures. No count is written here on purpose --
+	// a suite figure in a source file goes stale on the next clause and nothing
+	// recomputes it.
+	//
+	// WHY NO CLAUSE CAN EXIST FOR THE TICKS -- the mechanism, so a later reader can
+	// RE-DERIVE this rather than take it on trust. `strat::reachable`'s cost for a
+	// hex IS the summed `moveCost` along a cheapest path to that hex. `findPath`'s
+	// route is a cheapest path. And every prefix of a cheapest path is itself a
+	// cheapest path to its own last hex -- move costs are non-negative, so a
+	// cheaper prefix could otherwise be spliced in to beat a minimal total. So
+	// "look the cost up per hex" and "sum `moveCost` while walking the route" are
+	// THE SAME NUMBER ON EVERY BOARD: not merely on *Ferrum Crossing*, and not
+	// merely on the boards the fixtures happen to build. A clause asserting a
+	// difference would be asserting against an identity. THE CLAIM IS THEREFORE
+	// ARCHITECTURAL RATHER THAN BEHAVIOURAL -- it says which module owns §2.5's
+	// cost model, which is precisely T-UI-02's subject, and which is not a thing
+	// any black-box test can see.
+	//
+	// WHY NO CLAUSE CAN EXIST FOR `OutTotalCost` -- AND THE CAUSE IS THE
+	// CROSS-CHECK ITSELF, NOT A WEAK FIXTURE. This method REFUSES every board on
+	// which `OutRouteCosts.Last()` and `findPath`'s `outCost` differ. So on every
+	// board that answers at all, the two are equal BY CONSTRUCTION, and
+	// `OutTotalCost = Cost` and `OutTotalCost = OutRouteCosts.Last()` are
+	// indistinguishable from outside this method. The check removes the
+	// observability of the very thing the claim is about. Note the consequence for
+	// the check's own refusal arm: it is unreachable by the same argument, which is
+	// why "has never been observed to fire" above is a proof and not a sample.
+	//
+	// WHAT THE UNFALSIFIABILITY IS BOUGHT WITH, so the trade is legible rather than
+	// merely disclosed. The cross-check buys a real safety property -- the module's
+	// two movement answers can never silently disagree in front of a player, and a
+	// disagreement names both numbers instead of this file picking a winner between
+	// two rules answers. It pays for that in EXACTLY this unfalsifiability, and the
+	// payment is not a side effect to be engineered away: any check strong enough
+	// to guarantee the agreement is strong enough to hide which side was assigned.
+	// Deleting the check to make the claim testable would trade a live safety
+	// property for a test of a dead one. That is the trade, made deliberately.
+	//
+	// WHICH HALF A CHECKOUT CAN CHECK, AND WHICH RESTS ON READING THE BODY. This is
+	// the split `CLAUDE.md` already declares about its own limits, stated here
+	// because this record has been caught before by a claim that read as pinned
+	// when it was not. CHECKABLE FROM A CHECKOUT: that this method performs no
+	// addition, which is a grep of its body; that the refusal channel behaves as
+	// documented, which `MovePathRefusesUnseeded` and `MovePathRefusesUnknownUnitId`
+	// reach; that the ticks equal `Reachable`'s costs and the total equals the last
+	// tick on every board a fixture builds, which `MovePathTicksAreReachableCosts`
+	// reaches. NOT CHECKABLE FROM A CHECKOUT: WHICH EXPRESSION PRODUCED EITHER
+	// NUMBER. Those two rest on reading the body above and on nothing else, and a
+	// reviewer is entitled to know which is which.
+	FStratResult MovePathToHex(int32 UnitId, FIntPoint GoalHex,
+	                           TArray<FIntPoint>& OutRouteHexes,
+	                           TArray<int32>&     OutRouteCosts,
+	                           int32&             OutTotalCost) const;
 
 	// Every hex this unit may legally attack right now, ascending unit id.
 	//

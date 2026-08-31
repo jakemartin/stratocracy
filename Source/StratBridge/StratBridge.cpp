@@ -1391,6 +1391,138 @@ FStratResult FStratBridge::ReachableHexes(int32           UnitId,
 	return FStratResult::Ok();
 }
 
+FStratResult FStratBridge::MovePathToHex(int32              UnitId,
+                                         FIntPoint          GoalHex,
+                                         TArray<FIntPoint>& OutRouteHexes,
+                                         TArray<int32>&     OutRouteCosts,
+                                         int32&             OutTotalCost) const
+{
+	// Cleared up front for `Reachable`'s own reason, and the scalar with them: a
+	// refusal must not leave the caller holding a previous call's route, and a
+	// stale total beside an emptied array is the same defect wearing one number.
+	OutRouteHexes.Reset();
+	OutRouteCosts.Reset();
+	OutTotalCost = 0;
+
+	// ASKED FIRST, AND IT CARRIES BOTH THINGS THIS METHOD NEEDS FROM IT: every
+	// refusal, already phrased in its words, and the per-hex costs the ticks are
+	// read out of. Duplicating its four guards here would be a second place they
+	// could drift from `Reachable`'s.
+	std::vector<strat::ReachEntry> Reach;
+	const FStratResult Asked = Reachable(UnitId, Reach);
+	if (!Asked.bOk)
+	{
+		return Asked;
+	}
+
+	// Borrowed for the length of this call and never escaping it, exactly as in
+	// `Reachable` and `MakeUiSnapshot`: every pointer in the world points into
+	// `this`.
+	const strat::UiWorld World = MakeUiWorld();
+
+	// `Reachable` already proved this unit exists in this same world and that its
+	// `defIndex` is inside the loaded table -- both are its guards, above, and both
+	// ran against a world built the same way. Re-checked anyway rather than
+	// asserted, because the alternative to a refusal here is indexing `Units` past
+	// its end, and a guard that is unreachable today is free.
+	const strat::UiUnit* const Unit = strat::findUiUnit(World, UnitId);
+	if (Unit == nullptr
+		|| Unit->defIndex < 0
+		|| static_cast<size_t>(Unit->defIndex) >= Units.size())
+	{
+		return FStratResult::Fail(FString::Printf(TEXT("no unit with id %d"), UnitId));
+	}
+
+	// THE ONE RE-DERIVED ARGUMENT, AND THE DEBT IS ON THE DECLARATION. `Ui.h` has
+	// no `uiFindPath` to forward to, so the §2.4 allowance is looked up here in the
+	// same one line `uiReachable`'s body uses. A TABLE READ, not a rule: nothing
+	// below adjusts it, caps it, or spends it.
+	const strat::UnitDef& Def = Units[static_cast<size_t>(Unit->defIndex)];
+
+	// The one line this method exists for. Nothing above it chose the route and
+	// nothing below it reorders, retimes or trims one.
+	std::vector<strat::Hex> Path;
+	int                     Cost = 0;
+	if (!strat::findPath(World.board, Terrain, Unit->hex,
+	                     strat::Hex{GoalHex.X, GoalHex.Y}, Def.move, Path, Cost))
+	{
+		// AN ANSWER, NOT A FAULT -- see the declaration's channel block. The goal
+		// is out of the allowance, blocked, or impassable, and all three are
+		// ordinary board positions a hovering cursor produces constantly.
+		return FStratResult::Ok();
+	}
+
+	// Each hex's tick is `reachable`'s cost FOR THAT HEX, found by identity in the
+	// set `Reachable` just returned. Not the running sum of a `moveCost` column,
+	// not the difference of two neighbours: this loop performs no arithmetic, and
+	// the number it copies is the same one `ReachableHexes` hands the movement
+	// overlay for the same hex on the same board.
+	OutRouteHexes.Reserve(static_cast<int32>(Path.size()));
+	OutRouteCosts.Reserve(static_cast<int32>(Path.size()));
+	for (const strat::Hex& H : Path)
+	{
+		const strat::ReachEntry* Entry = nullptr;
+		for (const strat::ReachEntry& E : Reach)
+		{
+			if (E.hex.q == H.q && E.hex.r == H.r)
+			{
+				Entry = &E;
+				break;
+			}
+		}
+
+		if (Entry == nullptr)
+		{
+			// The module's two movement answers disagreeing about the same board:
+			// `findPath` routed through a hex `reachable` did not return. There is
+			// no honest tick to draw on it, and inventing one -- a zero, or the
+			// previous hex's -- would put a number on screen no rules function
+			// produced. Refused whole, with the hex named.
+			OutRouteHexes.Reset();
+			OutRouteCosts.Reset();
+			return FStratResult::Fail(FString::Printf(
+				TEXT("route hex (%d,%d) for unit %d is not in the reachable set"),
+				H.q, H.r, UnitId));
+		}
+
+		OutRouteHexes.Add(FIntPoint(H.q, H.r));
+		OutRouteCosts.Add(Entry->cost);
+	}
+
+	// `findPath` guarantees `outPath` includes both endpoints, so a successful
+	// call cannot produce an empty path -- an unreachable goal took the `Ok()`
+	// return above. Guarded rather than assumed because `.Last()` below would read
+	// off the end, and because an empty array here would be indistinguishable from
+	// the no-route answer while carrying a non-zero total.
+	if (OutRouteCosts.Num() == 0)
+	{
+		return FStratResult::Fail(FString::Printf(
+			TEXT("findPath answered a route of no hexes for unit %d"), UnitId));
+	}
+
+	// THE ONE CROSS-CHECK, AND THE DECLARATION SAYS WHY IT IS NOT AN ASSUMPTION.
+	// The last tick is the cost of arriving at the goal and `outCost` is the cost
+	// of the route to the goal; they are the same quantity from two module
+	// functions. This is a comparison and not a computation -- no third number is
+	// formed -- and on disagreement it refuses rather than choosing, because
+	// picking one would make this file the arbiter of a §2.5 answer.
+	const int32 CostAtGoal = OutRouteCosts.Last();
+	if (CostAtGoal != Cost)
+	{
+		// Read BEFORE the reset, deliberately: the two numbers are the whole
+		// content of this message, and a `Last()` after a `Reset()` reads off an
+		// emptied array.
+		OutRouteHexes.Reset();
+		OutRouteCosts.Reset();
+		return FStratResult::Fail(FString::Printf(
+			TEXT("unit %d: findPath cost %d disagrees with the reachable cost %d at the goal"),
+			UnitId, Cost, CostAtGoal));
+	}
+
+	OutTotalCost = Cost;
+	return FStratResult::Ok();
+}
+
 FStratResult FStratBridge::AttackTargetHexes(int32 AttackerId, TArray<FIntPoint>& OutHexes) const
 {
 	OutHexes.Reset();

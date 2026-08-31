@@ -537,6 +537,34 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
 	FString GetSaveSlotName() const { return SaveSlotName; }
 
+	/**
+	 * Whether `ConfigureMatchDestination` has been called on this subsystem yet.
+	 *
+	 * IT RECORDS THE CALL AND NOT ITS ARGUMENTS, WHICH IS THE ONLY REASON IT IS A SEPARATE
+	 * FLAG. Every value the call carries has a legal default a configured shell can also hold:
+	 * `MatchLevel` is null on a genuinely unconfigured Blueprint, and `SaveSlotName` arrives
+	 * non-empty by construction from `AStratShellGameMode`'s constructor, so neither can
+	 * distinguish "nobody has called" from "somebody called with these values". This project
+	 * already carries a defect of exactly that species -- a real default that could not signal
+	 * unset, which wrote the player's save every run -- so the distinction is made explicit
+	 * here rather than left to be inferred by every reader.
+	 *
+	 * WHAT IT IS FOR. `AStratShellHUD` creates the title menu only once this is true, which is
+	 * what turns "the menu happens to be built a tick after `Super::BeginPlay()`" into "the
+	 * shell is configured before the menu is asked for its model". IT SAYS NOTHING ABOUT
+	 * WHETHER THE CONFIGURATION WAS ANY GOOD -- a configured shell whose `MatchLevel` is null
+	 * reads true here and false on `FStratShellFacts::bMatchLevelConfigured`, and the two
+	 * questions must not be confused.
+	 *
+	 * IT IS NEVER CLEARED. There is no `Unconfigure`, and a second call overwrites the values
+	 * while leaving this true, because the question it answers is "has a GameMode ever handed
+	 * this subsystem its destination in this process" -- and the game-instance lifetime this
+	 * class holds for its own stated reason is exactly the span over which that question has
+	 * one answer.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
+	bool HasMatchDestinationBeenConfigured() const { return bMatchDestinationConfigured; }
+
 private:
 	/** Set by `AStratShellGameMode`. Never a `/Game/` literal in this file. */
 	UPROPERTY(Transient)
@@ -549,6 +577,15 @@ private:
 	/** Set by `AStratShellGameMode`. Empty means unconfigured, and no literal stands in. */
 	UPROPERTY(Transient)
 	FString SaveSlotName;
+
+	/**
+	 * Set by `ConfigureMatchDestination`, read by `HasMatchDestinationBeenConfigured`.
+	 *
+	 * `Transient` LIKE EVERY OTHER MEMBER HERE. Nothing about the shell survives a process,
+	 * and a saved "already configured" would be a lie on the first frame of the next launch.
+	 */
+	UPROPERTY(Transient)
+	bool bMatchDestinationConfigured = false;
 
 	/** Written by `ExecuteRoute(ContinueMatch)`, read once by the next world's GameMode. */
 	UPROPERTY(Transient)

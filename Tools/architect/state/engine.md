@@ -15,6 +15,132 @@
 
 ## NEXT
 
+- **2026-08-31, the `coordinator` (ACTING AND WRITING; OUT OF LANE, on the user's explicit
+  instruction in session -- the ownership note is the first bullet below rather than a header
+  above, because a reader arriving by a citation lands here) -- THE SHELL HUD EXISTS. THE THING
+  IT ACTUALLY BUILDS IS AN ORDERING AND NOT A WIDGET, AND ITS POINT IS THAT IT TURNS A CLAUSE
+  THIS PROJECT REFUSED TO WRITE INTO ONE IT CAN.**
+  - **WHOSE WRITE THIS IS, SAID FIRST BECAUSE IT IS THE IRREGULAR PART.** This file's sole
+    writer is `strat-gameplay-engineer`. The transcription clause does **not** cover this entry
+    and the difference is not a technicality: that clause is triggered by A MERGE and licenses
+    only carrying across a draft a lane already wrote, and here there was **no lane, no
+    worktree, no branch, no merge and no draft**. The `coordinator` wrote the C++ itself, in the
+    integration tree, and then wrote this. Acting and writing are the same actor and both are
+    named rather than one being left to be assumed.
+    **IT IS THE SECOND TIME, NOT THE FIRST, AND THAT IS THE FACT WORTH RECORDING.** The
+    2026-08-29 entry below -- the `LayerFor` late-mesh discharge -- opens
+    `coordinator` (ACTING AND WRITING) in this same file. A thing that has now happened twice is
+    a condition forming rather than an exception, and this project's own note says that
+    declaring "not a precedent" twice is exactly how a lane rule stops describing practice. No
+    clause is proposed here; the observation is filed for the user, who owns the ruling.
+  - **THE GAP, AND THE RECORD HAD ALREADY FILED IT IN TERMS.** W6 shipped the shell with no HUD,
+    so `WBP_TitleMenu` reaches the screen from `BP_StratShellGameMode`'s own graph -- Create
+    Widget, Add to Viewport, input mode, cursor -- which is the one place in this project where
+    a widget is drawn without a C++ HUD owning a widget-class slot. The editor lane flagged the
+    departure rather than burying it (`content.md`, W6's asset batch: *"The alternative is a
+    shell HUD class with a widget slot, which would match the convention and is an
+    engineer-lane item; it was not taken and the user was told."*) and `global.md` filed it as
+    an engineer-lane request. This entry closes that request.
+  - **WHAT WAS BUILT.** `AStratShellHUD`, an `AHUD` in `Source/StratPlay/`, plus one `UENUM`,
+    `EStratShellMenuTiming`. The Blueprint-facing surface is `MenuWidgetClass` (a
+    `TSubclassOf<UUserWidget>`, `EditDefaultsOnly`, never a path), `MenuZOrder`,
+    `bTakeUiOnlyInputMode` and `MaxConfigurationWaitTicks`. The observable surface is
+    `IsMenuLive`, `LastFailureReason`, `ConfigurationTicksWaited` and
+    `bMenuDrewOnAConfiguredShell`. `CreateMenuWidget` is the one function that touches a
+    viewport; `ResolveMenuTiming`, `FindShell` and `ApplyMenuInputMode` are private.
+  - **THE ORDERING IS THE WHOLE POINT, AND IT IS WHY THIS CLASS IS WORTH ITS OWN FILE.**
+    `AStratShellGameMode::BeginPlay` calls `Super::BeginPlay()` -- which is what fires a
+    Blueprint's `Event BeginPlay` -- before `ConfigureMatchDestination`, so a menu built off
+    that event asks `UStratShellSubsystem::GetMenuModel` on an unconfigured shell and draws
+    four greyed rows. The graph hops one tick around it. **`global.md` records the clause that
+    would have pinned that hop being REFUSED, and the refusal was right**: a clause asserting
+    the CURRENT ordering pins a hazard as a requirement and goes red the day the hazard is
+    repaired.
+    **THIS CLASS ASSERTS NOTHING ABOUT WHEN THE CONFIGURING CALL RUNS.** It asks the shell
+    WHETHER IT HAS BEEN CONFIGURED and creates the menu only once the answer is yes, waiting a
+    bounded number of ticks. The property that becomes pinnable is *"the shell is configured
+    before the menu is asked for its model"* -- which stays green under the repair, since moving
+    `ConfigureMatchDestination` ahead of `Super::BeginPlay()` merely makes the wait zero ticks
+    and moves no clause. That is this project's own note applied: pin the requirement, not the
+    hazard.
+  - **THE DECIDER IS WORLD-FREE, ON `UStratShellSubsystem`'s OWN STATED SPLIT.**
+    `AStratShellHUD::DecideMenuTiming` is `static`, takes a bool and two ints, and returns one
+    of three arms -- `CreateNow`, `WaitForConfiguration`, `CreateUnconfigured`. Three and not a
+    bool, so that "wait" and "give up waiting" are distinguishable to a clause and to a log
+    line; the second is the one a player can see. A headless clause reaches every arm with no
+    viewport, no cursor and no travel. What is left over is one `CreateWidget`, one
+    `AddToViewport` and one `SetInputMode`.
+    **THE `CreateUnconfigured` ARM DRAWS RATHER THAN REFUSING, and the argument is already in
+    the tree rather than invented here:** `AStratShellGameMode::BeginPlay` refuses to skip
+    configuring on a null `MatchLevel` because *"refusing to configure at all would replace
+    that readable menu with an empty one and a log line nobody is looking at."* The same trade
+    holds one level up. An unconfigured shell still builds all four rows, greyed, each naming
+    its own reason, which is §2.11.5's rule that unavailable options are greyed and named and
+    never hidden. The budget expiring costs a `LastFailureReason` and a Warning, not a menu.
+  - **THE SUBSYSTEM GREW A FLAG RATHER THAN THE HUD INFERRING ONE, AND THE REASON IS A DEFECT
+    THIS PROJECT HAS ALREADY PAID FOR.** `UStratShellSubsystem::HasMatchDestinationBeenConfigured`
+    reads a new `Transient` bool set at the end of `ConfigureMatchDestination`. **It records THE
+    CALL AND NOT ITS ARGUMENTS**, because every value the call carries has a legal default that
+    a configured shell can also hold: `MatchLevel` is null on a genuinely unconfigured
+    Blueprint, and `SaveSlotName` arrives non-empty by construction from
+    `AStratShellGameMode`'s constructor. Neither can distinguish "nobody has called" from
+    "somebody called with these values" -- which is precisely the shape of the real-default-
+    cannot-signal-unset defect that wrote the player's save every run. It is never cleared, and
+    it says nothing about whether the configuration was any good: a configured shell with a
+    null level reads true here and false on `FStratShellFacts::bMatchLevelConfigured`, and the
+    two questions must not be conflated.
+  - **THE MODULE ARROW MOVED BY ONE LINE AND IT HAD TO BE LOOKED FOR.** `StratPlay.Build.cs`
+    gains `"UMG"` under `PrivateDependencyModuleNames`. This module already depends PUBLICLY on
+    `StratUI`, which is where every other widget in the project lives -- **and that arrow
+    carries nothing**, because `StratUI.Build.cs` lists UMG as PRIVATE. Private here for the
+    same reason it is private there: no header in this module includes a UMG header,
+    `StratShellHUD.h` holding its slot as a `TSubclassOf` over a forward declaration, which is
+    all UHT needs. No new module, no reversed arrow, nothing added to the `.uproject`.
+  - **THE BUILD, IN THIS TREE, EDITOR CLOSED WITH A CONTROL.** `tasklist` piped to a
+    case-insensitive `UnrealEditor` filter came back empty **and `tasklist` alone was shown
+    printing its header in the same pass**, because an empty filter proves nothing until the
+    instrument is shown able to speak. `Build.bat StratocracyEditor Win64 Development` with the
+    absolute `-project=` and `-waitmutex`, whose own last lines are `Result: Succeeded` and
+    `Total execution time: 12.96 seconds` over 9 actions -- with `StratShellHUD.cpp`,
+    `StratShellSubsystem.cpp`, `StratShellGameMode.cpp`, `Module.StratPlay.gen.cpp` and the
+    `UnrealEditor-StratPlay.dll` link all named among them, so the green is over the new
+    translation units and over UHT's regenerated reflection for the new `UCLASS` and `UENUM`
+    rather than over an up-to-date tree. **ZERO warnings and ZERO errors** over the whole
+    captured log, counted case-insensitively rather than eyeballed from a tail. The tool also
+    reported an adaptive-unity exclusion naming both edited translation units -- the line reads
+    `[Adaptive Build] Excluded from StratPlay unity file: StratShellHUD.cpp, StratShellSubsystem.cpp`
+    -- so the new file compiled STANDALONE and its include list stands on its own rather than on
+    a neighbour's.
+  - **THE SUITE WAS RE-RUN ON THIS TREE AFTER THE RELINK AND NO FIGURE IS STATED HERE.**
+    `global.md` owns the count and the verdict and this entry links to it rather than restating
+    it. Two facts that are this entry's to state: the figure did not MOVE, and this pass adds
+    no clause, so a set difference on the test macro over these changes is empty by
+    construction. It was read from the exported report under `Saved/AutomationReport` rather
+    than from the log, on the standing rule that the log undercounts by one.
+  - **WHAT IS OWED, AND NEITHER HALF IS THIS LANE'S.**
+    - **THE CLAUSE.** `DecideMenuTiming` was made static and three-armed *so that it could be
+      pinned*, and nothing pins it yet. Its three arms and the `MaxConfigurationWaitTicks`
+      boundary are `strat-test-author`'s, under `Source/StratPlay/Tests/`. **Until it lands,
+      the requirement this class was built to make assertable is UNASSERTED, and this record
+      says so rather than letting the design read as discharged.**
+    - **THE ASSET CHANGE, AND IT CARRIES A PLAYER-VISIBLE HAZARD.** `HUDClass` on
+      `BP_StratShellGameMode` must point at a Blueprint subclass of `AStratShellHUD` **AND the
+      graph's own Create Widget / Add to Viewport / input mode / cursor nodes must come out in
+      the same commit. Doing the first without the second puts TWO MENUS ON SCREEN.** That is
+      `Content/` and therefore the editor lane's; the editor was closed for this entire pass.
+      **Nothing is broken meanwhile: this class is inert until an asset names it**, because
+      nothing spawns a HUD no `HUDClass` points at.
+  - **PROVENANCE, STAMPED RATHER THAN WRITTEN AS A LIVE SENTENCE.** Measured 2026-08-31 in the
+    integration tree at repository root `E:/MultiAgent/Stratocracy` on branch `master` over base
+    `84788c0`, with no worktree, no branch, no rebase and no merge, and with the editor closed
+    throughout. The absolute path is stamped to this measurement and is **not** a claim about
+    any other checkout -- a live sentence naming this box's path is a thing CI can never
+    satisfy, which this project has already reddened a runner to learn.
+  - **WHAT THIS PASS DID NOT TOUCH, stated so the blast radius is readable:** no `Content/`, no
+    `Config/`, no `Data/`, nothing under `Source/StratRules/`, no test and nothing under any
+    `Tests/` directory, no `.uproject`. Outside this record the working tree carries exactly
+    five paths, all under `Source/StratPlay/`.
+
 - **2026-08-30, `strat-gameplay-engineer` -- W6, THE TITLE/MENU SHELL, LANDS AS C++ ONLY IN THE
   LANE TREE `E:/MultiAgent/Strat-wt/slot-1` ON `feat/title-menu`. THE HEADLINE IS NOT THE SCREEN;
   IT IS THE PLAYER-VISIBLE DEFECT THE SCREEN'S OWN CONFIGURATION SURFACED.** This entry is the

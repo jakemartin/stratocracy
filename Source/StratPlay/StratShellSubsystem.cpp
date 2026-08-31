@@ -206,6 +206,11 @@ void UStratShellSubsystem::ConfigureMatchDestination(TSoftObjectPtr<UWorld> InMa
 {
 	MatchLevel   = MoveTemp(InMatchLevel);
 	SaveSlotName = InSaveSlotName;
+
+	// SET LAST AND NEVER CLEARED. See the header: this records THE CALL, so that an
+	// unconfigured shell and a shell configured with a null level stay two different
+	// states. `AStratShellHUD` waits on it before it asks the shell for a menu model.
+	bMatchDestinationConfigured = true;
 }
 
 void UStratShellSubsystem::ConfigureTitleDestination(TSoftObjectPtr<UWorld> InTitleLevel)

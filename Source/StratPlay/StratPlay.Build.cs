@@ -113,6 +113,16 @@ public class StratPlay : ModuleRules
 			// for why it is Private rather than Public.
 			"StratBridge",
 
+			// UMG. `StratShellHUD.cpp` calls `CreateWidget` and `UUserWidget::AddToViewport`
+			// to put the title menu on screen. PRIVATE, and it has to be looked for rather than
+			// assumed present: this module already depends PUBLICLY on `StratUI`, which is where
+			// every other widget in the project lives -- but `StratUI.Build.cs` lists UMG under
+			// `PrivateDependencyModuleNames`, so nothing about that arrow reaches this module.
+			// Private here for the same reason it is private there: no header in this module
+			// includes a UMG header, `StratShellHUD.h` holding a `TSubclassOf<UUserWidget>` over
+			// a forward declaration, which is all UHT needs.
+			"UMG",
+
 			// Enhanced Input. `AStratPlayerController` adds a `UInputMappingContext` on
 			// BeginPlay and binds four `UInputAction`s through `UEnhancedInputComponent`.
 			// Private because no header in this module includes an Enhanced Input header:

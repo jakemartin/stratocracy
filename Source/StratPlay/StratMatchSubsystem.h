@@ -125,6 +125,7 @@
 #include "Templates/SubclassOf.h"
 
 #include "StratAiPlayback.h"
+#include "StratTransientReceipts.h"
 #include "StratViewModel.h"
 
 #include "StratMatchSubsystem.generated.h"
@@ -920,6 +921,55 @@ public:
 	 * C++ callers -- phase 4, and a gate -- read it here.
 	 */
 	const FStratViewModel& GetViewModel() const { return AppliedModel; }
+
+	/**
+	 * §2.11.2's transient layer as of the last `ApplyView` -- GATE-TRANSIENT's surface.
+	 *
+	 * WHAT IT IS AND WHAT IT IS NOT. `StratTransientReceipts.h` carries the whole argument;
+	 * the sentence that binds a caller here is that THE SCREEN MUST BE FULLY CORRECT WITH
+	 * ZERO RECEIPTS DRAWN. Every number in it is a second reading of a durable home the view
+	 * model already carries, so a widget that ignores this getter loses emphasis and loses no
+	 * information. `Banner` is the exception in shape but not in principle: it is steady state
+	 * derived from `FStratMatchView::SideToMove`, which is on screen anyway.
+	 *
+	 * IT IS THIS REFRESH'S, NOT THE MATCH'S. `ApplyView` overwrites it whole on every call,
+	 * INCLUDING EMPTYING IT, so a consumer that polls slower than the refresh cadence will
+	 * miss receipts. That is the correct trade for a layer whose whole content is emphasis --
+	 * a queue that guaranteed delivery would be the event list `FStratViewModel` was written
+	 * to exclude, and would make the screen depend on every previous frame.
+	 *
+	 * NOT A `UFUNCTION`, for `GetViewModel`'s stated reason -- UHT does not accept a reference
+	 * return. This is the C++ and gate-facing read; `CopyTransientReceipts` below is the same
+	 * value for Blueprint, and the two must stay one expression apart so they cannot drift.
+	 */
+	const FStratTransientReceipts& GetTransientReceipts() const { return LastReceipts; }
+
+	/**
+	 * The same value, by copy, for the widgets.
+	 *
+	 * BY VALUE AND CHEAPLY SO, which is why this exists where `GetViewModel` refuses the
+	 * equivalent: that function returns a reference because copying a 99-hex model would make
+	 * the cheap read expensive. This struct is a banner, two integers and a list that is empty
+	 * on most refreshes, so the copy costs nothing and the reflection is worth having.
+	 *
+	 * IT IS WHAT KEEPS THE TOAST AND BANNER WIDGETS FREE OF ARITHMETIC. Every number a widget
+	 * draws off this is a field, already decided; there is nothing left for it to compute,
+	 * which is the state T-UI-03's no-widget-side-arithmetic clause describes.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Transient",
+		meta = (DisplayName = "Get Transient Receipts"))
+	FStratTransientReceipts CopyTransientReceipts() const { return LastReceipts; }
+
+	/**
+	 * The durable readings `ApplyView` will compare the next model against.
+	 *
+	 * EXPOSED SO A CLAUSE CAN SEE THE EDGE DETECTOR'S STATE, and for no other reason -- it is
+	 * the input to a decision, not a description of the screen. `StratMarkFromView` is the
+	 * only writer of a seeded value and it is a free function, so a clause needs no access to
+	 * this to drive the decider; what it needs this for is asserting that the LIVE path
+	 * re-marks, which is the half a world-free clause cannot reach.
+	 */
+	const FStratReceiptMark& GetReceiptMark() const { return ReceiptMark; }
 
 	/**
 	 * Changes which `strat` side the screen is drawn FOR, and rebuilds.
@@ -2128,6 +2178,37 @@ private:
 	/** What `ApplyView` last drew. See `GetViewModel`: a record, never an input. */
 	UPROPERTY(Transient)
 	FStratViewModel AppliedModel;
+
+	/**
+	 * §2.11.2's transient layer for the refresh `AppliedModel` describes. See
+	 * `GetTransientReceipts`.
+	 *
+	 * PRIVATE AND `Transient`, EXACTLY AS `AppliedModel` IS, AND BLUEPRINT REACHES IT THROUGH
+	 * `CopyTransientReceipts` RATHER THAN THROUGH THIS FIELD. The first spelling marked it
+	 * `BlueprintReadOnly` in place, which UHT refuses -- measured, one error, `Error:
+	 * BlueprintReadOnly should not be used on private members`, reported at this file. The
+	 * alternative was moving the member to the public section; it was not taken, because a
+	 * public mutable member is a second writer of a value whose declaration two lines up
+	 * insists `ApplyView` is the only one.
+	 */
+	UPROPERTY(Transient)
+	FStratTransientReceipts LastReceipts;
+
+	/**
+	 * The previous refresh's durable readings. `ApplyView` is the only writer.
+	 *
+	 * IT IS RESET WHEREVER `AppliedModel` IS RESET, AND THAT PAIRING IS LOAD-BEARING RATHER
+	 * THAN TIDY. There are exactly three writers of `AppliedModel` -- `ApplyView`,
+	 * `Deinitialize` and the match teardown -- and a mark left standing across either
+	 * teardown would be compared against the NEXT match's first model, whose `fameCombat` is
+	 * zero and whose turn is 1. The kill arm would stay silent on that comparison (a fall
+	 * emits nothing) but the income arm would fire on a turn edge between two different
+	 * matches, which is a receipt about no match at all. Resetting to a default -- and so to
+	 * `bSeeded == false` -- makes the first model of the next match a first observation
+	 * again, which is what it is.
+	 */
+	UPROPERTY(Transient)
+	FStratReceiptMark ReceiptMark;
 
 	/** Retained from `StartMatch` so `ApplyView` knows which class to spawn. */
 	UPROPERTY(Transient)

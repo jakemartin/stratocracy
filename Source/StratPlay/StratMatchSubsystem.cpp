@@ -145,6 +145,12 @@ void UStratMatchSubsystem::Deinitialize()
 
 	AppliedModel = FStratViewModel();
 
+	// THE TRANSIENT LAYER GOES WITH THE MODEL, at both of the two places the model is
+	// cleared. `ReceiptMark`'s own declaration states why a surviving mark is worse than no
+	// mark: it would be compared against the first model of some later match.
+	ReceiptMark  = FStratReceiptMark();
+	LastReceipts = FStratTransientReceipts();
+
 	Super::Deinitialize();
 }
 
@@ -768,6 +774,28 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 		HUD->PushGuidance(Model.Guidance);
 		HUD->PushInfoPanel(Model.InfoPanel, Model.ViewingSide);
 	}
+
+	// §2.11.2's TRANSIENT LAYER, AND IT IS THE ONE THING IN THIS FUNCTION THAT LOOKS AT TWO
+	// FRAMES. Everything above is a set difference against `Model` alone -- deliberately, per
+	// the units block's own note -- and a receipt is by definition an edge, which no single
+	// frame carries. The whole of the two-frame reasoning is these three lines and the
+	// world-free decider they call; nothing above consults `ReceiptMark` and nothing below
+	// consults `LastReceipts`.
+	//
+	// BEFORE THE RE-MARK AND BEFORE `AppliedModel`, WHICH IS THE ORDER AND NOT A PREFERENCE.
+	// The decider needs the PREVIOUS reading; re-marking first would compare the model with
+	// itself and no receipt could ever fire. That failure is silent -- an always-empty receipt
+	// list is indistinguishable from a quiet turn -- which is why the order is stated here
+	// rather than left to read as obvious.
+	//
+	// AFTER THE RECONCILIATION, on `ConcludeMatchIfEnded`'s reasoning one step weaker: a
+	// receipt is emphasis on something the board is already showing, so it must not be
+	// computed before the board shows it. It is placed BEFORE the conclusion transition, so
+	// that the refresh on which a match ends still carries that turn's kill receipt and its
+	// banner reads `None` -- the durable homes moved on this frame and the transient layer
+	// reports what they did.
+	StratDecideTransientReceipts(ReceiptMark, Model, LastReceipts);
+	ReceiptMark = StratMarkFromView(Model);
 
 	// CACHED AFTER THE FACT AND NEVER READ BACK. See `GetViewModel`: this is a record of
 	// what was applied, not an input to anything above.
@@ -2316,6 +2344,14 @@ void UStratMatchSubsystem::TearDownPresentation()
 	// behind an emptied map would make that claim false for exactly as long as it took
 	// someone to read it.
 	AppliedModel = FStratViewModel();
+
+	// AND SO DOES THE TRANSIENT LAYER, for the reason `ReceiptMark`'s declaration gives and
+	// which bites HERE rather than in `Deinitialize`: this path runs BETWEEN two matches in
+	// one session, so a surviving mark has a live successor to be compared against. The next
+	// match's first model would present a turn edge from the old match's last turn, and the
+	// income receipt would fire for a turn that never began.
+	ReceiptMark  = FStratReceiptMark();
+	LastReceipts = FStratTransientReceipts();
 
 	// THE PRODUCTION MENU GOES WITH THE MATCH, not with the world. A buildlist describes one
 	// factory in one `strat::GameState`; carried across a reseed it would offer rows against a

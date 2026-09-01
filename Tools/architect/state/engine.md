@@ -94,6 +94,31 @@
     **unverified**. That the Game target RUNS is likewise unmeasured -- this closes a link
     failure, and nothing here launched `Stratocracy.exe` or drove a packaged build. **Discharged
     by** a packaging or cook pass that actually starts the produced binary.
+    - **DISCHARGED 2026-09-01, BY A PACKAGING PASS THAT STARTED THE PRODUCED BINARY. The text
+      above stands as written and is not edited; this stamp says what it owed and what paid it.**
+      A Win64 **Development** package was built with `RunUAT BuildCookRun`
+      (`-clientconfig=Development -build -cook -stage -pak -archive`), archived to
+      `E:/MultiAgent/Stratocracy-Package`, and the produced binary was launched into
+      `/Game/StratMaps/Lvl_FerrumCrossing`. It stayed up 60 seconds and its own log recorded,
+      verbatim: *"LogStratPlay: Match live: seeded from
+      'E:/MultiAgent/Stratocracy-Package/Windows/Stratocracy/Data/ferrum_crossing.json' (first
+      side 0), drawn for side 0, 99 hexes and 10 units on screen."* **The resolved path is INSIDE
+      the package**, which is the load-bearing half -- it read the STAGED data, not the source
+      tree, so this is a packaged run and not the editor's content reached from a different
+      executable. The log contained zero errors, warnings or ensures.
+    - **WHAT THE PACKAGING PASS STILL DOES NOT CLAIM.** A **Shipping** package was also built and
+      launched and stayed up 60 seconds, but **its scenario load is UNVERIFIED and must not be
+      read as covered by the paragraph above**: Shipping compiles logging out. The control for
+      that absence -- because a silence proves nothing until the instrument is shown able to
+      speak -- is that the same probe returns a real log for the Development build, and Shipping
+      creates an EMPTY `Logs/` directory under `%LOCALAPPDATA%/Stratocracy/Saved/`. So the
+      missing log is stripped logging rather than a failed run, and that is all it is. **Would be
+      discharged by** a Shipping-configuration run whose scenario load is observed through some
+      channel logging does not strip.
+    - **PROVENANCE, SO THE STAMP IS NOT MISREAD AS THIS LANE'S OWN EXECUTION.** This lane did not
+      run `RunUAT` or launch either binary; the measurements above were made outside it and
+      delivered to it, and this entry is the record rather than the run. A reader wanting to
+      re-execute has the exact switches and the archive path above.
   - **A DEBT THAT RIDES WITH THIS, AND HALF OF IT WAS ALREADY DISCHARGED BY SOMEONE ELSE WHILE
     THIS LANE WORKED.** No automation clause can cover this: the defect is a property of a link
     type the suite never builds, so the only honest net is CI building the Game target. **That
@@ -102,6 +127,88 @@
     file. What remains open is the other half: **discharged by** that step being seen to go RED
     on a tree with the `#if` removed, since a CI step nobody has watched fail is a step whose
     subject is unproven.
+    - **DISCHARGED 2026-09-01: THE STEP HAS NOW BEEN WATCHED TO FAIL.** GitHub Actions run
+      **33469897876**, a `workflow_dispatch` on throwaway branch `probe/ci-game-target-red`
+      (commit `b5e4102`, since DELETED locally and on the remote; `master` was never touched).
+      That branch carried exactly one mutation, the same one this entry's in-place proof used:
+      in `Source/StratBridge/Vendored/Hex.strat.cpp`, `#if STRAT_VENDORED_RULES_IN_BRIDGE`
+      replaced by `#if 1`. Per-step outcomes were `success` for *build StratocracyEditor*,
+      `success` for *run the automation suite*, `success` for *gate the exported suite report*,
+      and **`failure` for *build the Stratocracy Game target***, whose own output was
+      *"Hex.strat.cpp.obj : error LNK2005: "void __cdecl strat::axialToOffset(...)" already
+      defined in Hex.good.cpp.obj"* -- 9 x `LNK2005` over `axialToOffset`, `hexDistance`,
+      `hexEqual`, `hexLess`, `inBounds`, `neighborCandidate`, `neighbors`, `offsetToAxial` and
+      `sortCanonical` -- then *"Stratocracy.exe : fatal error LNK1169: one or more multiply
+      defined symbols found"*, `Result: Failed (OtherCompilationError)`, and a `Build.bat` exit
+      code of 6 for the Game target.
+    - **THE THREE GREEN ROWS ARE THE LOAD-BEARING HALF OF THAT RUN, NOT THE RED ONE.** The editor
+      built, the suite ran and the report gate passed **while the Game target was unlinkable**,
+      because `STRAT_VENDORED_RULES_IN_BRIDGE` is 1 in a modular build and the mutant is a
+      literal no-op there. That is the blind spot this entry argued for, DEMONSTRATED instead of
+      argued: a step that reddens while every other step in the same run stays green is a net
+      catching something no existing net could see. **Had the suite reddened too, the step would
+      have been redundant** -- and the red row alone, without the three green ones, would not
+      have distinguished a new net from a duplicate of one already standing.
+    - **WHAT RUN 33469897876 DID NOT PROVE, AND MUST NOT BE READ AS CLOSING WITH IT.** The
+      `#error` arm of each shim is **still unfalsified**. That mutant exercised the `#if` only;
+      it never removed the `PrivateDefinitions.Add` call, which is the ONLY condition that fires
+      the `#error`. Two consecutive `strat-integration-reviewer` passes said so explicitly.
+      **Discharged by** a build over a tree with that `PrivateDefinitions.Add` line removed, seen
+      to stop on the `#error` itself rather than on the `LNK2019` the `#error` exists to
+      forestall.
+    - **AND THE `+54` ABOVE IS NOW STALE -- STAMPED HERE RATHER THAN CORRECTED IN PLACE.** That
+      CI step is no longer uncommitted: it is **committed in `7713c6c`**, and it is now `+60`,
+      not `+54`. It grew after the sentence above was written, by the `id: build_editor` line,
+      the `if:` condition, and a correction to a false historical claim. It is still NOT this
+      lane's write and is still recorded by its owner in their own file -- see `global.md`. A
+      reader chasing a `+54` in `.github/workflows/build-and-suite.yml` will find nothing that
+      matches it, which is why the figure is stamped instead of left standing.
+    - **PROVENANCE, AND WHICH HALF THIS LANE RE-MEASURED RATHER THAN TOOK ON DELIVERY.** This
+      lane did not push `probe/ci-game-target-red`, did not dispatch the workflow and did not
+      delete the branch; that run was made outside this lane. **The step outcomes above were
+      then re-read here from the GitHub API rather than transcribed from the delivery** --
+      `gh run view 33469897876 --json ...` returns `headBranch` `probe/ci-game-target-red`,
+      `headSha` `b5e41022aabb532e3d753cff8ce06e38b21c3736`, `event` `workflow_dispatch`,
+      `conclusion` `failure`, and exactly one `failure` among fourteen steps, on *build the
+      Stratocracy Game target*, with *build StratocracyEditor*, *run the automation suite* and
+      *gate the exported suite report* all `success`. **What was NOT re-measured here is the
+      linker text**, which is quoted from the delivery and not from the run's own log; a reader
+      wanting it first-hand has the run ID and the failing step's name.
+    - **DISCHARGED 2026-09-01, LATER THE SAME DAY. THE CAVEAT IMMEDIATELY ABOVE IS STAMPED AND
+      NOT DELETED**, because it is an accurate record of what this stamp rested on when it was
+      first written; only its linker half has since moved from delivered to measured. The
+      `coordinator` handed this lane the failing step's log and said in terms not to take it on
+      their word, so it was re-fetched here rather than pasted:
+      `gh run view 33469897876 --log-failed` returns 27,806 bytes.
+    - **THE RUNNER PATH IS THE LOAD-BEARING LINE, AND IT IS WHY THE CAVEAT WAS WORTH LEAVING
+      OPEN.** The `LNK1169` line names
+      `E:\actions-runner\_work\stratocracy\stratocracy\Binaries\Win64\Stratocracy.exe`.
+      **This entry's own in-place mutant produced the SAME NINE SYMBOLS on this box**, so the
+      nine `LNK2005` lines alone are indistinguishable from this lane re-quoting its own local
+      output back to itself; the runner path is the only token in the payload that fixes the
+      text to CI. A quote that cannot be distinguished from its reader's own prior measurement
+      is not corroboration.
+    - **HOW IT WAS COMPARED, AND THE CONTROL FIRST.** The twelve diagnostic lines were checked
+      against the handed-over text by `diff` rather than by eye -- **EXACT MATCH, 12 of 12 lines
+      identical** -- over the nine `LNK2005` symbols (`axialToOffset`, `hexDistance`, `hexEqual`,
+      `hexLess`, `inBounds`, `neighborCandidate`, `neighbors`, `offsetToAxial` and
+      `sortCanonical`), the `LNK1169`, the `Result: Failed (OtherCompilationError)` label and the
+      Game-target exit code of 6. **The instrument was shown able to speak before its silence was
+      read as agreement:** a control copy with `LNK1169` altered to `LNK9999` was reported as
+      differing.
+    - **AND THE LOG CARRIES A SECOND, INDEPENDENT READING OF THE `success` ROWS.** Across the
+      whole `--log-failed` payload there is **exactly ONE step name**,
+      `build the Stratocracy Game target`. That no other step failed is therefore established
+      twice by two different instruments -- once from the API's step list, once from the failed
+      log's own contents -- which is the claim the three green rows above depend on. (Noted for
+      the next reader: `--log-failed` worked here, against a standing expectation on this box
+      that it does not.)
+    - **AND THE RUN'S OWN CLOCK IS WHY THESE STAMPS ARE DATED 2026-09-01 AND NOT 2026-08-31.**
+      `createdAt` is `2026-09-01T04:27:16Z`, which on this box's local time is 2026-09-01
+      00:27 -- so the local date rolled over before the measurement, and the usual hazard here
+      (a UTC log stamp dragging an entry a day forward, which the parent entry itself calls out
+      about `reportCreatedOn`) runs the OTHER way this time. The date is taken from local time
+      and agrees with UTC by coincidence rather than by transcription.
 
 - **2026-08-31, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, in worktree
   `E:/MultiAgent/Strat-wt/slot-2` on `feat/w8-transient-receipts`, base `c754342`, lane commit

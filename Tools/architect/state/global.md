@@ -11,6 +11,49 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-01 (THE PROJECT PACKAGES FOR WINDOWS, AND THE HEADLINE IS THAT ITS THREE
+BLOCKING DEFECTS WERE ALL INVISIBLE TO A GREEN EDITOR BUILD AND A GREEN SUITE -- THE GAME
+TARGET HAD SIMPLY NEVER BEEN BUILT. Written by the `coordinator`, whose file this is. THE CODE
+AND CONFIG FIXES ARE THEIR OWN LANES' AND WERE WRITTEN BY THOSE AGENTS THEMSELVES IN LANE --
+`strat-gameplay-engineer` in `engine.md`, `strat-test-author` in `tests.md`,
+`strat-data-steward` in `data.md`. This block claims only the banner and the two files no crew
+lane owns, `.github/` and `.agents/`, which the `coordinator` wrote directly as it does for the
+architecture note. Nothing here invokes the transcription clause, the editor-driver clause or
+the in-session clause.
+DATED 2026-09-01 THOUGH THE COMMIT IS `Mon Aug 31 23:54:22 2026` LOCAL: the pass crossed local
+midnight, and its last two measurements -- the CI falsifiability run and these record writes --
+are 2026-09-01 local. The date is the pass's, not the commit's, and the split is named here so
+a reader meeting `7713c6c`'s August timestamp is not left to reconcile it alone.
+The suite is now **347/347**, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of this tree agrees at 347.
+NO SUITE WAS RUN IN THIS PASS AND THE FIGURE IS THEREFORE UNMOVED -- it is carried forward from
+the block below, which cites the same report, because the live figure belongs in the topmost
+block and a carried figure with no stated provenance is the shape this record has been caught
+by before.
+WHAT LANDED, in `7713c6c`, pushed, CI green on that commit. Three defects, each first exposure
+of a path the project had never executed rather than a regression: nothing staged `Data/`, so a
+packaged match start would have refused with `scenario file unreadable`; `UEnum::HasMetaData`
+is editor-only and stopped the Game target at `C2039`; and the vendored rules linked twice in a
+MONOLITHIC target -- 110 x `LNK2005` then `LNK1169` -- while a MODULAR editor build puts the two
+copies in two DLLs that never meet a linker. A Development and a Shipping Win64 package were
+archived, and the Development one was RUN: it logged `Match live: seeded from`
+`'E:/MultiAgent/Stratocracy-Package/Windows/Stratocracy/Data/ferrum_crossing.json' ... 99 hexes`
+`and 10 units on screen` -- a path inside the package, so it read the staged copy.
+THE NEW CI STEP HAS BEEN WATCHED GOING RED, WHICH IS THE PART WORTH READING. A green gate
+proves it executes, not that it discriminates. Run **33469897876**, dispatched on throwaway
+branch `probe/ci-game-target-red` (since deleted; `master` untouched) carrying one mutation --
+`Hex.strat.cpp`'s `#if STRAT_VENDORED_RULES_IN_BRIDGE` forced to `#if 1` -- failed
+`build the Stratocracy Game target` with 9 x `LNK2005` then `LNK1169`, WHILE
+`build StratocracyEditor`, `run the automation suite` and `gate the exported suite report` ALL
+PASSED. That green-while-red pattern is the blind spot demonstrated rather than argued: the
+mutant is a literal no-op in a modular build, so no clause could ever have seen it. The full
+account, and the two debts this does NOT close, are in the topmost `## NEXT` entry.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the builds,
+the packages and the packaged-binary run behind this block were performed in
+`E:/MultiAgent/Stratocracy` on branch `master` on this developer box, and the archives live
+OUTSIDE the repo at `E:/MultiAgent/Stratocracy-Package` and `...-Package-Shipping`, which no
+checkout contains and no sweep can reach. The CI runs are the runner's own.]**)
+
 _Last run 2026-08-31 (W8'S TWO BUILT ITEMS ARE MERGED, AND THE HEADLINE IS THAT TWO OF THE
 WAVE'S MUTANTS SURVIVED FOR A REASON NO FIXTURE COULD FIX -- THE CLAIMS THEY TEST ARE TRUE OF THE
 SOURCE AND INVISIBLE IN EVERY OUTPUT. Written by the `coordinator`, whose file this is, and this
@@ -19,8 +62,12 @@ entry claims only the banner: the code is `strat-gameplay-engineer`'s lane and t
 lane, in this tree, after the merge. Nothing here invokes the transcription clause, the
 editor-driver clause or the in-session clause: there WAS a lane topology, and the work went
 through it.
-The suite is now **347/347**, every entry Success, zero failed, zero notRun,
-zero succeededWithWarnings, and the macro census of this tree agrees at 347.
+**[STAMPED 2026-09-01 -- SUPERSEDED BY THE BANNER ABOVE, WHICH CARRIES THIS RECORD'S LIVE
+FIGURE. Kept rather than deleted, which is this record's convention. The figure did not
+MOVE: no suite was run in the pass above, and both blocks cite the same report. What moved
+is which block is live.]**
+The suite was **347/347** at that pass, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of that tree agreed at 347.
 THE COUNT MOVED 321 -> 347 ACROSS TWO MERGES BY SET DIFFERENCE ON
 `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 26, REMOVED 0 -- both sides collected by one function.
 Each lane measured +13 IN ITS OWN TREE and neither lane's 334 was ever the merged figure; the
@@ -86,7 +133,7 @@ carry the income receipt's RATE-VOICED COPY OBLIGATION -- measured, zero occurre
 "+8 / turn" and never "+8 Fame", because the receipt carries the STANDING RATE and is
 deliberately not suppressed on turn 1; the `KillFame` arm carries no such obligation, since its
 number was actually awarded.
-THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn 2026.09.01-03.15.35`
+THE REPORT BEHIND THE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn 2026.09.01-03.15.35`
 -- UTC, which is 2026-08-31 23:15 local, and this entry is dated by the local day as the record
 always is -- 347 entries, 347 succeeded, 0 failed, 0 notRun, 0 succeededWithWarnings, read from
 the exported report rather than from the log, by `strat-gameplay-engineer` after the Game-target
@@ -3428,6 +3475,77 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-09-01, COORDINATOR (ACTING AND WRITING) -- THE PROJECT PACKAGES FOR WINDOWS, AND CI
+  NOW BUILDS THE GAME TARGET, WHICH HAS BEEN WATCHED GOING RED RATHER THAN ONLY GOING GREEN.**
+  Landed in `7713c6c`, pushed, and CI green on that commit. THE PASS CROSSES LOCAL MIDNIGHT and
+  is dated by its end rather than its commit: `7713c6c` is `Mon Aug 31 23:54:22 2026` local,
+  while the falsifiability run below and these record writes are 2026-09-01 local. Named because
+  a reader meeting that August commit timestamp is otherwise left to reconcile it alone. `.github/` and `.agents/` are owned
+  by NO crew lane, which is why the `coordinator` both acted and wrote here; the three code and
+  config fixes are their own lanes' and are recorded in `engine.md`, `tests.md` and `data.md`
+  by those agents themselves, not restated here. This entry claims only the CI step and the
+  packaging status. No suite figure is stated in this bullet -- the banner above owns it.
+  - **WHY IT EXISTED TO BE FOUND.** The Game target had never been built in this project. Its
+    three blocking defects were each invisible to a green editor build: nothing staged `Data/`
+    so a packaged match start would refuse; `UEnum::HasMetaData` is editor-only; and the
+    vendored rules link twice in a MONOLITHIC target while a MODULAR editor build puts the two
+    copies in two DLLs that never meet a linker.
+  - **THE GATE DISCRIMINATES, AND THIS IS THE MEASUREMENT RATHER THAN THE INTENTION.** A green
+    step proves it executes, not that it can fail. GitHub Actions run **33469897876**,
+    `workflow_dispatch` on throwaway branch `probe/ci-game-target-red` (commit `b5e4102`, since
+    DELETED locally and on the remote -- `master` was never touched, and `on.push.branches` is
+    `[master]` only, so this had to be dispatched deliberately). One mutation:
+    `Source/StratBridge/Vendored/Hex.strat.cpp`, `#if STRAT_VENDORED_RULES_IN_BRIDGE` -> `#if 1`.
+    `build the Stratocracy Game target` FAILED with 9 x `LNK2005` (`Hex.strat.cpp.obj ... already
+    defined in Hex.good.cpp.obj`) then `LNK1169`, `Result: Failed (OtherCompilationError)`, and
+    `Build.bat exit code (Game target): 6`.
+  - **THE GREEN ROWS ARE THE LOAD-BEARING HALF.** In that same run `build StratocracyEditor`,
+    `run the automation suite` and `gate the exported suite report` ALL PASSED while the Game
+    target was unlinkable, because `STRAT_VENDORED_RULES_IN_BRIDGE` is 1 in a modular build and
+    the mutant is a literal no-op there. A step that reddens while every other step stays green
+    is the blind spot demonstrated rather than argued. HAD THE SUITE REDDENED TOO, the step
+    would have been redundant and this probe would have proved something much weaker.
+  - **UBT LABELS A PURE LINK FAILURE `Result: Failed (OtherCompilationError)`** -- observed on
+    the runner, not only on the developer box. The workflow's own comment warns the next reader
+    not to narrow its string match to anything that trusts that label.
+  - **WHAT THE PACKAGE WAS OBSERVED DOING, since a build result is not a run.** The Development
+    archive was launched into `Lvl_FerrumCrossing` and logged `Match live: seeded from
+    'E:/MultiAgent/Stratocracy-Package/Windows/Stratocracy/Data/ferrum_crossing.json' ... 99
+    hexes and 10 units on screen` -- a path INSIDE the package, so it read the staged copy and
+    not the source tree.
+  - **TWO THINGS REMAIN OPEN AND ARE NAMED RATHER THAN LEFT TO BE FOUND.** (1) The `#error` arm
+    of each shim is UNFALSIFIED: run 33469897876's mutant proved the `#if`, and never removed
+    the `PrivateDefinitions.Add` line, which is the only condition that fires the `#error`.
+    `strat-integration-reviewer` named this across two passes. (2) SHIPPING'S SCENARIO LOAD IS
+    UNVERIFIED. A Shipping package builds, stages `Data/` byte-identical, launches and stays up,
+    but that configuration compiles logging out. The control for the absence: the same probe
+    returns a real log for the Development build, and Shipping creates an EMPTY `Logs/`
+    directory under `%LOCALAPPDATA%`, so the missing log is stripped logging and not a failed
+    run. Discharged by a look at the running window, which no log can substitute for.
+  - **TWO LITERAL CONTROL BYTES WERE FOUND IN THIS FILE AND REPAIRED, AND THEY WERE NOT WRITTEN
+    IN THIS PASS.** A byte scan before committing found two `0x08` BACKSPACE bytes, present in
+    `HEAD` as well at shifted offsets, inside an older `## NEXT` bullet: the `bridge_event_list`
+    probe read `` `<BS>FStratEvent<BS>` `` where the author plainly wrote the grep pattern
+    `` `\bFStratEvent\b` ``. A shell heredoc ate the escapes at write time and left the
+    control characters behind. Repaired at byte level to the two literal characters, with the
+    replacement asserted unique and the file re-scanned to zero control bytes; NO CLAIM CHANGED,
+    only unreadable bytes. RECORDED RATHER THAN DONE SILENTLY because it edits a historical
+    entry, which this record otherwise stamps rather than rewrites -- the exception is that a
+    corrupt byte is not a claim to be stamped, it is damage to be undone.
+    THE SAME FAILURE HAPPENED AGAIN DURING THIS PASS, WHICH IS WHY THE SCAN WAS RUN AT ALL:
+    `strat-gameplay-engineer` wrote a BEL byte into `engine.md` through a quoted heredoc
+    (`E:\actions-runner` -> `E:<BEL>ctions-runner`), caught it from an incidental Python
+    `SyntaxWarning` rather than from a check it had designed, and repaired it. Its own note is
+    that with only invalid escapes there would have been NO warning and it would have shipped.
+    The standing lesson both halves confirm: write a patch script with a real file, never a
+    heredoc.
+  - **A CLAIM THIS SEAT WROTE AND ANOTHER AGENT FALSIFIED.** The CI step's comment first
+    asserted `the first time this project ever built its Game target` as measured fact. It was
+    an explicitly unverified impression passed down in a dispatch brief, and it came back as a
+    finding from `strat-gameplay-engineer`. The comment now states only the errors that were
+    observed and says the history is NOT claimed and cannot be settled from a checkout --
+    `Binaries/` and `Intermediate/` are untracked, so the evidence a prior build would have left
+    is exactly the evidence git does not keep.
 - **2026-08-30, COORDINATOR (ACTING AND WRITING) -- CI NOW BUILDS AND RUNS THE SUITE, AND IT
   COULD NOT RUN UNTIL A SELF-HOSTED RUNNER EXISTED. **[STAMPED 2026-08-30, LATER THE SAME DAY:
   ONE IS REGISTERED AND ONLINE -- see the closing bullet of this entry, which carries the
@@ -6227,7 +6345,7 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
       census returns forty-three. The direction does not matter and the lesson is the one already
       on the books: a count in a report is a claim, and the tree is the authority over it.
   - **`bridge_event_list` RENDERS "(actionable)" AND IS NOT ACTIONABLE ON THIS SIDE AT ALL.** Its
-    probe is `FStratEvent` and answers NO correctly -- `grep -rn "FStratEvent" Source/`
+    probe is `\bFStratEvent\b` and answers NO correctly -- `grep -rn "FStratEvent" Source/`
     returns ZERO. What is wrong is the word "actionable" hung on that NO. **THE RULES MODULE
     DEFINES NO EVENT TYPE**, here or upstream, and Sec 4.9's own Determinism line reads "the
     bridge never reorders, drops, or synthesizes events" -- so the bridge may not manufacture the

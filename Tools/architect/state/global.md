@@ -86,20 +86,39 @@ carry the income receipt's RATE-VOICED COPY OBLIGATION -- measured, zero occurre
 "+8 / turn" and never "+8 Fame", because the receipt carries the STANDING RATE and is
 deliberately not suppressed on turn 1; the `KillFame` arm carries no such obligation, since its
 number was actually awarded.
-THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn 2026.09.01-00.02.33`
--- UTC, which is 2026-08-31 20:02 local, and this entry is dated by the local day as the record
+THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn 2026.09.01-03.15.35`
+-- UTC, which is 2026-08-31 23:15 local, and this entry is dated by the local day as the record
 always is -- 347 entries, 347 succeeded, 0 failed, 0 notRun, 0 succeededWithWarnings, read from
-the exported report rather than from the log. THAT STAMP SUPERSEDES `2026.08.31-23.38.07`, which
-the `coordinator` measured on the same bytes and which a verification re-run overwrote; the
-earlier report no longer exists on disk. `Tools/architect/gate_reports/2026-08-31-w8-lanes.md`
-carries that dead stamp SUPERSEDED IN PLACE rather than deleted, and names the live one -- so a
-reader meeting it there is not being sent to fix something already fixed. **[THIS SENTENCE IS
-THE CORRECTION OF AN UNDER-CLAIM THE RECORD GATE CAUGHT IN ITS FIRST DRAFT, WHICH SAID ONLY
-THAT THE REPORT `still cites it`. That was literally true and materially misleading: it named
-a rot without naming its repair, in the same pass that made it. An under-claim sends the next
-reader to redo work that is done, which is the mirror of a stale over-claim and is recorded
-here because this record has been caught by the over-claim shape far more often and may be
-under-weighting this one.]**
+the exported report rather than from the log, by `strat-gameplay-engineer` after the Game-target
+link fix of the 2026-08-31 packaging pass.
+THAT IS THE THIRD STAMP ON THE SAME 347, AND ALL THREE ARE NAMED RATHER THAN OVERWRITTEN. The
+`coordinator` measured `2026.08.31-23.38.07`; a verification re-run replaced it with
+`2026.09.01-00.02.33`; the link fix's own re-run replaced THAT with the live stamp above. The
+report path is single and every run truncates it, so only the newest exists on disk and the two
+older stamps are citable as history and never as evidence -- which is the whole reason each is
+named here instead of being quietly replaced.
+ONE CITATION OF A DEAD STAMP WAS OPEN HERE, AND IT IS NOW CLOSED -- STAMPED RATHER THAN REWRITTEN,
+so the sequence stays readable. `Tools/architect/gate_reports/2026-08-31-w8-lanes.md` carried
+`2026.08.31-23.38.07` SUPERSEDED IN PLACE, correctly, while its own "the live report is now" line
+still named `2026.09.01-00.02.33` -- which this entry had just made dead in turn. That file is the
+steward's lane and not mine, so the debt was recorded here and dispatched rather than reached into.
+**[CLOSED 2026-08-31 by `strat-data-steward`. That file now carries a SECOND superseded block naming
+`reportCreatedOn 2026.09.01-03.15.35` -- 347 succeeded, 0 failed, 0 notRun, 0 succeededWithWarnings
+-- which the steward read out of `Saved/AutomationReport/index.json` itself rather than taking this
+entry's figure on trust. Both dead stamps remain on that page, superseded in place and not deleted,
+because a reader arriving at a removed citation cannot tell a repair from an omission. The steward's
+own account of the edit is in `data.md`. THIS PARAGRAPH IS LEFT STANDING RATHER THAN CUT: it is the
+only place the record says why the debt existed at all, and a closed debt with no history reads as
+one that was never owed.]**
+**[HISTORICAL, AND KEPT BECAUSE THE LESSON OUTLIVES THE SENTENCE IT WAS ATTACHED TO. The
+paragraph above was rewritten on 2026-08-31 when a third report stamp superseded the second,
+so the wording this note was first written against is gone; it is restated flat here rather
+than left dangling after replacement text it does not describe. WHAT IT RECORDED: an earlier
+draft of the replaced paragraph said only that the gate report `still cites it`. That was
+literally true and materially misleading -- it named a rot without naming the repair made in
+the same pass. An under-claim sends the next reader to redo work that is done, which is the
+mirror of a stale over-claim, and is recorded because this record has been caught by the
+over-claim shape far more often and may be under-weighting this one.]**
 **[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the builds,
 the mutant rounds and the suite runs behind the figure above were performed in
 `E:/MultiAgent/Stratocracy` on branch `master` and in the two lane worktrees under

@@ -15,6 +15,134 @@
 
 ## NEXT
 
+- **DONE, 2026-08-31 -- the project's `ProjectName` no longer reads the template's name, and a
+  dead gate-report citation is corrected in place.** Working tree: `E:/MultiAgent/Stratocracy`,
+  branch `master`, base HEAD `2592276`.
+  **THE EDIT, `Config/DefaultGame.ini`, line 3.** Was `ProjectName=Top Down Game Template`, now
+  `ProjectName=Stratocracy`. CRLF preserved (15 `\r\n` before and after, verified by byte count).
+  **KEY CHOSEN, AGAINST THE ALTERNATIVES, READ FROM THE ENGINE SOURCE, NOT GUESSED.**
+  `UGeneralProjectSettings` (`C:/Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/
+  EngineSettings/Classes/GeneralProjectSettings.h`) declares `ProjectName` as "The project's
+  non-localized name" — the one field this task's own evidence (two archived Win64 packages
+  carrying the template's name) points at. It also declares a SEPARATE
+  `ProjectDisplayedTitle` ("The project's title as displayed on the window title bar") under
+  `Category=Displayed`, plus `CompanyName`, `ProjectVersion`, `Description`, `Homepage`,
+  `CopyrightNotice`, `LicensingTerms`, `PrivacyPolicy`, `SupportContact`. None of these appear in
+  `Config/DefaultGame.ini` today (absent = engine default, empty string), and none is touched by
+  this edit. `ProjectDisplayedTitle` in particular falls back to `ProjectName` when unset, per the
+  engine's own convention for that field, so this one edit already reaches the window-title case
+  without inventing a value for a field the user did not name. `CompanyName`, a version string, a
+  description and the rest are all editorial/business decisions this agent has no brief for and
+  is not this agent's call — left alone, stated here rather than silently defaulted.
+  **NOT VERIFIED FROM A CHECKOUT:** whether the already-archived Development/Shipping packages
+  need to be re-packaged to pick this up — packaging was not re-run by this agent, per its own
+  lane; that is the user's or the editor-builder's next step if a corrected archive is wanted.
+  **GATE REPORT CITATION, `Tools/architect/gate_reports/2026-08-31-w8-lanes.md`.** The
+  `2026.09.01-00.02.33` stamp this file's own idiom had already superseded once was itself dead —
+  `strat-gameplay-engineer`'s post-link-fix suite re-run overwrote `Saved/AutomationReport/` a
+  second time. Verified myself, not taken on the dispatch prompt's figure: read
+  `Saved/AutomationReport/index.json` directly with `utf-8-sig` —
+  `reportCreatedOn='2026.09.01-03.15.35'`, `succeeded=347`, `succeededWithWarnings=0`, `failed=0`,
+  `notRun=0`, matching the brief exactly. Added a second `[SUPERSEDED 2026-08-31 ...]` block
+  after the first one, in the same idiom (stamped in place, old text kept, new stamp naming the
+  live report and who read it), rather than editing the dead stamp in place. LF line endings
+  preserved (205 `\n`, 0 `\r\n`, before and after). Full detail, the exact before/after text and
+  the banner-sweep sweep this pass ran, is in this agent's own dispatch report; not restated here
+  beyond what a future reader of this record needs to find the edit.
+  **BANNER SWEEP.** `python Tools/architect/strat_banner_sweep.py` printed `SWEEP CLEAN`, exit 0,
+  both before and after both edits above — the automation-report line in its own printed summary
+  moved from nothing-yet-observed to `347 entries, all Success (2026.09.01-03.15.35)`, matching
+  the report read directly.
+  **`global.md` NEEDS AN EDIT THIS AGENT DOES NOT MAKE**, per its own lane boundary: the sentence
+  citing the dead `2026.09.01-00.02.33` gate-report debt should be stamped superseded and point at
+  this entry and at the gate report's own second `[SUPERSEDED ...]` block, now correcting to
+  `2026.09.01-03.15.35`. Left to the `coordinator`, stated here rather than silently assumed done.
+
+- **DONE, 2026-08-31 -- packaged Win64 builds can now read `Data/ferrum_crossing.json` at
+  runtime, via a new `[/Script/UnrealEd.ProjectPackagingSettings]` stanza in
+  `Config/DefaultGame.ini`.** Working tree: `E:/MultiAgent/Stratocracy`, branch `master`, HEAD
+  `2592276`. The read site (measured, not assumed by this entry -- named in the dispatch and
+  independently re-read here): `FStratBridge::LoadScenarioFromFile`
+  (`Source/StratBridge/StratBridge.cpp`) calls `FFileHelper::LoadFileToString` against a full
+  path built by two callers named `ResolveScenarioPath`
+  (`Source/StratPlay/StratMatchSubsystem.cpp`, `Source/StratUI/StratScoreboardHUD.cpp`) as
+  `FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectDir(), Configured))`, and the
+  configured string `Data/ferrum_crossing.json` lives as a Blueprint default on
+  `BP_StratGameMode` and `BP_StratGameMode_AiVsAi` (confirmed by grepping printable ASCII runs
+  out of the raw `.uasset` bytes -- a `.uasset` cannot be read any other way from a checkout, and
+  this entry does not claim to have opened it in the editor). `Config/` before this edit had NO
+  `ProjectPackagingSettings` section anywhere (`grep -rn "ProjectPackagingSettings" Config/`
+  returned nothing, confirmed live with a printed sentinel rather than trusting silent grep).
+  **THE EDIT, `Config/DefaultGame.ini`.** Appended a new section after the existing
+  `[ConsoleVariables]` block (was absent; now present):
+  ```
+  [/Script/UnrealEd.ProjectPackagingSettings]
+  +DirectoriesToAlwaysStageAsNonUFS=(Path="../Data")
+  ```
+  **MECHANISM CHOSEN AND WHY, AGAINST THE ALTERNATIVES.** `UProjectPackagingSettings` (engine
+  header `Developer/DeveloperToolSettings/Classes/Settings/ProjectPackagingSettings.h`, read at
+  `C:/Program Files/Epic Games/UE_5.8/...`, this project's registered engine per the `.uproject`'s
+  `EngineAssociation: "5.8"`) is `UCLASS(config=Game, defaultconfig)`, so it reads from
+  `DefaultGame.ini`, not `DefaultEngine.ini` -- confirmed by reading the `UCLASS` line, not
+  assumed from the property's editor category. Two array properties exist for staging files
+  outside `Content/`: `DirectoriesToAlwaysStageAsUFS` (packed into the `.pak`) and
+  `DirectoriesToAlwaysStageAsNonUFS` (copied as real loose files, never pak'd -- the engine's own
+  comment in `CopyBuildToStagingDirectory.Automation.cs` says exactly that: "NonUFS files are
+  never in pak files and should always be remapped"). Chose NonUFS because
+  `FFileHelper::LoadFileToString` is a raw platform-file read against an absolute path this
+  project computes itself; NonUFS guarantees the byte in question exists as an ordinary file on
+  disk at the resolved path with no dependency on how the pak virtual filesystem chooses to remap
+  a directory that was never under `Content/`, which is the more conservative choice for a read
+  path that already fails loudly (`scenario file unreadable at %s`) rather than silently. Both
+  properties are documented `RelativeToGameContentDir`; read the automation-tool source rather
+  than assume that meant "must live under Content" --
+  `StageAdditionalDirectoriesFromConfig` (`CopyBuildToStagingDirectory.Automation.cs:817-856`)
+  resolves the configured path with `DirectoryReference.Combine(ProjectContentRoot, RelativePath)`
+  and mirrors it into the stage tree with `StagedDirectoryReference.Combine(StageContentRoot,
+  RelativePath)`, so `"../Data"` resolves to the project root's `Data/` folder (a sibling of
+  `Content/`, confirmed by `ls`) and stages to the SAME relative position under the staged
+  project root -- exactly where `FPaths::ProjectDir()` resolves at runtime in a packaged,
+  non-editor build.
+  **WHAT WAS STAGED: THE WHOLE `Data/` DIRECTORY, NOT A SUBSET, AND WHY.** The measurement handed
+  to this agent showed only `ferrum_crossing.json` is proven needed by a runtime call site; the
+  three CSVs are read only by an editor commandlet (`ImportStratDataCommandlet.cpp`, never in a
+  packaged build) and `parity_fixture.save` only from `Tests/`. A directory-level NonUFS entry
+  has no per-file filter, so staging only the JSON would mean naming individual files, which
+  breaks silently the next time someone adds a new runtime-read data file to `Data/` without
+  updating this ini -- the same "guard that types its own subject list stops covering the next
+  one added" lesson this record already carries (2026-08-19, the vendored-citation guard). The
+  CSVs and the fixture cost nothing at runtime (they are never opened by shipped code) and
+  staging the directory is the lower-maintenance, equally-correct choice; said here rather than
+  silently defaulted to.
+  **VERIFIED FROM A CHECKOUT, EACH CLAIM AGAINST ITS OWN SOURCE, NOT NARRATED.** (1) `UCLASS`
+  line read directly: `config=Game, defaultconfig` (line 178 of the header above). (2)
+  `FDirectoryPath`'s single field is named `Path`
+  (`Runtime/CoreUObject/Public/UObject/SoftObjectPath.h:757-768`) -- confirms the ini array
+  syntax `(Path="...")`. (3) `ConfigHierarchyType.Game` (used to build `PlatformGameConfig` in
+  the automation script, five call sites grepped) includes `DefaultGame.ini` per the engine's own
+  config hierarchy -- this is the standard UE config-layer fact, not independently re-derived
+  from the .cs file, and is flagged as such. (4) `Data/` sits directly beside `Content/` at
+  project root (`ls E:/MultiAgent/Stratocracy/` lists both), so `"../Data"` from
+  `ProjectContentRoot` lands exactly on it. (5) CRLF preserved: `Config/DefaultGame.ini` was
+  CRLF before the edit (hex-dumped, `0d0a` throughout) and the new lines were written with the
+  same terminator (hex-dumped after the edit, `0d0a` at every line end including the two new
+  ones).
+  **NOT VERIFIED FROM A CHECKOUT, STATED RATHER THAN ASSERTED.** This agent did not run
+  `RunUAT BuildCookRun` and did not confirm the staged output tree on disk -- the user has a
+  Win64 archive running against this same tree right now (started before this edit) and this
+  entry does not treat its output as evidence either way, per the dispatch's own instruction. So:
+  the config syntax and the resolution logic are read off the engine source and are correct as
+  read, but **no packaged build produced under this exact ini has actually been inspected for the
+  presence of `Data/ferrum_crossing.json` at the resolved path** -- that is the one thing this
+  entry cannot close from a checkout, and the user's own next run (started after this write) is
+  the way to close it.
+  **NOT RE-RUN THIS PASS, DELIBERATELY: the headless automation suite.** A `Config/`-only change
+  with no gameplay-code or asset dependency does not, on its own, change suite behaviour, and
+  starting a competing headless UE process on this box while the user's own `RunUAT` archive is
+  in flight risks resource contention on a run this agent was explicitly told not to interfere
+  with. Current suite status and its full provenance are `global.md`'s, not restated or
+  re-claimed here.
+
 - **DONE, 2026-08-30 -- `GameDefaultMap` and `EditorStartupMap` moved from the match map to the
   new title level, W6's last asset-tail item, ordinary in-lane `Config/` write, no exception
   needed.** Working tree: `E:/MultiAgent/Stratocracy`, branch `master`, HEAD `40609e7` (the W6

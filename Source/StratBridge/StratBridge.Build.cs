@@ -74,6 +74,69 @@ public class StratBridge : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
+		// THE VENDORED SOURCES ARE COMPILED HERE ONLY WHERE THE DLL BOUNDARY IS.
+		//
+		// The block at the top of this file explains why `Vendored/*.strat.cpp`
+		// exist: in a MODULAR build every module is its own DLL, the vendored
+		// sources carry no `_API` macro, and a cross-module `strat::` call cannot
+		// link -- 8 x LNK2019. Compiling them into this module deletes the boundary
+		// the call would have had to cross. That reason is a statement about the
+		// boundary, and it stops being true when the boundary does.
+		//
+		// A MONOLITHIC target links every module into one binary. There the shims
+		// are the defect rather than the fix, because `Stratocracy.Build.cs`
+		// depends on the `StratRules` MODULE -- for T-DATA-05's `Combat.h`, per its
+		// own comment -- so the twelve `*.good.cpp` are already compiled once as
+		// that module's objects, and the twelve shims compile them again. Both sets
+		// enter one `Stratocracy.exe`. Measured 2026-08-31, before this switch:
+		//
+		//     Build.bat Stratocracy Win64 Development
+		//       Ai.strat.cpp.obj : error LNK2005: "bool __cdecl
+		//       strat::buildPriorityLess(struct strat::UnitDef const &, struct
+		//       strat::UnitDef const &)" already defined in Ai.good.cpp.obj
+		//       ... 110 x LNK2005 ...
+		//       Stratocracy.exe : fatal error LNK1169: one or more multiply
+		//       defined symbols found
+		//
+		// UBT labels that run `Result: Failed (OtherCompilationError)`. It is a
+		// pure link failure -- every compile action succeeded -- and the label is
+		// not to be read as a compile diagnostic.
+		//
+		// So the shims switch off exactly where their reason is absent, and this
+		// module takes an ordinary dependency on `StratRules` in that build
+		// instead. One copy of the code either way; in monolithic it is the copy
+		// the vendored module was written to produce, compiled under
+		// `StratRules.Build.cs`'s own NoPCHs / bUseUnity=false / shadow-warning
+		// settings, which are the same three this file sets.
+		//
+		// WHAT WAS REJECTED, and why.
+		//   - Making `Stratocracy`'s `StratRules` dependency conditional instead
+		//     (keeping the shims as the single copy in every target). It works,
+		//     but it edits a module this milestone does not own, and it would have
+		//     to re-supply `Combat.h` to the parity harness as a bare include path
+		//     -- an include edge with no arrow behind it, in a module whose tests
+		//     name `strat::` types. Refused for blast radius, not because it fails.
+		//   - `IS_MONOLITHIC`, UBT's own global, answering the `#if` directly. That
+		//     leaves the dependency decision in this file and the compile decision
+		//     in twelve others, agreeing only by inspection. The definition below
+		//     comes from the SAME C# expression as the dependency, so the two
+		//     halves cannot drift apart; and each shim `#error`s on an ABSENT
+		//     definition rather than treating it as 0, so a future refactor that
+		//     drops it fails at compile in the modular build instead of at link.
+		//
+		// The dependency is PRIVATE. No public header of this module names a
+		// `strat::` symbol -- `StratBridge.h` is the only header that includes the
+		// vendored headers at all, and it is forbidden to any header declaring a
+		// UCLASS/USTRUCT/UENUM -- so a public arrow would re-export a link-line
+		// entry no dependent could use. `PublicIncludePaths` below already carries
+		// the include half, in both link types, and is untouched by this.
+		bool bCompileVendoredRulesHere = Target.LinkType != TargetLinkType.Monolithic;
+		PrivateDefinitions.Add("STRAT_VENDORED_RULES_IN_BRIDGE=" + (bCompileVendoredRulesHere ? "1" : "0"));
+		if (!bCompileVendoredRulesHere)
+		{
+			PrivateDependencyModuleNames.Add("StratRules");
+		}
+
 		// The vendored headers, by short name. This is a PUBLIC include path because
 		// the game module's T-DATA-05 parity pass includes `Combat.h` to compare
 		// EUnitType against the real `strat::UnitType`, and it reaches it through a

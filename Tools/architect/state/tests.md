@@ -14,6 +14,63 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-31 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
+  only -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `2592276`, UNCOMMITTED
+  at the time of writing) -- THE WIN64 **GAME** TARGET AND WHAT `Tests/` COULD AND COULD NOT FIX.
+  ONE FILE GUARDED; THE REMAINING GAME-TARGET FAILURE IS NOT IN THIS LANE.**
+  - **WHAT WAS CHANGED, AND THE PROOF IT WEAKENED NOTHING.**
+    `Source/StratUI/Tests/StratMatchResultModelClauses.cpp` is now wrapped `#if WITH_EDITOR` /
+    `#endif`, from just after its last `#include` to the last line. `git diff --stat` on that
+    file reads **30 insertions and 0 deletions** -- the guard and its prose block and nothing
+    else -- so no clause byte moved. All six clause names the file declares
+    (`Stratocracy.StratUI.T-UI-03.*`) were confirmed present and `Success` in the exported
+    report after the change, by set-membership against `Saved/AutomationReport/index.json`
+    rather than by eye. **No suite figure, count move or verdict is stated in this file;**
+    `global.md` owns all three and this entry links to it rather than restating any.
+  - **WHY `WITH_EDITOR` AND NOT `WITH_METADATA` ON THE TWO CALL SITES.** The failing construct
+    is `UEnum::HasMetaData` inside the file-local `AllTiers()` and `AllCauses()`, which filter
+    `Hidden` enumerators off `StaticEnum<>()`. Guarding just those calls needs an `#else` arm
+    that derives the enumerator set a second way -- a second implementation of the filter,
+    living in the one target where no clause here runs and where therefore no gate covers it.
+    `WITH_EDITOR` is the predicate `EAutomationTestFlags::EditorContext` already asserts, and it
+    is 1 for `StratocracyEditor`, so the guard is inert on the editor suite BY CONSTRUCTION and
+    not merely by inspection. **What the guard does NOT pin:** nothing. It is not a clause and
+    it certifies no behaviour; it removes a translation unit from a target that could never have
+    run it.
+  - **WHY THE GUARD WAS NOT APPLIED TO THE OTHER SIXTY-NINE TEST FILES, AND THE COST OF THAT.**
+    A blanket guard looks like a uniform no-op and is not one: six headers under
+    `Source/*/Tests/` (`StratGuidanceRouteDouble.h`, `StratGuidanceRouteProbe.h`,
+    `StratMatchResultHostDouble.h`, `StratMatchResultHostProbe.h`,
+    `StratProductionMenuHostDouble.h`, `StratProductionMenuHostProbe.h`) declare `UCLASS`
+    doubles that UHT parses and that other modules include and link across a module boundary --
+    `StratPlay/Tests/StratMatchResultTrigger.cpp` includes `Tests/StratMatchResultHostProbe.h`,
+    and two more do the same for the guidance-route and production-menu probes. **The cost is
+    stated rather than left to be discovered: the next editor-only engine API used in ANY other
+    test file reddens the Game target again, and nothing in this tree gates against that.**
+    Whether any CI job builds the Game target at all is **UNVERIFIED** -- I did not read the
+    workflow files -- so the sentence above is a statement about this tree's C++ gates and not
+    about the runner.
+  - **THE GAME TARGET STILL DOES NOT LINK, AND THE CAUSE IS OUTSIDE `Tests/` ENTIRELY. THIS IS
+    THE MOST REUSABLE THING HERE.** With the guard in place the compile step passes and the link
+    fails with **110 x `LNK2005`** and then `LNK1169`, each of the form
+    `Ai.strat.cpp.obj : error LNK2005: "... strat::buildPriorityLess(...)" already defined in
+    Ai.good.cpp.obj`. The twelve vendored rules translation units exist TWICE in this tree by
+    design -- `Source/StratRules/*.good.cpp` compiled as the `StratRules` module, and
+    `Source/StratBridge/Vendored/*.strat.cpp` compiled into `StratBridge` -- and the second copy
+    is the recorded fix for the 8 x `LNK2019` that `.agents/ue-project-context.md` describes.
+    **The editor target is MODULAR, so the two copies land in two different DLLs and the
+    duplication is invisible; the Game target is MONOLITHIC, so both sets of objects land in one
+    `Stratocracy.exe` and every `strat::` symbol is defined twice.** The architecture note's
+    "measured 8 x LNK2019" reasoning is stated only over the modular case, and this is the other
+    half of it. Fixing it needs a `.Build.cs` or module-registration change, which is not this
+    lane's and not this task's blast radius, so it was left standing and reported.
+  - **AN INSTRUMENT CAVEAT WORTH THE LINE.** `Build.bat` exits **6** on both failures above --
+    the `C2039` compile failure and the `LNK1169` link failure -- and **0** on the editor
+    success, so the exit code separates green from red but says nothing about which failure you
+    are looking at. Read `Result: Succeeded` / `Result: Failed (OtherCompilationError)` and the
+    linker's own lines. Both Game builds reported `Result: Failed (OtherCompilationError)`,
+    including the one whose only error was a LINK error.
+
 - **2026-08-31 (local), `strat-test-author` (ACTING and WRITING; IN LANE, in worktree
   `E:/MultiAgent/Strat-wt/slot-2` on `feat/w8-transient-receipts`, base `c754342`, lane commit
   `0a697c0`, MERGED TO `master` AS `ed09973`) -- W8 ITEMS (5) AND (6): THIRTEEN

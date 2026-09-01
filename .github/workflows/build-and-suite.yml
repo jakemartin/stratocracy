@@ -221,6 +221,7 @@ jobs:
       # future engine version changing its exit conventions turns into a red run rather than a
       # silent green.
       - name: build StratocracyEditor
+        id: build_editor
         shell: powershell
         run: |
           $build = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
@@ -294,6 +295,64 @@ jobs:
           }
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
+      # THE GAME TARGET, AND IT IS A DIFFERENT LINK RATHER THAN A SECOND OPINION ON THE SAME
+      # ONE. `StratocracyEditor` is MODULAR -- every module becomes its own DLL. `Stratocracy`
+      # is MONOLITHIC -- every module's objects enter one executable. That difference is not a
+      # build setting to be tidied away; it is the entire reason this step exists.
+      #
+      # The vendored rules sources are compiled TWICE, by design. `Source/StratRules/*.good.cpp`
+      # build as the `StratRules` module, which `Source/Stratocracy/Stratocracy.Build.cs` depends
+      # on; `Source/StratBridge/Vendored/*.strat.cpp` each `#include` those same twelve files so
+      # that `StratBridge` can call them without crossing a DLL boundary the vendored sources
+      # carry no `_API` macro to cross. Modular: the two copies land in two DLLs and never meet a
+      # linker together. Monolithic: they do.
+      #
+      # MEASURED 2026-08-31, on a Game-target build run while packaging: 110 x LNK2005 then
+      # LNK1169. At that same moment the editor build was green and the suite was 347/347.
+      # No step in this workflow could see it, and none would have.
+      #
+      # NOT CLAIMED: that this was the first Game-target build in the project's history. An
+      # earlier draft of this comment said so as though it were measured. It was not measured,
+      # and nothing in a checkout can settle it -- `Binaries/` and `Intermediate/` are not
+      # tracked, so the evidence a build would have left is exactly the evidence git does not
+      # keep. The 110 errors above are what was observed; the history is not.
+      #
+      # UBT REPORTS A LINK FAILURE AS `Result: Failed (OtherCompilationError)` -- measured on
+      # that run. The label says compilation; the failure was the linker. Do not narrow the
+      # string match below to anything that trusts that label.
+      #
+      # A SEPARATE LOG FILE, because `build.log` belongs to the editor step above and the upload
+      # step collects it by that name. Writing both here would leave whichever ran last and make
+      # the artifact silently ambiguous about which target it describes.
+      #
+      # WHAT THIS STEP DOES NOT COVER, said here so it is not over-trusted: it compiles and links
+      # ONLY. It does not cook, stage, or package, so it cannot see a cook- or stage-time defect
+      # -- the class that left the first packaged build unable to read `Data/ferrum_crossing.json`
+      # while every build in this workflow was green. A step that caught THAT would have to run
+      # `RunUAT BuildCookRun`, which is a far heavier job than this one.
+      - name: build the Stratocracy Game target
+        # RUNS EVEN WHEN THE SUITE WENT RED, AND THAT IS THE POINT. This target's failure
+        # mode is orthogonal to any clause -- the link collision above was found while the
+        # suite was 347/347 -- so letting a red suite skip it would reintroduce exactly the
+        # blind spot the step was added to close. It is still skipped when the EDITOR build
+        # failed, because then the tree is broken for both targets and a second failure
+        # would report the same defect twice under a different name.
+        if: always() && steps.build_editor.outcome == 'success'
+        shell: powershell
+        run: |
+          $build = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          $proj  = Join-Path $env:GITHUB_WORKSPACE 'Stratocracy.uproject'
+          & $build Stratocracy Win64 Development "-project=$proj" -waitmutex -NoHotReloadFromIDE |
+            Tee-Object -FilePath build-game.log
+          $code = $LASTEXITCODE
+          Write-Host "Build.bat exit code (Game target): $code"
+          if ($code -ne 0) { exit 1 }
+          if (-not (Select-String -Path build-game.log -Pattern '^Result: Succeeded' -Quiet)) {
+            Write-Host "Build.bat exited 0 but never printed 'Result: Succeeded'."
+            Write-Host "Refusing to treat that as a build: the two disagree and one of them is wrong."
+            exit 1
+          }
+
       # ALWAYS, INCLUDING ON RED -- a failing run is the one where the per-clause detail is
       # worth having, and this project has already lost a diagnosis to logs it could see the
       # conclusion of but not the cause.
@@ -305,5 +364,6 @@ jobs:
           path: |
             Saved/AutomationReport/**
             build.log
+            build-game.log
           if-no-files-found: warn
           retention-days: 14

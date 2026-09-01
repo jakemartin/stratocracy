@@ -24,7 +24,8 @@ The rules are *deterministic and headless*. The engine never decides an outcome;
 ## Modules and the arrows between them
 
 ```
-StratRules ──┐  (vendored; ALSO compiled into StratBridge as Vendored/*.strat.cpp)
+StratRules ──┐  (vendored; ALSO compiled into StratBridge as Vendored/*.strat.cpp,
+             │   IN MODULAR BUILDS ONLY — see "Hard constraints" below)
              │
 Stratocracy ─┴──▶ StratBridge ──▶ StratUI ──▶ StratPlay
                         └────────────────────────┘
@@ -36,7 +37,7 @@ Stratocracy ─┴──▶ StratBridge ──▶ StratUI ──▶ StratPlay
 |---|---|---|
 | `StratRules` | `Core` only | Vendored pure C++17 `namespace strat`. Zero engine deps. |
 | `Stratocracy` | Core, CoreUObject, Engine, InputCore, EnhancedInput, …, `StratRules` | Game module: UE template code + `StratData/` row structs and the import commandlet. |
-| `StratBridge` | Core, CoreUObject, Engine, **`Stratocracy`**; `StratRules` as a `PublicIncludePaths` entry only — an include edge, not a module dependency | `FStratBridge` — the only code that knows both worlds. Owns the authoritative `strat::GameState`. |
+| `StratBridge` | Core, CoreUObject, Engine, **`Stratocracy`**; `StratRules` as a `PublicIncludePaths` entry in EVERY target — an include edge — **PLUS a `PrivateDependencyModuleNames` link edge ON THE MONOLITHIC BRANCH ONLY**, added by `StratBridge.Build.cs` from `Target.LinkType != TargetLinkType.Monolithic`. Both branches are reasoned under "Hard constraints" below; do not derive this row for one link type and report the other as a violation | `FStratBridge` — the only code that knows both worlds. Owns the authoritative `strat::GameState`. |
 | `StratUI` | Core, CoreUObject, Engine, `StratBridge`; private UMG/Slate/SlateCore | The UMG surface and the reflected view model. |
 | `StratPlay` | Core, CoreUObject, Engine, `StratUI` public; **`StratBridge`, `UMG`, `EnhancedInput` private** | Gameplay actors, camera, input, the match subsystem. |
 
@@ -98,6 +99,27 @@ engine headers — so no other module can link a call to them.
 **Measured: 8 × `LNK2019` the first time the bridge tried** (recorded in `StratBridge.h`). The
 rules sources are therefore compiled *into* `StratBridge` via `Vendored/*.strat.cpp`, and the
 exported surface is `FStratBridge`, which was written to be exported.
+
+**AND THAT COMPILE-IN IS CONDITIONAL, WHICH IS NOT A DETAIL.** The reason above is a statement
+about a DLL boundary, so it stops holding when there is no boundary. A **Game target is
+monolithic**: every module's objects enter one executable, and the `StratRules` module's copy
+of the rules is already there because `Source/Stratocracy/Stratocracy.Build.cs` depends on it.
+Compiling them a second time into `StratBridge` then puts every `strat::` symbol in the binary
+twice. **Measured 2026-08-31, the first Game-target build attempted during packaging: 110 ×
+`LNK2005` then `LNK1169`** — while the editor build was green and the suite was 347/347, which
+is exactly why no clause could see it.
+
+So each `Vendored/*.strat.cpp` guards its single `#include` on `STRAT_VENDORED_RULES_IN_BRIDGE`,
+and `StratBridge.Build.cs` defines that from `Target.LinkType != TargetLinkType.Monolithic` —
+the *same* expression that adds `StratRules` to the private dependencies on the monolithic
+branch, so the two halves cannot drift apart. One copy of the rules reaches the binary either
+way. An **absent** definition is a `#error`, not a silent 0: without that, a dropped define
+would resurface as the very `LNK2019` the shims exist to prevent, which is the worst available
+disguise for their own misconfiguration.
+
+The suite cannot cover this. It runs inside a modular editor build and cannot observe a
+monolithic link, so the net is CI building the Game target — the `build the Stratocracy Game
+target` step in `.github/workflows/build-and-suite.yml`.
 
 *Naming* a `strat::` type in a `.cpp` is legal — `StratScoreboardParity.cpp` does it. *Calling*
 a `strat::` free function outside those two directories is a link error. When you need a rules

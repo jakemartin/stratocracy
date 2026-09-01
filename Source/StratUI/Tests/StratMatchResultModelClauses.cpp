@@ -87,6 +87,34 @@
 // `StratMatchResultWidget.h` records about itself.
 #include "StratBridge.h"
 
+// ---------------------------------------------------------------------------
+// EDITOR-TARGET ONLY. THIS GUARD IS NOT A WEAKENING, AND THE REASON IS MEASURED.
+//
+// Every clause below carries `EAutomationTestFlags::EditorContext`, so none of them can be
+// selected to run in a Win64 **Game** target under any circumstances. Compiling them there
+// buys nothing, and one thing they do costs: `AllTiers()` and `AllCauses()` filter enumerators
+// with `UEnum::HasMetaData`, which is declared only where `WITH_METADATA` is on. A Win64
+// Development Game build measured it on 2026-08-31 as, verbatim:
+//
+//   StratMatchResultModelClauses.cpp(621,12): error C2039: 'HasMetaData': is not a member of 'UEnum'
+//   StratMatchResultModelClauses.cpp(635,12): error C2039: 'HasMetaData': is not a member of 'UEnum'
+//
+// WHY A WHOLE-FILE `WITH_EDITOR` GUARD AND NOT A `WITH_METADATA` GUARD ON THE TWO CALLS.
+// Guarding the calls needs an `#else` arm that derives the enumerator set a DIFFERENT way --
+// a second implementation of the filter, living in the one target where no clause here runs
+// and where therefore no gate covers it. `WITH_EDITOR` is exactly the predicate the test flags
+// already assert, and it is 1 for `StratocracyEditor`, so the guard is inert on the editor
+// suite BY CONSTRUCTION rather than by inspection. Not one clause below is edited.
+//
+// THIS GUARD IS DELIBERATELY NOT APPLIED TO THE OTHER TEST FILES, AND THE COST IS STATED
+// RATHER THAN LEFT TO BE DISCOVERED. Six headers under `Source/*/Tests/` declare `UCLASS`
+// doubles that UHT parses and that other modules link, so a blanket guard across the suite is
+// not the uniform no-op it looks like. The consequence of the narrow choice: the next
+// editor-only engine API used in any other test file reddens the Game target again, and
+// nothing in this tree gates against that.
+// ---------------------------------------------------------------------------
+#if WITH_EDITOR
+
 namespace StratMatchResultModel
 {
 	/** The harness pin every parity file in this suite carries, and it must stay equal to
@@ -1755,3 +1783,5 @@ bool FStratEveryTiebreakKeyReachesItsOwnCriterionTest::RunTest(const FString& /*
 
 	return true;
 }
+
+#endif // WITH_EDITOR

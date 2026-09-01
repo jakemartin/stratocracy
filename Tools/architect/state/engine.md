@@ -15,6 +15,94 @@
 
 ## NEXT
 
+- **2026-08-31, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `2592276`, UNCOMMITTED at the time of writing --
+  the user commits) -- THE WIN64 GAME TARGET LINKS, BECAUSE THE VENDORED SHIMS NOW EXIST ONLY
+  WHERE THE DLL BOUNDARY THEY WERE WRITTEN AGAINST EXISTS.**
+  - **THE FAILURE, AND WHY IT WAS INVISIBLE FOR THE WHOLE PROJECT.** `Build.bat Stratocracy
+    Win64 Development` compiled every action and then died at link: **110 x `LNK2005`** followed
+    by `LNK1169`, exit 6, e.g. *"`Ai.strat.cpp.obj : error LNK2005: "bool __cdecl
+    strat::buildPriorityLess(struct strat::UnitDef const &, struct strat::UnitDef const &)"
+    already defined in Ai.good.cpp.obj`"*. The twelve vendored translation units are compiled
+    TWICE -- once as the `StratRules` UBT module, which `Stratocracy.Build.cs` depends on for
+    T-DATA-05's `Combat.h`, and once as `Source/StratBridge/Vendored/*.strat.cpp`. **The editor
+    target is MODULAR, so the two copies land in two DLLs and never meet a linker together; a
+    Game target is MONOLITHIC and they meet in one `Stratocracy.exe`.** Nothing regressed --
+    the duplication has been there since the shims were written, and only a link type this tree
+    had never built could see it. **UBT labels the run `Result: Failed (OtherCompilationError)`
+    and that label is wrong in the way that matters:** it is a pure link failure and reading it
+    as a compile diagnostic sends the next reader to the wrong file.
+  - **WHAT CHANGED, BY FILE.** `StratBridge.Build.cs` gains one C# expression --
+    `bool bCompileVendoredRulesHere = Target.LinkType != TargetLinkType.Monolithic;` -- which
+    emits `STRAT_VENDORED_RULES_IN_BRIDGE` as a `PrivateDefinition` **and**, on the false branch,
+    adds `StratRules` to `PrivateDependencyModuleNames`. Each of the twelve
+    `Vendored/*.strat.cpp` wraps its single `#include` of the vendored `.good.cpp` in
+    `#if STRAT_VENDORED_RULES_IN_BRIDGE`. **Nothing else was touched:** no `Source/StratRules/`
+    byte, no `Source/Stratocracy/` file, no target file, no `.uproject` entry.
+  - **THE TWO HALVES COME FROM ONE EXPRESSION, AND THAT IS THE POINT OF THE MECHANISM.** UBT's
+    own `IS_MONOLITHIC` would have answered the `#if` without a new definition, and is refused:
+    it would leave the dependency decision in one file and the compile decision in twelve
+    others, agreeing only by inspection. Because the `#if` reads a definition the SAME
+    expression emits, it is not possible to switch one half and leave the other. Each shim also
+    `#error`s on an **absent** definition rather than letting it read as 0 -- an absent define
+    would otherwise present as `LNK2019` in the modular build, which is the exact error class
+    the shims exist to prevent and the worst possible disguise for their own misconfiguration.
+  - **WHAT WAS REJECTED.** Making `Stratocracy.Build.cs`'s `StratRules` dependency conditional
+    instead, keeping the shims as the single copy in both link types. It would work, and it is
+    refused on blast radius rather than on correctness: it edits a module this milestone does
+    not own, and it would have to re-supply `Combat.h` to the parity harness as a bare include
+    path -- an include edge with no module arrow behind it, in a module whose tests name
+    `strat::` types and where the distance between naming and calling is one keystroke.
+  - **THE DEPENDENCY IS PRIVATE, DELIBERATELY.** No public header of `StratBridge` names a
+    `strat::` symbol -- `StratBridge.h` is the only header including the vendored headers at all
+    and is forbidden to any header declaring a `UCLASS`/`USTRUCT`/`UENUM` -- so a public arrow
+    would re-export a link-line entry no dependent could use. `PublicIncludePaths` is unchanged
+    and still carries `StratRules` in both link types.
+  - **THE SWITCH WAS MEASURED IN THE OBJECT FILES, NOT INFERRED FROM A GREEN LINK.** Byte-grep
+    for the mangled `buildPriorityLess@strat` **with its positive controls shown**, because an
+    absence proves nothing until the instrument is seen to speak (a first attempt via `dumpbin
+    /SYMBOLS` returned six lines of output for every input and was discarded as mute):
+    `UnrealGame/.../StratBridge/Ai.strat.cpp.obj` = **0 hits, 21,763 bytes**;
+    `UnrealGame/.../StratRules/Ai.good.cpp.obj` = 1 hit, 529,306 bytes;
+    `UnrealEditor/.../StratBridge/Ai.strat.cpp.obj` = 1 hit, **591,106 bytes**;
+    `UnrealEditor/.../StratRules/Ai.good.cpp.obj` = 1 hit, 558,422 bytes. So the Game target has
+    exactly one definition and it is the vendored module's own; the Editor target still has two,
+    in two DLLs, unchanged.
+  - **THE GUARD WAS PROVED LOAD-BEARING BY BREAKING IT, ON THIS TREE, IN PLACE.** A green link
+    is consistent with a guard that does nothing, so one shim -- `Hex.strat.cpp` alone -- had its
+    `#if STRAT_VENDORED_RULES_IN_BRIDGE` replaced by `#if 1` and the Game target rebuilt: **9 x
+    `LNK2005`** naming `strat::axialToOffset`, `hexDistance`, `hexEqual`, `hexLess`, `inBounds`,
+    `neighborCandidate`, `neighbors`, `offsetToAxial` and `sortCanonical`, each *"already defined
+    in `Hex.good.cpp.obj`"*, then `LNK1169`. **In place and not in a copy**, because a copied
+    tree's cached `Intermediate/Build` resolves the ORIGINAL sources and the mutant is a silent
+    no-op. Restored by file copy and verified by md5 (`1e820aee58d633e0de63411ca6aef2a3`, equal
+    to the pre-mutation backup) plus a zero-hit grep for the mutation marker; the Game target
+    then rebuilt `Result: Succeeded` and the Editor target after it.
+  - **BOTH TARGETS BUILT `Result: Succeeded` on this tree, Game first and Editor after**, and
+    the Editor was rebuilt BEFORE the suite ran so no stale binary could report old clause names.
+    **The suite figure is `global.md`'s to state and is not restated here**; the run this lane
+    read was exported to `Saved/AutomationReport/index.json` (`utf-8-sig`) with
+    `reportCreatedOn` **`2026.09.01-03.15.35`** -- a UTC stamp, which is why this entry is dated
+    a day earlier than it reads.
+  - **`Source/StratRules/` IS BYTE-UNTOUCHED, and here is how that was checked rather than
+    asserted.** `git status --porcelain -- Source/StratRules Data` is empty, and the md5 over
+    `git hash-object` of every file in the directory is `3e5c215537135fc4f911c4be24ed8def` both
+    before and after the change -- taken through `git hash-object` rather than a worktree diff
+    because `core.autocrlf=true` makes a plain byte compare cry drift on identical blobs.
+  - **WHAT THIS DOES NOT CLAIM.** That the Game target has never been built here before is the
+    dispatching brief's impression and this lane did not measure it, so it is recorded as
+    **unverified**. That the Game target RUNS is likewise unmeasured -- this closes a link
+    failure, and nothing here launched `Stratocracy.exe` or drove a packaged build. **Discharged
+    by** a packaging or cook pass that actually starts the produced binary.
+  - **A DEBT THAT RIDES WITH THIS, AND HALF OF IT WAS ALREADY DISCHARGED BY SOMEONE ELSE WHILE
+    THIS LANE WORKED.** No automation clause can cover this: the defect is a property of a link
+    type the suite never builds, so the only honest net is CI building the Game target. **That
+    step is in this tree already** -- an uncommitted `+54` in `.github/workflows/build-and-suite.yml`,
+    NOT this lane's write and not described further here, whose owner records it in their own
+    file. What remains open is the other half: **discharged by** that step being seen to go RED
+    on a tree with the `#if` removed, since a CI step nobody has watched fail is a step whose
+    subject is unproven.
+
 - **2026-08-31, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, in worktree
   `E:/MultiAgent/Strat-wt/slot-2` on `feat/w8-transient-receipts`, base `c754342`, lane commit
   `0a697c0`, MERGED TO `master` AS `ed09973`) -- W8 ITEMS (5) AND (6): THE INCOME AND KILL

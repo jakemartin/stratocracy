@@ -53,9 +53,10 @@ Measured: `C4150`, deletion of pointer to incomplete type, emitted from the gene
 StratRules  → Core
 Stratocracy → Core, CoreUObject, Engine, InputCore, EnhancedInput, …, StratRules
 StratBridge → Core, CoreUObject, Engine, Stratocracy
-              (+ PublicIncludePaths "StratRules" — an INCLUDE edge, NOT a module arrow)
+              (+ PublicIncludePaths "StratRules" — an INCLUDE edge, in EVERY target)
+              (+ PRIVATE link edge on StratRules, MONOLITHIC TARGETS ONLY — see below)
 StratUI     → Core, CoreUObject, Engine, StratBridge  (+ private UMG, Slate, SlateCore)
-StratPlay   → Core, CoreUObject, Engine, StratUI      (+ private StratBridge, EnhancedInput)
+StratPlay   → Core, CoreUObject, Engine, StratUI      (+ private StratBridge, UMG, EnhancedInput)
 ```
 **DERIVE THIS LIST; DO NOT TRUST IT.** It is a typed subject list, and a guard that types its
 own subjects stops covering them silently — which is exactly what happened here. Two rows above
@@ -81,32 +82,53 @@ Run this each gate and compare it against the block, row by row:
 for f in Source/*/*.Build.cs; do
   m=$(basename "$f" .Build.cs)
   sed 's#//.*##' "$f" | tr '\n' ' ' |
-  grep -oE '(Public|Private)(DependencyModuleNames|IncludePaths)\.AddRange\([^)]*\)' |
+  grep -oE '(Public|Private)(DependencyModuleNames|IncludePaths)\.(AddRange|Add)\([^)]*\)' |
   while read -r line; do
     vals=$(printf '%s' "$line" | grep -oE '"[A-Za-z0-9_/]+"' | tr -d '"' | paste -sd, -)
-    printf '%-12s %-30s %s\n' "$m" "${line%%.AddRange*}" "${vals:-(none)}"
+    printf '%-12s %-30s %s\n' "$m" "${line%%.Add*}" "${vals:-(none)}"
   done
 done
 ```
-It prints 15 rows — three per module, five modules. **A module missing from that output is itself
-a finding**, not a module with no arrows: it means the extraction failed, and an empty result is
-the one thing this shape cannot distinguish from a clean one.
+It prints **16 rows** — three per module across five modules, **plus one**:
+`StratBridge  PrivateDependencyModuleNames   StratRules`. **A module missing from that output is
+itself a finding**, not a module with no arrows: it means the extraction failed, and an empty
+result is the one thing this shape cannot distinguish from a clean one.
+
+**THE SIXTEENTH ROW IS CONDITIONAL AND THE EXTRACTION CANNOT SHOW THAT IT IS.** It comes from a
+`.Add(` inside an `if (!bCompileVendoredRulesHere)` block, so the edge exists **on monolithic
+(Game) targets only** and not in the modular editor build. This is a TEXTUAL scan: it prints the
+line whatever the link type, and nothing in the output says the row is guarded. Read
+`StratBridge.Build.cs` for the branch before treating that row as an unconditional arrow.
+**UNTIL 2026-09-01 THIS COMMAND MATCHED `.AddRange` ONLY AND COULD NOT SEE THAT ROW AT ALL** —
+the edge landed in `7713c6c` and the gate that was meant to police module arrows was blind to
+the only one that had moved in a month. A derivation pinned to one call form is blind to every
+edge added with the other, which is the same failure the census below exists to catch.
 
 **Then census the field set, because the three above are also a typed subject list:**
 ```bash
 for f in Source/*/*.Build.cs; do sed 's#//.*##' "$f"; done |
   grep -oE '[A-Za-z]+[[:space:]]*(\.AddRange|\.Add|=)' | sed 's/[[:space:]]*$//' | sort -u
 ```
-Measured 2026-08-26, this prints exactly six: the three above plus `PCHUsage`, `bUseUnity`, and
-`ShadowVariableWarningLevel` — none of which touch the graph. **Any seventh name is a finding by
-its own existence**, whether or not you can tell what it does. `DynamicallyLoadedModuleNames`,
+**Measured 2026-09-01, this prints TEN**, and the number was six when this block was written:
+the three fields above, plus `PCHUsage`, `bUseUnity` and `ShadowVariableWarningLevel` which do
+not touch the graph, plus four that arrived with the packaging pass —
+`PrivateDependencyModuleNames.Add`, `PrivateDefinitions.Add`, `bCompileVendoredRulesHere =`, and
+`BRIDGE=`. **`BRIDGE=` IS A FALSE POSITIVE AND IT IS NOT WHAT IT LOOKS LIKE:** it is the tail of
+the STRING LITERAL `"STRAT_VENDORED_RULES_IN_BRIDGE="` inside `PrivateDefinitions.Add`, not a
+field and not a comment — the `sed` strip removes `//` lines and cannot reach inside a quoted
+string. Do not chase it, and do not `sed` it away either: the census is deliberately a dumb
+instrument, and narrowing it to spare one known false positive is how it would stop seeing the
+next real field. **Any ELEVENTH name is a finding by its own existence**, whether or not you can
+tell what it does. `DynamicallyLoadedModuleNames`,
 `PrivateIncludePaths`, and `PublicSystemLibraries` are all real `ModuleRules` fields that would
 add an edge this table does not model, and a derivation pinned to three field names is blind to
 every one of them until this census says otherwise.
 
 Both commands were **extracted from this file and executed**, healthy path and mutant, on
-2026-08-26 — not read, and not inferred from a diff. Against the real tree they print 15 rows and
-6 fields, matching the two claims above. Against a disposable copy of `Source/`, adding
+2026-08-26 — not read, and not inferred from a diff. Against the real tree they printed 15 rows
+and 6 fields THEN; **re-measured 2026-09-01 they print 16 and 10**, matching the two claims above
+as restated. The figures moved because the tree moved, and the 2026-08-26 run is kept here as the
+record of a real execution rather than deleted. Against a disposable copy of `Source/`, adding
 `"StratRules"` to `StratBridge`'s `PublicDependencyModuleNames` moved it into the first command's
 output while leaving that module's `PublicIncludePaths` row unchanged — the two edges stayed
 distinguishable, which is the whole point of splitting them — and adding a
@@ -118,17 +140,39 @@ from a clean census, and was caught only by running the block instead of reading
 `/Script/Stratocracy.UnitRow` into `DT_Units`. Do not report it as a layering violation; a
 report that does has bad ground truth, and the fix is this file and the context file, not the
 tree. **`StratUI` must not gain a `Stratocracy` dependency.** No cycle may appear.
-**`StratBridge` does NOT depend on the `StratRules` module, and must not start.** The row above
-carries `StratRules` in parentheses because `StratBridge.Build.cs` names it in
-`PublicIncludePaths` — a header search path, not a link edge — while the vendored `strat::`
-sources are compiled INTO this module as `Source/StratBridge/Vendored/*.strat.cpp`. That is the
-whole reason the module exists: the vendored sources carry no `_API` macro, so
+**`StratBridge` TAKES A LINK EDGE ON `StratRules` ON MONOLITHIC TARGETS ONLY, AND THAT IS
+DELIBERATE. DO NOT BLOCK ON IT.** **[CORRECTED 2026-09-01. This block previously read
+*"`StratBridge` does NOT depend on the `StratRules` module, and must not start"* and instructed a
+finding if the name ever appeared in a dependency array. That instruction was WRONG from
+`7713c6c` onward and would have mandated a BLOCK on a correct, reasoned design; a gate run on
+2026-09-01 declined to follow it and reported the instruction instead, which is why this is
+corrected here. The tree wins. The claim is restated flat below rather than patched in place.]**
+
+In the MODULAR editor build there is no link edge: `StratBridge.Build.cs` names `StratRules` in
+`PublicIncludePaths` — a header search path only — and the vendored `strat::` sources are
+compiled INTO this module. In a MONOLITHIC Game build that same file adds `StratRules` to
+`PrivateDependencyModuleNames` and stops compiling them in. **Both branches come from the ONE
+expression `Target.LinkType != TargetLinkType.Monolithic`**, so the dependency half and the
+compile half cannot drift apart, and one copy of the rules reaches the binary either way.
+The reason the monolithic branch must exist: the game module already depends on `StratRules`, so
+compiling the vendored sources a second time into `StratBridge` puts every `strat::` symbol in
+the executable twice — **measured 2026-08-31, 110 × `LNK2005` then `LNK1169`, while the editor
+build was green and the suite was clean**, which is exactly why no clause could see it.
+`.agents/ue-project-context.md` reasons both branches and is CORRECT as written; it was checked
+on 2026-09-01 and needed no change.
+
+**So: report drift only if the name appears in `PublicDependencyModuleNames`, or in
+`PrivateDependencyModuleNames` UNCONDITIONALLY — outside the `if (!bCompileVendoredRulesHere)`
+guard — or if the `Vendored/*.strat.cpp` set stops being compiled on the modular branch.** A
+derivation that reads `PublicIncludePaths` sees `StratRules` in every target and one that reads
+the dependency arrays sees it only via the guarded `.Add`; **neither disagreement is a finding.**
+
+The original reasoning, still true and still the point of the module: the vendored
+sources carry no `_API` macro, so
 `UnrealEditor-StratRules.dll` exports exactly one symbol and any cross-module `strat::` call is
-`LNK2019` — measured 8×, and recorded in that file's own header block. So a derivation that
-reads `PublicIncludePaths` will see `StratRules` here and a derivation that reads only the
-dependency arrays will not; **neither disagreement is a finding.** Report drift only if the
-name moves INTO `PublicDependencyModuleNames` or `PrivateDependencyModuleNames`, or if the
-`Vendored/*.strat.cpp` set stops being compiled here.
+`LNK2019` — measured 8×, and recorded in that file's own header block. That is why the modular
+build compiles them in rather than linking them, and why the rule against a cross-module
+`strat::` call is unchanged by any of the above.
 
 **6. New modules registered — unless they have no module object.**
 Any new `Source/<Module>/` directory carrying `IMPLEMENT_MODULE` must appear in

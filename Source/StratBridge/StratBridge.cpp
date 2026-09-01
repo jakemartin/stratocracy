@@ -1180,6 +1180,105 @@ FStratResult FStratBridge::FactorySpawnBlockedAt(FIntPoint FactoryHex, bool& bOu
 		FactoryHex.X, FactoryHex.Y));
 }
 
+FStratResult FStratBridge::FactoryBuildPulses(int32 Side,
+                                              TArray<FStratFactoryBuildPulse>& OutPulses) const
+{
+	// Cleared up front, exactly as `Forecast`, `BuildOptions`, `MatchResult` and
+	// `FactorySpawnBlockedAt` clear theirs -- and it matters more here than on any of
+	// them, because the caller reconciles tiles against this array: a refusal that left
+	// the previous turn's entries in place would leave a `BUILD` pulse standing on a
+	// factory that has since built.
+	OutPulses.Reset();
+
+	// THE MALFORMED QUESTION, REFUSED BEFORE THE PROJECTION. `BuildOptions` would refuse
+	// it too, but only after this method had built a whole snapshot to hand it a factory
+	// hex -- and the wording is this method's own, since the side it names is this
+	// method's argument rather than one row's.
+	if (Side < 0 || Side >= strat::SIDE_COUNT)
+	{
+		return FStratResult::Fail(FString::Printf(
+			TEXT("side %d is outside the %d sides this match has"), Side, strat::SIDE_COUNT));
+	}
+
+	// THE SNAPSHOT IS THE ONLY SANCTIONED ROUTE TO THE FACTORY SET, and `FactorySpawnBlockedAt`
+	// directly above records the measurement behind that: `isFactoryObjective` is file-local
+	// to `Ui.good.cpp` and declared in no header. Going through `MakeUiSnapshot` also
+	// inherits its two refusals -- "definitions are not loaded" and "no scenario is loaded"
+	// -- in that method's own words, so this file states neither of them a second time.
+	//
+	// ONCE, ABOVE THE LOOP. See the declaration for why: this runs at mouse-move rate.
+	strat::UiSnapshot Snapshot;
+	const FStratResult Projected = MakeUiSnapshot(Snapshot);
+	if (!Projected.bOk)
+	{
+		return Projected;
+	}
+
+	OutPulses.Reserve(static_cast<int32>(Snapshot.factories.size()));
+
+	for (const strat::UiFactoryView& Factory : Snapshot.factories)
+	{
+		FStratFactoryBuildPulse Pulse;
+		Pulse.Hex = FIntPoint(static_cast<int32>(Factory.hex.q), static_cast<int32>(Factory.hex.r));
+
+		// THE GDD'S SECOND HALF, READ AND NOT INFERRED. It is the module's own field on the
+		// entry the module itself built for this hex; nothing here re-derives T-TURN-10's
+		// allowance, and nothing here asks a second question to learn it.
+		Pulse.bHasBuiltThisTurn = Factory.hasBuiltThisTurn;
+
+		// THE GDD'S FIRST HALF, THROUGH THE ONLY DOOR IT HAS. Routed through this class's
+		// own `BuildOptions` rather than calling `strat::uiBuildOptions` a second time:
+		// that method owns the empty-vector refusal and the side check, and a direct call
+		// here would be a second author on both.
+		std::vector<strat::UiBuildOption> Options;
+		const FStratResult Asked = BuildOptions(Side, Factory.hex, Options);
+		if (!Asked.bOk)
+		{
+			// PART-FILLED IS WORSE THAN EMPTY, per the declaration. The only refusals
+			// reachable from here are whole-board ones -- the side is pre-checked above and
+			// the bridge was seeded to get this far -- so a failure on any factory is a
+			// failure on all of them, and the array goes back to empty rather than holding
+			// the factories the loop happened to reach first.
+			OutPulses.Reset();
+			return Asked;
+		}
+
+		// ROW ZERO, BECAUSE UPSTREAM DECLARES `available` ROW-INVARIANT -- `Ui.h` states it
+		// at the field and `uiBuildOptions` computes it once above its own loop. `Options`
+		// is never empty on the `Ok()` path: `BuildOptions` refuses an empty vector rather
+		// than returning one.
+		Pulse.bBuildAvailable   = Options.front().available;
+		Pulse.UnavailableReason = FromStd(Options.front().reason);
+
+		// THE ONE DERIVATION, AND IT IS AN OR OVER THE MODULE'S OWN BOOLEANS. No price is
+		// compared to a purse here; `affordable` arrived decided. Early-out on the first
+		// affordable row -- the question is "any", and asking it of the rest would answer a
+		// different one.
+		for (const strat::UiBuildOption& Option : Options)
+		{
+			if (Option.affordable)
+			{
+				Pulse.bAnyUnitAffordable = true;
+				break;
+			}
+		}
+
+		// The condition, and `bShouldPulse`'s declaration is where the absence of
+		// `bHasBuiltThisTurn` from this line is argued rather than left to be noticed.
+		Pulse.bShouldPulse = Pulse.bBuildAvailable && Pulse.bAnyUnitAffordable;
+
+		OutPulses.Add(Pulse);
+	}
+
+	// AN EMPTY ARRAY IS AN ANSWER HERE, WHICH IS THE OPPOSITE CALL FROM `BuildOptions` AND
+	// IS MADE ON A DIFFERENT SUBJECT. That method refuses an empty menu because §2.4's
+	// table always has rows, so emptiness could only be a missing input. A board with no
+	// factories is a scenario the rules module accepts -- `buildUiSnapshot` fills
+	// `factories` from the objectives it was seeded with -- and "no factory pulses" is a
+	// true sentence about it.
+	return FStratResult::Ok();
+}
+
 // ---------------------------------------------------------------------------
 // Recorded log -> §4.10 save (row 10 part (a)).
 // ---------------------------------------------------------------------------

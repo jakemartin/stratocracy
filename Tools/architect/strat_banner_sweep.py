@@ -503,6 +503,11 @@ class SweepResult:
     report_created_on: "datetime.datetime | None" = None
     report_created_on_raw: str | None = None
     newest_test_mtime: float | None = None
+    # THE REPORT'S OWN SUCCEEDED COUNT, READ EVEN WHEN THE REPORT IS RED. Added 2026-09-01
+    # alongside the `_collect_suite_claims` fix that lets an honest non-green figure (`346/347`)
+    # become a live claim at all -- see `read_report_count` and `check_suite_counts` for why a
+    # numerator now has its own ground truth, separate from `report_count` (the total).
+    report_succeeded: int | None = None
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -631,21 +636,51 @@ def in_live_section(text: str, line_no: int) -> bool:
 # Independent readings of the tree, so the document is checked against the
 # ARTIFACTS and not only against itself.
 # ---------------------------------------------------------------------------
-def read_report_count(path: str = REPORT_JSON) -> tuple[int | None, str]:
+def read_report_count(path: str = REPORT_JSON) -> tuple[int | None, int | None, str]:
+    """The report's TOTAL entry count and its SUCCEEDED count, read even when the report is RED.
+
+    **2026-09-01 DEFECT AND FIX, MEASURED AGAINST THE REAL TREE, NOT SUPPOSED.** Until this
+    fix, this function refused to return ANYTHING once any entry was non-Success -- the
+    reasoning (recorded in `global.md`'s 2026-09-01 entry) was that a red report's count must
+    never be mistaken for a trustworthy ALL-GREEN figure, which is still correct. But the old
+    code threw away the TOTAL and the SUCCEEDED count along with that refusal, and those are
+    separate facts from "the suite is clean": a report saying "347 entries, 346 Success, 1
+    FAILED" is not lying about having 347 entries or about 346 of them succeeding merely
+    because it is also red. Declining to hand back those two numbers meant `check_suite_counts`
+    had NOTHING to compare a live non-green claim against, so it printed `SWEEP CLEAN` while a
+    false `347/347` stood in the banner and the tree's own (red) report said 346 of 347 --
+    verified by a direct call to the pre-fix function against that exact report, returning
+    `(None, "... non-Success entries -- suite count not read from a red report")`.
+
+    So: this now ALWAYS returns the total and the succeeded count when the report is loadable,
+    whatever its own verdict, and the note says explicitly whether the report was red. It is
+    still never used to assert the suite IS clean -- that judgement stays with the report's own
+    `state` fields and with the LIVE CLAIM'S OWN wording (`346/347` reads as non-green on its
+    face; nothing here relabels it). `check_suite_counts` uses the total to verify a claim's
+    DENOMINATOR (works for green and non-green alike, since a green claim's numerator equals
+    its denominator) and the succeeded count to verify a NON-GREEN claim's numerator
+    specifically, which a macro census could never do -- it counts macros, not outcomes.
+    """
     if not os.path.exists(path):
-        return None, f"no automation report at {path} -- suite figures checked against each other only"
+        return None, None, f"no automation report at {path} -- suite figures checked against each other only"
     try:
         # utf-8-sig: the report is UTF-8 WITH BOM. Two separate passes have
         # reported UTF-16 for this file and both were wrong.
         with io.open(path, encoding="utf-8-sig") as fh:
             data = json.load(fh)
     except Exception as exc:                                  # pragma: no cover
-        return None, f"automation report unreadable ({exc}) -- treated as absent, not as agreement"
+        return None, None, f"automation report unreadable ({exc}) -- treated as absent, not as agreement"
     tests = data.get("tests", [])
+    total = len(tests)
     non_success = [t for t in tests if t.get("state") != "Success"]
+    succeeded = total - len(non_success)
     if non_success:
-        return None, f"automation report has {len(non_success)} non-Success entries -- suite count not read from a red report"
-    return len(tests), f"automation report: {len(tests)} entries, all Success ({data.get('reportCreatedOn')})"
+        return (total, succeeded,
+                f"automation report: {total} entries, {succeeded} Success, "
+                f"{len(non_success)} non-Success -- a RED report, read for its own total and "
+                f"succeeded count, never as a claim that the suite is clean "
+                f"({data.get('reportCreatedOn')})")
+    return total, succeeded, f"automation report: {total} entries, all Success ({data.get('reportCreatedOn')})"
 
 
 def read_macro_census(source_dir: str = SOURCE_DIR) -> tuple[int | None, str, float | None]:
@@ -791,8 +826,23 @@ def _collect_suite_claims(label: str, text: str, result: SweepResult) -> None:
             else:
                 stamped = False
             n, d = int(m.group(1)), int(m.group(2))
-            if n != d:
-                continue                      # "103 -> 104" style progressions are not claims
+            # AN UNEQUAL PAIR IS AN HONEST NON-GREEN SUITE FIGURE, NOT A "103 -> 104" STYLE
+            # PROGRESSION -- AND THIS RECORD'S OWN PROGRESSION NOTATION CAN NEVER REACH THIS
+            # CODE PATH IN THE FIRST PLACE. `_SUITE_CLAIM_RE` requires a literal "/" between
+            # the two numbers; every progression this record has ever written uses an ARROW
+            # ("103 -> 108", `decisions.md`, `global.md` throughout) which contains no "/" at
+            # all. So the `if n != d: continue` this replaced was never once protecting against
+            # the shape its own comment named -- grepped across the whole live record
+            # 2026-09-01, zero `\d+/\d+` progressions exist, only arrows -- and its actual,
+            # measured effect was to drop every HONEST partial figure unconditionally. Verified
+            # directly against the real live `346/347` in `global.md`'s current banner
+            # (2026-09-01): absent from this function's output under the old filter, present
+            # under this one. See `global.md`'s own entry for the account of the false
+            # `347/347` this silence let stand. `check_suite_counts` now verifies BOTH halves
+            # of an unequal claim separately -- the denominator against the tree's total, the
+            # numerator against the report's own succeeded count when the report is readable --
+            # so removing this filter does not weaken verification; it is what MAKES
+            # verification of a non-green claim possible at all.
             line_no = start + para[:m.start()].count("\n")
             snippet = " ".join(para[max(0, m.start() - 70):m.end() + 40].split())
             live = (not stamped) and in_live_section(text, line_no)
@@ -836,7 +886,11 @@ def check_suite_counts(docs: list[tuple[str, str]], result: SweepResult) -> None
         _collect_suite_claims(label, text, result)
 
     live = [c for c in result.suite_claims if c.live]
-    distinct = sorted({c.numerator for c in live})
+    # COMPARED AS THE FULL PAIR, NOT JUST THE NUMERATOR. Before 2026-09-01 a non-green claim
+    # was never collected at all, so two live claims agreeing on the numerator while disagreeing
+    # on the denominator (`346/347` vs `346/348`) could not arise. Now that it can, the
+    # numerator alone is not enough to catch it.
+    distinct = sorted({(c.numerator, c.denominator) for c in live})
     if len(distinct) > 1:
         where = "; ".join(f"{c.doc}:{c.line_no}: {c.numerator}/{c.denominator}" for c in live)
         result.findings.append(Finding(
@@ -844,14 +898,35 @@ def check_suite_counts(docs: list[tuple[str, str]], result: SweepResult) -> None
             f"live suite claims disagree with each other: {distinct} -- {where}",
         ))
 
+    # DENOMINATOR TRUTH: how many tests exist, whether the report is green or red (see
+    # `read_report_count`'s 2026-09-01 fix) or, failing that, the macro census. This is the
+    # SAME comparison as before 2026-09-01 for a green claim -- n == d == truth, so checking
+    # the denominator is identical to checking the numerator was -- and it is now also the
+    # right comparison for a non-green claim, where the numerator is EXPECTED to differ from
+    # the total.
     truth = result.report_count if result.report_count is not None else result.macro_count
     if truth is not None and live:
-        wrong = [c for c in live if c.numerator != truth]
+        wrong = [c for c in live if c.denominator != truth]
         if wrong:
             where = "; ".join(f"{c.doc}:{c.line_no}: {c.numerator}/{c.denominator}" for c in wrong)
             result.findings.append(Finding(
                 "SUITE COUNT AGREEMENT",
-                f"live suite claim(s) disagree with the tree ({truth}): {where}",
+                f"live suite claim(s) disagree with the tree's total ({truth}): {where}",
+            ))
+
+    # NUMERATOR TRUTH, ONLY WHEN THE REPORT ITSELF IS READABLE. A macro census counts macros,
+    # never outcomes, so it has no opinion on how many tests SUCCEEDED -- only the report does,
+    # and now it is read for that even when it is red. This is the check that verifies an
+    # honestly-stated `346/347` actually matches what the report says passed, rather than
+    # merely matching the total.
+    if result.report_succeeded is not None and live:
+        wrong = [c for c in live if c.numerator != result.report_succeeded]
+        if wrong:
+            where = "; ".join(f"{c.doc}:{c.line_no}: {c.numerator}/{c.denominator}" for c in wrong)
+            result.findings.append(Finding(
+                "SUITE COUNT AGREEMENT",
+                f"live suite claim(s) disagree with the report's own succeeded count "
+                f"({result.report_succeeded}): {where}",
             ))
 
 
@@ -901,6 +976,40 @@ def check_live_count_present(result: SweepResult) -> None:
         f"reporting verb such as 'reads', 'claim' or 'defect' in the figure's own sentence -- "
         f"is hiding it from this sweep. Run with --explain and reword, do not ignore this",
     ))
+
+
+def check_truth_available(result: SweepResult) -> None:
+    """A live suite claim compared against NOTHING is not a verified claim -- it is silence.
+
+    **2026-09-01 DEFECT AND FIX.** `check_suite_counts` compares every live claim against
+    `report_count` (falling back to `macro_count`); when BOTH are `None` it has nothing to
+    compare against and every comparison in that function passes VACUOUSLY -- the same
+    "checked nothing, printed clean" shape `check_live_count_present` already exists to catch
+    at the other end of this pipe, for the case where there is no live claim at all. This is
+    the missing half: a live claim that DOES exist but that this run could not verify against
+    anything is a finding, never a silent pass, however defensible the reason ground truth was
+    unavailable this run (a missing report, an unreadable one, or a `Source/` tree with no
+    test-defining macros to census). The read-the-report-anyway fix in `read_report_count`
+    closes the most common way this used to happen -- a red report no longer refuses its own
+    total and succeeded count -- but does not make ground truth unconditionally available: the
+    report can still be genuinely absent or unreadable, and this is the check that refuses to
+    let that combine with silence.
+
+    Only checked when `check_tree` is True: `--no-tree` deliberately never establishes ground
+    truth at all, by request, and is not this defect.
+    """
+    live = [c for c in result.suite_claims if c.live]
+    if not live:
+        return   # check_live_count_present already covers "no live claim at all"
+    if result.report_count is None and result.macro_count is None:
+        where = "; ".join(f"{c.doc}:{c.line_no}: {c.numerator}/{c.denominator}" for c in live)
+        result.findings.append(Finding(
+            "SUITE COUNT UNVERIFIABLE",
+            f"live suite claim(s) exist ({where}) but neither the automation report nor the "
+            f"macro census could establish a ground truth this run, so nothing above compared "
+            f"anything. An unable-to-verify live claim is a finding with a non-zero exit, "
+            f"never silence.",
+        ))
 
 
 def check_item_states(docs: list[tuple[str, str]], result: SweepResult) -> None:
@@ -1357,7 +1466,7 @@ def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True
     result.docs = [d[0] for d in docs]
 
     if check_tree:
-        result.report_count, note = read_report_count(report_path)
+        result.report_count, result.report_succeeded, note = read_report_count(report_path)
         result.notes.append(note)
         result.macro_count, note, result.newest_test_mtime = read_macro_census(source_dir)
         result.notes.append(note)
@@ -1376,6 +1485,8 @@ def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True
 
     check_suite_counts(docs, result)
     check_live_count_present(result)
+    if check_tree:
+        check_truth_available(result)
     check_record_ownership(result)
     check_item_states(docs, result)
     check_banner_date(docs, result)
@@ -2098,6 +2209,20 @@ def _write_fixture_report(path: str, count: int, created_on: str, mtime: float) 
     os.utime(path, (mtime, mtime))
 
 
+def _write_fixture_report_partial(path: str, total: int, succeeded: int, created_on: str,
+                                   mtime: float) -> None:
+    """A RED report -- `succeeded` of `total` Success, the rest Fail. For the 2026-09-01
+    non-green-figure fixtures, which need a report that genuinely disagrees with itself the
+    way the real 2026-09-01 report does, not merely a green one truncated."""
+    tests = [{"testDisplayName": f"T{i}", "state": "Success" if i < succeeded else "Fail"}
+              for i in range(total)]
+    data = {"reportCreatedOn": created_on, "succeeded": succeeded, "succeededWithWarnings": 0,
+            "failed": total - succeeded, "notRun": 0, "tests": tests}
+    with io.open(path, "w", encoding="utf-8") as fh:
+        json.dump(data, fh)
+    os.utime(path, (mtime, mtime))
+
+
 def _write_fixture_source(path: str, count: int, mtime: float) -> None:
     body = "\n".join(f'IMPLEMENT_SIMPLE_AUTOMATION_TEST(T{i}, "x", 0)' for i in range(count))
     with io.open(path, "w", encoding="utf-8") as fh:
@@ -2214,6 +2339,109 @@ def check_provenance_self_test() -> tuple[bool, list[str]]:
     # FIRST DAY`, quoted rather than cited by a line number that moves whenever that file grows.
     run_case("an honest account of a superseded citation, using the reporting verb 'cited', "
              "PASSES", _CITED_ACCOUNT_PROVENANCE, True)
+    return ok, lines
+
+
+def check_truth_self_test() -> tuple[bool, list[str]]:
+    """Fixtures for the two 2026-09-01 defects, built on scratch report/source pairs exactly as
+    `check_identity_self_test` and `check_provenance_self_test` are -- never against the real
+    `Saved/` or `Source/`, which are outside this steward's lane.
+
+    (defect 2) An honestly-stated NON-GREEN suite figure must be collected as a live claim and
+    verified -- both halves: the denominator against the tree's total, the numerator against
+    the report's own succeeded count.
+
+    (defect 1) A live claim this run genuinely CANNOT verify -- no report, no macro census --
+    must be a hard finding, never a silent pass.
+    """
+    import tempfile
+    import time
+
+    lines: list[str] = []
+    ok = True
+
+    def run_case(name: str, banner_figure: str, report_kwargs: "dict | None",
+                 source_kwargs: "dict | None", want_pass: bool,
+                 want_check: "str | None" = None) -> None:
+        nonlocal ok
+        with tempfile.TemporaryDirectory() as d:
+            report_path = os.path.join(d, "index.json")
+            # ABSENT ENTIRELY, NOT MERELY EMPTY, WHEN `source_kwargs` IS NONE. An empty-but-
+            # existing `Source/` directory is not the same fact as no `Source/` at all --
+            # `read_macro_census` returns a genuine `0`, not `None`, for an existing empty
+            # directory, and `0` IS a ground truth (a real ground truth of zero macros), not an
+            # absence of one. The UNVERIFIABLE case needs `read_macro_census` to return `None`,
+            # which only happens when `os.path.isdir(source_dir)` is False -- so the directory
+            # itself must not exist for that case, caught once by this exact confusion when the
+            # first draft of this fixture created it unconditionally and got `SUITE COUNT
+            # AGREEMENT` (disagreeing with a ground truth of 0) instead of `SUITE COUNT
+            # UNVERIFIABLE` (no ground truth at all).
+            source_dir = os.path.join(d, "Source")
+            state_dir = os.path.join(d, "state")
+            os.makedirs(state_dir)
+            if report_kwargs is not None:
+                _write_fixture_report_partial(report_path, **report_kwargs)
+            if source_kwargs is not None:
+                os.makedirs(source_dir)
+                _write_fixture_source(os.path.join(source_dir, "T.cpp"), **source_kwargs)
+            gpath = os.path.join(state_dir, "global.md")
+            with io.open(gpath, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(f"# global\n\n_Last run 2026-09-01 "
+                         f"(the suite is **{banner_figure}**, honestly non-green.)_\n\n"
+                         f"## NEXT\n\n- **Nothing else.**\n")
+            res = run_sweep(gpath, check_tree=True, report_path=report_path, source_dir=source_dir)
+        got_pass = res.passed
+        good = got_pass == want_pass
+        if good and want_check is not None:
+            good = any(f.check == want_check for f in res.findings)
+        ok = ok and good
+        detail = "" if res.passed else " -- " + "; ".join(f.check for f in res.findings)
+        lines.append(f"    [{'OK' if good else '**WRONG**'}] {name}: "
+                     f"expected {'PASS' if want_pass else 'FAIL'}, "
+                     f"got {'PASS' if got_pass else 'FAIL'}{detail}")
+
+    base = time.time() - 100000
+
+    # DEFECT 2, HEALTHY PATH: an honest 346/347, a red report that genuinely says 346 of 347,
+    # and a macro census agreeing on the total -- the real 2026-09-01 shape. Must PASS: this is
+    # the record's own live claim, truthfully stated and truthfully verified.
+    run_case("an honest 346/347 verified against a matching red report PASSES",
+              "346/347",
+              dict(total=347, succeeded=346, created_on="2026.09.01-19.41.17", mtime=base + 200),
+              dict(count=347, mtime=base + 100), True)
+
+    # DEFECT 2, THE DEFECT ITSELF WOULD HAVE READ AS CLEAN: a claimed 346/347 where the report
+    # actually says 345 succeeded -- a real disagreement that the pre-fix filter could never
+    # even have SEEN, because it dropped 346/347 before comparing anything. Must FAIL.
+    run_case("a claimed 346/347 that disagrees with the report's own succeeded count (345) FAILS",
+              "346/347",
+              dict(total=347, succeeded=345, created_on="2026.09.01-19.41.17", mtime=base + 200),
+              dict(count=347, mtime=base + 100), False, "SUITE COUNT AGREEMENT")
+
+    # DEFECT 2, DENOMINATOR HALF: a claimed 346/347 where the report's total is actually 348 --
+    # the SAME failure the green-suite check has always caught, now also reachable through a
+    # non-green claim.
+    run_case("a claimed 346/347 that disagrees with the tree's total (348) FAILS",
+              "346/347",
+              dict(total=348, succeeded=346, created_on="2026.09.01-19.41.17", mtime=base + 200),
+              dict(count=348, mtime=base + 100), False, "SUITE COUNT AGREEMENT")
+
+    # DEFECT 1: no report at all, no macro-census source at all, and a live claim standing
+    # unverified. Before the fix this printed SWEEP CLEAN, exit 0 -- `truth` was `None` and
+    # every comparison in `check_suite_counts` passed vacuously. Must FAIL now, loudly, with
+    # the new check named so a reader knows WHY: not a contradiction, an inability to check.
+    run_case("a live claim with NO report and NO macro-census source is UNVERIFIABLE and FAILS",
+              "346/347", None, None, False, "SUITE COUNT UNVERIFIABLE")
+
+    # THE HEALTHY GREEN PATH MUST STILL PASS, UNCHANGED, THROUGH THE SAME NEW CODE PATHS. Not a
+    # regression fixture for either defect on its own -- both `report_count` and
+    # `report_succeeded` now flow through `read_report_count` unconditionally, so an ordinary
+    # all-green claim has to be proven to still verify correctly, not merely assumed to.
+    run_case("an ordinary all-green 347/347 still verifies and PASSES",
+              "347/347",
+              dict(total=347, succeeded=347, created_on="2026.09.01-19.41.17", mtime=base + 200),
+              dict(count=347, mtime=base + 100), True)
+
     return ok, lines
 
 
@@ -2460,6 +2688,26 @@ def check_self_test() -> tuple[bool, str]:
     ok = ok and provenance_ok
     lines.append("    -- REPORT PROVENANCE part (a) (cited stamp vs the report actually read) --")
     lines.extend(provenance_lines)
+
+    # THE COLLECTION ITSELF, PINNED DIRECTLY -- not only through a full sweep's verdict via
+    # `check_truth_self_test` below. This is the exact regression `global.md`'s own 2026-09-01
+    # entry measured: a live `346/347` was ABSENT from `_collect_suite_claims`'s output because
+    # of the unconditional `if n != d: continue` this fix removed. Asserted against the live
+    # function itself, so reintroducing that continue anywhere in this function is caught here
+    # even if every case in `check_truth_self_test` happened to still pass for some other reason.
+    _probe_result = SweepResult()
+    _collect_suite_claims("global.md", "_Last run 2026-09-01 (the suite is **346/347**.)_\n",
+                          _probe_result)
+    _collected = [(c.numerator, c.denominator, c.live) for c in _probe_result.suite_claims]
+    good = (346, 347, True) in _collected
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] a non-green 346/347 figure IS "
+                 f"collected as a LIVE claim by `_collect_suite_claims` directly: {_collected}")
+
+    truth_ok, truth_lines = check_truth_self_test()
+    ok = ok and truth_ok
+    lines.append("    -- 2026-09-01: a non-green figure is a claim, and unverifiable is a finding --")
+    lines.extend(truth_lines)
 
     return ok, "\n".join(lines)
 

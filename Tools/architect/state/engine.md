@@ -15,6 +15,124 @@
 
 ## NEXT
 
+- **2026-09-01, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `cada741`, UNCOMMITTED at the time of writing --
+  the user commits) -- W8 ITEM (4), THE BUILD PULSE, C++ HALF: THE CONDITION IS NOW A BRIDGE
+  ANSWER, BECAUSE ITS TWO HALVES REACHED THE ENGINE THROUGH DIFFERENT DOORS AND NOTHING COULD
+  HOLD BOTH AT ONCE.**
+  - **THE GAP, STATED AS THE GDD STATES IT.** §2.11.5: *"When any unit is affordable and the
+    factory has not built this turn, the factory tile shows a small `BUILD` pulse ... The second
+    half of that condition is read rather than inferred: the factory's own `hasBuiltThisTurn`."*
+    The second half was already a snapshot field and already mirrored onto
+    `FStratFactoryView::bHasBuiltThisTurn`. The first half existed ONLY as per-row
+    `strat::UiBuildOption::affordable`, behind `FStratBridge::BuildOptions`. **The two could not
+    be joined by any existing caller**, because the only engine-side route to the buildlist is
+    `UStratMatchSubsystem::RefreshProductionMenu`, which its own block declares ALL-OR-NOTHING
+    against a single `ProductionMenu` slot -- so a tile polling it per factory would clobber an
+    open menu. That is the specific reason this is C++ and not an editor pass.
+  - **WHAT CHANGED, BY FILE.** `StratBridge.h` gains the plain struct `FStratFactoryBuildPulse`
+    (`Hex`, `bAnyUnitAffordable`, `bHasBuiltThisTurn`, `bBuildAvailable`, `UnavailableReason`,
+    `bShouldPulse`) and the method `FactoryBuildPulses(int32 Side, TArray<...>& OutPulses)`;
+    `StratBridge.cpp` implements it; `StratViewModel.h` gains
+    `FStratFactoryView::bBuildPulse` and the census amendment that field forces;
+    `StratViewModel.cpp` asks the bridge once per model and copies one bool per factory.
+    **Nothing else was touched:** no `Source/StratRules/` byte, no `Data/` byte, no
+    `Source/Stratocracy/` file, no `Tests/` file, no `.uproject` entry, no `.Build.cs`.
+  - **THE DESIGN QUESTION WAS RESOLVED AGAINST THE MODULE, AND THE ANSWER IS ONE-DIRECTIONAL.**
+    The question dispatched with this task was whether `available && any(affordable)` ALREADY IS
+    the GDD's condition. It is not, and the relationship is an implication rather than an
+    equality:
+    - **`available` IMPLIES `!hasBuiltThisTurn`.** `strat::canBuildAt` is
+      `running && phase == Actions && side == activeSide && !hasBuiltThisTurn(s, factory)`;
+      `strat::uiBuildOptions` consults `canBuildAt` FIRST and sets `available` false on its
+      refusal; and `UiFactoryView::hasBuiltThisTurn` is filled from that same
+      `hasBuiltThisTurn(t, o->hex)` -- the same predicate over the same turn state and the same
+      hex, taking no side argument. So availability CONTAINS the build allowance.
+    - **THE CONVERSE FAILS, on nine further reasons `uiBuildOptions` spells out** -- no match
+      running, the match is over, the turn has not begun, start-of-turn repair not applied, not
+      the active side, no objective at that hex, the factory is not held by this side, the
+      objective has no terrain row, not a build point, a pending build already holds the slot.
+      **THE FALSIFIER, so nobody has to take it on the prose:** an ENEMY-HELD factory that has
+      not built this turn, with the asking side able to afford a unit, has `hasBuiltThisTurn`
+      false and `available` false. **The GDD sentence read literally lights a `BUILD` pulse on
+      the opponent's tile there.**
+    - **SO `bShouldPulse` IS `bBuildAvailable && bAnyUnitAffordable`, A DECLARED NARROWING OF
+      THE GDD SENTENCE RATHER THAN A TRANSCRIPTION OF IT**, and it is dark on every board the
+      GDD says it must be dark on. `bHasBuiltThisTurn` is CARRIED UNFOLDED beside it -- which is
+      how the GDD's "read rather than inferred" is satisfied by an observable value instead of
+      by a comment -- and is DELIBERATELY ABSENT FROM THE EXPRESSION: by the implication above
+      `bBuildAvailable && !bHasBuiltThisTurn` is EQUAL TO `bBuildAvailable` on every board, so
+      writing the redundant term would assert a difference that does not exist. This repo has
+      twice recorded a clause asserting a difference between two provably identical expressions;
+      that is why the equality is stated here rather than left for a reader to notice.
+  - **NO AFFORDABILITY IS RECOMPUTED ANYWHERE ABOVE THE MODULE, WHICH IS THE CONSTRAINT
+    `BuildOptions` HANDED DOWN.** No price is compared to a purse in `StratBridge.cpp` or in
+    `StratViewModel.cpp`. The single operation is an OR over `affordable` booleans the module
+    already decided, taken in `StratBridge.cpp` and DECLARED DERIVED at
+    `FStratFactoryBuildPulse::bAnyUnitAffordable` rather than dressed as a mirror. `available`
+    is read off row zero, which is sound because `Ui.h` DECLARES it row-invariant ("IT DOES NOT
+    VARY BY ROW") and `uiBuildOptions` computes it once above its own loop -- not because the
+    rows happened to agree.
+  - **PLURAL AND NOT PER-HEX, AND THE REASON IS A CALL COUNT RATHER THAN A PREFERENCE.**
+    `FactorySpawnBlockedAt` answers ONE hex and projects a whole `UiSnapshot` to do it, and is
+    called once per production-menu refresh. This question's caller is `StratBuildViewModel`,
+    which runs on every presentation refresh and therefore **at mouse-move rate** --
+    `AStratPlayerController`'s hover path says so at its own refusal log ("this fires at
+    mouse-move rate"). A per-hex form called in that loop would project the snapshot once per
+    factory: five projections per refresh on the shipped scenario where one is needed. The
+    plural form projects ONCE and asks `BuildOptions` per factory. **The singular form is
+    deliberately not also declared**: it would have no caller, and a bridge method with no
+    caller reads as built when it is only compiled.
+  - **THE VIEW-MODEL ROUTE IS THE POINT, NOT A CONVENIENCE.** The pulse lands on
+    `FStratFactoryView::bBuildPulse` so that T-INT-05 stays true in the shape it is written --
+    the screen is rebuildable from the view model alone -- and so that no tile composes the
+    condition in the layer T-UI-03 governs. It also keeps the pulse entirely off
+    `RefreshProductionMenu`'s slot: **nothing in this pass reads, writes or touches
+    `ProductionMenu` or `ProductionMenuHex`.** The join between the pulse array and the factory
+    loop is BY HEX and not by index: both sequences come from the same `Snapshot.factories` in
+    the same canonical order and a positional read would agree today, which is exactly why it
+    was refused -- it would agree silently until one order moved, and a pulse drawn on the wrong
+    factory is a defect nothing on screen distinguishes from a correct one.
+  - **THE CENSUS IN `StratViewModel.h` MOVED AND IS AMENDED IN PLACE RATHER THAN REWRITTEN.**
+    That block says every field of the model is a snapshot mirror, a table read or a selection
+    over the model's own fields. `bBuildPulse` is a FOURTH KIND -- a value copied from a bridge
+    QUERY -- and the amendment names it as such rather than leaving a reader to classify it as
+    the mirror it is not. **The arithmetic count did NOT move:**
+    `FStratBuildOptionView::Shortfall` is still the one arithmetic exception and is still
+    outside the model.
+  - **BUILD.** `Build.bat StratocracyEditor Win64 Development` -> `Result: Succeeded`
+    (107 actions, 58.57s). `-NoHotReloadFromIDE` was NOT passed: this is the main tree, not a
+    worktree, and the editor was closed (verified: no `UnrealEditor.exe` task). **The MONOLITHIC
+    branch was built too, deliberately** -- `Build.bat Stratocracy Win64 Development` ->
+    `Result: Succeeded`, `Output binary: E:\MultiAgent\Stratocracy\Binaries\Win64\Stratocracy.exe`.
+    The vendored-shim mechanism recorded in the 2026-08-31 entry below is the reason a
+    `StratBridge` change has to be built on both link types before it is reported green, and the
+    editor build cannot see the failure that mechanism prevents.
+  - **ONE CLAUSE IS RED AND IT IS NOT THIS PASS'S, MEASURED WITH A CONTROL RATHER THAN
+    ASSERTED.** `Stratocracy.StratPlay.T-INT-05.RefreshFromMachineDecoratesWithNoRegistration`
+    fails in the exported report at `reportCreatedOn 2026.09.01-19.41.17`. It was NOT diagnosed
+    from the diff: the four edited files were `git stash`ed, the editor target was REBUILT from
+    `cada741`'s bytes, and the clause was run alone -- **it failed with byte-identical error
+    text on both sides**, `Expected 'the controller's own refresh decorated with nobody
+    registered (it returned false: 'scoreboard refresh refused: there is no scoreboard widget to
+    refresh')' to be true.` and the field-for-field guidance mismatch beneath it. The stash was
+    then popped and both targets rebuilt, so the binaries in this tree are the modified sources'.
+    **It is a pre-existing red at `cada741`, in a lane that is not this one** -- see the HANDOFF
+    line below and `global.md`, which is the only file that may carry the live figure.
+  - **WHAT THIS PASS DID NOT DO, so none of it is mistaken for done.** No widget, no tile, no
+    material and no `Content/` byte -- the editor half of item (4) is a separate later batch and
+    was explicitly not this task. No test: `Tests/` is `strat-test-author`'s lane, and the
+    clauses this needs are named in that agent's brief rather than written here. **No clause in
+    this tree currently binds to `bShouldPulse`, `bBuildPulse` or `FactoryBuildPulses`**, which
+    is the honest statement of this pass's coverage and is why the narrowing above is recorded
+    as a claim a test must still pin rather than as one it already does.
+  - **THE DEBT.** The narrowing is engineering judgement over an under-specified sentence, not a
+    ruling. If §2.11.5's pulse is later RULED to be the GDD sentence literally -- pulsing on any
+    factory the viewing side could afford to build at, whoever holds it -- **the change is one
+    line, at `FStratBridge::FactoryBuildPulses`, and no caller moves**, because both halves are
+    already on `FStratFactoryBuildPulse` and nothing downstream recomputes either. That is the
+    condition that discharges this debt.
+
 - **2026-08-31, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `2592276`, UNCOMMITTED at the time of writing --
   the user commits) -- THE WIN64 GAME TARGET LINKS, BECAUSE THE VENDORED SHIMS NOW EXIST ONLY

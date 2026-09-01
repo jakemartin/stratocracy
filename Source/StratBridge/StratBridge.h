@@ -304,6 +304,133 @@ struct FStratAiCommand
 	int32               DefIndex = -1;    // Build -- an index into UnitDefs()
 };
 
+// ---------------------------------------------------------------------------
+// §2.11.5's BUILD pulse, for ONE factory, in engine types.
+//
+// WHAT GAP THIS CLOSES. The GDD states the pulse as a CONJUNCTION OF TWO FACTS THAT
+// ARRIVE THROUGH DIFFERENT DOORS -- "when any unit is affordable and the factory has
+// not built this turn, the factory tile shows a small `BUILD` pulse". The second half
+// is a snapshot field (`strat::UiFactoryView::hasBuiltThisTurn`, and the GDD says in
+// terms that it is "read rather than inferred ... out of the snapshot's per-factory
+// block"). The first half exists ONLY as per-row `strat::UiBuildOption::affordable`,
+// behind `BuildOptions`. Before this struct there was no way to hold both at once for a
+// factory whose menu is not open: `UStratMatchSubsystem::RefreshProductionMenu` is
+// declared ALL-OR-NOTHING against a single menu slot, so a pulse that polled it per
+// factory would clobber an open menu, and that is the specific reason the widget cannot
+// simply ask the existing query for itself.
+//
+// PLAIN AND NOT REFLECTED, for `FStratResult`'s and `FStratAiCommand`'s reason exactly:
+// this header must declare no `UCLASS`/`USTRUCT`/`UENUM`, or UHT parses it and the
+// vendored `strat` headers go in front of the header tool. The reflected mirror is
+// `FStratFactoryView::bBuildPulse` in `Source/StratUI/StratViewModel.h`, and the copy
+// across is one assignment in `StratBuildViewModel`.
+//
+// IT COMPUTES NO AFFORDABILITY, AND THAT IS THE CONSTRAINT IT INHERITS RATHER THAN A
+// CLAIM IT MAKES FRESH. `BuildOptions`' own block says `affordable` is the MODULE's
+// arithmetic "precisely so that T-UI-03's no-widget-side-arithmetic clause has something
+// to bind to". No price is compared to a purse anywhere behind this struct; the only
+// thing done to `affordable` is an OR over rows the module already decided, which is
+// declared below at the field rather than disguised as a mirror.
+struct FStratFactoryBuildPulse
+{
+	/** The factory this answer is about. X = q, Y = r -- the encoding the whole façade
+	 *  uses, and the value `FStratFactoryView::Hex` already carries. Mirrors
+	 *  `strat::UiFactoryView::hex`. */
+	FIntPoint Hex = FIntPoint(0, 0);
+
+	/**
+	 * DECLARED DERIVED, and it is the ONE derivation in this struct. It is
+	 * `any(row.affordable)` over the rows `BuildOptions` returned for this factory --
+	 * an OR over booleans the module computed, never a second comparison of a price
+	 * against a purse. `strat::UiBuildOption::affordable` is `costFame <= fameTotal`
+	 * and is stated in `Ui.h` as a per-SIDE fact naming no factory; the OR is taken over
+	 * this factory's own row set anyway, so nothing here assumes affordability is
+	 * constant across factories even though upstream's definition makes it so.
+	 *
+	 * THERE IS NO MODULE-SIDE `anyAffordable` TO MIRROR INSTEAD. `Ui.h` carries
+	 * affordability only per row, and `Source/StratRules/` is vendored and hash-gated,
+	 * so the fold has to happen on this side of the boundary. This is the lowest layer
+	 * that can take it, which is `FStratBuildOptionView::Shortfall`'s reasoning exactly.
+	 */
+	bool bAnyUnitAffordable = false;
+
+	/**
+	 * The GDD's second half, MIRRORED and never inferred: `strat::UiFactoryView::
+	 * hasBuiltThisTurn` for this factory, which the rules module fills from
+	 * `strat::hasBuiltThisTurn(t, o->hex)` -- T-TURN-10's per-factory allowance, taking
+	 * no side argument at all.
+	 *
+	 * IT IS CARRIED EVEN THOUGH `bShouldPulse` DOES NOT NAME IT, and the block on
+	 * `bShouldPulse` is where that is argued. Read here, it is the field that says WHICH
+	 * refusal is standing when the pulse is dark: dark with this true is the case the GDD
+	 * sentence is about; dark with this false is one of the nine others, and
+	 * `UnavailableReason` names it in the module's own words.
+	 */
+	bool bHasBuiltThisTurn = false;
+
+	/**
+	 * `strat::UiBuildOption::available` for this factory and this side, COPIED off the
+	 * rows -- every gate a Build passes on its way in except cost.
+	 *
+	 * READ OFF ONE ROW, WHICH IS SOUND BECAUSE UPSTREAM DECLARES IT ROW-INVARIANT rather
+	 * than because it happened to agree. `Ui.h` states at the field that it "DOES NOT VARY
+	 * BY ROW. Every gate above is a property of the FACTORY and the SIDE, never of the
+	 * unit type", and `uiBuildOptions` computes it once above its loop for that reason.
+	 * `BuildOptions` refuses rather than returning an empty vector, so a successful call
+	 * always has a row to read.
+	 */
+	bool bBuildAvailable = false;
+
+	/**
+	 * `strat::UiBuildOption::reason`, verbatim, in the module's own words. Empty when
+	 * `bBuildAvailable`. Diagnostic: nothing draws it, and §2.11.5's menu has its own copy
+	 * on `FStratBuildOptionView::Reason` for the rows.
+	 */
+	FString UnavailableReason;
+
+	/**
+	 * THE ANSWER THE TILE DRAWS. `bBuildAvailable && bAnyUnitAffordable`.
+	 *
+	 * IT IS A DECLARED NARROWING OF THE GDD SENTENCE AND NOT A TRANSCRIPTION OF IT. The
+	 * GDD names two halves; this names availability where the GDD names
+	 * `hasBuiltThisTurn`. The relationship between the two spellings was RESOLVED against
+	 * the module rather than assumed, and it is one-directional:
+	 *
+	 *   `bBuildAvailable` IMPLIES `!bHasBuiltThisTurn`. `strat::canBuildAt` is
+	 *   `running && phase == Actions && side == activeSide && !hasBuiltThisTurn(s, factory)`;
+	 *   `uiBuildOptions` consults `canBuildAt` FIRST and sets `available` false on its
+	 *   refusal; and `UiFactoryView::hasBuiltThisTurn` is that same `hasBuiltThisTurn(t, hex)`
+	 *   over the same turn state and the same hex. So the pulse is dark on every board the
+	 *   GDD says it must be dark on -- the named half is CONTAINED, never contradicted.
+	 *
+	 *   THE CONVERSE FAILS, WHICH IS WHY THE TWO ARE NOT THE SAME EXPRESSION. `available`
+	 *   is false for nine further reasons `uiBuildOptions` spells out: no match running,
+	 *   the match is over, the turn has not begun, start-of-turn repair has not been
+	 *   applied, this side is not the active side, no objective at that hex, the factory
+	 *   is not held by this side, the objective has no terrain row, not a build point, and
+	 *   a pending build already holds the slot. A CONCRETE FALSIFIER, so that no reader has
+	 *   to take this on the prose: an ENEMY-HELD factory that has not built this turn, with
+	 *   the asking side able to afford a unit, has `bHasBuiltThisTurn` false and
+	 *   `bBuildAvailable` false. The GDD sentence read literally lights a `BUILD` pulse on
+	 *   the opponent's tile there; this field does not, and that is the reason for the
+	 *   narrowing.
+	 *
+	 * `bHasBuiltThisTurn` IS THEREFORE DELIBERATELY ABSENT FROM THE EXPRESSION, AND WRITING
+	 * IT IN WOULD BE THE DEFECT AND NOT THE FIX. By the implication above,
+	 * `bBuildAvailable && !bHasBuiltThisTurn` is EQUAL TO `bBuildAvailable` on every board;
+	 * a redundant term would assert a difference that does not exist and hand a reader --
+	 * and a test -- two spellings it cannot tell apart. The field is carried unfolded
+	 * beside this one instead, which is what lets the GDD's "read rather than inferred"
+	 * requirement be satisfied by an observable value rather than by a comment.
+	 *
+	 * THE DEBT THIS TAKES ON. If the pulse is later RULED to be the GDD sentence literally
+	 * -- pulsing on any factory the viewing side could afford to build at, regardless of
+	 * who holds it -- the change is one line here and no caller moves, because both halves
+	 * are already on this struct. Nothing else in the tree recomputes either.
+	 */
+	bool bShouldPulse = false;
+};
+
 class STRATBRIDGE_API FStratBridge
 {
 public:
@@ -904,6 +1031,53 @@ public:
 	// @param bOutSpawnBlocked  set false on every refusal, so a caller that ignores
 	//                          the result never draws a boxed-in footer off one.
 	FStratResult FactorySpawnBlockedAt(FIntPoint FactoryHex, bool& bOutSpawnBlocked) const;
+
+	// §2.11.5's BUILD pulse for EVERY factory on the board, from one side's point of
+	// view. See `FStratFactoryBuildPulse` for the condition, the resolution of the two
+	// spellings of it, and the falsifier that separates them.
+	//
+	// PLURAL AND NOT PER-HEX, WHICH IS A COST DECISION AND IS MEASURED IN CALLS RATHER
+	// THAN ASSERTED. `FactorySpawnBlockedAt` directly above answers ONE hex and projects a
+	// whole `UiSnapshot` to do it -- forced, for the reason its own block gives -- and it
+	// is called once per production-menu refresh, so that cost is paid rarely. This
+	// question's caller is `StratBuildViewModel`, which runs on every presentation refresh
+	// AND THEREFORE AT MOUSE-MOVE RATE (`AStratPlayerController`'s hover path says so at
+	// its own refusal log). A per-hex form called in that loop would project the snapshot
+	// once per factory -- four extra projections per refresh on the shipped scenario, five
+	// in total where one is needed. This form projects ONCE and asks `BuildOptions` per
+	// factory, which builds a `UiWorld` of pointers and walks the unit table. The singular
+	// form is deliberately not also declared: it would have no caller, and a bridge method
+	// with no caller reads as built when it is only compiled.
+	//
+	// EVERY FACTORY, NOT THE HELD ONES. The set is `strat::UiSnapshot::factories`, whole
+	// and in the module's canonical hex order, because that is the only sanctioned route
+	// to WHICH hexes are factories at all -- `isFactoryObjective` is file-local to
+	// `Ui.good.cpp`, measured by the method above. A caller drawing tiles needs an entry
+	// for a neutral or enemy factory as much as for its own; `bShouldPulse` is false on
+	// those and `UnavailableReason` says which one it is.
+	//
+	// TWO CHANNELS, AS `Forecast` AND `BuildOptions` HAVE THEM. `FStratResult` says whether
+	// the question could be ASKED -- an unloaded bridge, an unseeded one, a side outside
+	// the match, or a unit table with no rows; every per-factory entry says what the rules
+	// ANSWERED. A factory this side does not hold and one that has already built are
+	// ANSWERS and arrive as `Ok()` with `bShouldPulse` false.
+	//
+	// THE SIDE IS THE ONE MALFORMED-QUESTION CASE, refused here for `BuildOptions`'s
+	// reason exactly -- and refused BEFORE the projection, so a malformed question costs
+	// nothing and cannot be told apart from a well-formed one only by its price.
+	//
+	// A REFUSAL EMPTIES THE ARRAY AND NEVER PART-FILLS IT. A caller reconciling tiles
+	// against a partial answer would leave the pulse it last drew on the factories the
+	// loop had not reached, which is the one failure mode a reconciled surface cannot see.
+	//
+	// COMPUTES NOTHING BUT THE OR. Not the affordability, not the availability, not the
+	// build allowance, not the factory set. See `bAnyUnitAffordable`, which declares the
+	// fold rather than dressing it as a mirror.
+	//
+	// @param Side       the `strat` side asking -- whose purse prices `bAnyUnitAffordable`
+	//                   and whose ownership `bBuildAvailable` answers about.
+	// @param OutPulses  one entry per factory, in the snapshot's canonical hex order.
+	FStratResult FactoryBuildPulses(int32 Side, TArray<FStratFactoryBuildPulse>& OutPulses) const;
 
 	// ---- The engine-typed façade -----------------------------------------
 	// EVERY METHOD IN THIS SECTION SAYS, IN `int32` AND `FIntPoint`, EXACTLY WHAT THE TYPED

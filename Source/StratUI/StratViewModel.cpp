@@ -405,6 +405,30 @@ bool StratBuildViewModel(
 	}
 
 	// ---- Factories ---------------------------------------------------------
+	// §2.11.5's BUILD pulse, ONE ASK FOR THE WHOLE BOARD, before the loop. The bridge
+	// composes it -- see `FStratFactoryBuildPulse::bShouldPulse` for the condition and for
+	// why availability stands where the GDD sentence names the build allowance. Nothing
+	// below recomputes any part of it; the loop copies one bool.
+	//
+	// A REFUSAL FAILS THE WHOLE MODEL rather than yielding an unpulsed board, on
+	// `MakeUiSnapshot`'s reasoning above: phase 3 RECONCILES against this value, so a model
+	// that quietly dropped the pulse would not draw a board without pulses -- it would turn
+	// off every pulse on screen and report success. The reachable refusals are all
+	// whole-board ones (no unit table, or a viewing side outside the match, which the check
+	// above has already refused in its own words), so there is no case where a partial
+	// answer would have been the honest one.
+	TArray<FStratFactoryBuildPulse> Pulses;
+	{
+		const FStratResult PulseResult = Bridge.FactoryBuildPulses(ViewingSide, Pulses);
+		if (!PulseResult.bOk)
+		{
+			// The bridge's own sentence, forwarded unchanged, exactly as the snapshot
+			// refusal above forwards its own.
+			OutFailureReason = PulseResult.Reason;
+			return false;
+		}
+	}
+
 	// Canonical hex order, the snapshot's, preserved.
 	Built.Factories.Reserve(static_cast<int32>(Snapshot.factories.size()));
 	for (const strat::UiFactoryView& Source : Snapshot.factories)
@@ -415,6 +439,22 @@ bool StratBuildViewModel(
 		FactoryView.bHasBuiltThisTurn = Source.hasBuiltThisTurn;
 		FactoryView.bBuildWaiting     = Source.buildWaiting;
 		FactoryView.bSpawnBlocked     = Source.spawnBlocked;
+
+		// MATCHED BY HEX, NOT BY INDEX. Both sequences come from the same
+		// `Snapshot.factories` in the same canonical order and a positional read would
+		// agree today -- which is exactly why it is refused: it would agree silently until
+		// the day one of the two orders moved, and a pulse drawn on the wrong factory is a
+		// defect nothing on screen distinguishes from a correct one. The set is the
+		// shipped scenario's four factories, so the cost of the match is a constant this
+		// module does not need to think about.
+		for (const FStratFactoryBuildPulse& Pulse : Pulses)
+		{
+			if (Pulse.Hex == FactoryView.Hex)
+			{
+				FactoryView.bBuildPulse = Pulse.bShouldPulse;
+				break;
+			}
+		}
 
 		Built.Factories.Add(FactoryView);
 	}

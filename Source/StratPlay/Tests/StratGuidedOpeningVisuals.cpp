@@ -91,6 +91,37 @@ namespace StratGuidedOpeningVisuals
 {
 	static const int32 kFirstSide = 0;
 
+	/**
+	 * A slot name nothing on this box holds, so SS2.11.6's suppression cannot reach this file BY
+	 * ACCIDENT. HYGIENE AND NOT A REPAIR, and that distinction is a measurement rather than a
+	 * hope -- taken 2026-09-01 over `cada741`.
+	 *
+	 * THE HAZARD IS REAL AND IS THE ONE `StratGuidanceInputGates.cpp` records at its own
+	 * `kAbsentSlotName`. `FStratMatchConfig::SaveSlotName` defaults to `StratocracyMatch`, THE
+	 * PLAYER'S SLOT, so on a developer's box that carries a completed match
+	 * `UStratMatchSubsystem::HasCompletedAMatchOnSave(FString())` answers TRUE. Wherever that
+	 * answer reaches `FStratGuidedOpening::Begin` as `bSuppressed`, guidance never arms at all.
+	 *
+	 * IT DOES NOT REACH THIS FILE, AND THAT WAS MEASURED AND NOT READ. The save is consulted in
+	 * exactly one place -- `AStratPlayerController::TryArmGuidedOpening`, which COMPUTES the
+	 * `bSuppressed` argument -- and every clause below bypasses the controller and passes the
+	 * literal `false`. All five clauses ran green with the suppressing save PRESENT and green
+	 * again with it ABSENT, on identical binaries, the save moved and restored by content hash.
+	 * That pair alone is ambiguous between insensitivity and vacuity, so three temporary probes
+	 * decided it: with THIS config the save WAS visible (`HasCompletedAMatchOnSave(FString())`
+	 * true -- the instrument can speak, so the green is not an unreachable slot); arming with
+	 * `bSuppressed` true REDDENED the arming premise these five all open with; and with that
+	 * premise removed so the fixture could not stop early, the LIT CONTROL read 0 markers where
+	 * the clauses require 1. A suppressed opening turns this file RED. It cannot pass it quietly.
+	 *
+	 * SO WHAT THIS LINE BUYS is that the immunity stops depending on WHICH ROUTE the fixture
+	 * takes. A clause added here later and routed through the controller would suppress silently
+	 * on a developer's box and pass on a clean one -- the second, silent shape. This makes that
+	 * impossible rather than unlikely. NOTHING BELOW ASSERTS ANYTHING ABOUT A SLOT, and no
+	 * expectation in this file moved when it was added.
+	 */
+	static const TCHAR* const kAbsentSlotName = TEXT("StratGuidedOpeningVisualsNoSuchSlot");
+
 	static UDataTable* LoadTable(const TCHAR* ObjectPath)
 	{
 		return LoadObject<UDataTable>(nullptr, ObjectPath);
@@ -116,6 +147,7 @@ namespace StratGuidedOpeningVisuals
 		}
 
 		Out.ScenarioFile    = TEXT("Data/ferrum_crossing.json");
+		Out.SaveSlotName    = kAbsentSlotName;   // see `kAbsentSlotName` -- hygiene, measured
 		Out.FirstSide       = kFirstSide;
 		Out.ViewingSide     = 0;
 		Out.BoardActorClass = AStratBoardActor::StaticClass();

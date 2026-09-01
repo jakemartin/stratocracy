@@ -89,6 +89,30 @@
 // it does not need a clause of its own, and why its function takes the model rather than
 // a bridge; see both blocks for the reasoning stated where it binds.
 //
+// AND ONE FIELD THAT IS NEITHER A MIRROR, A TABLE READ, NOR A SELECTION, ADDED 2026-09-01:
+// `FStratFactoryView::bBuildPulse`. It is `FStratFactoryBuildPulse::bShouldPulse`, copied
+// whole off `FStratBridge::FactoryBuildPulses` -- an answer the BRIDGE composed, in the one
+// module where `strat::` symbols link, out of two facts that reach this file through
+// different doors. So the census gains a FOURTH KIND of field, named here rather than left
+// for a reader to classify as the mirror it is not: a value copied from a bridge QUERY
+// rather than from the snapshot.
+//
+// THE ARITHMETIC COUNT DID NOT MOVE, and the narrowed no-arithmetic claim above is untouched
+// by this. There is no `+`, no `-`, no `/` and no `.size()` written for this field anywhere
+// in this pair; the only operation behind it is an OR over booleans `strat::uiBuildOptions`
+// already decided, and it is taken in `StratBridge.cpp` where that block declares it.
+// `FStratBuildOptionView::Shortfall` is still the one arithmetic exception and is still
+// outside the model.
+//
+// WHY IT IS A FIELD AND NOT LEFT TO THE TILE TO COMPOSE. §2.11.5's pulse is
+// `available && any(affordable)`, and only the first of those has a home on this model --
+// affordability lives per row on `FStratBuildOptionView`, behind a query. A tile that
+// composed it for itself would have to open a production menu per factory, which
+// `UStratMatchSubsystem::RefreshProductionMenu` may not be asked to do (it is ALL-OR-NOTHING
+// against one menu slot, per its own block), and the composition would land in the layer
+// T-UI-03 governs. Carrying the answer keeps T-INT-05 true in the shape it is written:
+// the pulse is rebuildable from the view model alone.
+//
 // THE PRESENTATION BLOCK'S DEBT IS DISCHARGED -- read the paragraph below as the reason
 // the fields are shaped this way, not as an open item. `FStratSelectionMachine::Decorate-
 // ViewModel` (`Source/StratPlay/StratSelectionMachine.h`) landed as the producer, called
@@ -583,6 +607,32 @@ struct FStratFactoryView
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	bool bSpawnBlocked = false;
+
+	/**
+	 * §2.11.5's BUILD pulse for this factory, from the model's `ViewingSide`. Copied whole
+	 * off `FStratFactoryBuildPulse::bShouldPulse`, which `FStratBridge::FactoryBuildPulses`
+	 * composes.
+	 *
+	 * THE ONLY FIELD ON THIS STRUCT THAT IS NOT A SNAPSHOT MIRROR, and the header block
+	 * above states what that costs the census. It is here rather than one layer up because
+	 * its second half -- whether any §2.4 row is affordable to this side -- has no home on
+	 * this model at all: affordability is per row on `FStratBuildOptionView`, behind
+	 * `StratBuildProductionMenu`, which opens a menu.
+	 *
+	 * IT IS PER VIEWING SIDE AND NOT PER OWNER, which is the same distinction
+	 * `StratBuildViewModel`'s `ViewingSide` block already draws and matters here for the
+	 * same hot-seat reason: the pulse is a nudge to the player looking at the screen, and on
+	 * every other turn the viewing side and `sideToMove` differ.
+	 *
+	 * IT IS NOT `!bHasBuiltThisTurn && <affordable>`, AND THE DIFFERENCE IS DELIBERATE AND
+	 * ARGUED WHERE IT IS DECIDED. `FStratFactoryBuildPulse::bShouldPulse`'s own block
+	 * resolves the two spellings against the rules module, proves that availability CONTAINS
+	 * the build allowance, and names the falsifier that separates them -- an enemy-held
+	 * factory that has not built this turn. Nothing between that expression and this field
+	 * recomputes any part of it.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	bool bBuildPulse = false;
 };
 
 /**

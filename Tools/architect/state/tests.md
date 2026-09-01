@@ -14,6 +14,150 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-01 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
+  only -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `cada741`, UNCOMMITTED
+  at the time of writing) -- THE FIVE `T-UI-02` VISUAL CLAUSES IN
+  `StratGuidedOpeningVisuals.cpp` ARE ARMED, NOT VACUOUS. THE SAVE CANNOT REACH THEM. THE SLOT
+  NAME ADDED IS HYGIENE AND NOT A REPAIR.**
+  - **THE QUESTION.** The entry below found that `FStratMatchConfig::SaveSlotName` defaults to
+    the PLAYER'S slot and that a completed match there suppresses the whole §2.11.6 opening.
+    `StratGuidedOpeningVisuals.cpp` also names no slot and is dense with guidance machinery, so
+    the worry was the SILENT shape of that hazard: five clauses about what is DRAWN, passing
+    because nothing was armed.
+  - **THE ANSWER, AND WHY BOTH HALVES OF IT WERE NEEDED.** The five clauses ran green with
+    `Saved/SaveGames/StratocracyMatch.sav` PRESENT and green again with it ABSENT, on identical
+    binaries (`Build.bat` reported `Target is up to date` before the first), reports to a
+    scratch `-ReportExportPath`. **That pair is ambiguous on its own** -- it is equally the
+    signature of insensitivity and of vacuity -- so three temporary probes decided it, in a
+    file created and deleted inside this pass
+    (`Source/StratPlay/Tests/ZZTempProbeGuidedVisualsFalsifiability.cpp`, named outside the
+    `Stratocracy.` namespace so it could never join the suite):
+    1. `ZZTempProbe.SaveIsVisibleThroughTheVisualsFixtureConfig` -- **Success**. Built with
+       `StratGuidedOpeningVisuals.cpp`'s own config, `HasCompletedAMatchOnSave(FString())`
+       answered TRUE. The suppressing save IS reachable from that exact config, so the green
+       above is not an instrument that cannot speak.
+    2. `ZZTempProbe.SuppressedArmingReddensThePremise` -- **Fail**, *"Expected 'the shipped
+       scenario arms a guided opening for the seat to move' to be true."* That is verbatim the
+       premise all five clauses open with.
+    3. `ZZTempProbe.SuppressedOpeningCannotSatisfyTheLitControl` -- **Fail**, *"Expected 'with
+       guidance SUPPRESSED, the lit control the real clauses assert first (exactly one marker
+       showing)' to be 1, but it was 0."* The arming premise was REMOVED in this probe so the
+       fixture could not stop early; the clauses' own LIT CONTROL still could not be satisfied.
+    So a suppressed opening turns this file **RED** and cannot make it pass quietly. The
+    coverage that has been shipping green is real coverage.
+  - **WHY IT IS IMMUNE, WHICH IS A PROPERTY OF THE ROUTE AND NOT OF THE FIXTURE'S CARE.** The
+    save is consulted at exactly one site, `AStratPlayerController::TryArmGuidedOpening`, which
+    COMPUTES `bSuppressed`. Every clause in this file bypasses the controller and passes the
+    literal `false` to `FStratGuidedOpening::Begin`. `StratGuidanceRouteClauses.cpp` went red
+    for the opposite reason: it drives the controller.
+  - **WHAT CHANGED, AND IT MOVED NO EXPECTATION.** `kAbsentSlotName` and one
+    `Out.SaveSlotName` line in `MakeConfig`, with the measurement above recorded at the
+    constant. It buys one thing: a clause added here LATER and routed through the controller
+    would suppress silently on a developer's box and pass on a clean one. **It repaired
+    nothing** -- all five were green before it and after it, in both save states.
+  - **WHAT THESE FIVE DO NOT PIN, restated because this pass could be misread as widening
+    them.** Not pixels (`IsGuidedMarkerVisible` reports a visible FLAG). And **not the
+    production suppression route**: no clause here reaches `TryArmGuidedOpening`, so "a
+    completed match on the save skips guidance" is pinned by `StratGuidanceInputGates.cpp` and
+    `StratGuidanceRouteClauses.cpp` and NOT by this file. The slot name added here does not
+    change that and must not be cited as coverage of it.
+  - **THE OTHER TEN UNSLOTTED FIXTURE FILES: NONE PROVEN SENSITIVE, SO NONE EDITED.** The whole
+    suite was run twice on identical binaries, save present and save absent, and **no test
+    changed state between the two runs**; `Saved/SaveGames/` was still empty after the absent
+    run, so nothing in the suite recreates the player's slot either. By route: every file that
+    consults a save (`StratMatchCompletionRecording`, `StratGuidanceInputGates`,
+    `StratGuidanceRouteClauses`, `StratDifficultyHandicapMatchClauses`,
+    `StratProductionMenuSeam`) already names its own slot; of the ten unslotted ones, none
+    calls a save API, none constructs an `FStratGuidedOpening`, and the three that could WRITE
+    a slot (`StratMatchConclusion`, `StratMatchResultTrigger`,
+    `StratViewingSideHandoverClauses`) already ASSERT `bRecordCompletionOnMatchEnd` false off
+    `FStratMatchConfig()`. **LATENT, AND WORTH NAMING RATHER THAN EDITING:**
+    `StratPathPreviewDecoratorClauses.cpp` and `StratAiPlaybackClauses.cpp` already spawn an
+    `AStratPlayerController` and call `DecorateForPresentation` / `HandleSelectionEvent`
+    directly. Neither reaches `RefreshFromMachine`, so neither is sensitive today; **one added
+    refresh call in either would make it sensitive in one line**, and that is the day each
+    needs a slot name.
+  - **THE DEVELOPER'S SAVE WAS MOVED TWICE AND RESTORED EACH TIME BY CONTENT AND BY MTIME.**
+    sha256 `c78b5af5f8c8dd890da4f57a0248900eccc6ed0042674b15a9a034f9bdb0cb9e`, 2076 bytes,
+    mtime `2026-09-01 17:00:14.502327500 -0400`, identical before and after both moves --
+    `mv` in both directions, never a copy-over. **Its mtime is 17:00 and the entry below dates
+    the same file at 09:49**; that clock moved between the two passes and not in this one.
+  - **NO CANONICAL REPORT WAS OVERWRITTEN.** Every run in this pass went to a scratch
+    `-ReportExportPath`; `Saved/AutomationReport` still reads `reportCreatedOn
+    2026.09.01-21.16.17`, which is the stamp `global.md`'s banner cites. The suite's figure is
+    `global.md`'s to state and is not restated here.
+
+- **2026-09-01 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
+  only -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `cada741`, UNCOMMITTED
+  at the time of writing) -- `T-INT-05.RefreshFromMachineDecoratesWithNoRegistration` WAS
+  READING A `.sav` FILE IT NEVER NAMED. THE CLAUSE WAS WRONG; THE CONTROLLER WAS RIGHT.**
+  - **THE VERDICT, AND WHICH SIDE IT ACQUITS.** `AStratPlayerController::RefreshFromMachine`
+    did not stop decorating. `TryArmGuidedOpening` runs inside `DecorateForPresentation` and
+    suppresses the whole §2.11.6 opening when `HasCompletedAMatchOnSave(FString())` is true --
+    which is §2.11.6 in terms, *"any completed match on the save skips all guidance
+    automatically"*. `ResolveSaveSlotName(FString())` returns `ActiveConfig.SaveSlotName`, and
+    this file's `MakeConfig` never set one, so it resolved to the C++ default
+    `StratocracyMatch` -- **THE PLAYER'S SLOT**. `Saved/SaveGames/StratocracyMatch.sav` exists
+    on this box (2076 bytes, mtime 2026-09-01 09:49 local) and its only serialised property is
+    `bHasCompletedAMatch : BoolProperty`. The opening was therefore correctly suppressed, the
+    decoration correctly wrote an inactive block, and the clause asserted an active one.
+  - **THE MEASUREMENT, WHICH IS A REVERSAL AND NOT A SINGLE OBSERVATION.** Clause run alone,
+    three times, byte-identical source and binaries (`Build.bat` reported `Target is up to
+    date` before the first): save present -> **Fail**; the same file moved aside and nothing
+    else touched -> **Success**; the same bytes restored (sha256
+    `c78b5af5f8c8dd890da4f57a0248900eccc6ed0042674b15a9a034f9bdb0cb9e`, verified before and
+    after) -> **Fail**. All three went to a scratch `-ReportExportPath`; the canonical
+    `Saved/AutomationReport` was NOT overwritten by any run in this pass and still holds
+    `reportCreatedOn 2026.09.01-19.41.17`, the stamp `engine.md` and `global.md` cite.
+  - **WHAT THIS EXPLAINS THAT NOTHING ELSE DID.** The morning-green / evening-red pair over
+    identical source had no tested cause. A file appearing in `Saved/SaveGames/` between two
+    runs is a cause of exactly that shape. **It is not proof of what wrote it:** the full suite
+    run with the directory empty left it empty, so the suite does not write that slot --
+    `FStratMatchConfig::bMayRecordCompletionOnSave` is doing its job. A PIE or packaged-build
+    playtest is the remaining candidate and **is UNVERIFIED**; I did not attribute the file.
+  - **WHAT THE CLAUSE'S OWN COMMENT GOT RIGHT, STATED BECAUSE IT WAS UNDER SUSPICION.** The
+    block saying the scoreboard refusal happens *"long after `ApplyView` has already run and
+    already pushed"* is **NOT stale**. The reported refusal was the scoreboard one, which is
+    the LAST step of `RefreshFromMachine`, so `ApplyView` provably ran; the strip was unset
+    because what was pushed was legitimately inactive. Read that comment as still true.
+  - **THE FIX, ENTIRELY INSIDE `Tests/`.** `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp`,
+    **40 insertions, 0 deletions** -- no existing clause byte moved. (1) A file-own
+    `kAbsentSlotName` constant, matching `StratGuidanceInputGates.cpp`'s established pattern;
+    (2) `MakeConfig` now sets `Out.SaveSlotName`; (3) the clause **asserts** the suppression
+    premise via `H.Subsystem->HasCompletedAMatchOnSave(FString())` instead of inheriting it
+    from whatever disk it runs on. Nothing was relaxed: the strip-parity assertion and the
+    field-for-field comparison are untouched.
+  - **THE FALSIFIABILITY PROOF, BECAUSE A NEW ASSERTION IS WORTHLESS UNTIL IT IS SEEN RED.**
+    A valid `UStratSaveGame` payload carrying `bHasCompletedAMatch` was copied to
+    `Saved/SaveGames/StratocracyAutomation_NoSuchSlot_GuidanceRoute.sav` -- the fixture's own
+    slot -- and the clause failed **on the new line by name**: *"Expected 'the fixture's own
+    save slot records no completed match, so §2.11.6 does not suppress the opening this clause
+    is about' to be false."* The plant was removed and the clause returned to Success. That is
+    the diagnosis the old clause could not give: it reported an unset strip and named no cause.
+  - **WHAT THIS CLAUSE PINS, AND WHAT IT STILL DOES NOT.** It pins that `RefreshFromMachine`
+    decorates through `DecorateForPresentation` directly, with NO decorator registered on the
+    subsystem (`HasViewDecorator()` false) -- i.e. that decoration does not depend on
+    `BeginPlay` having run. It does **NOT** pin suppression behaviour: `bSuppressed` is now
+    false by construction on both sides, and the clause's module-side expectation still passes
+    `false` to `FStratGuidedOpening::Begin` literally. **A clause that pins §2.11.6's
+    suppression through the CONTROLLER's own arming path does not exist** -- the closest is
+    `StratGuidanceInputGates.cpp`, which arms through the production path but with an absent
+    slot in both arms. Writing one needs a fixture that plants and removes a `.sav`, which is
+    a filesystem side effect no clause in this corpus currently takes; it is a real gap and it
+    is stated rather than closed here.
+  - **THE HAZARD CLASS, AND THIS FILE ALREADY KNEW ABOUT IT.** `StratGuidanceRouteClauses.cpp`
+    carried prose naming *"treating a real default as an unset marker, in
+    `FStratMatchConfig::SaveSlotName`"* and still did not point its own `MakeConfig` at a slot.
+    **Knowing a defect class in prose is not applying the mitigation.** Nine other test files
+    set `Out.SaveSlotName`; this one was the omission. **Any future fixture that starts a match
+    must set it**, in BOTH directions of the failure: unnamed, a suppressed opening makes
+    guidance clauses fail (here) or pass vacuously (`StratGuidanceInputGates.cpp`'s own block
+    warns of the second), and neither symptom is about the code under test.
+  - **No suite figure, count move or verdict is stated in this file;** `global.md` owns all
+    three. **Note for whoever updates it:** the figure it currently carries was measured over
+    the canonical report above, i.e. BEFORE this fix, and this entry deliberately does not
+    restate or update it.
+
 - **2026-08-31 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
   only -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `2592276`, UNCOMMITTED
   at the time of writing) -- THE WIN64 **GAME** TARGET AND WHAT `Tests/` COULD AND COULD NOT FIX.

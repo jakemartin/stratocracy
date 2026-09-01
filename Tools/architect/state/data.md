@@ -15,6 +15,95 @@
 
 ## NEXT
 
+- **FIXED, 2026-09-01 -- two `strat_banner_sweep.py` defects the `coordinator` filed in
+  `global.md` this evening, both now closed.** Working tree: `E:/MultiAgent/Stratocracy`,
+  branch `master`, base HEAD `cada741`. `strat-test-author` was concurrently diagnosing a red
+  clause in this same session; nothing here touches `Tests/`, `tests.md`, or makes any claim
+  about that clause's pass/fail state, per the coordinator's own instruction.
+  - **DEFECT (1), "cannot verify" read as "no finding."** `read_report_count` (the function's
+    actual name in this file; `global.md`'s entry called it `read_report` informally) refused to
+    return anything once any report entry was non-Success -- so a live claim compared against
+    nothing, and every downstream comparison passed vacuously. Fixed by having it always return
+    the report's TOTAL
+    and SUCCEEDED counts when the report is loadable, whatever its own verdict, and adding a new
+    check, `check_truth_available`, for the genuinely unverifiable case that remains: no
+    readable report AND no macro census. That case is now a hard finding,
+    `SUITE COUNT UNVERIFIABLE`, non-zero exit, never silence.
+  - **DEFECT (2), the sweep could not represent a non-green figure at all.**
+    `_collect_suite_claims` unconditionally dropped every claim where the numerator and
+    denominator differed, commented as skipping arrow-form progressions
+    (`"103 -> 104"`). Measured against the whole live record before touching anything: every
+    progression this project has ever written uses an arrow, which contains no `/`, so
+    `_SUITE_CLAIM_RE` (which requires a literal `/`) can never match one -- the filter was
+    never once protecting against the shape its own comment named, and its only measured effect
+    was to drop every honest partial figure, including the live one this record was carrying
+    unverified this evening. Removed. `check_suite_counts` now verifies a non-green claim's two
+    halves separately: the denominator against the tree's total (report total, or the macro
+    census when the report is unreadable) and the numerator against the report's own succeeded
+    count -- a macro census has no opinion on outcomes, only on how many macros exist, so it is
+    never used for the numerator half. A green claim (`n == d`) goes through the identical
+    codepath unchanged, since its numerator and denominator are the same number.
+  - **THE TRAP THE COORDINATOR NAMED IS CLOSED.** Before this fix, the only wording that
+    satisfied the guard for a red suite was an equal pair -- rewording an honest `` `346/347` ``
+    to the false `` `347/347` `` this record was trying to avoid. Run with `--explain` against
+    the real record after the fix, observed at the time of this entry (this is a record of that
+    one run, not a live pointer -- `global.md` has since moved and superseded the figure, which
+    is expected, since it alone carries the live count): the live figure then read
+    `LIVE 346/347` in `global.md`'s claim list rather than being absent from it, and no
+    `SUITE COUNT AGREEMENT` or `LIVE COUNT MISSING` finding fired on it -- both halves verified
+    against the report's own `346 Success` and `347` total.
+  - **PROOF, THE HEALTHY PATH.** `python Tools/architect/strat_banner_sweep.py --self-test` ->
+    `SELF-TEST: ALL FIXTURES CORRECT`, `echo EXIT=$?` on the next line -> `EXIT=0`, all 55
+    fixtures reported `[OK]` (49 pre-existing, unchanged in wording or verdict, plus 6 new: a
+    direct-collection differential proving `_collect_suite_claims` now returns
+    `(346, 347, live=True)` for a non-green figure it used to drop; and five cases in a new
+    `check_truth_self_test` -- an honest non-green claim verified against a matching red report
+    PASSES; the same claim disagreeing with the report's own succeeded count FAILS; disagreeing
+    with the report's total FAILS; a live claim with no report and no macro-census source is
+    `SUITE COUNT UNVERIFIABLE` and FAILS; and an ordinary all-green claim still verifies and
+    PASSES through the same, now-shared code path). The 49-vs-55 count was measured by running
+    the unmodified HEAD file **in place** (`git stash push -- Tools/architect/strat_banner_sweep.py`,
+    run, `git stash pop`) rather than from a copied path -- a copy outside this git repo makes
+    `_current_branch()` return `None` and silently skips part (b) of REPORT PROVENANCE,
+    which read as 3 fixtures WRONG on a copy that is correct in place; recorded here so nobody
+    re-measures the same false alarm.
+  - **PROOF, THE RED-REPORT ARM (DEFECT 1) EXITS NON-ZERO WHEN IT CANNOT VERIFY.** Fixture: a
+    live claim, no report file, no `Source/` directory at all (not merely empty -- an empty-but-
+    present directory makes `read_macro_census` return a genuine `0`, a ground truth, not an
+    absence of one; this cost one wrong fixture on the first draft, caught by the self-test
+    itself before this was written up). Result: `SUITE COUNT UNVERIFIABLE`, `res.passed ==
+    False`. Pinned in `check_truth_self_test`.
+  - **PROOF, RUN AGAINST THE REAL RECORD, EXACTLY AS PRINTED.** `python
+    Tools/architect/strat_banner_sweep.py` (unpiped, exit code read on the line immediately
+    after, never through a pipe -- this tool has never exited 0 through one):
+    ```
+    suite claims found: 53 (1 live, 52 stamped)
+    [**REPORT IDENTITY**] .../Saved/AutomationReport/index.json (reportCreatedOn
+    2026.09.01-19.41.17, written 2026-09-01 15:41:17) predates a test-defining source file
+    modified 2026-09-01 17:01:44 -- this report is evidence about a PAST tree, not the current
+    one, whatever its count happens to say. Re-run the suite before trusting it as ground truth
+    for a live claim.
+    SWEEP FAILED -- the record contradicts itself or the tree
+    ```
+    `EXIT=1`. **THIS FAIL IS NOT A REGRESSION FROM EITHER FIX, AND NO CLAIM IS MADE HERE ABOUT
+    WHICH RUN OR WHICH CLAUSE IT DESCRIBES.** `check_report_identity` used to `return` early
+    whenever `result.report_count is None`, which was EVERY red report under the old
+    `read_report_count` -- so this check was silently skipped on every red report until this
+    fix. Now that a red report's total is read rather than refused, this check runs on it too,
+    and it found `find Source -name "*.cpp" -newer Saved/AutomationReport/index.json` returns
+    exactly one file, `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp` -- consistent with,
+    though not proof of, the concurrent `strat-test-author` pass this session; that agent's own
+    file is where any claim about it belongs. Confirmed reproducible: two successive unpiped
+    runs of this tool, seconds apart, produced byte-identical output.
+  - **WHETHER `global.md` NEEDS AN UPDATE, NOT ACTED ON HERE.** `Tools/architect/state/global.md`
+    was explicitly out of bounds for this pass, per the coordinator's own instruction, and this
+    steward did not reach into it. It currently records that the sweep "EXITS 1 on this record"
+    and names the reword-to-`347/347` trap as the reason. The overall verdict (exit 1) still
+    holds after this fix, but the REASON no longer does: the trap mechanism it names --
+    `LIVE COUNT MISSING` pressuring a reword -- cannot fire any more, because the guard now
+    recognises and verifies the honest `346/347` figure directly. The current exit 1 is a
+    `REPORT IDENTITY` finding unrelated to either defect. Whoever next writes `global.md` should
+    read this entry before deciding what, if anything, needs restating there.
 - **DONE, 2026-08-31 -- the project's `ProjectName` no longer reads the template's name, and a
   dead gate-report citation is corrected in place.** Working tree: `E:/MultiAgent/Stratocracy`,
   branch `master`, base HEAD `2592276`.

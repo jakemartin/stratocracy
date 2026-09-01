@@ -11,6 +11,101 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-01 (THE SUITE IS GREEN AGAIN, AND THE CAUSE OF THE RED WAS A FIXTURE
+READING THE DEVELOPER'S OWN SAVE FILE. Written by the `coordinator`, whose file this is, in
+lane and under no exception clause. No code, no clause and no tool was written by this seat
+in this pass: the C++ is `strat-gameplay-engineer`'s and is in `engine.md`, the clause repair
+is `strat-test-author`'s and is in `tests.md`, and the guard fix is `strat-data-steward`'s
+and is in `data.md`. Each wrote its own entry, in lane, itself.
+The suite is **347/347**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, and the macro census of this tree agrees at 347.
+THE FIGURE WAS MEASURED FROM THIS SEAT AND NOT RELAYED. The canonical report was re-run
+after every lane had landed, so it describes the tree as it now stands rather than any
+lane's own tree.
+WHAT WAS ACTUALLY WRONG, AND IT WAS NEVER THE ENGINE. `FStratMatchConfig::SaveSlotName`
+defaults to `StratocracyMatch` -- THE PLAYER'S REAL SLOT -- and the guidance-route fixture
+never set one. So `TryArmGuidedOpening` asked `HasCompletedAMatchOnSave`, resolved to that
+default, and read an actual save file sitting on this developer box whose
+`bHasCompletedAMatch` correctly suppressed the Sec 2.11.6 guided opening. The controller then
+wrote an INACTIVE block, exactly as the GDD requires, and the clause asserted an active one.
+Proven by a present / absent / restored reversal on byte-identical binaries, by the lane
+agent, before any fix was written.
+THIS RETIRES THE `WHAT IS NOT KNOWN` PARAGRAPH IN THE BLOCK BELOW, AND THE RETIREMENT IS THE
+POINT OF THIS ENTRY. That block recorded, correctly, that the morning-green and evening-red
+runs were of IDENTICAL SOURCE and that no diff explained them; it named a stale-binary
+hypothesis and marked it UNVERIFIED. The hypothesis was NOT the answer. The answer is that
+the two runs saw the same source and a DIFFERENT DISK, and the timeline fits: the green run
+was 2026-08-31 23:15 local, the save was written 2026-09-01 09:49 local, and the red runs
+were 15:41 local onward. THE RECORD WAS RIGHT TO REFUSE TO GUESS -- the guess it declined to
+make would have been wrong.
+AND THE EVIDENCE THAT DATED THE SAVE IS GONE, WHICH IS SAID HERE BECAUSE NOTHING ELSE WILL
+SAY IT. The 09:49 mtime above is the lane agent's reading; moving the file aside and
+restoring it -- which is HOW the reversal was proved -- reset that mtime to the restore time.
+The file's content hash was verified identical across the reversal, so the CAUSE is solid,
+but the TIMELINE now rests on the agent's report and cannot be re-derived from this tree.
+THE GUARD THAT SHOULD HAVE CAUGHT THE STALE FIGURE IS FIXED, and it caught something on its
+first honest run: a `REPORT IDENTITY` finding, because the canonical report predated the test
+file the repair had just changed. That is the check working, not a defect. It is quiet now
+only because the report above was re-run after the change.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the
+builds, the reversal, the control and the suite runs behind this block were performed in
+`E:/MultiAgent/Stratocracy` on branch `master` on this developer box, with the editor closed
+throughout, and the save file named above is this box's and is in no checkout.]**)
+
+_Last run 2026-09-01 (THE SUITE IS NOT GREEN, AND THE FIGURE THIS RECORD HAS BEEN CARRYING
+WAS FALSE AGAINST ITS OWN TREE. Written by the `coordinator`, whose file this is, in lane and
+under no exception clause -- no code was written by this seat in this pass.
+**[STAMPED 2026-09-01, LATER THE SAME EVENING -- SUPERSEDED BY THE BANNER ABOVE, WHICH
+CARRIES THIS RECORD'S LIVE FIGURE. THIS BLOCK IS NOT WITHDRAWN: it was TRUE of the tree it
+was written against, and its diagnosis is what found the cause. What it got wrong is the
+paragraph below headed WHAT IS NOT KNOWN -- the cause WAS findable and has since been
+found, and the hypothesis that block names was not the answer. See above.]**
+The suite was **346/347** at that pass -- 347 entries, 346 Success, ONE FAILED, zero notRun,
+zero succeededWithWarnings -- and the macro census of that tree agreed at 347, so nothing had
+stopped registering and no clause had gone missing. The failing clause is
+`Stratocracy.StratPlay.T-INT-05.RefreshFromMachineDecoratesWithNoRegistration`, which asserts
+that the controller's own refresh decorates the strip with nothing registered as decorator.
+MEASURED THREE TIMES AND NOT ONCE, and read from the exported report rather than from the log,
+which undercounts by exactly one every run. `strat-gameplay-engineer` reported it first while
+landing W8 item (4); two further runs by the `coordinator` agree, the third being the control
+below. The live report on disk is `reportCreatedOn 2026.09.01-19.41.17`.
+THE FAILURE IS PRESENT AT `cada741`'S OWN SOURCE BYTES AND IS NOT CAUSED BY THE UNCOMMITTED
+W8 ITEM (4) WORK SITTING IN THIS TREE -- which matters, because that work is on the same
+refresh path and was the obvious suspect. THE CONTROL, and it is stated in full because a
+weaker one had already been accepted once in this pass: the four modified files under
+`Source/` were stashed; the revert was VERIFIED by counting `FactoryBuildPulses` occurrences
+in `StratViewModel.cpp` down to zero rather than by trusting the stash; the editor target was
+rebuilt; and THE RELINK ITSELF WAS VERIFIED BY SHA-256 on both
+`UnrealEditor-StratUI.dll` and `UnrealEditor-StratBridge.dll`, both of which changed. That
+last check is the one that separates a real control from a no-op build, WHICH ALSO PRINTS
+`Result: Succeeded`. The full suite then ran at those bytes and returned the same 346 of 347
+and the same clause. The stash was popped and the editor target rebuilt, so this tree's
+binaries are its modified sources' again.
+THE SUPERSEDED FIGURE'S REPORT NO LONGER EXISTS, AND THAT IS WHY IT IS STAMPED RATHER THAN
+ARGUED WITH. `Saved/AutomationReport` is a SINGLE PATH that every run truncates, so the
+morning report the block below cites was overwritten by the first of this evening's runs.
+Nothing in this tree can now confirm or refute that 347-all-Success reading.
+WHAT IS NOT KNOWN, STATED RATHER THAN FILLED IN. The morning and evening runs are of
+IDENTICAL SOURCE -- the morning figure was read at `7713c6c`, and `cada741` changed only
+record files -- so this is not a code regression and no diff explains it. THE STANDING
+HYPOTHESIS IS UNVERIFIED AND MUST NOT BE READ AS A FINDING: that the morning run used
+binaries left by the packaging pass rather than a clean relink, a stale-binary green this
+project has been caught by before. IT WAS NOT TESTED, and testing it would need the morning's
+binaries, which are untracked and which no checkout contains. A reader is entitled to know
+that the FIGURE here is measured and the CAUSE here is not.
+AND THE SWEEP CANNOT SEE ANY OF THIS, WHICH IS HOW THE FALSE FIGURE STOOD. On a RED report
+`strat_banner_sweep.py`'s `read_report` returns no count at all, so the live claim is compared
+against nothing and the tool still prints `SWEEP CLEAN` at exit 0 -- measured this evening,
+with the red report on disk and the false figure still standing. The guard goes quiet on
+precisely the condition under which a live figure is most likely wrong. That file is
+`strat-data-steward`'s lane and is NOT repaired here; it is recorded as owed, in the entry
+under `## NEXT`.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the
+builds, the control and the three suite runs behind this block were performed in
+`E:/MultiAgent/Stratocracy` on branch `master` on this developer box, with the editor closed
+throughout. Two of the three reports were exported OUTSIDE the repo and no checkout contains
+them; the one inside the tree is the live report named above.]**)
+
 _Last run 2026-09-01 (THE PROJECT PACKAGES FOR WINDOWS, AND THE HEADLINE IS THAT ITS THREE
 BLOCKING DEFECTS WERE ALL INVISIBLE TO A GREEN EDITOR BUILD AND A GREEN SUITE -- THE GAME
 TARGET HAD SIMPLY NEVER BEEN BUILT. Written by the `coordinator`, whose file this is. THE CODE
@@ -24,12 +119,21 @@ DATED 2026-09-01 THOUGH THE COMMIT IS `Mon Aug 31 23:54:22 2026` LOCAL: the pass
 midnight, and its last two measurements -- the CI falsifiability run and these record writes --
 are 2026-09-01 local. The date is the pass's, not the commit's, and the split is named here so
 a reader meeting `7713c6c`'s August timestamp is not left to reconcile it alone.
-The suite is now **347/347**, every entry Success, zero failed, zero notRun,
-zero succeededWithWarnings, and the macro census of this tree agrees at 347.
-NO SUITE WAS RUN IN THIS PASS AND THE FIGURE IS THEREFORE UNMOVED -- it is carried forward from
-the block below, which cites the same report, because the live figure belongs in the topmost
-block and a carried figure with no stated provenance is the shape this record has been caught
-by before.
+**[STAMPED 2026-09-01, LATER THE SAME DAY -- SUPERSEDED BY THE BANNER ABOVE, WHICH CARRIES
+THIS RECORD'S LIVE FIGURE. AND THIS ONE IS NOT MERELY SUPERSEDED, IT IS FALSE AGAINST ITS OWN
+TREE: three suite runs that evening, one of them a control at this same commit's own source
+bytes with the relink verified by hash, all report 346 of 347 with
+`Stratocracy.StratPlay.T-INT-05.RefreshFromMachineDecoratesWithNoRegistration` FAILED. Kept
+rather than corrected in place, which is this record's convention, because a reader arriving
+at a repaired figure cannot tell a repair from an omission. The report this block cites was
+overwritten by those runs, so the reading below can no longer be confirmed OR refuted from any
+checkout -- it is history now, and never evidence.]**
+The suite was **347/347** at that pass, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of that tree agreed at 347.
+NO SUITE WAS RUN IN THAT PASS AND THE FIGURE WAS THEREFORE UNMOVED -- it was carried forward
+from the block below, which cites the same report, because the live figure belongs in the
+topmost block and a carried figure with no stated provenance is the shape this record has been
+caught by before.
 WHAT LANDED, in `7713c6c`, pushed, CI green on that commit. Three defects, each first exposure
 of a path the project had never executed rather than a regression: nothing staged `Data/`, so a
 packaged match start would have refused with `scenario file unreadable`; `UEnum::HasMetaData`
@@ -120,7 +224,26 @@ supported still holds; the figure does not, and both are stamped in `engine.md`.
 WHAT W8 STILL OWES, AND NONE OF IT IS BUILT. Item (2) the capture-progress pip and item (4) the
 BUILD pulse are DRAWING-ONLY -- `CaptureProgress`, `bHasBuiltThisTurn` and `bAffordable` are all
 already published and read by no drawing code -- so they need an editor session and no C++ at
-all. ITEM (3), THE REPAIR-ELIGIBILITY PIP, IS STILL NOT BUILDABLE AND IS THE USER'S TO RULE:
+all.
+**[STAMPED 2026-09-01 BY THE `coordinator`, WHOSE FILE THIS IS. THE SENTENCE ABOVE IS FALSE
+ON TWO COUNTS, AND BOTH WERE MEASURED AT `cada741` RATHER THAN REASONED.
+(1) `bAffordable` IS READ BY DRAWING CODE. It occurs 9 times in
+`Content/UI/WBP_ProductionMenu.uasset`. The scan covered every `.uasset` under `Content/`
+-- 1902 of them at that commit -- and the instrument was controlled by a second scan over
+the same files that returned hits for other names, so the zeroes below are silence from a
+microphone shown able to speak. The claim DOES hold for the other two fields:
+`CaptureProgress` and `bHasBuiltThisTurn` occur 0 times across those same files. It is
+wrong about one field of three, not about all three.
+(2) ITEM (4) IS THEREFORE NOT DRAWING-ONLY AND DOES NEED C++. `bAffordable` lives on
+`FStratBuildOptionView`, which is a PER-ROW result of the `BuildOptions` query and not a
+per-factory snapshot field, so the pulse's own first half -- the GDD's "any unit is
+affordable" -- has no field to read; and `RefreshProductionMenu` is documented
+ALL-OR-NOTHING against a single `ProductionMenu` slot, so a widget cannot poll it per
+factory without clobbering an open menu.
+THE DEFECT IN THE ORIGINAL SENTENCE WAS TREATING PUBLICATION AS IF IT IMPLIED A READABLE
+PER-FACTORY CONDITION. Three fields were published; the condition the pulse needs was not.
+What replaces this sentence is the topmost entry under `## NEXT`.]**
+ITEM (3), THE REPAIR-ELIGIBILITY PIP, IS STILL NOT BUILDABLE AND IS THE USER'S TO RULE:
 there is no module-side predicate, and `Combat.h`'s `repairAmount` TAKES `onOwnedObjective` and
 `enemyAdjacent` as arguments rather than deriving them. The three routes are a new
 `FStratBridge` method that derives the two board facts and calls the verified `repairAmount`, an
@@ -3475,6 +3598,199 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-09-01, THE `coordinator` (ACTING AND WRITING; IN LANE -- THIS IS ITS OWN FILE) --
+  THE RED CLAUSE IS FIXED AND THE GUARD IS FIXED, AND WHAT IS LEFT IS THE CLASS OF DEFECT
+  BEHIND IT: FIXTURES THAT READ THE DEVELOPER'S OWN DISK.** Over base `cada741`, with three
+  lanes' work uncommitted in the tree. The banner above owns the figure and the cause; the
+  two items this entry's predecessor listed as OWED are both stamped DISCHARGED there.
+  - **[DISCHARGED 2026-09-01 by `strat-test-author`, IN ITS OWN LANE, AND THE ANSWER IS THE
+    GOOD ONE: THE FIVE CLAUSES ARE ARMED AND THE COVERAGE IS REAL. NOT A VACUOUS PASS.** Its
+    account is in `tests.md`. THE REASON IS SIMPLER THAN THE SUSPICION: that fixture calls
+    `FStratGuidedOpening::Begin` with a LITERAL `bSuppressed` of false, so it never asks the
+    save at all; the save is consulted at exactly ONE site, the controller's own
+    `TryArmGuidedOpening`, and this file never routes through the controller.
+    **WHY THE PRESENT/ABSENT REVERSAL COULD NOT HAVE SETTLED IT, which is the part worth
+    keeping:** passing in BOTH save states is equally the signature of INSENSITIVITY and of
+    VACUITY, so the reversal that diagnosed the earlier clause is ambiguous here. Three
+    temporary probes separated them -- the suppressing save was shown VISIBLE through this
+    fixture's own config, so the green is not a mute instrument; and with the arming premise
+    deliberately REMOVED so the fixture could not stop early, the clauses' own lit control
+    still could not be satisfied, 0 markers where 1 is required. A suppressed opening turns
+    that file loudly RED. The probe file was deleted and built out in the same pass.
+    **VERIFIED FROM THIS SEAT rather than taken on the agent's word:** its diff is 32
+    insertions and ZERO deletions, so no assertion moved and the slot it added is HYGIENE
+    against a future controller-routed clause rather than a repair; and each of the ten
+    remaining unslotted files scores ZERO on a save API, on `FStratGuidedOpening` and on
+    `RefreshFromMachine`, which corroborates the ranking below independently of the agent.]**
+  - **OPEN (1), AND IT IS THE ONE THAT COULD BE HIDING A FALSE GREEN.** Eleven test files
+    construct an `FStratMatchConfig` and NEVER set `SaveSlotName`, so every one of them
+    resolves to `StratocracyMatch`, the player's real slot, exactly as the repaired clause
+    did. Measured by set difference over the files that name the config type. Ranked by how
+    much guidance machinery each mentions, the head of the list is
+    `Source/StratPlay/Tests/StratGuidedOpeningVisuals.cpp` at 158 mentions and NO slot.
+    **THAT FILE IS CURRENTLY GREEN WITH A SUPPRESSING SAVE PRESENT, AND THAT IS THE
+    WORRYING SHAPE RATHER THAN A REASSURING ONE:** either it is genuinely suppression-
+    tolerant, or its clauses are passing VACUOUSLY, which is the OPPOSITE symptom the repair
+    already documented for `StratGuidanceInputGates.cpp` -- there a suppressed opening opened
+    every gate. A vacuous pass is invisible to every instrument in this tree. `Tests/` is
+    `strat-test-author`'s lane and this was NOT diagnosed from this seat.
+  - **[DISCHARGED 2026-09-01, AND IT WAS ALREADY CLOSED BEFORE IT WAS WRITTEN -- BY THE
+    `RefreshFromMachineDecoratesWithNoRegistration` REPAIR, NOT BY ANY LATER WORK. The
+    divergence below was REAL while that one clause read the player's slot, and it stopped
+    being real the moment that clause named its own. Measured since: the whole-suite
+    present/absent differential is EMPTY -- `strat-test-author` ran the full suite with the
+    save present and again with it absent on identical binaries and NO test changed state.
+    THAT DIFFERENTIAL IS THE AGENT'S MEASUREMENT AND NOT THIS SEAT'S; what was verified here
+    is the save-present half, which is the canonical report the banner cites. THE ITEM IS
+    STAMPED RATHER THAN DELETED because a reader meeting a CI/developer-box disagreement in
+    future should find the shape described and find out it was once true.]**
+  - **OPEN (2): THIS MAKES CI AND THIS BOX DISAGREE ABOUT THE SAME COMMIT, IN BOTH
+    DIRECTIONS.** A runner has no save file, so a fixture that reads one takes the
+    unsuppressed branch there and the suppressed branch here. Nothing in the workflow or the
+    suite reports which branch it took. This is stated as a CONSEQUENCE of open (1) and not
+    as a separate measurement: no CI run has been made to demonstrate it.
+  - **OPEN (4), AND IT IS A TRIPWIRE RATHER THAN A DEFECT -- NOTHING IS WRONG TODAY.** Two
+    of the ten unslotted files, `Source/StratPlay/Tests/StratPathPreviewDecoratorClauses.cpp`
+    and `Source/StratPlay/Tests/StratAiPlaybackClauses.cpp`, ALREADY SPAWN AN
+    `AStratPlayerController` but reach it directly through `DecorateForPresentation` and
+    `HandleSelectionEvent`, never through `RefreshFromMachine`. That is the only reason they
+    are insensitive. **ONE ADDED `RefreshFromMachine` CALL IN EITHER MAKES IT READ THE
+    DEVELOPER'S SAVE, IN ONE LINE, WITH NOTHING ON SCREEN OR IN THE SUITE TO SAY SO.** The
+    day either grows that call is the day it needs a slot, and the pattern to copy is
+    `kAbsentSlotName` in `StratGuidanceInputGates.cpp`, which already carries both an absent
+    slot and a separate control slot. Recorded because the cost of noticing it now is a
+    sentence and the cost of noticing it later is another evening like this one.
+  - **OPEN (3), AND IT IS OWED TO A LANE THIS SEAT CANNOT WRITE.** Refreshing the canonical
+    report to describe the fixed tree overwrote the one `engine.md` cites. That file's live
+    citation of the superseded stamp is now dead -- `Saved/AutomationReport` is a SINGLE PATH
+    that every run truncates. `engine.md` is `strat-gameplay-engineer`'s and was NOT reached
+    into; the debt is recorded here so it is not discovered by a reader following a citation
+    to a report that no longer exists.
+- **2026-09-01, THE `coordinator` (ACTING AND WRITING; IN LANE -- THIS IS ITS OWN FILE) --
+  THE SUITE HAS ONE RED CLAUSE, IT IS NOT THIS EVENING'S WORK, AND THE GUARD THAT SHOULD
+  HAVE CAUGHT THE STALE FIGURE GOES QUIET ON EXACTLY THIS CONDITION.** Measured over base
+  `cada741`, with the W8 item (4) work uncommitted in the tree. The banner above owns the
+  figure and the control; this entry owns the two things that are OWED. No code was written
+  by this seat in this pass.
+  - **[DISCHARGED 2026-09-01 by `strat-data-steward`, IN ITS OWN LANE. BOTH ARMS BELOW ARE
+    FIXED and its account is in `data.md`, which is its file and not restated here. The
+    guard now reads a RED report for its own total and succeeded counts rather than refusing
+    it, raises a hard `SUITE COUNT UNVERIFIABLE` finding where it used to go quiet, and
+    collects an unequal pair as a claim. VERIFIED FROM THIS SEAT rather than taken on the
+    agent's word: `--self-test` prints 55 `[OK]` lines at exit 0, and a run against this
+    record recognises the then-live `346/347` as a live claim -- the exact figure it could
+    not see when this item was written. ONE MEASUREMENT OF THE STEWARD'S IS WORTH CARRYING
+    OUT OF ITS FILE, because it retires the premise this item was argued from: every
+    progression in this record uses an arrow, never a slash, so the `n != d` filter could
+    never have fired on the shape its own comment named. It was not protecting anything.]**
+  - **OWED (1), AND IT IS A GUARD DEFECT RATHER THAN A RECORD ONE:
+    `Tools/architect/strat_banner_sweep.py` TREATS "CANNOT VERIFY" AS "NO FINDING".** Its
+    `read_report` returns no count when any report entry is non-Success, so a live suite
+    claim in this file is compared against nothing and the tool still prints `SWEEP CLEAN` at
+    exit 0. That is how a false `347/347` stood in the banner while the tree's own report
+    said 346 of 347. THE DECLINE ITSELF IS DEFENSIBLE -- a red report's count is not a
+    trustworthy suite figure -- SO THE FIX IS NOT TO READ THE COUNT ANYWAY: it is that being
+    unable to check a live claim must be a finding with a non-zero exit, not silence. **This
+    file is `strat-data-steward`'s lane and the `coordinator` did NOT reach into it.** Whoever
+    takes it should note that the healthy path must still pass -- this project has recorded a
+    guard that was tested five ways it should fail and zero ways it should stay quiet -- and
+    that a fixture proving the RED-report arm now exits non-zero is the one that matters.
+  - **AND THERE IS A SECOND ARM, FOUND WHILE STAMPING THE BANNER ABOVE, WHICH IS WORSE THAN
+    THE FIRST BECAUSE IT PRESSURES THE RECORD TOWARD THE LIE THE GUARD EXISTS TO PREVENT.**
+    `_collect_suite_claims` ends with `if n != d: continue`, commented as skipping
+    `103 -> 104` style progressions. The effect is that **THE SWEEP CANNOT SEE A NON-GREEN
+    SUITE FIGURE AT ALL.** Measured, not inferred: the live `346/347` in the banner above is
+    absent from the 52 claims the tool collects, while a direct call shows its qualifier
+    window matches and `in_code_span` returns `None` -- so the equal-pair filter is the only
+    thing dropping it.
+    **THE CONSEQUENCE IS A TRAP, AND IT IS SPELLED OUT HERE RATHER THAN LEFT TO BE STEPPED
+    IN.** With that figure invisible the tool reports `LIVE COUNT MISSING` and names two
+    causes -- that the banner has lost its figure, or that a reporting verb is hiding it --
+    AND BOTH ARE FALSE HERE. It then instructs the maintainer to `reword, do not ignore
+    this`. **THE ONLY WORDING THAT SATISFIES THE GUARD IS AN EQUAL PAIR, WHICH ON THIS TREE
+    WOULD MEAN WRITING `347/347` -- THE EXACT FALSE FIGURE THIS PASS CAME HERE TO STAMP.**
+    So: **THE BANNER'S `346/347` MUST NOT BE REWORDED TO SILENCE THE SWEEP.** The sweep
+    currently EXITS 1 on this record, and that is the correct state of affairs until either
+    the suite is green again or the guard learns to express a red one; a green sweep before
+    then would mean the figure had been falsified, not that the record had been repaired.
+    The fix belongs with OWED (1) above and in the same lane: a partial figure is a CLAIM
+    and should be collected as one, with the progression filter narrowed to the arrow form
+    it was actually written for.
+  - **[DISCHARGED 2026-09-01 by `strat-test-author`, IN ITS OWN LANE, AND THE ANSWER IS
+    ENDING (1): THE CLAUSE WAS WRONG AND THE CONTROLLER WAS RIGHT. Its account is in
+    `tests.md`. The cause is in the banner above. NOTHING OUTSIDE `Tests/` WAS TOUCHED, which
+    was the condition this item was dispatched under, and the diff is 40 insertions and ZERO
+    deletions -- the original assertions are byte-untouched, so the clause was REPAIRED and
+    not relaxed to green, which is the failure mode the dispatch named.]**
+  - **OWED (2): THE RED CLAUSE ITSELF,
+    `Stratocracy.StratPlay.T-INT-05.RefreshFromMachineDecoratesWithNoRegistration`.** It
+    asserts the strip is active after `AStratPlayerController::RefreshFromMachine` with
+    nothing registered as the subsystem's view decorator. Observed: the strip comes back
+    entirely unset while the module authors a full directive for the same board, and the
+    refresh returns the KNOWN scoreboard refusal the clause deliberately reports rather than
+    asserts. So the question is whether `ApplyView` is still reached before that refusal --
+    the clause's own comment states it is, and the observation is that nothing was pushed.
+    EITHER THE CLAUSE OR THE CONTROLLER IS WRONG AND THE RECORD DOES NOT YET SAY WHICH; that
+    is the finding, and guessing it from the failure text is how this record has previously
+    written a diagnosis it had to retract. It is `strat-test-author`'s if the clause moved
+    past the code and `strat-gameplay-engineer`'s if the refresh order did, and it should be
+    dispatched to ONE of them with the question open rather than to both with an answer
+    assumed.
+  - **WHAT IS NOT OWED, NAMED SO NOBODY RE-DERIVES IT.** The W8 item (4) work is NOT the
+    cause. The control behind that is in the banner above, and its load-bearing half is that
+    the relink was verified by hash rather than by a build that printed `Result: Succeeded`.
+    An earlier reading in this same session suspected the new refusal path in
+    `StratBuildViewModel` and was WRONG; it is recorded because the suspicion was reasonable
+    -- that path does fail the whole model on a bridge refusal, and it is on the same refresh
+    the clause exercises -- and a later reader meeting the same shape should not have to
+    re-run the control to dismiss it.
+- **2026-09-01, THE `coordinator` (ACTING AND WRITING; IN LANE -- THIS IS ITS OWN FILE) --
+  USER RULING: W8 ITEM (2), THE CAPTURE-PROGRESS PIP, IS CUT FROM THE MVP, AND ITEM (4),
+  THE BUILD PULSE, TAKES THE NEW-BRIDGE-METHOD ROUTE.** Both ruled in session over base
+  `cada741`, with no worktree and no wave in flight. NO EXCEPTION CLAUSE IS INVOKED AND
+  NONE IS NEEDED: this is `global.md`, whose writers are the `coordinator` and the steward,
+  and a wave-scope ruling is milestone status, which this file holds. No code was written
+  by this seat. No suite was run in this pass and this entry states no count -- the banner
+  owns that figure.
+  - **WHY THE PIP IS CUT, AND IT IS A MEASUREMENT OF THE VENDORED RULES RATHER THAN A
+    PREFERENCE.** At `captureTurns = 1` the pip has no reachable state on the shipped map.
+    The capture tick in `Source/StratRules/Economy.good.cpp` creates progress with
+    `turnsHeld = 1`; that immediately satisfies its own `turnsHeld >= captureTurns` test,
+    and `clearProgress` erases it INSIDE THE SAME TICK. No snapshot is taken mid-tick, so
+    `FStratUnitView::CaptureProgress` reads 0 in every snapshot. `Economy.h` carries the
+    default and names it in its own comment -- 1 on the shipped scenario -- and nothing in
+    `Data/` overrides it. THE GDD AGREES FROM THE OTHER SIDE, which is why this is not one
+    source read twice: Ferrum Crossing ships N = 1 on Q4, and `GATE-CAP-PARTIAL` had to be
+    run on a `captureTurns = 2` FIXTURE precisely because the shipped scenario cannot reach
+    the state it asserts about.
+  - **THIS PROJECT ALREADY PAID FOR THIS ONCE, WHICH IS THE PART WORTH READING.** The same
+    fact was found on 2026-08-23 against the guided opening: beat 2's pip arm could never
+    fire, and arm (b) `IsRingedObjectiveHeldByGuidedSide` was added to rescue the beat.
+    `StratGuidedOpening.cpp` carries the reasoning at the beat-2 site and states the
+    mechanism in the same words used here. THE WAVE PLAN STILL LISTED THE PIP AS BUILDABLE
+    BECAUSE THAT FINDING LIVED IN THE GUIDANCE MACHINE'S FILE AND NEVER REACHED THE W8 ITEM
+    LIST -- a fact known in one lane and absent from the plan that scheduled the work.
+  - **WHAT THE CUT DOES NOT DECIDE.** The pip is not wrong and the code behind it is not
+    dead: it is the arrival receipt Sec 2.11.6 names, and it would light up on any scenario
+    authored at `captureTurns >= 2`. The cut is scoped to THE MVP, which ships one map at
+    N = 1. Reviving it needs no new C++ -- only an editor pass -- so a later scenario does
+    not reopen this ruling, it just spends the pass.
+  - **THE THIRD ROUTE WAS OFFERED AND DECLINED**, recorded so it does not read as
+    unconsidered: raising N on the shipped scenario. It was declined as a design change
+    rather than a UI one, and it could not have been done in this tree in any case --
+    `Data/` is vendored and hash-gated, so it would have been an upstream re-vendor request
+    against `stratocracy-crew`, never an edit here.
+  - **ITEM (4) IS DISPATCHED, IN LANE.** `strat-gameplay-engineer` holds the C++ over base
+    `cada741`, in the main tree, with the editor closed. THE USER WAS OFFERED DISPATCH AND
+    IN-SESSION WRITING WITH THE COST OF EACH NAMED, AND CHOSE DISPATCH -- so the in-session
+    clause is not invoked and the lane agent writes its own `engine.md` entry, which this
+    seat does not author. The editor pass is deliberately a SEPARATE later batch, the
+    user's choice of C++ first; until it lands the pulse is published and undrawn, which is
+    the state item (2) was in when the wave plan called it buildable.
+  - **WHAT REMAINS OF W8 AFTER THIS RULING:** item (3), the repair-eligibility pip, still
+    unruled and still carrying the three routes named further down this file; and item
+    (4)'s editor pass. Item (2) is closed BY CUT rather than by build, and a reader
+    counting built items should not count it as delivered.
 - **2026-09-01, COORDINATOR (ACTING AND WRITING) -- THE PROJECT PACKAGES FOR WINDOWS, AND CI
   NOW BUILDS THE GAME TARGET, WHICH HAS BEEN WATCHED GOING RED RATHER THAN ONLY GOING GREEN.**
   Landed in `7713c6c`, pushed, and CI green on that commit. THE PASS CROSSES LOCAL MIDNIGHT and

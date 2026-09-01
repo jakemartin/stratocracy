@@ -68,6 +68,30 @@ namespace StratGuidanceRoute
 {
 	static const int32 kFirstSide = 0;
 
+	/**
+	 * A slot name that does not exist, so `HasCompletedAMatchOnSave` answers false and
+	 * `AStratPlayerController::TryArmGuidedOpening` ARMS the guided opening.
+	 *
+	 * WHY THIS IS HERE, AND IT IS A MEASUREMENT RATHER THAN TIDINESS.
+	 * `FStratMatchConfig::SaveSlotName` defaults to `StratocracyMatch` -- THE PLAYER'S SLOT
+	 * -- and `MakeConfig` below used to leave it there. `TryArmGuidedOpening` asks
+	 * `HasCompletedAMatchOnSave(FString())`, which resolves to that default, so
+	 * `RefreshFromMachineDecoratesWithNoRegistration` read whatever `.sav` happened to be on
+	 * the machine running it. Measured 2026-09-01 over `cada741`, three runs of that clause
+	 * alone: with `Saved/SaveGames/StratocracyMatch.sav` present and carrying
+	 * `bHasCompletedAMatch`, it failed with an entirely unset strip; with that one file moved
+	 * aside and nothing else changed, it passed; with the same bytes restored, it failed
+	 * again. The controller was right every time -- §2.11.6 is "any completed match on the
+	 * save skips all guidance automatically" -- and the clause was reading a disk it never
+	 * named.
+	 *
+	 * `StratGuidanceInputGates.cpp` carries the same constant for the same cause and states
+	 * the OPPOSITE symptom: there a suppressed opening opens every gate and the whole file
+	 * passes vacuously. A fixture that does not name its slot fails on one machine and goes
+	 * quiet on another, and neither is about the code under test.
+	 */
+	static const TCHAR* kAbsentSlotName = TEXT("StratocracyAutomation_NoSuchSlot_GuidanceRoute");
+
 	static UDataTable* LoadTable(const TCHAR* ObjectPath)
 	{
 		return LoadObject<UDataTable>(nullptr, ObjectPath);
@@ -157,6 +181,7 @@ namespace StratGuidanceRoute
 		Out.ViewingSide     = 0;
 		Out.BoardActorClass = AStratBoardActor::StaticClass();
 		Out.UnitActorClass  = AStratUnitActor::StaticClass();
+		Out.SaveSlotName    = kAbsentSlotName;
 		return true;
 	}
 
@@ -1872,6 +1897,21 @@ bool FStratGuidanceRefreshFromMachineNeedsNoRegistrationTest::RunTest(const FStr
 	// ran and there is nothing bound.
 	if (!TestFalse(TEXT("nothing is registered as the subsystem's view decorator"),
 			H.Subsystem->HasViewDecorator()))
+	{
+		return false;
+	}
+
+	// THE SECOND PREMISE, AND IT IS ASKED RATHER THAN ASSUMED BECAUSE IT USED TO BE INHERITED
+	// FROM DISK. §2.11.6 suppresses the entire opening when the resolved save slot records a
+	// completed match, and `TryArmGuidedOpening` applies that inside the very refresh below --
+	// so an unset strip is evidence about DECORATION only once suppression is excluded.
+	// `MakeConfig` points the config at `kAbsentSlotName`; this reads the subsystem's own
+	// answer instead of trusting that, so a slot of that name appearing on some future machine
+	// reddens this line by name rather than reappearing as the unexplained unset strip
+	// measured on 2026-09-01.
+	if (!TestFalse(TEXT("the fixture's own save slot records no completed match, so §2.11.6 ")
+			TEXT("does not suppress the opening this clause is about"),
+			H.Subsystem->HasCompletedAMatchOnSave(FString())))
 	{
 		return false;
 	}

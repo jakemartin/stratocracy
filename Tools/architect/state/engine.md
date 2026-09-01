@@ -15,6 +15,314 @@
 
 ## NEXT
 
+- **2026-08-31, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, in worktree
+  `E:/MultiAgent/Strat-wt/slot-2` on `feat/w8-transient-receipts`, base `c754342`, lane commit
+  `0a697c0`, MERGED TO `master` AS `ed09973`) -- W8 ITEMS (5) AND (6): THE INCOME AND KILL
+  RECEIPTS AND THE TURN BANNER, WHOSE EVERY NUMBER IS A SECOND READING OF A DURABLE HOME.**
+  - **WHOSE WRITE THIS IS, SAID FIRST.** The C++ is this lane's, written by this lane, in this
+    lane's own worktree, under a standing wave topology; the entry is this lane's too. Neither
+    the transcription clause nor the in-session clause is invoked or needed. **The commits are
+    a separate actor and are named as such:** the `coordinator` ran `0a697c0` and `ed09973` at
+    the user's explicit instruction in session -- the user did not run git -- and the git
+    author recorded on both is the user's identity, measured on this tree rather than assumed
+    (`git show --format=%an ed09973` returns `lobohotpants`). The distinction is kept because
+    *"the user committed it"* and *"the `coordinator` committed it at the user's instruction"*
+    are different claims about who checked what, and a lane agent has already got this half
+    wrong once. **The W8 path-preview lane's entry -- lane commit `4f5e09e`, merged as
+    `1576e40` -- makes the same distinction about its own two commits; that is one wave's
+    convention recorded twice and not two independent findings.**
+  - **WHAT LANDED, BY SYMBOL.** `Source/StratUI/StratTransientReceipts.{h,cpp}`, new: the
+    reflected `EStratReceiptKind`, `EStratTurnBanner`, `FStratReceiptView`, `FStratReceiptMark`
+    and `FStratTransientReceipts`, plus three world-free deciders -- `StratMarkFromView`,
+    `StratDecideTurnBanner` and `StratDecideTransientReceipts`. In `UStratMatchSubsystem`:
+    `GetTransientReceipts`, `GetReceiptMark`, `CopyTransientReceipts`, the private
+    `LastReceipts` and `ReceiptMark`, one two-line call site in `ApplyView`, and a reset beside
+    each of the two existing `AppliedModel` teardowns. **It lives in `StratUI` and not in
+    `StratPlay`**, for `StratViewModel.h`'s own placement reason: it is the lowest module both
+    the widgets and the actors can see, and the widgets are the consumers.
+  - **THE INVARIANT THIS LANE HAD TO NOT BREAK, AND THE SENTENCE THAT KEEPS IT TRUE.**
+    `FStratViewModel` forbids an event layer in its own words -- no changed flag, no dirty set,
+    no sequence number -- because that is what makes T-INT-05's rebuild-from-the-view-model-
+    alone property structural. But a receipt IS an edge, and a value carrying no history cannot
+    express one. **The reconciliation is that THE SCREEN MUST BE FULLY CORRECT WITH ZERO
+    RECEIPTS DRAWN**: `FStratTransientReceipts` is not a field of the view model, is not an
+    input to `ApplyView`, and every number in it is a second reading of a durable home that is
+    on screen anyway -- `IncomePerTurn`, `FameCombat`, `SideToMove`. Dropping every receipt on
+    the floor loses emphasis and loses no information. **If that ever stops being true -- if a
+    receipt becomes the only place a fact appears -- this file has become an event list and
+    T-INT-05 has a hole in it.** That is the property to check first if this surface grows.
+  - **THE DECIDERS ARE WORLD-FREE ON `AStratShellHUD::DecideMenuTiming`'S PRECEDENT**, which
+    this file already records as the shape that made a decision pinnable headlessly. No
+    `UWorld`, no bridge, no viewport, no subsystem pointer: a clause plants a mark and a view
+    model and asserts. What is left at the call site is one call and one re-mark. **The mark is
+    a value the CALLER owns and not a cache inside the module** -- a file-static would make the
+    answer depend on process history, so two clauses in one suite would contaminate each other
+    and a second match in one session would inherit the first one's fame.
+  - **THE KILL RECEIPT READS THE `FameCombat` RISE, AND ROUTING `FStratCombatOutcome` WAS NOT
+    THIS LANE'S TO CHOOSE.** That struct already carries everything Sec 2.11.3's named-victim
+    line needs -- `DefenderId`, `bDefenderDied`, `AttackerFameCombatBefore` and
+    `AttackerFameCombatAfter` -- but `StratBridge.h` states in terms that the bridge *"does not
+    retain the last one"* and defers the delivery mechanism BY NAME to a separate ruling,
+    `bridge_event_list`. Taking that route would have been this lane opening that ruling, which
+    is a decision and not a design. So the receipt reads the rise in
+    `FStratSideView::FameCombat` instead, which needs no new bridge surface and no ruling.
+    **`strat-integration-reviewer` weighed this independently and confirmed it does NOT
+    reimplement the deferred mechanism under another name.**
+  - **THE COST THAT BUYS, WRITTEN DOWN RATHER THAN OWNED QUIETLY.** (1) **No victim identity**
+    -- a durable counter knows the amount and not the unit, so Sec 2.11.3's named-victim line
+    is unbuildable from this tree. (2) **No per-kill granularity**: two kills between two marks
+    collapse into ONE receipt carrying their summed Fame, because a counter cannot say how many
+    steps it took. **The collapse is worst during AI playback**, where commands step one at a
+    time -- a refresh between steps splits them and a refresh only at the end does not, so the
+    receipt count there is a property of the refresh cadence rather than of the turn.
+    **DISCHARGE CONDITION: the day the `bridge_event_list` ruling lands and the bridge retains
+    outcomes, the kill arm grows a `VictimUnitId` and both costs go together.** Filing that
+    ruling is not this lane's pass.
+  - **A MEASURED FINDING AGAINST THE W8 RULING'S OWN WORDING, AND IT SURVIVES INTO THE MERGED
+    TREE.** The ruling says kill toasts *"restate the scoreboard's Destroyed row"*. That row
+    exists -- and it carries COMBAT FAME, not a count of destroyed units. Measured here:
+    `EStratScoreCriterion::CombatFame` carries `UMETA(DisplayName = "Destroyed")` at
+    `StratScoreboardWidget.h:111`, `FStratScoreboardRow`'s own comment maps that row to
+    `UiSideView::fameCombat`, and Sec 2.11.4 gives it a disambiguating tooltip precisely
+    because the label reads like a tally while the number is a currency. **`strat::UiSideView`
+    has exactly five fields** -- `fameTotal`, `fameCombat`, `objectivesHeld`, `survivingHp`,
+    `incomePerTurn` -- and none is a kill count; the reviewer checked that independently
+    against `strat::UiSideView`, `FStratBridge` and `FStratCombatOutcome` and found no
+    published delta. **THE CONSEQUENCE IS FOR `Content/` AND IS THE REASON THIS IS RECORDED
+    RATHER THAN NOTED: copy drawn off a kill receipt MUST BE FAME-VOICED and NEVER A TALLY --
+    the number is Fame that was awarded, not units that died.** No rules change follows and no
+    scope question is opened: the durable home the ruling names does exist, it is simply a
+    currency.
+  - **THE INCOME ARM CARRIES THE STANDING RATE, NOT THE AMOUNT PAID, AND TURN 1 WAS
+    DELIBERATELY NOT SPECIAL-CASED.** `Ui.h` is explicit that `incomePerTurn` is the STANDING
+    rate, that it reads non-zero on turn 1 even though Q8(a) pays 0 then, and that it is
+    *"deliberately NOT `accrueIncome`'s return value"*. That return -- the amount actually
+    added -- is published NOWHERE: not in `UiSnapshot`, not through `FStratBridge`.
+    **Suppressing the receipt on turn 1 was considered and REFUSED**, because it transcribes a
+    rules fact (Sec 2.7's Q8(a)) into the presentation layer, where nothing rechecks it against
+    the rules and where it would silently outlive any change to them. The arm is named
+    `IncomeRate` rather than `Income` so the enumerator itself says what the number is.
+    **DISCHARGE CONDITION: when a paid-this-turn figure is published -- an upstream
+    `UiSideView` field carrying `accrueIncome`'s return, or an `FStratBridge` method routing
+    it -- the arm becomes `IncomePaid`, `Amount` becomes that field verbatim, and the copy
+    obligation below is DELETED rather than moved.**
+  - **AN OPEN OBLIGATION OWED BEFORE THE TOAST WIDGET IS AUTHORED, RECORDED HERE SO IT IS NOT
+    LOST.** Because the arm carries a rate and is not suppressed on turn 1, **copy drawn off an
+    `IncomeRate` receipt must be RATE-VOICED and never amount-voiced** -- the amount-voiced form
+    is FALSE ON TURN 1, while the rate-voiced form is true on every turn including that one. It
+    is stated in two places in code: the header prose block, and the `UPROPERTY` tooltip on
+    `FStratReceiptView::Amount`, added in a sanctioned comment-only pass after the reviewer
+    observed that the header block is not a surface the content lane reads. **The tooltip is
+    where a UMG author binding the pin actually lands, which is why it is duplicated there
+    rather than cited.** **THE RECORD-SIDE HALF IS STILL OPEN AND IS MEASURED AS OPEN:**
+    `content.md` carries zero occurrences of this obligation or of `GATE-TRANSIENT`, checked on
+    this tree. `content.md` is not this lane's file and this lane does not write it; routing it
+    is the `coordinator`'s. **The obligation is discharged when `content.md` carries it, or
+    when the `IncomePaid` discharge above makes it moot -- whichever comes first.**
+  - **A UHT FAILURE FIXED PROPERLY RATHER THAN AROUND, AND THE MEASUREMENT IS RECORDED AT THE
+    MEMBER.** The first spelling marked `LastReceipts` `BlueprintReadOnly` in the private
+    section; measured, one error: `Error: BlueprintReadOnly should not be used on private
+    members`, reported at `StratMatchSubsystem.h`. **The obvious fix -- move the member to the
+    public section -- was refused**, because a public mutable member is a SECOND WRITER of a
+    value whose own declaration insists `ApplyView` is the only one. Closed instead with a
+    `BlueprintPure` copy accessor, `CopyTransientReceipts`, which is the shape
+    `GetConcludedMatchView` already uses in that class. **The copy is cheap here and that is
+    why the shape is available at all**: `GetViewModel` refuses the equivalent because copying
+    a 99-hex model would make a cheap read expensive, while this struct is a banner, two
+    integers and a list that is empty on most refreshes.
+  - **TWO BANNER-EDGE DEFECTS WERE CAUGHT IN THIS LANE'S OWN FIRST DRAFT, BEFORE ANY BUILD, AND
+    THE RULE THAT FELL OUT IS REUSABLE.** `FStratReceiptMark` first carried only `SideToMove`,
+    so the previous banner was recomputed with the CURRENT result flag. That breaks in two
+    directions at once: a concluded match then reports a banner change on EVERY refresh forever
+    -- the old side always maps to a turn arm and the new one always to `None` -- and forcing
+    the flag false instead hides the one transition that matters, the refresh on which the
+    match ends. `SetViewingSide` is the same shape: it flips the banner with no rules field
+    moving at all. **THE RULE, now stated at the field: whatever `StratDecideTurnBanner` reads,
+    the mark stores. A fourth input added to that function without a field beside it
+    reintroduces the same class of bug.** It is recorded as a design rule and not as a fixed
+    bug because neither defect was reachable by a clause written against the first draft's own
+    shape.
+  - **THE ONE SUBTRACTION IS MARKED AS SUCH IN THE SOURCE.** `StratTransientReceipts.cpp` holds
+    the only arithmetic in the file, on the line its own comment labels THE ONE SUBTRACTION, and
+    the file's opening block says why the argument for it does not extend to a second one: it
+    subtracts one reading of `FameCombat` from an earlier reading of THAT SAME FIELD, restating
+    no cost table, no half and no flag bonus -- the three clauses `StratBridge.h` says a deriver
+    would have to restate. The receipt carries `DurableBefore`, `DurableAfter` and `Amount`
+    together so a clause can check the subtraction against its own inputs, which is
+    `FStratCombatOutcome`'s own precedent read from the other side.
+  - **WHAT THIS ENTRY DOES NOT STATE.** No suite count and no phase verdict -- `global.md` owns
+    both, and a live figure of that shape in this file is a finding by
+    `strat_banner_sweep.py`'s RECORD OWNERSHIP check. Thirteen `GATE-TRANSIENT` clauses landed
+    over this lane's code, across `Source/StratUI/Tests/StratTransientReceiptClauses.cpp` and
+    `Source/StratPlay/Tests/StratTransientReceiptCallSite.cpp`; **`tests.md` is their record and
+    this lane does not write it.** Eleven were PROPOSED from this lane, and the test author
+    added three beyond them while widening a fourth -- `FameCombatFallIsSilent` became
+    `FameCombatFallOrHoldIsSilent`, which correctly pins the strictly-greater comparison rather
+    than only the fall. **Proposing a clause is not writing one.** The line-endings-vary-per-
+    file lesson this wave also paid for is recorded in the path-preview lane's entry and is not
+    restated here; it bound this pass too -- both files this lane wrote are LF, while
+    `engine.md` is CRLF, and this entry was inserted by a script that measured both and refused
+    on anything but exactly one anchor.
+
+- **2026-08-31, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, in worktree
+  `E:/MultiAgent/Strat-wt/slot-1` on `feat/w8-path-preview`, base `c754342`, lane commit
+  `4f5e09e`, MERGED TO `master` AS `1576e40`) -- W8 ITEM (1): THE PATH PREVIEW IS ROUTED
+  THROUGH THE MODULE, AND TWO OF ITS FIVE MUTANTS SURVIVED FOR A REASON NO CLAUSE CAN FIX.**
+  - **WHOSE WRITE THIS IS, SAID FIRST, AND SAID WITHOUT LOCATING ANY OTHER ENTRY.** The C++ is
+    this lane's, written by this lane, in this lane's own worktree, under a standing wave
+    topology; the entry is this lane's too. **Neither the transcription clause nor the
+    in-session clause is invoked or needed** -- this is an ordinary in-lane write, and those
+    two are named only to say that neither is load-bearing here. **The commits are a separate
+    actor and are named as such:** the `coordinator` ran `4f5e09e` and `1576e40` at the user's
+    explicit instruction in session -- the user did not run git -- and the git author recorded
+    on both is the user's identity. That distinction is kept because *"the user committed it"*
+    and *"the `coordinator` committed it at the user's instruction"* are different claims about
+    who checked what, and a lane agent has already got this half wrong once.
+  - **[CORRECTED BEFORE THIS ENTRY WAS EVER COMMITTED -- THE BULLET ABOVE ONCE DESCRIBED ITS
+    NEIGHBOURS BY POSITION, AND THE POSITION MOVED WHILE THE PASS WAS STILL OPEN. RECORDED
+    RATHER THAN QUIETLY REWRITTEN, because the defect is one this file keeps meeting and the
+    fix is a shape rather than a number.]** The first draft opened *"BECAUSE THE THREE ENTRIES
+    ABOVE THIS ONE ARE OUT-OF-LANE WRITES AND THIS ONE IS NOT"*. It was written when this was
+    the topmost entry under `## NEXT`. Entries PREPEND there, the sibling W8 lane's entry then
+    landed above this one, and the sentence was afterwards wrong twice over: wrong on the count,
+    and wrong on the character, since it labelled an IN-LANE write as out-of-lane -- inside the
+    one bullet whose entire job is ownership legibility. **THE COUNT WAS NOT THE DEFECT; THE
+    SHAPE WAS.** Changing "three" to "one" would have rotted again on the next prepend. **THE
+    RULE THIS LANE TAKES FROM IT:** an entry may pin ITSELF by commit identity -- this one does,
+    via `4f5e09e` and `1576e40` -- but it must never locate another entry by POSITION. Anything
+    that needs to say something about another entry names it by DATE AND SUBJECT, or belongs in
+    that entry's own file. Nothing here needs to, so nothing does. Note where the failure landed:
+    this entry pins its own identity by commit and warns twice below that its own figures move,
+    yet the single place it reached for a neighbour it reached for position -- because position
+    was the only handle it had in hand, which is exactly when this defect gets written.
+  - **WHAT GAP THIS CLOSED, AND WHY A NEW BRIDGE METHOD WAS UNAVOIDABLE RATHER THAN
+    CONVENIENT.** `FStratBridge::ReachableHexes` answers WHICH hexes are in reach and WHAT each
+    costs, and carries NO ROUTE. `strat::findPath` -- which has the route -- was reachable from
+    nothing: measured before the pass, ZERO occurrences of that name anywhere in `Source/`
+    outside `Source/StratRules/`. The vendored sources carry no `_API` macro (this file's
+    standing 8 x `LNK2019`), so a route could not be asked for from `StratPlay` at all, and the
+    only other way to draw one was to walk the reach set downhill in the engine. **That walk is
+    `Move.h`'s tie-break rule restated by a layer that may not hold it, and it is the exact
+    substitution `T-UI-02` forbids in its own words** -- the same shape as the 122 divergent
+    hexes across 10 of 10 units this file already records for `distance <= move`. So the method
+    had to exist before the feature could be built honestly.
+  - **WHAT LANDED, BY SYMBOL.** `FStratBridge::MovePathToHex(int32 UnitId, FIntPoint GoalHex,
+    TArray<FIntPoint>& OutRouteHexes, TArray<int32>& OutRouteCosts, int32& OutTotalCost)
+    const`, in `StratBridge`. `FStratPathPreviewView` and the `FStratViewModel::PathPreview`
+    field, in `StratUI` beside the model they belong to. `IStratPathQuery`,
+    `FStratBridgePathQuery` and the free function `StratDecoratePathPreview`, in
+    `Source/StratPlay/StratPathPreviewQuery.{h,cpp}`, on the decoration seam
+    `StratForecastQuery` already established. One call added to
+    `AStratPlayerController::DecorateForPresentation`, after the hover decorator.
+  - **IT IS THE ONLY *PRODUCTION* `strat::findPath` CALL SITE IN THE TREE, AND THE QUALIFIER IS
+    LOAD-BEARING RATHER THAN CAUTIOUS.** In shipping code the call occurs exactly once,
+    `StratBridge.cpp:1446`. **There is a SECOND call in the merged tree**, at
+    `Source/StratBridge/Tests/StratPathPreviewParity.cpp:303`, and it is deliberate: that file
+    lives inside `StratBridge`, so the vendored symbol links, and it calls the module directly
+    to serve as an INDEPENDENT ORACLE for the bridge's answer. The unqualified sentence *"the
+    only `strat::findPath` call site"* was true on the lane branch before the test author's
+    file landed and is FALSE in the merged tree; it is written here in its scoped form so that
+    a later reader greps, finds two hits, and does not conclude the record is wrong.
+  - **THE REFUSAL SPLIT, WHICH HAD TO BE CHOSEN RATHER THAN INHERITED, BECAUSE THE TWO
+    NEIGHBOURS DISAGREE.** The refusals -- definitions not loaded, no scenario, a `defIndex`
+    outside the table, an id not on the board -- are `Reachable`'s, forwarded verbatim. **An
+    UNREACHABLE GOAL IS AN EMPTY ANSWER AND NOT A REFUSAL**, following `AttackTargetHexes` and
+    NOT `ReachableHexes`. `ReachableHexes` may read empty as a fault because a successful call
+    always yields at least the unit's own hex at cost 0; that property does not transfer. A
+    hovering cursor produces an out-of-allowance, blocked or impassable goal on most of its
+    frames, and those are ordinary board positions exactly as *"nothing in reach"* is for
+    attack, so folding them onto the refusal channel would make an ordinary hover read as a
+    broken bridge. `OutTotalCost` is 0 on that answer and **0 is not a sentinel** -- it is also
+    the honest cost of a route to the unit's own hex -- so a consumer must read the array's
+    emptiness and never the number.
+  - **THE FIVE CODE MUTANTS, BUILT IN PLACE IN THE LANE TREE AND REVERTED FROM A BYTE BACKUP
+    VERIFIED WITH `sha256sum -c`.** Never in a copy: a copied tree's cached `Intermediate/Build`
+    resolves the original sources and reports `Result: Succeeded` for a build that compiled
+    nothing. THREE DIED -- trimming the start hex (four clauses, two of them collateral from the
+    resulting array-length desync); returning `Fail` on the no-route arm (two); gating the
+    decorator on `bDone` instead of `bHasMoved` (two, the second because that clause drives
+    `bHasMoved` from a table with an already-moved leg). **TWO SURVIVED, and they are the part
+    of this entry a later reader most needs.**
+  - **SURVIVING MUTANT ONE -- THE TICK CLAIM. `MovePathToHex`'s header asserts the ticks are
+    `reachable`'s costs LOOKED UP, not derived. That is true of the source and unobservable
+    from any output, and the mechanism is an IDENTITY rather than a weak fixture.**
+    `strat::reachable`'s cost for a hex IS the summed `moveCost` along a cheapest path to that
+    hex; `findPath`'s route is a cheapest path; and every prefix of a cheapest path is itself a
+    cheapest path to its own last hex, because move costs are non-negative and a cheaper prefix
+    could otherwise be spliced in to beat a minimal total. **So "look the cost up per hex" and
+    "sum `moveCost` while walking the route" are THE SAME NUMBER ON EVERY BOARD** -- not merely
+    on *Ferrum Crossing*, and not merely on the boards the fixtures happen to build. A clause
+    asserting a difference would be asserting against an identity. The claim is ARCHITECTURAL
+    and not behavioural: it says which module owns Sec 2.5's cost model, which is precisely
+    `T-UI-02`'s subject, and which no black-box test can see.
+  - **SURVIVING MUTANT TWO -- THE `OutTotalCost` CLAIM, AND THE CAUSE IS THE METHOD'S OWN
+    CROSS-CHECK.** `MovePathToHex` REFUSES every board on which `OutRouteCosts.Last()` and
+    `findPath`'s `outCost` differ. So on every board that answers at all the two are equal BY
+    CONSTRUCTION, and `OutTotalCost = Cost` and `OutTotalCost = OutRouteCosts.Last()` are
+    indistinguishable from outside. **The check removes the observability of the very thing the
+    claim is about**, and by the same argument its own refusal arm is unreachable -- which
+    upgrades the header's *"has never been observed to fire"* from a sample to a proof.
+    **WHAT THAT IS BOUGHT WITH, so the trade is legible rather than merely disclosed:** the
+    cross-check buys a real safety property -- the module's two movement answers can never
+    silently disagree in front of a player, and a disagreement names both numbers instead of
+    the bridge picking a winner between two rules answers -- and it pays in exactly this
+    unfalsifiability. The payment is not a side effect to be engineered away: any check strong
+    enough to guarantee the agreement is strong enough to hide which side was assigned.
+    Deleting it to make the claim testable would trade a live safety property for a test of a
+    dead one.
+  - **BOTH CLAIMS ARE MARKED AT THE CODE SITE AND NOT ONLY HERE, IN A SEPARATE SANCTIONED
+    COMMENT-ONLY PASS.** `StratBridge.h` carries a pointer paragraph at each claim and a
+    closing block giving the mechanism, the trade, and the split between what a checkout can
+    check (that the method performs no addition; the refusal channel, via
+    `MovePathRefusesUnseeded` and `MovePathRefusesUnknownUnitId`; the numeric agreement, via
+    `MovePathTicksAreReachableCosts`) and what rests on reading the body -- WHICH EXPRESSION
+    PRODUCED EITHER NUMBER. It is stated at the code because a reader who finds these unpinned
+    will otherwise file the gap as missing coverage and spend a pass trying to close it.
+  - **THE `uiPath` DEBT, WHICH IS THE ONE THING IN `MovePathToHex` THAT IS NOT A FORWARD.**
+    `Ui.h` offers `uiReachable` for the reach set and NO `uiFindPath` beside it, so unlike
+    `Reachable` -- which forwards to a `Ui.h` entry point that assembles its own arguments --
+    this method must look up the unit's Sec 2.4 `move` allowance itself, in the same one line
+    `uiReachable`'s body uses. That is a table read and not a rule. **DISCHARGE CONDITION: the
+    day a `uiPath` is vendored upstream, this body becomes a forward to it and no caller
+    changes** -- the same sentence `AttackTargetHexes` carries about its own enumeration.
+    Filing it upstream is the steward's pass and not this lane's; `Source/StratRules/` is
+    read-only here.
+  - **A SEAM WAS ASKED FOR AND DELIBERATELY NOT BUILT, AND THE MEASUREMENT IS WHY.** The request
+    was to make `DecorateForPresentation`'s call site pinnable by adding a protected virtual or
+    an injectable `IStratPathQuery*`, following the forecast path's shape. **Measured: the
+    forecast path has no such seam to copy** -- `DecorateForPresentation` is declared at
+    `StratPlayerController.h:337`, NON-VIRTUAL, under the `public:` at line 235; a grep for
+    `Forecast` in that header returns nothing, so there is no member and no injectable; and
+    `FStratBridgeForecastQuery` is a stack local in an unnamed scope block. **And the premise
+    was false: the call site was already pinnable.** Because the method is public, existing
+    clauses call it directly on a live controller -- at decision time, nine call sites across
+    `StratHoverInputClauses.cpp` and `StratInfoPanelRouting.cpp`. So no production change was
+    made. **THE MERGED TREE VINDICATES THAT AND ALSO MOVES THE FIGURE:** `strat-test-author`
+    then wrote `Stratocracy.StratPlay.T-UI-02.DecorateForPresentationPublishesThePreview` using
+    exactly that route, so the count is now eleven call sites across three files. The
+    nine-across-two figure was true of the tree the decision was made against and is stamped
+    here rather than silently corrected; **neither figure should be quoted forward, because
+    both move whenever anyone adds a clause.**
+  - **TWO INSTRUMENT DEFECTS WERE CAUGHT BEFORE THEY COULD FABRICATE A RESULT, AND BOTH ARE
+    REUSABLE LESSONS FOR THIS LANE.** (1) **Line endings vary per file in this tree**:
+    `Source/StratBridge/StratBridge.cpp` is CRLF while the new
+    `Source/StratPlay/StratPathPreviewQuery.cpp` is LF. A mutation patcher matching on a bare
+    newline found zero anchors in the CRLF file; had it not COUNTED its anchor and refused on
+    anything but exactly 1, the mutant would have applied nothing, built green, and been
+    reported as "survived" for entirely the wrong reason -- a false measurement
+    indistinguishable from the true one that was eventually recorded. (2) Writing a
+    carriage-return escape through a quoted bash heredoc into Python collapsed it to a real
+    newline and produced a `SyntaxError`; rebuilt using `chr(13)`/`chr(10)` and no backslashes
+    at all.
+  - **WHAT THIS ENTRY DOES NOT STATE.** No suite count and no phase verdict -- `global.md` owns
+    both, and a live figure of that shape in this file is a finding by
+    `strat_banner_sweep.py`'s RECORD OWNERSHIP check. Thirteen `T-UI-02` clauses landed over
+    this lane's code, across `Source/StratBridge/Tests/StratPathPreviewParity.cpp` and
+    `Source/StratPlay/Tests/StratPathPreviewDecoratorClauses.cpp`; **`tests.md` is their record
+    and this lane does not write it.** Two of the thirteen were PROPOSED from this lane and
+    both landed -- `MovePathArraysAreTheSameLength` and
+    `DecorateForPresentationPublishesThePreview` -- and proposing a clause is not writing one.
+
 - **2026-08-31, the `coordinator` (ACTING -- the C++ below is this lane's and was written OUT OF
   LANE, in the integration tree, on the user's explicit instruction in session) and
   `strat-gameplay-engineer` (WRITING; this entry and nothing else in the pass) -- THE TITLE

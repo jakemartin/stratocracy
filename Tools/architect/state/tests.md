@@ -14,6 +14,325 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-08-31 (local), `strat-test-author` (ACTING and WRITING; IN LANE, in worktree
+  `E:/MultiAgent/Strat-wt/slot-2` on `feat/w8-transient-receipts`, base `c754342`, lane commit
+  `0a697c0`, MERGED TO `master` AS `ed09973`) -- W8 ITEMS (5) AND (6): THIRTEEN
+  `GATE-TRANSIENT` CLAUSES FOR THE INCOME AND KILL RECEIPTS AND THE TURN BANNER, TWO OF WHICH
+  PASSED THEIR FIRST MUTANT ROUND WHILE BEING INCAPABLE OF FAILING.**
+  - **WHOSE WRITE THIS IS, SAID FIRST.** The clause bytes are this lane's, written by this lane,
+    in this lane's own worktree, under a standing wave topology; this entry is this lane's too,
+    **written directly rather than drafted for transcription**. Neither the transcription clause
+    nor the in-session clause is invoked or needed, and the direct write is the stronger form for
+    the reason the transcription clause states about its own limit (1): nothing in a checkout
+    distinguishes a real transcription from an invented one. **The commits are a separate actor
+    and are named as such:** the `coordinator` ran `0a697c0` and `ed09973` at the user's explicit
+    instruction in session -- the user did not run git -- and the git author recorded on both is
+    the user's identity. `engine.md`'s entry for this same lane makes the identical distinction;
+    **that is one wave's convention recorded twice and not two independent findings**, and the
+    W8 path-preview lane's own entry (lane commit `4f5e09e`, merged as `1576e40`) records it a
+    third time for the same wave and the same reason. **No suite figure, count move or verdict is
+    stated in this file**; `global.md`'s banner owns all three and this entry links to it rather
+    than restating any.
+  - **THE THIRTEEN, DERIVED BY SET DIFFERENCE ON THE MACRO AND NOT BY AN ACCEPTANCE-ID GREP.**
+    Multiline regex over `IMPLEMENT_SIMPLE_AUTOMATION_TEST` across `Source/**/*.cpp`, both sides
+    collected by ONE function -- `c754342` and `0a697c0` each read through `git show` -- which
+    returns exactly these names, thirteen added and none removed. Collecting the two sides with
+    one function is the point rather than a detail: two corpora gathered by different filters
+    fabricate findings. Eleven in `Source/StratUI/Tests/StratTransientReceiptClauses.cpp`:
+    `UnseededMarkEmitsNoReceiptsAndStillBanners`, `KillReceiptCarriesTheFameCombatRise`,
+    `FameCombatFallOrHoldIsSilent`, `SideAbsentFromTheMarkIsSkipped`,
+    `IncomeReceiptIsTheRateVerbatim`, `IncomeFiresOnlyOnTheTurnSidePair`,
+    `KillReceiptsPrecedeTheIncomeReceipt`, `BannerFollowsSideToMoveAgainstTheSeat`,
+    `ResultSilencesTheBanner`, `BannerChangeIsRelativeToTheMarksOwnInputs` and
+    `ReceiptsAreOverwrittenNotAccumulated`. Two in
+    `Source/StratPlay/Tests/StratTransientReceiptCallSite.cpp`: `ApplyViewRemarksAfterDeciding`
+    and `MarkResetsWithTheAppliedModel` -- the two halves a world-free clause cannot reach,
+    because their subject is `UStratMatchSubsystem` and `StratUI` sits below `StratPlay`. **All
+    thirteen ride `GATE-TRANSIENT` and mint no acceptance ID**, per the 2026-08-29 W8 ruling.
+    `T-FAME-02`, `T-FAME-07` and `T-TURN-01` are REFUSED for these items and appear in this lane
+    only inside the prose that refuses them: a toast asserts that a receipt fired with the
+    module's number and not that an award was computed correctly, and a banner asserts nothing
+    about strict alternation, it follows a mirror of it.
+  - **THE TWO CLAUSES THAT PASSED THEIR FIRST MUTANT ROUND WHILE BEING INCAPABLE OF FAILING, AND
+    THE SPECIES THEY SHARE. THIS IS THE MOST REUSABLE THING IN THE WAVE.** Both are the same
+    defect wearing different clothes: **a fixture in which the two candidate expressions the
+    clause is meant to separate evaluate to THE SAME NUMBER**, so the assertion is satisfied by
+    either and the clause certifies nothing while looking green.
+    - `KillReceiptCarriesTheFameCombatRise` asserted that `Amount` is the RISE in
+      `FStratSideView::FameCombat`. Its first fixture took `Before` from the seeded opening,
+      where `FameCombat` is **zero** -- so `After - Before` and `After` are the same number, and
+      a mutant carrying the absolute reading instead of the rise ran the whole suite green.
+      Repaired by planting `Before` at the side's standing income rate (a module field, nonzero),
+      pushing `FameTotal` down to that same value so the two fields stay distinguishable, and
+      asserting that the two expressions DISAGREE before asserting the amount.
+    - `BannerChangeIsRelativeToTheMarksOwnInputs` asserted that the previous banner is recomputed
+      from the MARK's inputs. Its concluded-match case took the mark **over the already-concluded
+      model**, so the mark's result flag and the model's could never disagree -- and a mutant
+      recomputing the previous banner with the CURRENT result flag ran the whole suite green.
+      Repaired by adding the case in which they DO differ: the mark taken while the match is
+      live, a concluded model applied against it -- the refresh on which the match ends, which is
+      the one transition the naive fix hides.
+    - **THE GENERALISATION, WHICH IS WHAT A LATER READER WANTS.** A fixture must be checked for
+      the coincidence BEFORE the mutant is written, by asking of each assertion: what is the
+      other expression a wrong implementation would plausibly produce here, and does this fixture
+      make it a different number? A zero, an identity and a value copied from the same source are
+      the three ways it silently does not. The income arm's fixture was built to avoid exactly
+      this and says so in its own comment; the same reasoning was simply not carried across to
+      the other two clauses in the same file, which is how both survived review, a first mutant
+      round, and the author's own reading.
+  - **WHERE THE EXPECTATIONS COME FROM.** Every clause seeds a real `FStratBridge` from the
+    shipped tables and scenario and builds a real `FStratViewModel` from it; no fame figure,
+    income figure, side count or turn number is typed. The income amount is asserted against
+    **`strat::UiSideView::incomePerTurn` off the snapshot the same bridge projected** -- one
+    layer BELOW the view model -- and the turn edge that fires it is a real
+    `FStratBridge::SubmitEndTurn` with the pair change asserted first. The banner clauses use two
+    REAL models built for two seats off one bridge, so `ViewingSide` is the builder's answer.
+    **One expectation in the pass is computed and it is declared:** the kill `Amount`, as the
+    difference of two module-side reads, because no delta is published anywhere in this tree --
+    `accrueIncome`'s return is unpublished, the bridge does not retain `FStratCombatOutcome`
+    (its delivery is deferred by name to the `bridge_event_list` ruling), and no `UiSideView`
+    field carries "fame gained since". Both operands are separately pinned to their own sources
+    before the subtraction is named.
+  - **THE MUTANT MATRIX, AND TWO CITATION DEFECTS IN MY OWN REPORT OF IT.** Fifteen mutants, each
+    built IN PLACE in the lane tree -- never in a copy, whose cached `Intermediate/Build`
+    resolves the original sources and reports success for a build that compiled nothing -- one at
+    a time, whole suite each, reverted and sha256-verified. Every clause has at least one
+    witness. Two defects in how it was REPORTED, both the species this lane spent the pass
+    correcting elsewhere:
+    - **A quoted artifact came from a different run than the one it was attached to.** The report
+      said "every mutant restored: `RESTORED, hashes match: True`". The first matrix **never
+      printed that line** -- `grep -c` returns zero on its output -- because it terminated early
+      on an anchor failure and its closing restore never ran. The line quoted came from the
+      SECOND run. Restoration was true and independently verified three ways (the loop-top
+      restore runs before the patch, so the anchor failure wrote nothing; the tracked diff stayed
+      additions-only; the CR count was unchanged), but the evidence cited was produced by another
+      execution. **The anchor failure had its own cause worth keeping:** the multi-line anchor
+      was written with `\n` while `StratMatchSubsystem.cpp` is CRLF, so it matched ZERO times in
+      that file while matching fine in the LF files beside it. Line endings vary per file in this
+      tree and a patch driver must try both spellings.
+    - **The matrix was presented as uniform when eleven of its rows predated the two fixture
+      fixes.** Those rows were measured against clause bytes that later changed. Closed by
+      re-running the three rows that named an edited clause over the DELIVERED bytes, with
+      identical results, so every row is now a measurement over bytes that are in the tree.
+  - **SIX PROSE SITES WHERE THE COMMENTS STILL TOLD THE PRE-FIX STORY, TWO OF WHICH NO GATE
+    REPORTED.** The reviewer flagged one paragraph; a sweep of this lane's own prose against its
+    own delivered fixtures found six. All six were withdrawn in `STRUCK>` form with the
+    superseded text KEPT, never edited to be true, because what the old text records is the
+    defect that was caught. The two nobody reported are the ones worth naming:
+    - **The kill block's FIRST paragraph, which the fixture moved under.** It said `DurableBefore`
+      is asserted against the mark row "which `StratMarkFromView` wrote off the real projection".
+      The repaired fixture OVERWRITES that row with the plant, so for the risen side the asserted
+      value is the plant and not the projection. It stays true of every other side, which is what
+      the per-side parity loop actually pins.
+    - **The banner-change header still asserting a coverage this lane's own M10 mutant had
+      DISPROVED.** It claimed the concluded-match case pins the result-flag defect. That mutant
+      had already shown it does not. The body gained the new case during the fix and the header
+      was left telling the superseded two-case story -- **the fix reached the code and not the
+      prose that describes it**, in a block whose whole subject is a claim that was wrong.
+    The other four: the file header's copy of the same wrong-field claim; an in-body comment
+    **written during the fix itself** that was also wrong and also unmeasured; a cross-reference
+    in `FameCombatFallOrHoldIsSilent` that died when the clause it pointed at was rebuilt; and
+    the `StratPlay` file header carrying both the stale cross-reference and the same unmeasured
+    mechanism. **A prose sweep after a fixture change is now part of this lane's own checklist**,
+    because four of the six were introduced or falsified by the repair rather than by the
+    original write.
+  - **THE WRONG-FIELD MECHANISM WAS MEASURED, NOT REASONED -- AND THE REVIEWER'S OWN ACCOUNT OF
+    IT WAS WRONG WHILE ITS CONCLUSION WAS RIGHT.** The struck prose claimed a decider watching
+    `FameTotal` instead of `FameCombat` "would see no rise at all and the clause would go red on
+    an empty list". The reviewer, correcting it, said such a decider sees a **fall**. Neither is
+    what happens. Two wrong-field deciders were built in place against the delivered fixture:
+    - **Comparing `FameTotal` while the mark still writes `FameCombat`: the list is never empty.**
+      Side 0 HOLDS -- its mark row is the plant and its `FameTotal` was pushed down to match --
+      but SIDE 1, whose mark row is untouched at zero, rises and fires. The clause reddens on the
+      receipt's `Side`, on `DurableBefore`, on `Amount` and on the guard that `Amount` is not the
+      reading itself.
+    - **Swapping the field in both the mark and the comparison** reddens the per-side parity loop
+      FIRST and only then on an empty list. So the empty list is real in exactly one of the two
+      variants, and it is not the sharpest thing that fails; the parity loop is.
+    **A reviewer can be right that a claim is false and wrong about why**, and this pass is the
+    instance: the finding was correct, narrower than the defect, and its proposed mechanism did
+    not survive being run. The lesson is not about the reviewer -- it is that a mechanism nobody
+    executed is a guess whoever writes it, and the correction for an unmeasured claim is a
+    measurement rather than a better-sounding claim.
+  - **WHAT THESE THIRTEEN DELIBERATELY DO NOT PIN, AND WHY ASSERTING IT WOULD BE WRONG.** Victim
+    identity, per-kill granularity, toast duration, stacking, animation and copy are all absent
+    from the module under test ON PURPOSE, and the reasons are in
+    `Source/StratUI/StratTransientReceipts.h`. **No clause asserts their absence**, because a
+    clause over a known limitation goes RED the day the limitation is repaired -- the day the
+    `bridge_event_list` ruling lands and the kill arm grows a `VictimUnitId`, a clause requiring
+    no victim identity would fail for the feature being built. Ask of every clause what it does
+    the day the thing it describes is fixed. Also unpinned: **`UStratMatchSubsystem::Deinitialize`'s
+    copy of the mark reset**. `TearDownPresentation`'s copy IS pinned, reached through a second
+    `StartMatch`; `Deinitialize` runs as the world dies, after which nothing survives to observe
+    the mark, and pinning it needs a seam this lane may not add. **That is a stated gap, not an
+    oversight.** And the kill rise is PLANTED rather than played: the only deterministic
+    mid-match position in this tree is `Data/parity_fixture.save`, which needs
+    `strat::parseSave` -- a vendored free function, `LNK2019` outside `StratBridge` and
+    `StratRules`. Reaching a rules-produced kill needs either a bridge method that loads a save
+    log, or the clause moved to `StratBridge/Tests`, where `StratBuildViewModel` is not visible.
+  - **INSTRUMENT CAVEATS FROM THIS PASS, FOR THE NEXT ONE.** (a) `TestNotEqual`'s overload set is
+    ambiguous over the bare `INDEX_NONE` macro while `TestEqual`'s is not -- measured, one
+    `C2668`; spell it into an `int32` local. (b) `FString` comparison is case-insensitive here
+    for `==`, `Contains` and `TestEqual` alike, and nothing in these thirteen compares two
+    `FString`s for that reason; every value asserted is an integer or an enumerator, and
+    enumerators go through `static_cast<int32>` so a failure prints the ordinal. (c) The suite
+    report must be read from the EXPORTED report and not the log, which undercounts by exactly
+    one every run. (d) **This lane's own three verification stamps from the lane tree --
+    `-22.46.13`, `-23.06.21` and `-23.27.38` UTC -- are SUPERSEDED and must not be cited as
+    current.** Each run overwrote the one before it, which is the standing hazard: one report
+    path means every run falsifies every unstamped citation of the previous one, anywhere in the
+    record. The live report identity and the count belong to `global.md`'s banner; this entry
+    states neither. **[STAMPED 2026-08-31]**
+
+- **2026-08-31 (local), `strat-test-author` (ACTING and WRITING; IN LANE, in worktree
+  `E:/MultiAgent/Strat-wt/slot-1` on `feat/w8-path-preview`, base `c754342`, lane commit
+  `4f5e09e`, MERGED TO `master` AS `1576e40`) -- W8 ITEM (1): THIRTEEN `T-UI-02` CLAUSES FOR THE
+  PATH PREVIEW, AND EVERY ONE OF THE FOUR GATE ROUNDS AFTER THE ASSERTIONS WERE SETTLED WAS
+  SPENT ON THE PROSE AROUND THEM.**
+  - **WHOSE WRITE THIS IS, SAID FIRST.** The clause bytes are this lane's, written by this lane,
+    in this lane's own worktree, under a standing wave topology; this entry is this lane's too,
+    written directly rather than drafted for transcription. **Neither the transcription clause
+    nor the in-session clause is invoked or needed**, and the direct write is the stronger form
+    for the reason the transcription clause states about its own limit (1): nothing in a
+    checkout distinguishes a real transcription from an invented one. **The commits are a
+    separate actor and are named as such:** the `coordinator` ran `4f5e09e` and `1576e40` at the
+    user's explicit instruction in session -- the user did not run git -- and the git author
+    recorded on both is the user's identity. `engine.md`'s entry for this same lane makes the
+    identical distinction; **that is one wave's convention recorded twice and not two
+    independent findings.** No suite figure, count move or verdict is stated in this file;
+    `global.md`'s banner owns all three and this entry links to it rather than restating any.
+  - **THE THIRTEEN, DERIVED BY SET DIFFERENCE ON THE MACRO AND NOT BY AN ACCEPTANCE-ID GREP.**
+    Multiline regex over `IMPLEMENT_SIMPLE_AUTOMATION_TEST` across `Source/**/*.cpp`, both sides
+    collected by ONE function -- `c754342` and `1576e40` each read through `git show` -- which
+    returns exactly these names with nothing removed. An ID grep is the wrong instrument here
+    and has undercounted on this project before, because a name can carry an ID in prose without
+    defining a clause and a clause can be defined without its ID appearing on the macro line.
+    Six in `Source/StratBridge/Tests/StratPathPreviewParity.cpp`:
+    `MovePathRouteIsFindPathsRoute`, `MovePathTicksAreReachableCosts`,
+    `MovePathAnswersExactlyTheReachableSet`, `MovePathIncludesBothEndpoints`,
+    `MovePathRefusesUnseeded`, `MovePathRefusesUnknownUnitId` -- plus a seventh added on the
+    reviewer's finding, `MovePathArraysAreTheSameLength`. Six in
+    `Source/StratPlay/Tests/StratPathPreviewDecoratorClauses.cpp`:
+    `PathPreviewWritesUnconditionally`, `PathPreviewGoalIsTheHoveredHex`,
+    `PathPreviewGateIsHasMovedNotDone`, `PathPreviewCopiesTheQueryAnswer`,
+    `PathQueryForwardsTheBridgesAnswer` and `DecorateForPresentationPublishesThePreview`. **All
+    thirteen ride `T-UI-02` and mint no acceptance ID**, per the 2026-08-29 W8 ruling.
+  - **WHERE THE EXPECTATIONS COME FROM, WHICH IS THE ONLY QUESTION WORTH ASKING OF A PARITY
+    FILE.** The bridge seven take theirs from `strat::findPath` and `strat::uiReachable` over the
+    bridge's own `MakeUiWorld()`, and the refusal wordings from `FStratBridge::Reachable`'s own
+    `Reason` on the same object in the same run -- no refusal literal is typed. The play six take
+    theirs from a recording double's own payload, except `PathQueryForwardsTheBridgesAnswer` and
+    `DecorateForPresentationPublishesThePreview`, which take theirs from
+    `FStratBridge::MovePathToHex` on **the same bridge pointer** the production code reached.
+    **One number in the pass is computed and it is declared a FOIL**, not an expectation: a
+    fixture-richness control that subtracts two ticks to establish that some route under test
+    enters a hex costing more than 1, so a board of uniform plains cannot satisfy the pass
+    silently.
+  - **WHAT THEY DO NOT PIN, AND THE MECHANISM, BECAUSE A READER WHO CANNOT RE-DERIVE THIS WILL
+    FILE IT AS MISSING COVERAGE.** Two claims in `MovePathToHex`'s header are TRUE OF THE SOURCE
+    and unobservable in every output it can produce. (1) **Which expression produced the
+    ticks.** `strat::reachable`'s cost for a hex IS the summed `moveCost` along a cheapest path
+    to that hex; `findPath`'s route is a cheapest path; and every prefix of a cheapest path is
+    itself a cheapest path to its own last hex, because move costs are non-negative and a
+    cheaper prefix could otherwise be spliced in to beat a minimal total. **So "look the cost up
+    per hex" and "sum `moveCost` while walking the route" are the same number on every board** --
+    not merely on *Ferrum Crossing*, and not merely on boards these fixtures build. A clause
+    asserting a difference would be asserting against an identity.
+    `MovePathTicksAreReachableCosts` therefore pins that each tick EQUALS the module's per-hex
+    answer, which is real, and cannot pin which body produced it. (2) **Which expression produced
+    `OutTotalCost`**, and the cause is the method's own cross-check rather than a weak fixture:
+    it REFUSES every board on which the last tick and `findPath`'s `outCost` differ, so on every
+    board that answers at all the two are equal by construction and the assignment is invisible
+    from outside. (3) **The bridge's two internal refusal arms** -- a route hex absent from the
+    reach set, and the cost disagreement itself -- are unreachable **by the same argument**: the
+    check is what makes the disagreement impossible, so its own arm cannot fire. That is a proof
+    and not a sample. **What would flip any of this:** a `uiPath` entry point vendored beside
+    `uiReachable`, or the cross-check removed in favour of reporting both numbers -- either makes
+    the assignment observable and the clauses buildable.
+  - **FALSIFIABILITY WAS PROVED IN TWO HALVES BY TWO LANES, AND NEITHER HALF SUBSTITUTES FOR THE
+    OTHER.** This lane built **thirteen test-side liveness perturbations** -- one expectation per
+    clause, all built IN PLACE in the lane tree and never in a copy, eleven in one batch and two
+    in a second after the last clauses landed. Each reddened **exactly its own clause** and left
+    every other test in the tree green; all were reverted from byte backups -- the first batch
+    verified by grepping for perturbation fragments, the second by `git hash-object` against
+    the backup -- before the final run. That proves each assertion is live and wired to its
+    subject -- the "assertion that could not fail" defect this file already records from the
+    2026-08-31 input-claim pass -- and it proves nothing about discrimination of a real defect.
+    **The five code mutants are `strat-gameplay-engineer`'s and are recorded in `engine.md`**:
+    three died and two survived. **This lane REFUSED to build them**, because `Source/` outside
+    `Tests/` is not its lane and the standing rule covers a temporary edit intended to be
+    reverted; it specified them instead, and the engineer's measurement confirmed the two
+    survivals this entry's mechanism paragraph explains. **A lane that had run its own code
+    mutants would have discovered the same identity and had no clean record of who was entitled
+    to write those bytes.**
+  - **THE DEFECT THAT COST FOUR GATE ROUNDS WAS PROSE, AND IT RECURRED TWICE AFTER BEING FIXED
+    ONCE -- WHICH IS THE FINDING, NOT THE FIRST INSTANCE.** The block over
+    `MovePathTicksAreReachableCosts` claimed the clause forbade the summing body and named a
+    board on which the two numbers differ. **`strat-integration-reviewer` returned BLOCK**; the
+    claim was false in exactly the direction the engineer's surviving mutant had measured, and
+    no such board exists. It was retracted in the house `STRUCK>` form -- the false sentences
+    quoted, then the mechanism as the measurement that refutes them -- **and the opening sentence
+    was struck too**, because retracting an argument while leaving its conclusion standing is the
+    same shape as the original defect. Then the identical gap was found in the same file's *WHAT
+    THIS FILE DOES NOT PIN* list, which named the cross-check arm but not the ticks. Then **two
+    assertion failure strings** were found still claiming the discrimination the prose now
+    disclaimed. **Each round was caught by a different reader and none by the suite**, which was
+    green throughout: no instrument in this tree reads a comment, and a clause whose prose
+    overclaims is green by construction.
+  - **AND THE LOAD-BEARING PART: AN ASSERTION MESSAGE STRING IS COMPILED TEXT, NOT A COMMENT.**
+    Both this lane and the `coordinator` described a pass as "comment-only" when it had altered
+    an assertion's message. Behaviourally inert -- no predicate, no early return, no clause name
+    moved -- but it is in the binary, a stale build reports the OLD string, and the distinction
+    matters most at the moment a message renders: **a failure string is read when a reader is
+    furthest from the prose and most likely to act on the line alone.** The two rewritten strings
+    had been pointing a debugger at the summing hypothesis the retraction proves impossible and
+    away from the causes the clause can actually produce. **The check that separates the two
+    cases is a diff filtered for non-comment non-blank added lines**, which is cheap and was not
+    run the first time. A clause NAME is likewise compiled; rebuild before the suite or a stale
+    binary reports the old set green.
+  - **A FLAKE, MEASURED AND NOT DIAGNOSED.** One verification run in the lane tree came back with
+    **five StratBridge clauses red at once** -- `T-SAVE-06.RestoreFromSaveTextReachesTheSavedHash`,
+    `T-SAVE-06.SerializeRefusesUnseeded`, `T-TURN-04.CappedMatchNamesTheKeyThatDiffered`,
+    `T-UI-01.CombatOutcomeAgreesWithForecast` and
+    `T-UI-01.ForecastIllegalAloneSetsOnlyLegalityDisagrees`. None was this lane's and none was
+    under perturbation. Byte identity with the preceding green state was confirmed by
+    `git hash-object` and **the identical bytes re-ran clean**. Recorded so the next reader does
+    not attribute it to a change: five clauses reddening together in one run is the shape, and
+    the correct first move is a re-run, not a diagnosis.
+  - **TWO FIGURES CORRECTED IN THE MERGED TREE, BOTH MEASURED HERE.** (1) *"`MovePathToHex` is the
+    tree's only `strat::findPath` call site"* -- stated unqualified in `4f5e09e`'s commit message,
+    which is merged and not amendable -- **is FALSE as written and TRUE scoped to production
+    code.** `grep -rn "strat::findPath(" Source/ | grep -v "^Source/StratRules/"` returns TWO:
+    `Source/StratBridge/StratBridge.cpp:1446`, the production call, and
+    `Source/StratBridge/Tests/StratPathPreviewParity.cpp:303`, this lane's own INDEPENDENT
+    ORACLE. The second is legal precisely because that file is inside `StratBridge`, where the
+    vendored symbols link, and it is what makes the route clause a parity test rather than a
+    self-comparison. **The scoped form is the claim to carry forward.** (2) The
+    `DecorateForPresentation` seam is now **eleven call sites across three test files**, not the
+    nine across two it was before this lane, because `DecorateForPresentationPublishesThePreview`
+    used that route.
+  - **INSTRUMENT CAVEATS FROM THIS PASS, EACH ONE A THING THAT WOULD HAVE MADE A CLAUSE UNABLE TO
+    FAIL.** `TestEqual` on `FString` is case-INSENSITIVE in this engine, as are `==` and
+    `Contains`; the two refusal clauses use **`TestEqualSensitive`** (`AutomationTest.h`) so a
+    re-cased wording cannot pass. **`TestNotEqual` has no `int32` overload** here though
+    `TestEqual` does -- it is declared only for the string-ish types, so a numeric non-equality
+    control must be written `TestTrue(A != B)`. **`bool` has no `TestEqual` overload to rely on**
+    either; those comparisons are explicit. On the fixture side: **"unmoved" is not "selectable"**
+    on *Ferrum Crossing*, because the guided opening locks every unit but the one it marks, so
+    `DecorateForPresentationPublishesThePreview` ASKS the selection machine which unit it will
+    accept rather than restating the guided opening's rule -- restating it would have been the
+    very substitution `T-UI-02` exists to catch. **`HandleSelectionEvent` is stateful** and a
+    second `HexPrimary` on a selected unit's own hex DESELECTS it, which left the machine at
+    `-1` on a unit it had just selected; every selection is now preceded by `Cancel`. And a
+    fixture that spawns the board actor emits `no tile mesh for terrain`, **declared** with
+    `AddExpectedMessagePlain` on `StratAiMatchClauses.cpp`'s precedent rather than suppressed.
+  - **WHAT THIS LANE DID NOT PIN AND WHY, beyond the unfalsifiable pair above.** A selection
+    naming a unit absent from `Model.Units` -- the decorator returns false there and the
+    declaration folds it into "nothing is selected". Any drawing: no spline, arrowhead, tick
+    widget or overlay exists yet, and nothing here is on screen. And `Move.h`'s tie-break among
+    equal-cost routes, which is the rules crew's gate; these clauses assert the bridge returns
+    whatever `findPath` returned, which is the only half the bridge can get wrong.
+
 - **2026-08-31 (local), in the INTEGRATION tree, base `edda819`, committed as `810c366`, editor
   closed for the build -- THE TITLE SCREEN'S INPUT MODE IS PINNED BY THREE CLAUSES, AND THE FIRST
   MUTANT ROUND FOUND THE DEFECT IN THE CLAUSES RATHER THAN IN THE CODE.** **ACTING: the

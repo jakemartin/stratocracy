@@ -11,6 +11,102 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-08-31 (W8'S TWO BUILT ITEMS ARE MERGED, AND THE HEADLINE IS THAT TWO OF THE
+WAVE'S MUTANTS SURVIVED FOR A REASON NO FIXTURE COULD FIX -- THE CLAIMS THEY TEST ARE TRUE OF THE
+SOURCE AND INVISIBLE IN EVERY OUTPUT. Written by the `coordinator`, whose file this is, and this
+entry claims only the banner: the code is `strat-gameplay-engineer`'s lane and the clauses are
+`strat-test-author`'s, and ALL FOUR LANE ENTRIES WERE WRITTEN BY THOSE AGENTS THEMSELVES, in
+lane, in this tree, after the merge. Nothing here invokes the transcription clause, the
+editor-driver clause or the in-session clause: there WAS a lane topology, and the work went
+through it.
+The suite is now **347/347**, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of this tree agrees at 347.
+THE COUNT MOVED 321 -> 347 ACROSS TWO MERGES BY SET DIFFERENCE ON
+`IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 26, REMOVED 0 -- both sides collected by one function.
+Each lane measured +13 IN ITS OWN TREE and neither lane's 334 was ever the merged figure; the
+count moved in the merge commits, which is why no lane record carries one.
+WHAT LANDED. W8 item (1), the path preview with cost ticks, in `4f5e09e` merged as `1576e40`;
+W8 items (5) and (6), the income and kill receipts and the `YOUR TURN`/`ENEMY TURN` banner, in
+`0a697c0` merged as `ed09973`. Thirteen clauses ride `T-UI-02` and thirteen ride the local
+`GATE-TRANSIENT` name; no acceptance ID is minted by either. `FStratBridge::MovePathToHex` now
+routes `strat::findPath`, which was routed through no bridge method at all before this wave.
+THE COMMITS AND MERGES WERE RUN BY THE `coordinator` ON THE USER'S EXPLICIT INSTRUCTION IN
+SESSION -- the user said "commit both lanes and merge them". The git author on all four is the
+user's identity because it is this box's git config, and the user did not run git. That
+distinction is recorded in all four lane entries as ONE WAVE'S CONVENTION RECORDED FOUR TIMES,
+not as four findings.
+TWO MUTANTS SURVIVED AND BOTH ARE REFUTATIONS OF THIS PROJECT'S OWN PROSE, NOT PASSES. Replacing
+the tick lookup with a running sum of `TerrainDef::moveCost` reddened nothing, because
+`strat::reachable`'s cost for a hex IS the summed cost along a cheapest path, `findPath`'s route
+is a cheapest path, and every prefix of a cheapest path is a cheapest path to its own last hex --
+so the two expressions are equal ON EVERY BOARD and a clause asserting a difference would assert
+against an identity. Assigning `OutTotalCost = OutRouteCosts.Last()` reddened nothing because
+`MovePathToHex`'s own cross-check refuses every board on which the two differ, making the
+assignment's source unobservable BY CONSTRUCTION. Both claims are now marked in `StratBridge.h`
+as held by inspection rather than by the suite, with the mechanism written out so a later reader
+re-derives the identity instead of filing missing coverage. The same argument proves the
+cross-check's own refusal arm unreachable, which upgrades an earlier "never observed to fire"
+from a sample to a proof.
+EVERY FINDING IN SIX GATE ROUNDS WAS IN PROSE DESCRIBING CODE, AND NONE WAS IN CODE. One BLOCK
+and five PASSes; the C++ was clean from the first build in both lanes. The BLOCK was a comment
+claiming a clause forbade the summing implementation -- the claim the same pass had measured
+false -- in the file a reader reaches BECAUSE the header names that clause. The same species then
+appeared six more times in the other lane, twice in places no gate reported, once in a header
+still asserting a coverage its own mutant had disproved. FOUR SEPARATE AGENTS FALSIFIED THEIR OWN
+REPORTED CLAIMS IN THIS WAVE -- the engineer on its two header claims, the reviewer on a
+mechanism it had reasoned rather than measured, the test author on two citations, and the
+`coordinator` on the figures below. None was caught by a gate; each was caught by its author
+re-reading its own evidence.
+A CLAIM OF THE `coordinator`'S IS FALSE IN THE MERGED TREE AND IS ANSWERED HERE BECAUSE ITS
+COMMIT MESSAGE CANNOT BE. `4f5e09e`'s message says `MovePathToHex` is "the tree's ONLY
+`strat::findPath` call site". THE SAME COMMIT CONTAINS A SECOND CALL:
+`Source/StratBridge/Tests/StratPathPreviewParity.cpp:303`, where the parity clause calls the
+module directly as an INDEPENDENT ORACLE -- legal, since that file is inside `StratBridge`, and
+the right way to write that clause. The true claim is scoped to PRODUCTION code, and
+`engine.md`'s entry carries the scoped form. The message was not amended: `4f5e09e` sits under
+two merge commits, so rewriting it would redo both merges and discard the post-merge gate's
+byte-identity verification -- a disproportionate price for a sentence the record can answer.
+A SECOND FIGURE OF THE `coordinator`'S MOVED UNDER ITS OWN LANES: "nine `DecorateForPresentation`
+call sites across two test files", relayed while deciding not to build an injection seam, is now
+eleven across three, because the clause that used that route added two of them. The decision it
+supported still holds; the figure does not, and both are stamped in `engine.md`.
+WHAT W8 STILL OWES, AND NONE OF IT IS BUILT. Item (2) the capture-progress pip and item (4) the
+BUILD pulse are DRAWING-ONLY -- `CaptureProgress`, `bHasBuiltThisTurn` and `bAffordable` are all
+already published and read by no drawing code -- so they need an editor session and no C++ at
+all. ITEM (3), THE REPAIR-ELIGIBILITY PIP, IS STILL NOT BUILDABLE AND IS THE USER'S TO RULE:
+there is no module-side predicate, and `Combat.h`'s `repairAmount` TAKES `onOwnedObjective` and
+`enemyAdjacent` as arguments rather than deriving them. The three routes are a new
+`FStratBridge` method that derives the two board facts and calls the verified `repairAmount`, an
+upstream re-vendor request, or cutting the item; deriving them above the bridge is the
+presentation-layer arithmetic `T-UI-02` and `T-UI-03` both exist to forbid.
+AND ONE RECORD DEBT IS OPEN AND OWED BEFORE THE TOAST WIDGET IS AUTHORED: `content.md` does not
+carry the income receipt's RATE-VOICED COPY OBLIGATION -- measured, zero occurrences of it or of
+`GATE-TRANSIENT` in that file. The obligation is in `StratTransientReceipts.h` and in the
+`Amount` pin's editor tooltip, and the content lane reads neither. Copy off that arm must read
+"+8 / turn" and never "+8 Fame", because the receipt carries the STANDING RATE and is
+deliberately not suppressed on turn 1; the `KillFame` arm carries no such obligation, since its
+number was actually awarded.
+THE REPORT BEHIND THE LIVE FIGURE ABOVE IS THIS TREE'S OWN: `reportCreatedOn 2026.09.01-00.02.33`
+-- UTC, which is 2026-08-31 20:02 local, and this entry is dated by the local day as the record
+always is -- 347 entries, 347 succeeded, 0 failed, 0 notRun, 0 succeededWithWarnings, read from
+the exported report rather than from the log. THAT STAMP SUPERSEDES `2026.08.31-23.38.07`, which
+the `coordinator` measured on the same bytes and which a verification re-run overwrote; the
+earlier report no longer exists on disk. `Tools/architect/gate_reports/2026-08-31-w8-lanes.md`
+carries that dead stamp SUPERSEDED IN PLACE rather than deleted, and names the live one -- so a
+reader meeting it there is not being sent to fix something already fixed. **[THIS SENTENCE IS
+THE CORRECTION OF AN UNDER-CLAIM THE RECORD GATE CAUGHT IN ITS FIRST DRAFT, WHICH SAID ONLY
+THAT THE REPORT `still cites it`. That was literally true and materially misleading: it named
+a rot without naming its repair, in the same pass that made it. An under-claim sends the next
+reader to redo work that is done, which is the mirror of a stale over-claim and is recorded
+here because this record has been caught by the over-claim shape far more often and may be
+under-weighting this one.]**
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the builds,
+the mutant rounds and the suite runs behind the figure above were performed in
+`E:/MultiAgent/Stratocracy` on branch `master` and in the two lane worktrees under
+`E:/MultiAgent/Strat-wt/`, on this developer box. A sweep running anywhere else -- CI runs in
+`/home/runner/work/stratocracy/stratocracy` -- is reading a different tree, which is why this
+sentence is stamped and the live figure above carries no path at all.]**)
+
 _Last run 2026-08-31 (THE TITLE SCREEN WAS TURNING GAME INPUT OFF FOR THE REST OF THE SESSION,
 AND THE HEADLINE IS THAT THE FLAG IT SETS DOES NOT LIVE ON ANYTHING THE TRAVEL DESTROYS.
 Written by the `coordinator`, whose file this is. THE C++ IS `strat-gameplay-engineer`'S LANE AND
@@ -19,8 +115,10 @@ the user's explicit instruction in session: the user reported the defect, was gi
 and the proposed repair, and answered yes to it being written here. THERE IS NO LANE AND NO
 MERGE -- everything below was done over base `edda819`, with no worktree, no branch and no
 rebase, and the editor was closed for the build and reopened afterwards.
-The suite is now **321/321**, every entry Success, zero failed, zero notRun,
-zero succeededWithWarnings, and the macro census of this tree agrees at 321.
+**[STAMPED 2026-08-31, LATER THE SAME DAY -- SUPERSEDED BY THE BANNER ABOVE, WHICH CARRIES
+THIS RECORD'S LIVE FIGURE. Kept rather than deleted, which is this record's convention.]**
+The suite was **321/321** at that pass, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of that tree agreed at 321.
 THE COUNT MOVED 318 -> 321 BY SET DIFFERENCE ON `IMPLEMENT_SIMPLE_AUTOMATION_TEST` -- NEW 3,
 REMOVED 0 -- both sides collected by one function. The three clauses ride `T-UI-02`, mint no
 acceptance ID, and live in the new file `Source/StratPlay/Tests/StratInputClaimClauses.cpp`:

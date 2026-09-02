@@ -113,6 +113,23 @@
 // T-UI-03 governs. Carrying the answer keeps T-INT-05 true in the shape it is written:
 // the pulse is rebuildable from the view model alone.
 //
+// AND ONE BLOCK THAT IS A FIFTH KIND AGAIN, ADDED 2026-09-02: `FStratCommandBarView`,
+// filled by `StratDecorateCommandBar`. Two of its five fields are DECLARED COPIES of
+// `FStratGuidanceView`'s, which is the selection kind above. The other three are a FOLD --
+// booleans the decorator forms out of fields of this same model, plus one named selector
+// over that same model (`UStratViewModelLibrary::CountViewingSideUnitsAbleToAct`). Named
+// here rather than left for a reader to classify, on the same rule the fourth kind was
+// named under.
+//
+// THE ARITHMETIC COUNT DID NOT MOVE, AND THE DISTINCTION THAT KEEPS IT STILL IS WORTH ITS
+// LINE. No number is stored: the count is produced by a `BlueprintPure` selector, compared
+// against zero inside the decorator, and only the BOOLEAN survives onto the model.
+// `StratViewModelLibrary.h`'s own block already ruled that a count FIELD would be "the first
+// piece of ARITHMETIC INSIDE THE MODEL" and that computing it over the model on demand is
+// not; this block is the shape that ruling permits. There is still exactly one arithmetic
+// exception in this pair (`FStratBuildOptionView::Shortfall`) and it is still outside the
+// model.
+//
 // THE PRESENTATION BLOCK'S DEBT IS DISCHARGED -- read the paragraph below as the reason
 // the fields are shaped this way, not as an open item. `FStratSelectionMachine::Decorate-
 // ViewModel` (`Source/StratPlay/StratSelectionMachine.h`) landed as the producer, called
@@ -1715,6 +1732,147 @@ struct FStratPathPreviewView
 };
 
 /**
+ * GDD Sec 2.11.2 / Sec 2.11.5 -- the on-screen command bar: the BUILD control and the END
+ * TURN control. Riding T-UI-03.
+ *
+ * WHAT GAP THIS CLOSES, AND IT IS THE PLAYER'S OWN REPORT. Every command in this prototype
+ * is a keyboard binding -- `B` toggles Sec 2.11.5's menu, End Turn is `Enter`/`Space` -- and
+ * nothing on screen says either exists. This block is what a persistent HUD binds those two
+ * controls to.
+ *
+ * THE LATCH IS AN INPUT INTENT AND THIS BLOCK IS RECOMPUTED EVERY REFRESH, WHICH IS THE ONE
+ * IDEA IT CARRIES. `FStratBuildAffordance` (`Source/StratPlay/StratBuildAffordance.h`) holds
+ * a hex and a bool and NOT "is the button visible"; `StratDecorateCommandBar` resolves that
+ * hex against `Factories` and `ViewingSide` on every decorate. So a factory captured out from
+ * under the latch, a hot-seat hand-over, or a match that concluded darkens the control on the
+ * next refresh with no clear-point code involved. Staleness is structurally impossible rather
+ * than dependent on remembering every clear point -- the posture `FStratHoverView` already
+ * takes, and the one both `UStratMatchSubsystem::IsProductionMenuOpen` and
+ * `AStratScoreboardHUD::IsProductionMenuWidgetOpen` take in their own headers.
+ *
+ * AND THAT IS WHAT SATISFIES T-INT-05 RATHER THAN A CONVENTION.
+ * `AStratPlayerController::GetProductionTargetHex` exempts itself from T-INT-05 on an
+ * explicit condition -- it "appears in no view model, and nothing on screen is drawn from
+ * it". A BUILD control drawn from a focus latch does not inherit that exemption, so what it
+ * draws is a field HERE and not a read off an actor.
+ *
+ * WHAT IS DELIBERATELY ABSENT, AND WHY EACH ABSENCE IS A DECISION.
+ *
+ * - NO IDLE COUNT. `StratViewModelLibrary.h` argues against exactly this field at length: a
+ *   count on the model would be "the first piece of ARITHMETIC INSIDE THE MODEL", and its
+ *   only possible parity assertion would be against a `strat::UiSnapshot` field that does not
+ *   exist, because the count is over a bit the rules module has ruled it does not own. A
+ *   widget that draws the number calls `UStratViewModelLibrary::CountViewingSideUnitsAbleToAct`
+ *   -- which is what `bEndTurnSuggested` below is folded over, so the number the HUD prints
+ *   and the highlight it draws cannot disagree.
+ * - NO `bProductionMenuOpen`. It is the mirror two headers already refuse. The BUILD control
+ *   simply STAYS VISIBLE under the menu -- the menu's ZOrder is 20 and the bar's is 5 -- and
+ *   `AStratScoreboardHUD::OpenProductionMenuWidget` already refuses an already-open menu and
+ *   says why, so a second press is inert. Leaving the field out removes a model mirror and a
+ *   widget-side conjunction at once.
+ * - NO VERB AND NO ASSET REFERENCE. This is a description of what should be on screen. What
+ *   the controls DO lives on `AStratPlayerController`, and what they look like lives in a
+ *   WBP.
+ */
+USTRUCT(BlueprintType)
+struct FStratCommandBarView
+{
+	GENERATED_BODY()
+
+	/**
+	 * Whether Sec 2.11.5's BUILD control is on screen.
+	 *
+	 * A WBP BINDS VISIBILITY TO THIS ONE BOOL AND MAKES NO CONJUNCTION, exactly as the
+	 * directive strip binds to `FStratGuidanceView::bActive` and the info panel to
+	 * `FStratInfoPanelView::bHasHex`. That is T-UI-03's requirement and it is the reason the
+	 * ownership test was resolved one layer down rather than left as `Owner == ViewingSide`
+	 * in a graph -- `FStratInfoPanelView`'s own "NOT IN THIS ROUND" block rules on that exact
+	 * comparison.
+	 *
+	 * TRUE MEANS: the player has focused a hex, that hex holds a factory in `Factories`, and
+	 * that factory's `Owner` equals `ViewingSide`. All three are re-asked on every decorate.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|CommandBar")
+	bool bShowBuildButton = false;
+
+	/**
+	 * The focused factory's hex, X = q and Y = r. MEANINGLESS UNLESS `bShowBuildButton`.
+	 *
+	 * `FIntPoint(0, 0)` IS A REAL HEX ON THIS BOARD and cannot signal its own absence -- the
+	 * same trap `AStratPlayerController::GetProductionTargetHex`,
+	 * `UStratMatchSubsystem::IsProductionMenuOpen` and `FStratGuidanceView::ObjectiveHex` all
+	 * record, closed here the same way: read the bool first.
+	 *
+	 * IT IS CARRIED FOR THE READER AND NOT FOR THE CLICK. The BUILD control's `OnClicked`
+	 * calls `AStratPlayerController::OpenProductionMenuAtFocusedFactory`, which takes no hex
+	 * -- the controller already holds the latch and passing this value back in would let a
+	 * graph open a menu about a factory the latch is not on. This field exists so a clause,
+	 * a log line or a WBP label can say WHICH factory without going to an actor for it.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|CommandBar")
+	FIntPoint BuildFactoryHex = FIntPoint::ZeroValue;
+
+	/**
+	 * Sec 2.11.2's END TURN highlight: every unit this seat can command has finished.
+	 *
+	 * A HIGHLIGHT AND NEVER A GATE. It does not make End Turn legal, does not make it
+	 * illegal, and promises the player nothing about whether a legal command still exists --
+	 * `CountUnitsAbleToAct`'s own block draws that line in terms ("IT IS A NUDGE AND NEVER A
+	 * LEGALITY CLAIM"). It answers "have you forgotten someone?" with "no".
+	 *
+	 * FOLDED IN C++ BECAUSE T-UI-03 FORBIDS THE GRAPH FORM. The derivation is
+	 * `!Match.bHasResult && !Guidance.bEndTurnGated && CountViewingSideUnitsAbleToAct == 0`,
+	 * written out at `StratDecorateCommandBar` where it is performed. A graph spelling
+	 * `count == 0` would be a comparison and a graph spelling `suggested AND NOT gated` would
+	 * be a conjunction; both are what that clause forbids a widget doing to a number it was
+	 * handed.
+	 *
+	 * `bEndTurnGated` IS ANDED IN ON PURPOSE AND MUST NOT BE DROPPED AS REDUNDANT. It
+	 * resolves dim-beats-highlight in one place so the widget never has to. On the SHIPPED
+	 * scenario the pair is unreachable -- Sec 2.11.6-B beat 1a locks every unit but the marked
+	 * Infantry, and locked units do not count, so a gated turn always has at least one unit
+	 * able to act -- but that is a fact about `FStratGuidedOpening::PublishLocks` and not a
+	 * structural guarantee. The `&&` is what makes it one.
+	 *
+	 * ZERO UNITS IS VACUOUSLY "ALL DONE", AND THE ONE INPUT ON WHICH THAT SHOWS IS NAMED. A
+	 * model carrying no units at all reads as suggested. `StratBuildViewModel` cannot produce
+	 * one -- it "REFUSES RATHER THAN PRODUCING AN EMPTY MODEL", its own block says so -- and
+	 * a live match always carries at least the flag unit, whose death concludes the match and
+	 * sets `bHasResult`. So the vacuous reading is reachable only by a hand-built model, which
+	 * is exactly the thing a clause builds; recorded here rather than guarded against, because
+	 * a units-count term would be this block forming an opinion about a model it was handed.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|CommandBar")
+	bool bEndTurnSuggested = false;
+
+	/**
+	 * Sec 2.11.6-B's End Turn gate. A DECLARED COPY of `FStratGuidanceView::bEndTurnGated`.
+	 *
+	 * COPIED SO THAT ONE CONTROL HAS ONE SOURCE. The alternative was leaving the widget to
+	 * read the highlight off this block and the dim off `Model.Guidance` -- two blocks, two
+	 * bindings, one button -- which is the shape that lets a screen show a control both lit
+	 * and dimmed on the frame the two are written apart. Precedent for a copy declared AS a
+	 * copy: `FStratFactoryView::bBuildPulse`.
+	 *
+	 * IT RESTATES AND DOES NOT RE-DERIVE. `StratDecorateCommandBar` assigns it from
+	 * `Model.Guidance.bEndTurnGated` and nothing else, which is why the decorator must run
+	 * after `FStratGuidedOpening::DecorateViewModel`.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|CommandBar")
+	bool bEndTurnDimmed = false;
+
+	/**
+	 * `Move the marked Infantry first.` -- Sec 2.11.6-B beat 1a. A DECLARED COPY of
+	 * `FStratGuidanceView::EndTurnGateHover`, for `bEndTurnDimmed`'s reason exactly: the dim
+	 * and its explanation are one control's two halves and must not come from two blocks.
+	 *
+	 * EMPTY WHEN NOT GATED, forwarding the guidance field's own contract unchanged.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|CommandBar")
+	FText EndTurnHoverText;
+};
+
+/**
  * The whole view model: everything that should be on screen, in engine types.
  *
  * A VALUE, REBUILT, NEVER PATCHED. Phase 3's `ApplyView` reconciles actors against this
@@ -1880,6 +2038,31 @@ struct FStratViewModel
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
 	FStratPathPreviewView PathPreview;
+
+	/**
+	 * Sec 2.11.2's on-screen command bar: the BUILD control and the END TURN control.
+	 *
+	 * WRITTEN BY `StratDecorateCommandBar`, on the decoration seam, and AFTER
+	 * `FStratGuidedOpening::DecorateViewModel` -- it copies `Guidance.bEndTurnGated` and
+	 * `Guidance.EndTurnGateHover` and ANDs the first into `bEndTurnSuggested`, so run before
+	 * the guidance layer it would draw this frame's button against last frame's gate.
+	 * `FStratBuildAffordance::DecorateViewModel` is the caller, which is why the ordering is
+	 * stated on both.
+	 *
+	 * `StratBuildViewModel` LEAVES IT DEFAULT-CONSTRUCTED, and that default is load-bearing
+	 * in the same way `PathPreview`'s is: no BUILD control, no highlight, no dim. Every model
+	 * built for a hand-over, a gate, an AI turn or a reconcile nobody clicked during says
+	 * exactly that, which is the truth for all of them -- so an undecorated rebuild CLEARS the
+	 * bar rather than leaving the last click's affordance standing.
+	 *
+	 * IT REACHES NO BRIDGE, unlike `Forecast` and `PathPreview`. Its decorator takes the model
+	 * and nothing else, on `StratDecorateInfoPanel`'s stated rule: a decorator holding a
+	 * bridge could write a control the model does not describe, and then the command bar
+	 * would be a second source of truth about a board T-INT-05 says the model alone
+	 * describes.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|View")
+	FStratCommandBarView CommandBar;
 };
 
 /**
@@ -2085,3 +2268,65 @@ STRATUI_API void StratComposeForecastView(
  * last line.
  */
 STRATUI_API void StratDecorateInfoPanel(FStratViewModel& Model);
+
+/**
+ * Fills Sec 2.11.2's command bar from the model it is a bar ON, plus one input intent.
+ *
+ * IT TAKES THE MODEL AND A LATCH, AND NOTHING ELSE -- no bridge, no snapshot, no table, no
+ * controller, no query interface. That is `StratDecorateInfoPanel`'s signature discipline
+ * with one addition, and the addition is the whole reason this function has parameters at
+ * all: WHICH FACTORY the player focused is an input intent that no field of the model
+ * carries, and cannot be, because nothing in this project selects a hex
+ * (`FStratSelectionMachine` tracks only `SelectedUnitId`, and its own header says so).
+ *
+ * SO THE HEX ARRIVES AS AN ARGUMENT AND THE ANSWER IS RESOLVED HERE, WHICH IS THE DESIGN.
+ * The caller -- `FStratBuildAffordance::DecorateViewModel` -- hands over a hex and a bool and
+ * decides nothing. This function looks the hex up in `Model.Factories` and compares the
+ * owner against `Model.ViewingSide` on EVERY call, so a latch that has gone stale draws
+ * nothing without anything having to notice. A `bShowBuildButton` computed by the caller and
+ * merely copied here would be exactly the staleness this arrangement is built to make
+ * unrepresentable.
+ *
+ * TWO ARGUMENTS AND NOT AN `FStratBuildAffordance`, deliberately. This module does not depend
+ * on `StratPlay` and never may -- the arrow runs the other way -- so the parameter list is
+ * two plain values. It also means a clause drives every arm of this function with no
+ * affordance, no controller and no world in existence.
+ *
+ * A DECORATOR AND NOT A COMPOSE, spelled like `StratDecorateInfoPanel` and not like
+ * `StratComposeInfoPanelModel`, for that function's stated reason: it writes one field of a
+ * model it also reads, so a compose taking `const FStratViewModel&` and an out-parameter
+ * would invite the caller to alias the model against its own field.
+ *
+ * IT MUST RUN AFTER `FStratGuidedOpening::DecorateViewModel`, and that constraint is REAL and
+ * runs one way. It reads `Model.Guidance.bEndTurnGated` and `Model.Guidance.EndTurnGateHover`
+ * and writes neither. Run early, the END TURN control is drawn against last frame's gate --
+ * a failure that reads as latency and is sequencing, which is the same shape
+ * `StratDecorateInfoPanel` records about the hover.
+ *
+ * IT IS UNORDERED AGAINST THE HOVER, THE FORECAST, THE PATH PREVIEW AND THE INFO PANEL. It
+ * shares no field with any of them: it reads `Factories`, `ViewingSide`, `Match`, `Units` and
+ * `Guidance`, and writes `CommandBar`, which nothing else reads.
+ *
+ * NO FAILURE CHANNEL, on `StratDecorateInfoPanel`'s rule. There is no input it can be handed
+ * that has no answer: no focus is `bShowBuildButton` false, a focus on a hex the model does
+ * not carry is `bShowBuildButton` false, and a focus on an enemy factory is the same. A
+ * `bool` return would be a value no caller could act on.
+ *
+ * UNCONDITIONAL. It writes ALL FIVE FIELDS on every call, including the calls where the
+ * answer is "no bar affordances at all". A decorator that returned early on the empty case
+ * would leave the previous click's BUILD control on screen after the player clicked away.
+ *
+ * ALL-OR-NOTHING, as every builder in this file is: it fills a local and assigns on the last
+ * line.
+ *
+ * @param Model                the model to decorate. Read and written.
+ * @param bHasFocusedFactory   whether the player has focused a hex at all. Read FIRST --
+ *                             `FIntPoint(0, 0)` is a real hex and cannot signal its absence.
+ * @param FocusedFactoryHex    that hex, X = q and Y = r. Meaningless unless the bool. NOT
+ *                             checked against the board -- if it names no factory the answer
+ *                             is simply "no BUILD control", which is correct.
+ */
+STRATUI_API void StratDecorateCommandBar(
+	FStratViewModel& Model,
+	bool             bHasFocusedFactory,
+	FIntPoint        FocusedFactoryHex);

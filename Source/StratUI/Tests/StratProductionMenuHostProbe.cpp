@@ -7,6 +7,7 @@
 #include "Tests/StratProductionMenuHostProbe.h"
 
 #include "Tests/StratProductionMenuHostDouble.h"
+#include "Tests/StratProductionMenuOrderDouble.h"
 
 #include "Blueprint/UserWidget.h"
 #include "StratScoreboardHUD.h"
@@ -61,4 +62,49 @@ bool StratTestProductionMenuWidgetIsInViewport(const AStratScoreboardHUD* Hud)
 	// IsInViewport()` consults `UGameViewportSubsystem::IsWidgetAdded`, which is the same
 	// authority `AStratScoreboardHUD::IsProductionMenuWidgetOpen` reaches through.
 	return Hud->ProductionMenu->IsInViewport();
+}
+
+// ---------------------------------------------------------------------------------------------
+// The order-observing double. See the header block added beside these declarations.
+// ---------------------------------------------------------------------------------------------
+
+bool StratTestInstallProductionMenuOrderDouble(
+	AStratScoreboardHUD* Hud,
+	TFunction<void()>    OnPanelDown)
+{
+	if (Hud == nullptr)
+	{
+		return false;
+	}
+
+	// OUTERED TO THE HUD, on `StratTestInstallProductionMenuDouble`'s stated reason: the
+	// widget's lifetime is the HUD's, so the `TObjectPtr` below is not the only thing keeping
+	// it reachable while a clause is mid-flight.
+	UStratProductionMenuOrderDouble* const Double = NewObject<UStratProductionMenuOrderDouble>(Hud);
+	if (Double == nullptr)
+	{
+		return false;
+	}
+
+	Double->OnRemovedFromParent = MoveTemp(OnPanelDown);
+
+	// THE SAME MEMBER `AStratScoreboardHUD::CreateProductionMenuWidget` ASSIGNS.
+	Hud->ProductionMenu = Double;
+	return true;
+}
+
+void StratTestClearProductionMenuOrderHook(AStratScoreboardHUD* Hud)
+{
+	if (Hud == nullptr)
+	{
+		return;
+	}
+
+	// A `Cast` AND NOT AN ASSUMPTION. The member is typed `UUserWidget` and may hold the
+	// plain host double, a real WBP, or nothing at all; only the order double has a hook.
+	if (UStratProductionMenuOrderDouble* const Double =
+			Cast<UStratProductionMenuOrderDouble>(Hud->ProductionMenu))
+	{
+		Double->OnRemovedFromParent = nullptr;
+	}
 }

@@ -806,10 +806,38 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// `SlateCore`. Its own header records the debt that arrangement creates.
 	//
 	// NO REASON STRING AND NO RETURN VALUE TO IGNORE, on `PushGuidance`'s reasoning.
+	// ---- Sec 2.11.2's command bar -------------------------------------------
+	// THE FIFTH SURFACE RECONCILED FROM THIS ONE VALUE, on the same HUD lookup as the strip
+	// and the panel, so none of the three can fall out of step with each other or with the
+	// board. `Model.CommandBar` was written by `StratDecorateCommandBar` before this call --
+	// `AStratPlayerController::DecorateForPresentation` decorates, after the guidance layer,
+	// and its own block records why that ordering is real -- and is default-constructed on any
+	// path that did not decorate, which is the empty bar and the honest reading of a model
+	// that states no focus.
+	//
+	// UNCONDITIONAL, WITH NO BRANCH ON `bShowBuildButton` AND NONE ON `bEndTurnSuggested`.
+	// Skipping the push when nothing is focused would leave a BUILD control on screen after
+	// the player clicked away -- the delta-shaped thinking this whole function is written to
+	// exclude, and the one outcome the recompute-every-refresh design exists to make
+	// unreachable.
+	//
+	// ONE ARGUMENT AND NO VIEWING SIDE, UNLIKE THE PANEL ON THE LINE ABOVE. Every
+	// viewer-relative question was already resolved against `Model.ViewingSide` inside the
+	// decorator, so there is no second operand to carry; `StratCommandBarWidget.h` states the
+	// condition that would create one.
+	//
+	// THROUGH THE HUD BECAUSE THE HUD OWNS THE WIDGET, and the module-arrow argument the strip
+	// records above applies here word for word: `AStratScoreboardHUD::PushCommandBar` takes a
+	// reflected struct, so this module needs none of `UMG`, `Slate` or `SlateCore`. Its own
+	// header records the debt that arrangement creates and amends it rather than opening a
+	// second one.
+	//
+	// NO REASON STRING AND NO RETURN VALUE TO IGNORE, on `PushGuidance`'s reasoning.
 	if (AStratScoreboardHUD* const HUD = FindScoreboardHUD())
 	{
 		HUD->PushGuidance(Model.Guidance);
 		HUD->PushInfoPanel(Model.InfoPanel, Model.ViewingSide);
+		HUD->PushCommandBar(Model.CommandBar);
 	}
 
 	// §2.11.2's TRANSIENT LAYER, AND IT IS THE ONE THING IN THIS FUNCTION THAT LOOKS AT TWO

@@ -11,6 +11,60 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-02 (THE PLAYER CAN NOW ACT WITH A MOUSE, AND THE THING WORTH READING IS
+THAT THE FEATURE WAS BLOCKED BY AN ABSENCE NOBODY HAD WRITTEN DOWN: THIS PROJECT HAS NO
+SELECTED HEX. Written by the `coordinator`, whose file this is, IN LANE AND UNDER NO EXCEPTION
+CLAUSE -- no worktree stood, no wave was in flight, and this seat wrote no code and no clause.
+The C++ is `strat-gameplay-engineer`'s and is in `engine.md`; the clauses are
+`strat-test-author`'s and are in `tests.md`. Each wrote its own entry, in lane, itself.
+The suite is **370/370**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, and the macro census of this tree agrees at 370.
+THE COUNT MOVED 362 -> 370 AND EVERY ONE OF THE NEW CLAUSES IS AN ADDITION: **+8 added, 0
+removed, 0 state changes**, measured by set difference on the test MACRO with one collector on
+both sides, at `reportCreatedOn 2026.09.02-14.32.33`. All eight new clause names were verified
+PRESENT IN THAT REPORT rather than inferred from the delta, which is what distinguishes a real
+run from a stale binary reporting the old names green.
+WHAT THE USER ASKED FOR, after playing the prototype: on-screen buttons -- a BUILD button that
+appears once a factory they own is selected, opening the existing production menu, which gains
+an exit button; and an END TURN button that highlights once every unit has used its actions.
+WHY IT NEEDED A DESIGN RATHER THAN A WIDGET. `FStratSelectionMachine` tracks a selected UNIT
+and this project has no selected HEX -- its own header says so -- so a prior ruling routed
+Sec 2.11.5's menu around that by reading `HexUnderCursor` at keypress. A BUTTON CLICK PUTS THE
+CURSOR ON THE BUTTON, so that path cannot serve one, and `ToggleProductionMenu`'s claim to be
+callable "so a menu button ... can drive the same path the key does" was FALSE for the hex
+half. It is retracted in place at its own declaration.
+THE USER RULED four things: a click-to-focus latch leaving the selection machine untouched; a
+primary click on your own factory latches it AND still issues whatever the machine makes of it;
+the exit button reuses the existing close path behind one verb that owns the ordering; and the
+new clauses ride T-UI-03, each stating its stretch in its own name.
+THE DESIGN'S LOAD-BEARING IDEA is that the latch holds only an INTENT -- a hex and a bool --
+and the drawn bit is RECOMPUTED from the model on every decorate. A factory captured out from
+under the latch, a hand-over, or a concluded match darkens the button with no clear-point code
+involved, so staleness is structurally impossible rather than remembered. It is also what keeps
+T-INT-05 true: `GetProductionTargetHex`'s exemption from that clause is conditioned on nothing
+being drawn from it, and a button drawn from a latch does not inherit it.
+WHAT IS NOT DONE, AND IT IS THE HALF THE PLAYER SEES. No widget asset exists: no
+`WBP_CommandBar`, no `CommandBarWidgetClass` default on `BP_StratScoreboardHUD`, no EXIT button
+on `WBP_ProductionMenu`. THE EDITOR WAS NOT RUNNING IN THIS PASS -- measured with a control: no
+`UnrealEditor` process and nothing listening on `127.0.0.1:9315`, against 37 other LISTENING
+sockets. So NOTHING IS ON SCREEN YET and the C++ above is reachable only from a clause. This is
+the same shape as W8's asset tail and is tracked under `## NEXT`.
+A GATE FINDING WORTH KEEPING, because the instrument was wrong twice before it was right. Two
+summary sentences in `StratPlayerController` asserted the function was "unchanged in behaviour"
+while a note in the same comment block recorded that a refusal sentence had moved -- the
+nested-correction shape. BOTH THE PER-LINE GREP AND A NAIVE WHITESPACE FLATTEN REPORTED THEM
+ABSENT, the first because the claims wrap across comment lines and the second because
+collapsing whitespace leaves the `*` leader embedded mid-sentence. AND BOTH CONTROLS FIRST USED
+TO VERIFY THE FIX SAT ON A SINGLE LINE, which every instrument finds including the blind ones,
+so they certified only that the file had been opened. Measured over a phrase known to wrap:
+per-line 0, naive-flattened 0, leader-stripped 1. The working scan and its wrapped control are
+recorded in `engine.md`, which is where the finding belongs.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the build,
+the suite run and the writes behind this block were performed in `E:/MultiAgent/Stratocracy` on
+branch `master` on this developer box, with the editor closed throughout. NOTHING WAS COMMITTED
+-- staging and commits are the user's call -- so a later checkout will not contain this pass's
+tree unless the user committed it.]**)
+
 _Last run 2026-09-02 (W8 IS ON SCREEN, AND THE THING WORTH READING IS THAT A HUMAN HAD TO
 SAY SO -- EVERY INSTRUMENT IN THIS TREE SAID `CORRECTLY ASSIGNED` AND NONE OF THEM CAN SEE A
 PIXEL. Written by the `coordinator`, whose file this is. ACTING in the content lane under
@@ -22,8 +76,8 @@ colour correction cross local midnight. THE HONEST DATE REDDENED THE GUARD -- th
 refused a banner dated a day before an entry beneath it -- AND THE FIX WAS TO MOVE THE BANNER
 RATHER THAN BACKDATE THE ENTRY, which is what this record did the last time the same thing
 happened and is recorded here so the next reader meets the rule rather than rediscovers it.
-The suite is **362/362**, every entry Success, zero failed, zero notRun, zero
-succeededWithWarnings, and the macro census of this tree agrees at 362.
+The suite was **362/362** at that pass, every entry Success, zero failed, zero notRun,
+zero succeededWithWarnings, and the macro census of that tree agreed at 362.
 NO SUITE WAS RUN IN THIS PASS AND THE FIGURE IS THEREFORE UNMOVED -- it is carried forward
 from the block below, which cites the same report, and the provenance is stated because a
 carried figure with none is a shape this record has been caught by before. This pass touched
@@ -43,7 +97,12 @@ the master material family has no time input and this route cannot author a mate
 editor session, the PIE run and the asset writes behind this block were performed in
 `E:/MultiAgent/Stratocracy` on branch `master` on this developer box, driven over raw HTTP to
 `127.0.0.1:9315` because the connector was latched stale. The user's confirmation was made at
-that machine and is in no checkout.]**)
+that machine and is in no checkout.]**
+**[STAMPED 2026-09-02 -- SUPERSEDED BY THE BANNER ABOVE, WHICH CARRIES THIS RECORD'S LIVE
+FIGURE. THE FIGURE DID MOVE THIS TIME, 362 -> 370, and the report this block cited has been
+OVERWRITTEN by the run the banner above cites -- one report path, one artifact. So the
+reading below can no longer be confirmed or refuted from any checkout; it is history now,
+and never evidence. Kept rather than deleted, which is this record's convention.]**)
 
 _Last run 2026-09-01 (THE SUITE IS GREEN AGAIN, AND THE CAUSE OF THE RED WAS A FIXTURE
 READING THE DEVELOPER'S OWN SAVE FILE.

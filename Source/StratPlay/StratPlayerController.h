@@ -169,6 +169,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 
+#include "StratBuildAffordance.h"
 #include "StratGuidedOpening.h"
 #include "StratHoverState.h"
 #include "StratSelectionMachine.h"
@@ -511,6 +512,24 @@ public:
 	const FStratHoverState& GetHoverState() const { return Hover; }
 
 	/**
+	 * Sec 2.11.5's focused-factory latch, so a clause can drive and read it whole.
+	 *
+	 * NOT A `UFUNCTION`, matching `GetHoverState` and `GetSelectionMachine` and for their
+	 * reason: `FStratBuildAffordance` is not a reflected type and exposing the object to
+	 * Blueprint would mean making it one. What a graph needs is the DRAWN answer,
+	 * `FStratViewModel::CommandBar::bShowBuildButton`, and the one verb that acts on the
+	 * latch -- `OpenProductionMenuAtFocusedFactory` -- which takes no hex precisely so that no
+	 * graph can name a factory the latch is not on.
+	 *
+	 * A READ AND NOT THE SCREEN'S SOURCE, on `GetHoveredHex`'s stated rule. Nothing drawn may
+	 * read this. T-INT-05 holds only while the screen is a function of the view model alone,
+	 * and the BUILD control's visibility is `FStratViewModel::CommandBar` -- which is why the
+	 * affordance produces a model field at all instead of being read off this actor.
+	 */
+	FStratBuildAffordance&       GetBuildAffordance()       { return BuildAffordance; }
+	const FStratBuildAffordance& GetBuildAffordance() const { return BuildAffordance; }
+
+	/**
 	 * The machine, so a hand-over or a gate can read what is selected.
 	 *
 	 * NON-CONST BECAUSE THE GUIDANCE LAYER WRITES THE LOCKS, and that clause used to read:
@@ -624,11 +643,101 @@ public:
 	 * THE ONE THING IT REFUSES IS A CURSOR THAT IS NOT ON THE BOARD, which is not a rules
 	 * answer -- there is no hex to be about.
 	 *
-	 * PUBLIC AND `BlueprintCallable` so a menu button, a console command or a gate can
-	 * drive the same path the key does; the Enhanced Input handler is one call to this.
+	 * PUBLIC AND `BlueprintCallable` so a console command or a gate can drive the same path
+	 * the key does; the Enhanced Input handler is one call to this.
+	 *
+	 * [RETRACTED 2026-09-02, IN PLACE. The sentence above read:
+	 * RETRACTED> "PUBLIC AND `BlueprintCallable` so a MENU BUTTON, a console command or a
+	 * RETRACTED>  gate can drive the same path the key does; the Enhanced Input handler is
+	 * RETRACTED>  one call to this."
+	 * IT WAS FALSE FOR THE HEX HALF AND THE FAILURE IS STRUCTURAL RATHER THAN AN OVERSIGHT.
+	 * The open arm of this function resolves the factory from `HexUnderCursor`, and A BUTTON
+	 * CLICK PUTS THE CURSOR ON THE BUTTON -- off the board -- so a menu button driving this
+	 * path gets `the cursor is not on the board` every time, which is the refusal that reads
+	 * least like the cause. The reflection was never the problem; the HEX SOURCE was. Nothing
+	 * about the CLOSE arm or about a console command or a gate was wrong, so the clause is
+	 * narrowed rather than deleted.
+	 *
+	 * WHAT SERVES A BUTTON IS `OpenProductionMenuAtFocusedFactory` BELOW, and what makes it
+	 * possible is a second hex source that does not need a cursor -- `FStratBuildAffordance`,
+	 * latched at the moment of a primary click on the board.
+	 *
+	 * WHAT THIS FUNCTION HELD INVARIANT, AND IT IS NOT "EVERYTHING". It still toggles, it
+	 * still reads the cursor, and it still serves the `B` key. Those three are the contract a
+	 * caller has and none of them moved -- but a blanket "this function is unchanged in
+	 * behaviour" stood in front of them and was FALSE, because the Sec 2.8 concluded-match
+	 * gate became part of the shared open and now runs AFTER the cursor read instead of
+	 * before it. On a concluded match with the cursor off the board, the REFUSAL SENTENCE
+	 * this function reports changed with it. That is a fact about the call site rather than
+	 * about this declaration, and it is argued where it landed: the `[ORDER CHANGED
+	 * 2026-09-02]` note on the `HexUnderCursor` refusal in the .cpp.]
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
 	bool ToggleProductionMenu(FString& OutFailureReason);
+
+	/**
+	 * Opens Sec 2.11.5's menu on the factory the player has FOCUSED. The BUILD button's verb.
+	 *
+	 * WHAT GAP THIS CLOSES: the retraction above. This is the same open sequence
+	 * `ToggleProductionMenu` runs, taking its hex from `FStratBuildAffordance` instead of from
+	 * the cursor, so a control the player CLICKS can open the menu the key opens.
+	 *
+	 * AN OPEN AND NOT A TOGGLE, AND THAT IS THE DECISION IN IT. A button that toggled would be
+	 * a SECOND EXIT CONTROL competing with the menu's own -- two ways out, behaving
+	 * differently under a double-click, and neither of them the one the player was told about.
+	 * The BUILD control stays visible under the menu (ZOrder 20 over 5) and a second press is
+	 * INERT, because `AStratScoreboardHUD::OpenProductionMenuWidget` already refuses an
+	 * already-open menu and says why. So "press BUILD twice" does nothing, which is the
+	 * correct thing for it to do.
+	 *
+	 * IT TAKES NO HEX, DELIBERATELY. A `FIntPoint` parameter would let a graph open a menu
+	 * about a factory the latch is not on, and then `GetProductionTargetHex` -- which the WBP
+	 * reads from its own `Construct` -- and the BUILD control the player pressed would be
+	 * about two different factories. The latch is the only source.
+	 *
+	 * IT ASKS NO RULES QUESTION AND MAKES NO LEGALITY CHECK, on `ToggleProductionMenu`'s
+	 * stated rule, unchanged: whether this side can pay, whether the factory has built this
+	 * turn and whether it is spawn-blocked are all rows on the menu about to be built, with
+	 * the rules module's own reasons attached.
+	 *
+	 * @return false with a reason when nothing is focused, when the match has concluded, when
+	 *         there is no HUD to host a menu, or when the HUD refuses the open. A refusal
+	 *         leaves no latch behind claiming a menu is about a hex.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
+	bool OpenProductionMenuAtFocusedFactory(FString& OutFailureReason);
+
+	/**
+	 * Closes Sec 2.11.5's menu. The production menu's EXIT button's verb.
+	 *
+	 * WHY THIS EXISTS AS A VERB AT ALL, WHICH IS THE ONLY LOAD-BEARING THING ABOUT IT. Closing
+	 * the menu is TWO ACTS ON TWO OBJECTS AND THE ORDER BETWEEN THEM IS THE CONTRACT: the
+	 * panel comes down (`AStratScoreboardHUD::CloseProductionMenuWidget`) and THEN the rows
+	 * are cleared (`UStratMatchSubsystem::CloseProductionMenu`). The reverse leaves a live
+	 * panel bound to an empty row array for however long the two lines are apart -- a screen
+	 * showing a menu the subsystem says is not open. That ordering was written down in exactly
+	 * one place a widget graph cannot reach, inside `ToggleProductionMenu`'s close arm, so an
+	 * EXIT button wiring the two underlying calls itself would have been one drag of a wire
+	 * away from the defect. THIS VERB OWNS THE PAIR SO NO GRAPH HAS TO.
+	 *
+	 * THE LATCH IS CLEARED WITH THE PANEL, on the close arm's own stated reason: leaving it
+	 * set would have `GetProductionTargetHex` answer true with no menu on screen.
+	 *
+	 * THE FOCUS IS NOT. `FStratBuildAffordance` is untouched here, and that is a decision --
+	 * exit returns the player to the factory they were focused on with the BUILD control still
+	 * on screen. Clearing it would make exit behave as a cancel, which is a different gesture
+	 * the player already has on the secondary click and on Escape.
+	 *
+	 * NOT GATED ON A CONCLUDED MATCH. Taking a panel down is never a command, and a player
+	 * left unable to dismiss a menu on a finished match would be worse than anything this
+	 * could prevent -- `ToggleProductionMenu`'s close arm records the same ruling.
+	 *
+	 * @return false with a reason only when there is no HUD of the right class. "No menu was
+	 *         open" is SUCCESS: this verb is idempotent, so an exit button pressed twice, or
+	 *         pressed on a menu something else already took down, is not an error.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Production")
+	bool CloseProductionMenu(FString& OutFailureReason);
 
 protected:
 	// ---- Enhanced Input assets. Null as C++ DEFAULTS; set on the `BP_` subclass. ------
@@ -895,6 +1004,34 @@ private:
 	bool ApplyHoverChange(bool bChanged);
 
 	/**
+	 * The one open sequence Sec 2.11.5's menu has. Both public openers end here.
+	 *
+	 * ONE SEQUENCE, TWO HEX SOURCES, AND THAT IS THE WHOLE OF WHY IT IS PRIVATE.
+	 * `ToggleProductionMenu` resolves the hex from the cursor;
+	 * `OpenProductionMenuAtFocusedFactory` resolves it from the focus latch. Everything after
+	 * that point -- the concluded-match gate, the latch, the HUD open, the unwind on refusal
+	 * -- is identical and is written once. `AStratPlayerController::RefreshFromMachine`'s own
+	 * block objects in these terms to "a second, subtly different sequence written for the
+	 * button's benefit", and this is that objection obeyed.
+	 *
+	 * AN OPEN AND NEVER A TOGGLE. The shared inner deliberately has no close arm: a toggle
+	 * shared between a key and a button would give the button a second exit behaviour the
+	 * menu's own EXIT control does not have. `ToggleProductionMenu` keeps its close arm
+	 * ABOVE this call, where the key's toggle semantics belong and nothing else can reach
+	 * them.
+	 *
+	 * IT DOES NOT CHECK WHETHER A MENU IS ALREADY OPEN. `AStratScoreboardHUD::
+	 * OpenProductionMenuWidget` does, refuses, and says why; a second test here would be this
+	 * class forming an opinion about a widget's lifetime it does not own.
+	 *
+	 * @param Hex                whichever source resolved it. Not validated against the
+	 *                           board -- see `ToggleProductionMenu` on why a legality
+	 *                           pre-check would replace the module's reason with silence.
+	 * @param OutFailureReason   the refusing layer's own words, forwarded unchanged.
+	 */
+	bool OpenProductionMenuAtHex(FIntPoint Hex, FString& OutFailureReason);
+
+	/**
 	 * The latched target hex and whether anything is latched. See `GetProductionTargetHex`.
 	 *
 	 * TWO MEMBERS AND NOT ONE, because `FIntPoint(0, 0)` is a real hex and cannot mean
@@ -929,6 +1066,28 @@ private:
 	 * unlike `GuidedOpening` there is nothing here to arm and no bridge to wait for.
 	 */
 	FStratHoverState Hover;
+
+	/**
+	 * Sec 2.11.5's focused-factory latch and the producer of `FStratCommandBarView`.
+	 *
+	 * BY VALUE AND BESIDE THE HOVER, for the hover's reasons exactly. `FStratBuildAffordance`
+	 * is not a reflected type, so this member cannot become the reflected copy of a
+	 * presentation bit on an actor that T-INT-05 forbids.
+	 *
+	 * AND UNLIKE THE HOVER, IT IS NOT A PRESENTATION BIT AT ALL. It is an INPUT INTENT -- two
+	 * fields saying which hex the player last clicked with intent to build -- and nothing on
+	 * screen is drawn from it directly. The drawn bit, `bShowBuildButton`, is recomputed from
+	 * `FStratViewModel::Factories` and `::ViewingSide` on every decorate. That distinction is
+	 * the same one `GetProductionTargetHex` draws about its own latch, and it is what keeps
+	 * T-INT-05 true with a BUILD control on screen; the affordance's own header block states
+	 * it in full, including the MEASUREMENT that
+	 * `Stratocracy.StratPlay.T-INT-05.NoActorHoldsPresentationBits` performs no reflected
+	 * walk of this class's members today.
+	 *
+	 * NOT ARMED AND NOT RESET AT BEGINPLAY. Its default is "nothing focused", which is the
+	 * truth for a controller nobody has clicked with yet -- the hover's reasoning unchanged.
+	 */
+	FStratBuildAffordance BuildAffordance;
 
 	/**
 	 * §2.11.6's guided opening. BY VALUE AND BESIDE THE MACHINE, for the machine's reasons.

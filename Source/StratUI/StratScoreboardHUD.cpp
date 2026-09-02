@@ -69,6 +69,12 @@
 // IWYU: this file names `UStratInfoPanelWidget`, `FStratInfoPanelModel` and
 // `StratComposeInfoPanelModel` directly. The header forward declares only the class.
 #include "StratInfoPanelWidget.h"
+
+// IWYU: this file names `UStratCommandBarWidget` directly. The header forward declares only
+// the class. No composition type is named beside it, unlike the info panel's include above --
+// `FStratCommandBarView` arrives finished and there is no `StratComposeCommandBarModel`; see
+// `StratCommandBarWidget.h` on why the compose step is absent rather than missing.
+#include "StratCommandBarWidget.h"
 #include "StratMatchResultWidget.h"
 
 #include "StratScoreboardWidget.h"
@@ -294,6 +300,30 @@ void AStratScoreboardHUD::BeginPlay()
 		UE_LOG(LogStratUI, Warning, TEXT("No hover info panel this session: %s"), *FailureReason);
 	}
 
+	// Sec 2.11.2'S COMMAND BAR, CREATED HERE AND FOR `CreateGuidanceWidget`'S STATED REASON
+	// RATHER THAN BY POSITION, exactly as the info panel above. It sits above every one of the
+	// scoreboard's early returns so that an unset `ScoreboardWidgetClass` cannot silently make
+	// the bar conditional on it, and below the bridge and viewing-side checks because those
+	// two mean no match will be drawn at all and a BUILD control over a board that never
+	// seeded would offer a factory that does not exist.
+	if (CommandBarWidgetClass == nullptr)
+	{
+		// Log, and `LastFailureReason` untouched, on the guidance branch's reason: that member
+		// answers "why is there no scoreboard".
+		UE_LOG(LogStratUI, Log,
+			TEXT("No command bar requested: no CommandBarWidgetClass is set on this HUD's Blueprint defaults."));
+	}
+	else if (!CreateCommandBarWidget(FailureReason))
+	{
+		// NOT A RETURN, and Warning rather than Error, matching the strip and the panel. The
+		// match remains fully playable without the bar: every verb it offers has a keyboard
+		// binding that does not go through it -- `B` for Sec 2.11.5's menu, End Turn for the
+		// turn -- so nothing becomes unreachable when it is absent. What is lost is that the
+		// player is not TOLD those verbs exist, which is the gap the bar closes and not a
+		// gate it holds.
+		UE_LOG(LogStratUI, Warning, TEXT("No command bar this session: %s"), *FailureReason);
+	}
+
 	// §2.11.5'S MENU IS REPORTED HERE AND CREATED NOWHERE NEAR HERE, and the split is
 	// deliberate. The class is checked at `BeginPlay` so that "no menu was configured" is a
 	// line in the session log next to the other two widgets' -- otherwise the only witness
@@ -407,6 +437,16 @@ void AStratScoreboardHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		GuidanceStrip->RemoveFromParent();
 		GuidanceStrip = nullptr;
+	}
+
+	// The command bar goes down the same way and for the same reason, and like the strip it
+	// has the map's lifetime rather than the menu's -- so this is the guarded form and not
+	// `CloseProductionMenuWidget`'s unguarded one. It holds no pointer into the bridge:
+	// `PushCommandBar` copies a reflected struct in.
+	if (CommandBar != nullptr)
+	{
+		CommandBar->RemoveFromParent();
+		CommandBar = nullptr;
 	}
 
 	// §2.11.5's menu goes down the same way, and unlike the two above it may legitimately
@@ -787,6 +827,97 @@ bool AStratScoreboardHUD::DeliverLatestInfoPanel()
 	FStratInfoPanelModel Composed;
 	StratComposeInfoPanelModel(LastPushedInfoPanel, LastPushedInfoPanelViewingSide, Composed);
 	InfoPanel->PushInfoPanel(Composed);
+	return true;
+}
+
+bool AStratScoreboardHUD::CreateCommandBarWidget(FString& OutFailureReason)
+{
+	// Same shape as `CreateInfoPanelWidget` above, deliberately, so that a reader who has
+	// understood one has understood all three. Unset is handled by BeginPlay as a
+	// configuration rather than an error; reaching here with it null means someone called this
+	// directly, and that IS an error.
+	if (CommandBarWidgetClass == nullptr)
+	{
+		OutFailureReason = TEXT("CommandBarWidgetClass is unset");
+		return false;
+	}
+
+	APlayerController* const OwningPlayer = GetOwningPlayerController();
+	if (OwningPlayer == nullptr)
+	{
+		OutFailureReason = TEXT("this HUD has no owning player controller to parent the command bar to");
+		return false;
+	}
+
+	UStratCommandBarWidget* const Created =
+		CreateWidget<UStratCommandBarWidget>(OwningPlayer, CommandBarWidgetClass);
+	if (Created == nullptr)
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("CreateWidget returned null for CommandBarWidgetClass '%s'"),
+			*GetNameSafe(CommandBarWidgetClass));
+		return false;
+	}
+
+	Created->AddToViewport(CommandBarZOrder);
+
+	// Assigned only after it is on screen, so `CommandBar != nullptr` and "there is a bar"
+	// never disagree.
+	CommandBar = Created;
+
+	// BROUGHT UP TO THE LAST VALUE THIS HUD WAS HANDED, for the measured reason recorded
+	// against `CreateGuidanceWidget`: `AStratPlayerController::BeginPlay` reaches
+	// `UStratMatchSubsystem::ApplyView` with the session's first decorated model before this
+	// function has run. It assumes NO ordering -- a push arriving after this point takes the
+	// ordinary route through `PushCommandBar`, one that arrived before it is delivered here,
+	// and a session with no push at all delivers nothing.
+	//
+	// NOTHING IS LOST WHEN IT DELIVERS NOTHING, as with the panel. The bar's own defaults ARE
+	// the empty bar -- no BUILD control, no highlight, no dim -- so a fresh widget with no
+	// delivery is showing the correct thing rather than a stale or blank one.
+	DeliverLatestCommandBar();
+
+	return true;
+}
+
+void AStratScoreboardHUD::PushCommandBar(const FStratCommandBarView& InCommandBar)
+{
+	// RECORDED FIRST, UNCONDITIONALLY, AND WITHOUT COMPARING, on `PushGuidance`'s and
+	// `PushInfoPanel`'s reasoning: the widget may not exist yet, so the value is kept before
+	// the forward rather than only when the forward can happen. No equality test and no
+	// early-out on "unchanged" -- that would make the bar's contents a function of the history
+	// of calls instead of the current model.
+	LastPushedCommandBar  = InCommandBar;
+	bCommandBarEverPushed = true;
+
+	// THE REST IS A NULL CHECK AND A FORWARD -- not even a composition, unlike the panel. See
+	// the header block on why there is nothing left to compose. No bar is a configuration and
+	// not a refusal, so there is nothing to report and nothing to log.
+	//
+	// NO BRANCH ON THE VALUE. This function does not read `bShowBuildButton`, does not show or
+	// hide the widget, and decides nothing about the bar's appearance. The view carries that
+	// bool precisely so a WBP can bind visibility to it.
+	if (CommandBar != nullptr)
+	{
+		CommandBar->PushCommandBar(InCommandBar);
+	}
+}
+
+bool AStratScoreboardHUD::DeliverLatestCommandBar()
+{
+	// TWO CONDITIONS, AND THEY ARE DIFFERENT QUESTIONS, on `DeliverLatestInfoPanel`'s stated
+	// split. `CommandBar` answers "is there anywhere to deliver to"; `bCommandBarEverPushed`
+	// answers "is there anything to deliver". The second cannot be read off
+	// `LastPushedCommandBar` itself -- a default-constructed `FStratCommandBarView` is the
+	// ordinary empty bar and not an absence.
+	if (CommandBar == nullptr || !bCommandBarEverPushed)
+	{
+		return false;
+	}
+
+	// THE FLAG IS NOT CLEARED. This is a replay of the current value, not the consumption of a
+	// queued event.
+	CommandBar->PushCommandBar(LastPushedCommandBar);
 	return true;
 }
 

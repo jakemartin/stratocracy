@@ -94,6 +94,17 @@
 // So this file still has exactly ONE subtraction and it is still
 // `StratBuildProductionMenu`'s.
 //
+// AND THE COUNT DID NOT MOVE ON 2026-09-02 EITHER, which is worth saying for the same
+// reason: that day added `StratDecorateCommandBar`. That function contains no `+`, `-`, `*`
+// or `/`. It performs ONE lookup (`Factories.FindByPredicate` by hex, the same shape
+// `StratDecorateInfoPanel` uses to find the hovered hex's unit), TWO copies out of
+// `Model.Guidance`, and TWO comparisons -- `Owner == ViewingSide` and `<count> == 0` -- both
+// of which produce a BOOLEAN that is stored, never a number. The count itself is
+// `UStratViewModelLibrary::CountViewingSideUnitsAbleToAct`'s, a `BlueprintPure` selector over
+// this same model whose own header argues at length why computing it OVER the model is not
+// arithmetic INSIDE it. So this file still has exactly ONE subtraction and it is still
+// `StratBuildProductionMenu`'s.
+//
 // WHY THE MAPPINGS ARE SWITCHES AND ASSERTS RATHER THAN CASTS. `EStratResultTier` and
 // `strat::ResultTier` agree today enumerator for enumerator, and a `static_cast` between
 // them would keep agreeing right up until someone adds a tier upstream, at which point
@@ -106,6 +117,11 @@
 // terrain name arrive through the bridge from the scenario and the §4.8 tables.
 
 #include "StratViewModel.h"
+
+// IWYU: `StratDecorateCommandBar` names `UStratViewModelLibrary::CountViewingSideUnitsAbleToAct`
+// directly. This is a header of THIS module and includes nothing vendored, so it carries none
+// of the constraint the next include does; the two are adjacent only by position.
+#include "StratViewModelLibrary.h"
 
 // See item 1 of the block above. This line is legal here and nowhere else in this pair.
 #include "StratBridge.h"
@@ -830,4 +846,104 @@ void StratDecorateInfoPanel(FStratViewModel& Model)
 	}
 
 	Model.InfoPanel = Built;
+}
+
+
+// ---------------------------------------------------------------------------
+// Sec 2.11.2's command bar, at the decoration seam.
+// ---------------------------------------------------------------------------
+
+void StratDecorateCommandBar(
+	FStratViewModel& Model,
+	bool             bHasFocusedFactory,
+	FIntPoint        FocusedFactoryHex)
+{
+	// BUILT ASIDE AND ASSIGNED ON THE LAST LINE, on `StratDecorateInfoPanel`'s reasoning
+	// rather than only the house rule: this function reads `Model` and writes into `Model`,
+	// so a running write would let a half-filled block be read by the lookups that fill the
+	// rest of it.
+	FStratCommandBarView Built;
+
+	// ---- The BUILD control, RESOLVED HERE AND NEVER CARRIED IN ---------------
+	//
+	// THE CALLER HANDS OVER AN INTENT AND THIS FUNCTION ANSWERS THE QUESTION. That split is
+	// the whole design: `FStratBuildAffordance` holds a hex and a bool, and every refresh
+	// re-asks whether that hex is still a factory and still this seat's. A caller that
+	// computed `bShowBuildButton` for itself would be caching an answer that goes stale on a
+	// capture, a hand-over or a conclusion -- see the struct's own block.
+	//
+	// THE BOOL IS READ FIRST. `FIntPoint(0, 0)` is a real hex on this board and cannot signal
+	// its own absence.
+	if (bHasFocusedFactory)
+	{
+		// A LOOKUP AND NOT A DERIVATION. `Factories` is in canonical hex order and a hex
+		// holds at most one factory, so the first match is the only match. Nothing here asks
+		// the rules module anything: which hexes hold factories and who owns each were
+		// answered by `strat::buildUiSnapshot` and copied across by `StratBuildViewModel`.
+		const FStratFactoryView* const Factory = Model.Factories.FindByPredicate(
+			[FocusedFactoryHex](const FStratFactoryView& Candidate)
+			{
+				return Candidate.Hex == FocusedFactoryHex;
+			});
+
+		// `Owner == ViewingSide` AND NOT `Owner != INDEX_NONE`. A NEUTRAL factory carries
+		// `INDEX_NONE`, so on a model whose `ViewingSide` were also `INDEX_NONE` the two
+		// spellings differ and this one latches the neutral factory. `StratBuildViewModel`
+		// range-checks `ViewingSide` against the snapshot's own side count and refuses rather
+		// than producing such a model, so the input is reachable only by hand -- recorded
+		// because a clause is exactly the thing that builds one by hand.
+		//
+		// AND IT IS `ViewingSide` AND NOT `Match.SideToMove`. Sec 2.11.5's BUILD control is a
+		// statement about whose SCREEN this is, and in hot-seat the two differ every other
+		// turn -- the same distinction `UStratViewModelLibrary::GetViewingSideView` exists to
+		// make in one place. A bar wired to `SideToMove` would offer the opponent's factories
+		// on every screen drawn between the turn flipping and the hand-over completing.
+		if (Factory != nullptr && Factory->Owner == Model.ViewingSide)
+		{
+			Built.bShowBuildButton = true;
+			Built.BuildFactoryHex  = FocusedFactoryHex;
+		}
+	}
+
+	// ---- The two guidance copies, declared AS copies -------------------------
+	//
+	// ASSIGNED AND NOT RE-DERIVED. `FStratGuidedOpening::DecorateViewModel` decided both, and
+	// this function must run after it for exactly that reason. Copying rather than reading
+	// the guidance block from the widget is what gives one control one source; see the
+	// fields' own blocks.
+	Built.bEndTurnDimmed   = Model.Guidance.bEndTurnGated;
+	Built.EndTurnHoverText = Model.Guidance.EndTurnGateHover;
+
+	// ---- The END TURN highlight, single-authored over the existing count ------
+	//
+	// THIS IS NOT T-UI-03'S FORBIDDEN ARITHMETIC, and the standing precedent for that reading
+	// is `UStratMatchSubsystem::ApplyView`, in its "Sec 2.11.6-B's objective ring" block:
+	// "THIS IS NOT T-UI-03'S FORBIDDEN ARITHMETIC: it is a visibility condition over two
+	// booleans, not a number drawn on screen, and no widget renders the conjunction." The
+	// same holds here with one term more. No number reaches the model: the count is compared
+	// against zero and only the boolean is stored.
+	//
+	// OVER `CountViewingSideUnitsAbleToAct` AND NOT OVER A SECOND WALK OF `Model.Units`. That
+	// selector is the number Sec 2.11.2's HUD draws, and its four-clause derivation --
+	// side, `bDone`, `bLockedThisTurn`, and `!(bHasMoved && bHasActed)` -- is written out on
+	// its own declaration so it can be pinned rather than inferred. Re-deriving it here would
+	// be a second author of the same fact, and the highlight could then disagree with the
+	// number printed beside it.
+	//
+	// `bHasResult` IS THE FIRST TERM. A concluded match has nothing left to end, and nudging
+	// the player to end a turn on a final board would advertise a control Sec 2.8's gate is
+	// guaranteed to refuse.
+	//
+	// `bEndTurnGated` IS ANDED IN ON PURPOSE AND MUST NOT BE DROPPED AS REDUNDANT. It resolves
+	// dim-beats-highlight in one place so no widget spells `suggested AND NOT gated`. On the
+	// shipped scenario the pair is unreachable -- beat 1a locks every unit but the marked
+	// Infantry and locked units do not count, so a gated turn always has one unit able to act
+	// -- but that is a fact about `FStratGuidedOpening::PublishLocks` and not a structural
+	// guarantee. This `&&` is what makes it one.
+	Built.bEndTurnSuggested =
+		   !Model.Match.bHasResult
+		&& !Model.Guidance.bEndTurnGated
+		&& UStratViewModelLibrary::CountViewingSideUnitsAbleToAct(Model) == 0;
+
+	Model.CommandBar = Built;
 }

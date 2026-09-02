@@ -15,6 +15,172 @@
 
 ## NEXT
 
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `fcf64d3`, UNCOMMITTED) — THE ON-SCREEN COMMAND
+  BAR, C++ HALF: THE LATCH IS AN INPUT INTENT AND THE DRAWN BIT IS RECOMPUTED EVERY REFRESH,
+  WHICH IS WHAT LETS A BUILD BUTTON EXIST WITHOUT FALSIFYING T-INT-05.**
+  - **THE GAP, AND IT IS THE PLAYER'S OWN REPORT RATHER THAN AN AUDIT'S.** After playing the
+    prototype the user asked for two on-screen controls: a BUILD button that appears once a
+    factory they own is selected, and an END TURN button that highlights once every unit has
+    used its actions. Every command in this build is a keyboard binding, nothing on screen
+    says either exists, and §2.11.5's menu has no visible way out.
+  - **THE ONE THING THAT MADE IT MORE THAN WIRING, MEASURED RATHER THAN ASSUMED.** Nothing in
+    this project selects a HEX — `FStratSelectionMachine` tracks `SelectedUnitId` and its own
+    header says so in terms — and the existing route around that, `ToggleProductionMenu`
+    reading `HexUnderCursor` at the instant the key fires, **cannot serve a button, because a
+    button click puts the cursor on the button.** That file's own header claimed the opposite:
+    that it was `BlueprintCallable` "so a MENU BUTTON, a console command or a gate can drive
+    the same path the key does". It is **RETRACTED IN PLACE, QUOTED**, at
+    `AStratPlayerController::ToggleProductionMenu`. The reflection was never the problem; the
+    HEX SOURCE was, and only for the open arm, so the clause is narrowed and not deleted.
+  - **THE DESIGN, IN ONE SENTENCE: `FStratBuildAffordance` HOLDS A HEX AND A BOOL AND NOT
+    "IS THE BUTTON VISIBLE".** `StratDecorateCommandBar` looks that hex up in
+    `Model.Factories` on every decorate and writes
+    `bShowBuildButton = (found && Owner == ViewingSide)`. A factory captured out from under
+    the latch, a hot-seat hand-over, a concluded match: the control goes dark on the next
+    refresh with **no clear-point code involved**. Staleness is structurally impossible
+    rather than dependent on remembering every clear point — `FStratHoverState`'s posture,
+    and the one both `UStratMatchSubsystem::IsProductionMenuOpen` and
+    `AStratScoreboardHUD::IsProductionMenuWidgetOpen` take in their own headers.
+  - **AND THAT IS WHAT SATISFIES T-INT-05 RATHER THAN A CONVENTION.**
+    `GetProductionTargetHex` exempts itself from that clause on an EXPLICIT CONDITION — it
+    "appears in no view model, and nothing on screen is drawn from it". A BUILD control drawn
+    from a focus latch **does not inherit that exemption**, so what it draws is a field on
+    `FStratViewModel` and the only route from the latch to the screen is `DecorateViewModel`.
+  - **THE TWO FLAGGED ASSUMPTIONS WERE MEASURED BEFORE ANY CODE WAS WRITTEN, AND BOTH HELD.**
+    (1) `Stratocracy.StratPlay.T-INT-05.NoActorHoldsPresentationBits`
+    (`Source/StratPlay/Tests/StratMatchReconcile.cpp`) **does not census controller members**:
+    it drives five decorations through `ApplyView` and compares
+    `AStratUnitActor::GetLastAppliedView()` field by field, and grepping the WHOLE FILE for
+    `PlayerController`, `TFieldIterator`, `FProperty` and `StaticClass()->` returns **ZERO**
+    hits. So a non-`UPROPERTY` `FStratBuildAffordance` on the controller is not reachable by
+    it today; the affordance's own header states what the answer is IF that clause ever grows
+    a reflected walk. (2) `FStratSelectionMachine::Reset()` **has no caller anywhere in
+    `Source/`, including `Tests/`** — declared at its header, defined in its `.cpp`, called by
+    nothing. `FStratBuildAffordance::Reset()` was written for parity with it, so it inherits
+    that debt, and **the debt is stated at the method** rather than left for a reader to
+    discover the parity is with an uncalled thing.
+  - **WHAT THE PLAN DID NOT ANTICIPATE, LISTED BECAUSE A SILENT ADDITION IS THE ONE A GATE
+    CANNOT SEE.**
+    - **THE TWO CENSUS BLOCKS IN `StratViewModel.h` / `.cpp` HAD TO BE AMENDED, AND THE PLAN
+      DID NOT NAME THEM.** Those blocks enumerate what KIND of thing a field of this model may
+      be — a snapshot mirror, a table read, a selection, and since 2026-09-01 a bridge-query
+      copy — and claim the arithmetic count. `FStratCommandBarView` is a **fifth kind**: two
+      declared copies plus three booleans FOLDED from fields of the same model and one named
+      selector over it. Both blocks now say so. **The arithmetic count did not move**, and the
+      distinction that keeps it still is stated: no NUMBER is stored, the count is compared
+      against zero inside the decorator and only the boolean survives onto the model, which is
+      exactly the shape `StratViewModelLibrary.h` already ruled permissible when it refused a
+      count FIELD.
+    - **THE §2.8 CONCLUDED-MATCH GATE MOVED RELATIVE TO THE CURSOR READ.** Making the gate part
+      of the shared open — so the button inherits it — puts it AFTER `HexUnderCursor` on the
+      key path where it used to be before. On a concluded match with the cursor off the board
+      the reported reason therefore changed from the concluded-match sentence to `the cursor is
+      not on the board`. Both are true and no caller branches on either string, but a clause
+      asserting the first would go red on a correct change, so it is recorded at the call site.
+    - **`HandleSelectionEvent` HAS NO CANCEL BRANCH TO PUT A `ClearFocus()` IN.** The plan said
+      "a `ClearFocus()` in `HandleSelectionEvent`'s Cancel path"; Cancel goes straight to the
+      machine. It is an `else if` beside the `HexPrimary` arm, in the same block, ahead of
+      `HandleEvent`.
+    - **`Observe`'S FIRST OBSERVATION RECORDS AND CLEARS NOTHING**, and the two observation
+      fields are `INDEX_NONE` rather than 0 so that "not seen a model yet" is distinguishable
+      from "saw turn 0, side 0". Unspecified in the plan; a first observation treated as a
+      change would be a clear with no cause.
+    - **TWO INPUTS ARE DOCUMENTED RATHER THAN GUARDED AGAINST, EACH WITH THE REASON.**
+      `Owner == ViewingSide` latches a NEUTRAL factory on a model whose `ViewingSide` is also
+      `INDEX_NONE` — unreachable through `StratBuildViewModel`, which range-checks and refuses,
+      so reachable only by a hand-built model, which is exactly what a clause builds. And
+      `bEndTurnSuggested` reads TRUE on a model carrying **no units at all**, vacuously; a
+      units-count term was rejected because it would be the decorator forming an opinion about
+      a model it was handed, and `StratBuildViewModel` "REFUSES RATHER THAN PRODUCING AN EMPTY
+      MODEL" in its own words.
+    - **THE HUD GAINED EIGHT MEMBERS, NOT THE PLAN'S SIX**, once the `LastPushed…` /
+      `bEverPushed` pair the plan itself then names is counted. **The existing debt block was
+      AMENDED and no second one opened**, on that block's own rule — and **no count of the
+      moving members is restated**, because the SEVEN/ELEVEN sentence has now been overtaken
+      twice and a census written inside a growing thing is invalidated by the next thing that
+      grows it.
+    - **`#include "StratViewModelLibrary.h"` in `StratViewModel.cpp`**, implied by the fold and
+      not stated. Same module, no arrow moved, nothing vendored.
+    - **THE MONOLITHIC GAME TARGET WAS BUILT TOO**, where the plan's verification named only
+      the editor target.
+  - **A DEBT, WITH THE CONDITION THAT DISCHARGES IT.** `FStratBuildAffordance::Reset()` has no
+    caller, exactly as the method it was written for parity with has none. **Discharged when a
+    load or reseed path calls both in one place** — a focus surviving a reseed is a BUILD
+    control about a factory on a board that is gone, and the machine's own state is in the
+    same position.
+  - **AN INSTRUMENT FINDING FROM THIS PASS, RECORDED BECAUSE IT GENERALIZES PAST THIS FILE
+    AND PAST THIS PASS: A PROSE CLAIM WRAPPED ACROSS TWO COMMENT LINES IS INVISIBLE TO A
+    SINGLE-LINE GREP, AND THE OBVIOUS FIX IS BLIND TO IT TOO.**
+    - **THE FAILURE MODE IS A FALSE "ALREADY CLEAN" ON A DEFECT SITTING IN THE FILE.** Two
+      summary sentences about `ToggleProductionMenu` were false, and were caught by a human
+      READING the prose. My first grep for each of them returned NOTHING on either file — not
+      because they were absent but because **each wrapped across two comment lines**, and a
+      per-line scan cannot see a sentence that spans one. Had I stopped there I would have
+      reported the file clean. Same shape as this tree's existing findings about per-line
+      scans missing wrapped signatures, arrived at from the prose side.
+    - **THE OBVIOUS FIX IS ALSO DEFECTIVE, AND THAT IS THE HALF WORTH READING.** Collapsing
+      whitespace — `re.sub(r"\s+", " ", source)` — does NOT work on comment prose. It
+      collapses the newline and **leaves the CONTINUATION LEADER embedded mid-sentence**: the
+      `*` of a block comment, the `//` of a line comment. The flattened text then reads
+      `... unchanged in * behaviour ...` and still does not match. **I reported a clean scan
+      from exactly that instrument earlier in this pass, and it gave the right verdict for
+      the wrong reason.**
+    - **WHAT ACTUALLY WORKS: STRIP THE COMMENT LEADER PER LINE, THEN FLATTEN.**
+      `re.sub(r"^\s*(//+|\*/|/\*+|\*)\s?", "", line)` over each line, joined, then
+      whitespace-collapsed. That is the scan any future audit of header prose should use.
+    - **MEASURED WITH A CONTROL, AND THE CONTROL MUST ITSELF BE WRAPPED OR IT ONLY PROVES THE
+      FILE WAS OPENED.** This is the trap inside the trap: a control phrase that happens to
+      sit on ONE line is found by every instrument, including the two that are blind, so it
+      certifies nothing about the property under test. The control used here is
+      `It still toggles, it still reads the cursor`, which genuinely spans two comment lines
+      in `AStratPlayerController::ToggleProductionMenu`'s declaration —
+      **per-line 0, naive-flattened 0, leader-stripped 1.** Both weaker instruments are
+      silent on a phrase that is demonstrably present.
+    - **AND THE CORRECTED SCAN CHANGES AN ANSWER RATHER THAN CONFIRMING EVERY ONE.** Over the
+      `AStratPlayerController` pair it FINDS `unchanged in behaviour` in the header, where
+      both weaker instruments found nothing — and **that hit is CORRECT**: it is the false
+      claim QUOTED INSIDE ITS OWN RETRACTION BLOCK, which is this project's house style for
+      retracting in place rather than deleting. The other two subjects are absent on every
+      instrument. **A scan that cannot see a quoted retraction could not tell a live claim
+      from a retracted one either**, which is the reason this matters beyond the two
+      sentences that produced it.
+    - **NO CENSUS OF WRAPPED CLAIMS IS STATED HERE, DELIBERATELY.** A count of how many
+      wrapped prose claims this tree carries would be a number written inside a growing
+      thing, invalidated by the next header anybody edits. What is recorded is the
+      INSTRUMENT and its control; the count is whatever the instrument says on the day it is
+      run.
+
+  - **WHAT CHANGED, BY FILE.** NEW: `Source/StratPlay/StratBuildAffordance.h` / `.cpp`,
+    `Source/StratUI/StratCommandBarWidget.h` / `.cpp`. MODIFIED: `StratViewModel.h`
+    (`FStratCommandBarView`, the `CommandBar` field, `StratDecorateCommandBar`'s declaration,
+    the census amendment), `StratViewModel.cpp` (the decorator, the include, the census
+    amendment), `StratScoreboardHUD.h` / `.cpp` (the eight members and the debt amendment),
+    `StratPlayerController.h` / `.cpp` (the member, the accessor, the retraction, three verbs,
+    the latch call, the two decorate calls), `StratMatchSubsystem.cpp` (one push in
+    `ApplyView`, unconditional and unbranched). **Nothing else:** no `Source/StratRules/` byte,
+    no `Data/` byte, no `Source/Stratocracy/` file, no `Tests/` file, no `Content/` asset, no
+    `.uproject` entry, **no `.Build.cs`** — `StratUI` already carries private UMG/Slate/
+    SlateCore and `StratPlay` already depends on `StratUI`, which is worth stating because a
+    new widget class looks like it needs one.
+  - **BUILT AND GREEN ON BOTH TARGETS, IN THE COMPILER'S OWN WORDS.** With the editor verified
+    closed against a control — `tasklist` returning 92 `svchost` rows and ZERO matching
+    `unreal|livecoding`, `netstat -ano` returning zero lines containing `9315` against 37
+    `LISTENING` lines — `StratocracyEditor Win64 Development` and the monolithic `Stratocracy
+    Win64 Development` each printed `Result: Succeeded` and exited 0, with a case-insensitive
+    grep for `warning|error` over each captured build log returning **0**. **The suite was not
+    run in this pass and no clause was added**; the clauses this needs are named in the handoff
+    and are `strat-test-author`'s. The count and the phase verdict are `global.md`'s and are
+    deliberately not restated here.
+  - **THE ASSET HALF IS UNBUILT AND THAT IS THE STATE THIS LANDS IN.** C++ supplies fields and
+    verbs and nothing else. `CommandBarWidgetClass` is `EditDefaultsOnly`, has no initializer
+    and names no `/Game/` path; no `WBP_CommandBar` exists, `BP_StratScoreboardHUD` carries no
+    default, and `WBP_ProductionMenu` has no EXIT button. **Unset is LEGITIMATE and logged
+    once at Log**, exactly as an unset `GuidanceWidgetClass` is: the `B` key and the End Turn
+    key both still work, because the bar is a second route to two verbs and never the only
+    one. Measured this session: no `UnrealEditor` process and nothing listening on
+    `127.0.0.1:9315`, so the editor lane could not act.
+
 - **2026-09-01, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `f079b9f`, UNCOMMITTED) — W8 ITEM (4), THE
   BUILD PULSE, DRAWING HALF: "DRAWING-ONLY, NO C++" WAS FALSE A SECOND TIME, AND THE SECOND

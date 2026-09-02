@@ -61,3 +61,43 @@ STRATUI_API bool StratTestHasProductionMenuWidget(const AStratScoreboardHUD* Hud
  *         are two different states and no clause below may confuse them.
  */
 STRATUI_API bool StratTestProductionMenuWidgetIsInViewport(const AStratScoreboardHUD* Hud);
+
+// ---------------------------------------------------------------------------------------------
+// THE ORDER-OBSERVING DOUBLE, ADDED 2026-09-02 FOR `T-UI-03.CloseProductionMenuTakesThePanel-
+// DownBeforeClearingTheRows`.
+//
+// WHY THE SURFACE GREW. `AStratPlayerController::CloseProductionMenu` performs two acts on two
+// objects and its declaration calls the ORDER the contract. Both orders leave the identical
+// final state -- no widget, no rows -- so the order is invisible to any clause that inspects
+// only the aftermath. `StratProductionMenuOrderDouble.h` supplies the missing MOMENT; the two
+// functions below are how a StratPlay clause reaches it without acquiring UMG.
+//
+// THE DOUBLE SUPPLIES A MOMENT AND NEVER AN EXPECTATION. Everything the hook's lambda reads is
+// the subsystem's own answer, which is what keeps `StratProductionMenuHostDouble.h`'s "a double
+// that kept its own bookkeeping" hazard out of reach.
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Installs a `UStratProductionMenuOrderDouble` on `Hud->ProductionMenu` and arms its hook.
+ *
+ * `NewObject` AND NOT `CreateWidget`, for `StratTestInstallProductionMenuDouble`'s measured
+ * reason: `UUserWidget::CreateWidgetInstance` refuses a player controller that is not a LOCAL
+ * player controller, and a transient world has none.
+ *
+ * @param OnPanelDown fired from inside `UWidget::RemoveFromParent` -- i.e. inside
+ *                    `AStratScoreboardHUD::CloseProductionMenuWidget`, which is the caller's
+ *                    FIRST act. Capture weakly: a fixture teardown can reach the same path.
+ * @return false, with `Hud->ProductionMenu` untouched, if `Hud` is null or construction failed.
+ */
+STRATUI_API bool StratTestInstallProductionMenuOrderDouble(
+	AStratScoreboardHUD* Hud,
+	TFunction<void()>    OnPanelDown);
+
+/**
+ * Drops the hook from whatever order double is installed, leaving the widget alone.
+ *
+ * FOR TEARDOWN AND NOT FOR MEASUREMENT. A clause calls this once it has read what it needed, so
+ * that a later `RemoveFromParent` -- `AStratScoreboardHUD::EndPlay` calls one unguarded -- runs
+ * no clause code. Safe to call when nothing is installed.
+ */
+STRATUI_API void StratTestClearProductionMenuOrderHook(AStratScoreboardHUD* Hud);

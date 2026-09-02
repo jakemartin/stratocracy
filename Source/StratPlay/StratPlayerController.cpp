@@ -685,56 +685,169 @@ bool AStratPlayerController::ToggleProductionMenu(FString& OutFailureReason)
 		return false;
 	}
 
-	UStratMatchSubsystem* const Match = GetMatch();
+	// THE SUBSYSTEM IS NO LONGER LOOKED UP HERE. Both arms below reach it through the verb
+	// that needs it -- `CloseProductionMenu` for the rows, `OpenProductionMenuAtHex` for the
+	// §2.8 gate -- so this function now holds no pointer it does not use on its own path.
 
 	// --- Already open: this press closes it. -------------------------------
+	//
+	// FORWARDED TO `CloseProductionMenu` RATHER THAN SPELLED OUT, AS OF 2026-09-02. The two
+	// acts and their order -- panel down, then rows cleared -- used to be written here and
+	// nowhere else, which is what made an EXIT button wiring them itself one drag of a wire
+	// away from a live panel bound to an empty row array. That verb now owns the pair; this
+	// arm is one call to it and the key's behaviour is unchanged.
 	if (Hud->IsProductionMenuWidgetOpen())
 	{
-		Hud->CloseProductionMenuWidget();
-
-		// TWO ACTS ON TWO OBJECTS, IN THIS ORDER, AND THE ORDER IS THE CONTRACT. The panel
-		// comes down first, then the rows are cleared. The reverse would leave a live panel
-		// bound to an empty `ProductionMenu` array for however long the two lines are apart,
-		// which is a screen showing a menu the subsystem says is not open.
-		//
-		// A NULL SUBSYSTEM IS NOT A FAILURE HERE. The panel is down either way, which is
-		// what the player asked for; there is simply nothing left holding rows.
-		if (Match != nullptr)
-		{
-			Match->CloseProductionMenu();
-		}
-
-		// THE LATCH IS CLEARED WITH THE PANEL AND NOT WHEN THE NEXT ONE OPENS. Leaving it
-		// set would have `GetProductionTargetHex` answer true with no menu on screen, and
-		// the accessor's whole first channel is "is there one".
-		bHasProductionTargetHex = false;
-		ProductionTargetHex     = FIntPoint::ZeroValue;
-
-		return true;
+		return CloseProductionMenu(OutFailureReason);
 	}
 
 	// --- Not open: this press opens one on the hex under the cursor. -------
-
-	// §2.8: A FINISHED MATCH DOES NOT OPEN A MENU. Only the OPEN path is gated -- the close
-	// branch above runs whatever the match's state, because taking a panel down is never a
-	// command and a player left unable to dismiss a menu on a finished match would be worse
-	// than the defect this gate closes.
 	//
-	// THROUGH THE SUBSYSTEM RATHER THAN A MODEL, unlike `HandleSelectionEvent`'s gate: this
-	// function builds no model of its own, and building one here purely to ask would be the
-	// second model that gate exists to avoid.
-	if (Match != nullptr && Match->IsMatchConcluded())
-	{
-		OutFailureReason = StratMatchConcludedRefusalText();
-		return false;
-	}
+	// THE CURSOR IS RESOLVED HERE AND THE SEQUENCE IS BELOW. `HexUnderCursor` is THE key's
+	// hex source and cannot be a button's -- a click puts the cursor on the button -- so hex
+	// RESOLUTION stayed here and the OPEN SEQUENCE moved into `OpenProductionMenuAtHex`.
+	//
+	// WHAT MOVED IS STATED BEFORE WHAT DID NOT, AND THAT ORDER IS DELIBERATE. A summary that
+	// claims no change and then retracts itself further down the same block leaves BOTH claims
+	// live for a reader who stops at the first sentence, and a nested correction is not read
+	// as a correction. So this block is flat: no sentence below is retracted by any sentence
+	// after it.
+	//
+	// TWO THINGS MOVED ON 2026-09-02. (1) THE OPEN SEQUENCE -- the Sec 2.8 gate, the latch,
+	// the HUD open and the unwind -- is no longer written in this function. It is in
+	// `OpenProductionMenuAtHex`, so the button and the key run ONE sequence rather than two
+	// subtly different ones. (2) THE Sec 2.8 CONCLUDED-MATCH GATE THEREFORE RUNS AFTER THE
+	// CURSOR READ INSTEAD OF BEFORE IT, and the refusal sentence reported on one input
+	// changed with it. That second one is argued in full at the refusal it changed -- the
+	// `[ORDER CHANGED 2026-09-02]` note on the `HexUnderCursor` refusal below, where a reader hits it
+	// -- and is deliberately not re-argued here, because a copy of an argument is a copy that
+	// can go stale.
+	//
+	// WHAT DID NOT MOVE: the toggle, the cursor as this arm's hex source, the `B` key
+	// binding, and the WORDING of every refusal taken individually. No refusal sentence was
+	// rewritten; one of them is now reached on an input that used to reach a different one.
+	//
+	// THE CLOSE ARM ABOVE IS DELIBERATELY NOT SHARED. See `OpenProductionMenuAtHex`'s
+	// declaration: the shared inner is an OPEN and never a toggle, so a button cannot inherit
+	// a second exit behaviour the menu's own EXIT control does not have. The close arm above
+	// forwards to `CloseProductionMenu` for the ordering reason that verb exists to own.
 
 	FIntPoint Hex;
 	if (!HexUnderCursor(Hex))
 	{
 		// The same ordinary answer `OnSelect` gets. Not a fault, and nothing is latched --
 		// see `GetProductionTargetHex` on why a hex cannot signal its own absence.
+		//
+		// AHEAD OF THE CONCLUDED-MATCH GATE, WHICH IS WHERE IT ALREADY WAS RELATIVE TO THE
+		// CURSOR READ AND IS NOT WHERE IT IS RELATIVE TO THE GATE. [ORDER CHANGED
+		// 2026-09-02: the §2.8 gate used to run BEFORE this read and now runs after it,
+		// inside `OpenProductionMenuAtHex`. On a concluded match with the cursor off the
+		// board the reported reason therefore changed from the concluded-match sentence to
+		// `the cursor is not on the board`. Both are true; the second is the more local
+		// answer, and no caller branches on either string -- they are sentences for a human.
+		// Recorded because a clause asserting the first would go red on a correct change.]
 		OutFailureReason = TEXT("the cursor is not on the board");
+		return false;
+	}
+
+	return OpenProductionMenuAtHex(Hex, OutFailureReason);
+}
+
+bool AStratPlayerController::OpenProductionMenuAtFocusedFactory(FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	// THE LATCH IS THE ONLY HEX SOURCE, AND NO CURSOR IS READ. See the declaration: this is
+	// the verb the retraction on `ToggleProductionMenu` points at, and reading `HexUnderCursor`
+	// here would reintroduce the exact defect -- a button click has the cursor on the button.
+	FIntPoint Hex;
+	if (!BuildAffordance.GetFocusedHex(Hex))
+	{
+		// A SENTENCE AND NOT A CRASH, and it should be unreachable from the button: the BUILD
+		// control is only on screen when `FStratViewModel::CommandBar::bShowBuildButton` is
+		// true, and that field is written from this same latch. It is reachable from a console
+		// command, from a gate, and from a graph that binds visibility to something else --
+		// which is precisely why the answer is a reason rather than an assumption.
+		OutFailureReason = TEXT("no factory is focused: click one you own first");
+		return false;
+	}
+
+	return OpenProductionMenuAtHex(Hex, OutFailureReason);
+}
+
+bool AStratPlayerController::CloseProductionMenu(FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	AStratScoreboardHUD* const Hud = Cast<AStratScoreboardHUD>(GetHUD());
+	if (Hud == nullptr)
+	{
+		OutFailureReason = TEXT("this controller has no AStratScoreboardHUD hosting a production menu");
+		return false;
+	}
+
+	// TWO ACTS ON TWO OBJECTS, IN THIS ORDER, AND THE ORDER IS THE CONTRACT -- the sentence
+	// this verb exists to hold. The panel comes down first, then the rows are cleared. The
+	// reverse would leave a live panel bound to an empty `ProductionMenu` array for however
+	// long the two lines are apart, which is a screen showing a menu the subsystem says is
+	// not open. An EXIT button wiring the two underlying calls itself would have been one
+	// drag of a wire away from that; see the declaration.
+	Hud->CloseProductionMenuWidget();
+
+	// A NULL SUBSYSTEM IS NOT A FAILURE HERE. The panel is down either way, which is what the
+	// player asked for; there is simply nothing left holding rows.
+	if (UStratMatchSubsystem* const Match = GetMatch())
+	{
+		Match->CloseProductionMenu();
+	}
+
+	// THE LATCH IS CLEARED WITH THE PANEL AND NOT WHEN THE NEXT ONE OPENS. Leaving it set
+	// would have `GetProductionTargetHex` answer true with no menu on screen, and the
+	// accessor's whole first channel is "is there one".
+	bHasProductionTargetHex = false;
+	ProductionTargetHex     = FIntPoint::ZeroValue;
+
+	// THE FOCUS IS DELIBERATELY NOT CLEARED. `BuildAffordance` is untouched: exit returns the
+	// player to the factory they were focused on with the BUILD control still on screen.
+	// Clearing here would make exit behave as a cancel, which is a different gesture the
+	// player already has on the secondary click and on Escape.
+
+	// IDEMPOTENT, AND "NO MENU WAS OPEN" IS SUCCESS. `CloseProductionMenuWidget` is written
+	// to be safe with none up -- `AStratScoreboardHUD::EndPlay` calls it unguarded for that
+	// reason -- and `UStratMatchSubsystem::CloseProductionMenu` likewise. An exit button
+	// pressed twice is not an error.
+	return true;
+}
+
+bool AStratPlayerController::OpenProductionMenuAtHex(FIntPoint Hex, FString& OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	AStratScoreboardHUD* const Hud = Cast<AStratScoreboardHUD>(GetHUD());
+	if (Hud == nullptr)
+	{
+		// THE HUD IS WHERE WIDGET CREATION LIVES, and `StratScoreboardHUD.h` records why:
+		// `CreateWidget` and `AddToViewport` mean `UMG`, `Slate` and `SlateCore`, and
+		// `StratPlay.Build.cs` naming those three is a structural cost this project has
+		// already declined to pay once. So no HUD of that class means no menu, and it is
+		// reported rather than worked around.
+		OutFailureReason = TEXT("this controller has no AStratScoreboardHUD to host a production menu");
+		return false;
+	}
+
+	// §2.8: A FINISHED MATCH DOES NOT OPEN A MENU. Only the OPEN path is gated -- closing runs
+	// whatever the match's state, because taking a panel down is never a command and a player
+	// left unable to dismiss a menu on a finished match would be worse than the defect this
+	// gate closes. That is why the gate lives HERE, in the shared open, and not in
+	// `CloseProductionMenu`.
+	//
+	// THROUGH THE SUBSYSTEM RATHER THAN A MODEL, unlike `HandleSelectionEvent`'s gate: this
+	// function builds no model of its own, and building one here purely to ask would be the
+	// second model that gate exists to avoid.
+	UStratMatchSubsystem* const Match = GetMatch();
+	if (Match != nullptr && Match->IsMatchConcluded())
+	{
+		OutFailureReason = StratMatchConcludedRefusalText();
 		return false;
 	}
 
@@ -748,7 +861,11 @@ bool AStratPlayerController::ToggleProductionMenu(FString& OutFailureReason)
 	if (!Hud->OpenProductionMenuWidget(OutFailureReason))
 	{
 		// UNWOUND, so that a refused open leaves no latch behind claiming a menu is about a
-		// hex. The refusal reason is the HUD's own, forwarded unchanged.
+		// hex. The refusal reason is the HUD's own, forwarded unchanged. THIS COVERS THE
+		// ALREADY-OPEN CASE, which is the one a BUILD button reaches by being pressed twice:
+		// the HUD refuses, this unwinds, and the menu that IS up keeps its own latch --
+		// because the unwind restores nothing, it clears, and the open menu's hex was the
+		// same hex in the only way a second press can happen from a focus that has not moved.
 		bHasProductionTargetHex = false;
 		ProductionTargetHex     = FIntPoint::ZeroValue;
 		return false;
@@ -912,6 +1029,37 @@ bool AStratPlayerController::HandleSelectionEvent(EStratSelectionEvent Event,
 			RefreshFromMachine(RefreshReason);
 			return false;
 		}
+	}
+
+	// ---- §2.11.5's focused-factory latch -----------------------------------
+	// AFTER THE §2.8 GATE AND AFTER THE Q27 GATES, AND BEFORE `HandleEvent`. After, because
+	// an event those gates refuse never happened as far as the player is concerned, and a
+	// focus moved by a refused click would be an affordance appearing in response to an input
+	// that was told it did nothing. Before, only because the model is already built ten lines
+	// up and this is where the event is still in hand; nothing here depends on the machine.
+	//
+	// NO REFRESH CALL. The refresh at the bottom of this function runs on every path that
+	// reaches here, so a second one would repaint the same frame twice.
+	//
+	// IT IS BOTH, ALWAYS, AND THAT IS A RULING RATHER THAN A CONVENIENCE. A primary click on
+	// your own factory latches the focus AND still goes to `SelectionMachine.HandleEvent`
+	// below -- so a click that is simultaneously a move order onto that factory's hex and a
+	// focus gesture does both, and neither is swallowed. Nothing here consumes the event.
+	//
+	// THE CONTROLLER FORWARDS A HEX AND A MODEL AND DECIDES NOTHING, which is what keeps this
+	// file's opening claim ("IT DECIDES NOTHING") true rather than nearly true. Whether that
+	// hex is a factory, whether this seat holds it and whether the match is over are all
+	// answered inside `FStratBuildAffordance::NoteHexPrimary` against the model built above.
+	if (Event == EStratSelectionEvent::HexPrimary)
+	{
+		BuildAffordance.NoteHexPrimary(Hex, Model);
+	}
+	else if (Event == EStratSelectionEvent::Cancel)
+	{
+		// §2.11.1's cancel -- secondary click or Escape -- drops the selection, and the focus
+		// goes with it. A cancel that left a BUILD control on screen would leave the player
+		// with one affordance still lit after an input whose whole meaning is "never mind".
+		BuildAffordance.ClearFocus();
 	}
 
 	const FStratSelectionOutcome Outcome = SelectionMachine.HandleEvent(Event, Hex, Model, Query);
@@ -1215,6 +1363,29 @@ void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
 				*GetName(), *PathFailureReason);
 		}
 	}
+
+	// §2.11.2'S COMMAND BAR, AND IT MUST RUN AFTER `GuidedOpening.DecorateViewModel`.
+	// `StratDecorateCommandBar` reads `Model.Guidance.bEndTurnGated` and `::EndTurnGateHover`
+	// and writes neither -- the constraint runs one way, exactly as the hover's does for the
+	// forecast. Run before the guidance layer, the END TURN control would be drawn against
+	// last frame's gate.
+	//
+	// TWO CALLS AND NOT ONE, ON `FStratGuidedOpening`'S SPLIT. `Observe` MUTATES -- it is the
+	// turn clock, the seat clock and the concluded-match clear -- and `DecorateViewModel` is
+	// `const`. Collapsing them would put a clock advance inside a decorator, which is the
+	// thing this file's ordering block spends its length keeping separable.
+	//
+	// IT IS UNORDERED AGAINST THE HOVER, THE FORECAST, THE PATH PREVIEW AND THE INFO PANEL.
+	// It reads `Factories`, `ViewingSide`, `Match`, `Units` and `Guidance` and writes
+	// `CommandBar`, which none of them reads. It sits here rather than last only because the
+	// info panel below is the decorator that restates the most and belongs last.
+	//
+	// NO FAILURE CHANNEL AND NOTHING TO LOG, on the info panel's rule: this decorator reaches
+	// no bridge, so there is no unseeded state for it to refuse over. Nothing focused, a
+	// focus on a hex the model does not carry and a focus on an enemy factory are all answers
+	// it writes unconditionally.
+	BuildAffordance.Observe(Model);
+	BuildAffordance.DecorateViewModel(Model);
 
 	// §2.11.2'S INFO PANEL, AND IT IS LAST BECAUSE IT READS THE MOST. It selects the
 	// hovered hex out of `Model.Hexes` (so it must follow `Hover.DecorateViewModel`) and

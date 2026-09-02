@@ -259,6 +259,44 @@
 // and an `int32`, touches no member of this class other than its own nine, and never touches
 // `GetBridge()`. Relocating it is a cut and paste plus one call-site edit in
 // `UStratMatchSubsystem::ApplyView`.
+//
+// AND A SIXTH SURFACE HAS NOW JOINED THEM: Sec 2.11.2's COMMAND BAR -- the BUILD control and
+// the END TURN control. `CommandBarWidgetClass`, `CommandBarZOrder`, `CommandBar`,
+// `CreateCommandBarWidget`, `PushCommandBar`, `DeliverLatestCommandBar`,
+// `LastPushedCommandBar` and `bCommandBarEverPushed` below -- EIGHT members.
+//
+// THIS AMENDS THE DEBT ABOVE AND DOES NOT OPEN A SECOND ONE, which is that block's own stated
+// rule ("A THIRD SURFACE ON A CLASS CALLED `AStratScoreboardHUD`, AND IT JOINS THE DEBT
+// RECORDED ABOVE RATHER THAN OPENING A NEW ONE"). The module-arrow argument is unchanged and
+// is not re-argued: `StratPlay.Build.cs` would have to name `UMG`, `Slate` and `SlateCore` for
+// `UStratMatchSubsystem` to create a widget, and StratUI already declares all three. NO COUNT
+// OF THE MOVING MEMBERS IS RESTATED HERE ON PURPOSE -- the SEVEN/ELEVEN sentence below has
+// been overtaken twice now, and a census written inside a growing thing is invalidated by the
+// next thing that grows it. What discharges these eight is what discharges every other group:
+// a Sec 2.11 UI-layer owner, and they move there unchanged.
+//
+// IT IS THE GUIDANCE STRIP'S LIFETIME AND NOT THE MENU'S. Created at `BeginPlay`, alive all
+// match, reconciled on every `ApplyView` -- because "no BUILD control and no highlight" is a
+// STATE of the command bar rather than the bar's absence, and it is the state the surface
+// spends most of its life in. A bar created when a factory is focused and destroyed when it
+// is not would make `bShowBuildButton` false unrepresentable, and that bool is what the WBP
+// binds the BUILD control's visibility to.
+//
+// IT CARRIES THE SAME FIRST-DELIVERY CACHE, for the MEASURED reason the info panel's block
+// records rather than by symmetry: the defect is a property of the ORDER of
+// `AStratPlayerController::BeginPlay` and this class's, not of which widget is downstream.
+// `bCommandBarEverPushed` is a separate bool for the same reason as its two predecessors -- a
+// default-constructed `FStratCommandBarView` is a REAL state, the ordinary one -- so "the
+// cache equals the default" cannot mean "nothing has been cached".
+//
+// NO VIEWING SIDE IS CACHED BESIDE IT, UNLIKE THE INFO PANEL, AND THE ASYMMETRY IS THE POINT
+// RATHER THAN AN OMISSION. `PushInfoPanel` takes a side because Sec 2.11.2's yours/enemy
+// clause is still unresolved at that seam -- `FStratInfoPanelView` deliberately carries a
+// SIDE. `FStratCommandBarView` carries no side and no id: `StratDecorateCommandBar` already
+// resolved every viewer-relative question against `Model.ViewingSide` when it wrote the
+// block, so there is no second operand for this class to hold and no composition for it to
+// perform. `PushCommandBar` therefore takes ONE reflected struct and nothing else, which is
+// also the signature that survives the move to a UI-layer owner.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -279,6 +317,7 @@
 // never become an include in this file.
 class FStratBridge;
 class UDataTable;
+class UStratCommandBarWidget;
 class UStratGuidanceWidget;
 class UStratInfoPanelWidget;
 class UStratMatchResultWidget;
@@ -671,6 +710,78 @@ public:
 	 */
 	bool bInfoPanelEverPushed = false;
 
+public:
+	// ---- Sec 2.11.2's command bar: the BUILD and END TURN controls ----------
+	// See the header block for the debt these eight join and for why no viewing side is
+	// cached beside the value.
+
+	/**
+	 * Hands `FStratViewModel::CommandBar` to the bar, and records it.
+	 *
+	 * NOT A UFUNCTION, and for `PushInfoPanel`'s reason rather than `AdoptBridge`'s: the
+	 * argument is reflectable, so nothing forces this to be plain C++. It is plain C++ so
+	 * that no Blueprint can write a command-bar value at all, which is the same refusal
+	 * `UStratCommandBarWidget::PushCommandBar` makes one layer down and for the same reason
+	 * -- a graph pushing a fabricated `bShowBuildButton` would put a BUILD control on screen
+	 * over a factory this seat does not hold.
+	 *
+	 * VOID AND UNREFUSABLE, matching `PushGuidance` and `PushInfoPanel`. There is nothing a
+	 * caller could do with a failure and nothing here that can fail: an unset
+	 * `CommandBarWidgetClass` is a legitimate configuration.
+	 *
+	 * NO COMPOSITION STEP, UNLIKE `PushInfoPanel`. See the header block: the value arrives
+	 * fully resolved and this class copies it across.
+	 *
+	 * @param InCommandBar  `FStratViewModel::CommandBar`, already written by
+	 *                      `StratDecorateCommandBar`. Crosses whole and unmodified.
+	 */
+	void PushCommandBar(const FStratCommandBarView& InCommandBar);
+
+	/**
+	 * Brings the bar up to the last value `PushCommandBar` was handed.
+	 *
+	 * FOR THE FIRST-DELIVERY DEFECT the guidance cache measures and `DeliverLatestInfoPanel`
+	 * restates. It is idempotent: `UStratCommandBarWidget::PushCommandBar` assigns
+	 * unconditionally, so a second call changes nothing except that `OnCommandBarRefreshed`
+	 * fires again.
+	 *
+	 * @return false when there is no bar to deliver to, or nothing has been pushed yet. The
+	 *         second condition cannot be read off `LastPushedCommandBar` itself, because a
+	 *         default-constructed `FStratCommandBarView` is a real, ordinary state.
+	 */
+	bool DeliverLatestCommandBar();
+
+	/** Sec 2.11.2's command bar, or null. Read-only for `GuidanceStrip`'s reason: this HUD
+	 *  creates and owns it, and a second creator is a second lifetime. */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|CommandBar")
+	TObjectPtr<UStratCommandBarWidget> CommandBar;
+
+	/**
+	 * The last value `PushCommandBar` was handed, whether or not a bar existed to receive it.
+	 *
+	 * ONE WRITER, `PushCommandBar`, AND ONE READER, `DeliverLatestCommandBar`. Nothing else in
+	 * this class consults it and nothing branches on it -- in particular `PushCommandBar` does
+	 * NOT compare against it, on the delta-shaped-thinking refusal `ApplyView` makes at the
+	 * other end of the same call.
+	 *
+	 * NOT A `UPROPERTY`, and deliberately not `BlueprintReadOnly`, for `LastPushedGuidance`'s
+	 * two stated reasons: `FStratCommandBarView` holds no object references, and publishing a
+	 * second readable copy would give a graph a value whose freshness depends on when it
+	 * asked. `UStratCommandBarWidget::Model` is the one a WBP reads.
+	 */
+	FStratCommandBarView LastPushedCommandBar;
+
+	/**
+	 * Whether `PushCommandBar` has ever run. NOT whether anything is focused.
+	 *
+	 * A SEPARATE BOOL, on `bInfoPanelEverPushed`'s reason: a default-constructed
+	 * `FStratCommandBarView` is the ordinary bar -- nothing focused, nothing suggested -- and
+	 * not an absence, so the cache cannot answer this question about itself. Without it,
+	 * `DeliverLatestCommandBar` on a fresh HUD would fire `OnCommandBarRefreshed` at a Widget
+	 * Blueprint to announce a reconcile that never happened.
+	 */
+	bool bCommandBarEverPushed = false;
+
 	/**
 	 * Why there is no scoreboard, when there is none. Empty on success.
 	 *
@@ -959,6 +1070,29 @@ protected:
 	int32 InfoPanelZOrder = 5;
 
 	/**
+	 * The WBP_ asset deriving from UStratCommandBarWidget -- Sec 2.11.2's command bar.
+	 *
+	 * UNSET IS A LEGITIMATE CONFIGURATION AND NOT AN ERROR, exactly as `GuidanceWidgetClass`
+	 * and `InfoPanelWidgetClass` are. `BeginPlay` says so once at Log. Leaving it unset does
+	 * not stop `StratDecorateCommandBar` filling `FStratViewModel::CommandBar` every refresh,
+	 * because the projection is not a property of the widget -- and the `B` key and the End
+	 * Turn key both still work, because the bar is a second route to two verbs and never the
+	 * only one.
+	 *
+	 * NO `/Game/` PATH HERE OR ANYWHERE IN THIS PAIR. Set on the Blueprint default.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|CommandBar")
+	TSubclassOf<UStratCommandBarWidget> CommandBarWidgetClass;
+
+	/** Viewport Z-order for the command bar. Defaults to the info panel's 5 -- the two never
+	 *  overlap (Sec 2.11.2 puts the panel bottom-left and the bar with the persistent HUD) and
+	 *  neither is an instruction the other may occlude. BELOW `ProductionMenuZOrder`'s 20 ON
+	 *  PURPOSE: the BUILD control stays VISIBLE UNDER the open menu, which is what lets this
+	 *  class hold no "is the menu open" mirror -- see `FStratCommandBarView`'s own block. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|CommandBar")
+	int32 CommandBarZOrder = 5;
+
+	/**
 	 * The WBP_ asset for §2.11.5's production menu -- `WBP_ProductionMenu`.
 	 *
 	 * A `TSubclassOf` set on a Blueprint default, never a `ConstructorHelpers` path
@@ -1055,6 +1189,14 @@ protected:
 	 *  yet delivers nothing and leaves the panel on its own defaults, which for Sec 2.11.2 is
 	 *  the correct empty panel rather than a blank surface waiting for data. */
 	bool CreateInfoPanelWidget(FString& OutFailureReason);
+
+	/** Creates the configured command bar and adds it to the viewport, then delivers the last
+	 *  pushed value to it if there is one -- `CreateInfoPanelWidget`'s shape exactly, and for
+	 *  the measured first-delivery reason recorded there rather than by imitation. A session
+	 *  with no push yet delivers nothing and leaves the bar on its own defaults, which is a
+	 *  bar with no BUILD control and no highlight -- the correct empty bar rather than a blank
+	 *  surface waiting for data. */
+	bool CreateCommandBarWidget(FString& OutFailureReason);
 
 	/** Creates the configured production menu and adds it to the viewport. Does NOT refresh
 	 *  it and CANNOT: `RefreshMenu` is a Blueprint custom event on the WBP and this class

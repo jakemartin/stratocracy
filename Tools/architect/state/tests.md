@@ -14,6 +14,190 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-02 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
+  only -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `fcf64d3`, UNCOMMITTED
+  at the time of writing) -- §2.11.2'S ON-SCREEN COMMAND BAR IS GATED: THE BUILD BUTTON, THE
+  END TURN HIGHLIGHT, THE FOCUS LATCH AND THE TWO NEW CONTROLLER VERBS. EIGHT CLAUSES IN TWO
+  NEW FILES, PLUS ONE NEW TEST-ONLY WIDGET DOUBLE. THE LIVE COUNT LIVES IN
+  `Tools/architect/state/global.md` AND NOWHERE ELSE.**
+  - **THE ACCEPTANCE ID WAS RULED BY THE USER, NOT DERIVED: every clause rides `T-UI-03` and
+    states its own stretch in its own name**, on `T-SCN-07`'s precedent for a shared ID. It is
+    also the ID the subject earns: `T-UI-03` is the no-widget-side-arithmetic clause, and the
+    whole reason `FStratCommandBarView` exists is that the two controls' conditions were folded
+    in C++ so no graph spells `count == 0` or `suggested AND NOT gated`.
+  - **WHERE THE CLAUSES LIVE, AND WHY EACH IS IN THE MODULE IT IS IN.** The split is a linker
+    fact and was decided before anything was written:
+    - `Source/StratUI/Tests/StratCommandBarClauses.cpp` -- four clauses over
+      `StratDecorateCommandBar`, a free function on `FStratViewModel`. No widget, no actor, no
+      world, no PIE.
+    - `Source/StratPlay/Tests/StratBuildAffordanceClauses.cpp` -- four clauses over
+      `FStratBuildAffordance` and the controller verbs. **The hand-over clause calls BOTH the
+      latch (StratPlay) and `StratDecorateCommandBar` (StratUI), so StratPlay is the only
+      directory that can host it; in StratUI it is `LNK2019`.**
+  - **WHAT EACH CLAUSE PINS, AND WHERE ITS EXPECTATION COMES FROM. Read this column before
+    citing any of them as coverage.**
+    - `StratUI.T-UI-03.CommandBarBuildButtonFollowsFactoryOwnershipOnEveryDecorate` -- the
+      design's load-bearing property. **ONE latch, unchanged across seven decorates, and the
+      MODEL is mutated between them**: the factory changes hands, goes neutral, the seat moves,
+      the factory leaves `Factories` entirely, everything is restored, and finally the bool is
+      dropped with the real hex still passed in. The answers follow the model every time, which
+      is what makes staleness structurally impossible rather than dependent on a clear-point
+      list. Expectation: the contract stated on `bShowBuildButton` ("TRUE MEANS ...") over a
+      factory and side indices ENUMERATED off the built model -- no coordinate is named.
+    - `StratUI.T-UI-03.CommandBarGateBeatsSuggestionWhenBothHold` -- the `&&` both
+      `bEndTurnSuggested`'s block and the decorator call "MUST NOT BE DROPPED AS REDUNDANT".
+      **On the shipped scenario the pair is unreachable** (beat 1a locks every unit but the
+      marked Infantry and locked units do not count), so the clause hand-builds the combination
+      and pins the answer -- which is what turns a fact about `PublishLocks` into a structural
+      one. Carries its own positive control (same model, ungated, MUST suggest).
+    - `StratUI.T-UI-03.CommandBarSuggestionAgreesWithCountViewingSideUnitsAbleToAct` -- SINGLE
+      AUTHORING over a seven-model corpus the selector's four clauses disagree on. **Measured
+      on the green run: 5 / 0 / 0 / 5 / 0 / 0 / 5 able to act, three suggested and four not**,
+      and the clause asserts the corpus is non-vacuous in both directions so it cannot go quiet
+      if it ever drifts to one answer.
+    - `StratUI.T-UI-03.BuildViewModelLeavesCommandBarDefaulted` -- sibling to
+      `BuildViewModelLeavesGuidanceDefaulted`, `CompareScriptStruct` over the whole block so a
+      field added tomorrow is covered without an edit, with the decorated-model negative
+      control that stops the comparison being one that cannot fail.
+    - `StratPlay.T-UI-03.BuildAffordanceClearsOnEveryStatedClearPoint` -- **one leg per row of
+      `StratBuildAffordance.h`'s clear-point table, which IS this pass's specification**,
+      including the row stated as a NON-clear: a production menu close does NOT clear, measured
+      through `AStratPlayerController::CloseProductionMenu` on a real controller. A FRESH
+      affordance per leg, so no leg's precondition is a previous leg's outcome.
+    - `StratPlay.T-UI-03.OpenProductionMenuAtFocusedFactoryNeedsNoCursor` -- see the gap note
+      below.
+    - `StratPlay.T-UI-03.CloseProductionMenuTakesThePanelDownBeforeClearingTheRows` -- see the
+      order note below.
+    - `StratPlay.T-UI-03.CommandBarSurvivesNoStaleFocusAcrossAHandover` -- **both halves, in
+      order, and the order is the subject.** (1) The RECOMPUTE alone: a latch left deliberately
+      stale across a hand-over draws nothing, with `HasFocus()` asserted STILL TRUE at that
+      moment so the answer is attributable to the decorator. (2) Only then the CLEAR. A clause
+      measuring only (2) would report the design's guarantee as resting on a clear-point list,
+      which the header says it does not rest on. The factory never changes hands anywhere in
+      it; only the seat moves.
+  - **A GAP `StratProductionMenuAffordance.cpp` DECLARES IN ITS OWN HEADER IS NOW TWO-THIRDS
+    CLOSED, AND THE FILE'S OWN TEXT IS THE CITATION.** That header lists three things a
+    headless run cannot reach, all because `HexUnderCursor` needs a `ULocalPlayer`:
+    - **THE OPEN PATH IS NOW REACHABLE, and by contrast in ONE FRAME.** With a live match and a
+      board asserted non-null, `ToggleProductionMenu` is refused AT THE CURSOR while
+      `OpenProductionMenuAtFocusedFactory`, on the same controller in the same frame, resolves
+      its hex from the latch and reaches the HUD -- its refusal becomes the HUD's own
+      `no ProductionMenuWidgetClass ...`. **The three refusals are asserted to be three
+      different sentences, case-sensitively.** Measured focus: hex `(-1, 4)` on the live board.
+    - **THE UNWIND BRANCH, which that header calls UNREACHABLE, is now reached and asserted**:
+      a refused open leaves `GetProductionTargetHex` false and the meaningless hex.
+    - **THE CLOSE ARM OF `ToggleProductionMenu` IS STILL UNREACHABLE** -- it is gated on
+      `IsProductionMenuWidgetOpen()`, which is false headlessly because `AddToViewport` is a
+      no-op with no game viewport. **No clause claims it.** What is pinned instead is
+      `CloseProductionMenu`, the verb that arm now forwards to, called directly.
+  - **AN ORDER IS NOT VISIBLE IN THE STATE THAT FOLLOWS IT, AND THAT IS WHY THIS PASS ADDED A
+    SECOND WIDGET DOUBLE.** `CloseProductionMenu`'s declaration calls the order the contract --
+    panel down, THEN rows cleared -- but both orders leave the identical aftermath (no widget,
+    no rows). A clause named for the order while measuring only the conjunction would carry a
+    subject broader than what it pins.
+    - `Source/StratUI/Tests/StratProductionMenuOrderDouble.h/.cpp` overrides
+      `UWidget::RemoveFromParent`, the one virtual `CloseProductionMenuWidget` calls, and fires
+      a hook the clause supplies. **The hook reads `UStratMatchSubsystem::IsProductionMenuOpen()`
+      and `ProductionMenu.Num()` -- the SUBSYSTEM's own answers -- at that instant**, so the
+      double supplies a MOMENT and never an expectation.
+    - **`StratProductionMenuHostDouble.h`'s "ADDS NOTHING AND OVERRIDES NOTHING" RULE IS NOT
+      WEAKENED AND THAT FILE IS NOT EDITED.** Its stated hazard is a clause going green
+      comparing a double against itself; nothing here compares against a recording the double
+      made. The two doubles are separate so that rule keeps holding for every clause that uses
+      the first one.
+    - **MEASURED ON THE GREEN RUN, printed by the clause via `AddInfo` so it is checkable from
+      a checkout:** *"panel-down fired 1 time(s); at that instant the subsystem reported the
+      menu open = 1, with 4 row(s)"*. Idempotence is asserted on top: a second exit succeeds,
+      takes no second panel down, and leaves the rows cleared.
+    - **THE HOOK IS CAPTURED WEAKLY (`TWeakObjectPtr`) AND BY `TSharedRef`, AND CLEARED
+      EXPLICITLY BEFORE TEARDOWN.** `AStratScoreboardHUD::EndPlay` calls
+      `CloseProductionMenuWidget` unguarded, so a live hook could otherwise run clause code on
+      a destroyed subsystem. Belt and braces, and both are deliberate.
+  - **FALSIFIABILITY, MEASURED, AND WHAT KIND OF MEASUREMENT IT IS. NO PRODUCTION MUTANT WAS
+    BUILT** -- the lane forbids editing a file outside `Tests/` even temporarily -- so all four
+    probes were planted in the CLAUSES' OWN FILES, built in place, run, and reverted. Each
+    therefore proves the comparison is LIVE ON BOTH SIDES against the shipped code, and none
+    proves anything about a hypothetical rewrite of the code under test. **One planting pass,
+    four inverted assertions, and exactly the four intended clauses went Fail with the other
+    four new ones still green:**
+    - the ordering observation inverted -- Fail: *"Expected 'T-UI-03: at the instant the PANEL
+      came down, the subsystem still held its ROWS ...' to be true."*
+    - the enemy-captured case of the ownership clause inverted -- Fail: *"Expected 'T-UI-03:
+      the SAME latch darkens the BUILD control once the factory changes hands ...' to be
+      false."*
+    - the gate's suppression inverted -- Fail: *"Expected 'T-UI-03: §2.11.6-B's gate beats
+      §2.11.2's highlight ...' to be false."*
+    - the button path's refusal required to name the CURSOR instead of the HUD -- Fail:
+      *"Expected 'T-UI-03: with a factory focused, the BUILD verb resolves its hex WITHOUT A
+      CURSOR and reaches the HUD ...' to be true."* **That one is the sharpest of the four: it
+      is a measurement that the refusal reaching the caller really is the HUD's sentence and
+      really is not the cursor's, which is the whole claim in the clause's name.**
+    - **THE REVERT SCRIPT REFUSED ITS OWN FOURTH EDIT AND WAS RIGHT TO.** The mutant made
+      `Focused.Contains(TEXT("cursor") ...)` appear TWICE in the file, so the anchor count was
+      2 and the script raised rather than replacing. Recorded because the refusal is the
+      feature: a script that had taken the first match would have silently rewritten the
+      wrong assertion. Reverted with a two-line anchor including the preceding comment's own
+      indentation.
+  - **WHAT THESE CLAUSES DO NOT PIN. Read this before citing any of them as coverage.**
+    - **THAT THE LATCHED HEX IS THE FOCUSED ONE.** `OpenProductionMenuAtFocusedFactory` cannot
+      SUCCEED headlessly -- `CreateWidget` refuses a controller that is not a LOCAL player
+      controller, measured and recorded in `StratProductionMenuHostProbe.cpp` -- and the
+      refusal unwinds the latch, so `GetProductionTargetHex` is false whether the hex was
+      written or never written at all. **What is pinned is that hex RESOLUTION succeeded with
+      no cursor; WHICH hex it resolved to is owed by a PIE clause.**
+    - **NO WIDGET, NO BINDING, NO PIXEL.** Whether `WBP_CommandBar` binds visibility to one
+      bool and makes no conjunction, whether the BUILD button is on screen, whether the exit
+      button is wired to `CloseProductionMenu` -- all asset properties and the editor lane's.
+      `OpenProductionMenuAction`'s binding at `ETriggerEvent::Started` is likewise unpinned,
+      for `StratProductionMenuAffordance.cpp`'s stated reasons.
+    - **WHETHER `CountViewingSideUnitsAbleToAct` IS RIGHT.** The agreement clause calls it on
+      both sides of its comparison, so a defect INSIDE the selector moves both together and is
+      invisible there. Its four-clause derivation is gated where it is authored. What the
+      clause pins is SINGLE AUTHORING -- that the bar grew no second walk of `Model.Units`.
+    - **THE DECORATOR ORDERING CONSTRAINT.** `StratDecorateCommandBar` must run AFTER
+      `FStratGuidedOpening::DecorateViewModel` -- it reads `Guidance.bEndTurnGated` and writes
+      neither -- and nothing below pins the call ORDER inside
+      `AStratPlayerController::RefreshFromMachine`. What IS pinned is that the two copies track
+      the guidance block in both directions. **A clause over the call order would need a seam
+      the controller does not have; see the open item below.**
+  - **TWO HAZARDS THE ENGINEER DOCUMENTED WERE OFFERED AS CANDIDATE CLAUSES AND ONE WAS
+    REFUSED. Both refusals are the same rule: PIN THE REQUIREMENT, NOT THE HAZARD.**
+    - **REFUSED: the neutral-factory latch.** `Owner == ViewingSide` latches a NEUTRAL factory
+      (`Owner == INDEX_NONE`) when `ViewingSide` is ALSO `INDEX_NONE`, on a model
+      `StratBuildViewModel` refuses to produce. A clause asserting that behaviour would GO RED
+      ON ITS OWN FIX the day someone tightens the test, which is the wrong thing for a gate to
+      do. **What was written instead is the requirement**: a neutral factory does NOT latch and
+      does NOT show the button on a model with a real viewing side -- a leg of the clears
+      clause and case (c) of the ownership clause.
+    - **ACCEPTED, BUT AS A CASE AND NOT AS A CLAUSE: the vacuous zero-unit reading.** A model
+      with no units reads as suggested. That is a CONSEQUENCE of `count == 0` rather than a
+      rule of its own, so it sits in the agreement corpus where the equality is measured over
+      it; a clause named after it would advertise a subject the decorator does not have.
+  - **SLOT HYGIENE, AND IT IS NOT OPTIONAL.** `Source/StratPlay/Tests/StratBuildAffordance-
+    Clauses.cpp` names its own slot (`StratocracyAutomation_BuildAffordance`) on both clauses
+    that start a match. **An unset `FStratMatchConfig::SaveSlotName` resolves to the PLAYER'S
+    REAL SAVE SLOT**, which stays an open finding elsewhere in this record; the two new
+    match-starting clauses are not part of it.
+  - **NO `FOutputDevice` IS CONSTRUCTED IN EITHER NEW FILE**, so the
+    `CanBeUsedOnMultipleThreads()` override that the four captures in `Source/StratPlay/Tests/`
+    carry is not in play here. Recorded so a future pass adding a capture to either file knows
+    it must add the override with it.
+  - **OPEN, AND EACH NAMES THE CODE CHANGE IT WOULD NEED. This lane does not make them.**
+    - **THE DECORATOR CALL ORDER inside `RefreshFromMachine`.** `BuildAffordance.Observe` then
+      `DecorateViewModel`, after the guidance layer -- unobservable from outside, because the
+      method returns one finished model and every intermediate ordering produces the same one
+      on any model where the gate is stable across the frame. It would need either a seam that
+      reports the decoration sequence, or a public split of `RefreshFromMachine` into its
+      decoration steps.
+    - **THE AFFIRMATIVE HALF OF `GetProductionTargetHex`** -- that it can ever answer TRUE with
+      the FOCUSED hex. Still owed by a PIE clause, for the reason above.
+    - **`FStratSelectionMachine` HAS NO BUILD ARM.** Still not writable as a clause, for the
+      reason `StratProductionMenuAffordance.cpp`'s header already records: `EStratSelection-
+      Command` is a plain `enum class` and not a `UENUM`, so there is no reflected enumerator
+      list to read and compare. Unchanged by this pass and restated only because
+      `StratBuildAffordance.h` newly rules that the machine stays untouched, which makes the
+      absence load-bearing where it used to be incidental.
+
 - **2026-09-01 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
   only -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `f079b9f`, UNCOMMITTED
   at the time of writing) -- W8 ITEMS (3) AND (4) ARE GATED: THE §2.7 REPAIR RECEIPT AND THE

@@ -43,6 +43,68 @@
 
 ## NEXT
 
+- **W8 ITEM (4)'S PULSE MATERIAL IS AUTHORED AND ASSIGNED, AND A HUMAN CONFIRMED IT DRAWS --
+  WHICH NO INSTRUMENT IN THIS TREE COULD HAVE DONE.** 2026-09-01/02, in
+  `E:/MultiAgent/Stratocracy` on branch `master` over base `4a89ac2`, no worktree and no merge.
+  **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE. WRITING: the
+  `coordinator`, under THIS FILE'S FALLBACK CONDITION.** Two authorities for two halves,
+  cited separately because this file's header says an entry citing one for both is a finding.
+  `strat-editor-builder` was not dispatched and could not have acted: it holds the NeoStack
+  tools and no Bash, and the tool it needs was not served.
+  - **THE ABSENCE, MEASURED WITH A CONTROL, TWICE.** `execute_script` was requested BY NAME
+    from the connector and did not come back, while `unreal_status` and
+    `list_unreal_projects` -- same server, same lookup -- did. Measured once with the editor
+    CLOSED and again after it was reopened, so the cause is the connector and not startup
+    order. **THE EDITOR ITSELF SERVES THAT TOOL AND NOTHING ELSE:** a raw MCP `tools/list`
+    over `127.0.0.1:9315` returns exactly one tool, `execute_script`. The connector was
+    latched stale in a way the editor was not -- `list_unreal_projects` reported the live
+    editor while `unreal_status` claimed `runtimes.json` held none, and the file plainly
+    held a live entry with a fresh heartbeat plus five fossils. **So the route taken was
+    Bash over raw HTTP**, the same route this record notes was used on 2026-08-29.
+  - **WHAT WAS AUTHORED.** `/Game/StratArt/Materials/MI_Overlay_BuildPulse`, a
+    `MaterialInstanceConstant` parented to `M_Translucent` -- the same master all three
+    sibling overlays and both markers already use -- carrying the one `Color` vector
+    parameter that family exposes. Assigned to `BuildPulseMaterial` on `BP_StratBoard`'s
+    class default, which was `None` before and is the only place a `/Game/` path for it may
+    live, since `AStratBoardActor` is forbidden to name one.
+  - **VERIFIED BY READ-BACK THROUGH A DIFFERENT ROUTE THAN THE WRITE, WITH A CONTROL.** The
+    setters' return values were NOT taken as evidence -- this record already holds a case
+    where an authoring call lied in both directions. The asset was reopened from disk and
+    `class_properties` was called on the `_C` path rather than the handle written through;
+    the control was `MI_Overlay_Reach`, whose value is known, answering through the same
+    read path so that a silent `nil` could not pass as an answer.
+  - **THE COLOUR WAS WRONG ON THE FIRST TRY AND ONLY A HUMAN COULD SAY SO.** It shipped at
+    teal `(0.05, 0.85, 0.80, A 0.70)` and the user, at the keyboard, reported it reading
+    **more grey than teal** while confirming the overlay appears. THE ALPHA WAS CHOSEN OFF
+    THE WRONG SIBLINGS: reach uses `0.55` and target `0.60`, but BOTH SIT ON PLAINS. The one
+    overlay sharing this one's backdrop is the objective ring at `0.85`, because it also
+    sits on a FACTORY tile -- and the pulse sits on a factory tile ALWAYS. Corrected to
+    `(0.00, 0.95, 0.90, A 0.90)`, purer and slightly above the ring's alpha since, unlike the
+    ring, it has no animation to catch the eye. **The user approved the corrected colour.**
+  - **THE EDITING TOOL REFUSED THE FIRST CORRECTION AND WAS RIGHT TO.** With PIE active the
+    `set` and `save` both came back refused, naming the reason: editing a material the
+    rendering thread is sampling races `CacheResourceShadersForRendering` and can AV the
+    editor. The play session was stopped and the edit then took. Recorded because it is a
+    standing ordering constraint on this lane, not a one-off.
+  - **WHAT THE HUMAN CHECK ESTABLISHED THAT NOTHING HERE COULD.** The draw path is confirmed
+    end to end -- predicate, bridge, view model, board actor, screen. **TWO EDITOR CAPTURES
+    WERE INCONCLUSIVE** and are recorded as such rather than dressed up: the board and its
+    units rendered, the log confirmed `Match live ... drawn for side 0` with side 0 opening
+    on 350 Fame and owning one factory, so a pulse was owed -- and the overlay still could
+    not be picked out of either frame. The clauses cannot close that gap either: they pin
+    `GetBuildPulseOverlayCount`, an INSTANCE COUNT, and they run headless under `-nullrhi`,
+    where there are no pixels to test. This is the shape this project has recorded before --
+    a human at the keyboard is the only instrument that can say the game looks right.
+  - **AND IT DOES NOT PULSE, WHICH IS THE HALF THAT IS STILL OWED.** `M_Translucent` exposes
+    ONE vector parameter, ZERO scalars and ZERO static switches, and has no time input; the
+    Lua API answers `No asset-specific methods` for a Material, so there is no node-graph
+    authoring through this route. Building a `Time -> Sine -> Opacity` graph out of raw
+    property calls, blind, with no clause able to test appearance, was REFUSED rather than
+    attempted. So what ships is a STATIC TINT and Sec 2.11.5 asks for a pulse. **Discharged
+    when a master material with a time-driven opacity is authored by hand in the editor, or
+    when this instance's parent is swapped to one. Neither needs a C++ change**: the engine
+    turns instances on and off and the material owns how it looks, which is the split
+    `strat-gameplay-engineer` chose deliberately.
 - **THE SHELL GAMEMODE NOW POINTS AT THE SHELL HUD AND HAS STOPPED BUILDING THE MENU ITSELF, AND
   THE TWO HALVES ARE ONE CHANGE RATHER THAN TWO.** 2026-08-31, in the integration tree
   `E:/MultiAgent/Stratocracy` on branch `master`, with no worktree and no merge. **ACTING AND

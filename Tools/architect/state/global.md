@@ -11,8 +11,47 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-02 (W8 IS ON SCREEN, AND THE THING WORTH READING IS THAT A HUMAN HAD TO
+SAY SO -- EVERY INSTRUMENT IN THIS TREE SAID `CORRECTLY ASSIGNED` AND NONE OF THEM CAN SEE A
+PIXEL. Written by the `coordinator`, whose file this is. ACTING in the content lane under
+`CLAUDE.md`'s EDITOR-DRIVER CLAUSE and writing `content.md` under ITS FALLBACK CONDITION,
+both measured with a control and both cited in that file; this banner is written in lane and
+needs neither.
+DATED 2026-09-02 THOUGH THE PASS BEGAN ON 2026-09-01: the asset work, the user's look and the
+colour correction cross local midnight. THE HONEST DATE REDDENED THE GUARD -- the sweep
+refused a banner dated a day before an entry beneath it -- AND THE FIX WAS TO MOVE THE BANNER
+RATHER THAN BACKDATE THE ENTRY, which is what this record did the last time the same thing
+happened and is recorded here so the next reader meets the rule rather than rediscovers it.
+The suite is **362/362**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, and the macro census of this tree agrees at 362.
+NO SUITE WAS RUN IN THIS PASS AND THE FIGURE IS THEREFORE UNMOVED -- it is carried forward
+from the block below, which cites the same report, and the provenance is stated because a
+carried figure with none is a shape this record has been caught by before. This pass touched
+two `Content/` assets and two record files; it compiled nothing and ran no clause.
+WHAT LANDED. `MI_Overlay_BuildPulse` authored and assigned to `BuildPulseMaterial` on
+`BP_StratBoard`, which was `None` before -- so W8 item (4) now DRAWS, confirmed by the user
+at the keyboard. The detail, the measured tool absence and its control, and the API's limits
+are `content.md`'s and are not restated here.
+WHAT IT COST TO LEARN THE COLOUR WAS WRONG. It shipped teal and read GREY, and no capture,
+clause or gate could have told anyone: two editor screenshots were inconclusive, and the
+clauses pin an instance COUNT under `-nullrhi` where there are no pixels. The alpha had been
+chosen off the two sibling overlays that sit on PLAINS instead of the one that sits on a
+FACTORY tile -- the backdrop this overlay always has. Corrected and approved.
+AND IT STILL DOES NOT PULSE. A static tint ships where Sec 2.11.5 asks for a pulse, because
+the master material family has no time input and this route cannot author a material graph.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the
+editor session, the PIE run and the asset writes behind this block were performed in
+`E:/MultiAgent/Stratocracy` on branch `master` on this developer box, driven over raw HTTP to
+`127.0.0.1:9315` because the connector was latched stale. The user's confirmation was made at
+that machine and is in no checkout.]**)
+
 _Last run 2026-09-01 (THE SUITE IS GREEN AGAIN, AND THE CAUSE OF THE RED WAS A FIXTURE
-READING THE DEVELOPER'S OWN SAVE FILE. Written by the `coordinator`, whose file this is, in
+READING THE DEVELOPER'S OWN SAVE FILE.
+**[STAMPED 2026-09-02 -- SUPERSEDED BY THE BANNER ABOVE, WHICH CARRIES THIS RECORD'S LIVE
+FIGURE. THE FIGURE DID NOT MOVE: no suite ran in the pass above and both blocks cite the same
+report. What moved is which block is live, and the date. Kept rather than deleted, which is
+this record's convention.]**
+Written by the `coordinator`, whose file this is, in
 lane and under no exception clause. No code, no clause and no tool was written by this seat
 in this pass: the C++ is `strat-gameplay-engineer`'s and is in `engine.md`, the clause repair
 is `strat-test-author`'s and is in `tests.md`, and the guard fix is `strat-data-steward`'s
@@ -3631,6 +3670,34 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-09-02, THE `coordinator` (ACTING under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE; WRITING
+  THIS FILE IN LANE, AND `content.md` UNDER ITS FALLBACK CONDITION) -- W8 IS NOW COMPLETE
+  ENOUGH TO BE SEEN, AND A HUMAN SAW IT.** Over base `4a89ac2`, pushed and CI-green. The
+  asset detail, the measured absence and its control, and the API's limits are `content.md`'s
+  and are NOT restated here. This entry carries only what this file owns: milestone status
+  and what is still owed. No suite was run in this pass and this entry states no count.
+  - **W8 ITEM (4) IS DRAWN.** The pulse material is authored and assigned, and the user
+    confirmed AT THE KEYBOARD that the overlay appears on the factory hex. That confirmation
+    is the milestone fact: the draw path is proven end to end -- predicate, bridge, view
+    model, board actor, screen -- and **no instrument in this tree could have established
+    it.** Two editor captures were inconclusive and the clauses pin an instance COUNT under
+    `-nullrhi`, where there are no pixels. The record has said for weeks that a human is the
+    only instrument for this; this is the first W8 item where that was actually spent.
+  - **THE FIRST COLOUR WAS WRONG AND THE HUMAN CAUGHT THAT TOO** -- it read grey rather than
+    teal, because its alpha was chosen off the two sibling overlays that sit on PLAINS rather
+    than the one that sits on a FACTORY tile, which is the backdrop this one always has.
+    Corrected and approved by the user. `content.md` carries the values.
+  - **WHAT W8 STILL OWES, AND IT IS ONE THING: THE PULSE DOES NOT PULSE.** A static tint
+    ships where Sec 2.11.5 asks for a pulse, because the master material family has no time
+    input and this session's route cannot author a material graph. **It needs no C++**, which
+    is the useful part -- the engine turns instances on and off and the material owns how it
+    looks. Discharged by a hand-authored master with a time-driven opacity, or by swapping
+    this instance's parent to one.
+  - **AND THE OTHER OPEN ITEMS ARE UNCHANGED BY THIS PASS, NAMED SO THE ENTRY IS NOT READ AS
+    CLOSING THEM:** the three clause gaps that need production surface the test author
+    refused to write, the `enemy adjacent` one-shot still blocked upstream, and the sweep's
+    third blind spot -- it compares suite counts and cannot check a stamp a block cites nor
+    the state of a clause a block names.
 - **2026-09-01, THE `coordinator` (ACTING AND WRITING; IN LANE -- THIS IS ITS OWN FILE) --
   USER RULING: W8 ITEM (3), THE REPAIR-ELIGIBILITY PIP, IS CUT, AND THE REACTIVE REPAIR
   RECEIPT IS BUILT IN ITS PLACE. W8 IS NOW CLOSED EXCEPT FOR ASSET WORK.** Ruled in session

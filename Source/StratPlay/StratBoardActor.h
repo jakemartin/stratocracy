@@ -33,11 +33,10 @@
 // to be styled individually; the answer to styling is `TerrainMeshes`, which is keyed the
 // same way the data is.
 //
-// THE OVERLAYS ARE DECLARED IN C++, and the asymmetry is deliberate. `ReachOverlay`,
-// `TargetOverlay` and `ObjectiveOverlay` are not data -- their count follows the meanings
-// the game has, not the rows a table has; they need distinct materials a designer will want
-// to see in the details panel, and none is keyed by anything. They are constructor
-// subobjects.
+// THE OVERLAYS ARE DECLARED IN C++, and the asymmetry is deliberate. The overlay components
+// are not data -- their count follows the meanings the game has, not the rows a table has;
+// they need distinct materials a designer will want to see in the details panel, and none is
+// keyed by anything. They are constructor subobjects.
 //
 // THERE ARE THREE OF THEM AS OF 2026-08-23, AND THIS BLOCK USED TO SAY TWO:
 // RETRACTED> "THE TWO OVERLAYS ARE DECLARED IN C++ ... there are exactly two of them for as
@@ -47,6 +46,21 @@
 // fact that a new GDD section was always going to move. A FOURTH MEANING MUST BE A FOURTH
 // COMPONENT and never a third use of an existing one; see `ShowObjective` on why reusing
 // `TargetOverlay` for the ring was refused.
+//
+// THE FOURTH ARRIVED ON 2026-09-01 AND THE SENTENCE ABOVE IS THE ONE THAT PREDICTED IT.
+// `BuildPulseOverlay` is §2.11.5's BUILD pulse. IT LANDED IN C++ BECAUSE IT COULD NOT LAND
+// ANYWHERE ELSE, which is the part worth reading rather than the arithmetic: `bBuildPulse`
+// was published on `FStratFactoryView` and read by nothing for the whole of W8, and the
+// record described the remaining work as needing "an editor session and no C++ at all".
+// That was false, and this file is why -- there is no generic overlay map and no extensible
+// slot here, so a content pass had nothing to bind a fourth meaning to. The count is not a
+// contract, but the ABSENCE of a keyed collection is: a fifth meaning costs another
+// component and another property, deliberately, so that each one keeps a name.
+//
+// TWO PROSE COUNTS ELSEWHERE IN THIS FILE MOVED WITH IT AND ARE STAMPED WHERE THEY SIT --
+// the `OverlayMesh` property's "three components, three materials", and the sentence
+// directly above that named the three components one by one. Both are now count-free for
+// the reason this block already gives.
 //
 // PICKING IS AN INSTANCE-INDEX LOOKUP AND NOT A DISTANCE SEARCH. A trace against the tile
 // components returns a component and an instance index; `HexAtInstance` maps that pair
@@ -388,6 +402,75 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Board")
 	int32 GetTargetOverlayCount() const;
 
+	/**
+	 * §2.11.5's BUILD pulse: lights every factory tile whose `FStratFactoryView::bBuildPulse`
+	 * is set for the model's viewing side.
+	 *
+	 * WHAT GAP THIS CLOSES, AND IT IS A GAP THE RECORD DESCRIBED AS CLOSED.
+	 * `FStratFactoryBuildPulse::bShouldPulse` was composed by the bridge, mirrored onto
+	 * `FStratFactoryView::bBuildPulse`, published, and READ BY NOTHING. The remaining work
+	 * was recorded as drawing-only -- "an editor session and no C++ at all" -- which this
+	 * class falsified by construction: its overlays are three named components with three
+	 * fixed material slots and no keyed collection, so `Content/` had nothing to bind to.
+	 * This is that fourth binding, and the material behind it stays the content lane's.
+	 *
+	 * A SET AND NOT ONE HEX, WHICH IS THE OPPOSITE OF `ShowObjective` AND FOR THE REASON
+	 * THAT SIGNATURE GIVES. §4.7's `guidedOpening.objective` is a single authored hex per
+	 * seat, so a `TArray` there would invite "every objective" through the back door. The
+	 * pulse is genuinely per factory and several are lit at once in the ordinary case --
+	 * Ferrum Crossing ships four buildable factories -- so a single-hex signature here would
+	 * be the defect, not the guard.
+	 *
+	 * IT DECIDES NOTHING AND CANNOT. The set is handed in. Every entry came from
+	 * `FStratFactoryView::bBuildPulse`, which is `FStratFactoryBuildPulse::bShouldPulse`
+	 * copied whole -- and THAT expression is `bBuildAvailable && bAnyUnitAffordable`,
+	 * composed in `FStratBridge::FactoryBuildPulses` out of the rules module's own
+	 * `available` and `affordable`. This class holds no bridge and could not fold the two
+	 * halves if it wanted to, which is the same inability `ShowReach` records and the same
+	 * substitution T-UI-02 exists to catch.
+	 *
+	 * AN EMPTY SET IS THE ORDINARY CASE ON HALF OF ALL TURNS AND IS NOT A FAULT. See
+	 * `ClearBuildPulses`.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Board")
+	void ShowBuildPulses(const TArray<FIntPoint>& Hexes);
+
+	/**
+	 * Clears the BUILD pulse overlay.
+	 *
+	 * A DARK BOARD IS OFTEN THE CORRECT DRAWING, AND SAYING SO HERE IS THE POINT OF THIS
+	 * BLOCK. `bShouldPulse` inherits `side == activeSide` from `strat::canBuildAt`, so on
+	 * the opponent's hot-seat turn EVERY factory's pulse is dark board-wide -- not because a
+	 * material is missing, not because the overlay failed, but because the viewing side may
+	 * not build. A reader who meets a dark board first will reach for
+	 * `BuildPulseMaterial` being unset, and that is the wrong place to look on every other
+	 * turn. The derivation and its nine other refusals live at
+	 * `FStratFactoryBuildPulse::bShouldPulse` in `Source/StratBridge/StratBridge.h`, which
+	 * is the authority; this is a pointer to it and deliberately not a copy of it.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Board")
+	void ClearBuildPulses();
+
+	/**
+	 * How many factory tiles the §2.11.5 BUILD pulse is currently lighting.
+	 *
+	 * OFF THE COMPONENT, NOT A CACHED NUMBER, for `GetTargetOverlayCount`'s reason -- a
+	 * cached count agrees with the code that set it while disagreeing with the screen.
+	 *
+	 * IT EXISTS FOR A CLAUSE, and an accessor with no named caller is the shape that rots.
+	 * The clause is named in this change's handoff:
+	 * `Stratocracy.StratPlay.T-UI-02.BuildPulseOverlayIsDrawnFromTheModelAlone`. Without it
+	 * "the pulse is drawn where and only where `bBuildPulse` is set" is unobservable from
+	 * outside this class, because `BuildPulseOverlay` is protected -- the same hole
+	 * `GetTargetOverlayCount` and `GetObjectiveOverlayCount` were each added to close.
+	 *
+	 * ZERO WHEN THE COMPONENT DOES NOT EXIST, indistinguishable here from "exists and lights
+	 * nothing" -- the same collapse `GetTargetOverlayCount` declares, safe for the same
+	 * reason: both mean nothing is lit.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Board")
+	int32 GetBuildPulseOverlayCount() const;
+
 protected:
 	/** Nothing but a transform. The tile components are runtime-created and attach here;
 	 *  the overlays are constructor subobjects and attach here too.
@@ -412,6 +495,12 @@ protected:
 	 *  not a third meaning loaded onto `TargetOverlay`. */
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Board")
 	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> ObjectiveOverlay;
+
+	/** §2.11.5's BUILD pulse. See `ShowBuildPulses` on why this is a FOURTH component and
+	 *  not a fourth meaning loaded onto `ObjectiveOverlay` -- the ring and the pulse are on
+	 *  screen at once during the guided opening, whose beat 3 is a Build. */
+	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Board")
+	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> BuildPulseOverlay;
 
 	// ---- Configuration. All EditDefaultsOnly, all set on a Blueprint default. --------
 
@@ -442,8 +531,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UStaticMesh> FallbackTerrainMesh;
 
-	/** The flat quad every overlay instances. One mesh, three components, three materials --
-	 *  see `ShowTargets` and `ShowObjective`. */
+	/** The flat quad every overlay instances. ONE MESH, ONE COMPONENT PER MEANING, ONE
+	 *  MATERIAL EACH -- see `ShowTargets`, `ShowObjective` and `ShowBuildPulses`.
+	 *  [STAMPED 2026-09-01. This said "One mesh, three components, three materials", which
+	 *  went false the moment `BuildPulseOverlay` landed. It is count-free now rather than
+	 *  re-numbered, for the header block's stated reason: the count was never the
+	 *  invariant.] */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UStaticMesh> OverlayMesh;
 
@@ -462,6 +555,34 @@ protected:
 	 *  absent one. This block said unset was the shipping state until the default landed. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UMaterialInterface> ObjectiveMaterial;
+
+	/**
+	 * §2.11.5's BUILD pulse. UNSET IS THE STATE THIS SHIPS IN AS OF 2026-09-01, AND THAT IS
+	 * STATED HERE RATHER THAN LEFT TO BE DISCOVERED. No material instance for the pulse
+	 * exists in `Content/` yet; `BP_StratBoard` carries no default here, and it must not be
+	 * given one from C++ -- the instance and its assignment are the CONTENT lane's, which is
+	 * why this is `EditDefaultsOnly`, has NO initializer, and names no `/Game/` path.
+	 * `ObjectiveMaterial` directly above is the model, and it read exactly this way until
+	 * `MI_Overlay_Objective` landed on 2026-08-24.
+	 *
+	 * UNSET IS LEGITIMATE AND THE FAILURE IT PRODUCES IS VISIBLE RATHER THAN SILENT: the
+	 * pulse draws in `OverlayMesh`'s own material, so a lit factory looks like a reach
+	 * highlight sitting on it. That is a wrong-looking pulse and not an absent one, which is
+	 * the same trade `ObjectiveMaterial` records and the reason neither is logged while a
+	 * missing `OverlayMesh` is -- a missing MESH draws nothing at all and has to announce
+	 * itself.
+	 *
+	 * NO ANIMATION IS DRIVEN FROM C++ AND NONE MAY BE ADDED HERE ON AN ASSUMPTION. Measured
+	 * 2026-09-01 against the live editor's reflection: `MI_Overlay_Objective`, the only
+	 * member of this material family today, is a `MaterialInstanceConstant` with one vector
+	 * parameter, ZERO scalar parameters and ZERO static switches. So there is no parameter
+	 * named anywhere in the tree for a pulse to drive, and code that created a dynamic
+	 * instance to set one would be naming a parameter that does not exist -- a silent no-op
+	 * that reads as a broken pulse. HOW THE PULSE PULSES IS THE CONTENT LANE'S DECISION, in
+	 * the material itself; this class turns instances on and off and nothing more.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
+	TObjectPtr<UMaterialInterface> BuildPulseMaterial;
 
 	/** How far above the tile plane the overlays sit, so they do not z-fight the tiles.
 	 *  Presentation, exposed because the right value depends on the meshes phase 5
@@ -506,6 +627,13 @@ private:
 	/** As `ReachDrawnHexes`, for `ObjectiveOverlay`. */
 	UPROPERTY()
 	TArray<FIntPoint> ObjectiveDrawnHexes;
+
+	/** As `ReachDrawnHexes`, for `BuildPulseOverlay`. IT EARNS ITS KEEP MORE THAN THE OTHER
+	 *  THREE DO: the pulse set is a function of the TURN, not of the selection, so it is
+	 *  identical across every hover refresh within one turn and this cache is what stops
+	 *  `ApplyView` clearing and re-adding four instances on every mouse move. */
+	UPROPERTY()
+	TArray<FIntPoint> BuildPulseDrawnHexes;
 
 	/**
 	 * Is the board already drawing exactly this hex list?

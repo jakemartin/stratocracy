@@ -15,6 +15,207 @@
 > file was split; completed 2026-08-22, no meaning changed.)
 
 - **2026-09-01 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
+  only -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `f079b9f`, UNCOMMITTED
+  at the time of writing) -- W8 ITEMS (3) AND (4) ARE GATED: THE §2.7 REPAIR RECEIPT AND THE
+  §2.11.5 BUILD-PULSE DRAW. FIFTEEN CLAUSES IN THREE NEW FILES. THE LIVE COUNT LIVES IN
+  `Tools/architect/state/global.md` AND NOWHERE ELSE.**
+  - **THE ACCEPTANCE IDS WERE DECIDED FROM §4.11'S OWN TEXT, BECAUSE THE TWO PROPOSED LISTS
+    DISAGREED WITH EACH OTHER.** The bridge repair clauses were offered once as `T-UI-02` and
+    once as `T-TURN-09`, and the receipt clauses as `T-UI-03`. All three were refused and none
+    was minted:
+    - **`T-TURN-08` for the bridge repair measurement.** §4.11 states it as *"repair fires at
+      the start of the unit's turn exactly when the verified repairAmount says so ... this gate
+      asserts the turn loop calls it at the right moment with the right board facts, nothing
+      more."* That sentence is exactly what
+      `Source/StratBridge/Tests/StratRepairReceiptParity.cpp` does. `T-TURN-09` is DETERMINISM,
+      `T-UI-02` is the reachable-hex highlight and `T-UI-03` is the scoreboard's 1:1 binding;
+      none of them is repair. **Reassigned on `T-SCN-07`'s precedent, and this is `T-TURN-08`'s
+      first use in this repository.**
+    - **`GATE-TRANSIENT` for the receipt decider clauses**, which is what all thirteen
+      pre-existing transient-receipt clauses ride and what a corpus census settled rather than
+      a preference. It mints no acceptance ID.
+    - **`T-UI-02` for the pulse draw**, which is what the board-overlay clauses in
+      `Source/StratPlay/Tests/` already ride -- and is the name
+      `AStratBoardActor::GetBuildPulseOverlayCount`'s own doc block asked for by full string.
+      `GATE-BOARDCHURN` refused `T-UI-02` for ITS clauses on the ground that they are about
+      whether the renderer was TOUCHED rather than about what is DRAWN; every clause here has
+      what is drawn as its subject, so that refusal does not reach them.
+  - **`FStratBridge::RepairsAtTurnOpen`'s "(T-TURN-09)" CITATION IS HALF OF A REAL ONE, NOT AN
+    ERROR.** `strat::applyStartOfTurnRepair`'s own doc line in `Source/StratRules/Turn.h` cites
+    BOTH T-TURN-08 and T-TURN-09 for the ascending-id guarantee. Recorded so nobody re-derives
+    it as drift.
+  - **THE PARITY FIXTURE REACHES NO REPAIR AT ALL, AND THAT IS THE MOST USEFUL MEASUREMENT IN
+    THIS PASS.** `Data/parity_fixture.save` replayed one `FStratBridge::Submit` at a time
+    crosses **12 turn openings across its 169 commands and heals NOBODY at any of them.**
+    §2.7 needs a damaged unit standing on an objective its own side holds with no enemy
+    adjacent, and the fixture's damaged units are the ones in contact while its units on owned
+    objectives are the ones capturing away from the fighting. A first draft of the file walked
+    the fixture looking for a repairing opening and went red on all five clauses saying so;
+    that red run is what produced this figure.
+    - **SO THE POSITION IS REACHED RATHER THAN FOUND, AND EVERY STEP OF REACHING IT IS STILL A
+      MODULE ANSWER.** `DriveToARepairingTurnOpen` replays the fixture (which supplies the
+      DAMAGE -- not one attack is chosen in the test), then at a turn opening asks the
+      projection which of the active side's units is below `hpMax`, asks
+      `FStratBridge::Reachable` -- the rules module's own query, never a distance filter --
+      where each may stand, and keeps only hexes where `strat::UiHexView::owner == side` and no
+      enemy is at `hexDistance == 1`. It moves every such unit, recomputing the projection and
+      the reach set between movers, then ends two turns with the opponent passing WITHOUT A
+      SINGLE COMMAND so the adjacency it read is the adjacency §2.7 sees. **A refused move is
+      fatal, not skipped:** the destination came out of the module's own reach set, so a
+      refusal would mean two module answers disagree. Going off the fixture's script is this
+      directory's existing posture -- `StratCombatOutcomeParity.cpp`'s counter-kill clause does
+      the same and says so.
+    - **WHAT IT ACTUALLY REACHES, printed by the clauses themselves via `AddInfo` so it is
+      checkable from a checkout rather than taken on trust:** *"fixture position 20 (3 openings
+      in), side 0: unit 5 at hp 1/12 on (-1,4)"*, and the measured answer
+      `{unit=5 side=0 hp 1->4/12 amount=3}`.
+  - **THE ORACLE CLAUSE, AND IT IS THE ONE THE WHOLE BRIDGE FILE EXISTS FOR.**
+    `T-TURN-08.RepairAmountIsTheModulesOwnRepairAmount` computes `strat::repairAmount` in the
+    test from the same board facts and requires the bridge's `Amount` to equal it. **That is
+    the one place in this pass where an expectation is computed rather than read, and the
+    reason is that no module-side repair figure exists anywhere in this tree:**
+    `strat::openTurn` builds the `RepairApplied` vector, adds each amount to `GameUnit::hp` and
+    DISCARDS it, returning `void`; `Driver.good.cpp`'s `openActiveTurn` keeps it but is the
+    debug driver over `Session` and the bridge never runs it. So the only independent oracle
+    available is the rules function itself, asked the same question. The two board facts are
+    read off the module's own projection (`UiHexView::owner` for the objective,
+    `strat::hexDistance == 1` for adjacency) and `hp`/`hpMax` off `strat::UiUnitView`;
+    **nothing in the test re-derives the +25% table, the min-1 floor or the never-overheal
+    clamp**, which are `repairAmount`'s and are gated upstream as T-REPAIR-01..07.
+    - **IT ASKS THE ORACLE ABOUT EVERY UNIT, NOT ONLY THE REPORTED ONES.** A unit the oracle
+      says was owed nothing must carry NO entry; a unit it says was owed something must carry
+      one for exactly that amount; and the two lists must be the same size. A one-sided version
+      would be green over a bridge reporting one unit out of four.
+    - **THE CLAUSE MUST LIVE IN `Source/StratBridge/Tests/`.** It calls a `strat::` free
+      function, which is `LNK2019` in any other module -- measured 8x.
+  - **FALSIFIABILITY, MEASURED, AND WHAT KIND OF MEASUREMENT IT IS.** **No production mutant
+    was built.** The lane forbids editing a file outside `Tests/` even temporarily, so both
+    probes were planted in the CLAUSE'S OWN FILE, built in place, run, and reverted; each
+    therefore proves that the comparison is LIVE ON BOTH SIDES against the shipped code, and
+    neither proves anything about a hypothetical rewrite of the code under test.
+    - **The oracle clause.** `strat::repairAmount(...)` became `strat::repairAmount(...) + 1` in
+      the test. Result **Fail**, on four distinct assertion families at once: *"unit 5's
+      measured amount IS strat::repairAmount's answer' to be 4, but it was 3"*, *"unit 5's
+      HpAfter is HpBefore plus the module's amount' to be 5, but it was 4"*, five separate
+      *"strat::repairAmount owes unit N 1 HP at this opening, so the bridge must report it ...
+      to be not null"*, and *"the bridge reports exactly the units the oracle owed ... to be 6,
+      but it was 1"*.
+    - **The copy-not-subtracted clause.** Expectation swapped from `Repair.Amount` to `Delta` --
+      i.e. asserting what a RE-SUBTRACTING decider would have produced. Result **Fail**:
+      *"the receipt's Amount is the BRIDGE's Amount, copied' to be 100, but it was 200."* **That
+      is a measurement of the shipped decider**: on a row whose `Amount` is 200 and whose
+      `HpAfter - HpBefore` is 100, it emits 200. An implementation that re-subtracted would emit
+      100 and this clause would redden on it. The three numbers are printed by the clause itself
+      via `AddInfo` on every green run.
+  - **WHY THE COPY CLAUSE'S FIXTURE DISAGREES WITH ITSELF ON PURPOSE.** On any consistent row --
+    the only kind the bridge produces -- `Amount` and `HpAfter - HpBefore` are the same number,
+    so `Receipt.Amount == Repair.Amount` is true of a copy AND of a re-subtraction and pins
+    nothing. The planted row makes them 200 and 100: both nonzero, so a wrong answer is a wrong
+    VALUE rather than a zero that could be confused with the arm not firing; and every one of
+    the three planted numbers is a module reading off the live projection (`FStratUnitView::Hp`,
+    `FStratSideView::IncomePerTurn`, `FStratSideView::FameTotal`), whose PROVENANCE is the
+    fixture and none of which is an expectation. **All three inequalities are asserted as
+    preconditions before anything is decided**, so the clause cannot go inert quietly.
+  - **WHAT THESE CLAUSES DO NOT PIN. Read this before citing any of them as coverage.**
+    - **A BLOCKED REPAIR, AND NOTHING DRAWN OFF AN ABSENCE.** The record is positive-case only:
+      an absent entry cannot be told apart from full HP, from a unit off an owned objective, or
+      from §2.7's anti-fortress lock firing. §2.11.6's `enemy adjacent` one-shot needs precisely
+      that third reading and **no clause anywhere asserts it**. A clause that did would be
+      asserting a discrimination the code deliberately does not have.
+    - **THE FIRST TURN OF A MATCH.** `strat::seedFromScenario` opens it, not `Submit`, so there
+      is no bracket to measure.
+    - **`ReplayLog`'s TURN BOUNDARIES.** It reaches `strat::replayLog` directly and never passes
+      through `Submit`; the clause pins that it leaves the record EMPTY, not that it observes.
+    - **THE ASCENT, ON A ONE-ENTRY ANSWER.** `EveryRepairEntryIsAPositiveRiseAscendingByUnitId`
+      asserts strict ascent by unit id, and the reachable position yields **one** entry today,
+      so on this fixture **that assertion pins nothing**. `DriveToARepairingTurnOpen` plants
+      every mover it can rather than the first, precisely so the width can grow; the clause
+      reports the width it got via `AddInfo` instead of demanding one it cannot honestly
+      require. **The `std::sort` in `StratRepairObservation::CaptureAfter` is therefore
+      UNPINNED as of this pass.**
+    - **`LoadDefinitions` CLEARING THE RECORD IS UNOBSERVABLE FROM OUTSIDE THE BRIDGE.** That
+      function sets `bSeeded = false` in the same body that calls
+      `RepairsAtLastTurnOpen.clear()`, so `RepairsAtTurnOpen` refuses afterwards and the
+      emptiness hides behind the refusal: **deleting that `clear()` leaves
+      `ReplayAndReseedEachLeaveTheRecordEmpty` green.** What the clause does pin is what a
+      caller experiences -- the answer goes away and the caller's array is emptied -- and the
+      route's own comment block in the test says so rather than implying more. Making it
+      observable needs a production change, so it is listed under the blocked items below and
+      not fixed here.
+    - **PIXELS, MATERIALS AND COPY.** Nothing asserts an appearance. `BuildPulseMaterial` ships
+      UNSET, so a lit factory currently draws in `OverlayMesh`'s own material; every pulse
+      clause reads counts and instance POSITIONS, both unaffected by which material a slot
+      holds. The GDD's `+[N] HP — repaired` string is likewise unasserted -- it is a UMG
+      binding, and `FString` comparison is case-insensitive in this engine, which has already
+      produced a clause in this project that could not fail.
+  - **THE PULSE CLAUSES, AND THE ONE FACT THEY ARE BUILT AROUND.** `bBuildPulse` inherits
+    `side == activeSide` from `strat::canBuildAt`, so **on the opponent's hot-seat turn every
+    factory is dark board-wide, and that is correct.**
+    `T-UI-02.BuildPulseClearsAndIsDarkOnTheOpponentsTurn` asserts that darkness **as a
+    requirement**, and produces it through the rules module -- `SubmitEndTurn` on the bridge,
+    the model rebuilt for a viewing side that is no longer to move -- rather than by editing a
+    flag. Its LIT half is its own positive control: on a board with no overlay mesh both halves
+    read zero and the clause would look green while measuring nothing, which is why
+    `GiveTheBoardAnOverlayMesh` is not optional in any of these fixtures.
+    - `BuildPulseOverlayIsDrawnFromTheModelAlone` checks POSITIONS and not only the count: a
+      subsystem collecting the right NUMBER of hexes off the wrong predicate (`Owner ==
+      ViewingSide`, `!bHasBuiltThisTurn`) lands on the same count on this board. Every drawn
+      instance is matched to a hex the model marked through
+      `AStratBoardActor::WorldLocationOfHex` -- the board's own axial-to-world map, read and
+      never repeated -- and every marked hex must be found among the drawn ones.
+    - It also reads the other three overlays, because *"the pulse was drawn"* and *"something
+      was drawn on the reach overlay instead"* are different facts and only the second reading
+      tells them apart.
+    - **`GetBuildPulseOverlayCount` HAD NO CALLER, AND NOW HAS ITS DECLARED ONE.** Its doc block
+      names `Stratocracy.StratPlay.T-UI-02.BuildPulseOverlayIsDrawnFromTheModelAlone` by full
+      string; that is the clause written. Its two siblings are likewise called only from
+      `Tests/`. The clause asserts the accessor agrees with the component it claims to read,
+      which turns *"off the component, not a cached number"* from a sentence into a measurement.
+  - **INSTRUMENT CAVEAT WORTH REUSING: THE THREE PULSE CLAUSES DECLARE THE BOARD'S
+    UNMESHED-TERRAIN WARNING.** A fixture world has no Blueprint defaults, so
+    `AStratBoardActor` logs *"no tile mesh for terrain ..."* at Warning on every `ApplyView`.
+    The first full run left three tests in `succeededWithWarnings`;
+    `AddExpectedMessagePlain(..., Occurrences 0)` on `StratAiMatchClauses.cpp`'s precedent
+    removed them. **A gate that leaves warnings in a green run trains the next reader to skim
+    warnings**, and that is the whole reason it was fixed rather than tolerated.
+  - **PROJECT-PROSE DRIFT FOUND WHILE WRITING THESE, NOT FIXED -- `Source/` OUTSIDE `Tests/` IS
+    NOT THIS LANE.** `FStratReceiptView::UnitId`'s tooltip says it keys into
+    `FStratViewModel::Units` by **`FStratUnitView::Id`**; that field is spelled `UnitId`, and
+    `StratViewModel.h` records at the declaration that it is spelled that way ON PURPOSE.
+    One-word drift, no behaviour, for `strat-gameplay-engineer`.
+  - **THE RUN.** Editor CLOSED and verified (`tasklist`: no `UnrealEditor` and no
+    `LiveCodingConsole` process) before every build; `Build.bat` green each time, no
+    `-NoHotReloadFromIDE`. The figures are in `Tools/architect/state/global.md`, which is the
+    only file that may carry them; what is recorded here instead is the SHAPE of the result,
+    which this file owns: **zero failures, zero warnings, the fifteen clauses above are
+    additions and not replacements, and a name-by-name diff of the new report against the
+    previous canonical one shows no test removed and no pre-existing test changed state.**
+    `git status --porcelain` after the run shows the three new `Tests/` files as `??` and
+    nothing else that is mine.
+    - **A CLAIM STOOD HERE FOR ABOUT FOUR MINUTES AND IS KEPT RATHER THAN DELETED, BECAUSE WHAT
+      IT RECORDS IS THE REASONING THAT WAS WRONG:**
+
+        STRUCK> "Every run in this pass went to a scratch `-ReportExportPath`, so
+        STRUCK>  `Saved/AutomationReport/index.json` STILL READS `reportCreatedOn
+        STRUCK>  2026.09.01-23.31.22` and every live citation of that stamp elsewhere remains
+        STRUCK>  valid."
+
+      **WITHDRAWN, AND THE PRESERVATION WAS THE DEFECT.** Leaving the canonical report alone
+      protects the citation in `global.md` and breaks something worse:
+      `strat_banner_sweep.py` then reported **TREE DISAGREES WITH ITSELF** -- report 347,
+      macro census 362 -- plus **REPORT IDENTITY**, *"predates a test-defining source file
+      modified 2026-09-01 20:32:47 ... this report is evidence about a PAST tree."* A stale
+      canonical report is a finding in its own right, and a valid citation OF a stale report is
+      a citation of the wrong tree. So the suite was re-run to the canonical path.
+    - **`Saved/AutomationReport/index.json` NOW READS `reportCreatedOn 2026.09.02-00.38.55`,
+      AND TWO LINES IN `global.md` ARE STALE BECAUSE OF IT.** They are not this lane's to
+      touch and the sweep names both: `global.md:20` carries a live suite figure that no longer
+      matches the tree, and `global.md:54` cites `reportCreatedOn 2026.09.01-23.31.22`, which
+      is now a DIFFERENT run from the one the sweep opens. Handed to the `coordinator`/steward
+      with the new stamp above. **After those two lines are corrected the sweep has nothing
+      else to say about this pass: no finding it raised names `tests.md`.**
+
+- **2026-09-01 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
   only -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `cada741`, UNCOMMITTED
   at the time of writing) -- THE FIVE `T-UI-02` VISUAL CLAUSES IN
   `StratGuidedOpeningVisuals.cpp` ARE ARMED, NOT VACUOUS. THE SAVE CANNOT REACH THEM. THE SLOT

@@ -415,6 +415,17 @@ struct FStratFactoryBuildPulse
 	 *   the opponent's tile there; this field does not, and that is the reason for the
 	 *   narrowing.
 	 *
+	 * THE MOST VISIBLE CONSEQUENCE OF THAT INHERITANCE, STATED 2026-09-01 BECAUSE THE FIRST
+	 * DRAWING LAYER HAS NOW LANDED AND WILL MEET IT. `canBuildAt` carries
+	 * `side == activeSide`, so ON THE OPPONENT'S HOT-SEAT TURN THIS FIELD IS FALSE FOR EVERY
+	 * FACTORY ON THE BOARD -- the pulse is dark board-wide, on half of all turns, and that is
+	 * CORRECT. It was derivable from the `canBuildAt` expansion above and from the
+	 * per-viewing-side note on `FStratFactoryView::bBuildPulse`, and derivable is not the
+	 * same as said: a reader who meets a dark board first will reach for a missing material
+	 * or a broken overlay, and both are the wrong place to look on every other turn. This
+	 * paragraph is the answer's home; `AStratBoardActor::ClearBuildPulses` points here rather
+	 * than restating it.
+	 *
 	 * `bHasBuiltThisTurn` IS THEREFORE DELIBERATELY ABSENT FROM THE EXPRESSION, AND WRITING
 	 * IT IN WOULD BE THE DEFECT AND NOT THE FIX. By the implication above,
 	 * `bBuildAvailable && !bHasBuiltThisTurn` is EQUAL TO `bBuildAvailable` on every board;
@@ -429,6 +440,98 @@ struct FStratFactoryBuildPulse
 	 * are already on this struct. Nothing else in the tree recomputes either.
 	 */
 	bool bShouldPulse = false;
+};
+
+// ---------------------------------------------------------------------------
+// FStratRepairApplication -- ONE UNIT'S §2.7 START-OF-TURN REPAIR, AS MEASURED
+// ACROSS THE `applyCommand` CALL THAT OPENED THE TURN.
+//
+// WHAT GAP THIS CLOSES, AND WHY THE OBVIOUS ROUTE IS SHUT. `strat::openTurn` builds the
+// `RepairSubject` vector, derives `onOwnedObjective` and `enemyAdjacent` itself, calls
+// `strat::applyStartOfTurnRepair`, adds each `RepairApplied::amount` to `GameUnit::hp` --
+// AND THEN DISCARDS THE VECTOR. It returns `void` (`Replay.good.cpp`'s `openTurn`), so
+// the module's own `amount` reaches no caller through any channel. `Driver.good.cpp`'s
+// `openActiveTurn` pushes it into a string list, but that is the debug driver over
+// `Session` and the bridge never runs it. THE UNITS REALLY DO HEAL AND NOTHING REPORTS
+// IT; that is the whole of the gap and it is the reason this struct is measured rather
+// than mirrored.
+//
+// WHY THE AMOUNT IS NOT RECOMPUTED FROM `strat::repairAmount`, WHICH IS PUBLIC AND WHICH
+// THIS MODULE MAY LEGALLY CALL. It takes `(unit, onOwnedObjective, enemyAdjacent)`, and
+// the two board facts exist nowhere outside `openTurn`'s own loop -- no `UiSnapshot`
+// field carries either. Deriving them here is EXACTLY the re-derivation the W8 ruling
+// refused when it cut the repair-eligibility pip, and it is why that pip was cut. This
+// struct is the reactive half of that pair and it asks the board nothing.
+//
+// SO THE INSTRUMENT IS THE ONE `StratCombatObservation` ALREADY USES: two
+// `strat::UiSnapshot`s bracketing one `strat::applyCommand`, joined by unit id. That
+// block's own words -- "an observer has exactly two places to look" -- hold here with one
+// place struck out, since there is no forecast for a repair.
+//
+// AND THE BRACKET IS WHAT MAKES THE MEASUREMENT SOUND, WHICH IS THE LOAD-BEARING SENTENCE
+// IN THIS BLOCK. An HP rise measured between two arbitrary readings means nothing: HP
+// falls under §2.6 combat and arrives fresh on a §2.7 spawn, so a delta taken over a
+// presentation refresh conflates three causes and could not say which it saw. Inside
+// `applyCommand`'s `EndTurn` arm the only statement anywhere that writes `GameUnit::hp`
+// is `openTurn`'s repair loop -- `strat::endTurn` and `strat::beginTurn` mutate no unit
+// (they move `result`, `phase`, the two flag sets and `builtThisTurn`), `accrueIncome`
+// moves Fame, `captureTick` moves ownership, and `resolveBuilds` -- the one thing in the
+// module that creates a unit -- is called from the `Build` arm and from nowhere else. So
+// a rise across THIS bracket IS a §2.7 repair by construction. Verified by reading
+// `Replay.good.cpp`'s `openTurn` and `applyCommand`, and `Turn.good.cpp`'s `beginTurn`
+// and `endTurn`; a rules re-vendor that adds a second HP writer to that arm invalidates
+// this paragraph and the clause named at `RepairsAtTurnOpen` is what would report it.
+//
+// PLAIN AND NOT REFLECTED, for `FStratFactoryBuildPulse`'s reason exactly: this header
+// must declare no `UCLASS`/`USTRUCT`/`UENUM` or UHT parses it and the vendored `strat`
+// headers go in front of the header tool. The reflected mirror is
+// `FStratUnitRepairView` in `Source/StratUI/StratTransientReceipts.h`.
+//
+// THE POSITIVE CASE ONLY, AND IT IS A LIMIT AND NOT AN OVERSIGHT. A zero rise cannot be
+// told apart from a unit at full HP, a unit off an owned objective, and a unit whose
+// repair §2.7 BLOCKED because an enemy stands adjacent. §2.11.6's `enemy adjacent`
+// one-shot needs exactly that discrimination and NOTHING HERE PROVIDES IT -- it stays
+// blocked upstream on the same missing predicate that cut the pip. Only rises are
+// recorded, and a caller must not read an absent entry as "repair was denied".
+struct FStratRepairApplication
+{
+	/** `strat::UiUnitView::id`. THE JOIN KEY, and see `RepairsAtTurnOpen` for why it is
+	 *  the id and not the hex or the index. */
+	int32 UnitId = INDEX_NONE;
+
+	/** `strat::UiUnitView::side` as read AFTER the turn opened. §2.7 repairs the ACTIVE
+	 *  side alone (`applyStartOfTurnRepair` filters on `s.activeSide`), so in a legal match
+	 *  every entry carries the side that is now to move -- carried anyway rather than
+	 *  assumed, because a receipt that stated the viewer's side would be asserting a rules
+	 *  fact this struct did not measure. */
+	int32 Side = INDEX_NONE;
+
+	/** `strat::UiUnitView::hp` before the submit. */
+	int32 HpBefore = 0;
+
+	/** `strat::UiUnitView::hp` after it. */
+	int32 HpAfter = 0;
+
+	/** `strat::UiUnitView::hpMax`, read after. Carried so a drawing layer can size a bar
+	 *  without a second lookup, and so a clause can see that the module's own
+	 *  never-overheal guarantee held. */
+	int32 HpMax = 0;
+
+	/**
+	 * `HpAfter - HpBefore`, and STRICTLY POSITIVE by construction -- an entry is only
+	 * recorded when the field rose.
+	 *
+	 * DECLARED DERIVED RATHER THAN DRESSED AS A MIRROR, on `bAnyUnitAffordable`'s
+	 * precedent. It restates no rule: not `repairAmount`'s table, not §2.7's eligibility,
+	 * not the never-overheal clamp. A change to any of them moves this number
+	 * automatically, which is the test `StratTransientReceipts.h` already applies to the
+	 * `KillFame` delta and passes for the same reason.
+	 *
+	 * ALL THREE ARE CARRIED, ON THAT SAME FILE'S STATED REASON: "the two readings are the
+	 * mirrors, `Amount` is the one subtraction, and a clause can check it against its own
+	 * inputs rather than trusting it."
+	 */
+	int32 Amount = 0;
 };
 
 class STRATBRIDGE_API FStratBridge
@@ -1078,6 +1181,41 @@ public:
 	//                   and whose ownership `bBuildAvailable` answers about.
 	// @param OutPulses  one entry per factory, in the snapshot's canonical hex order.
 	FStratResult FactoryBuildPulses(int32 Side, TArray<FStratFactoryBuildPulse>& OutPulses) const;
+
+	// §2.11.6's REPAIR RECEIPT, reactive half. Every unit whose HP rose across the most
+	// recent turn-opening this bridge OBSERVED. See `FStratRepairApplication` for the whole
+	// argument; what is stated here is the contract of the call.
+	//
+	// A RECORD AND NOT AN EVENT, WHICH IS WHAT MAKES IT SAFE FOR A RECONCILED SURFACE. The
+	// answer is a field of this object, so it reads the same on every call until the next
+	// turn opens -- a caller that refreshes twice in one turn gets the same list twice and
+	// never a half of it. Deciding whether a SECOND telling is due is the caller's, and
+	// `StratDecideTransientReceipts` gates it on the same (Turn, SideToMove) edge the income
+	// arm already uses rather than on anything this method knows.
+	//
+	// OVERWRITES `OutRepairs` ENTIRELY, INCLUDING EMPTYING IT, on `FactoryBuildPulses`'s
+	// stated reason: a caller reconciling floaters against a part-filled array would leave
+	// the last turn's numbers standing over units this turn did not heal.
+	//
+	// ONE CHANNEL AND NOT TWO. There is no malformed question here -- it takes no argument
+	// -- so `FStratResult` says only whether there is a bridge to ask: an unseeded bridge
+	// refuses, and EMPTY IS AN ANSWER meaning "nothing healed", which is the common case and
+	// is `Ok()`.
+	//
+	// WHAT IT DOES NOT COVER, stated rather than left to be found. (a) A turn opened by
+	// `strat::seedFromScenario` -- the FIRST turn of a match -- is not measured, because
+	// there is no earlier reading to measure against and every unit is at `hpMax` on a fresh
+	// seed anyway. (b) `ReplayLog` reaches `strat::replayLog` directly and never passes
+	// through `Submit`, so a log loaded from disk in a fresh process replays its turn
+	// boundaries silently. That is the SAME gap `Submit`'s own block already records for the
+	// `STRAT-COMBAT` family, with the same fix available and the same reason nothing needs
+	// it yet; it is a real gap, not a deliberate exclusion.
+	//
+	// @param OutRepairs  one entry per unit that healed, ASCENDING BY UNIT ID -- the order
+	//                    `strat::applyStartOfTurnRepair` itself guarantees (T-TURN-09), so
+	//                    the receipt list is a property of the ids and not of a snapshot's
+	//                    iteration order.
+	FStratResult RepairsAtTurnOpen(TArray<FStratRepairApplication>& OutRepairs) const;
 
 	// ---- The engine-typed façade -----------------------------------------
 	// EVERY METHOD IN THIS SECTION SAYS, IN `int32` AND `FIntPoint`, EXACTLY WHAT THE TYPED
@@ -1736,6 +1874,18 @@ private:
 	// why `LoadScenarioFromFile` leaves it alone while `LoadDefinitions` clears it:
 	// a reseed does not move the table these index into, and a table reload does.
 	std::vector<int> Buildlist;
+
+	// §2.11.6's repair record: what `RepairsAtTurnOpen` hands back. Written ONLY by the
+	// end-turn observation in `Submit`, and replaced whole on each successful `EndTurn`
+	// rather than appended to -- it describes the turn that just opened, never a history.
+	//
+	// HELD IN THE ENGINE MIRROR RATHER THAN IN A `strat` TYPE, WHICH IS THE OPPOSITE OF
+	// `Recorded` DIRECTLY ABOVE AND FOR A REASON THAT DOES NOT APPLY THERE. `Recorded` is
+	// held as `strat::SaveCommand` because `serializeSave` and `replayLog` consume it and a
+	// mirror would be a second spelling of the file format. There is no module type to hold
+	// here at all: `strat::RepairApplied` never leaves `openTurn`, and rebuilding one would
+	// claim a provenance this value does not have. Every consumer is engine-side.
+	std::vector<FStratRepairApplication> RepairsAtLastTurnOpen;
 
 	// Assembles the combat stat block for one unit exactly as the driver's
 	// `combatUnit` does: every stat LOOKED UP from the UnitDef at `defIndex`,

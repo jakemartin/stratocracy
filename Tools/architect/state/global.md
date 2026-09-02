@@ -17,8 +17,13 @@ lane and under no exception clause. No code, no clause and no tool was written b
 in this pass: the C++ is `strat-gameplay-engineer`'s and is in `engine.md`, the clause repair
 is `strat-test-author`'s and is in `tests.md`, and the guard fix is `strat-data-steward`'s
 and is in `data.md`. Each wrote its own entry, in lane, itself.
-The suite is **347/347**, every entry Success, zero failed, zero notRun, zero
-succeededWithWarnings, and the macro census of this tree agrees at 347.
+The suite is **362/362**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, and the macro census of this tree agrees at 362.
+THE COUNT MOVED 347 -> 362 AND EVERY ONE OF THE NEW CLAUSES IS AN ADDITION: measured
+name by name against the previous report, **+15 added, 0 removed, 0 state changes** on the
+347 that already existed. The census is derived here from the macro across the tracked test
+files PLUS the three new ones, not copied from the report, so the two figures are two
+measurements rather than one restated twice.
 THE FIGURE WAS MEASURED FROM THIS SEAT AND NOT RELAYED. The canonical report was re-run
 after every lane had landed, so it describes the tree as it now stands rather than any
 lane's own tree.
@@ -50,7 +55,19 @@ only because the report above was re-run after the change.
 **[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the
 builds, the reversal, the control and the suite runs behind this block were performed in
 `E:/MultiAgent/Stratocracy` on branch `master` on this developer box, with the editor closed
-throughout, and the save file named above is this box's and is in no checkout.]**)
+throughout, and the save file named above is this box's and is in no checkout.
+THE REPORT BEHIND THE FIGURE AT THE TOP OF THIS BLOCK IS `reportCreatedOn 2026.09.02-00.38.55`,
+re-run after the last lane landed so it describes this tree rather than any earlier one.
+IT REPLACED `2026.09.01-23.31.22`, WHICH THIS BLOCK CITED UNTIL THE CLAUSES LANDED, AND THE
+OVERWRITE WAS CORRECT RATHER THAN CARELESS. `strat-test-author` ran to a scratch path first,
+exactly as its brief required, and the sweep then reported TREE DISAGREES WITH ITSELF -- the
+scratch report carried 347 while the macro census had already moved to 362 -- and REPORT
+IDENTITY against a test file newer than the report. A valid citation of a stale report is a
+citation of the WRONG TREE, so it re-ran to the canonical path and said so. That is the
+protocol working, not a lane exceeding it.
+It is named HERE, deliberately far from the figure itself: a `reportCreatedOn` sitting
+within a couple of hundred characters of a suite count makes the sweep read that count as
+QUOTED rather than LIVE, and this record has been caught by that before.]**)
 
 _Last run 2026-09-01 (THE SUITE IS NOT GREEN, AND THE FIGURE THIS RECORD HAS BEEN CARRYING
 WAS FALSE AGAINST ITS OWN TREE. Written by the `coordinator`, whose file this is, in lane and
@@ -59,16 +76,32 @@ under no exception clause -- no code was written by this seat in this pass.
 CARRIES THIS RECORD'S LIVE FIGURE. THIS BLOCK IS NOT WITHDRAWN: it was TRUE of the tree it
 was written against, and its diagnosis is what found the cause. What it got wrong is the
 paragraph below headed WHAT IS NOT KNOWN -- the cause WAS findable and has since been
-found, and the hypothesis that block names was not the answer. See above.]**
+found, and the hypothesis that block names was not the answer. See above.
+**AND THE ENUMERATION ABOVE WAS ITSELF THE DEFECT, CORRECTED 2026-09-01 LATER THE SAME
+EVENING.** By naming ONE thing this block got wrong, the stamp implied everything else in
+it still held. TWO FURTHER SENTENCES BELOW WERE LEFT IN THE PRESENT TENSE AND ARE NOW
+FALSE: the one naming the failing clause, which PASSES in this tree, and the one naming
+the live report on disk, which has been replaced twice since. Both are corrected in place
+below. **NEITHER WAS CAUGHT BY `strat_banner_sweep.py`** -- it compares suite COUNTS, not
+the stamp a block cites nor the pass/fail state of a clause a block names, so a superseded
+block can carry a false present-tense claim past a clean sweep. Found by
+`strat-gameplay-engineer` reading this file while working from it, not by any guard.]**
 The suite was **346/347** at that pass -- 347 entries, 346 Success, ONE FAILED, zero notRun,
 zero succeededWithWarnings -- and the macro census of that tree agreed at 347, so nothing had
-stopped registering and no clause had gone missing. The failing clause is
+stopped registering and no clause had gone missing. The clause that failed AT THAT PASS was
 `Stratocracy.StratPlay.T-INT-05.RefreshFromMachineDecoratesWithNoRegistration`, which asserts
 that the controller's own refresh decorates the strip with nothing registered as decorator.
+**IT PASSES NOW** -- repaired in lane by `strat-test-author`; the cause is in the banner
+above. This sentence read `The failing clause is` until 2026-09-01, which was a present-tense
+claim about a tree that had already been fixed.
 MEASURED THREE TIMES AND NOT ONCE, and read from the exported report rather than from the log,
 which undercounts by exactly one every run. `strat-gameplay-engineer` reported it first while
 landing W8 item (4); two further runs by the `coordinator` agree, the third being the control
-below. The live report on disk is `reportCreatedOn 2026.09.01-19.41.17`.
+below. The report on disk AT THAT PASS was `reportCreatedOn 2026.09.01-19.41.17`.
+**THAT STAMP IS LONG DEAD AND THIS SENTENCE SAID `is` UNTIL 2026-09-01.**
+`Saved/AutomationReport` is a SINGLE PATH that every run truncates, and it has been
+rewritten several times since -- the live stamp belongs in the topmost banner and nowhere
+else, which is why this line now names no current figure at all.
 THE FAILURE IS PRESENT AT `cada741`'S OWN SOURCE BYTES AND IS NOT CAUSED BY THE UNCOMMITTED
 W8 ITEM (4) WORK SITTING IN THIS TREE -- which matters, because that work is on the same
 refresh path and was the obvious suspect. THE CONTROL, and it is stated in full because a
@@ -3598,6 +3631,83 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
 
+- **2026-09-01, THE `coordinator` (ACTING AND WRITING; IN LANE -- THIS IS ITS OWN FILE) --
+  USER RULING: W8 ITEM (3), THE REPAIR-ELIGIBILITY PIP, IS CUT, AND THE REACTIVE REPAIR
+  RECEIPT IS BUILT IN ITS PLACE. W8 IS NOW CLOSED EXCEPT FOR ASSET WORK.** Ruled in session
+  over base `f079b9f`, pushed and CI-green. No code was written by this seat in this pass;
+  the banner owns the suite figure and this entry states none.
+  - **THE GAP IS REAL AND WAS RE-MEASURED RATHER THAN QUOTED FROM THE ENTRY BELOW.**
+    `Combat.h`'s `repairAmount` takes `onOwnedObjective` and `enemyAdjacent` AS ARGUMENTS;
+    `Ui.h`'s snapshot publishes neither; `Turn.h`'s `RepairSubject` carries `enemyAdjacent`
+    but requires the CALLER to fill it; and the only implementation is a `static` function in
+    `Driver.good.cpp`, declared in no header. There is no module-side predicate to ask.
+  - **UPSTREAM IS NOT THE ANSWER TODAY, AND THIS IS THE MEASUREMENT THAT RETIRES THE
+    RE-VENDOR ROUTE THE ENTRY BELOW OFFERS.** `stratocracy-crew` is three commits ahead of
+    the vendored `rulesCommit`, and all three touch only `README.md`, `crew/`, `evidence/`
+    and `run.py` -- NO rules source. `repairAmount`'s signature there is identical and
+    upstream carries no repair predicate either. A re-vendor today would gain nothing.
+  - **AND THE BUILD PULSE IS NOT A PRECEDENT FOR BUILDING IT ANYWAY, WHICH IS THE
+    DISTINCTION THE RULING TURNS ON.** `FactoryBuildPulses` ORs booleans THE MODULE ALREADY
+    DECIDED. A pip would require the bridge to COMPUTE `enemyAdjacent` -- an adjacency scan
+    whose only implementation is `static` inside the rules -- making the engine a second
+    author of an ANTI-FORTRESS RULE OUTCOME. It would not be hard; it would be silently
+    divergent the day adjacency or zone-of-control moves upstream, and no clause in this tree
+    could catch it, because both spellings would be this project's own.
+  - **WHAT REPLACES IT, AND WHY IT COSTS NO NEW AUTHORITY.** Sec 2.11.6's concept ledger names
+    TWO mitigations for the same failure -- *"heal silently fails next to an enemy; reads as
+    a bug"* -- the PREDICTIVE pip and the REACTIVE receipt, and **BOTH WERE UNBUILT AT THE
+    TIME OF THIS RULING**: no Sec 2.11.6 one-shot fires at all (`FiredOneShotTipIds` is storage
+    with no writer) and `EStratReceiptKind` carries only `IncomeRate` and `KillFame`. The
+    receipt is derivable from ALREADY PUBLISHED fields by the mark/compare pattern the
+    existing receipts use -- a positive `FStratUnitView::Hp` delta across the turn advance --
+    so it needs no predicate, no new bridge method and no second author.
+  - **A READING OF THIS SEAT'S WAS WRONG DURING THIS PASS AND IS RECORDED BECAUSE IT WOULD
+    HAVE JUSTIFIED A MUCH LARGER SCOPE.** An intermediate measurement concluded THE ENGINE
+    NEVER REPAIRS AT ALL, on the grounds that no file outside `Source/StratRules/` calls
+    `applyStartOfTurnRepair` except one test passing an EMPTY subject vector. That is true and
+    it is not the whole route: the bridge advances turns through `strat::applyCommand`, whose
+    `EndTurn` arm calls `openTurn`, which builds the `RepairSubject` vector -- deriving
+    both board facts inside the rules -- and applies repair every turn. **THE GAME DOES REPAIR
+    UNITS.** Had the wrong reading been recorded, the next reader would have scoped this item
+    as "implement repair" rather than "report it".
+    **[CORRECTED 2026-09-01 BY THE `coordinator`, ITS OWN FILE, AFTER
+    `strat-integration-reviewer` CAUGHT IT. THE SENTENCE ABOVE FIRST NAMED `openActiveTurn`,
+    AND THAT WAS THE WRONG FUNCTION -- INSIDE THE ONE BULLET WRITTEN TO STOP A READER
+    MIS-TRACING THIS EXACT ROUTE.** The `EndTurn` arm calls `openTurn`, in
+    `Source/StratRules/Replay.good.cpp`. `openActiveTurn` is the OLDER SIBLING over the debug
+    driver's own `Session` in `Driver.good.cpp`, and `Replay.h` says so where it names the
+    pair; the bridge never runs it. Both functions build a `RepairSubject` vector the same
+    way, which is why the conclusion -- THE GAME DOES REPAIR UNITS -- was and is correct, and
+    why the error survived being written down: the claim it supports is true, so nothing about
+    it read wrong. Only the route was false, and a reader following it would have landed in
+    the one file the bridge does not use. Corrected here rather than swapped silently.
+    NO GUARD COULD HAVE CAUGHT THIS: the sweep compares suite counts, the citation gate refuses
+    LINE numbers and this cited a SYMBOL, and a symbol that exists greps like a correct one --
+    which this record has already recorded as a hazard under its own name. It was found by an
+    agent reading the file against the source while gating something else.]**
+  - **WHAT THIS RULING DOES NOT UNBLOCK, NAMED SO IT IS NOT ASSUMED CLOSED.** The `enemy
+    adjacent` ONE-SHOT is still blocked and is blocked on exactly what the pip was blocked on.
+    The receipt only needs the POSITIVE case, which a positive HP delta gives it. The one-shot
+    must fire on the BLOCKED case, and a zero delta cannot distinguish "blocked by an adjacent
+    enemy" from "already at full HP" or "not on an owned objective" -- that discrimination is
+    the missing predicate again. It stays open, and its route is upstream.
+  - **ONE GATE OBSERVATION IS ANSWERED HERE AND DOES NOT HOLD, RECORDED SO IT IS NOT
+    RE-RAISED.** The same gate read the canonical automation report as PREDATING the
+    uncommitted C++, which would have meant the banner's live figure described a tree without
+    it. Measured instead of argued: the report's mtime is `19:31:22` local and the newest
+    changed file under `Source/` is `19:22:08` local, so the report is NINE MINUTES NEWER and
+    does describe this tree. The gate flagged its own uncertainty on that point in terms --
+    it did not run the suite and said so -- which is why this is answered rather than treated
+    as a finding. **The reviewer's OTHER prose observation, the wrong function name above, was
+    correct.** One right, one wrong, from the same pass and both hedged honestly.
+  - **AND ONE ADVISORY IS OWED TO A LANE THIS SEAT CANNOT WRITE.** The gate found that
+    `FStratBridge::RestoreFromSaveText` replaces game state WITHOUT clearing the retained
+    repair-observation record, and is safe only because a freshness guard earlier in that same
+    method refuses when the command log is non-empty. Every other state-replacing path clears
+    the record explicitly and says why. The code is CORRECT TODAY; what is missing is the
+    sentence pinning the invariant, so a future relaxation of that guard would silently carry a
+    previous match's floaters into a restored save. `StratBridge.h` is
+    `strat-gameplay-engineer`'s and was not reached into.
 - **2026-09-01, THE `coordinator` (ACTING AND WRITING; IN LANE -- THIS IS ITS OWN FILE) --
   THE RED CLAUSE IS FIXED AND THE GUARD IS FIXED, AND WHAT IS LEFT IS THE CLASS OF DEFECT
   BEHIND IT: FIXTURES THAT READ THE DEVELOPER'S OWN DISK.** Over base `cada741`, with three

@@ -16,6 +16,233 @@
 ## NEXT
 
 - **2026-09-01, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `f079b9f`, UNCOMMITTED) — W8 ITEM (4), THE
+  BUILD PULSE, DRAWING HALF: "DRAWING-ONLY, NO C++" WAS FALSE A SECOND TIME, AND THE SECOND
+  REASON WAS NOT THE FIRST ONE.**
+  - **THE GAP, AND IT IS A GAP THE RECORD DESCRIBED AS CLOSED.**
+    `FStratFactoryView::bBuildPulse` was composed by `FStratBridge::FactoryBuildPulses`,
+    mirrored onto the view model by `StratBuildViewModel`, published, reflected — **and read
+    by nothing.** Measured, not inferred: before this change the only tree-wide hits for
+    `bBuildPulse` outside `Source/StratRules/` were the declaration in `StratViewModel.h`, the
+    single assignment inside `StratBuildViewModel` in `StratViewModel.cpp`, and three PROSE
+    references in header blocks citing it as a precedent. **No consumer.**
+  - **WHY A CONTENT PASS COULD NOT HAVE CLOSED IT, WHICH IS THE PART WORTH READING.**
+    `AStratBoardActor` carried exactly THREE `UHierarchicalInstancedStaticMeshComponent`
+    overlays — `ReachOverlay`, `TargetOverlay`, `ObjectiveOverlay` — each a
+    `CreateDefaultSubobject`, each with one fixed `EditDefaultsOnly` material slot, and its
+    own `OverlayMesh` property said so in terms: *"One mesh, three components, three
+    materials."* **There is no generic map and no extensible slot**, so `Content/` had nothing
+    to bind a fourth meaning to. That is a different cause from the first time this claim
+    failed, and both are the same lesson: the record described the SUBJECT of the remaining
+    work correctly and its LOCATION wrongly.
+  - **THE FIX: THE FOURTH COMPONENT THAT `StratBoardActor.h`'S OWN HEADER BLOCK PREDICTED.**
+    That block already said *"A FOURTH MEANING MUST BE A FOURTH COMPONENT and never a third
+    use of an existing one"*, so the shape was ruled before it was needed and nothing new was
+    decided here. `BuildPulseOverlay` + `BuildPulseMaterial`, beside the ring's pair.
+  - **A SET AND NOT ONE HEX, WHICH IS THE OPPOSITE OF `ShowObjective` AND ARGUED RATHER THAN
+    COPIED.** The ring takes a single `FIntPoint` precisely so "every objective" cannot arrive
+    through the back door — §4.7 authors one objective per seat. The pulse is genuinely per
+    factory and several are lit at once in the ordinary case, so a single-hex signature would
+    have been the defect here rather than the guard. `ShowBuildPulses(const TArray<FIntPoint>&)`.
+  - **THE MATERIAL IS UNSET AND THAT IS THE STATE THIS SHIPS IN.** `BuildPulseMaterial` is
+    `EditDefaultsOnly`, has NO initializer and names no `/Game/` path — `ObjectiveMaterial`'s
+    block is the model and this one follows it. No pulse material instance exists in
+    `Content/` yet and `BP_StratBoard` carries no default. **Unset is LEGITIMATE**: the pulse
+    then draws in `OverlayMesh`'s own material, so a lit factory looks like a reach highlight
+    — wrong on screen rather than absent from it, which is why it is silent and not logged
+    while a missing `OverlayMesh` is logged. Stated at the property, where the next reader
+    lands.
+  - **NO ANIMATION IS DRIVEN FROM C++, AND THE REASON IS A MEASUREMENT RATHER THAN A
+    PREFERENCE.** `MI_Overlay_Objective` — the only member of this material family in the tree
+    — is a `MaterialInstanceConstant` with one vector parameter, **zero scalar parameters and
+    zero static switches**, measured against the live editor's reflection on 2026-09-01. So
+    there is no parameter name for a pulse to drive; code creating a dynamic instance to set
+    one would name a parameter that does not exist, which is a silent no-op that reads as a
+    broken pulse. **How the pulse pulses is the content lane's decision, in the material.**
+    This class turns instances on and off and nothing more.
+  - **THE CALL SITE: `UStratMatchSubsystem::ApplyView`, BESIDE THE RING, UNCONDITIONAL IN BOTH
+    DIRECTIONS.** `ShowBuildPulses` is called on EVERY refresh, with an empty array when
+    nothing pulses — there is no `if (Num() > 0)` guard, because that is the delta-shaped
+    thinking that would leave last turn's pulses standing on a turn that lit none. The loop
+    tests one already-composed bool and carries across one already-composed hex; it consults
+    `bHasBuiltThisTurn`, `bSpawnBlocked`, `Owner` and `ViewingSide` **not at all**, each being
+    folded into `bShouldPulse` upstream or deliberately excluded from it there. **This class
+    asks no rules question and could not: it holds the model, not the fold.**
+  - **THE BOARD-SIDE READ WAS DECIDED OUT LOUD, AND THE DECISION WAS "STATE THE CONSEQUENCE
+    ONCE, POINT AT IT TWICE".** `bShouldPulse` inherits `side == activeSide` from
+    `strat::canBuildAt`, so **on the opponent's hot-seat turn the pulse is dark board-wide, on
+    half of all turns, and that is CORRECT.** It was derivable from the `canBuildAt` expansion
+    already in `FStratFactoryBuildPulse::bShouldPulse`'s block, and derivable is not said: a
+    reader meeting a dark board first will reach for the unset material, which is the wrong
+    place to look on every other turn. **The paragraph was added at `bShouldPulse`, where the
+    derivation lives**; `FStratFactoryView::bBuildPulse` and
+    `AStratBoardActor::ClearBuildPulses` each got a one-sentence POINTER to it and not a copy,
+    because a copy of an argument is a copy that can go stale.
+  - **WHAT CHANGED, BY FILE.** `StratBoardActor.h`: `BuildPulseOverlay`,
+    `BuildPulseMaterial`, `BuildPulseDrawnHexes`, `ShowBuildPulses` / `ClearBuildPulses` /
+    `GetBuildPulseOverlayCount`, and three prose counts stamped rather than re-numbered.
+    `StratBoardActor.cpp`: the subobject, its entry in the no-collision loop, the mesh and
+    material assignment in `BeginPlay`, the three method bodies. `StratMatchSubsystem.cpp`:
+    the collect-and-show block in `ApplyView`. `StratBridge.h` and `StratViewModel.h`: the
+    board-side-read paragraph and its two pointers, prose only. **Nothing else:** no
+    `Source/StratRules/` byte, no `Data/` byte, no `Source/Stratocracy/` file, no `Tests/`
+    file, no `Content/` asset, no `.uproject` entry, no `.Build.cs`.
+  - **THREE PROSE COUNTS WENT FALSE AND WERE STAMPED, NOT RE-NUMBERED**, on the header
+    block's own stated reason that the count was never the invariant: `OverlayMesh`'s "One
+    mesh, three components, three materials", the constructor's "NO COLLISION ON EITHER
+    OVERLAY" (a two-era survivor), and the header block's own component enumeration. The
+    `BeginPlay` log line naming which highlights will not draw was extended rather than
+    stamped — it is a list of subjects, not a count.
+  - **A DEBT, WITH THE CONDITION THAT DISCHARGES IT.** `GetBuildPulseOverlayCount` has no
+    caller in the tree today. It exists for the clause named in the handoff below, and an
+    accessor with no named reader is the shape that rots — the same debt
+    `GetObjectiveOverlayCount` took on and discharged. **Discharged when
+    `Stratocracy.StratPlay.T-UI-02.BuildPulseOverlayIsDrawnFromTheModelAlone` lands.**
+  - **BUILT AND GREEN ON BOTH TARGETS.** `StratocracyEditor` and the monolithic `Stratocracy`
+    Game target each printed `Result: Succeeded`, exit 0, with zero errors and zero warnings;
+    the Game target relinked `Binaries\Win64\Stratocracy.exe`. The suite was run to a SCRATCH
+    `-ReportExportPath` so the canonical `Saved/AutomationReport/` was not overwritten — no
+    clause failed and none was skipped. **The count and the phase verdict are `global.md`'s
+    and are deliberately not restated here.**
+
+- **2026-09-01, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `f079b9f`, UNCOMMITTED) — W8 ITEM (3), THE
+  REACTIVE REPAIR RECEIPT, C++ HALF: THE ARITHMETIC WENT DOWN A LAYER RATHER THAN SIDEWAYS,
+  AND THE FILE THAT FORBADE IT IN ADVANCE WAS OBEYED RATHER THAN AMENDED.**
+  - **[STAMPED 2026-09-01, LATER THE SAME DAY. THIS ENTRY'S HEADER READ `UNCOMMITTED and —
+    read this before citing anything below — **UNBUILT**` AND THAT IS NO LONGER TRUE. IT IS
+    BUILT.** The bullet directly below is retained as the record of the pass that failed, not
+    as a live statement about this tree, and its own opening sentence is retracted:
+    RETRACTED> "THE BUILD DID NOT RUN AND NOTHING HERE IS VERIFIED."
+    **WHAT THE COMPILER SAID ON THE PASS THAT DID RUN: NOTHING.** With the editor genuinely
+    closed — verified with a control, `tasklist` returning 93 `svchost` rows and ZERO matching
+    `unreal|livecoding`, and `netstat -ano` returning no line containing `9315` —
+    `Build.bat StratocracyEditor Win64 Development -project=… -waitmutex` ran 87 actions and
+    printed `Result: Succeeded`, exit 0, in 46.83 s. **NOT ONE LINE OF THE CHANGE HAD TO
+    MOVE: zero errors, zero warnings, no UHT diagnostic, and the one-subtraction resolution
+    described below stands exactly as written.** `Module.StratUI.gen.cpp` and
+    `Module.StratPlay.gen.cpp` both compiled, so the two new reflected shapes —
+    `EStratReceiptKind::UnitRepair` and `FStratUnitRepairView` — went through the header tool.
+    The monolithic `Stratocracy` Game target was then built as well and also printed
+    `Result: Succeeded`, exit 0, relinking `E:\MultiAgent\Stratocracy\Binaries\Win64\Stratocracy.exe`
+    — which matters for this change specifically, because it touches `StratBridge`, and a
+    modular editor build structurally cannot observe the `LNK2005` collision class that
+    directory's vendored shims exist to prevent. `-NoHotReloadFromIDE` was passed on NEITHER
+    target, per `.agents/ue-project-context.md`: it is for linked worktrees, and on this tree
+    it only moves the failure later.]**
+  - **THE BUILD DID NOT RUN AND NOTHING HERE IS VERIFIED — HISTORY, SUPERSEDED BY THE STAMP
+    ABOVE; TRUE OF THE 2.73 s PASS IT DESCRIBES AND OF NO LATER ONE.** The editor was
+    reported closed in the dispatch brief and was OPEN — measured, not inferred:
+    `Get-CimInstance Win32_Process` returned PID 44064,
+    `"…/UnrealEditor.exe" "E:\MultiAgent\Stratocracy\Stratocracy.uproject"`, alongside
+    `LiveCodingConsole` PID 9348. `Build.bat StratocracyEditor Win64 Development` therefore
+    failed in 2.73 s with `Unable to build while Live Coding is active. Exit the editor and
+    game, or press Ctrl+Alt+F11 if iterating on code in the editor or game` /
+    `Result: Failed (OtherCompilationError)`. **That is an EARLIER failure than the
+    `LNK1104`/"cannot open for writing" one `.agents/ue-project-context.md` describes, and the
+    same cause** — the Live Coding mutex catches it before any compile action starts, so
+    nothing in this change has been through UHT. `-NoHotReloadFromIDE` was NOT passed: it
+    defeats that mutex and would have moved the failure to the link step on this tree, which
+    that document records as measured on 2026-08-22. **Neither target was built; the suite was
+    not run; no report stamp is cited and the dead citation elsewhere in this file was left
+    alone.**
+  - **THE GAP.** §2.11.6's `+[N] HP — repaired`. The game already repairs — `strat::openTurn`
+    (`Replay.good.cpp`) builds the `RepairSubject` vector, derives `onOwnedObjective` and
+    `enemyAdjacent` itself, calls `strat::applyStartOfTurnRepair` and adds each
+    `RepairApplied::amount` to `GameUnit::hp`. **And then discards the vector: `openTurn`
+    returns `void`.** So the module's own amount reaches NO caller through any channel.
+    `Driver.good.cpp`'s `openActiveTurn` pushes it into a string list, but that is the debug
+    driver over `Session` and the bridge never runs it. The brief's third hoped-for route —
+    "a channel where the module's own `RepairApplied::amount` reaches the engine without
+    anyone subtracting" — **does not exist in the vendored tree, and closing it is a rules
+    change.** See the change request at the foot of this entry.
+  - **THE OBSTACLE AND HOW IT WAS RESOLVED.** `StratTransientReceipts.cpp` opens with a
+    standing claim that there is exactly ONE subtraction in it — the `KillFame` amount — and
+    that the header's argument for it "does not extend to a second one". **An HP delta is that
+    second subtraction and the claim is RIGHT to forbid it there.** The `KillFame` argument
+    turns on `fameCombat` being a monotone accumulator with one cause, so a rise between two
+    refreshes has exactly one meaning. **HP has none of those properties**: it falls under
+    §2.6, rises under §2.7, and arrives fresh at `hpMax` on a §2.7 spawn — a rise measured
+    between two PRESENTATION REFRESHES has three possible causes and that layer cannot say
+    which it saw.
+    - **So the subtraction was taken one layer down, in `FStratBridge`, bracketed around the
+      SINGLE `strat::applyCommand` call that opens a turn.** Inside `applyCommand`'s `EndTurn`
+      arm the only statement in the rules module that writes `GameUnit::hp` is `openTurn`'s
+      repair loop — `strat::endTurn` and `strat::beginTurn` mutate no unit, `accrueIncome`
+      moves Fame, `captureTick` moves ownership, and `resolveBuilds`, the one thing that
+      creates a unit, is called from the `Build` arm and nowhere else. **A rise across that
+      bracket IS a §2.7 repair by construction, not by inference** — the property the
+      presentation layer cannot have, at the only layer that can. Verified by reading
+      `Replay.good.cpp`'s `openTurn` and `applyCommand` and `Turn.good.cpp`'s `beginTurn` /
+      `endTurn`; a re-vendor that adds a second HP writer to that arm invalidates it.
+    - **The forbidding paragraph was NOT edited.** It still reads exactly as it did and is
+      still TRUE of that file: the repair arm's `Amount` is copied, character for character
+      with the income arm's verbatim assignment. A note was APPENDED recording that the check
+      its own last sentence demands was actually performed, what it caught, and where the
+      arithmetic went instead.
+    - **The rejected alternative was the one the brief listed first** — argue that a second
+      subtraction is justified and restate the claim to match. It was killed by the
+      three-causes point above: no restatement makes an unbracketed HP delta attributable, so
+      it would have been a weaker claim covering a defect rather than a stronger one.
+  - **WHAT CHANGED, BY FILE.** `StratBridge.h`: plain struct `FStratRepairApplication`
+    (`UnitId`, `Side`, `HpBefore`, `HpAfter`, `HpMax`, `Amount`) and
+    `RepairsAtTurnOpen(TArray<...>&) const`, plus the retained member
+    `RepairsAtLastTurnOpen`. `StratBridge.cpp`: the `StratRepairObservation` namespace, an
+    `EndTurn` bracket in `Submit` beside the existing Attack one, the accessor, and clears in
+    `LoadDefinitions`, `LoadScenarioFromFile` and `ReplayLog`. `StratTransientReceipts.h`:
+    `EStratReceiptKind::UnitRepair`, `FStratReceiptView::UnitId`, the reflected mirror
+    `FStratUnitRepairView`, and a four-argument `StratDecideTransientReceipts` beside the
+    old three-argument form. `StratTransientReceipts.cpp`: rule 5, copy-only.
+    `StratMatchSubsystem.cpp`: one bridge read and a field-for-field mirror in `ApplyView`.
+    **Nothing else:** no `Source/StratRules/` byte, no `Data/` byte, no `Source/Stratocracy/`
+    file, no `Tests/` file, no `.uproject` entry, no `.Build.cs`.
+  - **THE THREE DESIGN QUESTIONS, RESOLVED.**
+    - **VIEWER-RELATIVITY: none, deliberately.** §2.7 repairs the ACTIVE side alone, so on a
+      hot-seat opponent's turn every entry is theirs; a `ViewingSide` filter here would make
+      the arm silent on exactly half of all turns. `FStratReceiptView::Side` is already
+      declared "an index …, never a you/enemy answer" precisely so a receipt can be about the
+      other side, `EStratTurnBanner` is the one place the mapping happens, and `IncomeRate`
+      already fires for whichever side is to move. **Whether a hot-seat screen DRAWS the
+      opponent's floaters is a drawing decision with both facts in hand; suppressing them in
+      a decider would take that decision away and hide it.**
+    - **THE JOIN: unit id, via `strat::findUiUnitView`.** An INDEX join reads one unit's HP
+      under another's identity the day either order moves, and nothing on screen distinguishes
+      a floater on the wrong unit from a correct one. A HEX join is the shape that works for a
+      FACTORY and cannot work here — a factory's hex is its identity, a unit's hex is a field
+      that moves, and two snapshots either side of a turn boundary are where it is least
+      trustworthy. Units absent from either snapshot are skipped in silence; neither case is
+      reachable across this bracket today and both are handled, because the alternative is
+      code whose correctness rests on a rules fact stated in a comment.
+    - **ZERO IS NOT EVIDENCE, and the receipt covers the POSITIVE CASE ONLY.** An absent entry
+      cannot be told apart from full HP, from a unit off an owned objective, or from a repair
+      §2.7 BLOCKED by an adjacent enemy. §2.11.6's `enemy adjacent` one-shot needs exactly that
+      third reading, **was not attempted, and remains blocked upstream** on the same missing
+      module-side predicate that got the eligibility pip cut. Stated on the enum arm, on the
+      `Amount` tooltip and in the header block, so no drawing layer can reach the field without
+      passing the warning.
+  - **THE COPY OBLIGATION IS ON A PIN, NOT ONLY IN A HEADER BLOCK.** `+[N] HP — repaired`,
+    em dash, `[N]` = `FStratReceiptView::Amount` — written into the `Amount` `UPROPERTY`
+    tooltip and into the `UnitRepair` enumerator's, which is what a UMG author actually meets
+    in the editor. It also records that amount-voiced copy is CORRECT on this arm (unlike
+    `IncomeRate`) and that nothing may be drawn off an absence.
+  - **A DEBT AND A GAP, WRITTEN DOWN RATHER THAN OWNED QUIETLY.** (a) `ReplayLog` reaches
+    `strat::replayLog` directly and never passes through `Submit`, so a log loaded in a fresh
+    process replays its turn boundaries unobserved; the record is CLEARED there rather than
+    stale-filled. **This is the same gap `Submit`'s own block already records for the
+    `STRAT-COMBAT` family**, with the same fix and the same reason it is not taken.
+    **Discharged when** a phase needs replayed turn boundaries observed. (b) The first turn,
+    opened inside `strat::seedFromScenario`, is not measured — no earlier reading exists and
+    every unit is at `hpMax` on a fresh seed.
+  - **CHANGE REQUEST, UPSTREAM, NOT TAKEN HERE.** `strat::openTurn` discards
+    `applyStartOfTurnRepair`'s return. Publishing it — an out-parameter, or a return type —
+    would let the bridge MIRROR the module's own `RepairApplied::amount` and delete the
+    subtraction described above entirely. Behaviour: `openTurn` reports what it healed.
+    Acceptance: T-TURN-08 / T-TURN-09's existing subjects. Upstream file:
+    `E:\MultiAgent\stratocracy-crew` → `cpp_reference/Replay.good.cpp` and `Replay.h`.
+    **Not required for this receipt to be correct**, only for it to be a mirror instead of a
+    bracketed measurement.
+
+- **2026-09-01, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `cada741`, UNCOMMITTED at the time of writing --
   the user commits) -- W8 ITEM (4), THE BUILD PULSE, C++ HALF: THE CONDITION IS NOW A BRIDGE
   ANSWER, BECAUSE ITS TWO HALVES REACHED THE ENGINE THROUGH DIFFERENT DOORS AND NOTHING COULD

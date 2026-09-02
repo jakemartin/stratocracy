@@ -47,13 +47,20 @@ AStratBoardActor::AStratBoardActor()
 	ObjectiveOverlay = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("ObjectiveOverlay"));
 	ObjectiveOverlay->SetupAttachment(BoardRoot);
 
-	// NO COLLISION ON EITHER OVERLAY, and this is the same rule `AStratUnitActor` states
+	BuildPulseOverlay = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("BuildPulseOverlay"));
+	BuildPulseOverlay->SetupAttachment(BoardRoot);
+
+	// NO COLLISION ON ANY OVERLAY, and this is the same rule `AStratUnitActor` states
 	// for itself: every rules question this game asks is asked about a HEX, so the cursor
 	// must reach the tile underneath. An overlay that blocked the trace would make a hex
 	// unpickable exactly when it is highlighted as pickable, which is the worst available
-	// time for it.
+	// time for it. THE BUILD PULSE IS THE CASE THAT MAKES THIS SHARPEST: it lights the very
+	// factory tiles a player is about to click on to open a production menu, so a pulse with
+	// collision would make the pulse itself the reason the build could not be started.
+	// [STAMPED 2026-09-01: this said "ON EITHER OVERLAY" back when there were two. It is
+	// count-free now for the header block's reason.]
 	for (UHierarchicalInstancedStaticMeshComponent* const Overlay :
-	     { ReachOverlay.Get(), TargetOverlay.Get(), ObjectiveOverlay.Get() })
+	     { ReachOverlay.Get(), TargetOverlay.Get(), ObjectiveOverlay.Get(), BuildPulseOverlay.Get() })
 	{
 		Overlay->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		Overlay->SetCanEverAffectNavigation(false);
@@ -76,6 +83,7 @@ void AStratBoardActor::BeginPlay()
 		ReachOverlay->SetStaticMesh(OverlayMesh);
 		TargetOverlay->SetStaticMesh(OverlayMesh);
 		ObjectiveOverlay->SetStaticMesh(OverlayMesh);
+		BuildPulseOverlay->SetStaticMesh(OverlayMesh);
 
 		if (ReachMaterial != nullptr)
 		{
@@ -94,12 +102,22 @@ void AStratBoardActor::BeginPlay()
 		{
 			ObjectiveOverlay->SetMaterial(0, ObjectiveMaterial);
 		}
+		// UNSET IS SILENT HERE TOO, ON THE RING'S REASONING AND WITH ONE DIFFERENCE WORTH
+		// KNOWING: unset is the state this SHIPS in as of 2026-09-01, because no pulse
+		// material exists in `Content/` yet. So this branch is not taken on any board in the
+		// tree today and the pulse draws in `OverlayMesh`'s material -- a pulse that looks
+		// like a reach highlight, which is wrong on screen rather than absent from it. The
+		// property's own block carries the argument and the content-lane handoff.
+		if (BuildPulseMaterial != nullptr)
+		{
+			BuildPulseOverlay->SetMaterial(0, BuildPulseMaterial);
+		}
 	}
 	else
 	{
 		UE_LOG(LogStratPlay, Log,
-			TEXT("Board '%s' has no OverlayMesh set; reach, target and objective-ring "
-			     "highlights will not draw."),
+			TEXT("Board '%s' has no OverlayMesh set; reach, target, objective-ring and "
+			     "BUILD-pulse highlights will not draw."),
 			*GetName());
 	}
 }
@@ -518,6 +536,29 @@ void AStratBoardActor::ShowObjective(FIntPoint Hex)
 void AStratBoardActor::ClearObjective()
 {
 	FillOverlay(ObjectiveOverlay, ObjectiveDrawnHexes, TArray<FIntPoint>());
+}
+
+void AStratBoardActor::ShowBuildPulses(const TArray<FIntPoint>& Hexes)
+{
+	// THROUGH THE SAME `FillOverlay` THE OTHER THREE USE, so the pulse cannot drift from the
+	// highlights in how it clears or how it is offset off the tile plane -- and so the
+	// no-op-when-unchanged path arrives for free, which this overlay needs more than they do
+	// (see `BuildPulseDrawnHexes`). THE SET IS PASSED STRAIGHT THROUGH: no sort, no dedupe,
+	// no filter. It arrives in `FStratViewModel::Factories` order, which is the module's
+	// canonical hex order, and re-ordering it here would make this class a second author of
+	// an order `StratViewModel.h` declares load-bearing.
+	FillOverlay(BuildPulseOverlay, BuildPulseDrawnHexes, Hexes);
+}
+
+void AStratBoardActor::ClearBuildPulses()
+{
+	FillOverlay(BuildPulseOverlay, BuildPulseDrawnHexes, TArray<FIntPoint>());
+}
+
+int32 AStratBoardActor::GetBuildPulseOverlayCount() const
+{
+	// Off the component and never off a cached count -- see the declaration.
+	return BuildPulseOverlay != nullptr ? BuildPulseOverlay->GetInstanceCount() : 0;
 }
 
 int32 AStratBoardActor::GetObjectiveOverlayCount() const

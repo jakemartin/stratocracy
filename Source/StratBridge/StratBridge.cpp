@@ -7,6 +7,9 @@
 
 #include "StratData/StratDataRows.h"
 
+// `std::sort`, for the unit-id ordering `StratRepairObservation::CaptureAfter` declares.
+#include <algorithm>
+
 // A REAL module object, unlike Source/StratRules/. That directory holds vendored
 // C++ with no IMPLEMENT_MODULE, and listing it in Stratocracy.uproject once made
 // the editor abort at startup with "The game module 'StratRules' could not be
@@ -124,6 +127,10 @@ FStratResult FStratBridge::LoadDefinitions(const UDataTable* UnitTable, const UD
 	// into the vector that just moved. Carried across a reload it would silently
 	// tell the AI to build a different unit type than the caller named.
 	Buildlist.clear();
+	// And §2.11.6's repair record. Its unit ids name units of a seed that just went stale,
+	// so carrying it across would draw this turn's floaters over whatever now holds those
+	// ids. Same reasoning as the log directly above, one field along.
+	RepairsAtLastTurnOpen.clear();
 	return FStratResult::Ok();
 }
 
@@ -181,6 +188,10 @@ FStratResult FStratBridge::LoadScenarioFromFile(const FString& ScenarioFilePath,
 	// on the success path only: a failed load leaves the previous match intact and
 	// its log with it.
 	Recorded.clear();
+
+	// And the repair record with it, on the success path only and for the log's reason
+	// exactly: the units it names belong to the match that was just replaced.
+	RepairsAtLastTurnOpen.clear();
 
 	bSeeded = true;
 	return FStratResult::Ok();
@@ -509,6 +520,115 @@ namespace StratCombatObservation
 	}
 }
 
+// ---------------------------------------------------------------------------
+// StratRepairObservation -- §2.11.6's repair receipt, measured across the one
+// `applyCommand` call that opens a turn.
+//
+// THE WHOLE ARGUMENT IS ON `FStratRepairApplication` IN THE HEADER and is not restated
+// here: why the module's own `RepairApplied::amount` is unreachable, why
+// `strat::repairAmount` may not be re-asked, and why the bracket around `applyCommand`'s
+// `EndTurn` arm is what makes an HP rise mean "repair" rather than "some HP moved".
+//
+// FILE-LOCAL FREE FUNCTIONS, NOT METHODS, for `StratCombatObservation`'s reason exactly:
+// everything they need is the bridge's public surface, so making them members would widen
+// the exported class for no caller.
+// ---------------------------------------------------------------------------
+namespace StratRepairObservation
+{
+	/** The pre-submit projection, kept alive across `applyCommand` so each unit's HP has a
+	 *  "before" to be measured against. Same shape as `StratCombatObservation::FBefore`,
+	 *  and deliberately a separate type: the two observations bracket different command
+	 *  kinds and sharing one struct would invite sharing one capture. */
+	struct FBefore
+	{
+		bool              bValid = false;
+		strat::UiSnapshot Snapshot;
+	};
+
+	void CaptureBefore(const FStratBridge& Bridge, FBefore& Before)
+	{
+		Before.bValid = Bridge.MakeUiSnapshot(Before.Snapshot).bOk;
+	}
+
+	/**
+	 * Fills `Out` with one entry per unit whose HP ROSE across the submit.
+	 *
+	 * JOINED BY UNIT ID, NEVER BY INDEX AND NEVER BY HEX, and the two refusals have
+	 * different reasons worth keeping apart. An INDEX join would read one unit's HP under
+	 * another unit's identity the first time the projection's order moved, and nothing on
+	 * screen distinguishes a floater on the wrong unit from a correct one -- that is
+	 * `StratBuildViewModel`'s stated reason for matching pulses by hex. A HEX join is the
+	 * shape that works for a FACTORY and cannot work here: a factory's hex is its identity,
+	 * a unit's hex is a field that moves, and two snapshots either side of a turn boundary
+	 * are exactly where a unit's hex is least trustworthy. `strat::UiUnitView::id` is the
+	 * only key that is the unit itself, and `strat::findUiUnitView` is the module's own
+	 * lookup on it.
+	 *
+	 * A UNIT IN ONE SNAPSHOT AND NOT THE OTHER IS SKIPPED IN SILENCE, which is the
+	 * first-observation rule at per-unit granularity. A unit absent from `Before` has no
+	 * previous reading and would otherwise read as having healed from nothing; a unit absent
+	 * from `After` is not there to draw a floater on. Neither is reachable across this
+	 * bracket today -- `openTurn` neither kills nor spawns -- and both are handled anyway,
+	 * because the alternative is code whose correctness depends on a rules fact stated in a
+	 * comment.
+	 *
+	 * A FALL EMITS NOTHING AND IS NOT A FAULT, on `StratDecideTransientReceipts`'s reasoning
+	 * for a fall in `fameCombat`: this observer cannot see WHICH of the several causes it
+	 * would be, so diagnosing it here would be a verdict from the wrong seat.
+	 */
+	void CaptureAfter(const FStratBridge& Bridge,
+	                  const FBefore& Before,
+	                  std::vector<FStratRepairApplication>& Out)
+	{
+		Out.clear();
+
+		strat::UiSnapshot After;
+		if (!Before.bValid || !Bridge.MakeUiSnapshot(After).bOk)
+		{
+			// UNMEASURABLE, AND EMPTY IS THE HONEST ANSWER RATHER THAN A GUESS. See
+			// `StratCombatObservation::CaptureAfter`, which leaves its fields at -1 for the
+			// same reason. Here there is no field to leave: an invented entry would put a
+			// number on screen that no projection produced.
+			return;
+		}
+
+		for (const strat::UiUnitView& AfterUnit : After.units)
+		{
+			const strat::UiUnitView* const BeforeUnit =
+				strat::findUiUnitView(Before.Snapshot, AfterUnit.id);
+			if (BeforeUnit == nullptr)
+			{
+				continue;
+			}
+			if (AfterUnit.hp <= BeforeUnit->hp)
+			{
+				continue;
+			}
+
+			FStratRepairApplication R;
+			R.UnitId   = static_cast<int32>(AfterUnit.id);
+			R.Side     = static_cast<int32>(AfterUnit.side);
+			R.HpBefore = static_cast<int32>(BeforeUnit->hp);
+			R.HpAfter  = static_cast<int32>(AfterUnit.hp);
+			R.HpMax    = static_cast<int32>(AfterUnit.hpMax);
+			R.Amount   = R.HpAfter - R.HpBefore;   // THE ONE SUBTRACTION. See the header.
+			Out.push_back(R);
+		}
+
+		// ASCENDING BY UNIT ID, SORTED HERE RATHER THAN INHERITED. `applyStartOfTurnRepair`
+		// guarantees that order for the vector IT returns (T-TURN-09) -- but this list is
+		// built by walking `strat::UiSnapshot::units`, which is a different sequence in a
+		// different module, and taking the guarantee across would be assuming a property of
+		// a value nobody handed us. Sorting costs nothing at ten units and makes the
+		// declared order true of THIS list.
+		std::sort(Out.begin(), Out.end(),
+		          [](const FStratRepairApplication& A, const FStratRepairApplication& B)
+		          {
+		              return A.UnitId < B.UnitId;
+		          });
+	}
+}
+
 FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 {
 	if (!bSeeded)
@@ -534,11 +654,24 @@ FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 	// observing in both places would double-count every attack instead.
 	const bool bIsAttack = (Command.kind == strat::SaveCommandKind::Attack);
 
+	// §2.11.6's REPAIR RECEIPT, OBSERVED HERE AND FOR THE ATTACK OBSERVATION'S REASON
+	// RESTATED ONE KIND ACROSS: this is the choke point every applied command passes, so a
+	// raw `EndTurn` handed to this method cannot escape the measurement and no second
+	// emitter can double-count one that did not. The two observations are disjoint by kind
+	// and neither reads the other's capture.
+	const bool bIsEndTurn = (Command.kind == strat::SaveCommandKind::EndTurn);
+
 	FStratCombatOutcome              Outcome;
 	StratCombatObservation::FBefore  Before;
 	if (bIsAttack)
 	{
 		StratCombatObservation::CaptureBefore(*this, Command, Outcome, Before);
+	}
+
+	StratRepairObservation::FBefore  RepairBefore;
+	if (bIsEndTurn)
+	{
+		StratRepairObservation::CaptureBefore(*this, RepairBefore);
 	}
 
 	const strat::ReplayResult R = strat::applyCommand(GameState, Command, Tables());
@@ -561,6 +694,33 @@ FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 		StratCombatObservation::EmitResolved(Outcome);
 	}
 
+	// REPLACED WHOLE, AND ONLY ON THE SUCCESS PATH. A REFUSED `EndTurn` OPENED NO TURN, so
+	// the previous record still describes the turn the player is standing in and clearing it
+	// there would delete a true answer on the strength of a command that changed nothing.
+	// That asymmetry is why this sits below the `!R.ok` return and not beside the capture.
+	if (bIsEndTurn)
+	{
+		StratRepairObservation::CaptureAfter(*this, RepairBefore, RepairsAtLastTurnOpen);
+	}
+
+	return FStratResult::Ok();
+}
+
+FStratResult FStratBridge::RepairsAtTurnOpen(TArray<FStratRepairApplication>& OutRepairs) const
+{
+	// EMPTIED BEFORE THE GUARD, so a refusal leaves no stale list behind. See the header.
+	OutRepairs.Reset();
+
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	OutRepairs.Reserve(static_cast<int32>(RepairsAtLastTurnOpen.size()));
+	for (const FStratRepairApplication& R : RepairsAtLastTurnOpen)
+	{
+		OutRepairs.Add(R);
+	}
 	return FStratResult::Ok();
 }
 
@@ -664,6 +824,18 @@ FStratResult FStratBridge::ReplayLog(const TArray<strat::SaveCommand>& Log)
 	// only after the last command succeeded, so appending the whole log keeps
 	// "recorded" equal to "applied" without this file re-deciding either.
 	Recorded.insert(Recorded.end(), AsVector.begin(), AsVector.end());
+
+	// §2.11.6's repair record is CLEARED AND NOT FILLED, and the asymmetry with the log
+	// above is deliberate. `strat::replayLog` crosses every turn boundary in the log inside
+	// one call and hands back nothing per command, so there is no bracket to measure and no
+	// honest answer to fill this with. What IS certain is that the record now describes a
+	// turn boundary from before the replay, over a state the replay has since moved --
+	// leaving it would draw a floater for a repair that happened in a different match's
+	// timeline. Empty is the true statement: nothing was observed. The route to a real
+	// answer is the one `Submit`'s own block already names for the `STRAT-COMBAT` family --
+	// step the log through `Submit` and give up all-or-nothing at the module -- and it is
+	// not taken here for the same reason.
+	RepairsAtLastTurnOpen.clear();
 	return FStratResult::Ok();
 }
 

@@ -717,6 +717,43 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 		{
 			Board->ClearObjective();
 		}
+
+		// ---- Sec 2.11.5's BUILD pulse ---------------------------------------
+		// THE READ THAT WAS MISSING. `FStratFactoryView::bBuildPulse` has been composed by
+		// the bridge, mirrored onto the view model and published since W8, and until
+		// 2026-09-01 NOTHING IN THE TREE READ IT. The gap was recorded as drawing-only work
+		// needing no C++; that was false, because `AStratBoardActor` carried three named
+		// overlay components and no keyed collection, so `Content/` had nothing to bind to.
+		// The fourth component and this call site are the two halves of the fix.
+		//
+		// ONE CALL SITE, IN `ApplyView`, FOR THE RING'S REASON RESTATED: this is the only
+		// place every model reaches the screen through, so the pulse and the ring clear and
+		// light on one value in one function, and neither can outlive the other.
+		//
+		// UNCONDITIONAL IN BOTH DIRECTIONS. `ShowBuildPulses` is called on every refresh,
+		// with an empty array when nothing pulses -- there is no `if (Pulses.Num() > 0)`
+		// guard, because that is exactly the delta-shaped thinking that would leave last
+		// turn's pulses standing on a turn that lit none. An empty set is the ORDINARY case
+		// on the opponent's hot-seat turn and is not a fault; `ClearBuildPulses` carries
+		// why, and it is a pointer to `FStratFactoryBuildPulse::bShouldPulse` rather than a
+		// second copy of that argument.
+		//
+		// A COPY OF A BOOL AND A COPY OF A HEX, AND NOTHING ELSE. This loop tests one
+		// already-composed field and carries across one already-composed coordinate. It does
+		// not consult `bHasBuiltThisTurn`, `bSpawnBlocked`, `Owner` or `Model.ViewingSide` --
+		// every one of those is folded into `bShouldPulse` upstream or deliberately excluded
+		// from it there, and re-reading any of them here would be this file forming a second
+		// opinion about a rules question it may not ask.
+		TArray<FIntPoint> PulseHexes;
+		PulseHexes.Reserve(Model.Factories.Num());
+		for (const FStratFactoryView& Factory : Model.Factories)
+		{
+			if (Factory.bBuildPulse)
+			{
+				PulseHexes.Add(Factory.Hex);
+			}
+		}
+		Board->ShowBuildPulses(PulseHexes);
 	}
 
 	// ---- Sec 2.11.6's guided-opening strip ----------------------------------
@@ -794,7 +831,44 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// that the refresh on which a match ends still carries that turn's kill receipt and its
 	// banner reads `None` -- the durable homes moved on this frame and the transient layer
 	// reports what they did.
-	StratDecideTransientReceipts(ReceiptMark, Model, LastReceipts);
+	// §2.11.6's REPAIR RECEIPTS, FETCHED HERE AND NOT MEASURED HERE. `FStratRepairApplication`
+	// carries the argument for why the measurement belongs to the bridge; what this call site
+	// contributes is one read of a RECORD -- the same list for the whole turn, so this is not
+	// a second frame and the "one thing in this function that looks at two frames" sentence
+	// above still holds. `StratDecideTransientReceipts` gates it on the same turn edge the
+	// income arm uses, so a mouse-move refresh re-reads the list and emits nothing.
+	//
+	// A REFUSAL LEAVES THE ARRAY EMPTY AND IS NOT ESCALATED, which is the one place this
+	// differs from `StratBuildViewModel`'s handling of `FactoryBuildPulses`. That one forwards
+	// the bridge's sentence and FAILS the projection, because a factory tile drawn without its
+	// pulse is wrong. This one refuses only when there is no bridge or no seed -- states in
+	// which `ApplyView` has already got a model from somewhere and where the honest statement
+	// is that nothing was observed. Failing the whole refresh over a missing emphasis would
+	// blank the board to protect a floater.
+	TArray<FStratUnitRepairView> TurnRepairs;
+	if (const FStratBridge* const RepairSource = Bridge.Get())
+	{
+		TArray<FStratRepairApplication> Measured;
+		if (RepairSource->RepairsAtTurnOpen(Measured).bOk)
+		{
+			TurnRepairs.Reserve(Measured.Num());
+			for (const FStratRepairApplication& R : Measured)
+			{
+				// FIELD FOR FIELD AND IN ORDER, WITH NOTHING DECIDED. The bridge's ascending
+				// unit-id order is preserved because this is a walk and not a rebuild; a
+				// sort or a filter here would make the mirror a second opinion.
+				FStratUnitRepairView& View = TurnRepairs.AddDefaulted_GetRef();
+				View.UnitId   = R.UnitId;
+				View.Side     = R.Side;
+				View.HpBefore = R.HpBefore;
+				View.HpAfter  = R.HpAfter;
+				View.HpMax    = R.HpMax;
+				View.Amount   = R.Amount;
+			}
+		}
+	}
+
+	StratDecideTransientReceipts(ReceiptMark, Model, TurnRepairs, LastReceipts);
 	ReceiptMark = StratMarkFromView(Model);
 
 	// CACHED AFTER THE FACT AND NEVER READ BACK. See `GetViewModel`: this is a record of

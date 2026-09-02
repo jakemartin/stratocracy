@@ -624,6 +624,12 @@ struct FStratFactoryView
 	 * same hot-seat reason: the pulse is a nudge to the player looking at the screen, and on
 	 * every other turn the viewing side and `sideToMove` differ.
 	 *
+	 * SO THIS FIELD IS FALSE FOR EVERY FACTORY ON HALF OF ALL TURNS, AND A DARK BOARD IS NOT
+	 * A DEFECT. [ADDED 2026-09-01, when `AStratBoardActor::ShowBuildPulses` became the first
+	 * reader.] The argument -- `bShouldPulse` inheriting `side == activeSide` from
+	 * `strat::canBuildAt` -- lives at `FStratFactoryBuildPulse::bShouldPulse` in
+	 * `Source/StratBridge/StratBridge.h` and is deliberately not copied here.
+	 *
 	 * IT IS NOT `!bHasBuiltThisTurn && <affordable>`, AND THE DIFFERENCE IS DELIBERATE AND
 	 * ARGUED WHERE IT IS DECIDED. `FStratFactoryBuildPulse::bShouldPulse`'s own block
 	 * resolves the two spellings against the rules module, proves that availability CONTAINS

@@ -5,6 +5,18 @@
 // a copy, a comparison, or an index bound. That is the property to check first if this file
 // ever grows: arithmetic here is presentation-layer arithmetic, and the header's argument for
 // why the one subtraction is allowed does not extend to a second one.
+//
+// THE FILE GREW ON 2026-09-01 AND THE PROPERTY WAS RE-CHECKED RATHER THAN RE-ASSERTED. The
+// claim above still reads exactly as it did, and this note records that the check named in
+// its own last sentence was actually performed rather than assumed. §2.11.6's `UnitRepair`
+// arm was added, and it was the case the claim was written to catch: an HP delta IS a second
+// subtraction, and the `KillFame` argument does NOT extend to it, because `fameCombat` is a
+// monotone accumulator with one cause while HP falls under §2.6, rises under §2.7 and
+// arrives fresh on a spawn. So the arithmetic was NOT taken here. It lives in
+// `FStratBridge::RepairsAtTurnOpen`, where it is bracketed around the single
+// `strat::applyCommand` that opens a turn and is therefore a repair by construction; this
+// file COPIES `FStratUnitRepairView::Amount` the way the income arm copies `IncomePerTurn`.
+// The header block's own paragraph on the arm carries the argument. Count still one.
 
 #include "StratTransientReceipts.h"
 
@@ -59,6 +71,16 @@ EStratTurnBanner StratDecideTurnBanner(int32 SideToMove, int32 ViewingSide, bool
 
 void StratDecideTransientReceipts(const FStratReceiptMark& Mark,
                                   const FStratViewModel& Model,
+                                  FStratTransientReceipts& OutReceipts)
+{
+	// THE SHORT FORM FORWARDS AND DECIDES NOTHING OF ITS OWN, so there is exactly one
+	// implementation of the five rules and no chance of the two answering differently.
+	StratDecideTransientReceipts(Mark, Model, TArray<FStratUnitRepairView>(), OutReceipts);
+}
+
+void StratDecideTransientReceipts(const FStratReceiptMark& Mark,
+                                  const FStratViewModel& Model,
+                                  const TArray<FStratUnitRepairView>& TurnRepairs,
                                   FStratTransientReceipts& OutReceipts)
 {
 	// OVERWRITTEN WHOLE, NEVER APPENDED TO. The output is a statement about THIS refresh, and
@@ -138,25 +160,63 @@ void StratDecideTransientReceipts(const FStratReceiptMark& Mark,
 
 	const int32 Side = Model.Match.SideToMove;
 
-	if (!Model.Sides.IsValidIndex(Side))
+	// A BLOCK RATHER THAN THE EARLY RETURN THIS USED TO BE, and the change is load-bearing
+	// rather than cosmetic. The invalid-side case below is a statement about the SIDE
+	// PROJECTION and about nothing else; when it was a `return` it also silenced rule 5,
+	// which reads no side view at all and would have gone quiet for a reason that has
+	// nothing to do with it. The scope is what keeps the refusal the size of its own reason.
+	if (Model.Sides.IsValidIndex(Side))
 	{
-		// A `sideToMove` with no side view is a projection this file cannot describe, and
-		// inventing a zero-income receipt for it would put a number on screen that no module
-		// produced. Silence is the only honest answer.
-		return;
+		FStratReceiptView& Receipt = OutReceipts.Receipts.AddDefaulted_GetRef();
+
+		Receipt.Kind = EStratReceiptKind::IncomeRate;
+		Receipt.Side = Side;
+		Receipt.Turn = Model.Match.Turn;
+
+		// VERBATIM, AND THE ASSIGNMENT IS THE POINT. `Amount` is the module's field with
+		// nothing done to it -- `DurableBefore` exists so a clause can see that the rate at
+		// the mark was available and was NOT subtracted. If these two lines ever become one
+		// expression over both, the income arm has become a delta and the header's argument
+		// no longer covers it.
+		Receipt.DurableBefore = Mark.IncomePerTurn.IsValidIndex(Side) ? Mark.IncomePerTurn[Side] : 0;
+		Receipt.DurableAfter  = Model.Sides[Side].IncomePerTurn;
+		Receipt.Amount        = Model.Sides[Side].IncomePerTurn;
 	}
+	// A `sideToMove` with no side view is a projection this file cannot describe, and
+	// inventing a zero-income receipt for it would put a number on screen that no module
+	// produced. Silence is the only honest answer -- for the INCOME arm.
 
-	FStratReceiptView& Receipt = OutReceipts.Receipts.AddDefaulted_GetRef();
+	// ---- 5. §2.11.6's repair receipts, one per unit the bridge measured. --------------
+	// ON THE SAME EDGE AS RULE 4 AND AFTER IT, because §2.7's repair belongs to the turn
+	// that is BEGINNING, exactly as the income does -- so the two arrive in the order the
+	// turn ran and a reader of the list never sees a repair attributed to the turn that
+	// just ended. `bTurnStarted` above is the gate for both; see the header for why this arm
+	// needs one at all when the other two are gated by their own durable readings.
+	for (const FStratUnitRepairView& Repair : TurnRepairs)
+	{
+		FStratReceiptView& Receipt = OutReceipts.Receipts.AddDefaulted_GetRef();
 
-	Receipt.Kind = EStratReceiptKind::IncomeRate;
-	Receipt.Side = Side;
-	Receipt.Turn = Model.Match.Turn;
+		Receipt.Kind   = EStratReceiptKind::UnitRepair;
+		Receipt.Side   = Repair.Side;
+		Receipt.UnitId = Repair.UnitId;
+		Receipt.Turn   = Model.Match.Turn;
 
-	// VERBATIM, AND THE ASSIGNMENT IS THE POINT. `Amount` is the module's field with nothing
-	// done to it -- `DurableBefore` exists so a clause can see that the rate at the mark was
-	// available and was NOT subtracted. If these two lines ever become one expression over
-	// both, the income arm has become a delta and the header's argument no longer covers it.
-	Receipt.DurableBefore = Mark.IncomePerTurn.IsValidIndex(Side) ? Mark.IncomePerTurn[Side] : 0;
-	Receipt.DurableAfter  = Model.Sides[Side].IncomePerTurn;
-	Receipt.Amount        = Model.Sides[Side].IncomePerTurn;
+		// COPIED, NOT SUBTRACTED, AND THAT IS THE WHOLE OF THIS ARM'S ARITHMETIC BUDGET.
+		// `Amount` is `FStratRepairApplication::Amount` carried across two module
+		// boundaries with nothing done to it -- the same shape as the income arm's verbatim
+		// assignment above, and the reason the file block's one-subtraction claim survives
+		// this arm. Writing `Repair.HpAfter - Repair.HpBefore` here would be the second
+		// subtraction that claim forbids, and it would be a NUMERICALLY IDENTICAL defect:
+		// the wrong layer taking a difference it cannot attribute.
+		Receipt.DurableBefore = Repair.HpBefore;
+		Receipt.DurableAfter  = Repair.HpAfter;
+		Receipt.Amount        = Repair.Amount;
+
+		// NO FILTER ON `Model.Units`, and it is refused rather than overlooked. Checking
+		// that the unit is still in the model would make a receipt's existence depend on a
+		// projection taken at a different instant from the one that measured it, and the
+		// only outcome it could produce is a repair silently dropped. The bridge measured
+		// the unit AFTER the turn opened; if it is gone by this refresh, something later
+		// killed it and the receipt is still a true statement about the moment it names.
+	}
 }

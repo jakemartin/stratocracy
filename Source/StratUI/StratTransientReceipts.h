@@ -21,6 +21,7 @@
 //
 //     income  -> `FStratSideView::IncomePerTurn`, the Fame widget's "+X/turn"
 //     kill    -> `FStratSideView::FameCombat`, the scoreboard's "Destroyed" row
+//     repair  -> `FStratUnitView::Hp`, the unit's own HP readout   [added 2026-09-01]
 //     banner  -> `FStratMatchView::SideToMove`
 //
 // So a receipt is a SECOND, LOUDER TELLING of a fact the durable surface is already
@@ -76,6 +77,51 @@
 //   above is DELETED rather than moved. Until then a receipt-voiced income toast is not
 //   buildable from this tree and this file does not pretend otherwise.
 //
+// THE REPAIR ARM ARRIVES PRE-MEASURED AND THIS FILE DOES NO HP ARITHMETIC, ADDED 2026-09-01,
+// AND THE REASON IT IS SHAPED THAT WAY IS THE MOST USEFUL THING IN THIS BLOCK.
+// `StratTransientReceipts.cpp` opens with a standing claim that there is exactly ONE
+// subtraction in it -- the `KillFame` amount -- and that "the header's argument for why the
+// one subtraction is allowed does not extend to a second one." AN HP DELTA IS THAT SECOND
+// SUBTRACTION AND THE CLAIM IS RIGHT TO FORBID IT HERE. The `KillFame` argument turns on
+// `fameCombat` being a MONOTONE ACCUMULATOR with one cause: it only ever rises, and only
+// under §2.7's kill award, so a rise between two refreshes has exactly one meaning. HP HAS
+// NONE OF THOSE PROPERTIES. It falls under §2.6 combat, it rises under §2.7 repair, and it
+// arrives fresh at `hpMax` on a §2.7 spawn -- so a rise measured between two PRESENTATION
+// REFRESHES is a number with three possible causes and this layer cannot say which it saw.
+// A widget drawing "+3 HP — repaired" off it would be asserting a rules fact nobody
+// measured. The forbidding claim was therefore obeyed rather than amended, and it is still
+// true of the .cpp: the repair arm's `Amount` is COPIED, character for character with the
+// income arm's verbatim assignment.
+//
+// SO THE ARITHMETIC WENT DOWN A LAYER TO WHERE IT IS SOUND, NOT SIDEWAYS TO WHERE IT IS
+// QUIET. `FStratBridge::RepairsAtTurnOpen` measures each unit's HP across the SINGLE
+// `strat::applyCommand` call that opens a turn, and inside that bracket the only statement
+// in the rules module that writes `GameUnit::hp` is `strat::openTurn`'s repair loop. That
+// makes the rise a §2.7 repair BY CONSTRUCTION rather than by inference -- the property this
+// layer cannot have, at the only layer that can have it. `FStratRepairApplication` carries
+// the whole argument and the verification behind it; nothing of it is restated on this side,
+// because a copy of an argument is a copy that can go stale.
+//
+// AND IT IS THE SAME MOVE `FStratFactoryView::bBuildPulse` ALREADY MADE, one struct along:
+// an answer THE BRIDGE COMPOSED, copied whole across the boundary, with the derivation
+// declared at its origin instead of disguised as a mirror at its destination.
+//
+// WHY IT IS AN INPUT PARAMETER AND NOT A FIELD OF `FStratViewModel`. The view model is a
+// COMPLETE STATEMENT OF STEADY STATE and its own header forbids a "changed" flag, an event
+// or a dirty set anywhere in it. A list of what just healed is an EDGE wearing a value's
+// clothes, and the alternative shape -- `FStratViewModel::TurnRepairs` -- would have put the
+// first event list in the model this whole file exists to keep out of it. It comes in
+// alongside the model instead, into the struct that is already declared to be where edges
+// live.
+//
+// THE POSITIVE CASE ONLY, AND A ZERO IS NOT EVIDENCE OF ANYTHING. No entry means "no rise
+// was measured", which is indistinguishable from a unit at full HP, a unit off an owned
+// objective, and a unit whose repair §2.7 BLOCKED because an enemy stood adjacent. §2.11.6's
+// `enemy adjacent` one-shot needs precisely that third reading and this file does not
+// provide it and must not be read as providing it -- it is blocked on the same missing
+// module-side predicate that got the repair-eligibility PIP cut, and the pip's cutting is
+// why this receipt exists at all.
+//
 // WORLD-FREE DECIDERS, ON `AStratShellHUD::DecideMenuTiming`'S PRECEDENT AND FOR ITS REASON.
 // Everything that decides is a free function over plain reflected values -- no subsystem
 // pointer, no `UWorld`, no bridge, no viewport. A clause plants an `FStratReceiptMark` and
@@ -117,12 +163,17 @@
 struct FStratViewModel;
 
 /**
- * Which §2.11.2 receipt this is.
+ * Which §2.11.2 / §2.11.6 receipt this is.
  *
- * BOTH ARMS NAME THEIR QUANTITY AND NOT THEIR OCCASION. `IncomeRate` is a rate per the
- * header block above; `KillFame` is Fame and not a body count, per the "Destroyed row"
- * paragraph. A reader who takes either arm at its everyday-English meaning draws the wrong
- * number, which is why neither is spelled that way.
+ * EVERY ARM NAMES ITS QUANTITY AND NOT ITS OCCASION. `IncomeRate` is a rate per the header
+ * block above; `KillFame` is Fame and not a body count, per the "Destroyed row" paragraph;
+ * `UnitRepair` is HP restored to ONE named unit and not a side-wide total. A reader who
+ * takes any of them at its everyday-English meaning draws the wrong number, which is why
+ * none is spelled that way.
+ *
+ * TWO ARMS ARE ABOUT A SIDE AND ONE IS ABOUT A UNIT, which is the split
+ * `FStratReceiptView::UnitId` exists to record. A drawing layer that branched on `Side`
+ * alone would put a repair floater on a scoreboard.
  */
 UENUM(BlueprintType)
 enum class EStratReceiptKind : uint8
@@ -133,7 +184,73 @@ enum class EStratReceiptKind : uint8
 
 	/** The rise in `FStratSideView::FameCombat` -- the scoreboard's "Destroyed" row -- since
 	 *  the mark. Fame, in Fame's units. */
-	KillFame UMETA(DisplayName = "Kill fame")
+	KillFame UMETA(DisplayName = "Kill fame"),
+
+	/**
+	 * §2.11.6's REPAIR RECEIPT: HP restored to ONE unit by §2.7's start-of-turn repair.
+	 * `UnitId` names it and is never `INDEX_NONE` on this arm.
+	 *
+	 * COPY ON THIS ARM IS THE GDD'S, VERBATIM: `+[N] HP — repaired`, where `[N]` is
+	 * `FStratReceiptView::Amount`. Amount-voiced copy is correct here -- unlike
+	 * `IncomeRate`, this number is HP that was actually restored, on the turn the receipt
+	 * carries. See the `Amount` tooltip, which states the obligation where a UMG author
+	 * binding the pin will actually meet it.
+	 *
+	 * IT SAYS NOTHING ABOUT A UNIT THAT DID NOT HEAL. No receipt for a unit means no rise
+	 * was measured, and that does NOT distinguish full HP from a blocked repair. See the
+	 * header block's "positive case only" paragraph before drawing anything off an absence.
+	 */
+	UnitRepair UMETA(DisplayName = "Unit repair")
+};
+
+/**
+ * One unit's §2.7 start-of-turn repair, as the bridge measured it. THE REFLECTED MIRROR OF
+ * `FStratRepairApplication`, field for field, and an INPUT to this file rather than an
+ * output of it.
+ *
+ * IT IS A MIRROR AND NOT A SECOND MEASUREMENT, on `FStratFactoryView::bBuildPulse`'s
+ * precedent: the bridge composed the answer, this struct carries it across the module
+ * boundary, and nothing on this side re-asks. `FStratRepairApplication` in
+ * `Source/StratBridge/StratBridge.h` is the authority for every field below -- WHY the
+ * amount may be subtracted there, why the join is by unit id, and what a missing entry does
+ * and does not mean. That argument is deliberately not copied here; a copy of an argument is
+ * a copy that can go stale while the original moves.
+ *
+ * REFLECTED HERE RATHER THAN IN THE BRIDGE because `StratBridge.h` must declare no
+ * `USTRUCT` -- UHT would then parse the vendored `strat` headers it includes. The plain
+ * original and this mirror are the same arrangement `FStratFactoryBuildPulse` /
+ * `FStratFactoryView` already uses.
+ */
+USTRUCT(BlueprintType)
+struct FStratUnitRepairView
+{
+	GENERATED_BODY()
+
+	/** `FStratRepairApplication::UnitId`. Keys into `FStratViewModel::Units` by
+	 *  `FStratUnitView::Id` -- the same identity the unit actors are reconciled on. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
+	int32 UnitId = INDEX_NONE;
+
+	/** `FStratRepairApplication::Side`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
+	int32 Side = INDEX_NONE;
+
+	/** `FStratRepairApplication::HpBefore`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
+	int32 HpBefore = 0;
+
+	/** `FStratRepairApplication::HpAfter`. The unit's durable HP, which is on screen anyway. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
+	int32 HpAfter = 0;
+
+	/** `FStratRepairApplication::HpMax`. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
+	int32 HpMax = 0;
+
+	/** `FStratRepairApplication::Amount` -- `HpAfter - HpBefore`, subtracted BY THE BRIDGE
+	 *  and copied through unchanged. Strictly positive: an entry exists only where HP rose. */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
+	int32 Amount = 0;
 };
 
 /**
@@ -185,6 +302,23 @@ struct FStratReceiptView
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
 	int32 Side = INDEX_NONE;
 
+	/**
+	 * The unit this receipt is about, or `INDEX_NONE` when it is about a side.
+	 *
+	 * `INDEX_NONE` ON `IncomeRate` AND `KillFame`, AND THAT IS A STATEMENT RATHER THAN A
+	 * DEFAULT NOBODY SET. Neither has a unit: income is a side's rate, and the kill arm's own
+	 * "NO VICTIM IDENTITY" paragraph records that the unit which died is not available to
+	 * this file at all. A future kill arm that grows a `VictimUnitId` MUST NOT reuse this
+	 * field for it -- this one names the unit the receipt is DRAWN ON, and a victim is not
+	 * drawn on.
+	 *
+	 * NEVER `INDEX_NONE` ON `UnitRepair`. It keys into `FStratViewModel::Units` by
+	 * `FStratUnitView::Id`, which is what lets a floater find the actor to sit above without
+	 * this struct carrying a hex that would be a second copy of a fact that moves.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
+	int32 UnitId = INDEX_NONE;
+
 	/** `FStratMatchView::Turn` as read on the refresh that fired this. Carried so a log line
 	 *  or a clause can place the receipt without holding the model that produced it. */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Transient")
@@ -199,6 +333,11 @@ struct FStratReceiptView
 	 *   `KillFame`   -- equal to `DurableAfter - DurableBefore` over
 	 *                   `FStratSideView::FameCombat`, and strictly positive by construction:
 	 *                   a receipt is only emitted when the field ROSE.
+	 *   `UnitRepair` -- HP restored to the unit named by `UnitId`, equal to
+	 *                   `FStratUnitRepairView::Amount` COPIED. `DurableBefore` /
+	 *                   `DurableAfter` are that unit's HP either side of the turn opening,
+	 *                   and `DurableAfter` is `FStratUnitView::Hp` -- the number the unit's
+	 *                   own readout is already showing.
 	 *
 	 * THE COPY OBLIGATION RIDES ON THE `IncomeRate` ARM, AND IT IS REPEATED IN THIS TOOLTIP
 	 * RATHER THAN LEFT IN THE HEADER BLOCK BECAUSE THIS IS WHERE A UMG AUTHOR LANDS. The
@@ -208,6 +347,17 @@ struct FStratReceiptView
 	 *
 	 *   COPY DRAWN OFF AN `IncomeRate` RECEIPT MUST BE RATE-VOICED: "+8 / turn", NEVER
 	 *   "+8 Fame".
+	 *
+	 *   COPY DRAWN OFF A `UnitRepair` RECEIPT IS THE GDD's, VERBATIM: `+[N] HP — repaired`,
+	 *   with `[N]` this field. AN EM DASH, NOT A HYPHEN. Amount-voiced is CORRECT here and
+	 *   the `IncomeRate` obligation above does not carry across: this number is HP that was
+	 *   actually restored on the turn `Turn` names, so there is no turn on which "+3 HP" is
+	 *   the wrong sentence.
+	 *
+	 *   AND IT SAYS NOTHING ABOUT UNITS WITH NO RECEIPT. Do not draw "no repair", "blocked",
+	 *   or "enemy adjacent" off an absence -- an absence cannot tell those apart from a unit
+	 *   already at full HP. §2.11.6's `enemy adjacent` one-shot is a separate, still-blocked
+	 *   piece of work and this receipt is not it.
 	 *
 	 * WHY IT MATTERS, briefly. The number is §2.7's STANDING RATE, and this file deliberately
 	 * does NOT suppress the receipt on turn 1 -- Q8(a) pays 0 then, and transcribing that
@@ -391,11 +541,55 @@ STRATUI_API EStratTurnBanner StratDecideTurnBanner(int32 SideToMove,
  *      (Turn, SideToMove) changed. It is emitted AFTER the kill receipts so that a refresh
  *      carrying both reads in the order the turn actually ran: the kills happened on the turn
  *      that is ending, the income belongs to the one beginning.
+ *   5. One `UnitRepair` receipt per entry in `TurnRepairs`, on THE SAME (Turn, SideToMove)
+ *      EDGE as rule 4 and after it, because §2.7 repairs the turn that is beginning.
+ *
+ * WHY THE REPAIR ARM IS GATED ON THE TURN EDGE AND NOT ON THE MARK'S CONTENTS, which is the
+ * one place this arm's shape differs from the other two and is worth reading before changing
+ * it. `TurnRepairs` is not a durable home and has no reading at the mark: it is a RECORD the
+ * bridge replaces at each turn opening and serves unchanged for the whole turn
+ * (`FStratBridge::RepairsAtTurnOpen` says so in terms). So a mid-turn refresh would re-emit
+ * the identical list on every mouse move if this arm fired unconditionally. The edge is what
+ * makes it fire once, and it is the SAME edge rather than a second one so that the income
+ * receipt and the repair receipts can never disagree about whether a turn began.
+ *
+ * `TurnRepairs` IS COPIED, NEVER RECOMPUTED, AND THIS FILE PERFORMS NO HP ARITHMETIC. See
+ * the header block's own paragraph on the arm, and the .cpp's file block, which still states
+ * truthfully that there is exactly one subtraction in it.
+ *
+ * A VIEWER-RELATIVE FILTER IS DELIBERATELY NOT APPLIED, and hot-seat is the case that
+ * settles it. §2.7 repairs the ACTIVE side alone, so on the opponent's turn every entry is
+ * theirs; filtering to `ViewingSide` here would make the arm silent on exactly half of all
+ * turns. That is not this file's call to make: `FStratReceiptView::Side` is declared to be
+ * "an index into `FStratViewModel::Sides`, never a you/enemy answer", precisely so a receipt
+ * CAN be about the other side and stay able to say so, and `EStratTurnBanner` is the one
+ * place the viewer-relative mapping happens. `IncomeRate` already behaves this way -- it
+ * fires for whichever side is now to move, viewer or not. Whether a hot-seat screen SHOWS
+ * the opponent's repair floaters is a drawing decision with both facts in hand; suppressing
+ * them here would take that decision away and hide it in a decider.
  *
  * A FALL IN `FameCombat` EMITS NOTHING AND IS NOT REPORTED AS A FAULT. The field only accrues
  * under §2.7, so a fall means the mark and the model describe different matches -- a reseed,
  * or a load -- and the caller resets the mark on both of those paths. Treating it as an error
  * here would put a diagnosis in a decider that cannot see which of the two happened.
+ */
+STRATUI_API void StratDecideTransientReceipts(const FStratReceiptMark& Mark,
+                                              const FStratViewModel& Model,
+                                              const TArray<FStratUnitRepairView>& TurnRepairs,
+                                              FStratTransientReceipts& OutReceipts);
+
+/**
+ * The three-argument call: the same decision with NOTHING HAVING BEEN REPAIRED.
+ *
+ * IT EXISTS SO THAT "NO REPAIRS" IS SPELLABLE WITHOUT CONSTRUCTING AN EMPTY ARRAY AT EVERY
+ * CALL SITE, and it is an overload rather than a default argument because a default would
+ * let a caller that SHOULD be passing repairs silently pass none -- which is the shape of
+ * failure this whole file is written against, an always-empty list being indistinguishable
+ * from a quiet turn. Naming the short form makes the omission deliberate and greppable.
+ *
+ * `UStratMatchSubsystem::ApplyView` DOES NOT USE IT. It passes the bridge's answer. This form
+ * is for callers that have no bridge -- a clause about the banner or about the two
+ * side-scoped arms, which is what every existing one is.
  */
 STRATUI_API void StratDecideTransientReceipts(const FStratReceiptMark& Mark,
                                               const FStratViewModel& Model,

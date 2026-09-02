@@ -43,6 +43,70 @@
 
 ## NEXT
 
+- **THE COMMAND BAR IS ON SCREEN AND THE USER DROVE ITS BUTTONS -- W9's ASSET HALF.**
+  2026-09-02, in `E:/MultiAgent/Stratocracy` on branch `master` over base `91927e9`, no
+  worktree and no merge. **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER
+  CLAUSE. WRITING: the `coordinator`, under THIS FILE'S FALLBACK CONDITION.** Two
+  authorities for two halves, cited separately because this file's header says an entry
+  citing one for both is a finding. `strat-editor-builder` was not dispatched and could not
+  have acted: it holds the NeoStack tools and no Bash, and the tool it needs was not served.
+  - **THE ABSENCE, MEASURED WITH A CONTROL.** Four tools were requested BY NAME in one
+    lookup: `mcp__NeoStack_Connect__execute_script` and
+    `mcp__unreal-editor-direct__execute_script` did NOT come back, while
+    `mcp__NeoStack_Connect__unreal_status` and `mcp__NeoStack_Connect__list_unreal_projects`
+    -- same lookup, same server -- did. `unreal_status` then reported *no active NeoStackAI
+    editors*. **THE EDITOR ITSELF WAS LIVE AND SERVING THAT EXACT TOOL:** `UnrealEditor.exe`
+    was running, `127.0.0.1:9315` was LISTENING against a control of 46 other LISTENING
+    sockets, and a raw MCP `tools/list` over that port returned `execute_script`. So this is
+    again the connector latched stale, not a dead editor -- the shape this file has recorded
+    before, and still the gap neither clause models: A TOOL ABSENT FROM THE CLIENT SURFACE
+    WHILE THE SERVER STILL SERVES IT. The route used was raw HTTP from Bash, which
+    `strat-editor-builder` does not have.
+  - **WHAT LANDED.** `WBP_CommandBar` (new, parented `/Script/StratUI.StratCommandBarWidget`);
+    `CommandBarWidgetClass` set on `BP_StratScoreboardHUD`; an `ExitButton` on
+    `WBP_ProductionMenu` calling the CONTROLLER's `CloseProductionMenu`, which owns the
+    panel-down-then-rows-cleared ordering -- wiring the two underlying nodes in the graph
+    instead is the defect that verb exists to remove.
+  - **THE HUMAN CONFIRMED IT, AND NO INSTRUMENT HERE COULD HAVE.** The user reported all
+    buttons on screen and working in PIE, then repositioned End Turn by hand. `shot showui`
+    composited NO UMG at all -- not the command bar and not the SCOREBOARD, which has shipped
+    for weeks; that control is what says the capture was blind rather than the widgets
+    absent. The same lesson as W8 item (4), reached by a different instrument.
+  - **TWO AUTHORING CALLS RETURNED `[OK]` AND WERE WRONG, WHICH IS WHY EACH WAS READ BACK.**
+    `create_asset` with `{parent = "/Script/StratUI.StratCommandBarWidget"}` reported
+    `[OK] created` and produced a `UserWidget`; the option is not honoured for
+    `WidgetBlueprint`. The fix is `bp:reparent(...)`, verified by SAVING and RE-OPENING rather
+    than by the return value. And in the refresh graph, an auto-inserted `To Text (Object)`
+    node was silently feeding the BUTTON OBJECT into `Set ToolTipText` in place of
+    `EndTurnHoverText` -- it compiled clean and would have rendered the widget's object name
+    as the tooltip. Found only by reading the graph's `linked_to` back.
+  - **MEASURED LIMITS OF THE LUA API, all with controls.** (1) A bare `find_nodes` CANNOT SEE
+    `AStratPlayerController` MEMBERS AT ALL -- `Request End Turn`, BlueprintCallable for
+    months, returns 0 hits, as does `Close Production Menu`. The action database is scoped to
+    the widget's own class; the PIN-CONTEXT form
+    (`find_nodes({query=..., from_handle=..., from_pin=...})` off a cast's `As` pin) finds
+    them. This is the single most useful thing in this entry for the next graph author.
+    (2) `playtest_console` returns `ok=true` with an EMPTY `output` for `GetAll` -- the
+    results reach `Saved/Logs/Stratocracy.log` and nowhere else. Read the log file.
+    (3) `read_log("output")` returned ZERO lines, so any absence concluded from it is
+    unfalsifiable; the control is that it returns zero for everything, not that nothing
+    matched. (4) `screenshot` returns captures as INLINE BASE64 and writes no file; a client
+    that prints only text blocks reports a successful capture and leaves nothing to look at.
+    (5) `find_nodes` hits key the class as `owning_class`, not `class`, and fuzzy matching
+    will hand you `Set Shadow Color and Opacity` for `Set Color and Opacity` unless the name
+    is compared exactly.
+  - **THE ANCHOR WAS CORRECTED AFTER THE USER'S PLACEMENT, AND THE POSITION DID NOT MOVE.**
+    The hand-placed End Turn sat at `Anchors=(1.0,0.5)` with `Top=418.53` -- a fixed pixel
+    offset from a MIDPOINT that moves with viewport height, so below roughly 870px tall the
+    button leaves the bottom of the screen. Re-anchored to `(1.0,1.0)` with `Top=-121.47`,
+    which is the same distance above the bottom edge at the 1080-tall `FillScreen` design
+    surface and is now a distance from an EDGE rather than a fraction of the height. Proved
+    by capturing the preview BEFORE and AFTER: visually identical, differing only by
+    sub-pixel rounding.
+  - **NOT DONE.** No visual polish: the buttons are engine-default `Button` styling with no
+    palette, no hover state and no sizing pass, and `CommandBarZOrder` shares 5 with
+    `InfoPanelZOrder`, which has not been observed to collide but has not been tested either.
+
 - **W8 ITEM (4)'S PULSE MATERIAL IS AUTHORED AND ASSIGNED, AND A HUMAN CONFIRMED IT DRAWS --
   WHICH NO INSTRUMENT IN THIS TREE COULD HAVE DONE.** 2026-09-01/02, in
   `E:/MultiAgent/Stratocracy` on branch `master` over base `4a89ac2`, no worktree and no merge.

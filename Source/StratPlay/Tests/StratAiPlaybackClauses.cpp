@@ -64,6 +64,7 @@
 #include "Engine/DataTable.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "Math/IntPoint.h"
 #include "Misc/Paths.h"
 #include "UObject/UObjectGlobals.h"
@@ -76,6 +77,7 @@
 #include "StratPlayerController.h"
 #include "StratSelectionMachine.h"
 #include "StratUnitActor.h"
+#include "Tests/StratRouteTweenUnitDouble.h"
 #include "StratViewModel.h"
 
 // Included from a .cpp and never from a UHT-parsed header -- the module-wide discipline.
@@ -190,6 +192,48 @@ namespace StratAiPlaybackClauses
 		/** Every command whose submission the INNER port accepted, in submission order. */
 		TArray<FStratAiCommand> Accepted;
 
+		/**
+		 * The route the INNER port handed back for each accepted command, PARALLEL TO
+		 * `Accepted` AND APPENDED IN THE SAME STATEMENT GROUP.
+		 *
+		 * WHY IT EXISTS AT ALL. `FStratAiCommand` carries no route counterpart, so
+		 * `FStratAiPlaybackStep::RouteHexes` had no independent value to be compared against
+		 * and would have shipped completely unasserted by the one clause whose whole claim is
+		 * that a step IS the command accepted at that position. This is that value.
+		 *
+		 * IT PRESERVES THE NON-CIRCULARITY PROPERTY VERBATIM, which is the only reason it may
+		 * be added here. The reel's own append happens in `FStratAiTurnRunner::RunTurn` one
+		 * stack frame ABOVE this one and in a different file; this append happens immediately
+		 * after the INNER production port returned true, from the same `OutEffect` the
+		 * runner will go on to hand to `Record`. Two writers, the same instant, different
+		 * files. Nothing in this file decides what the route should be, and this file never
+		 * asks `FStratBridge::MovePathToHex` -- asking it after the turn would ask about a
+		 * board the turn has already moved, which is the trap the player path's own comment
+		 * names by hand.
+		 */
+		TArray<TArray<FIntPoint>> AcceptedRoutes;
+
+		/**
+		 * The roster delta the production port handed out for each accepted command, in the
+		 * same order and by the same argument as `AcceptedRoutes` above.
+		 *
+		 * [ADDED 2026-09-02, SAME DAY, WHEN `Submit`'S THIRD PARAMETER BECAME
+		 * `FStratAiCommandEffect`.] `FStratAiPlaybackStep::AppearedUnitIds` and
+		 * `DepartedUnitIds` shipped in exactly the condition `RouteHexes` was in before
+		 * `AcceptedRoutes` existed: on the reel, consumed by
+		 * `UStratMatchSubsystem`'s per-cursor existence hold, and **compared against nothing at
+		 * all** by the one clause whose whole claim is that a step IS the command accepted at
+		 * that position. These are the independent values.
+		 *
+		 * THE NON-CIRCULARITY ARGUMENT IS `AcceptedRoutes`' AND IS NOT RESTATED HERE BECAUSE IT
+		 * IS NOT WEAKENED: the reel's append is one stack frame above, in a different file,
+		 * from the same `OutEffect` this file reads. Nothing here decides what a delta should
+		 * be, and this file never asks the bridge for a roster -- asking after the turn would
+		 * ask about a board the turn has already moved.
+		 */
+		TArray<TArray<int32>> AcceptedAppeared;
+		TArray<TArray<int32>> AcceptedDeparted;
+
 		/** Zero-based submission index to refuse at, or `INDEX_NONE` to refuse nothing. */
 		int32   RefuseSubmitAtStep = INDEX_NONE;
 		FString InjectedSubmitReason;
@@ -206,7 +250,21 @@ namespace StratAiPlaybackClauses
 			return Inner.NextCommand(Side, OutCommand, OutFailureReason);
 		}
 
-		virtual bool Submit(const FStratAiCommand& Command, FString& OutFailureReason) override
+		/**
+		 * NO SECOND `OutEffect.Reset()` HERE, DELIBERATELY. `IStratAiTurnPort::Submit`'s
+		 * contract puts the clear at entry of EVERY implementation, and the inner production
+		 * port is an implementation: it clears before it branches. A clear here as well would
+		 * be a second owner of one obligation, and the injected-refusal arm above returns
+		 * before the inner port is ever reached, on a path the contract requires to leave the
+		 * effect empty -- which it does, because the runner hands a fresh local per command.
+		 *
+		 * [WIDENED 2026-09-02, SAME DAY, FROM `TArray<FIntPoint>& OutMoveRoute`. THE PARAGRAPH
+		 * ABOVE IS UNCHANGED IN MEANING AND NOW BINDS ALL THREE MEMBERS AT ONCE, which is the
+		 * property `FStratAiCommandEffect::Reset()` exists to make unmissable: there is no
+		 * longer a way to clear the route and forget the roster delta.]
+		 */
+		virtual bool Submit(const FStratAiCommand& Command, FString& OutFailureReason,
+		                    FStratAiCommandEffect& OutEffect) override
 		{
 			const int32 Step = SubmitCalls++;
 			if (Step == RefuseSubmitAtStep)
@@ -214,11 +272,17 @@ namespace StratAiPlaybackClauses
 				OutFailureReason = InjectedSubmitReason;
 				return false;
 			}
-			if (!Inner.Submit(Command, OutFailureReason))
+			if (!Inner.Submit(Command, OutFailureReason, OutEffect))
 			{
 				return false;
 			}
+			// ONE STATEMENT GROUP, so the four lists cannot drift in length or in order. A
+			// clause that indexed `AcceptedRoutes[I]` against an `Accepted` appended
+			// somewhere else would be pinning this file's bookkeeping.
 			Accepted.Add(Command);
+			AcceptedRoutes.Add(OutEffect.MoveRoute);
+			AcceptedAppeared.Add(OutEffect.AppearedUnitIds);
+			AcceptedDeparted.Add(OutEffect.DepartedUnitIds);
 			return true;
 		}
 	};
@@ -249,7 +313,89 @@ namespace StratAiPlaybackClauses
 			S.Turn, S.Side, S.bHasHex ? TEXT("y") : TEXT("n"));
 	}
 
+	/** For failure messages only. No clause compares anything against this string. */
+	static FString DescribeRoute(const TArray<FIntPoint>& R)
+	{
+		if (R.Num() == 0)
+		{
+			return TEXT("<empty>");
+		}
+		FString Out;
+		for (const FIntPoint& H : R)
+		{
+			if (!Out.IsEmpty())
+			{
+				Out += TEXT(" -> ");
+			}
+			Out += FString::Printf(TEXT("(%d,%d)"), H.X, H.Y);
+		}
+		return Out;
+	}
+
+	/**
+	 * Whether a recorded step's route is element-for-element the route the port was handed.
+	 *
+	 * TWO EMPTY ARRAYS SATISFY THIS, WHICH IS WHY THE CLAUSE USING IT ALSO COUNTS. Element-wise
+	 * equality over nothing is vacuously true, so this predicate alone cannot tell a reel that
+	 * carries routes from a reel that carries none. The count control lives at the call site.
+	 */
+	static bool StepCarriesRoute(const FStratAiPlaybackStep& S, const TArray<FIntPoint>& R)
+	{
+		if (S.RouteHexes.Num() != R.Num())
+		{
+			return false;
+		}
+		for (int32 I = 0; I < R.Num(); ++I)
+		{
+			if (S.RouteHexes[I] != R[I])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	/** Whether one recorded step carries the same command the port accepted at that index. */
+	/** For failure messages only. No clause compares anything against this. */
+	static FString DescribeIds(const TArray<int32>& Ids)
+	{
+		if (Ids.Num() == 0)
+		{
+			return TEXT("<empty>");
+		}
+		TArray<FString> Parts;
+		for (const int32 Id : Ids)
+		{
+			Parts.Add(FString::FromInt(Id));
+		}
+		return FString::Join(Parts, TEXT(", "));
+	}
+
+	/**
+	 * Element for element and in order, exactly as `StepCarriesRoute` compares hexes.
+	 *
+	 * NO SORT AND NO SET COMPARISON, DELIBERATELY. `FStratAiPlaybackStep::AppearedUnitIds`'
+	 * own block says the reel copies the observation VERBATIM with "no de-duplication, no
+	 * ordering promise beyond the order the observation produced". A comparison that sorted
+	 * first would go green over a reel that reordered what it was handed, which is a thing
+	 * `Record` is documented never to do -- so this is the comparison that would notice.
+	 */
+	static bool StepCarriesIds(const TArray<int32>& OnStep, const TArray<int32>& FromPort)
+	{
+		if (OnStep.Num() != FromPort.Num())
+		{
+			return false;
+		}
+		for (int32 I = 0; I < OnStep.Num(); ++I)
+		{
+			if (OnStep[I] != FromPort[I])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
 	static bool StepCarriesCommand(const FStratAiPlaybackStep& S, const FStratAiCommand& C)
 	{
 		return S.Kind     == C.Kind
@@ -437,7 +583,9 @@ namespace StratAiPlaybackClauses
 //
 // §2.11.2: "this is presentation pacing only, no rules change. Any click or Esc skips to the
 // end state." The same scenario and the same command sequence, resolved three ways -- never
-// toured (`AiPlaybackStepSeconds = 0`, the shipped default), toured to exhaustion, and skipped
+// toured (`AiPlaybackStepSeconds = 0`, the C++ field default, which the shipped GameMode
+// Blueprints override -- see `DefaultConfigConsumesNoInput` below), toured to exhaustion, and
+// skipped
 // part-way -- must reach the same state and must have recorded the same commands.
 //
 // THE STRETCH IS STATED RATHER THAN LEFT TO BE NOTICED. This clause reaches T-TURN-09's
@@ -706,6 +854,13 @@ bool FStratReelRecordsEveryAcceptedCommandInOrderTest::RunTest(const FString& /*
 		TEXT("and exactly one step per command the port saw the rules module accept"),
 		HappyReel.Num(), HappyPort.Accepted.Num());
 
+	// The two parallel lists this file keeps are appended in one statement group, so a
+	// difference here is a defect in the double rather than in the reel. Asserted anyway,
+	// because every index below reads both.
+	TestEqual(
+		TEXT("the recorder's route list is parallel to its accepted-command list"),
+		HappyPort.AcceptedRoutes.Num(), HappyPort.Accepted.Num());
+
 	// ORDER, step by step, against the independent recorder.
 	const int32 HappySteps = HappyReel.Num();
 	int32 StepsChecked = 0;
@@ -722,6 +877,19 @@ bool FStratReelRecordsEveryAcceptedCommandInOrderTest::RunTest(const FString& /*
 			AddError(FString::Printf(
 				TEXT("step %d is not the command accepted at that position: reel '%s' vs port '%s'"),
 				I, *DescribeStep(*Step), *DescribeCommand(HappyPort.Accepted[I])));
+			break;
+		}
+		// THE ROUTE AT THAT SAME POSITION, element for element. The expected value is the one
+		// the INNER production port handed back through `OutEffect.MoveRoute` at the instant it
+		// accepted this command -- it is read, never computed, and `MovePathToHex` is
+		// deliberately not re-asked after the turn because the board has since moved.
+		if (HappyPort.AcceptedRoutes.IsValidIndex(I)
+			&& !StepCarriesRoute(*Step, HappyPort.AcceptedRoutes[I]))
+		{
+			AddError(FString::Printf(
+				TEXT("step %d (%s) does not carry the route the port was handed: reel '%s' vs port '%s'"),
+				I, KindWord(HappyPort.Accepted[I].Kind),
+				*DescribeRoute(Step->RouteHexes), *DescribeRoute(HappyPort.AcceptedRoutes[I])));
 			break;
 		}
 		++StepsChecked;
@@ -798,6 +966,344 @@ bool FStratReelRecordsEveryAcceptedCommandInOrderTest::RunTest(const FString& /*
 		TestTrue(TEXT("at least one recorded step carries a hex the camera can step to"),
 			HexBearing > 0);
 		TestTrue(TEXT("and the closing EndTurn carries none"), Hexless > 0);
+	}
+
+	// ---- THE ROUTE THE STEP CARRIES -----------------------------------------
+	// WHY THIS IS ITS OWN BLOCK AND NOT A LINE IN ARM 1'S LOOP. The route only exists on an
+	// ACCEPTED MOVE, and nothing guarantees §2.9's first turn contains one -- an opening turn
+	// that is all Builds is a perfectly ordinary answer. A vacuity control that could be
+	// satisfied or defeated by which command the AI happened to pick first is not a control.
+	// So this block plays turns until the port has seen a Move accepted, and fails loudly if
+	// it never does rather than passing quietly on a reel with nothing in it.
+	//
+	// ONE REEL ACROSS SEVERAL TURNS IS THE PRODUCTION SHAPE, not a fixture liberty:
+	// `FStratAiPlaybackReel`'s own header says one reel per HAND-OVER and not per turn, and
+	// `RunTurn` deliberately does not clear it.
+	//
+	// THE EXPECTATION IS READ, NEVER COMPUTED. `FStratRecordingAiPort::AcceptedRoutes[I]` is
+	// the array the INNER production port wrote into `OutEffect.MoveRoute` at the instant it accepted
+	// command `I`, appended in the same statement group as `Accepted[I]` one stack frame below
+	// the reel's own append. `FStratBridge::MovePathToHex` is deliberately NOT re-asked after
+	// the turn: it answers about the board as it stands, and the board has moved.
+	{
+		FStratBridge Routed;
+		if (!TestTrue(TEXT("the route bridge seeds identically"),
+				SeedBridgeWithBuildlist(Routed, Error)))
+		{
+			AddError(Error);
+			return false;
+		}
+
+		FStratBridgeAiTurnPort RoutedInner(&Routed);
+		FStratRecordingAiPort  RoutedPort(RoutedInner);
+		FStratAiPlaybackReel   RoutedReel;
+		FStratAiTurnRunner     RoutedRunner;
+
+		// A bound, not an estimate, on the same reasoning `MaxCommandsPerTurn` carries: an
+		// unbounded search for a Move would hang the suite if §2.9 never made one.
+		const int32 kMaxTurnsSeekingAMove = 8;
+		int32       TurnsPlayed           = 0;
+		bool        bSawAMove             = false;
+		while (TurnsPlayed < kMaxTurnsSeekingAMove && !bSawAMove)
+		{
+			const FStratAiTurnOutcome One = RoutedRunner.RunTurn(RoutedPort, &RoutedReel);
+			if (!One.bOk)
+			{
+				// NOT AN ERROR HERE, AND NOT A QUIET PASS EITHER. §2.8 can end the match
+				// inside a turn, and the rules module then refuses this runner's closing
+				// EndTurn -- `IStratAiTurnPort`'s own amendment records that as an ordinary
+				// end rather than a fault. So the loop stops and the `bSawAMove` control
+				// below decides whether anything was measured.
+				AddInfo(FString::Printf(TEXT("AI turn %d stopped short: %s"),
+					TurnsPlayed, *One.FailureReason));
+				break;
+			}
+			++TurnsPlayed;
+			for (const FStratAiCommand& C : RoutedPort.Accepted)
+			{
+				if (C.Kind == EStratAiCommandKind::Move)
+				{
+					bSawAMove = true;
+					break;
+				}
+			}
+		}
+
+		// THE FIRST HALF OF THE CONTROL. Everything below is element-wise equality, and
+		// element-wise equality over an empty list is vacuously true. If §2.9 never moved,
+		// this clause has measured nothing and must say so rather than pass.
+		if (!TestTrue(
+				*FString::Printf(TEXT("the AI accepted at least one Move within %d turns -- without "
+					"one, every route assertion below is vacuous"), kMaxTurnsSeekingAMove),
+				bSawAMove))
+		{
+			return false;
+		}
+
+		TestEqual(TEXT("the recorder's route list is parallel to its accepted-command list"),
+			RoutedPort.AcceptedRoutes.Num(), RoutedPort.Accepted.Num());
+		TestEqual(TEXT("the multi-turn reel holds one step per accepted command"),
+			RoutedReel.Num(), RoutedPort.Accepted.Num());
+
+		int32 RoutedSteps    = 0;   // accepted Moves whose step carries a non-empty route
+		int32 RoutelessSteps = 0;   // non-Move steps, each of which must carry none
+		int32 RouteStepsChecked = 0;
+		for (int32 I = 0; I < RoutedPort.Accepted.Num(); ++I)
+		{
+			const FStratAiPlaybackStep* const Step = RoutedReel.Peek();
+			if (Step == nullptr)
+			{
+				AddError(FString::Printf(TEXT("the multi-turn reel ran out at step %d of %d"),
+					I, RoutedPort.Accepted.Num()));
+				break;
+			}
+			if (!RoutedPort.AcceptedRoutes.IsValidIndex(I))
+			{
+				break;
+			}
+
+			// THE ASSERTION: the step's route is, element for element, the route the port was
+			// handed for the command accepted at that same position.
+			if (!StepCarriesRoute(*Step, RoutedPort.AcceptedRoutes[I]))
+			{
+				AddError(FString::Printf(
+					TEXT("step %d (%s) does not carry the route the port was handed: reel '%s' vs port '%s'"),
+					I, KindWord(RoutedPort.Accepted[I].Kind),
+					*DescribeRoute(Step->RouteHexes),
+					*DescribeRoute(RoutedPort.AcceptedRoutes[I])));
+				break;
+			}
+
+			// The classification is the PORT's accepted kind, so "which steps are allowed a
+			// route" is answered by what the rules module took rather than by the reel.
+			if (RoutedPort.Accepted[I].Kind == EStratAiCommandKind::Move)
+			{
+				if (Step->RouteHexes.Num() > 0)
+				{
+					++RoutedSteps;
+				}
+			}
+			else
+			{
+				if (Step->RouteHexes.Num() != 0)
+				{
+					AddError(FString::Printf(
+						TEXT("step %d is a %s and carries a route '%s' -- `IStratAiTurnPort::Submit` "
+						     "leaves it empty on every path but an accepted Move"),
+						I, KindWord(RoutedPort.Accepted[I].Kind),
+						*DescribeRoute(Step->RouteHexes)));
+					break;
+				}
+				++RoutelessSteps;
+			}
+
+			++RouteStepsChecked;
+			RoutedReel.Advance();
+		}
+
+		TestEqual(
+			TEXT("every step in the multi-turn reel carries the route accepted at that same position"),
+			RouteStepsChecked, RoutedPort.Accepted.Num());
+
+		AddInfo(FString::Printf(
+			TEXT("over %d AI turns and %d recorded steps: %d accepted Moves carried a route, "
+			     "%d non-Move steps carried none"),
+			TurnsPlayed, RouteStepsChecked, RoutedSteps, RoutelessSteps));
+
+		// THE SECOND HALF OF THE CONTROL, AND THE CLAUSE IS WORTHLESS WITHOUT IT. A runner
+		// that stopped forwarding `OutEffect.MoveRoute` produces a reel of empty arrays, and empty
+		// arrays satisfy every element-wise equality above. An empty route and a forgotten
+		// route are the same bytes, so only a count can tell them apart.
+		TestTrue(
+			TEXT("at least one recorded step carries a non-empty route -- element-wise equality "
+			     "over empty arrays is satisfied by a reel that carries no routes at all"),
+			RoutedSteps > 0);
+		TestTrue(
+			TEXT("and at least one non-Move step was seen, so 'every non-Move step's route is "
+			     "empty' is not vacuous either"),
+			RoutelessSteps > 0);
+	}
+
+	// ---- THE ROSTER DELTA THE STEP CARRIES ----------------------------------
+	// [ADDED 2026-09-02, SAME DAY, WHEN `IStratAiTurnPort::Submit`'S THIRD PARAMETER BECAME
+	// `FStratAiCommandEffect`.] `FStratAiPlaybackStep::AppearedUnitIds` and `DepartedUnitIds`
+	// shipped in EXACTLY the condition `RouteHexes` was in before the block above existed: on
+	// the reel, read by `UStratMatchSubsystem`'s per-cursor existence hold, and compared
+	// against NOTHING. This block is the same argument applied to the same defect one field
+	// later.
+	//
+	// A SEPARATE BLOCK AND A SEPARATE HAND-OVER FROM THE ROUTE BLOCK, AND THE REASON IS THE
+	// CONTROL AND NOT TIDINESS. The route block stops the moment the AI accepts one Move,
+	// which on this board is the first turn. A DEPARTURE needs a kill, so it needs combat, so
+	// it needs the hand-over to run on -- and the ratio control below needs a real population
+	// of Attacks to compare against. This block therefore plays until §2.8 ends the match or
+	// the bound is reached, which is the shape `UStratMatchSubsystem::RunAiTurnsNow` produces
+	// in a real AI-vs-AI game.
+	//
+	// THE EXPECTATION IS READ, NEVER COMPUTED, on `AcceptedRoutes`' argument exactly.
+	// `FStratRecordingAiPort::AcceptedAppeared[I]` and `AcceptedDeparted[I]` are the arrays the
+	// INNER production port wrote into `OutEffect` at the instant it accepted command `I`,
+	// appended in the same statement group as `Accepted[I]` one stack frame below the reel's
+	// own append. Nothing here asks the bridge for a roster: a roster read after the turn is a
+	// roster of a board the turn has already moved, which is the same trap the route block's
+	// own comment names.
+	//
+	// THE REEL IS READ THROUGH `StepAt` AND NOT THROUGH `Peek`, so this block neither depends
+	// on nor disturbs a cursor -- see that method's own declaration, which exists because a
+	// reader that must see the WHOLE reel is asking a question about the list.
+	{
+		FStratBridge Delta;
+		if (!TestTrue(TEXT("the roster-delta bridge seeds identically"),
+				SeedBridgeWithBuildlist(Delta, Error)))
+		{
+			AddError(Error);
+			return false;
+		}
+
+		FStratBridgeAiTurnPort DeltaInner(&Delta);
+		FStratRecordingAiPort  DeltaPort(DeltaInner);
+		FStratAiPlaybackReel   DeltaReel;
+		FStratAiTurnRunner     DeltaRunner;
+
+		// A BOUND AND NOT AN ESTIMATE, on `kMaxTurnsSeekingAMove`'s reasoning: an unbounded
+		// search for a death would hang the suite on a scenario where nobody ever dies.
+		const int32 kMaxTurnsSeekingARosterDelta = 40;
+		int32       DeltaTurnsPlayed             = 0;
+		while (DeltaTurnsPlayed < kMaxTurnsSeekingARosterDelta)
+		{
+			const FStratAiTurnOutcome One = DeltaRunner.RunTurn(DeltaPort, &DeltaReel);
+			if (!One.bOk)
+			{
+				// §2.8 CAN END THE MATCH INSIDE A TURN, at which point the rules module
+				// refuses this runner's closing EndTurn and `IStratAiTurnPort`'s own amendment
+				// classifies that as an ordinary end. Recorded and broken out of, exactly as
+				// the route block does; the counts below decide whether anything was measured.
+				AddInfo(FString::Printf(TEXT("the hand-over stopped at turn %d: %s"),
+					DeltaTurnsPlayed, *One.FailureReason));
+				break;
+			}
+			++DeltaTurnsPlayed;
+		}
+
+		TestEqual(TEXT("the recorder's appeared list is parallel to its accepted-command list"),
+			DeltaPort.AcceptedAppeared.Num(), DeltaPort.Accepted.Num());
+		TestEqual(TEXT("the recorder's departed list is parallel to its accepted-command list"),
+			DeltaPort.AcceptedDeparted.Num(), DeltaPort.Accepted.Num());
+		TestEqual(TEXT("the hand-over's reel holds one step per accepted command"),
+			DeltaReel.Num(), DeltaPort.Accepted.Num());
+
+		int32 AppearingSteps  = 0;   // steps whose appeared set is non-empty
+		int32 DepartingSteps  = 0;   // steps whose departed set is non-empty
+		int32 AttackSteps     = 0;   // accepted Attacks, the population the ratio is against
+		int32 BuildSteps      = 0;
+		int32 DeltaChecked    = 0;
+		for (int32 I = 0; I < DeltaPort.Accepted.Num(); ++I)
+		{
+			const FStratAiPlaybackStep* const Step = DeltaReel.StepAt(I);
+			if (Step == nullptr)
+			{
+				AddError(FString::Printf(TEXT("the hand-over's reel has no step %d of %d"),
+					I, DeltaPort.Accepted.Num()));
+				break;
+			}
+			if (!DeltaPort.AcceptedAppeared.IsValidIndex(I) ||
+				!DeltaPort.AcceptedDeparted.IsValidIndex(I))
+			{
+				break;
+			}
+
+			// THE ASSERTION, both halves: the step's roster delta is, element for element and
+			// in order, the delta the port was handed for the command accepted at that same
+			// position.
+			if (!StepCarriesIds(Step->AppearedUnitIds, DeltaPort.AcceptedAppeared[I]))
+			{
+				AddError(FString::Printf(
+					TEXT("step %d (%s) does not carry the appearances the port was handed: "
+					     "reel '%s' vs port '%s'"),
+					I, KindWord(DeltaPort.Accepted[I].Kind),
+					*DescribeIds(Step->AppearedUnitIds),
+					*DescribeIds(DeltaPort.AcceptedAppeared[I])));
+				break;
+			}
+			if (!StepCarriesIds(Step->DepartedUnitIds, DeltaPort.AcceptedDeparted[I]))
+			{
+				AddError(FString::Printf(
+					TEXT("step %d (%s) does not carry the departures the port was handed: "
+					     "reel '%s' vs port '%s'"),
+					I, KindWord(DeltaPort.Accepted[I].Kind),
+					*DescribeIds(Step->DepartedUnitIds),
+					*DescribeIds(DeltaPort.AcceptedDeparted[I])));
+				break;
+			}
+
+			if (Step->AppearedUnitIds.Num() > 0)
+			{
+				++AppearingSteps;
+			}
+			if (Step->DepartedUnitIds.Num() > 0)
+			{
+				++DepartingSteps;
+			}
+			// THE POPULATIONS ARE THE PORT'S ACCEPTED KIND, so "how many Attacks were there"
+			// is the rules module's answer and not the reel's.
+			if (DeltaPort.Accepted[I].Kind == EStratAiCommandKind::Attack)
+			{
+				++AttackSteps;
+			}
+			else if (DeltaPort.Accepted[I].Kind == EStratAiCommandKind::Build)
+			{
+				++BuildSteps;
+			}
+
+			++DeltaChecked;
+		}
+
+		TestEqual(
+			TEXT("every step in the hand-over carries the roster delta accepted at that same position"),
+			DeltaChecked, DeltaPort.Accepted.Num());
+
+		AddInfo(FString::Printf(
+			TEXT("over %d AI turns and %d recorded steps: %d steps added a unit, %d removed one; "
+			     "%d Builds and %d Attacks were accepted"),
+			DeltaTurnsPlayed, DeltaChecked, AppearingSteps, DepartingSteps,
+			BuildSteps, AttackSteps));
+
+		// ---- THE CONTROL, AND IT IS THE WHOLE CLAUSE ------------------------
+		// EVERY ASSERTION ABOVE IS AN ELEMENT-WISE EQUALITY, AND ELEMENT-WISE EQUALITY OVER TWO
+		// EMPTY ARRAYS IS ALWAYS TRUE. This is not a theoretical worry: it was MEASURED on this
+		// exact clause on 2026-09-02, when a mutant that cleared the route on BOTH sides passed
+		// the whole equality loop with no error at all and only the count reddened. A port that
+		// stopped forwarding `OutEffect`'s two id lists produces a reel of empty sets, and an
+		// empty set and a forgotten set are the same bytes.
+		TestTrue(
+			TEXT("at least one recorded step added a unit to the roster -- element-wise equality "
+			     "over empty sets is satisfied by a reel that carries no appearances at all"),
+			AppearingSteps > 0);
+		TestTrue(
+			TEXT("and at least one recorded step removed one, for the same reason"),
+			DepartingSteps > 0);
+
+		// AND THE SECOND CONTROL, WHICH IS THE ONE A "SOME STEP HAS A DELTA" CLAUSE WOULD NOT
+		// HAVE. A mechanism that reported a departure on EVERY accepted Attack -- the obvious
+		// wrong shape, since `TargetId` is right there and looks like a death identity --
+		// satisfies both counts above and would sail through. It cannot be right:
+		// `FStratAiPlaybackStep::AppearedUnitIds`' own block records that the Attack arm erases
+		// a unit only when `defHpAfter <= 0` or when the counter kills the attacker, and that a
+		// measured hand-over had 61 of 68 attacks kill nobody. So departures must be a small
+		// MINORITY of attacks, and the margin is asserted rather than the mere inequality --
+		// a mechanism firing on nine attacks in ten would pass `<` and fail this.
+		if (TestTrue(
+				*FString::Printf(TEXT("the hand-over accepted Attacks to measure that minority "
+					"against (it accepted %d)"), AttackSteps),
+				AttackSteps > 0))
+		{
+			TestTrue(*FString::Printf(
+					TEXT("departures are a small minority of attacks -- %d departing steps against "
+					     "%d accepted Attacks. A delta that fired on every attack would equal it, "
+					     "and most attacks kill nobody"),
+					DepartingSteps, AttackSteps),
+				DepartingSteps * 2 < AttackSteps);
+		}
 	}
 
 	// ---- ARM 2: the port refuses part-way ------------------------------------
@@ -1417,17 +1923,29 @@ bool FStratSkipIsReachableAfterTheMatchConcludesTest::RunTest(const FString& /*P
 }
 
 // ---------------------------------------------------------------------------
-// GATE-AITURN -- THE SHIPPED DEFAULT CONSUMES NO INPUT. THE REGRESSION CLAUSE.
+// GATE-AITURN -- A ZERO PLAYBACK INTERVAL CONSUMES NO INPUT. THE REGRESSION CLAUSE.
+//
+// WHOSE DEFAULT, AND IT IS NOT THE SHIPPED ONE. `AiPlaybackStepSeconds` initialises to `0.0f`
+// in `FStratMatchConfig`, but BOTH shipped GameMode Blueprints override it: the property name
+// is serialised in the raw bytes of `Content/StratPlay/BP_StratGameMode.uasset` and of
+// `BP_StratGameMode_AiVsAi.uasset` (measured with `grep -aF`, discriminated by controls --
+// `MoveTweenSeconds` is present in `BP_StratUnit` and absent from both GameModes, and a
+// fabricated property name is absent from all three), and `Tools/architect/state/global.md`
+// records the measured value as 0.5 on both, authored in `1a3520b` on 2026-08-29. So the
+// fixture below is the C++ FIELD default and covers a path the shipped game does not currently
+// take. The clause is still worth its place -- the swallowed input below is unrecoverable for
+// the player it happens to, and a zero interval is one designer edit away -- but it must not be
+// read as coverage of the shipping configuration.
 //
 // THE DEFECT THIS EXISTS FOR SHIPPED GREEN AND WAS FOUND BY A CLAUSE THAT PASSED WHILE
 // MEASURING IT. `UStratMatchSubsystem::RunAiTurnsNow` fills `AiPlaybackReel` on EVERY
 // hand-over -- deliberately, so `GetAiPlaybackStepCount()` answers whatever the configuration
-// -- while only the TIMER was gated on `AiPlaybackStepSeconds`. At the shipped default of
-// zero, `BeginAiPlayback` returned on its first line and left a non-empty reel with the cursor
+// -- while only the TIMER was gated on `AiPlaybackStepSeconds`. At a ZERO interval,
+// `BeginAiPlayback` returned on its first line and left a non-empty reel with the cursor
 // at 0. `IsAiPlaybackRunning()` read TRUE, `SkipAiPlayback()` returned TRUE, and
 // `AStratPlayerController::HandleSelectionEvent` returned early on it -- so the first click or
-// Esc after EVERY AI hand-over in the shipped configuration was swallowed by a tour that never
-// ran. The fix retires the reel on all three paths where `BeginAiPlayback` declines to arm a
+// Esc after EVERY AI hand-over in a zero-interval configuration was swallowed by a tour that
+// never ran. The fix retires the reel on all three paths where `BeginAiPlayback` declines to arm a
 // timer.
 //
 // FOUR READS, AND THE FOURTH IS WHAT STOPS THE OTHER THREE PASSING FOR THE WRONG REASON.
@@ -1488,19 +2006,23 @@ bool FStratDefaultConfigConsumesNoInputTest::RunTest(const FString& /*Parameters
 		return false;
 	}
 
-	// THE SHIPPED DEFAULT, PASSED EXPLICITLY RATHER THAN LEFT UNSET, so this reads as the arm
+	// THE C++ FIELD DEFAULT, PASSED EXPLICITLY RATHER THAN LEFT UNSET, so this reads as the arm
 	// it is. It is asserted below against the field's own default rather than against `0.0f`
-	// written here, so a re-defaulted field moves this clause's fixture with it.
+	// written here, so a re-defaulted field moves this clause's fixture with it. It is NOT the
+	// value a shipping match gets -- both GameMode Blueprints override the field, per this
+	// clause's header -- so read it as "whatever the struct's initialiser hands you".
 	FStratMatchConfig Config;
 	FString           Error;
-	if (!TestTrue(TEXT("an AI-vs-AI config assembles at the shipped playback default"),
+	if (!TestTrue(
+			TEXT("an AI-vs-AI config assembles at the C++ field default for playback, which no "
+			     "shipped GameMode Blueprint uses"),
 			MakeAiVsAiConfig(*Match, FStratMatchConfig().AiPlaybackStepSeconds, Config, Error)))
 	{
 		AddError(Error);
 		return false;
 	}
 	TestTrue(
-		TEXT("the shipped default is non-positive, so `BeginAiPlayback` takes its first exit "
+		TEXT("the field default is non-positive, so `BeginAiPlayback` takes its first exit "
 		     "and arms nothing"),
 		Config.AiPlaybackStepSeconds <= 0.0f);
 
@@ -1543,7 +2065,7 @@ bool FStratDefaultConfigConsumesNoInputTest::RunTest(const FString& /*Parameters
 
 	// ---- The three reads the fix is about ------------------------------------
 	TestFalse(
-		TEXT("at the shipped default nothing is playing, though the list survives"),
+		TEXT("at a non-positive interval nothing is playing, though the list survives"),
 		Match->IsAiPlaybackRunning());
 	TestEqual(
 		TEXT("the cursor was retired to the end rather than left at the start"),
@@ -1577,7 +2099,8 @@ bool FStratDefaultConfigConsumesNoInputTest::RunTest(const FString& /*Parameters
 	const bool bConsumed = Controller->HandleSelectionEvent(EStratSelectionEvent::Cancel, Hex, Reason);
 
 	TestFalse(
-		TEXT("THE REGRESSION: at the shipped default the first Esc after an AI hand-over is NOT "
+		TEXT("THE REGRESSION: at a non-positive interval the first Esc after an AI hand-over is "
+		     "NOT "
 		     "consumed by the skip gate -- it falls through to the concluded-match gate. Before "
 		     "the 2026-08-29 fix this same call returned true"),
 		bConsumed);
@@ -2018,8 +2541,8 @@ bool FStratReseedMidTourLeavesNoStuckTourTest::RunTest(const FString& /*Paramete
 		return false;
 	}
 
-	// A POSITIVE INTERVAL, because this clause needs a tour that genuinely arms. At the shipped
-	// default `BeginAiPlayback` retires on its way out and there would be no live tour for a
+	// A POSITIVE INTERVAL, because this clause needs a tour that genuinely arms. At a zero
+	// interval `BeginAiPlayback` retires on its way out and there would be no live tour for a
 	// reseed to strand -- which is `DefaultConfigConsumesNoInput`'s subject and not this one's.
 	FStratMatchConfig Config;
 	FString           Error;
@@ -2111,6 +2634,367 @@ bool FStratReseedMidTourLeavesNoStuckTourTest::RunTest(const FString& /*Paramete
 		Match->AdvanceAiPlaybackOneStep());
 	TestEqual(TEXT("none of those reads resurrected anything"),
 		Match->GetAiPlaybackStepCount(), 0);
+
+	return true;
+}
+
+// ===========================================================================
+// THE TOUR'S OWN SLIDES -- one clause and one MEASURED GAP, T-TURN-09, added 2026-09-02.
+//
+// WHAT LANDED AND WHY IT NEEDED CLAUSES HERE RATHER THAN BESIDE THE OTHERS. On 2026-09-02 the
+// user reversed the standing decision that AI moves do not slide: §2.11.2's playback tour now
+// animates each accepted Move along the hexes `FStratBridge::MovePathToHex` actually walked, one
+// unit at a time, with the tour's clock waiting for each picture.
+// `UStratMatchSubsystem::PlayMoveSlideForStep` reads `FStratAiPlaybackStep::RouteHexes`,
+// converts it through `AStratBoardActor::WorldLocationOfHex` and hands it to
+// `AStratUnitActor::PlayRouteSlide`, which PARKS -- it leaves the picture resting over the
+// route's own last hex with no clock behind it.
+//
+// A PARK IS STATE THAT OUTLIVES THE THING THAT MADE IT, WHICH IS THE WHOLE SUBJECT HERE.
+// `StratMatchReconcile.cpp`'s ten `T-INT-05` clauses pin the polyline's SHAPE by calling
+// `PlayRouteSlide` directly; nothing there drives a tour, and nothing there can, because
+// `SkipAiPlayback` refuses unless a reel is actually playing. This one is about what the TOUR
+// does with a park -- who clears it and when -- and it needs the AI-vs-AI harness in this file
+// to have a reel at all.
+//
+// WHAT IT PINS.
+//  11. `SkipLeavesNoPictureStranded` -- §2.11.2's "any click or Esc skips to the end state",
+//      extended to the pictures. A skip mid-slide must return every unit to relative zero.
+//      Without the cancel that `UStratMatchSubsystem::EndAiPlaybackTour` gained, a skip strands
+//      a picture over an intermediate hex FOREVER, with the model and the actor transform both
+//      saying otherwise and no clock left to move it.
+//
+// AND THE ARM-LAST ORDERING IS UNPINNED, WHICH WAS MEASURED RATHER THAN ARGUED AND IS THE ONE
+// THING IN THIS BLOCK WORTH READING TWICE. `UStratMatchSubsystem::AdvanceAiPlaybackOneStep`
+// arms the slide LAST -- after `FocusPlaybackStep`, after `Advance()`, and after the last-step
+// `EndAiPlaybackTour()`, which cancels every unit's slide. So a park still standing once the
+// tour has ended could only have been armed after that call, and a clause was WRITTEN,
+// COMPILED AND RUN on exactly that observation: `T-TURN-09.TheLastStepsSlideSurvivesTheTourEnding`,
+// which drove the tour to its end by hand and required some picture to still be in flight.
+//
+// IT FAILED ON THE SHIPPED, UNMUTATED TREE, and the failure is the finding. `reportCreatedOn
+// 2026.09.02-22.50.13`: the AI-vs-AI hand-over on Ferrum Crossing records **156 steps** and NOT
+// ONE PICTURE IS IN FLIGHT WHEN THE LAST OF THEM HAS BEEN SHOWN. Since no production file was
+// mutated, the arming cannot have been moved, so the cause is the other one the clause named:
+// **THIS SCENARIO'S HAND-OVER DOES NOT END ON A `Move` THAT ARMS.**
+// `UStratMatchSubsystem::PlayMoveSlideForStep` refuses six ways and every one is ordinary -- a
+// non-`Move` kind (the closing `EndTurn` is a recorded step), a route of fewer than two hexes, a
+// unit whose actor is gone. The clause was DELETED rather than softened into "assert only if the
+// last step happened to be a Move", because a clause that decides what to assert from the data
+// it is looking at reports a defect and a quiet scenario identically.
+//
+// **SO THE ORDER OF THOSE THREE STATEMENTS IS PINNED BY NOTHING, NO CLAUSE MAY BE CITED AS
+// COVERING IT, AND MOVING THE ARM ABOVE THE `EndAiPlaybackTour()` CALL YIELDS A GREEN SUITE.**
+// What would close it is a reel whose final step is a surviving unit's `Move` -- which needs
+// either a fixture scenario authored for it or a seam that lets a clause put a step on the reel,
+// and neither exists. Recorded here, in `Tools/architect/state/tests.md` and in the pass report,
+// rather than left as an absence.
+//
+// WHERE THE EXPECTATION COMES FROM. Nothing here computes a position. The waypoint counts are
+// `AStratUnitActor::GetTweenWaypointCount`, the picture's offset is
+// `AStratRouteTweenUnitDouble::BodyRelativeLocation` -- a verbatim read of
+// `USceneComponent::GetRelativeLocation` -- and the step count is
+// `UStratMatchSubsystem::GetAiPlaybackStepCount`. The ROUTE the AI took is never restated,
+// never predicted and never compared against: it is the rules module's answer and
+// `GATE-AITURN.ReelRecordsEveryAcceptedCommandInOrder` is the clause that pins it.
+//
+// WHAT IT DOES NOT PIN, AND IT IS THE SAME LIST THE `T-INT-05` BLOCK CARRIES. `FTestWorldScope`
+// creates its world with `bInformEngineOfWorld = false` and NOTHING TICKS IT, so
+// `AStratUnitActor::Tick` never runs and no timer ever fires. Nothing below observes a unit
+// MOVING, the eased position at any instant, the tour's pace, or that the tour waits for a
+// slide at all. Every advance below is one this file asked for by hand. **A GREEN RUN HERE SAYS
+// A PARK IS CREATED AND DESTROYED ON THE RIGHT OCCASIONS AND NOTHING ABOUT ANIMATION.**
+//
+// AND A SECOND PROPERTY THE ENGINEER'S ENTRY ASKED FOR IS NOT HERE EITHER, RECORDED AS A GAP
+// RATHER THAN LEFT AS A SILENCE. `AdvanceAiPlaybackOneStep` still arming no timer -- which is now a claim
+// about WHERE the re-arm was put rather than about a line not existing -- HAS NO CLAUSE AND
+// CANNOT HAVE ONE FROM `Tests/`. `UStratMatchSubsystem::AiPlaybackTimer` is private, so every
+// `FTimerManager` query is out of reach; and A SEAM WOULD NOT FIX IT EITHER, which is the part
+// worth writing down. While a tour plays, a one-shot on that handle is ALWAYS already pending
+// (`BeginAiPlayback` arms one through `ArmNextPlaybackStep` before any clause can look), and
+// `FTimerManager::SetTimer` on a pending handle REPLACES it. So moving the re-arm into
+// `AdvanceAiPlaybackOneStep` changes no observable state in a fixture that never ticks, and in
+// one that did it would change only the interval -- which is a PACE, and
+// `UStratMatchSubsystem::AiPlaybackStepSeconds`' own declaration rules that no test may assert
+// one. **The property is unobservable by combination and not by omission.** See
+// `GATE-AITURN.StepFocusesAndStopsOnTheLast`'s banner, which records the same reach problem for
+// its own half of the same handle.
+//
+// THE UNIT ACTOR CLASS IS `AStratRouteTweenUnitDouble` AND THAT IS LOAD-BEARING TWICE OVER.
+// `AStratUnitActor::MoveTweenSeconds` is `0.0f` in C++ and the shipped value lives on
+// `BP_StratUnit`, which no headless clause may name; at that default `PlayRouteSlide` returns 0
+// having written nothing, so no park is ever created, `EndAiPlaybackTour`'s cancel is a no-op on
+// every actor, and the clause below would pass over an implementation that had none of this code
+// in it at all. The double's header states the same thing for the `T-INT-05` block.
+// ===========================================================================
+
+namespace StratAiSlideTour
+{
+	using StratAiPlaybackClauses::FTestWorldScope;
+
+	/** Every unit actor alive in the world, as the double the config asked for. A null entry
+	 *  would mean the config did not take, which each clause asserts rather than tolerates. */
+	static TArray<AStratRouteTweenUnitDouble*> LiveDoubles(UWorld* World)
+	{
+		TArray<AStratRouteTweenUnitDouble*> Out;
+		if (World == nullptr)
+		{
+			return Out;
+		}
+		for (TActorIterator<AStratUnitActor> It(World); It; ++It)
+		{
+			AStratUnitActor* const Actor = *It;
+			if (IsValid(Actor) && !Actor->IsActorBeingDestroyed())
+			{
+				Out.Add(Cast<AStratRouteTweenUnitDouble>(Actor));
+			}
+		}
+		return Out;
+	}
+
+	/** How many pictures are mid-slide. `GetTweenWaypointCount() > 0` is the actor's own answer
+	 *  and is not a count this file keeps. */
+	static int32 SlidingCount(UWorld* World)
+	{
+		int32 Count = 0;
+		for (AStratRouteTweenUnitDouble* const Double : LiveDoubles(World))
+		{
+			if (Double != nullptr && Double->GetTweenWaypointCount() > 0)
+			{
+				++Count;
+			}
+		}
+		return Count;
+	}
+
+	/** The first picture that is BOTH mid-slide and genuinely displaced. The second half is the
+	 *  point: an armed polyline whose picture sits at relative zero is not a park, and a clause
+	 *  asserting that a park was cleared would be satisfied by one that never existed. */
+	static AStratRouteTweenUnitDouble* FirstParkedPicture(UWorld* World)
+	{
+		for (AStratRouteTweenUnitDouble* const Double : LiveDoubles(World))
+		{
+			if (Double != nullptr && Double->GetTweenWaypointCount() > 0 &&
+				Double->HasBody() && !Double->BodyRelativeLocation().IsZero())
+			{
+				return Double;
+			}
+		}
+		return nullptr;
+	}
+
+	/**
+	 * An AI-vs-AI match whose units are the tween double, with the hand-over already resolved
+	 * and its tour begun.
+	 *
+	 * THE PROBE-THEN-START SHAPE IS `MakeAiVsAiConfig`'S AND NOT THIS FUNCTION'S: that helper
+	 * starts a probe match to read which sides the SCENARIO deploys units for, rather than this
+	 * file deciding the roster. The one field written afterwards is the actor class, for the
+	 * reason the banner gives -- against the shipped C++ class no slide is ever armed.
+	 */
+	static bool ArrangeSlidingTour(FAutomationTestBase& Test, UWorld* World,
+		UStratMatchSubsystem*& OutMatch, int32& OutSteps)
+	{
+		OutMatch = World->GetSubsystem<UStratMatchSubsystem>();
+		if (!Test.TestNotNull(TEXT("the world has a UStratMatchSubsystem"), OutMatch))
+		{
+			return false;
+		}
+
+		FStratMatchConfig Config;
+		FString           Error;
+		if (!Test.TestTrue(TEXT("an AI-vs-AI config assembles, with a tour configured"),
+				StratAiPlaybackClauses::MakeAiVsAiConfig(*OutMatch,
+					StratAiPlaybackClauses::kHarnessPlaybackInterval, Config, Error)))
+		{
+			Test.AddError(Error);
+			return false;
+		}
+
+		// THE ONE DEVIATION, AND THE BANNER GIVES THE REASON AT LENGTH.
+		Config.UnitActorClass = AStratRouteTweenUnitDouble::StaticClass();
+
+		OutMatch->StartMatch(Config, Error);
+		if (!Test.TestTrue(TEXT("the AI-vs-AI match is live"), OutMatch->IsMatchLive()))
+		{
+			Test.AddError(Error);
+			return false;
+		}
+
+		FString    RunReason;
+		const bool bRan = OutMatch->RunAiTurnsNow(RunReason);
+		Test.AddInfo(FString::Printf(TEXT("RunAiTurnsNow returned %s; reason: '%s'"),
+			bRan ? TEXT("true") : TEXT("false"), *RunReason));
+
+		OutSteps = OutMatch->GetAiPlaybackStepCount();
+		if (!Test.TestTrue(*FString::Printf(
+					TEXT("the hand-over recorded at least two actions, so a step remains after "
+					     "the immediate first one (it recorded %d)"), OutSteps),
+				OutSteps >= 2))
+		{
+			return false;
+		}
+
+		// EVERY ACTOR IS THE DOUBLE. Asserted rather than assumed: a config that failed to take
+		// would leave `MoveTweenSeconds` at the C++ 0.0f, at which no slide is ever armed and
+		// both clauses below would pass over any implementation whatever.
+		const TArray<AStratRouteTweenUnitDouble*> Doubles = LiveDoubles(World);
+		if (!Test.TestTrue(TEXT("the tour has units on screen to slide"), Doubles.Num() > 0))
+		{
+			return false;
+		}
+		for (AStratRouteTweenUnitDouble* const Double : Doubles)
+		{
+			if (!Test.TestNotNull(TEXT("every spawned unit actor is the tween double the config "
+					"asked for -- against the shipped class no slide is ever armed"), Double))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Clause 11. A skip strands no picture.
+//
+// §2.11.2 SAYS "ANY CLICK OR ESC SKIPS TO THE END STATE", AND THE PICTURES ARE PART OF THE END
+// STATE NOW. `AStratUnitActor::PlayRouteSlide` leaves `Body` displaced with no clock behind it
+// -- that is what a tour's slide IS, since `UStratMatchSubsystem::ArmNextPlaybackStep` waits out
+// the seconds the actor reports rather than the actor waiting on anything. So a tour stopped
+// mid-slide leaves a unit DRAWN over an intermediate hex while the model and the actor transform
+// both say it is somewhere else, permanently.
+//
+// THE CANCEL WENT IN `EndAiPlaybackTour` AND NOT IN `SkipAiPlayback`, WHICH IS WHY THIS CLAUSE
+// GOES THROUGH THE SKIP. That verb exists so there is no way to stop a tour without clearing
+// what the tour left behind; driving the skip rather than calling the cancel directly is what
+// makes this a clause about the ROUTE a player takes rather than about a function.
+//
+// TWO PRECONDITIONS, AND BOTH ARE THE DIFFERENCE BETWEEN A CLAUSE AND A VACUITY. That a picture
+// is genuinely PARKED before the skip -- an armed polyline AND a non-zero relative location,
+// because an armed polyline whose picture sits at zero is not something a skip could strand --
+// and that the tour is still RUNNING, without which `SkipAiPlayback` returns false and clears
+// nothing. Both are asserted with `return false` on failure, so a fixture that silently stopped
+// producing slides reddens here rather than passing over an empty world.
+//
+// THE ASSERTION IS OVER EVERY UNIT ACTOR AND NOT OVER THE ONE THAT WAS PARKED. The cancel is
+// unconditional over every actor by design, and a clause that checked only the actor it happened
+// to find would go green over an implementation that cleared exactly one.
+//
+// WHAT WOULD REDDEN IT -- UNDISCHARGED, NO MUTANT BUILT, THIS LANE MAY NOT BUILD ONE. In
+// `UStratMatchSubsystem::EndAiPlaybackTour` (`Source/StratPlay/StratMatchSubsystem.cpp`), delete
+// the loop that calls `AStratUnitActor::CancelRouteSlide` on every unit actor -- the addition
+// that verb took on 2026-09-02. The skip still succeeds, the reel still retires, the board is
+// still correct, and a picture stays parked over an intermediate hex with nothing left to move
+// it. NOTHING ELSE IN THE TREE WOULD NOTICE: every other clause reads positions off the ACTOR
+// transform, which that mutation does not touch.
+//
+// A SECOND MUTATION THIS CLAUSE ALSO CATCHES, and it is the one the code's own comment argues
+// against: in `AStratUnitActor::CancelRouteSlide` (`Source/StratPlay/StratUnitActor.cpp`), move
+// `TweenRestOffset = FVector::ZeroVector;` to AFTER the `FinishTween()` call. `FinishTween`
+// retires TO `TweenRestOffset`, so the picture is left sitting over the parked hex while the
+// field claims otherwise -- the waypoint count goes to 0 and this clause reddens on the
+// position alone, which is exactly why the position is asserted separately from the count.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratAiTourSkipLeavesNoPictureStrandedTest,
+	"Stratocracy.StratPlay.T-TURN-09.SkipLeavesNoPictureStranded",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratAiTourSkipLeavesNoPictureStrandedTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratAiSlideTour;
+
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+	AddExpectedMessagePlain(TEXT("STRAT-AI refused"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FTestWorldScope Scope;
+	if (!TestTrue(TEXT("a transient world was created"), Scope.World != nullptr))
+	{
+		return false;
+	}
+
+	UStratMatchSubsystem* Match = nullptr;
+	int32                 StepsRecorded = 0;
+	if (!ArrangeSlidingTour(*this, Scope.World, Match, StepsRecorded))
+	{
+		return false;
+	}
+
+	// ---- Step until a picture is genuinely parked -----------------------------
+	// BOUNDED BY THE RECORDED COUNT AND THE BOUND IS CHECKED AFTERWARDS, so a tour that never
+	// parks ends this clause with a failure rather than a hang. The first action was already
+	// shown by `BeginAiPlayback`, so this may find a park without advancing at all.
+	int32 Advances = 0;
+	while (FirstParkedPicture(Scope.World) == nullptr &&
+	       Match->IsAiPlaybackRunning() &&
+	       Advances < StepsRecorded)
+	{
+		Match->AdvanceAiPlaybackOneStep();
+		++Advances;
+	}
+
+	AStratRouteTweenUnitDouble* const Parked = FirstParkedPicture(Scope.World);
+	if (!TestNotNull(*FString::Printf(
+				TEXT("some step of the tour parked a picture (%d of %d steps shown) -- without one "
+				     "there is nothing for a skip to strand and this clause pins nothing"),
+				Match->GetAiPlaybackCursor(), StepsRecorded),
+			Parked))
+	{
+		return false;
+	}
+
+	const FVector ParkedAt = Parked->BodyRelativeLocation();
+	AddInfo(FString::Printf(
+		TEXT("at step %d of %d, unit %d is mid-slide over %d waypoints with its picture %.1f uu "
+		     "from its transform"),
+		Match->GetAiPlaybackCursor(), StepsRecorded, Parked->GetUnitId(),
+		Parked->GetTweenWaypointCount(), ParkedAt.Size()));
+
+	if (!TestTrue(TEXT("and the tour is still running, without which the skip refuses and "
+				"clears nothing"),
+			Match->IsAiPlaybackRunning()))
+	{
+		return false;
+	}
+
+	// ---- THE SKIP -------------------------------------------------------------
+	if (!TestTrue(TEXT("the skip reports that it ended a tour that was running"),
+			Match->SkipAiPlayback()))
+	{
+		return false;
+	}
+
+	// ---- THE CLAUSE, OVER EVERY ACTOR AND NOT JUST THE ONE THAT WAS PARKED -----
+	const TArray<AStratRouteTweenUnitDouble*> Doubles = LiveDoubles(Scope.World);
+	TestTrue(TEXT("there are still units on screen to have been left stranded"), Doubles.Num() > 0);
+
+	for (AStratRouteTweenUnitDouble* const Double : Doubles)
+	{
+		if (Double == nullptr)
+		{
+			continue;
+		}
+		TestEqual(*FString::Printf(
+				TEXT("unit %d has no polyline left after the skip"), Double->GetUnitId()),
+			Double->GetTweenWaypointCount(), 0);
+		TestTrue(*FString::Printf(
+				TEXT("and unit %d's picture is home at EXACT relative zero rather than parked "
+				     "over an intermediate hex -- it is at %s"),
+				Double->GetUnitId(), *Double->BodyRelativeLocation().ToString()),
+			Double->BodyRelativeLocation().IsZero());
+	}
+
+	// AND THE SKIP CHANGED SOMETHING, which is the control against a tour that had already
+	// quietly cleared itself before this clause looked.
+	TestTrue(*FString::Printf(
+			TEXT("the picture this clause watched really was displaced before the skip (%s)"),
+			*ParkedAt.ToString()),
+		!ParkedAt.IsZero());
+	TestEqual(TEXT("and nothing anywhere is still sliding"), SlidingCount(Scope.World), 0);
 
 	return true;
 }

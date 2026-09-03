@@ -17,7 +17,10 @@ void FStratAiPlaybackReel::Reset()
 	Cursor = 0;
 }
 
-void FStratAiPlaybackReel::Record(const FStratAiCommand& Command, int32 Side, int32 Turn)
+void FStratAiPlaybackReel::Record(const FStratAiCommand&       Command,
+                                  int32                        Side,
+                                  int32                        Turn,
+                                  const FStratAiCommandEffect& Effect)
 {
 	FStratAiPlaybackStep& Step = Steps.AddDefaulted_GetRef();
 
@@ -28,6 +31,30 @@ void FStratAiPlaybackReel::Record(const FStratAiCommand& Command, int32 Side, in
 	Step.TargetId = Command.TargetId;
 	Step.DefIndex = Command.DefIndex;
 	Step.Hex      = Command.Hex;
+
+	// VERBATIM, AND THIS LINE IS THE SECOND JUDGEMENT THIS FILE DELIBERATELY DOES NOT MAKE.
+	// It is a copy and not a validation: there is no `MoveRoute.Last() == Command.Hex` here,
+	// no "is this a Move" filter, and no repair of a route that ends somewhere else. See
+	// `FStratAiPlaybackStep::RouteHexes` in the header for why -- the equality is
+	// `UStratMatchSubsystem::ApplyView`'s and is already written there, once, for the player's
+	// route, and the AI's route arrives at that same check by that same path. One checking
+	// rule, one place, reused.
+	//
+	// A "IS THIS A MOVE" FILTER WOULD ALSO BE WRONG AND NOT MERELY REDUNDANT: it would put
+	// this file's opinion about which kinds may carry a route in front of the port's, and the
+	// port is the only thing that ever asked the rules module a path question. A non-Move
+	// arriving with a non-empty route is the port's defect to fix, and it must be visible here
+	// rather than laundered into an empty array by a record that was told not to judge.
+	Step.RouteHexes = Effect.MoveRoute;
+
+	// AND THE ROSTER DELTA, ON EXACTLY THE SAME TERMS AND IN THE SAME BREATH. No de-duplication,
+	// no sort, no "is this a Build" or "is this an Attack" filter, and no cross-check that an
+	// Attack departed at most one id -- which it provably does, and which is still not this
+	// function's business to assert. `FStratAiPlaybackStep::AppearedUnitIds` states why the
+	// delta is one question rather than a per-kind pair, and why it is a set rather than a
+	// scalar. THE CONSUMER CHECKS, THE RECORD RECORDS.
+	Step.AppearedUnitIds = Effect.AppearedUnitIds;
+	Step.DepartedUnitIds = Effect.DepartedUnitIds;
 
 	// THE ONE JUDGEMENT THIS FILE MAKES, AND IT IS ABOUT A FIELD'S MEANING RATHER THAN ABOUT
 	// THE GAME. Build, Move and Attack each carry a hex the command was ABOUT --
@@ -46,6 +73,15 @@ void FStratAiPlaybackReel::Record(const FStratAiCommand& Command, int32 Side, in
 const FStratAiPlaybackStep* FStratAiPlaybackReel::Peek() const
 {
 	return Steps.IsValidIndex(Cursor) ? &Steps[Cursor] : nullptr;
+}
+
+const FStratAiPlaybackStep* FStratAiPlaybackReel::StepAt(int32 Index) const
+{
+	// THE SAME EXPRESSION AS `Peek` WITH THE CALLER'S INDEX INSTEAD OF THE CURSOR, WHICH IS THE
+	// WHOLE DIFFERENCE AND IS WHY IT IS ONE LINE. Out of range is `nullptr` and not a crash,
+	// on `Peek`'s own reasoning: there is a step or there is not, and a null pointer cannot be
+	// mistaken for a plausible one.
+	return Steps.IsValidIndex(Index) ? &Steps[Index] : nullptr;
 }
 
 bool FStratAiPlaybackReel::Advance()

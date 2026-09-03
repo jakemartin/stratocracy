@@ -43,6 +43,119 @@
 
 ## NEXT
 
+- **BP_StratUnit SURVIVED THE NATIVE ROOT CHANGE, `MoveTweenSeconds` IS 0.2 ON DISK, AND THE
+  SLIDE ITSELF IS STILL UNOBSERVED -- THE ONE NUMERIC INSTRUMENT THAT COULD HAVE SEEN IT WAS
+  MEASURED TOO SLOW TO.** 2026-09-02, in `E:/MultiAgent/Stratocracy` on branch `master` over
+  base `283d711`, no worktree and no merge. **ACTING AND WRITING: `strat-editor-builder`, this
+  file's own lane, under no exception at all.** Said explicitly because this file's header makes
+  it load-bearing: `mcp__unreal-editor-direct__execute_script` answered from the first call, with
+  `project_dir()` returning `E:/MultiAgent/Stratocracy/`, so **THE FALLBACK CONDITION WAS NOT
+  MET, the editor-driver clause was not invoked, and the `coordinator` wrote none of this
+  entry.** `global.md` carries any count or verdict; this file states neither.
+  - **THE MODULE PRE-FLIGHT.** `AStratUnitActor` is declared `STRATPLAY_API` in
+    `Source/StratPlay/StratUnitActor.h`, so the parent baked into `BP_StratUnit` is **StratPlay**
+    -- confirmed live, `open_asset` reporting `parent_class = StratUnitActor`. Nothing was
+    reparented and no asset was created.
+  - **THE HIERARCHY SURVIVED, MEASURED ON BOTH SURFACES.** Design time, off the CDO:
+    `RootComponent` reads `...Default__BP_StratUnit_C:UnitRoot`, and `GetAttachParent` returns
+    `UnitRoot` for `Body` and `Body` for all three of `GuidedMarker`, `FlagMarker` and
+    `UnactedPip`. Live in PIE, off `GetAll SceneComponent AttachParent`, the same four answers on
+    `BP_StratUnit_C_9`, with `GetAll StratUnitActor RootComponent` returning `UnitRoot`. **The
+    markers hanging off `Body` rather than `UnitRoot` is the whole reason they can travel with a
+    slide**, so it is measured on the surface that matters instead of inherited from the header.
+  - **`Body`'S RELATIVE TRANSFORM IS ZERO -- AND THE FIRST CONTROL I CHOSE FOR THAT READING WAS
+    INVALID, WHICH IS RECORDED RATHER THAN DROPPED.** All five components answer
+    `GetRelativeTransform` on the CDO with location (0,0,0), rotation (0,0,0), scale (1,1,1).
+    Five identical zeros could equally mean the instrument always returns identity, so it needed
+    a positive control. **THE FIRST ONE WAS WRONG ON ITS PREMISE:** I took engine `ACharacter`'s
+    `CharacterMesh0` for a known (0,0,-90)/yaw -90 template, read identity, and nearly wrote the
+    instrument off -- but engine `ACharacter` does not set that offset, the third-person TEMPLATE
+    BLUEPRINT does, so that control had no known-good value and proved nothing in either
+    direction. **THE VALID CONTROLS ARE IN THIS PROJECT'S OWN CODE:** `TwinStickPickup`'s
+    constructor sets `Collision Sphere` to (0,0,125) and `StratocracyCharacter`'s sets
+    `CameraBoom` to pitch -60, and both read back exactly, while a mistyped component name is
+    refused. So the instrument is shown able to report a non-identity CDO subobject transform, in
+    location AND in rotation, before its zeros here are read as evidence. Live in PIE,
+    `Body.RelativeLocation` is `(0,0,0)` on every unit at rest.
+  - **EVERY `EditDefaultsOnly` OVERRIDE SURVIVED, WITH ITS VALUE READ RATHER THAN CALLED
+    "unchanged".** `BodyZOffset = 50.0`; `FallbackMesh = /Engine/BasicShapes/Cylinder`;
+    `MeshByDefId` = Infantry->Cylinder, Tank->Cube, Artillery->Cone, Recon->Sphere;
+    `GuidedMarkerMesh = /Game/StratArt/Meshes/SM_GuidedMarker`, `GuidedMarkerMaterial =
+    /Game/StratArt/Materials/MI_Marker_Guided`, `GuidedMarkerZOffset = 300.0`;
+    `FlagMarkerMesh = /Engine/BasicShapes/Cone`, `FlagMarkerMaterial = MI_Marker_Flag`,
+    `FlagMarkerOffset = (0, -40, 300)`; `UnactedPipMesh = /Engine/BasicShapes/Sphere`,
+    `UnactedPipMaterial = MI_Marker_Pip`, `UnactedPipOffset = (0, 40, 300)`. A baseline
+    `compile()` taken BEFORE any write returned success.
+  - **THE ONE ASKED-FOR ITEM I COULD NOT GET: THE LOAD-TIME WARNINGS.** `read_log` IS INERT ON
+    THIS BUILD -- `output`, `message` and `compile` each return ZERO entries, so no absence may
+    be concluded from it, and the control is that it returns zero for EVERYTHING rather than that
+    nothing matched. `read_file` on `Saved/Logs/Stratocracy.log` reports `exists=true` and
+    `total_lines=0` because the live editor holds the handle, with `CLAUDE.md` read through the
+    same call returning its 180 lines as the control that the reader works. **THE WORKING
+    INSTRUMENT IS `playtest_log_contains`**, which reads that same locked file and hands back the
+    matching line -- controlled in both directions, finding `LogWorld` and `PIE` and refusing
+    `ZZZ_NO_SUCH_STRING_QQQ`. It searches only forward from a marker, so it cannot reach the
+    asset's ORIGINAL load, which happened before this session opened. **So no component-template
+    / instance-data mismatch warning was seen AND NONE WAS SUCCESSFULLY LOOKED FOR; that half of
+    the gate is NOT discharged by this entry.**
+  - **`MoveTweenSeconds` IS 0.2, AND THE `set` RETURN IS NOT WHY.** The baseline read was
+    `0.000000`, matching the C++ default the header declares, so the property had never been
+    overridden on this Blueprint. After `set`/`compile`/`save` it reads `0.200000` through
+    `class_properties` on the `_C` -- a different read path from the `bp:set` that wrote it --
+    the package grew **26623 -> 26925 bytes**, and, strongest of the three, **a unit actor
+    freshly spawned in PIE from the saved Blueprint reports `MoveTweenSeconds = 0.200000`, with
+    `PrimaryActorTick.bCanEverTick = True` beside it.** `read_file` refuses a `.uasset` outright
+    in BINARY mode as well as text, so there is no byte-grep of the package from this lane.
+  - **PIE: WHAT WAS ESTABLISHED.** On `/Game/StratMaps/Lvl_FerrumCrossing`, `Match live: ... 99
+    hexes and 10 units on screen`, with units at real board positions
+    (`UnitRoot.RelativeLocation = (2100, 519.6, 50)` and siblings) and never at the origin.
+    **UNITS DO NOT EASE IN FROM THE WORLD ORIGIN AT MATCH START, AND THIS WAS MEASURED WITH THE
+    TWEEN WIDENED TO 5 SECONDS SO THAT THE CLAIM COULD FAIL:** at about 0.75 s after a fresh
+    seed all ten `Body.RelativeLocation` values were exactly zero, where an origin ease-in would
+    have shown offsets of thousands of units for five full seconds. That is `SnapToWorldLocation`
+    on the spawn path, observed rather than argued.
+  - **PIE: WHAT WAS NOT ESTABLISHED, AND WHY, IN TERMS A LATER READER CAN RE-RUN. NO SLIDE WAS
+    EVER OBSERVED.** Three separate things stack up.
+    (1) **THE SAMPLER IS SLOWER THAN THE TWEEN.** The only numeric probe available is
+    `playtest_console("GetAll ...")` followed by a log search, and it was TIMED: **0.3497 s per
+    sample over 20 samples.** A 0.2 s tween is shorter than one sample, so an early run of 140
+    samples returning no non-zero `Body` offset PROVED NOTHING; it is retracted here rather than
+    reported as a finding. **Any future numeric check of this feature must widen
+    `MoveTweenSeconds` first.**
+    (2) **INJECTED CLICKS DO NOT REACH THE GAME.** Four `playtest_click` calls on visible
+    friendly units each returned `consumed=true` and produced NO `STRAT-` line at all, while in
+    the SAME PIE session `playtest_console("ke * RequestEndTurn")` produced `STRAT-CMD accepted
+    kind=EndTurn ... turn=1 side=0` -- so the command path and the log are both alive and the
+    silence is this record's already-known input-injection limit rather than a dead instrument.
+    There is no BlueprintCallable move verb on `AStratPlayerController` to substitute for the
+    click; the move is driven by `StratSelectionMachine` off clicks only.
+    (3) **THE ONLY SELF-DRIVING MOVES LAND ON BRAND-NEW ACTORS, WHERE SNAPPING IS CORRECT.**
+    `playtest_console` with `open Lvl_FerrumCrossing?game=` and the `BP_StratGameMode_AiVsAi`
+    class path DOES start an AI-vs-AI match inside PIE, and `STRAT-AI applied kind=Move` appears
+    in the log -- but that travel respawns the entire presentation (actor names went
+    `BP_StratUnit_C_19..28` -> `_0.._9` across it), so every unit is new and takes
+    `SnapToWorldLocation`, and no tween is owed. Within one match the actor names are stable
+    across four seconds, so the churn is the TRAVEL and not the move. That match also reaches
+    `STRAT-AI refused ... turn=6 side=1 reason=[T-SAVE-05] no match is running` within about a
+    second, so the AI window is very short.
+    **A HUMAN AT THE KEYBOARD IS THE ONLY INSTRUMENT LEFT** for the slide itself, for the flag /
+    guided marker / unacted pip travelling with it, and for a second order issued mid-slide. The
+    markers' ATTACHMENT to `Body` is proved above; that they are DRAWN moving is not, and this
+    entry does not claim it.
+  - **THE DIAGNOSTIC THAT WIDENED THE TWEEN LEFT NO TRACE ON DISK, DELIBERATELY.** To take the
+    five-second measurement the CDO was set to `5.0` and `compile()`d **with no `save()`**, so
+    PIE spawned from the in-memory class while the package on disk kept the 0.2 it already held;
+    it was then set back to `0.2`, compiled, and saved once more so that memory and disk agree
+    and no dirty package is left behind. Final state: **26925 bytes on disk, the same size as the
+    0.2 save that preceded the diagnostic**, and `class_properties` reads
+    `MoveTweenSeconds = 0.200000` with `BodyZOffset = 50.000000` beside it as the control that
+    the reader can see a float of that kind at all. **THE CONSOLE `set` COMMAND CANNOT DO THIS**
+    -- `set BP_StratUnit_C MoveTweenSeconds 5.0`, the same against the native class name, and the
+    same against a single instance name all three left the live value at `0.200000`, which is why
+    the CDO route was taken.
+  - **NOTHING WAS STAGED OR COMMITTED.** The single changed file is
+    `Content/StratPlay/BP_StratUnit.uasset`; staging is the user's call.
+
 - **THE COMMAND BAR IS ON SCREEN AND THE USER DROVE ITS BUTTONS -- W9's ASSET HALF.**
   2026-09-02, in `E:/MultiAgent/Stratocracy` on branch `master` over base `91927e9`, no
   worktree and no merge. **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER

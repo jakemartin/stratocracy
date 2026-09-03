@@ -1092,6 +1092,59 @@ bool AStratPlayerController::HandleSelectionEvent(EStratSelectionEvent Event,
 
 	if (Outcome.Command != EStratSelectionCommand::None)
 	{
+		// ---- The route the player is about to be shown travelling ------------
+		// ASKED BEFORE THE SUBMIT, AND THAT IS THE ONLY CORRECT POSITION RATHER THAN A
+		// PREFERENCE. `FStratBridge::MovePathToHex` answers about the board AS IT IS: after the
+		// submit the unit is standing on `Outcome.Hex`, so the same question answers `{goal}` at
+		// cost 0 -- a one-point route, structurally valid, silently wrong, and indistinguishable
+		// from a real answer by anything downstream. There is no later moment at which the
+		// question can be asked and no flag that would make one.
+		//
+		// HELD IN A LOCAL AND HANDED OVER ONLY AFTER THE BRIDGE ACCEPTS. A refused move must
+		// leave no route behind: `UStratMatchSubsystem::ApplyView` empties the map on every
+		// apply, but the refusal path below refreshes too, and a route noted for a command that
+		// never happened would animate a unit along a path it was told it could not take.
+		//
+		// IT REUSES THE §2.11.1 SEAM AND ADDS NO BRIDGE METHOD, NO QUERY TYPE AND NO HEX MATH.
+		// `FStratBridgePathQuery` already exists for the path preview -- `RefreshFromMachine`
+		// constructs one every refresh -- and it is the same forward to the same bridge method,
+		// which is what makes the ANIMATED route and the PREVIEWED route the same route by
+		// construction. The alternative, walking hex neighbours here, is `Move.h`'s §2.5
+		// tie-break restated in the input path and is the substitution `T-UI-02` exists to
+		// catch; the only neighbour math in this project is vendored `strat::` and unreachable
+		// from this module anyway.
+		//
+		// MOVE ONLY. An Attack does not relocate the attacker and an EndTurn has no unit, so
+		// neither has a route to walk. The switch is on `Outcome.Command` and never on a hex
+		// being non-default -- `FStratSelectionOutcome::Hex`'s own block forbids sniffing that
+		// field, because (0,0) is a real hex on this board.
+		//
+		// A REFUSAL IS SILENT AND DEGRADES TO A SNAP. The two channels are the query's own: a
+		// `false` means the question could not be asked, an empty array means the module
+		// answered "no route". `NotePendingMoveRoute` treats both as "note nothing", and the
+		// actor snaps on an empty route -- which is the same thing the player saw before this
+		// feature existed. Not logged at Warning for `StratDecoratePathPreview`'s reason: the
+		// commonest cause is a bridge state the player cannot see and did nothing to cause.
+		TArray<FIntPoint> MoveRouteHexes;
+		if (Outcome.Command == EStratSelectionCommand::Move)
+		{
+			const FStratBridgePathQuery PathQuery(Bridge);
+
+			TArray<int32> RouteCosts;
+			int32         RouteTotalCost = 0;
+			FString       RouteFailureReason;
+
+			if (!PathQuery.PathTo(Outcome.UnitId, Outcome.Hex, MoveRouteHexes, RouteCosts,
+			                      RouteTotalCost, RouteFailureReason))
+			{
+				MoveRouteHexes.Reset();
+
+				UE_LOG(LogStratPlay, Verbose,
+					TEXT("%s could not read the route for unit %d's move (the move still applies; it will snap): %s"),
+					*GetName(), Outcome.UnitId, *RouteFailureReason);
+			}
+		}
+
 		FString SubmitReason;
 		if (!StratSubmitSelectionCommand(*Bridge, Outcome, SubmitReason))
 		{
@@ -1106,6 +1159,39 @@ bool AStratPlayerController::HandleSelectionEvent(EStratSelectionEvent Event,
 		}
 
 		SelectionMachine.NotifyCommandApplied(Outcome);
+
+		// ---- The route, handed over now that the move is a fact ---------------
+		// AFTER THE ACCEPTANCE AND BEFORE `RunAiTurnsIfDue`, AND BOTH HALVES ARE LOAD-BEARING.
+		// After, because the route describes a move that happened, and the refusal path above
+		// returned without reaching this line -- so a refused move leaves nothing behind, which
+		// is what asking BEFORE the submit and handing over AFTER it buys.
+		//
+		// BEFORE, because `RunAiTurnsIfDue` is what reaches `RefreshPresentation` and therefore
+		// `UStratMatchSubsystem::ApplyView`, which is the one consumer and empties the map on
+		// its way out. Handed over after that call, the route would miss its own apply and would
+		// then be emptied by the NEXT one having animated nothing.
+		//
+		// ONE CALL AND ONE UNIT. Nothing here notes a route for anything the AI does.
+		//
+		// [CORRECTED 2026-09-02, SAME DAY, BECAUSE THE USER REVERSED THE DECISION THIS BLOCK
+		// CITED. WRITTEN FLAT, AND THE SPLIT MATTERS: THE SENTENCE ABOVE IS STILL TRUE AND ONLY
+		// THE CLAUSE AFTER ITS COMMA IS RETRACTED.] It said:
+		// RETRACTED> "... and that absence is the entire implementation of the user's decision
+		// RETRACTED>  that AI moves must not slide -- see
+		// RETRACTED>  `UStratMatchSubsystem::NotePendingMoveRoute`, which states why no
+		// RETRACTED>  detection exists or may be added."
+		// **AI MOVES NOW SLIDE**, during §2.11.2's playback tour, by the user's reversal. The
+		// ABSENCE here is intact and is unchanged in every particular -- this file notes one
+		// route for one unit on one accepted player command, and it still contains no detection
+		// of an AI turn. What it is no longer the implementation OF is a decision that no longer
+		// stands. The AI's slide is `UStratMatchSubsystem::PlayMoveSlideForStep`, reading the
+		// reel this file never touches; the "no detection exists or may be added" rule survives
+		// it, because that function is reached from the TOUR and asks nothing about whose turn
+		// it was.
+		if (Match != nullptr)
+		{
+			Match->NotePendingMoveRoute(Outcome.UnitId, MoveRouteHexes);
+		}
 
 		// ---- §2.9's opponent, if the command just handed play to it -----------
 		// AFTER `NotifyCommandApplied` AND BEFORE THE REFRESH BELOW, and both halves of that

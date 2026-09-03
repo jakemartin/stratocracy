@@ -19,16 +19,41 @@
 // the cursor and the hex under it answers, which also means "click the unit" and "click
 // its hex" are the same act with one implementation.
 //
-// IT HOLDS NO STATE THE VIEW MODEL DOES NOT ALSO HOLD, and this is the sharpest constraint
-// on this file. `StratViewModel.h` records the debt phase 3 inherits in as many words:
-// `FStratUnitView::bDone` and `bLockedThisTurn` are declared on the MODEL "so that phase
-// 3's selection machine has somewhere to put them that is not an actor, because state in
-// an actor makes T-INT-05 false and nothing reports it." So the fields below are a CACHE
-// OF THE LAST APPLIED VIEW and never a source: `ApplyUnitView` overwrites all of them from
-// the model on every call, nothing else writes them, and no code path reads one to decide
-// anything a later refresh could contradict. `T-INT-05.PresentationBitsAreDefaulted` pins
-// the negative today; the moment an actor here owns a bit the model does not, that clause
-// is quietly false with no compiler diagnostic.
+// [NARROWED 2026-09-02 BY THE MOVE TWEEN, WRITTEN FLAT BECAUSE THE HEADING SENTENCE BECAME
+// FALSE IN THE LETTER AND A READER WHO GREPS FOR IT MUST LAND ON THE CORRECTION.] It said:
+// RETRACTED> "IT HOLDS NO STATE THE VIEW MODEL DOES NOT ALSO HOLD, and this is the sharpest
+// RETRACTED>  constraint on this file."
+// IT HOLDS NO *BIT* THE VIEW MODEL DOES NOT ALSO HOLD, and that is still the sharpest
+// constraint on this file. `StratViewModel.h` records the debt phase 3 inherits in as many
+// words: `FStratUnitView::bDone` and `bLockedThisTurn` are declared on the MODEL "so that
+// phase 3's selection machine has somewhere to put them that is not an actor, because state
+// in an actor makes T-INT-05 false and nothing reports it." So the model-derived fields
+// below are a CACHE OF THE LAST APPLIED VIEW and never a source: `ApplyUnitView` overwrites
+// all of them from the model on every call, nothing else writes them, and no code path reads
+// one to decide anything a later refresh could contradict. `T-INT-05.PresentationBitsAreDefaulted`
+// pins the negative today; the moment an actor here owns a bit the model does not, that
+// clause is quietly false with no compiler diagnostic.
+//
+// THE ONE EXCEPTION IS NAMED HERE RATHER THAN LEFT TO BE FOUND.
+//
+// [WIDENED 2026-09-02 BY THE ROUTE TWEEN, WRITTEN FLAT BECAUSE THE EXCEPTION GREW A MEMBER AND
+// A SENTENCE NAMING TWO THINGS READS AS EXHAUSTIVE.] It said:
+// RETRACTED> "`TweenStartOffset` and `TweenElapsed` are state no model holds."
+// `TweenOffsets`, `TweenArcLengths` and `TweenElapsed` are state no model holds --
+// `TweenStartOffset` no longer exists; it was one offset and is now the polyline that replaced
+// it. They are not a cache of anything and `Tick` writes them. They are bounded by exactly the
+// three properties the single offset was bounded by, and the "NOT IN THIS ROUND" bullet on
+// movement interpolation below argues each: the terminal value is zero -- an EMPTY array and a
+// `Body` at exact relative zero -- and a clock drives them there, nothing reads any of them to
+// decide anything, and none is a BIT -- no marker, mesh or material answers off them. The claim
+// this file may make is therefore narrower than it was and is written narrowly wherever it
+// appears: the actor TRANSFORM is a function of the last model alone, always and synchronously;
+// the RENDERED position is a function of the last model alone AT REST.
+//
+// AND THE ROUTE ITSELF IS NOT HELD HERE, WHICH IS THE HALF THAT KEEPS THAT CLAIM CHEAP.
+// `ApplyUnitView` is HANDED the waypoints, converts them to offsets, and keeps no hex, no unit
+// route and no goal. Between two applies this actor cannot say where it was going -- only where
+// its own picture still is relative to where it now stands.
 //
 // MESHES ARE KEYED BY `DefId` AND NOT BY `DefIndex`, even though DT_Units' row order IS
 // pinned (`GATE-BRIDGE-DEFS`, phase 0). `StratViewModel.h` gives the reason on the field
@@ -43,11 +68,63 @@
 // `strat::SIDE_COUNT` does not vary with data.
 //
 // NOT IN THIS ROUND, with reasons:
-// - Movement interpolation. `ApplyUnitView` teleports. Animating a move needs the ordered
-//   event list §4.9 part 2 names and `StratBridge.h` records is not built -- the view model
-//   says what IS, not what HAPPENED, and driving a slide off a position difference would be
-//   inferring an event from a state, which is exactly the conflation that header warns
-//   about.
+// - [NARROWED 2026-09-02 BY THE MOVE TWEEN, BY THE LANE THAT OWNS THIS FILE. THE CORRECTION
+//   IS WRITTEN FLAT AND THE REASONING IS NOT OVERTURNED: it forbids exactly what it was
+//   written to forbid, and it turned out to forbid one thing more than it needed to.] It
+//   said:
+//   RETRACTED> "Movement interpolation. `ApplyUnitView` teleports. Animating a move needs the
+//   RETRACTED>  ordered event list §4.9 part 2 names and `StratBridge.h` records is not built
+//   RETRACTED>  -- the view model says what IS, not what HAPPENED, and driving a slide off a
+//   RETRACTED>  position difference would be inferring an event from a state, which is
+//   RETRACTED>  exactly the conflation that header warns about."
+//   WHAT STANDS, UNCHANGED AND UNWEAKENED: nothing in this class may LABEL a position
+//   difference. A slide that meant "this unit MOVED" -- as against attacked, retreated, was
+//   built, or is simply drawn at a different hex because a different model was applied -- is
+//   still inferring an event from a state, and the ordered event list that would license it
+//   is still not built. Nothing below asks what happened.
+//   WHAT IS NOW BUILT, AND WHY IT IS NOT THAT. `MoveTweenSeconds` eases a purely VISUAL
+//   offset on `Body` to zero. It labels no move, no attack and no ordering, it names no
+//   cause, and it is applied identically to a unit that moved, a unit whose hex changed
+//   because a whole different model was applied, and a unit that was dragged across the
+//   board by a debug command. What it interpolates is THIS ACTOR'S OWN PREVIOUS RENDERING to
+//   its new one -- a fact about a transform this class wrote and can read back off its own
+//   component, not a claim about what the rules did.
+//   THE ACTOR TRANSFORM STILL SNAPS, WHICH IS THE STRUCTURAL PART RATHER THAN A COURTESY.
+//   `ApplyUnitView`'s `SetActorLocation` line is unchanged, so `GetActorLocation()` read
+//   synchronously after `UStratMatchSubsystem::ApplyView` is the same value it was before
+//   this landed. `T-INT-05.ApplyViewSpawnsMovesAndDestroys` reads exactly that and needed no
+//   edit; had the tween moved the actor, it would have had to.
+//   THE COST IS STATE, AND IT IS STATED. `TweenOffsets`, `TweenArcLengths` and `TweenElapsed`
+//   are state no model holds -- see the correction on the "no state" paragraph above, which
+//   names them. Their terminal value is zero and a clock drives them there, not a later model;
+//   nothing reads any of them to decide anything; and none is a presentation BIT, so none can
+//   make one unit draw a marker another does not.
+//   AT `MoveTweenSeconds <= 0` -- THE C++ DEFAULT -- THE PATH IS THE OLD ONE EXACTLY. No
+//   offset is written, no tick is enabled, and `Body`'s relative location stays the zero it
+//   has always been. That is the switch-not-a-setting posture `AiPlaybackStepSeconds` argues
+//   at length; see `MoveTweenSeconds` below, which restates it locally.
+//   [EXTENDED 2026-09-02: THE PICTURE NOW FOLLOWS THE ROUTE'S HEXES RATHER THAN THE CHORD, AND
+//   THE ARGUMENT ABOVE IS UNCHANGED BY IT -- WHICH IS WHY THIS IS AN EXTENSION AND NOT A SECOND
+//   RETRACTION.] The waypoints arrive as a parameter of `ApplyUnitView`. They are a route the
+//   RULES MODULE produced -- `FStratBridge::MovePathToHex`, the same query the commit itself
+//   takes -- routed here through `UStratMatchSubsystem::NotePendingMoveRoute`, and this class
+//   still asks nothing about what happened: it eases its own picture along a polyline it was
+//   given, exactly as it eased along a chord it derived.
+//   [CORRECTED 2026-09-02, SAME DAY, BY THE LANE THAT WROTE IT, BECAUSE A USER DECISION WAS
+//   REVERSED. WRITTEN FLAT: THE SENTENCE BELOW IS NOW FALSE IN ITS SECOND HALF AND A READER WHO
+//   GREPS IT MUST LAND ON THE CURRENT RULE.] It said:
+//   RETRACTED> "WHAT DID CHANGE IS WHICH INPUTS EXIST: an EMPTY route means SNAP, so an AI
+//   RETRACTED>  move, a load, a reseed and a spawn all snap and only a player move whose route
+//   RETRACTED>  was captured slides."
+//   WHAT STANDS, VERBATIM: an EMPTY route means SNAP, and a load, a reseed, a spawn and a
+//   refused path query all reach that arm and all snap. WHAT IS RETRACTED: "an AI move ... snaps"
+//   and "ONLY a player move ... slides". **THE USER REVERSED THAT DECISION ON 2026-09-02: AI
+//   MOVES NOW ANIMATE ALONG THEIR ROUTE, ONE UNIT AT A TIME, DURING §2.11.2's PLAYBACK TOUR.**
+//   THE MECHANISM IS A SECOND ENTRY POINT AND NOT A CHANGE TO THIS ONE. `ApplyUnitView` is
+//   untouched in its arming condition; `PlayRouteSlide` is a separate verb that arms a slide
+//   which PARKS at the route's own last hex, and `UStratMatchSubsystem::PlayMoveSlideForStep`
+//   is its only caller. THAT IS STILL NOT AN EVENT INFERENCE BY THIS CLASS -- nothing here
+//   detects an AI turn; a caller that knows it is touring one calls the other verb.
 // - [HALF-DISCHARGED 2026-08-29 BY W4. THE CORRECTION IS WRITTEN FLAT, AND THE HALF THAT
 //   STILL STANDS IS NAMED SEPARATELY, because a bullet that is true of one bit and false of
 //   the other reads as wholly true to whoever greps for either.] It said:
@@ -91,6 +168,7 @@
 #include "StratUnitActor.generated.h"
 
 class UMaterialInterface;
+class USceneComponent;
 class UStaticMesh;
 class UStaticMeshComponent;
 
@@ -152,9 +230,196 @@ public:
 	 *                        ("the turn-1a unit marker clear[s] in the same frame as the
 	 *                        strip") and is the only operand of the three that can ever go
 	 *                        false mid-match.
+	 * @param RouteWorldPoints
+	 *                        the hexes this unit's picture is to travel along, in order, each
+	 *                        already converted by `AStratBoardActor::WorldLocationOfHex` -- the
+	 *                        one axial -> world expression in the project, for the reason
+	 *                        `WorldLocation` is passed rather than computed. `[0]` is the unit's
+	 *                        own starting hex and `.Last()` is the hex `View.Hex` names.
+	 *
+	 *                        **EMPTY MEANS SNAP, AND THAT IS THE WHOLE ARMING CONDITION.** No
+	 *                        route, no tween: the actor is put at its destination and its
+	 *                        picture goes with it. `UStratMatchSubsystem::PendingMoveRoutes` is
+	 *                        filled only by an accepted PLAYER command and is emptied on every
+	 *                        apply, so the map's own contents are the signal for THIS entry
+	 *                        point and no second one exists. A load, a reseed, a spawn and a
+	 *                        path query that refused all reach this arm too, and snapping is
+	 *                        the right answer to each.
+	 *
+	 *                        [CORRECTED 2026-09-02, SAME DAY, BECAUSE A USER DECISION WAS
+	 *                        REVERSED. FLAT, NOT NESTED.] It said:
+	 *                        RETRACTED> "This is what makes 'AI moves do not slide' true
+	 *                        RETRACTED>  WITHOUT anything in this class or its caller detecting
+	 *                        RETRACTED>  an AI turn."
+	 *                        AI MOVES NOW SLIDE, during §2.11.2's playback tour, by the user's
+	 *                        reversal of that decision on 2026-09-02. What is retracted is the
+	 *                        CONSEQUENCE and not the MECHANISM: this parameter is still filled
+	 *                        only from `PendingMoveRoutes`, this function still cannot tell an
+	 *                        AI turn from a player one, and the AI's slide arrives through
+	 *                        `PlayRouteSlide` instead -- a different verb with a different
+	 *                        caller. Nothing in this class detects anything.
 	 */
 	void ApplyUnitView(const FStratUnitView& View, const FVector& WorldLocation, int32 ViewingSide,
-	                   bool bGuidanceActive);
+	                   bool bGuidanceActive, const TArray<FVector>& RouteWorldPoints);
+
+	/**
+	 * Puts this actor over `WorldLocation` with NO animation, whatever `MoveTweenSeconds` says.
+	 *
+	 * THE DECLARED NO-ANIMATION ENTRY POINT, FOR A CALLER THAT KNOWS THE ACTOR IS NEW. It
+	 * exists because "a unit that just appeared must not slide in from wherever it was
+	 * standing" is a fact only the spawner has: a freshly spawned actor is at
+	 * `FTransform::Identity`, and without this every unit on a fresh board would ease in from
+	 * the world origin. `UStratMatchSubsystem::ApplyView` calls it on the spawn branch and
+	 * nowhere else.
+	 *
+	 * THE KNOWLEDGE STAYS AT THE ONE PLACE NEWNESS IS KNOWN AND IS NOT A BIT THIS ACTOR
+	 * REMEMBERS. The alternative was a `bHasAppliedAView` flag here, suppressing the first
+	 * tween -- and that is precisely a presentation bit on an actor that no model holds, which
+	 * is what `T-INT-05.NoActorHoldsPresentationBits` is about. The spawner already knows; it
+	 * says so by calling this.
+	 *
+	 * IT WRITES THE SAME EXPRESSION `ApplyUnitView` WRITES, DELIBERATELY DUPLICATED. Factoring
+	 * the `+ BodyZOffset` into a shared helper would have edited `ApplyUnitView`'s location
+	 * line, and that line staying byte-identical is what makes "the actor transform is
+	 * unchanged by this feature" checkable by reading rather than by argument. The duplication
+	 * is one addition and is named here so it is maintained as a pair.
+	 *
+	 * IT ALSO CLEARS ANY TWEEN IN FLIGHT, so calling it mid-slide is a hard cut rather than a
+	 * slide that continues from a stale start. That is what "no animation" has to mean to be
+	 * usable as a repair.
+	 *
+	 * @param WorldLocation the same value `ApplyUnitView` would be handed for this unit --
+	 *                      `AStratBoardActor::WorldLocationOfHex(View.Hex)`, never a value
+	 *                      computed here.
+	 */
+	void SnapToWorldLocation(const FVector& WorldLocation);
+
+	/**
+	 * Arms a route slide that PARKS at the route's own last hex. Returns the seconds armed.
+	 *
+	 * WHAT GAP THIS CLOSES, AND IT IS A USER DECISION REVERSED. Until 2026-09-02 AI moves were
+	 * required NOT to slide, and the mechanism was that nothing noted a route for them --
+	 * `ApplyUnitView`'s empty-route arm, which is unchanged. The user reversed that: §2.11.2's
+	 * playback tour now animates each AI move along the hexes the rules module actually walked,
+	 * ONE UNIT AT A TIME, with the tour's clock waiting for each slide. `ApplyUnitView` cannot
+	 * serve that, because by the time a tour runs the board ALREADY SHOWS THE FINAL STATE --
+	 * every actor is at its last hex and no transform is going to change again. So a tour's
+	 * slide is a slide the actor's TRANSFORM does not accompany, and that is the whole reason
+	 * this is a second verb rather than a fifth parameter on the first one.
+	 *
+	 * IT PARKS, WHICH IS THE ONE PROPERTY `ApplyUnitView` CANNOT HAVE. `ApplyUnitView`'s tween
+	 * always retires to `Body` at exact relative ZERO, because the actor has just been put where
+	 * the model says the unit is. Here the actor is at the unit's FINAL hex and the slide being
+	 * shown ends at some intermediate one, so the resting offset is non-zero and the picture
+	 * stays there until the next step moves it or the tour ends. See `TweenRestOffset`.
+	 *
+	 * IT WRITES NOTHING BUT THE TWEEN, AND THE LIST IS EXHAUSTIVE SO THAT A READER NEED NOT
+	 * DIFF IT AGAINST `ApplyUnitView`: the two tween arrays, `TweenElapsed`, `TweenRestOffset`,
+	 * `Body`'s relative location and the tick flag. **No mesh, no material, no marker, no
+	 * `UnitId`, no `LastAppliedView`, and -- the load-bearing one -- NO `SetActorLocation`.**
+	 * A tour that moved actors would be a second writer of the transform `ApplyView` owns, and
+	 * `T-INT-05`'s "the screen is a function of the model" would then be false of the board
+	 * rather than merely of a picture's rest position.
+	 *
+	 * @param RouteWorldPoints the hexes this unit's picture is to walk, in order, each already
+	 *                         through `AStratBoardActor::WorldLocationOfHex` -- the project's
+	 *                         one axial -> world expression, for `ApplyUnitView`'s reason.
+	 *                         Fewer than two points arms nothing and returns 0: a one-point
+	 *                         route has no segment to walk.
+	 * @param AnchorWorldPoint the TILE-PLANE point the offsets are measured against -- the
+	 *                         world location of the hex this unit's picture rests over when the
+	 *                         slide retires to nothing, which is the hex the LAST APPLIED MODEL
+	 *                         puts it on.
+	 *
+	 *                         **IT IS SUPPLIED BY THE CALLER, FROM THE SAME SOURCE THE ROUTE
+	 *                         CAME FROM, AND IT MAY NOT BE DERIVED HERE.** The obvious
+	 *                         derivation is `GetActorLocation() - FVector(0, 0, BodyZOffset)`,
+	 *                         and it is FORBIDDEN: `ApplyUnitView`'s own arming block records
+	 *                         that differencing two points from ONE source is what cancels the
+	 *                         lift exactly, and that a second copy of the `+ BodyZOffset`
+	 *                         expression is the one place this arithmetic could go wrong. That
+	 *                         cancellation is why `T-INT-05.TweenWaypointsSitAtTheDrawnUnitsHeight`
+	 *                         is green, and it was measured able to fail: substituting a
+	 *                         lift-bearing point for the route's own reddened it alone, with
+	 *                         *"waypoint 1 draws at the unit's own height over hex (-1, 4):
+	 *                         Z 0.00, expected 37.00"*. A derived anchor reintroduces exactly
+	 *                         that expression.
+	 *
+	 * @return the seconds the armed slide will take, or 0 when nothing was armed. **THE ACTOR
+	 *         TELLS THE CALLER RATHER THAN THE CALLER PREDICTING IT.** `MoveTweenSeconds` is
+	 *         this class's, and `UStratMatchSubsystem::AiPlaybackStepSeconds`' own block states
+	 *         "this subsystem never reads it" -- a sentence that has to stay true, because the
+	 *         moment the tour computed a duration from a per-actor Blueprint property there
+	 *         would be two answers to how long a slide lasts and a Blueprint edit would desync
+	 *         the clock from the picture. Zero is returned on every refusal, so the caller's
+	 *         interval collapses to its own pacing figure with no special case.
+	 */
+	float PlayRouteSlide(const TArray<FVector>& RouteWorldPoints, const FVector& AnchorWorldPoint);
+
+	/**
+	 * Retires any slide in flight AND clears any park, returning `Body` to exact relative zero.
+	 *
+	 * THE COUNTERPART TO `PlayRouteSlide` AND THE REASON A PARK IS SAFE TO CREATE. A parked
+	 * picture has no clock behind it -- that is what parking means -- so nothing brings it home
+	 * on its own. Without a verb that clears one, a tour skipped or abandoned mid-slide would
+	 * strand a unit's picture over an intermediate hex FOREVER, with the actor and the model
+	 * both saying it is somewhere else.
+	 *
+	 * IT RECOMPUTES NOTHING AND WRITES NO POSITION. `Body` goes to relative zero, which is the
+	 * value it holds at rest on every path that does not park; the actor transform is not read,
+	 * not written, and not consulted. So this cannot disagree with `ApplyView` about where the
+	 * unit is -- it has no opinion about where the unit is.
+	 *
+	 * A NO-OP WHEN THERE IS NOTHING TO CLEAR, deliberately, so that its caller may be
+	 * unconditional. See `UStratMatchSubsystem::EndAiPlaybackTour`, which calls it for every
+	 * unit actor on all six of its own call sites for exactly that reason.
+	 */
+	void CancelRouteSlide();
+
+	/**
+	 * Parks this picture over a hex IMMEDIATELY, with no slide and no clock. A park with
+	 * nothing running.
+	 *
+	 * WHAT GAP THIS CLOSES, AND IT IS A DEFECT A HUMAN SAW BEFORE ANY INSTRUMENT DID.
+	 * §2.11.2's tour steps over a board that is ALREADY FINAL -- `RunAiTurnsNow` reconciles
+	 * before `BeginAiPlayback`, deliberately, and that ordering is load-bearing. The cost, which
+	 * nothing in this tree predicted and a PIE playtest reported on 2026-09-02, is that every AI
+	 * unit is DRAWN at its destination the instant the hand-over resolves; `PlayRouteSlide` then
+	 * displaces that picture back to the start of its leg and eases forward. **The player sees a
+	 * mass snap to the destinations and then a rubber-band per unit**, in the user's own words:
+	 * *"the AI units all snap to their target destination and then each one teleports back to
+	 * their original position and then interps to the target location."*
+	 *
+	 * SO THE PICTURES ARE PUT BACK BEFORE THE TOUR'S FIRST STEP AND NOT DURING IT. The model
+	 * stays final -- nothing here touches the actor transform or the view model, and the fix is
+	 * emphatically NOT to reorder the refresh and the tour. What moves is the picture, before
+	 * anything is shown, so no unit is ever drawn at a hex it has not yet been seen to walk to.
+	 *
+	 * IT IS `FinishTween` WITH A COMPUTED REST OFFSET AND NOT A SIXTH COPY OF ITS FOUR LINES.
+	 * That function is the ONE retirement path in this class -- see its declaration -- and
+	 * "empty both arrays, put `Body` at the rest offset, zero the clock, tick off" is exactly
+	 * what a park with nothing running is. `CancelRouteSlide` is the same shape with a rest
+	 * offset of zero.
+	 *
+	 * IT REFUSES AT `MoveTweenSeconds <= 0`, WHICH IS NOT AN OPTIMISATION. That is the shipped
+	 * C++ default and the configuration every automation fixture runs at; nothing slides there,
+	 * so a park would displace a picture that no step would ever move back and the tour would
+	 * end with a unit drawn hexes from where the model says it is. A caller cannot get this
+	 * wrong because this function will not do it.
+	 *
+	 * @param ParkWorldPoint   the TILE-PLANE point to draw this unit over --
+	 *                         `AStratBoardActor::WorldLocationOfHex` of the hex its first
+	 *                         recorded move began on.
+	 * @param AnchorWorldPoint the TILE-PLANE point the offset is measured against, **from the
+	 *                         same source as `ParkWorldPoint`**, exactly as `PlayRouteSlide`
+	 *                         requires and for the identical reason: differencing two points
+	 *                         from one source cancels `BodyZOffset` exactly, so this function
+	 *                         holds no third copy of the `+ BodyZOffset` expression the
+	 *                         declaration pairs across `ApplyUnitView` and `SnapToWorldLocation`.
+	 *                         **Deriving it as `GetActorLocation() - FVector(0, 0, BodyZOffset)`
+	 *                         is forbidden here on `PlayRouteSlide`'s recorded measurement.**
+	 */
+	void ParkPictureAt(const FVector& ParkWorldPoint, const FVector& AnchorWorldPoint);
 
 	/**
 	 * Which unit this actor stands for. `FStratUnitView::UnitId`, and the key
@@ -170,6 +435,44 @@ public:
 	 *  not have to search the model for the entry that produced it -- the same value, not a
 	 *  second one. */
 	const FStratUnitView& GetLastAppliedView() const { return LastAppliedView; }
+
+	/**
+	 * How many waypoints the tween currently in flight has. Zero means none is in flight.
+	 *
+	 * IT EXISTS FOR THE CLAUSE, AND THAT IS SAID HERE RATHER THAN LEFT TO BE INFERRED -- the
+	 * same permission `IsGuidedMarkerVisible` takes and for the same reason. "The picture
+	 * follows the route's hexes rather than the chord between its ends" is a claim about a
+	 * POLYLINE, and a polyline is unassertable through a position sampled at one instant: a
+	 * chord and a route agree at both ends and a test that only reads `Body`'s location at rest
+	 * cannot tell them apart. There is no other reader in `Source/`.
+	 *
+	 * IT REPORTS THE REAL ARRAY AND NOT A CACHE OF IT. `TweenOffsets.Num()`, live -- so a
+	 * clause that arms a tween and then reads this is reading the thing `Tick` walks, and there
+	 * is no second number that could drift from it.
+	 *
+	 * IT IS A COUNT OF WAYPOINTS AND NOT OF HEXES, and the two differ by construction: the
+	 * terminal `FVector::ZeroVector` is APPENDED rather than converted from the route's last
+	 * hex, so an N-hex route arms N waypoints of which the last is exactly zero. See
+	 * `TweenOffsets`, which states why that is a construction and not an arithmetic identity.
+	 */
+	int32 GetTweenWaypointCount() const { return TweenOffsets.Num(); }
+
+	/**
+	 * One waypoint of the tween in flight, `Body`-relative, in the order the picture visits
+	 * them. Out of range answers `FVector::ZeroVector`.
+	 *
+	 * FOR THE CLAUSE, on `GetTweenWaypointCount`'s stated permission. Together the two let a
+	 * gate assert that consecutive waypoints are one hex apart -- which is what "along the
+	 * route" MEANS and is not checkable from an endpoint.
+	 *
+	 * OUT OF RANGE IS ZERO AND NOT A CRASH, deliberately: zero is what the terminal waypoint
+	 * holds anyway, so an off-by-one in a clause reads as a clause that measured the end of the
+	 * route rather than as a test that took the editor down mid-suite.
+	 */
+	FVector GetTweenWaypoint(int32 Index) const
+	{
+		return TweenOffsets.IsValidIndex(Index) ? TweenOffsets[Index] : FVector::ZeroVector;
+	}
 
 	/**
 	 * Whether §2.11.6-B's turn-1a marker is showing on this unit.
@@ -238,10 +541,40 @@ public:
 
 protected:
 	/**
+	 * The actor's root, and the thing `SetActorLocation` moves.
+	 *
+	 * WHY IT EXISTS AT ALL, WHICH IS THE ONE NON-OBVIOUS PART OF THE MOVE TWEEN. `Body` was
+	 * the root until 2026-09-02, and A ROOT'S RELATIVE LOCATION *IS* THE ACTOR'S WORLD
+	 * LOCATION -- there is nowhere to put a visual offset that the actor transform does not
+	 * also carry. Inserting an empty scene component above `Body` buys exactly one thing and
+	 * it is the whole design: the actor transform snaps to the destination as it always did,
+	 * and `Body`'s RELATIVE location carries the offset that decays to zero. `GetActorLocation()`
+	 * read synchronously after `UStratMatchSubsystem::ApplyView` therefore returns what it
+	 * returned before this landed, which is what `T-INT-05.ApplyViewSpawnsMovesAndDestroys`
+	 * reads.
+	 *
+	 * THE SHAPE IS THE PROJECT'S EXISTING ONE AND NOT AN INVENTION HERE. `AStratBoardActor`
+	 * has `BoardRoot` and `AStratCameraPawn` has `PivotRoot`, both for the same structural
+	 * reason: a root that is not the visual is a root that can stay still while the visual
+	 * does not.
+	 *
+	 * IT IS EMPTY ON PURPOSE. No mesh, no collision, nothing drawn. Everything visible hangs
+	 * off `Body` below, which is what keeps the three markers following the VISUAL rather than
+	 * the destination.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
+	TObjectPtr<USceneComponent> UnitRoot;
+
+	/**
 	 * The unit's body.
 	 *
 	 * NO COLLISION, set in the constructor and stated in the header block: the cursor must
 	 * reach the tile underneath, because every rules question is asked about a hex.
+	 *
+	 * NO LONGER THE ROOT AS OF 2026-09-02, and this is the sentence a reader looking for the
+	 * move tween should land on. It attaches to `UnitRoot` above, whose block gives the reason,
+	 * and its RELATIVE location is the visual offset the tween eases to zero. Its relative
+	 * location is zero at rest and zero on every path when `MoveTweenSeconds <= 0`.
 	 */
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
 	TObjectPtr<UStaticMeshComponent> Body;
@@ -565,12 +898,124 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
 	float BodyZOffset = 0.0f;
 
+	/**
+	 * How long the picture takes to cross ONE HEX STEP of the route it was handed.
+	 *
+	 * [REDEFINED 2026-09-02 BY THE ROUTE TWEEN, WRITTEN FLAT IN THIS FILE'S `RETRACTED>`
+	 * CONVENTION BECAUSE THE SENTENCE BELOW BECAME FALSE IN THE LETTER AND A READER TUNING PACE
+	 * LANDS ON IT.] It said:
+	 * RETRACTED> "How long `Body`'s visual offset takes to decay to zero after the actor is
+	 * RETRACTED>  moved. ... `ApplyUnitView` snaps the ACTOR to the destination exactly as it
+	 * RETRACTED>  always has and then gives `Body` a relative offset equal to where the unit was
+	 * RETRACTED>  DRAWN minus where it now stands; `Tick` eases that offset to zero over this
+	 * RETRACTED>  many seconds."
+	 * There is no longer A single offset. `ApplyUnitView` builds a POLYLINE of offsets, one per
+	 * route waypoint, and the whole tween lasts `MoveTweenSeconds * (waypoints - 1)` -- so this
+	 * is now a PER-STEP duration and a four-hex move takes four times as long as a one-hex hop
+	 * rather than the same time. **THAT IS A USER DECISION AND IT IS WHAT MAKES SPEED READ AS
+	 * CONSTANT** across moves of different lengths; the alternative, a fixed total, makes a long
+	 * move look frantic and a short one look sluggish for the same number.
+	 *
+	 * THE NAME IS UNDER-SPECIFIC BY ONE WORD AND IS KEPT ANYWAY, WHICH IS A COST STATED RATHER
+	 * THAN PAID SILENTLY. `MoveTweenSecondsPerHex` is the better name. Renaming it is REFUSED
+	 * because `Content/StratPlay/BP_StratUnit.uasset` stores its authored value keyed by this
+	 * property's `FName`: a rename ORPHANS that value with no diagnostic at all -- the Blueprint
+	 * falls back to the C++ default of 0.0, the animation switches off entirely, the build is
+	 * green, no log fires and no clause reddens, because zero is a supported configuration.
+	 * Mitigating it needs a `+PropertyRedirects` line in `Config/DefaultEngine.ini`, which is
+	 * the DATA STEWARD's lane and not this one's. Whoever holds both lanes at once may do the
+	 * pair; nobody may do half of it.
+	 *
+	 * WHAT IS UNCHANGED: the ACTOR still snaps. Every synchronous reader of
+	 * `GetActorLocation()` sees the destination, immediately, on the same call.
+	 *
+	 * ZERO IS THE C++ DEFAULT AND IT IS A USER DECISION, ON `AiPlaybackStepSeconds`' OWN
+	 * ARGUMENT RESTATED HERE RATHER THAN CITED. That field is §2.11.2's playback pace and its
+	 * block refuses to write the GDD's 0.5 into C++ for two reasons that both apply verbatim
+	 * to this number. First, a C++ default is a SECOND place the pace is stated, and the
+	 * designer-facing one on the Blueprint is then the one nobody can find when the two
+	 * disagree. Second -- and this is the load-bearing half -- a non-zero default would change
+	 * the path every existing test runs down, which is the change the field exists to avoid
+	 * making. So this ships as THE SWITCH AND NOT THE SETTING: the shipped duration goes on
+	 * `BP_StratUnit`, which is the content lane's and not this file's.
+	 *
+	 * AT `<= 0` THE PATH IS BIT-IDENTICAL TO THE ONE THAT SHIPPED BEFORE THIS FIELD EXISTED.
+	 * `ApplyUnitView` writes no offset, enables no tick, and leaves `Body`'s relative location
+	 * at the zero the constructor gave it. `bStartWithTickEnabled` is false, so an actor whose
+	 * Blueprint never sets this never ticks once in its life -- not a tick that early-returns,
+	 * no tick at all.
+	 *
+	 * NO DISTANCE CLAMP, AND THE ABSENCE IS DELIBERATE. A "don't animate a jump longer than N"
+	 * threshold needs a length scale, and the only honest one is `AStratBoardActor`'s
+	 * `HexSize`, which this class cannot see and must not: it holds no board pointer, by the
+	 * same discipline that makes `ApplyUnitView` take a world location instead of computing
+	 * one. Any constant written here would be a magic number this file cannot derive, and the
+	 * failure it would guard -- a unit sliding across the whole board -- cannot occur on any
+	 * path today, because `UStratMatchSubsystem::StartMatchInternal` calls
+	 * `TearDownPresentation()` unconditionally and that destroys every unit actor, so after a
+	 * load or a reseed every actor is NEW and takes `SnapToWorldLocation`.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	float MoveTweenSeconds = 0.0f;
+
+	/**
+	 * What fraction of the whole slide is spent easing in, and the same again easing out.
+	 * Clamped to [0, 0.5] where it is read. 0 is a linear ramp; 0.5 is a curve with no
+	 * constant middle at all.
+	 *
+	 * A TRAPEZOID AND NOT `SmoothStep`, WHICH IS THE USER'S OWN REQUEST AND NOT A REFINEMENT.
+	 * The ask was constant speed between eased ends, and `SmoothStep` has no constant middle
+	 * anywhere -- its velocity peaks at the midpoint and falls away on both sides, so a unit
+	 * crossing four hexes visibly races the middle two. `Tick` integrates a trapezoidal VELOCITY
+	 * profile instead: a linear ramp up over the first `MoveTweenEaseFraction` of the duration,
+	 * a constant plateau, a mirrored ramp down.
+	 *
+	 * THE `SmoothStep` BLOCK'S OWN ARGUMENT SURVIVES AND IS RESTATED HERE RATHER THAN DELETED
+	 * WITH IT, because it was never an argument for that particular curve -- it was an argument
+	 * for ZERO VELOCITY AT BOTH ENDS. A tween here can be replaced mid-flight by the next
+	 * `ApplyUnitView`, and the replacement begins at whatever velocity its own profile has at
+	 * alpha 0. A linear ramp starts at full speed, so a restart is a visible jerk; a one-sided
+	 * ease-out starts at full speed too. This profile's velocity is zero at 0 and at 1 and is
+	 * continuous throughout, so a slide that is interrupted and a slide that replaces it both
+	 * begin from rest and the seam is invisible -- the identical property, from a different
+	 * curve.
+	 *
+	 * A SCALAR AND DELIBERATELY NOT A `UCurveFloat`. A curve is an asset, an asset is a `/Game/`
+	 * path, and a `/Game/` path may not be named in this file -- so a curve would have to arrive
+	 * as a second `EditDefaultsOnly` property that is unset by default, and an unset curve is an
+	 * animation that silently does nothing. One number that cannot be null is the honest shape
+	 * for a knob this small.
+	 *
+	 * ONE REGRESSION IS DECLARED RATHER THAN DISCOVERED. A ONE-HEX HOP USED TO RUN `SmoothStep`
+	 * AND NOW RUNS THIS TRAPEZOID over the same duration -- same endpoints, same zero-velocity
+	 * ends, a slightly different feel in between. Keeping `SmoothStep` for one-step routes was
+	 * the alternative and is REFUSED: two profiles is two numbers to tune, two blocks of prose
+	 * to keep true, and a discontinuity in behaviour at a route length nobody would think to
+	 * test either side of.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	float MoveTweenEaseFraction = 0.25f;
+
 	/** Applies ALL THREE markers' Blueprint-default meshes, materials and offsets -- the
 	 *  §2.11.6-B guided marker, §2.11.2's flag `H` and §2.11.2's unacted pip. Overridden for
 	 *  the reason `AStratBoardActor::BeginPlay` gives: a constructor reading a Blueprint
 	 *  default runs on the CDO and sets it on the wrong object. THE THREE ARE APPLIED BY ONE
 	 *  HELPER AND NOT BY THREE COPIES OF THE SAME NINE LINES -- see `ConfigureMarker`. */
 	virtual void BeginPlay() override;
+
+	/**
+	 * Walks `Body`'s visual offset along `TweenOffsets` to zero and then switches itself off.
+	 *
+	 * THE ONLY TICKING THING IN THIS CLASS, AND IT IS OFF UNLESS A TWEEN IS IN FLIGHT.
+	 * `bStartWithTickEnabled` is false and `ApplyUnitView` enables ticking only when it has
+	 * actually armed a polyline; this function disables it again the moment the
+	 * offset reaches zero. So the steady state is the old one -- no tick -- and the actor is
+	 * never polling for a change the model would have told it about.
+	 *
+	 * IT WRITES A RELATIVE LOCATION ON `Body` AND NEVER TOUCHES THE ACTOR TRANSFORM. That is
+	 * the invariant the whole feature rests on; see `UnitRoot`.
+	 */
+	virtual void Tick(float DeltaSeconds) override;
 
 private:
 	/**
@@ -603,6 +1048,76 @@ private:
 	void ConfigureMarker(UStaticMeshComponent* Marker, UStaticMesh* Mesh, UMaterialInterface* Material,
 	                     const FVector& Offset, const TCHAR* MarkerName);
 
+	/**
+	 * Retires the move tween: both arrays emptied, `Body` at exactly `TweenRestOffset`, elapsed
+	 * zero, tick off.
+	 *
+	 * ONE RETIREMENT PATH AND NOT ONE PER EXIT, which is why it is a function rather than seven
+	 * copies of four lines. `Tick` reaches it four ways -- completion, a null `Body`, a
+	 * `MoveTweenSeconds` written to zero mid-slide, and a polyline of zero total length --
+	 * `SnapToWorldLocation` is the fifth caller, `CancelRouteSlide` the sixth, and
+	 * `ParkPictureAt` the seventh. A missed clear on any one of them leaves `Body` displaced with
+	 * no clock to bring it back, which is invisible in a build and obvious on a screen.
+	 *
+	 * THE SEVENTH IS THE ONE THAT SHOWS WHY THIS IS A FUNCTION. `ParkPictureAt` sets a NON-ZERO
+	 * rest offset and then calls this, and "empty both arrays, put `Body` at the rest offset,
+	 * zero the clock, tick off" is the entire definition of a park with nothing running -- so a
+	 * whole feature was added without a line of retirement logic being written a second time.
+	 *
+	 * [AMENDED 2026-09-02, SAME DAY, BY `PlayRouteSlide`. WRITTEN FLAT BECAUSE THE SENTENCE
+	 * BELOW NAMED A LITERAL AND IS NOW A FIELD READ.] It said:
+	 * RETRACTED> "IT WRITES EXACTLY ZERO rather than letting a curve converge to it."
+	 * IT WRITES EXACTLY `TweenRestOffset` rather than letting a curve converge to anything, AND
+	 * IT EMPTIES BOTH ARRAYS rather than leaving a spent polyline behind. **`TweenRestOffset` IS
+	 * ZERO ON EVERY PATH THAT DOES NOT PARK**, so this is byte-for-byte the old behaviour for
+	 * `ApplyUnitView`'s tween, for `SnapToWorldLocation`, and at the shipped
+	 * `MoveTweenSeconds <= 0` default; the writers of a non-zero rest offset are
+	 * `PlayRouteSlide` and `ParkPictureAt`, and there are no others. The "no state the model
+	 * holds" claim in the header block rested on the
+	 * terminal value BEING zero, and it is RE-SCOPED rather than weakened: see `TweenRestOffset`,
+	 * which states the one invariant that is now true of both paths.
+	 *
+	 * "EXACTLY" IS LITERAL AND IT COST A LINE TO KEEP, WHICH IS RECORDED HERE BECAUSE THE
+	 * OBVIOUS WRITE DOES NOT DELIVER IT. `USceneComponent::SetRelativeLocation` moves in WORLD
+	 * space and converts back through the parent's inverse, so it stores a ROUND TRIP of the
+	 * value it was handed -- measured 2026-09-02 with a probe in `CancelRouteSlide`: the same
+	 * call asking for `FVector::ZeroVector` stored an exact zero for one unit and
+	 * `Y=-0.000` for another, differing only in where their actors stood. The body uses
+	 * `SetRelativeLocation_Direct` plus `UpdateComponentToWorld` instead, which computes the
+	 * world transform FROM the relative one and so stores what it was asked for. The residue was
+	 * ~1e-14 uu and invisible on a screen; it was NOT invisible to `IsZero()`, which is what
+	 * this claim promises and what two clauses assert.
+	 *
+	 * IT EMPTIES BOTH ARRAYS for its own separate reason, unchanged: a route this actor is no
+	 * longer walking is state by any honest reading, and `GetTweenWaypointCount` reports the
+	 * array directly, so emptying it here is what makes "zero means no tween in flight" true for
+	 * the clause rather than merely intended.
+	 */
+	void FinishTween();
+
+	/**
+	 * How long the tween currently armed lasts, in seconds. Meaningless with fewer than two
+	 * waypoints.
+	 *
+	 * ONE EXPRESSION AND NOT THREE, WHICH IS A DRIFT RISK CLOSED RATHER THAN A TIDY-UP.
+	 * `MoveTweenSeconds * (waypoints - 1)` is the per-hex-step user decision that field's block
+	 * argues; `Tick` held the only copy of it until `PlayRouteSlide` needed to REPORT the same
+	 * number to a caller that paces a tour by it. Two copies of that product is a tour whose
+	 * clock and whose picture disagree the day the profile changes, and the disagreement is
+	 * silent -- the unit simply arrives early or the camera waits too long.
+	 *
+	 * TWO CALL SITES TODAY, AND THAT IS SAID BECAUSE IT WAS BRIEFED AS THREE: `Tick`, which
+	 * divides `TweenElapsed` by it, and `PlayRouteSlide`, which returns it. `ApplyUnitView` arms
+	 * a tween and needs no duration, because nothing waits on its slide.
+	 *
+	 * `double` AND NOT `float`, matching `Tick`'s own arithmetic exactly so that inlining it
+	 * here changes no result.
+	 */
+	double TweenDurationSeconds() const
+	{
+		return static_cast<double>(MoveTweenSeconds) * static_cast<double>(TweenOffsets.Num() - 1);
+	}
+
 	/** See `GetUnitId`. Written only by `ApplyUnitView`. */
 	UPROPERTY(Transient)
 	int32 UnitId = INDEX_NONE;
@@ -619,4 +1134,123 @@ private:
 	 */
 	UPROPERTY(Transient)
 	FStratUnitView LastAppliedView;
+
+	/**
+	 * The polyline the picture walks, `Body`-relative, in visiting order. Empty when no tween
+	 * is in flight.
+	 *
+	 * [REPLACED `TweenStartOffset` ON 2026-09-02. Everything that field's block claimed
+	 * transfers VERBATIM and is restated here rather than cited, because a citation to a
+	 * deleted member is a dangling one.]
+	 *
+	 * IT IS STATE IN THIS CLASS THAT NO MODEL HOLDS, together with `TweenArcLengths` and
+	 * `TweenElapsed` below, and the header block's correction names all three rather than
+	 * leaving them to be discovered. Its terminal value is EMPTY with `Body` at exact relative
+	 * zero; a clock drives it there; nothing reads it to decide anything; and it is not a BIT,
+	 * so it cannot make one unit draw a marker another does not.
+	 *
+	 * IT IS NOT A `UPROPERTY`, AND THAT IS A DECISION RATHER THAN AN OMISSION. It needs no
+	 * garbage collection -- an array of `FVector` owns no object -- and leaving it unreflected
+	 * keeps it off any future reflected walk that a clause about actor-held presentation state
+	 * might grow. `FStratBuildAffordance` on the controller is unreflected for the same reason
+	 * and says so in its own header.
+	 *
+	 * ELEMENT 0 IS RE-READ OFF `Body` ON EVERY ARMING AND IS NEVER A REMEMBERED DESTINATION.
+	 * See `ApplyUnitView`: it is OVERWRITTEN with `Body->GetComponentLocation()` measured before
+	 * the actor snaps, so an order arriving mid-slide restarts from where the unit is ACTUALLY
+	 * DRAWN and cannot pop. That is also why there is no `LastAppliedLocation` field here.
+	 *
+	 * [RE-SCOPED 2026-09-02, SAME DAY, BY `PlayRouteSlide`. WRITTEN FLAT. THE INVARIANT IS
+	 * NARROWED TO THE PATH IT WAS ALWAYS ABOUT AND IS NOT WEAKENED ON THAT PATH.] It said:
+	 * RETRACTED> "THE LAST ELEMENT IS EXACTLY `FVector::ZeroVector` BY CONSTRUCTION AND NEVER BY
+	 * RETRACTED>  ARITHMETIC. `ApplyUnitView` APPENDS it rather than converting the route's final
+	 * RETRACTED>  hex, which would produce zero only if two floating-point expressions agreed to
+	 * RETRACTED>  the bit."
+	 *
+	 * ON `ApplyUnitView`'S ARMING PATH THAT IS STILL TRUE, WORD FOR WORD, AND THE LINE THAT
+	 * MAKES IT TRUE -- `TweenOffsets.Add(FVector::ZeroVector)` -- IS UNCHANGED BYTE FOR BYTE.
+	 * It is legitimate there because `UStratMatchSubsystem::ApplyView` has already checked
+	 * `PendingRoute->Last() == View.Hex` before converting, so the route's final hex IS the hex
+	 * the actor was just put on: zero is both the right answer AND a construction rather than an
+	 * arithmetic coincidence.
+	 *
+	 * ON `PlayRouteSlide`'S PATH THE LAST ELEMENT IS COMPUTED AND IS ZERO ONLY BY ARITHMETIC,
+	 * on the one step where a unit's route happens to end on the hex it finishes the tour on.
+	 * That is not a defect and it is not a second rule -- it is the definition of a PARK.
+	 *
+	 * SO THE MEMBER CARRIES ONE INVARIANT TRUE OF BOTH PATHS, AND IT IS THIS: **`Body` at
+	 * relative `TweenOffsets.Last()` draws the unit over the route's own last hex.** Both paths
+	 * satisfy it, the terminal-zero property is the special case of it where that hex is also
+	 * the actor's, and `TweenRestOffset` is where the slide comes to rest for exactly that
+	 * reason.
+	 */
+	TArray<FVector> TweenOffsets;
+
+	/**
+	 * Cumulative distance along `TweenOffsets`, same length, `[0] == 0`.
+	 *
+	 * WHY IT IS STORED RATHER THAN RE-DERIVED EVERY TICK: constant speed means constant speed
+	 * IN WORLD UNITS, so the eased profile produces a DISTANCE and the distance has to be turned
+	 * back into a segment. Re-summing the polyline every frame would be the same arithmetic
+	 * repeated at 60 Hz for a value that cannot change while the tween is in flight -- nothing
+	 * writes `TweenOffsets` between arming and retirement.
+	 *
+	 * AND WHY IT MATTERS AT ALL FOR A HEX ROUTE, WHOSE STEPS LOOK EQUAL: they are equal except
+	 * for the FIRST one, which is overwritten with the drawn-position offset when an order
+	 * arrives mid-slide and is then not exactly one hex long. Walking by index instead of by
+	 * arc length would make that one segment run at a different speed from its neighbours, which
+	 * is exactly the artefact the whole trapezoid exists to avoid.
+	 */
+	TArray<double> TweenArcLengths;
+
+	/** Seconds since the current tween started. Meaningless unless `TweenOffsets` is non-empty
+	 *  and the actor is ticking; see `TweenOffsets`, which states the terms all three are held
+	 *  under. */
+	float TweenElapsed = 0.0f;
+
+	/**
+	 * Where `Body` rests when the current tween retires. Zero on every path but the two that
+	 * park.
+	 *
+	 * WHAT IT IS FOR. §2.11.2's tour shows AI moves on a board that ALREADY holds the final
+	 * state, so a slide of the AI's third move must come to rest over the hex that move ended
+	 * on -- not over the hex the unit is standing on now. `FinishTween` writes this instead of a
+	 * zero literal, and that is the whole of parking.
+	 *
+	 * ITS TERMINAL VALUE IS ZERO AND SOMETHING ALWAYS DRIVES IT THERE, WHICH IS THE TEST THE
+	 * HEADER BLOCK'S "no state the model holds" PARAGRAPH APPLIES TO THE OTHER THREE TWEEN
+	 * MEMBERS AND THIS ONE MUST PASS TOO. Three writers set it to zero:
+	 * `ApplyUnitView`'s arming branch, `CancelRouteSlide`, and `SnapToWorldLocation` (which
+	 * zeroes it BEFORE `FinishTween`, because a hard cut must clear a park and not retire into
+	 * one). `UStratMatchSubsystem::EndAiPlaybackTour` is what guarantees a driver exists for
+	 * every way a tour can stop, including the ways nobody has written yet.
+	 *
+	 * [AMENDED 2026-09-02, SAME DAY, BY `ParkPictureAt`. WRITTEN FLAT BECAUSE THE HEADING
+	 * SENTENCE NAMED A SINGULAR WRITER AND A READER GREPS THAT.] It said:
+	 * RETRACTED> "Zero on every path but `PlayRouteSlide`."
+	 * **TWO FUNCTIONS WRITE A NON-ZERO REST OFFSET AND THEY ARE THE ONLY TWO:** `PlayRouteSlide`,
+	 * which parks at the end of a slide it arms, and `ParkPictureAt`, which parks with nothing
+	 * running at all. The three zeroing writers are unchanged and still cover both, and
+	 * `EndAiPlaybackTour`'s cancel reaches a picture parked by either -- a pre-park is an empty
+	 * polyline with a non-zero rest offset, which `CancelRouteSlide` clears exactly as it clears
+	 * a spent slide's.
+	 *
+	 * AND IT IS NOT A BIT, on the same test as the other three. No marker, mesh, material or
+	 * visibility answers off it; it is a displacement with a clock behind it, and a match played
+	 * with it permanently zero differs only in that AI moves do not animate.
+	 *
+	 * IT IS OUTSIDE `T-INT-05.NoActorHoldsPresentationBits`' SUBJECT, AND THAT WAS READ OFF THE
+	 * CLAUSE RATHER THAN ASSUMED. Every assertion in that clause compares a field of
+	 * `GetLastAppliedView()` against the model; a member that is not part of the cached view sits
+	 * outside it, on exactly the footing the three tween members already there sit on.
+	 *
+	 * `ApplyUnitView` MUST NOT ZERO IT UNCONDITIONALLY, AND THIS IS THE EASIEST THING IN THE
+	 * FILE TO GET WRONG. `AStratPlayerController::Tick` calls `UpdateHoverFromCursor` every
+	 * frame and a hover crossing into a new hex reaches `ApplyView`, so `ApplyUnitView` FIRES
+	 * DURING A TOUR whenever the player moves the mouse across a hex boundary. An unconditional
+	 * clear there would pop every parked unit to its final hex on the next mouse move, and it
+	 * would read as a random glitch rather than as a rule. The `bActorMoved` guard is what makes
+	 * a hover harmless; the clear is conditioned on it.
+	 */
+	FVector TweenRestOffset = FVector::ZeroVector;
 };

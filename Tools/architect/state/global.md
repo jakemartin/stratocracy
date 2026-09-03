@@ -11,6 +11,220 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-03 (AI UNITS NOW WALK THEIR ROUTES ONE AT A TIME, AND THE THING WORTH READING
+IS THAT THE RULING EVERYBODY CITED AS FORBIDDING THIS FORBIDS SOMETHING ELSE. Written by the
+`coordinator`, whose file this is, IN LANE AND UNDER NO EXCEPTION CLAUSE -- this seat wrote no
+code and no clause. The C++ is `strat-gameplay-engineer`'s and is in `engine.md`; the clauses are
+`strat-test-author`'s and are in `tests.md`. Each wrote its own entry, in lane, itself.
+The suite is **386/386**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, and the macro census of this tree agrees at 386.
+THE COUNT MOVED 381 -> 386 AND EVERY ONE OF THE NEW CLAUSES IS AN ADDITION: **+5 added, 0
+removed, 0 state changes**, measured by set difference on the test MACRO with one collector on
+both sides. All five new clause names were verified PRESENT IN THE REPORT BY NAME rather than
+inferred from the delta.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.03-19.47.45`, RESTAMPED 2026-09-03.
+The citation is a run THIS SEAT made in THIS tree after the last source change, on the reverted
+tree, and the five names were read back out of that report by name.
+THE FIVE EXISTENCE-HOLD CLAUSES ARE THE +5, and they close the debt this record carried open
+since earlier on 2026-09-03, when five consecutive `strat-test-author` dispatches died to a
+server-side `HTTP 529` before writing a byte. The clauses are `strat-test-author`'s, written IN
+LANE, and its own entry is in `tests.md`; this seat wrote no clause and no code. Four of the five
+are pinned by exactly the one-line mutations `engine.md` specified, each built IN PLACE in this
+tree, rebuilt and re-run per mutant, every file under test restored byte-identically on hash.
+A NOTE ON WHERE THE BLOCK BELOW SITS, BECAUSE IT IS LOAD-BEARING AND NOT STYLISTIC. It was
+first written directly under the live citation above, and that made REPORT PROVENANCE check 5(a)
+INERT ON THIS BANNER'S OWN CERTIFYING CITATION: `is_stamped` scans
+`_PROVENANCE_CITATION_WINDOW` (400 characters) around a citation, so the `[STAMPED` bracket
+below reached the live citation and excused it. Measured, not reasoned: with the block adjacent,
+the live stamp was left reading a report that no longer existed and the sweep still printed
+CLEAN, and a probe setting it to a stamp no report has ALSO passed. Keep >400 characters of text
+between that citation and any `[STAMPED` marker, or the guard goes quiet on the one claim it
+exists to police.
+**[STAMPED 2026-09-03 -- the unit-movement wave's figure and its report, superseded by the
+existence-hold clauses below. Kept, not deleted, per this file's own convention.]**
+STAMPED> **[STAMPED 2026-09-03]** "The suite is 381/381 ... +6 added ... at the report
+STAMPED>  stamped `2026.09.03-14.05.36`" -- true of the unit-movement wave and
+STAMPED>  superseded by the existence-hold clauses below, not retracted. One report path,
+STAMPED>  one artifact, so that report no longer exists to be read.
+ONE BRIEFED MUTATION WAS MEASURED INERT AND THE CLAUSE WAS NOT SOFTENED TO FIT IT. Deleting
+`ApplyTourExistenceAtCursor();` from `BeginAiPlayback` does NOT redden
+`AUnitBuiltDuringTheHandoverIsHiddenUntilItsStep`, because `BeginAiPlayback` ends by calling
+`AdvanceAiPlaybackOneStep`, which calls the same pure function again at cursor 1 inside the same
+synchronous call -- so the deleted line's only effect lands in a window no frame is rendered in.
+The line is NOT dead, and that was measured rather than assumed: under the mutation a unit that
+legitimately appears at step 0 becomes concealed. The clause is instead pinned by deleting the
+same call from `AdvanceAiPlaybackOneStep`, which reddens it on all 19 appeared ids at once.
+**Closing it properly needs a `const` accessor reporting whether an id is currently held
+concealed, which is `strat-gameplay-engineer`'s and is NOT written.**
+**[STAMPED 2026-09-03 -- the retraction below is itself history now. It passed every earlier
+sweep only INCIDENTALLY: `RETRACTED>` is not in `_PARAGRAPH_STAMP_MARKERS`, and what excused it
+was a matching `reportCreatedOn` sitting inside `_STAMP_WINDOW`'s 220 characters. Restamping the
+banner above pushed that neighbour out of the window and the sweep fired, correctly. An explicit
+marker, not a lucky neighbour, is what keeps it quiet.]**
+RETRACTED> **[STAMPED 2026-09-03]** "at `reportCreatedOn 2026.09.02-23.16.13`" -- overwritten four
+RETRACTED>  times over by later runs before this line was corrected, so the figure above was
+RETRACTED>  right while its warrant was dead. One report path, one artifact.
+The citation above is a run THIS SEAT made in THIS tree after the last source change -- not a
+lane's report plus an argument from byte identity, which this record refuses for a banner.
+WHAT THE USER ASKED FOR, after watching AI units snap to their final hexes all at once: that each
+AI unit progress along its target route, and that they move ONE AT A TIME. **THIS REVERSES A USER
+DECISION FROM EARLIER THE SAME DAY** -- "AI moves must not slide" -- which had been implemented
+as a structural ABSENCE and documented as such at SIX sites, all six now corrected flat.
+WHY IT WAS BELIEVED IMPOSSIBLE, AND WHY THAT WAS WRONG. `StratAiPlayback.h` records that a
+PER-STEP BOARD was rejected because drawing one needs a mid-turn mirror of rules state. That
+ruling stands untouched and this is not it: the actor transform never leaves the FINAL model
+position for a single frame, and only `Body`'s visual offset moves -- the same distinction that
+made the player tween legal. Two further beliefs were simply false. The reel HAD no from-hex, but
+the route is obtainable in `FStratBridgeAiTurnPort::Submit`'s Move arm, on the line before the
+state changes, which is where it is now taken. And AI playback was believed to ship INERT on a
+`0.0f` C++ default -- it does not: `AiPlaybackStepSeconds` is 0.5 on both shipped GameMode
+Blueprints, so the per-action clock this feature needed was already running.
+THE THREE DEFECTS CAUGHT BY READING RATHER THAN BY A SUITE, each of which would have shipped
+green. (1) A brief from this seat specified `TweenOffsets[0] = Drawn - Destination`
+UNCONDITIONALLY; at a tour's start every picture is at relative zero, so a one-hex move -- the
+commonest reel entry there is -- collapses to a `{0, 0}` polyline and THE FEATURE ANIMATES
+NOTHING. Refused by the engineer and now pinned. (2) `AStratPlayerController::Tick` reaches
+`ApplyView` whenever the cursor crosses a hex boundary, so an unconditional park clear would pop
+every parked unit on the next mouse move. (3) A clause comparing routes element-wise passes
+silently when BOTH sides are empty; only its count control reddens.
+ALL SIX **[STAMPED 2026-09-03 -- "SIX" IS THE UNIT-MOVEMENT WAVE'S OWN COUNT, WHOSE DELTA WAS
++6 AND WHOSE FIGURE IS STAMPED ABOVE. IT IS NOT THE +5 THIS BANNER NOW CARRIES LIVE. Restamping
+the figure to 386 without stamping this sentence left one block asserting both counts, which is
+this file's own recurring defect and was caught by the gate at
+`Tools/architect/gate_reports/2026-09-03-unit-movement-and-existence-hold.md` as F3.]** NEW
+CLAUSES ARE DISCHARGED BY MEASUREMENT, each by its own banner's named one-line
+mutation, built IN PLACE by the lane that owns the file, rebuilt and re-run per mutant, every
+file restored byte-identically on hash AND md5. Both requested pairings hold: the anchor mutant
+reddens the height clause ALONE, and the two halves of `ApplyUnitView`'s new branch are reddened
+by one mutation each while the other stays green.
+TWO PROPERTIES OF THIS FEATURE ARE UNPINNABLE, MEASURED RATHER THAN ASSUMED, and both are
+recorded at their own lines. (1) `AdvanceAiPlaybackOneStep`'s ARM-LAST ordering: a clause for it
+was written, built, RUN, and FAILED ON THE SHIPPED TREE, then deleted rather than softened into
+one that picks its assertion from the data. The cause is structural, not scenario -- an applied
+`EndTurn` is `RunTurn`'s only successful exit, so no hand-over can ever end on an arming Move and
+no fixture change can reach it. Moving that statement above `EndAiPlaybackTour()` yields a fully
+green suite. (2) Whether `AdvanceAiPlaybackOneStep` arms a timer is unobservable BY COMBINATION:
+a one-shot is always already pending during a tour and `SetTimer` replaces it, and the one
+condition that would expose it -- a ticked world on a short interval -- is unavailable because
+every playback fixture uses a 600 s interval on never-ticked worlds, chosen to avoid flakes.
+THE HUMAN GATE IS NOW CLOSED ON EVERY VISIBLE CLAIM IN THIS WAVE, and it was the only
+instrument that could close any of them. The user reported, across three tests: player units
+move and their flags follow; AI units move along their routes; and built units appear when
+built and disappear when killed.
+AND THE HUMAN GATE FOUND WHAT NO GATE HERE COULD. On its first look the whole army snapped to
+its destinations and then RUBBER-BANDED BACK before walking: `RefreshPresentation` draws the
+final model before the tour starts, and each step then displaced a picture backwards. Both
+halves were visible and NEITHER was reachable by any clause, because a fixture can see an
+ARMED offset and never a SEQUENCE OF FRAMES. `PreParkPicturesForTour` is the repair, and this
+is the strongest evidence in this record that the eye is a GATE and not a courtesy.
+RETRACTED> "WHAT IS NOT DONE, AND IT IS THE HALF THE PLAYER SEES. **NOBODY HAS WATCHED AN AI
+RETRACTED>  UNIT WALK ITS ROUTE.**" -- true when written, closed by the user's own tests.
+WHAT REMAINS UNOBSERVED, NARROWED TO WHAT IS ACTUALLY OPEN: that a repeat mover PARKS at its
+first destination and continues from there, and that MOVING THE MOUSE during a tour does not
+pop a parked unit. Neither was named in the tests reported above; the second would read as a
+random glitch rather than a design error. `Tick` never runs in the fixture world, so the clauses pin what is ARMED and what is
+CANCELLED and nothing about the motion between. Three things need a human at the keyboard: that
+AI units move one at a time; that a repeat mover PARKS at its first destination and continues
+from there; and that MOVING THE MOUSE during an AI turn does not pop a parked unit -- which is
+defect (2) above and would read as a random glitch rather than as a design error.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the builds,
+the suite runs and the writes behind this block were performed in `E:/MultiAgent/Stratocracy` on
+branch `master` on this developer box, over base commit `283d711`, with the editor closed for
+every build. No lane topology stood; the user chose DISPATCH over an in-session write, so no
+clause of CLAUDE.md's was invoked and every lane wrote its own file. NOTHING WAS COMMITTED --
+staging and commits are the user's call -- so a later checkout will not contain this pass's tree
+unless the user committed it.]**)
+
+_Last run 2026-09-02 (UNITS NO LONGER TELEPORT -- THEY WALK THEIR OWN ROUTE, AND THE THING
+WORTH READING IS THAT NO PATHFINDING WAS WRITTEN, BECAUSE THE ORDERED ROUTE ALREADY EXISTED
+END TO END AND NOBODY HAD DRAWN IT. Written by the `coordinator`, whose file this is, IN LANE
+AND UNDER NO EXCEPTION CLAUSE -- this seat wrote no code and no clause. The C++ is
+`strat-gameplay-engineer`'s and is in `engine.md`; the clauses are `strat-test-author`'s and are
+in `tests.md`; the Blueprint default is `strat-editor-builder`'s and is in `content.md`. Each
+wrote its own entry, in lane, itself.
+The suite is **375/375**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, and the macro census of this tree agrees at 375.
+THE COUNT MOVED 370 -> 375 AND EVERY ONE OF THE NEW CLAUSES IS AN ADDITION: **+5 added, 0
+removed, 0 state changes**, measured by set difference on the test MACRO with one collector on
+both sides, at `reportCreatedOn 2026.09.02-21.01.14`. All five new clause names were verified
+PRESENT IN THAT REPORT rather than inferred from the delta, and the one retired name
+(`PendingRouteIsEmptiedByEveryApply`) was verified ABSENT from it.
+WHAT THE USER ASKED FOR, in two steps after playing: first that movement stop being a teleport,
+then -- having watched the resulting slide -- that the unit follow the hexes rather than cut
+straight across them.
+WHY THE FIRST HALF NEEDED A DESIGN. `ApplyUnitView` teleported ON PURPOSE and said so in prose:
+animating a move was held to need the ordered event list Sec 4.9 part 2 names and `StratBridge.h`
+records as not built, since sliding toward a position difference would be inferring what
+HAPPENED from what IS. The resolution keeps that reasoning intact rather than overturning it --
+`Body` moved beneath a new `UnitRoot`, so the ACTOR still snaps to the destination and only the
+PICTURE eases. `GetActorLocation()` is unchanged synchronously after `ApplyView`, which is why
+`T-INT-05.ApplyViewSpawnsMovesAndDestroys` stayed green and BYTE-IDENTICAL to `283d711`.
+WHY THE SECOND HALF DID NOT. `FStratBridge::MovePathToHex` already returned the ordered route
+and the bridge header already recorded that it is THE SAME ROUTE THE COMMIT TAKES, so the route
+is a RULES ANSWER and not an inference -- the objection above never applied to it. It is asked
+BEFORE the submit, because after it the unit stands on the goal and the query answers `{goal}`.
+THREE FINDINGS THAT A GREEN SUITE WOULD NOT HAVE SURFACED. (1) A player move produces TWO
+`ApplyView` calls, and the second was re-arming the tween -- invisible for a chord, fatal for a
+route, which it would have collapsed back to a straight line in the same frame. (2) The first
+five clauses were written so that NONE of them could arm a tween at all, because
+`MoveTweenSeconds` ships at 0.0 in C++; they would have passed over any implementation
+whatsoever, and needed a test-only actor double to mean anything. (3) Of the five, mutant runs
+proved TWO INERT -- every vacuity assertion inside them was green, which is the finding worth
+carrying: NON-VACUITY IS NOT FALSIFIABILITY.
+ALL FIVE ARE NOW DISCHARGED BY MEASUREMENT, each by a named one-line mutation built IN PLACE by
+`strat-gameplay-engineer` in its own lane, rebuilt and re-run per mutant, both files restored
+byte-identically on hash and md5. The clause pairing holds: `TweenWaypointsSitAtTheDrawnUnitsHeight`
+reddens ALONE under the mutation that sinks every waypoint by `BodyZOffset`, while
+`TweenWaypointsFollowTheNotedRoute` stays green.
+WHAT THE HUMAN GATE HAS NOW SEEN, AND WHAT IT HAS NOT. THE USER TESTED IN PIE AND REPORTS THAT
+PLAYER-CONTROLLED UNITS MOVE PROPERLY AND THAT THE FLAGS FLOATING ABOVE THEM FOLLOW. That is the
+gate no clause can stand in for, and it closes the two properties that mattered most: the unit
+travels its route rather than the chord, and the markers ride `Body`'s visual offset rather than
+sitting at the destination -- which is the consequence of their attachment staying on `Body` and
+not moving up to `UnitRoot`.
+RETRACTED> "WHAT IS NOT DONE, AND IT IS THE HALF THE PLAYER SEES. **NOBODY HAS WATCHED A UNIT
+RETRACTED>  WALK ITS HEXES.**" -- true when written, false now, superseded by the user's own
+RETRACTED>  test on 2026-09-02.
+RETRACTED> "`BP_StratUnit`'s component re-parent under the new native root is likewise
+RETRACTED>  unverified in-editor." -- THIS ONE WAS ALREADY FALSE WHEN WRITTEN, and the failure
+RETRACTED>  was this seat's rather than the record's: `content.md` records
+RETRACTED>  `strat-editor-builder` reading the hierarchy off the CDO AND live in PIE --
+RETRACTED>  `RootComponent` returning `UnitRoot`, `GetAttachParent` returning `UnitRoot` for
+RETRACTED>  `Body` and `Body` for all three markers, with `Body` at a zero relative transform.
+RETRACTED>  It was carried as an open gap for several passes after it had been discharged,
+RETRACTED>  which is the UNDER-claiming direction of a stale status line and sends the next
+RETRACTED>  reader to redo finished work.
+WHAT REMAINS UNOBSERVED, NARROWED TO WHAT IS ACTUALLY OPEN. (1) `Tick` never runs in the fixture
+world, so no eased position, no plateau, no `MoveTweenEaseFraction`, no duration and no
+retirement is reachable by any clause -- 375/375 says the polyline has the right SHAPE and arms
+on the right OCCASIONS, and still says nothing about the motion along it. The user's test
+vouches for how it LOOKS at the shipped values, not for the profile at other values. (2) TWO
+BEHAVIOURS HAVE STILL NOT BEEN WATCHED BY ANYONE: that AI units SNAP rather than slide, and that
+a second order arriving MID-SLIDE re-eases from where the unit is drawn instead of popping. Both
+are reachable only by a human at the keyboard, and neither was covered by the test above.
+ONE LINE IN THIS TREE IS PINNED BY NOTHING AND NO TEST CAN EVER PIN IT:
+`UStratMatchSubsystem::ApplyView`'s unconditional `PendingMoveRoutes.Reset()`. Every mutation of
+it is an EQUIVALENT MUTANT -- the hazard is foreclosed twice over by actor destruction and the
+actor-moved guard -- so a reader deleting it as dead code WOULD GET A GREEN SUITE. It is kept as
+defence in depth and the warning is recorded at the line itself.
+**[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the builds,
+the suite runs and the writes behind this block were performed in `E:/MultiAgent/Stratocracy` on
+branch `master` on this developer box, over base commit `283d711`, with the editor closed for
+every build. The work arrived mid-session with NO LANE TOPOLOGY STANDING; both routes were
+offered to the user with their costs and THE USER CHOSE DISPATCH over an in-session write, so no
+clause of CLAUDE.md's was invoked and every lane wrote its own file. NOTHING WAS COMMITTED --
+staging and commits are the user's call -- so a later checkout will not contain this pass's tree
+unless the user committed it.]**
+**[STAMPED 2026-09-02, LATER THE SAME DAY -- SUPERSEDED BY THE BANNER ABOVE, WHICH CARRIES
+THIS RECORD'S LIVE FIGURE. THE FIGURE DID MOVE, 375 -> 381, and the report this block cited has
+been OVERWRITTEN by the run the banner above cites -- one report path, one artifact -- so its
+reading can no longer be confirmed or refuted from any checkout. TWO OF ITS SENTENCES ARE NOW
+FALSE RATHER THAN MERELY SUPERSEDED, and they are named here because a reader who stops at this
+block must not carry them forward: its "TWO BEHAVIOURS HAVE STILL NOT BEEN WATCHED" item said
+AI units SNAP -- the user has since asked for the opposite and it is built; and its 375/375
+described a tree without the six route-slide clauses. Kept rather than deleted, which is this
+record's convention.]**)
+
 _Last run 2026-09-02 (THE PLAYER CAN NOW ACT WITH A MOUSE, AND THE THING WORTH READING IS
 THAT THE FEATURE WAS BLOCKED BY AN ABSENCE NOBODY HAD WRITTEN DOWN: THIS PROJECT HAS NO
 SELECTED HEX. Written by the `coordinator`, whose file this is, IN LANE AND UNDER NO EXCEPTION
@@ -63,7 +277,12 @@ recorded in `engine.md`, which is where the finding belongs.
 the suite run and the writes behind this block were performed in `E:/MultiAgent/Stratocracy` on
 branch `master` on this developer box, with the editor closed throughout. NOTHING WAS COMMITTED
 -- staging and commits are the user's call -- so a later checkout will not contain this pass's
-tree unless the user committed it.]**)
+tree unless the user committed it.]**
+**[STAMPED 2026-09-02, LATER THE SAME DAY -- SUPERSEDED BY THE BANNER ABOVE, WHICH CARRIES
+THIS RECORD'S LIVE FIGURE. THE FIGURE DID MOVE, 370 -> 375, and the report this block cited
+has been OVERWRITTEN by the run the banner above cites -- one report path, one artifact. So
+the reading below can no longer be confirmed or refuted from any checkout; it is history now,
+and never evidence. Kept rather than deleted, which is this record's convention.]**)
 
 _Last run 2026-09-02 (W8 IS ON SCREEN, AND THE THING WORTH READING IS THAT A HUMAN HAD TO
 SAY SO -- EVERY INSTRUMENT IN THIS TREE SAID `CORRECTLY ASSIGNED` AND NONE OF THEM CAN SEE A

@@ -15,6 +15,1748 @@
 
 ## NEXT
 
+- **2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- RECORD REPAIR ONLY, NO
+  `Source/` BYTE CHANGED: F4 AND ITS UNREPORTED TWIN, AND THE CLAIM-SHAPE SWEEP RUN OVER THE WHOLE
+  LANE RATHER THAN OVER `Tests/`. THE SWEEP FOUND THE SAME DEFECT IN PRODUCTION PROSE AND IT IS
+  DECLARED BELOW AS A DEBT, NOT REPAIRED.** No build and no suite run is claimed by this pass and
+  no count is written here; the live figure is `global.md`'s alone.
+  - **THE DEFECT SHAPE, STATED ONCE, BECAUSE FOUR ENTRIES NOW TURN ON IT.** Prose that calls a C++
+    FIELD default "the shipped default" when a shipped Blueprint serialises an override for that
+    field. It is not a wording preference: it is the belief that caused a measured regression --
+    see the `[CORRECTED 2026-08-29]` block at `AStratPlayerController::HandleCancelSelectionEvent`,
+    where believing AI playback shipped inert on the zero default cost the player's first click
+    after every AI hand-over.
+  - **THE DECIDING MEASUREMENT, AND WHAT IT DOES AND DOES NOT PROVE.** `grep -aF` over the raw
+    bytes of `Content/StratPlay/BP_StratUnit.uasset`, `BP_StratGameMode.uasset` and
+    `BP_StratGameMode_AiVsAi.uasset`. `AiPlaybackStepSeconds` and `AiSides` are present in both
+    GameMode Blueprints and absent from `BP_StratUnit`; `MoveTweenSeconds` is the exact mirror --
+    present in `BP_StratUnit`, absent from both GameModes; a fabricated property name is absent
+    from all three. ~~So the instrument discriminates per asset AND per property in both
+    directions. **A NAME-TABLE HIT PROVES THE PROPERTY IS SERIALISED**~~, **NOT WHAT IT HOLDS**,
+    **[BOTH STRUCK CLAUSES RETRACTED 2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN
+    LANE, main tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED), ON THE THIRD
+    RE-GATE'S F8. THE CROSS-ASSET CONTROL ABOVE COULD NOT SEE WHAT REFUTES THEM: a WITHIN-CLASS
+    control run on `BP_StratUnit` the same day returns 1 for `FlagMarkerMesh`, which this record
+    elsewhere says is UNSET, so on the ACTOR Blueprints a hit does NOT prove an override was
+    serialised and the instrument does not discriminate "in both directions" there. WHAT REPLACES
+    THEM, AND IT IS NOT A NARROWING TO NOTHING: on `BP_StratGameMode` and `BP_StratGameMode_AiVsAi`
+    the instrument discriminates in both directions and every sentence in this entry that rests on
+    those two assets stands unaltered; on `BP_StratUnit` and `BP_StratBoard` PRESENCE PROVES
+    NOTHING and ABSENCE IS DECISIVE. The counts, the negative control and the three legs of the
+    absence direction are in the THE NAME-TABLE INSTRUMENT bullet below, which a reader landing
+    here by citation must read before citing this one. Nothing in this file may now cite a byte
+    HIT on an actor Blueprint as proof of an override.]** which is why nothing
+    here states a value; `content.md` records the authored `MoveTweenSeconds` independently, and
+    `strings` does NOT work for this measurement -- it fails its own positive control.
+  - **TWO SITES REPAIRED IN THIS FILE, AND TWO MORE OF THE SAME CAUSE FOUND BY THE SWEEP.** F4 of
+    `Tools/architect/gate_reports/2026-09-03-unit-movement-and-existence-hold-regate.md`
+    (`AiPlaybackStepSeconds`, in the live "WHAT THE TEST LANE IS OWED" list) and the user's own
+    second finding (`MoveTweenSeconds`, in the 2026-09-02 route-slide entry). The sweep then
+    surfaced two further instances inside that same entry -- the `TweenRestOffset` bullet and the
+    "AT THE SHIPPED C++ DEFAULT" heading. All four are corrected IN PLACE and stamped INLINE on
+    the sentence they correct rather than only here, because a reader arriving by a citation lands
+    on the sentence. In every one of the four the CONSEQUENCE was true and only the configuration
+    was misnamed: no automation fixture executes those paths, because a fixture builds the C++
+    object and gets the C++ default.
+  - **WHY TWO GATES MISSED IT, WHICH IS THE ACTUAL LESSON.** The F1 repair's sweep was scoped to
+    `Source/**/Tests/` while the defect was not scoped to anything, and it matched a PHRASE where
+    the defect is a SHAPE. This pass swept 76 files -- this record plus every non-`Tests/` `.h`,
+    `.cpp` and `.cs` in `StratPlay`, `StratBridge` and `StratUI` -- by joining every line into one
+    string and stripping comment leaders first, then matching {shipped, ships, the real, actual, in
+    practice} within 120 characters of "default" in either order. **JOINING IS LOAD-BEARING, AND THE
+    COST OF NOT JOINING IS MEASURED RATHER THAN ASSERTED**: the `MoveTweenSeconds` instance the
+    user found is wrapped across two lines and is invisible to any line-oriented grep, and so are
+    THIRTEEN of the matches in the four production files below -- three in
+    `StratMatchSubsystem.cpp`, five in `StratMatchSubsystem.h`, none in `StratUnitActor.cpp` and
+    five in `StratUnitActor.h`. That count is of MATCHES, not of defects; the rulings are separate.
+  - **DEBT, DECLARED AND NOT REPAIRED: THE SAME SHAPE IS IN PRODUCTION PROSE AT ROUGHLY TWENTY
+    SITES IN FOUR FILES I OWN, EACH CITED BY THE SYMBOL IT SITS IN AND EACH VERIFIED TO EXIST.**
+    `StratMatchSubsystem.cpp` (eight, in `ApplyView`, `RunAiTurnsNow`, `WillAiPlaybackRun`,
+    `BeginAiPlayback`, `ArmNextPlaybackStep`, `AdvanceAiPlaybackOneStep` twice and
+    `EndAiPlaybackTour`), `StratMatchSubsystem.h` (six, on the declaration blocks of
+    `AdvanceAiPlaybackOneStep`, `BeginAiPlayback` twice, `PreParkPicturesForTour`,
+    `EndAiPlaybackTour` and `LastArmedSlideSeconds`, plus `AiPlaybackStepSeconds`' own *"this
+    ships inert"* sentence, which is the one that names the mechanism correctly in its second
+    half and asserts the shipped state falsely in its first), `StratUnitActor.cpp` (five, in
+    `ApplyUnitView` twice -- the snap and the park-clearing branch -- `PlayRouteSlide`,
+    `ParkPictureAt` and `FinishTween`) and `StratUnitActor.h` (two, on the blocks of
+    `ParkPictureAt` and `FinishTween`/`TweenRestOffset`). **NOT REPAIRED THIS PASS.**
+    ~~THE REASON IS SPECIFIC RATHER THAN CONVENIENT: the brief for this pass is a record repair,
+    and editing twenty comment blocks would make every `Source/` file newer than the exported
+    report the re-gate's own suite-freshness argument rests on, inside a tree already under
+    `VERDICT: BLOCK`.~~
+    **[CORRECTED 2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master`
+    in the main tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED), on the
+    user's measurement and re-measured here rather than accepted. THE STRUCK REASON IS FALSE, AND
+    IT IS THE SAME DEFECT CLASS THIS ENTRY EXISTS TO REPAIR -- A PLAUSIBLE MECHANISM ASSERTED
+    WITHOUT BEING MEASURED. `strat_banner_sweep.py`'s `read_macro_census` updates `newest_mtime`
+    ONLY inside its `if s or c:` branch -- that is, only for a `.cpp` that CONTAINS
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` or `IMPLEMENT_COMPLEX_AUTOMATION_TEST(_CLASS)`. A
+    production file with no test macro never contributes to the newest-test-source mtime, so
+    editing its comments cannot trip REPORT IDENTITY, and none of the four files in this debt
+    defines a test macro. MEASURED BOTH WAYS RATHER THAN READ OFF THE SOURCE, each probe
+    saving and restoring the file's mtime and verifying bytes and mtime identical afterwards:
+    touching `Source/StratPlay/StratUnitActor.cpp` (production, no test macro) -> sweep EXIT
+    0, ZERO `REPORT IDENTITY` findings, `SWEEP CLEAN`; touching
+    `Source/StratPlay/Tests/StratTourExistenceHoldClauses.cpp` (defines test macros) -> sweep
+    EXIT 1, ONE `REPORT IDENTITY` finding, `SWEEP FAILED`. THE SECOND PROBE IS THE CONTROL AND IS
+    WHAT MAKES THE FIRST'S SILENCE EVIDENCE RATHER THAN AN ABSENT INSTRUMENT. No byte and
+    no mtime under `Source/` differs after the probes.]**
+    **THE DEFERRAL STANDS, AND ITS TRUE REASON IS SCOPE -- REPAIRING NOW WAS THE OTHER ROUTE
+    OFFERED AND WAS DECLINED ON THESE THREE GROUNDS.** (1) The ~21 sites are RULINGS, not a
+    substitution: this entry already says the thirteen wrapped hits are a count of MATCHES and
+    that the rulings are separate, so each site needs its own reading against the asset evidence,
+    which is a different pass from a record repair. (2) **One of them is explicitly OPEN and is
+    not mine to rule** -- the `EStratDifficulty Difficulty` block in `StratMatchSubsystem.h`,
+    whose consequence depends on the authored `AiSides` value only the content lane can read
+    (the bullet below).
+    **[CORRECTED 2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, main tree
+    `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED), ON THE SECOND RE-GATE'S
+    F5. THE CITATION THIS SENTENCE CARRIED, AND THE ONE IN THE BULLET BELOW, NAMED A SYMBOL
+    THAT DOES NOT EXIST -- and it sat in the one bullet whose stated purpose is to be
+    greppable, which is what makes it a finding rather than a typo.]** Both read
+    RETRACTED> "`StratMatchSubsystem.h`'s `StratAiDifficulty` block".
+    **`StratAiDifficulty` RETURNS ZERO HITS ACROSS `Source/` AND `Config/`, WITH
+    `EStratDifficulty` RETURNING 34 IN `Source/` AS THE CONTROL** -- so the instrument speaks
+    and the absence is evidence rather than a failed search. A fabricated identifier greps
+    exactly like a defined one until someone looks, which is the whole reason the replacement
+    was grepped BEFORE it was written here: `EStratDifficulty` (the `UENUM`),
+    `FStratMatchConfig` (the struct that holds the field), and the field itself,
+    `EStratDifficulty Difficulty = EStratDifficulty::Easy;`, all resolve in
+    `Source/StratPlay/StratMatchSubsystem.h`. Cited by symbol and not by line, because lines
+    move and this record has been bitten by that before.
+    Rewriting the blocks around it would either force an unmeasured ruling on it or leave one
+    file half-repaired inside a single declaration block. (3) A comment edit in a production file
+    still changes that translation unit's inputs, so it is rebuild-then-run-then-record; this
+    pass performed no build and no suite run and claims neither, and doing them is the discharging
+    pass's work, not a record repair's.
+    **DISCHARGED WHEN** the next pass that compiles this module rewrites those blocks to say "the
+    C++ field default" and states, once per file, that both fields are overridden on the shipped
+    Blueprints -- at which point this bullet is stamped, not deleted. **[SCOPE AMENDED
+    2026-09-03 ON THE SECOND RE-GATE'S F6: this condition is NOT satisfied by rewriting only the
+    symbols enumerated above. Three further sites were added to it -- see the SCOPE WIDENED
+    sub-bullet below, which names them. A reader who stops at this sentence would otherwise
+    stamp the debt closed with those three still standing, which is exactly what F6 found.]**
+  - **ONE HIT LEFT OPEN AS A QUESTION RATHER THAN RULED, BECAUSE A NAME-TABLE HIT CANNOT ANSWER
+    IT.** The `EStratDifficulty Difficulty` block in `StratMatchSubsystem.h` **[CORRECTED
+    2026-09-03 BY THE SAME HAND IN THE SAME PASS AS THE F5 STAMP ABOVE, WHICH CARRIES THE
+    MEASUREMENT AND THE CONTROL. This site read RETRACTED> "`StratAiDifficulty` block" and
+    named nothing in the tree.]** and this record's own 2026-08-30
+    copy of it say *"`AiSides` defaults empty, so on the shipped hot seat that default reaches
+    `StratHandicappedSide` and comes back `INDEX_NONE`"*. `AiSides` IS serialised in
+    `BP_StratGameMode.uasset`, so the sentence's antecedent is the C++ default and not the shipped
+    one -- but whether the CONSEQUENCE still holds depends on the authored value, which my
+    instrument cannot read. **This is the same conflation the re-gate declared open at
+    `Source/StratPlay/Tests/StratAiMatchClauses.cpp:380` and it wants the same owner's
+    measurement**: the content lane reading `BP_StratGameMode`'s `AiSides` off the asset. Recorded
+    here so it is greppable rather than lost.
+  - **[SCOPE WIDENED 2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, main
+    tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED), ON THE SECOND
+    RE-GATE'S F6.] THE OPEN `AiSides` QUESTION ABOVE HAS MORE THAN ONE PRODUCTION SITE AND THIS
+    RECORD NAMED ONE.** The others are `StratHandicappedSide`'s own prose -- the function the
+    quoted sentence sends the reader TO -- and neither half of it appears in the symbol
+    enumeration the DISCHARGED WHEN condition points at. **So a pass that faithfully walked
+    every cited symbol could have stamped this debt closed while both survived unstamped, in
+    the very file the question is about. That is the defect: not the two comments, but a scope
+    that did not reach them.** The three sites added to the condition, each verified to resolve
+    before being written:
+      - **`StratHandicappedSide`'s DECLARATION comment**, `Source/StratPlay/StratMatchSubsystem.h`
+        -- *"`AiSides` EMPTY -> `INDEX_NONE`. ... This is the shipped configuration."*
+      - **`StratHandicappedSide`'s DEFINITION comment**, `Source/StratPlay/StratMatchSubsystem.cpp`
+        -- *"ARM ONE -- the shipped hot seat."*
+      - **`IsAiPlaybackRunning`'s declaration comment**, `Source/StratPlay/StratMatchSubsystem.h`
+        -- *"at the shipped `AiPlaybackStepSeconds` of zero"*. This one was found by the widened
+        sweep below and by nothing else: it is a FOURTH `.h` site on the OTHER field this debt
+        is about, and it is not among the seven `.h` symbols already enumerated.
+    **STILL DEFERRED AND NOT REPAIRED, ON LAST PASS'S TRADE UNCHANGED.** Repairing them means
+    ruling what `AiSides` holds on the shipped GameMode -- the question this bullet declares
+    OPEN and hands to the content lane -- and the re-gate states in terms that no production
+    byte need change to clear it. **DISCHARGED WHEN** the pass that rewrites the enumerated
+    `AiPlaybackStepSeconds` blocks ALSO rewrites these three. The condition now NAMES them, so
+    it can no longer be satisfied while they stand, which is the only thing F6 asked for.
+  - **THE ORIGINAL SWEEP WAS PINNED TO A TOKEN AND NOT TO A SHAPE, WHICH IS WHY IT WAS BLIND.
+    RE-RUN WIDENED 2026-09-03, WITH THE PATTERN WRITTEN OUT SO THE WIDENING IS CHECKABLE RATHER
+    THAN CLAIMED.** The original required the literal word `default` within 120 characters of a
+    {shipped, ships, the real, actual, in practice} token. The claim it exists to catch does not
+    need that word: *"this is the shipped configuration"*, *"the shipped hot seat"* and *"unset
+    is the state this ships in"* all make it without ever writing `default`.
+    **THE WIDENED PATTERN**, over the same 75 non-`Tests/` `.h`/`.cpp`/`.cs` files across
+    `StratPlay`, `StratBridge` and `StratUI`, comment leaders stripped and all lines JOINED so a
+    claim wrapped across lines is visible:
+    `\b(shipped|ships|shipping|out of the box|as shipped|on the shipped|in the shipped|the
+    authored|as authored)\b` -- with the `default`-nearby test retained ONLY to PARTITION the
+    hits and never to filter them. **37 hits the old shape could see; 102 it could not.**
+    **THE AXIS WAS GOT WRONG ON THE FIRST RUN AND THE CORRECTION IS THE LESSON, SO IT IS
+    RECORDED RATHER THAN QUIETLY DROPPED.** That run also swept {live, actual, actually, the
+    real, in practice} and returned **393** hits, which is not a rulable set. Those words are
+    the OLD sweep's CO-TOKENS; adding them widens the VOCABULARY, and vocabulary is a different
+    axis from the one F6 is about. The axis that matters is *the claim does not need the word*
+    `default` *to be made*, so the second run dropped that requirement and left the
+    shipping-state vocabulary alone.
+    **THE 102, PARTITIONED AND RULED.** **3** are the defect class and were already inside this
+    debt's enumeration -- the `AiPlaybackStepSeconds` prose on the field itself, on
+    `BeginAiPlayback` and on `WillAiPlaybackRun`; the widened shape found them a second way,
+    which is a check on the enumeration rather than a new finding. **3** are the defect class
+    and were NOT in it: the two `StratHandicappedSide` sites and `IsAiPlaybackRunning`, added to
+    the scope above. **5** are left UNRULED for a measured reason -- see the instrument bullet
+    below. **The remaining 91 are correct as written**, and they fall in four groups, listed so
+    the next sweep does not re-litigate them: a fact about the shipped SCENARIO or shipped DATA
+    (Ferrum Crossing's seven terrains and four factories, `captureTurns = 1`,
+    `Data/ferrum_crossing.json`); a fact about a shipped CODE PATH (*"no RNG ships"*, *"the
+    shipping AI never refuses"*, *"no shipping caller today"*, *"bit-identical to the tour that
+    shipped"*); wording quoted inside an existing RETRACTED or CORRECTED block, which must keep
+    the words it quotes; and -- the pattern the deferred repairs move TOWARD -- prose that names
+    the Blueprint AS the shipping authority, `StratUnitActor.h`'s *"the shipped duration goes on
+    `BP_StratUnit`"* and `StratPlayerController.h`'s *"the shipping `BP_` subclass does set
+    it"*. **A clean widened sweep would have been a result worth recording; this one was not
+    clean, and the three sites it added are the reason the widening was worth doing.**
+  - **THE NAME-TABLE INSTRUMENT DISCRIMINATES IN BOTH DIRECTIONS ON THE GAMEMODE BLUEPRINTS AND
+    IN ONE DIRECTION ONLY ON THE ACTOR BLUEPRINTS: THERE, PRESENCE PROVES NOTHING AND ABSENCE IS
+    DECISIVE. [HEADING CORRECTED 2026-09-03 ON THE THIRD RE-GATE'S F7; IT READ RETRACTED> "AND DOES
+    NOT DISCRIMINATE ON THE ACTOR BLUEPRINTS", WHICH IS FALSE IN THE ABSENCE DIRECTION -- THE
+    `BP_StratUnit` ROW BELOW CARRIES THE FOUR ZEROS THAT REFUTE IT.] MEASURED 2026-09-03 WITH A WITHIN-CLASS CONTROL,
+    WHICH THE EARLIER CROSS-ASSET CONTROL DID NOT TEST, AND IT IS WHY FIVE OF THE WIDENED
+    SWEEP'S HITS ARE LEFT UNRULED RATHER THAN RULED EITHER WAY.** The earlier measurement showed
+    a property name appearing in the asset of the class that declares it and not in the others,
+    and concluded that a hit means the property is serialised. Running the same `grep -aoF` over
+    EVERY member of one class against its OWN Blueprint gives two opposite answers:
+      - **`BP_StratGameMode` and `BP_StratGameMode_AiVsAi`, over all 13 `FStratMatchConfig`
+        members: only 5 appear** -- `AiPlaybackStepSeconds`, `AiSides`, `AiTurnDelaySeconds`,
+        `ScenarioFile`, and `bRecordCompletionOnMatchEnd`, **which appears in
+        `BP_StratGameMode` and NOT in `BP_StratGameMode_AiVsAi`.** A member CAN be absent, and
+        one is absent from one asset and present in the other, so on these two assets presence
+        is evidence. **The `AiSides` reasoning above therefore now stands on a control it did
+        not previously have** -- which is worth saying plainly, because the control could have
+        come back the other way and did not.
+      - **`BP_StratBoard`, over all NINE `EditDefaultsOnly` properties in `StratBoardActor.h`:
+        all nine appear -- including `BuildPulseMaterial`, whose own declaration block states in
+        terms that "`BP_StratBoard` carries no default here".** **[COUNT CORRECTED 2026-09-03 IN
+        PLACE, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, main tree
+        `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED): this row read RETRACTED>
+        "over all eleven editable properties ... all eleven appear". `StratBoardActor.h` declares
+        NINE `EditDefaultsOnly` members -- `HexSize`, `TerrainMeshes`, `FallbackTerrainMesh`,
+        `OverlayMesh`, `ReachMaterial`, `TargetMaterial`, `ObjectiveMaterial`, `BuildPulseMaterial`
+        and `OverlayZOffset` -- and all nine return 1, re-measured this pass. The five further
+        editor-visible members are `VisibleAnywhere` components, not defaults. The conclusion the
+        row draws is unchanged; only the count was wrong.]** The only two names that come back
+        zero, `TerrainId` and `Tiles`, are bare `UPROPERTY()` runtime members and not editable
+        defaults at all.
+      - **`BP_StratUnit` DOES NOT BEHAVE IDENTICALLY, AND THE DIFFERENCE IS THE HALF OF THIS
+        INSTRUMENT THAT WORKS.** **[CORRECTED 2026-09-03 IN PLACE, `strat-gameplay-engineer`
+        (ACTING and WRITING; IN LANE, main tree `E:/MultiAgent/Stratocracy`, base commit
+        `283d711`, UNCOMMITTED), ON THE THIRD RE-GATE'S F7. THIS ROW READ RETRACTED> "`BP_StratUnit`
+        behaves identically: every editable property returns exactly one ... so on the actor
+        Blueprints it discriminates nothing and no conclusion may be drawn from a hit in either
+        direction." THE FIRST CLAUSE IS FALSE OF THIS TREE -- FOUR PROPERTIES RETURN ZERO -- AND
+        THE CONCLUSION IT CARRIED DISCARDED A WORKING INSTRUMENT, WHICH IS WORSE THAN THE WRONG
+        COUNT: IT TOLD THE CONTENT LANE THAT SOMETHING IT CAN USE DOES NOT WORK.]** Re-run this
+        pass, `grep -aoF` over the raw bytes of `Content/StratPlay/BP_StratUnit.uasset` against all
+        FIFTEEN `EditDefaultsOnly` properties on `AStratUnitActor` plus a fabricated negative
+        control: **eleven return 1 and FOUR return 0.**
+          - **Zero:** `GuidedMarkerZOffset`, `FlagMarkerOffset`, `UnactedPipOffset`,
+            `MoveTweenEaseFraction` -- and the negative control `ZzFabricatedName`, also zero.
+          - **One:** `GuidedMarkerMesh`, `GuidedMarkerMaterial`, `FlagMarkerMesh`,
+            `FlagMarkerMaterial`, `UnactedPipMesh`, `UnactedPipMaterial`, `MeshByDefId`,
+            `FallbackMesh`, `SideMaterials`, `BodyZOffset`, `MoveTweenSeconds`.
+        **SO ON THE ACTOR BLUEPRINTS THE INSTRUMENT IS HALF GOOD RATHER THAN BLIND, AND THE TWO
+        HALVES MUST BE CITED SEPARATELY.** **PRESENCE PROVES NOTHING** here, and that half of the
+        original row survives intact: `GuidedMarkerMesh`, which this record says WAS assigned on
+        2026-08-24, and `FlagMarkerMesh`, which the file says is unset, BOTH return 1 -- the same
+        answer for a property known set and a property claimed unset. **ABSENCE IS DECISIVE** here,
+        on three legs written out so a reader can re-execute them rather than trust them: the
+        fabricated name returns 0, so the instrument is not answering PRESENT to everything;
+        `MoveTweenSeconds` is known-overridden on evidence independent of these bytes -- the C++
+        field default is `0.0f`, the tween path is inert at a non-positive duration, and the user
+        watched units slide on 2026-09-03 -- and it returns 1, so a real override DOES write its
+        name into this table; and delta serialisation writes a property name only where the
+        Blueprint carries an override, which is this project's long-recorded reading of these
+        files. **A ZERO THEREFORE SETTLES, FROM THE BYTES AND WITH NO EDITOR, THAT THE C++ FIELD
+        DEFAULT IS THE SHIPPED VALUE.**
+      - **THE FIRST RESULT THAT DIRECTION BUYS, RECOVERED HERE RATHER THAN LEFT SITTING IN THE
+        MEASUREMENT: `MoveTweenEaseFraction` IS ABSENT, SO THE TRAPEZOID THE USER WATCHED ON
+        2026-09-03 RUNS AT THE C++ `0.25f` AND NOTHING ON `BP_StratUnit` ALTERS IT.** By the same
+        warrant `GuidedMarkerZOffset` ships at `300.0f`, `FlagMarkerOffset` at `(0.0, -40.0,
+        300.0)` and `UnactedPipOffset` at `(0.0, 40.0, 300.0)`. Four questions that would have
+        needed an editor are closed from a checkout. **`BodyZOffset` and `MoveTweenSeconds` are
+        NOT closed this way** -- both read PRESENT, which is the direction that proves nothing, so
+        `Source/StratPlay/Tests/StratRouteTweenUnitDouble.h`'s claim about `BodyZOffset` is not
+        settled by these bytes either, and that file is the test lane's to correct if it wants it
+        settled.
+    So the five *"unset is the state this ships in"* sites are ruled NEITHER false NOR correct:
+    my instrument cannot see which, and saying so is the honest answer rather than the absent
+    one. **[RE-CHECKED 2026-09-03 AGAINST THE SHARPENED RULE ABOVE, ON THE THIRD RE-GATE'S F7, AND
+    THE REFUSAL STANDS -- SAID EXPLICITLY HERE RATHER THAN LEFT IMPLIED, BECAUSE A SHARPENED RULE
+    IS EXACTLY THE CONDITION UNDER WHICH A STANDING REFUSAL SHOULD BE RE-ASKED.** Every property
+    the five sites turn on reads PRESENT, which is the direction that proves nothing:
+    `FlagMarkerMesh` 1, `UnactedPipMesh` 1, `FlagMarkerMaterial` 1 and `UnactedPipMaterial` 1 on
+    `BP_StratUnit`, and `BuildPulseMaterial` 1 on `BP_StratBoard`. **Not one of the five is an
+    ABSENCE**, so the decisive direction never fires on any of them and none is settleable from
+    the bytes.]** They are named here so the content lane settles them in the same reading that settles
+    `AiSides`, and so the next sweep does not re-derive them from zero --
+    `StratUnitActor.h`'s `FlagMarkerMesh` block, its `UnactedPipMesh` block and the
+    Sec 2.11.2 markers'-art bullet in its own header block; `StratBoardActor.h`'s
+    `BuildPulseMaterial` block; and the `BuildPulseMaterial` arm inside
+    `AStratBoardActor::BeginPlay` in `StratBoardActor.cpp`. **`BuildPulseMaterial` is the one
+    to look at first**: it does not merely describe a C++ default, it makes an affirmative
+    claim ABOUT the Blueprint, and that is the kind of sentence a name-table hit was supposed
+    to be able to check.
+  - **WHAT THE CONTENT LANE IS OWED DID NOT NARROW, AND THAT IS THE RESULT RATHER THAN AN
+    OMISSION. RE-CHECKED 2026-09-03 ON THE THIRD RE-GATE'S F7.** The re-gate asked whether the
+    decisive-ABSENCE direction lets any of the six handed-off asset sites be answered from a
+    checkout with no editor. Re-measured this pass with `grep -aoF` over the raw bytes: **none of
+    the six. All six read PRESENT** -- `AiSides` 1 on `BP_StratGameMode` (and on THAT asset
+    presence does prove serialisation, but never the value, which is what the question asks);
+    `FlagMarkerMesh` 1, `UnactedPipMesh` 1, and the Sec 2.11.2 markers'-art bullet's
+    `FlagMarkerMaterial` 1 and `UnactedPipMaterial` 1 on `BP_StratUnit`; `BuildPulseMaterial` 1 on
+    `BP_StratBoard`, covering both its header block and its `BeginPlay` arm. **So the handoff is
+    unchanged at six sites and every one of them still needs an editor.** What the sharpened rule
+    settled instead is four sites that were never on that list -- `MoveTweenEaseFraction`,
+    `GuidedMarkerZOffset`, `FlagMarkerOffset` and `UnactedPipOffset`, recorded above. A reader who
+    expected this list to shrink should read this bullet as the answer, not as a missing one.
+  - **NOTHING ELSE IN THE SWEEP IS A DEFECT, AND THE PASSES ARE LISTED SO THE NEXT SWEEP DOES NOT
+    RE-LITIGATE THEM.** The blocks that name a Blueprint default AS the shipping state get it
+    right and are the pattern the repairs above move toward -- `StratBoardActor.h`'s
+    `ObjectiveMaterial` and `TargetMaterial`, `StratUnitActor.h`'s `GuidedMarker`,
+    `StratMatchSubsystem.h`'s `bRecordCompletionOnMatchEnd` and `SaveSlotName`, and
+    `NoteMatchResultIfEnded`'s *"the shipped GameMode Blueprint's default says yes"*. So does
+    `AStratPlayerController::HandleCancelSelectionEvent`'s struck sentence, which is this defect's
+    own retraction and must keep the false wording it quotes.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- THE EXISTENCE HOLD:
+  A ROSTER DELTA FROM THE BRIDGE, TWO CURSOR-KEYED MAPS ON THE SUBSYSTEM, AND THE RULING
+  `StratCombatLog.h` DEFERRED, MADE. THIS STEP LEAVES THE TREE DELIBERATELY UNCOMPILABLE AND THE
+  DEBT IS NAMED BELOW.**
+  - **STAMPED 2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master`
+    in the main tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED). RECORD
+    REPAIR ONLY -- NO `Source/` BYTE WAS CHANGED THIS PASS, so no build and no suite run is
+    claimed by it and no count is written here. Raised as **F2** of
+    `Tools/architect/gate_reports/2026-09-03-unit-movement-and-existence-hold.md` (`VERDICT:
+    BLOCK`). TWO CLAIMS IN THIS ENTRY ARE NOW FALSE OF THIS TREE. BOTH ARE CORRECTED IN PLACE
+    AND STAMPED ON THEIR OWN BULLETS RATHER THAN DELETED, because a reader arriving by a
+    citation lands on the bullet and not on this header.**
+    - **(1) THE NAMED DEBT IS DISCHARGED: THIS TREE COMPILES AND THE FIVE CLAUSES EXIST.** The
+      four `Submit` sites were repaired inside `Tests/` by `strat-test-author`, the tree links,
+      and every clause this entry hands over as unwritten is written and passing. MEASURED, NOT
+      ASSUMED, AND WITHOUT A BUILD OF MY OWN: `Binaries/Win64/UnrealEditor-StratPlay.dll`
+      (2026-09-03 15:46) and `UnrealEditor-StratBridge.dll` (14:35) are each NEWER than every
+      source file of their own module (newest respectively `Tests/StratAiPlaybackClauses.cpp` at
+      15:45 and `StratBridge.cpp` at 14:34), so a link ran after the last edit; and the exported
+      report at `reportCreatedOn 2026.09.03-19.47.45` carries all five clause names with state
+      `Success`. **A CLAUSE NAME IS COMPILED**, so a name's PRESENCE in that report is itself
+      evidence the binary that ran carries these bytes, which is what makes the timestamp
+      argument more than a coincidence of clocks. The live suite figure is `global.md`'s alone
+      and is deliberately not restated here.
+    - **(2) THE FIRST CLAUSE'S BRIEFED ONE-LINE MUTATION WAS MEASURED INERT.** It is stamped on
+      its own bullet below, with the mutation that DOES pin that clause and the seam that would
+      close the gap for good.
+  - **A ROSTER DELTA AND NOT A COMBAT OUTCOME OR A BUILD OUTCOME, AND THE GENERALISATION WAS
+    FORCED BY MY OWN TWO MEASUREMENTS RATHER THAN CHOSEN.** A Build command spawns ZERO OR MORE
+    units and a death can be the ATTACKER, so neither "the unit this Build built" nor "the unit
+    this Attack killed" is a well-formed question and `TargetId` names a LIVE unit in the common
+    case. **Both halves are the same question asked of one accepted command -- which ids
+    appeared, which departed.** One observation, no `Kind` switch, and no pair of parallel
+    mechanisms to drift.
+  - **THE BRIDGE: `StratRosterObservation`, BRACKETED AROUND THE SINGLE `applyCommand` CALL, AND
+    `FStratBridge::RosterDeltaOfLastCommand` AS THE RETURN CHANNEL.** Shaped exactly like
+    `RepairsAtTurnOpen` -- retain the last one, hand over a copy -- because that is this tree's
+    existing precedent for delivering an observation rather than only logging it. Filled on the
+    accepted path and **CLEARED on the refused one**, so the pair always describes the command
+    that just returned; §4.9 says a refused command changes nothing, and leaving the previous
+    delta readable would attribute an appearance to a rejected command.
+  - **IT READS `strat::GameState` DIRECTLY AND NOT `MakeUiSnapshot`, WHICH IS A DEPARTURE FROM
+    BOTH ITS NEIGHBOURS AND IS THE DECISION IN THAT FILE.** A `UiSnapshot` is a PROJECTION, and
+    "did this id survive" must be asked of the authoritative roster -- a view that one day
+    filtered a unit for a presentation reason would make that unit read as a DEAD one. It is also
+    far cheaper, which is what makes the third thing true: **this observation brackets EVERY
+    KIND**, unlike the combat and repair observations which are gated to one each. That is a cost
+    and it is stated -- Move and Build previously paid nothing and now pay two roster reads -- and
+    it is affordable only because the read is ids and nothing else: no HP, no hexes, no
+    projection. Gating it by kind was the alternative and is refused, because the arm deciding
+    which kinds can change a roster is exactly the assumption I measured false for Build.
+  - **IT DOES NOT DUPLICATE THE COMBAT OUTCOME'S DEATH TEST AND DOES NOT REPLACE IT, AND THE
+    DISTINCTION IS WRITTEN DOWN RATHER THAN LEFT TO BE NOTICED.** `FStratCombatOutcome` answers
+    *"did the unit I NAMED die"*, role-keyed to an attacker and a defender identified before the
+    submit, and `STRAT-COMBAT resolved` needs to say WHICH of the two it was. The delta answers
+    *"what left the roster"*, keyed to no role. **The delta SUBSUMES the outcome's death facts as
+    information -- an id in `Departed` is exactly a unit that died -- but not as USE**, because
+    the log line's question cannot be asked of it. Two answers, one question each; neither was
+    rewritten to serve the other, and no death test was duplicated.
+  - **THE RULING WAS RECORDED IN `StratCombatLog.h`'S OWN BLOCK RATHER THAN THE BLOCK BEING
+    DELETED.** That block's every sentence is still true OF `FStratCombatOutcome`, which still has
+    no accessor and is still only emitted; the amendment says the deferred ruling was made, for a
+    different and smaller payload, and points anyone widening the delta toward that struct's
+    fields back at the paragraph that is still the argument against.
+  - **THE PORT SHAPE: A STRUCT, `FStratAiCommandEffect`, REPLACING THE ROUTE OUT-PARAM. THIS IS
+    THE SECOND WIDENING OF `IStratAiTurnPort::Submit` IN ONE DAY AND THAT IS WHAT DECIDED IT.**
+    Two more out-params would have made five and broken the same three doubles again on the next
+    fact; one struct breaks them ONCE MORE AND THEN NEVER AGAIN BY THIS AXIS. `Reset()` clears
+    all three members in one verb, so an implementation cannot clear two of three and leave a
+    caller command N's roster delta against command N+1 -- which a five-parameter form would have
+    made easy and silent. `FStratAiPlaybackStep` keeps three FLAT fields; the struct is a
+    transport for one hop and nothing holds one.
+  - **THE HOIST, AND IT IS THE ONE PLACEMENT WITH NO ALTERNATIVE.** `RefreshPresentation` is where
+    a killed unit's actor is DESTROYED and a built unit's actor is SPAWNED, so after it "which
+    units did this hand-over create and destroy" is unanswerable. `BuildTourExistenceHolds` runs
+    above it in `RunAiTurnsNow`, reading `UnitActors` as the pre-hand-over roster -- which it
+    still is at that instant, and only at that instant.
+  - **`WillAiPlaybackRun()` MAKES "GATE UP, NO TOUR" UNREACHABLE BY CONSTRUCTION, WHICH IS THE
+    POINT OF FOLDING THE GUARDS AND NOT A TIDY-UP.** The hoist and `BeginAiPlayback` must agree
+    on whether a tour will run; a second copy of three conditions is exactly how the gate gets
+    raised for a tour that then declines, stranding every retained actor forever with no verb
+    left to release it. One `const` function, two callers. **All three reasons are kept as three
+    blocks and three `return false`s** -- folding them into one boolean would have merged three
+    arguments into one anonymous `false`. **Only the shared consequence stayed behind**: the
+    `RetireReel` lambda existed because three exits needed one line and there is one exit now, so
+    it is one statement, with its `SkipToEnd`-not-`Reset` argument restated rather than deleted
+    with it.
+  - **THE DESTROY LOOP'S CONJUNCTION, AND BOTH TERMS GUARD AGAINST THE OTHER'S FAILURE.** The
+    gate alone cannot say WHICH ids and would retain every unit that left the model for any
+    reason, including a reseed. The membership test alone would let a map that outlived its tour
+    strand an actor FOREVER -- nothing else in that function can tell a stale entry from a live
+    one. It is a `continue` and not a hide: what is deferred is DESTRUCTION, because hiding there
+    would make the unit vanish at the exact moment the hold exists to prevent.
+  - **`ApplyTourExistenceAtCursor` RECOMPUTES AND NEVER APPLIES A DELTA**, which is this class's
+    reconcile posture applied to existence. `bVisible = (Cursor > RevealAfter) && (Cursor <=
+    HideAfter)` with permissive defaults -- `-1` for "always here", `MAX_int32` for "never
+    leaves" -- so a unit in both maps, one, or neither falls out of one expression with no arm.
+    A delta would have to remember what it last did, and the two cases with no incremental answer
+    are exactly the ones that occur: a skip moves the cursor by any amount, and a unit can be
+    both revealed and hidden inside one tour.
+  - **ONE CORRECTION TO THE BRIEFED CALL SITES, AND IT WOULD HAVE SHIPPED THE BUG.** The brief
+    said to call it "at the hoist and after each `Advance()`". **At the hoist a built unit has no
+    actor yet** -- `RefreshPresentation` has not run, so the loop over `UnitActors` finds nothing
+    to hide and every newly built unit would be visible for the whole tour. It is called from
+    `BeginAiPlayback` instead, which is after that reconcile and before the first step is shown.
+    **No frame is rendered in between**: `RefreshPresentation` and `BeginAiPlayback` are two
+    statements of one synchronous call, so a unit that must not be seen yet is never drawn once.
+  - **THE RELEASE DESTROYS IN `EndAiPlaybackTour` AND DOES NOT DEFER TO THE NEXT `ApplyView`,
+    WHICH IS THE CHOICE THAT LOOKS OPTIONAL AND IS NOT.** Deferring is tempting -- the destroy
+    loop would do it correctly once the gate dropped. But after a tour ends the next `ApplyView`
+    may be a mouse crossing a hex boundary, a command, or NOTHING AT ALL; if the cursor never
+    moves again a unit the rules module killed forty steps ago stands on the board for the rest
+    of the match, which is worse than the defect being repaired. Ordered UNHIDE, then DESTROY,
+    then DROP THE GATE -- unhiding unconditional so no id this function failed to think about is
+    left invisible, destroying against the APPLIED MODEL rather than against `HideAfterStep` so
+    it asks the same authority `ApplyView` asks, and the gate last so nobody sees a half-released
+    hold. It lives here and nowhere else on this function's founding argument: no verb may stop a
+    tour without clearing what the tour left behind.
+  - **THE SCOPE LIMIT IS STRUCTURAL AND I VERIFIED IT RATHER THAN ACCEPTING IT.** A unit BUILT AND
+    KILLED inside one hand-over is absent from the final model AND from the pre-hand-over roster,
+    so no actor exists for it and none is created. **`AStratUnitActor` is spawned in exactly one
+    place in this tree -- `ApplyView`'s spawn branch, confirmed by sweeping `Source/` for
+    `SpawnActor<AStratUnitActor>` -- so there is no other route by which such an actor could
+    exist and the coordinator's reasoning holds.** It cannot be shown being built or dying without
+    a spawn path the model never asked for, and this pass does not invent one. **This is the
+    common case and not a corner: three of the seven deaths in the hand-over I measured were
+    units built during that same hand-over.** The two held sets are therefore: units in the FINAL
+    model that appeared, and units that departed but WERE in the pre-hand-over roster.
+    `BuildTourExistenceHolds` drops anything in both from both, explicitly, even though the
+    `UnitActors` test already makes it unreachable -- so "in both is out of scope" is a line of
+    code a reader can find rather than a property derived from two other conditions.
+  - **AND A SECOND LIMIT, NAMED AND NOT FIXED: A RETAINED CORPSE STANDS WHERE THE LAST RECONCILE
+    PUT IT.** Right for a human-vs-AI hand-over, where the unit never moved after the player last
+    saw it; wrong for a unit that MOVED and then died in the same hand-over, whose corpse waits at
+    the hex it started from rather than the one it walked to. Fixing it needs the dead unit's
+    final hex, which no surviving model carries. Recorded at the destroy loop as well as here.
+  - **THE PROSE. THE TWO THAT MATTER WERE HANDLED DIFFERENTLY FROM EACH OTHER, DELIBERATELY.**
+    `StratAiPlayback.h`'s per-step-board rejection is AMENDED and NOT overturned: that rejection
+    turned on needing A MID-TURN COPY OF THE RULES STATE, and every word of it stands --
+    **what now rewinds is EXISTENCE, driven from a per-step list of ids recorded at the instant
+    of acceptance, which that header's own opening already declares the reel to be. POSITIONS
+    STILL DO NOT REWIND**, and the amendment says so in terms. The same header's *"any click or
+    Esc skips to the end state is SATISFIED TRIVIALLY, because the end state was never absent"*
+    is marked **GENUINELY WEAKENED and not re-explained**: with the hold in force the end state IS
+    absent while a tour runs, and a skip now ACTIVELY destroys and unhides. What survives is that
+    none of it touches the RULES state, which is why `T-TURN-09`'s state-equality half is
+    unaffected while its screen-equality half now rests on a verb rather than on an absence.
+    `ApplyView`'s "one place every model reaches the screen" SURVIVES AS WRITTEN and gained one
+    sentence rather than a rewrite: it is a claim about MODELS and is unchanged; it was never a
+    claim that nothing else touches an actor.
+  - **THE TREE DOES NOT COMPILE AND THAT IS THIS STEP'S NAMED DEBT.** [**STAMPED 2026-09-03,
+    `strat-gameplay-engineer`: DISCHARGED, AND EVERY BUILD FACT IN THIS BULLET IS HISTORY.** It
+    described the tree AT THIS ENTRY. The tree today links and the five clauses run; the
+    measurement is under this entry's header. **NOTHING IN THIS BULLET MAY BE CITED AS A LIVE
+    BUILD STATUS.** The one sentence still worth reading is the enumeration of the four break
+    sites, which the test lane closed exactly.] Build:
+    `Result: Failed (OtherCompilationError)`. **EVERY ERROR IS IN `Tests/` AND THERE ARE ZERO
+    OUTSIDE IT** -- measured, not assumed: a second incremental build recompiled only
+    `StratAiPlaybackClauses.cpp` and `StratAiTurnRunnerClauses.cpp`, which means every other
+    translation unit in `StratBridge` and `StratPlay` had already compiled clean and was up to
+    date. **NO SUITE WAS RUN AND NO REPORT WAS DELETED**, because a suite over a tree that does
+    not link measures nothing. The four break sites and their exact required forms are handed to
+    `strat-test-author` in this lane's report; three are `Submit` overrides and the fourth is a
+    direct call on `FStratBridgeAiTurnPort` that constructs a `TArray<FIntPoint>` local.
+  - **WHAT THE TEST LANE IS OWED FOR THE HOLD, EACH WITH ITS ONE-LINE MUTATION. NOT WRITTEN AND
+    NOT BUILT THIS PASS.** [**STAMPED 2026-09-03, `strat-gameplay-engineer`: ALL FIVE ARE NOW
+    WRITTEN, BUILT AND GREEN** -- four in `Source/StratPlay/Tests/StratTourExistenceHoldClauses.cpp`
+    and the fifth in `Source/StratBridge/Tests/StratRosterDeltaClauses.cpp`. **THIS LIST IS NOW A
+    BRIEF THAT WAS ANSWERED, NOT WORK OUTSTANDING.** Four of the five reddened under exactly the
+    mutation written below; the FIRST did not, and carries its own stamp.]
+    - `T-TURN-09.AUnitBuiltDuringTheHandoverIsHiddenUntilItsStep` -- at a positive
+      `AiPlaybackStepSeconds`, a unit whose id is in some step's `AppearedUnitIds` and IS in the
+      final model is `IsHidden()` at cursor 0 and visible once the cursor passes that step.
+      **MUTATION: in `UStratMatchSubsystem::BeginAiPlayback`, delete the
+      `ApplyTourExistenceAtCursor();` call** -- the unit is then visible from the tour's start,
+      which is the defect.
+      - **STAMPED 2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on
+        `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit `283d711`,
+        UNCOMMITTED): THE MUTATION DIRECTLY ABOVE IS INERT AND MUST NOT BE RUN AS THIS CLAUSE'S
+        PIN. IT REDDENS NOTHING. A reader who runs it gets a GREEN suite and would conclude a
+        live clause is inert -- an instruction sheet ordering a false finding, which is the
+        failure `f079b9f` was committed to fix. It is stamped rather than deleted because the
+        same mutation is quoted in other files and a reader who meets it there is owed the
+        reason it fails.**
+        - **WHY IT IS INERT, VERIFIED BY ME AGAINST THIS TREE BY READING THE CALL CHAIN, NOT
+          TAKEN ON REPORT.** `UStratMatchSubsystem::BeginAiPlayback`'s last two statements are
+          `ApplyTourExistenceAtCursor()` and then `OnAiPlaybackTimer()`; `OnAiPlaybackTimer`
+          calls `AdvanceAiPlaybackOneStep()`, which calls `ApplyTourExistenceAtCursor()` AGAIN
+          at cursor 1 -- all inside one synchronous call, before `BeginAiPlayback` returns. The
+          function is a **pure function of the cursor** by its own declaration, so the second
+          call does not merge with the first, it SUPERSEDES it; the deleted line's only effect
+          lives in the window between the two, and that window renders no frame, as
+          `BeginAiPlayback`'s own comment states and `RunAiTurnsNow`'s single synchronous call
+          makes true. **No headless clause can reach it, so this is a property of the CODE and
+          not a weakness of any fixture.**
+        - **THE LINE IS NOT DEAD, AND THAT WAS MEASURED BY THE TEST LANE RATHER THAN ASSUMED BY
+          ME.** `Tools/architect/state/tests.md` records that under a supplementary mutation
+          unit 11 -- which appears at step index 0 and is therefore legitimately visible at
+          cursor 1 -- becomes CONCEALED, which is exactly the cursor-0 hide the unmutated
+          `AdvanceAiPlaybackOneStep` immediately undoes. **That is the test lane's run and I
+          neither re-ran it nor claim it as mine**; what I verified here is the call chain that
+          explains it. Deleting the call is therefore a real behaviour change that nothing in
+          this tree can observe -- the sharpest possible form of an unpinnable line.
+        - **THE MUTATION THAT DOES PIN THIS CLAUSE: delete `ApplyTourExistenceAtCursor();` from
+          `UStratMatchSubsystem::AdvanceAiPlaybackOneStep`** -- the call the reveal half
+          actually rests on. It reddens property (2) on all 19 appeared ids at once. Recorded by
+          the lane that ran it in `Tools/architect/state/tests.md`, and in the clause's own
+          header block in `Source/StratPlay/Tests/StratTourExistenceHoldClauses.cpp`. **Cite
+          THAT one, never the one above.**
+        - **THE SEAM THAT WOULD CLOSE IT, AND THE CONDITION THAT DISCHARGES THIS STAMP.** The
+          clause can only reach the hold THROUGH ITS CONSEQUENCES -- an actor's hidden flag --
+          because `bTourExistenceHeld`, `RevealAfterStep` and `HideAfterStep` are **private on
+          `UStratMatchSubsystem` with no route from `Tests/`**, and the one moment worth reading
+          them at is passed over synchronously. **DISCHARGED WHEN a `const` accessor on
+          `UStratMatchSubsystem` reporting whether a given unit id is currently held concealed
+          exists, AND a clause reads it at a point interleaved with `BeginAiPlayback`'s own
+          apply** -- at which moment the mutation above stops being inert, becomes a real pin,
+          and this stamp is retired rather than merely amended. The alternative seam the test
+          lane names -- hoisting the existence apply to a point a caller can interleave with --
+          is REFUSED here and the refusal is the decision: that call's placement is argued line
+          by line in `BeginAiPlayback` (below all three guards, after the reconcile has spawned
+          the actors, before `OnAiPlaybackTimer` shows step one), so moving it to suit a test
+          would trade a declared gap for a live regression risk. The accessor adds a read and
+          moves nothing.
+        - **AND IT IS DELIBERATELY NOT WRITTEN IN THIS PASS, WHICH IS MY CALL AND NOT AN
+          OVERSIGHT** -- the same call this file already made for `LayerFor`. It is a new public
+          surface on a subsystem: it needs its own clause, its own reviewer gate and its own
+          mutation, and landing an unpinned surface change inside a RECORD REPAIR over a tree
+          under `VERDICT: BLOCK` is how an unmeasured change gets carried in on the back of a
+          prose fix. **Until it lands, the gap stands DECLARED at four sites** -- here, the
+          clause's own header, `tests.md`, and `global.md` -- **and no one may write that this
+          clause pins the `BeginAiPlayback` call.**
+    - `T-TURN-09.AUnitKilledDuringTheHandoverSurvivesUntilItsStep` -- an id in a step's
+      `DepartedUnitIds` that WAS in the pre-hand-over roster still has an actor after
+      `RefreshPresentation`, and no longer has one after the tour ends. **MUTATION: in
+      `ApplyView`'s destroy loop, delete the `bTourExistenceHeld && HideAfterStep.Contains(...)`
+      continue** -- the actor is destroyed at the reconcile, as it is today.
+    - `T-TURN-09.EndingATourDestroysEveryRetainedCorpse` -- after `SkipAiPlayback`, no actor
+      exists for any id the applied model does not carry. **MUTATION: in `EndAiPlaybackTour`,
+      delete the destroy loop inside the `bTourExistenceHeld` block and keep the unhide** -- a
+      corpse then stands on the board with the gate down and nothing left to remove it. **This is
+      the sharpest of the four**, because the deferred alternative it rules out is the one a
+      future reader would reach for.
+    - `T-TURN-09.TheGateIsNeverRaisedWithoutATour` -- with `AiPlaybackStepSeconds` at the C++
+      FIELD default **[CORRECTED 2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN
+      LANE), base commit `283d711`, UNCOMMITTED: THIS BULLET READ "at the shipped default" AND
+      THAT WAS FALSE OF THIS TREE. `AiPlaybackStepSeconds` IS SERIALISED AS AN OVERRIDE IN BOTH
+      SHIPPED GameMode BLUEPRINTS -- measured this pass with `grep -aF` over the raw bytes of
+      `BP_StratGameMode.uasset` and `BP_StratGameMode_AiVsAi.uasset`, with `AiSides` as the
+      positive control, `MoveTweenSeconds` as the mirror-image negative and a fabricated name as
+      the absent control -- so the fixture's zero is the C++ FIELD default and a path the shipped
+      game never takes, exactly as the clause's own header in
+      `Source/StratPlay/Tests/StratTourExistenceHoldClauses.cpp` now says in capitals. Raised as
+      **F4** of `Tools/architect/gate_reports/2026-09-03-unit-movement-and-existence-hold-regate.md`
+      (`VERDICT: BLOCK`). THE MUTATION BELOW IS UNCHANGED AND STILL PINS THE CLAUSE; only the
+      configuration was misnamed.]**, `RunAiTurnsNow` leaves no actor retained and no actor
+      hidden. **MUTATION: in
+      `RunAiTurnsNow`, replace `if (WillAiPlaybackRun())` with `if (true)`** -- the gate goes up
+      with no tour to release it and the first killed unit is retained forever.
+    - AND ONE ON THE BRIDGE: `T-INT-05.ARefusedCommandLeavesNoRosterDelta` --
+      `RosterDeltaOfLastCommand` is empty after a refused submit that follows an accepted one
+      that was not. **MUTATION: in `FStratBridge::Submit`, delete the two `clear()` calls on the
+      `!R.ok` path** -- the previous command's delta is then readable as the refused command's.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- MEASUREMENT ONLY, NO
+  CODE CHANGED: WHAT AN AI-vs-AI HAND-OVER ACTUALLY CONTAINS, AND THREE RULES FINDINGS VERIFIED
+  AT THE SOURCE. ONE OF THEM IS STRONGER THAN CLAIMED AND A FOURTH BREAKS A DESIGN PREMISE.**
+  - **NO PROBE WAS NEEDED AND NONE WAS WRITTEN, WHICH IS THE FIRST RESULT.** The brief expected a
+    temporary log line. Both facts are ALREADY EMITTED by shipped code:
+    `FStratAiTurnRunner::RunTurn` emits `STRAT-AI applied kind=...` for every accepted command,
+    and `StratCombatObservation::EmitResolved` emits `STRAT-COMBAT resolved ... adied=N ddied=M`
+    with both ids for every applied Attack. So the measurement is a `grep` over a log the suite
+    already wrote. **NO SOURCE FILE IN ANY LANE WAS EDITED THIS PASS, IN ANY MODULE** -- there is
+    nothing to prove byte-identical because nothing was mutated, no probe was added and none had
+    to be removed, and `git status --porcelain` is the same set that stood before it. This record
+    file is the only thing this pass writes.
+  - **THE INSTRUMENT, AND IT WAS RUN TWICE BY TWO ROUTES THAT AGREE EXACTLY.** First by slicing
+    `Saved/Logs/Stratocracy-backup-2026.09.02-23.41.07.log` -- the full-suite run this lane
+    recorded earlier the same day -- between the automation controller's own `Test Started` /
+    `Test Completed` markers, so each hand-over is counted separately rather than as a suite-wide
+    aggregate. **That distinction is load-bearing:** the suite-wide `STRAT-AI applied` total is
+    2,682 across 28 fixtures, and quoting it as "a hand-over" would have overstated every figure
+    below by more than an order of magnitude. Then again by a PURPOSE-MADE headless run of
+    `Stratocracy.StratPlay.GATE-AITURN.StepFocusesAndStopsOnTheLast` alone, once the editor was
+    closed and `Saved/Logs/Stratocracy.log` was no longer locked. **Every figure below is
+    identical between the two**, which is what makes them a property of the hand-over rather than
+    of a particular run.
+  - **THE STEP-KIND HISTOGRAM OF ONE REAL HAND-OVER ON THE SHIPPED SCENARIO** (`MakeAiVsAiConfig`,
+    Ferrum Crossing), from `GATE-AITURN.StepFocusesAndStopsOnTheLast` and reproduced
+    STEP-FOR-STEP IDENTICALLY by nine other clauses, which is itself worth knowing because it
+    means the hand-over is deterministic and a clause may rely on these counts:
+    **Attack 68, Move 55, Build 22, EndTurn 11 -- 156 steps**, matching the 156 the test lane
+    reported.
+  - **QUESTION 1 -- DOES A BUILD STEP APPEAR? YES, DECISIVELY. 22 OF THEM PER HAND-OVER.** The
+    build half of the existence hold is NOT blocked for want of a reachable step and does not
+    need to be held. Builds also appear in the small fixtures (1-5 each), so a cheaper arrangement
+    than a full §2.8 game exists if a clause wants one.
+  - **QUESTION 2 -- DOES A HAND-OVER PRODUCE A KILL, AND IS A COUNTER-KILL REACHABLE? A KILL YES,
+    A COUNTER-KILL NOT IN ANY HAND-OVER IN THIS SUITE.**
+    - In the 156-step hand-over: **68 Attack steps, 7 deaths, ALL DEFENDERS, 0 counter-kills, and
+      61 attacks killed nobody at all.** So **an Attack step implies a death about one time in
+      ten**, measured, not assumed -- which is the empirical form of finding 1 below.
+    - Suite-wide: 1,682 resolved attacks, 173 defender deaths, **2 attacker deaths**. Both
+      attacker deaths are in ONE fixture and it is not an AI-vs-AI game --
+      `Stratocracy.StratBridge.T-UI-01.CounterKillLeavesTheAttackerOffTheRoster`, a purpose-built
+      arrangement (`attacker=5 defender=10 ahpBefore=1 ahpAfter=-1 dhpBefore=11 dhpAfter=10` --
+      a 1-hp attacker dying to the counter of a defender that lost a single point).
+    - **SO THE COUNTER-KILL IS REACHABLE AND ALREADY HAS A FIXTURE PRECEDENT, BUT IS NOT
+      ARRANGEABLE BY PLAYING THE SHIPPED SCENARIO.** A clause over attacker-death existence must
+      hand-arrange it on that clause's model, not wait for an AI game to produce one.
+    - **WHICH UNIT DIED IN EACH OF THE SEVEN, SINCE THE BRIEF ASKED FOR IDENTITIES AND NOT ONLY A
+      COUNT.** Read off `STRAT-COMBAT resolved`, `turn` in brackets: defender 5 (t2), 2 (t3),
+      10 (t4), 15 (t5), 20 (t5), 18 (t6), 1 (t6). Every one is `adied=0 ddied=1` -- the attacker
+      survived all seven.
+    - **AND THE SINGLE MOST CONSEQUENTIAL THING IN THIS MEASUREMENT FOR THE DESIGN, WHICH NOTHING
+      IN THE BRIEF ANTICIPATED: THREE OF THE SEVEN DEAD WERE BUILT IN THE SAME HAND-OVER.** The
+      shipped scenario fields 10 units, ids 1-10, and `g.nextUnitId++` hands out ids at spawn; the
+      hand-over reaches id 30. Dead ids 15, 20 and 18 are therefore units this same reel BUILT and
+      then KILLED. **So the two halves of the existence hold are not disjoint sets** -- a unit can
+      need hiding until its Build step AND retaining until its Attack step, in that order, within
+      one tour. A design that treats "built" and "killed" as separate populations will meet a unit
+      in both.
+  - **FINDING 1 -- CONFIRMED AT THE SOURCE.** `Replay.good.cpp`'s Attack arm:
+    `const int defHpAfter = d->hp - damage; const bool defenderDies = defHpAfter <= 0;` and on the
+    else path `mutableUnit(g, defId)->hp = defHpAfter;` -- the defender stays on the roster with
+    reduced hp. **An Attack step does not imply a death**, and the histogram above puts a number
+    on it.
+  - **FINDING 2 -- CONFIRMED AT THE SOURCE.** The counter block erases the ATTACKER when
+    `atkHp - counter <= 0`. **A death can be the attacker**, so
+    `FStratAiPlaybackStep::TargetId` -- documented caption-only -- names the surviving unit in
+    that case and a LIVE unit in the common case. **It must not be used as a death identity.**
+    Agreed without reservation.
+  - **FINDING 3 -- CONFIRMED AND STRONGER THAN CLAIMED, WHICH HELPS THE DESIGN.** `applyCommand`
+    contains exactly TWO `g.units.erase` calls and both are in the Attack arm -- verified by
+    sweeping every `erase` / `remove_if` / `clear` / `pop_back` / `resize` over a unit container
+    in all of `Source/StratRules/`. **AND THEY ARE MUTUALLY EXCLUSIVE:** the defender-death branch
+    ends `return okResult(1);` before the counter block is reached, so **an Attack step erases 0
+    or 1 units and NEVER 2.** The design's "0-or-1 per Attack step" premise is not merely
+    unfalsified, it is structural.
+    **TWO NEAR-MISSES THAT WOULD HAVE LOOKED LIKE A THIRD ERASURE, NAMED SO THE SWEEP IS
+    REPRODUCIBLE.** `Driver.good.cpp` holds three `s.units.erase` calls -- they operate on
+    `strat::Session`'s `DriverUnit` vector, the DEBUG DRIVER's own state, a different type on a
+    different code path that `FStratBridge::Submit` never enters. This is the identical
+    conflation `.agents/ue-project-context.md` already warns about for `stateHash`, hit a second
+    time on a different symbol. And `Economy.good.cpp`'s erase is on `s.captures`, not units.
+  - **FINDING 4, WHICH NOBODY ASKED FOR AND WHICH BREAKS A PREMISE OF THE BUILD HALF.** The Build
+    arm does not spawn the unit it was given. It calls `queueBuild`, then
+    `resolveBuilds(g.economy, g.bounds, occupied)` and pushes EVERY spawn that comes back:
+    `for (const SpawnResult& sp : spawns) { if (!sp.spawned) continue; /* boxed in: waits, holds
+    the slot */ ... g.units.push_back(u); }`. **So ONE Build command spawns ZERO OR MORE units,
+    not exactly one** -- zero when the factory is boxed in, and more than one when a build queued
+    earlier and blocked becomes placeable on a later Build command by that side. A hold that maps
+    "this Build step" to "this one unit" is therefore wrong in both directions: it would reveal a
+    unit at a step that did not create it, and hold a unit that no step will ever release.
+    **THE COMPENSATING GOOD NEWS, MEASURED THE SAME WAY:** `resolveBuilds` has exactly ONE call
+    site in `applyCommand` -- the Build arm -- and is NOT called from `openTurn`. So across the
+    whole of `applyCommand`, **units appear only on Build commands and disappear only on Attack
+    commands**, and no unit ever appears or vanishes at a turn boundary or on a Move, Capture or
+    EndTurn. The design's shape survives; its 1:1 mapping does not.
+  - **THE IDENTITY SOURCE EXISTS AND IS COMPUTED AS DESCRIBED -- CONFIRMED FIELD BY FIELD.**
+    `FStratBridge::Submit` brackets `StratCombatObservation::CaptureBefore` and `CaptureAfter`
+    around the single `strat::applyCommand` call and then calls `EmitResolved`.
+    `FStratCombatOutcome` carries `AttackerId`, `DefenderId`, `bAttackerDied` and `bDefenderDied`.
+    The death test is stated in the code and is the right one: *"ABSENCE FROM THE ROSTER IS THE
+    DEATH TEST, and it is the only one available: the snapshot carries no 'is dead' field because
+    a dead unit is not projected."*
+    **AND THE DISCARD IS DELIBERATE AND ALREADY WRITTEN DOWN**, under `StratCombatLog.h`'s "WHAT
+    IS DELIBERATELY NOT IN IT": *"No accessor on `FStratBridge`. The bridge assembles one of these
+    per attack and emits it; it does not retain the last one. A caller that needs to READ an
+    outcome needs a delivery mechanism (an event list, a return channel) that is a separate
+    ruling ... This struct is the payload such a mechanism would carry, landed early because
+    assembling it is the hard part."* So the design's premise -- that the identity is already
+    measured and merely discarded -- is exactly right, and the header anticipated this ask.
+  - **AN EDITOR IS RUNNING AND IT DID NOT BLOCK THIS PASS, WHICH IS WORTH SEPARATING.**
+    `UnrealEditor` PID 44100 is live and holds `Saved/Logs/Stratocracy.log` -- a `rm` on it
+    returned *"Device or resource busy"*, and a fresh headless run was diverted to
+    `Stratocracy_2.log`. **No build was attempted and none was needed**: no source changed, so the
+    binary from `reportCreatedOn 2026.09.02-23.41.07` is current. A build WOULD have been refused.
+  - **WHAT THIS DESCOPES, STATED AS THE ANSWER TO THE QUESTION ASKED RATHER THAN AS ADVICE.** The
+    build half is reachable and should not be held. The defender-death half is reachable from a
+    played hand-over. The attacker-death half is reachable only from a hand-arranged fixture, and
+    a precedent for one already exists. And the build half needs a different mapping than
+    per-step, because a Build command is not a unit.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- THE PRE-PARK:
+  `AStratUnitActor::ParkPictureAt` AND `UStratMatchSubsystem::PreParkPicturesForTour`, FOR A
+  DEFECT A HUMAN SAW IN PIE THAT NO INSTRUMENT IN THIS TREE COULD. AND A SECOND, LATENT DEFECT
+  THE FIX EXPOSED: `SetRelativeLocation` DOES NOT STORE WHAT IT IS HANDED.**
+  - **THE DEFECT, IN THE USER'S OWN WORDS AND NOT PARAPHRASED.** *"Before the interp movement
+    activates, the AI units all snap to their target destination and then each one teleports back
+    to their original position and then interps to the target location."*
+  - **THE DIAGNOSIS WAS VERIFIED AT THE SOURCE AND IS CORRECT.** `RunAiTurnsNow` calls
+    `RefreshPresentation` and then `BeginAiPlayback` -- verified by reading, not accepted -- so
+    every unit's picture is drawn at its FINAL hex the instant the hand-over resolves, and each
+    step's `PlayMoveSlideForStep` then displaces that picture BACK to its leg's start. Both
+    halves of what the user described are that one ordering: a mass snap to the destinations,
+    then a rubber-band per unit. **THE ORDERING WAS NOT CHANGED AND MUST NOT BE.** It is
+    load-bearing, `RunAiTurnsNow`'s own block argues it, and the whole design rests on the tour
+    stepping over a finished board. The model stays final.
+  - **THE FIX IS A PARK WITH NO CLOCK, AND IT REUSED THE ONE RETIREMENT PATH RATHER THAN ADDING
+    A SECOND.** `AStratUnitActor::ParkPictureAt` sets `TweenRestOffset` from two tile-plane
+    points and calls `FinishTween` -- because "empty both arrays, put `Body` at the rest offset,
+    zero the clock, tick off" IS a park with nothing running. A whole feature landed without one
+    line of retirement logic being written a second time; `FinishTween` is now reached seven ways
+    and its block says so.
+  - **THE ANCHOR IS THE CALLER'S ON BOTH ENTRY POINTS, AND ONE SCAN NOW ANSWERS FOR BOTH.**
+    `ParkPictureAt` takes a park point and an anchor from the same source, exactly as
+    `PlayRouteSlide` does, so `BodyZOffset` cancels and no third copy of that expression exists.
+    **AND `UStratMatchSubsystem::FindAppliedUnitHex` WAS EXTRACTED SO THE PARK AND THE SLIDE
+    CANNOT DISAGREE**: `PreParkPicturesForTour` and `PlayMoveSlideForStep` both ask it rather
+    than each looping over `AppliedModel.Units`. A park measured against one hex and a slide
+    measured against another is a jump at the moment the step is shown -- which is the defect
+    being repaired, in miniature, reintroduced by a copied loop.
+  - **THE REEL GAINED A CURSOR-BLIND READER.** `FStratAiPlaybackReel::StepAt` -- `Peek`'s
+    expression with the caller's index. `Peek` answers about the cursor, which is the right
+    question for stepping and the wrong one for a reader that must see the whole reel before the
+    tour starts. It cannot move the cursor, so there is still exactly one driver of the reel.
+  - **PLACEMENT: BELOW ALL THREE OF `BeginAiPlayback`'S GUARDS AND ABOVE `OnAiPlaybackTimer()`.**
+    Below, so the shipped-inert path (`AiPlaybackStepSeconds <= 0`), the empty reel and the
+    no-world case park nothing -- every automation fixture is on the first of those. Above,
+    because `OnAiPlaybackTimer` shows step one and a park applied after it would wipe the slide
+    that step had just armed. `ParkPictureAt` refuses a second time on `MoveTweenSeconds <= 0`,
+    so the inertness does not rest on the call site alone.
+  - **THE FOUR THINGS I WAS ASKED TO CONFIRM. ALL FOUR HOLD, AND (2) WAS CHECKED IN THE EXACT
+    FORM ASKED RATHER THAN IN THE FORM THAT WOULD HAVE PASSED EASILY.**
+    (1) **A repeat mover needs no jump between legs.** Leg N+1's route `[0]` is the hex leg N
+    ended on, and `PlayRouteSlide` measures waypoint 0 from that same hex against the same
+    anchor, so the two values are the same expression over the same hex and agree to the bit.
+    Only the first Move per unit is parked, for that reason.
+    (2) **A hover cannot eat a pre-park, INCLUDING A PARK WITH NO TWEEN ARMED, which is the case
+    that needed checking.** A pre-parked unit has an EMPTY polyline, so the park-clear branch's
+    first term (`TweenOffsets.Num() > 0`) is false and the second (`!TweenRestOffset.IsZero()`)
+    is true -- the branch therefore turns entirely on `bActorMoved`. A hover-driven `ApplyView`
+    applies the same model, so `SetActorLocation` writes the value `PreviousActorLocation`
+    already held and `bActorMoved` is false. **The branch is not taken and the park survives.**
+    That second term is exactly what makes a pre-park eligible for a clear when the actor really
+    moves, and `bActorMoved` is exactly what protects it from a mouse.
+    (3) **`EndAiPlaybackTour`'s cancel already covers a pre-park**, and this was worth checking
+    rather than assuming because a pre-parked picture is a state that did not exist when that
+    loop was written: it has an empty polyline and a non-zero rest offset, and
+    `CancelRouteSlide` zeroes the offset BEFORE retiring, so it comes home on the same call as a
+    picture caught mid-slide. Recorded at the loop.
+    (4) **A unit parked and never stepped is covered by (3)** -- it is the same state, and a tour
+    skipped in its first second strands nothing.
+  - **THE SECOND VISIBLE DEFECT I WAS ASKED ABOUT: YES, AND IT IS BROADER THAN THE QUESTION.**
+    A unit BUILT during the hand-over exists in the final model, has no Move step, and is
+    therefore not pre-parked -- so **it pops into existence when the hand-over resolves rather
+    than at its own Build step**, and the user will see that. It is not fixed here and it is not
+    a gap in the pre-park: the pre-park moves PICTURES and this is about EXISTENCE, which is a
+    different mechanism. **AND THE SAME SENTENCE APPLIES IN REVERSE AND IS NOT IN THE QUESTION:**
+    a unit KILLED during the hand-over VANISHES when it resolves rather than at the Attack step
+    that killed it, because `ApplyView`'s destroy loop has already run. Both are the honest cost
+    of a tour that steps over a finished board, both are one family, and a fix for either is a
+    visibility question -- hide until built, keep a corpse until killed -- not a park.
+  - **AND THEN THE FIX EXPOSED A LATENT DEFECT IN A CLAIM THIS FILE HAS MADE SINCE THE TWEEN
+    LANDED. THIS IS THE MOST USEFUL THING IN THE PASS.** The first full run after the pre-park
+    came back RED on `T-TURN-09.SkipLeavesNoPictureStranded` alone: *"unit 13's picture is home
+    at EXACT relative zero ... it is at X=0.000 Y=-0.000 Z=0.000"*. Identical bytes were re-run
+    once before diagnosing -- reproducible, not a flake -- and then MEASURED with a temporary
+    probe in `ParkPictureAt` and `CancelRouteSlide` rather than reasoned about.
+    **THE PROBE REFUTED THE OBVIOUS EXPLANATIONS.** `CancelRouteSlide` DID run on unit 13; the
+    unit WAS in `UnitActors`; nothing wrote after it. What the probe showed is that **the same
+    line, in the same call, asking for `FVector::ZeroVector`, stored an exact zero for unit 4 and
+    `Y=-0.000` for unit 13** -- differing only in where their actors stood on the board.
+    **THE CAUSE: `USceneComponent::SetRelativeLocation` IS A WORLD-SPACE MOVE.** It converts the
+    requested relative location to world, calls `MoveComponent`, and converts the result BACK
+    through the parent's inverse -- so it stores a ROUND TRIP, not the value it was handed. The
+    residue is ~1e-14 uu on a 100 uu tile, invisible on a screen, **and fully visible to
+    `IsZero()`, which is what two clauses assert and what this file's own "written rather than
+    approached" sentence promises.**
+    **THIS PREDATES THE PRE-PARK AND WAS UNOBSERVABLE UNTIL IT.** Before, only one picture per
+    tour was ever displaced and returned; every other unit's `Body` still held the exact zero its
+    construction gave it, so no clause could see the round trip. The pre-park displaces and
+    returns EVERY moving unit, which is what made a latent inexactness reddening.
+    **THE FIX MAKES THE CLAIM TRUE RATHER THAN MAKING THE CLAUSE LOOSER, AND THAT CHOICE IS THE
+    DECISION.** `FinishTween` now writes through `SetRelativeLocation_Direct` plus
+    `UpdateComponentToWorld`, which computes the WORLD transform FROM the relative one -- the
+    correct direction, no inverse, no round trip -- so the stored value is the value asked for by
+    construction. **The alternative was to ask `strat-test-author` to soften two `IsZero()`
+    assertions to a tolerance, and it was refused:** this file's prose says a sub-pixel residue
+    is state by any honest reading of "no state the model holds", and a clause weakened to fit my
+    code is the wrong direction of repair. It is safe on this component for a reason specific to
+    it and stated rather than assumed -- `Body` carries NO COLLISION, set three ways in the
+    constructor and load-bearing for the cursor, so there is no sweep, overlap or physics state
+    the move path was responsible for.
+  - **ONE EARLIER MEASUREMENT OF MINE IS NOW FALSE AND IS RETRACTED FLAT AT THE LINE.**
+    `PlayRouteSlide`'s waypoint-0 block recorded *"on a unit's FIRST slide of a tour
+    `Drawn - GetActorLocation()` is ZERO"* -- true when written, and the reason the pre-park had
+    to exist. **It is no longer true of any production path**: a pre-parked unit's drawn offset
+    equals `RouteWorldPoints[0] - AnchorWorldPoint`, so the `bSlideInFlight` guard now selects
+    between two identical values everywhere in the running game.
+    **THE GUARD STAYS, AND I CHECKED WHETHER THAT MADE A CLAUSE INERT RATHER THAN ASSUMING IT
+    HAD NOT.** `T-INT-05.AFirstRouteSlideArmsANonDegeneratePolyline` calls `PlayRouteSlide`
+    DIRECTLY on a picture at rest that nothing pre-parks (`ArrangeAtDestination`), so its named
+    mutation still collapses the polyline to {0, 0} and still reddens it. The clause is intact;
+    what changed is that the collapse is no longer reachable from a tour, and the clause is now
+    the only thing that keeps it reachable at all.
+  - **MEASURED.** Build: `Build.bat StratocracyEditor Win64 Development` at the full engine path,
+    `Result: Succeeded`, no warning on any edited translation unit; no editor was open and UBT
+    did not refuse. Suite: `Saved/AutomationReport/index.json` deleted before every run with the
+    destroyed stamp recorded -- the run this entry vouches for began by deleting
+    `2026.09.02-23.38.57` -- and the EXPORTED report read rather than the log. **The tree left
+    behind is stamped `reportCreatedOn 2026.09.02-23.41.07` with ZERO non-success entries of any
+    kind.** The control held: `Stratocracy.StratPlay.T-TURN-09.PlaybackDispositionsAgreeOnState`
+    reports `Success`, as do all six of the route-slide clauses. Neither a count nor a verdict is
+    written here and neither may be: `global.md` is the only file that may carry either. **No
+    file under any `Tests/` directory was edited by this lane**; the temporary probes were in
+    `StratUnitActor.cpp`, this lane's own file, and were removed by restoring a copy taken before
+    they were added.
+  - **WHAT THE TEST LANE IS OWED FOR THE PRE-PARK, NAMED WITH ITS MUTATION AND NOT BUILT.**
+    `Stratocracy.StratPlay.T-TURN-09.TheTourParksEveryMoverBeforeItsFirstStep` -- arrange a tour
+    at a positive `AiPlaybackStepSeconds` and a positive `MoveTweenSeconds`, and assert that
+    **immediately after `BeginAiPlayback` has shown step one**, a unit whose first Move comes
+    LATER in the reel is already displaced, and displaced specifically to
+    `WorldLocationOfHex(its first Move's RouteHexes[0]) - WorldLocationOfHex(its hex in the
+    applied model)`. The later-mover is what makes it a claim about the PRE-PARK and not about
+    step one's own slide. **THE MUTATION THAT MUST REDDEN IT:** in
+    `UStratMatchSubsystem::BeginAiPlayback`, delete the `PreParkPicturesForTour();` call -- one
+    line, and the tour then runs exactly as it did when the user reported the defect.
+    **A SECOND, SHARPER MUTATION THE SAME CLAUSE SHOULD CATCH:** in `PreParkPicturesForTour`,
+    delete the `Parked.Contains(Step->UnitId)` guard, so a repeat mover parks at its LAST move's
+    start instead of its first -- which is the defect the user saw, reduced to one unit and
+    otherwise invisible. **A THIRD, FOR A DIFFERENT CLAUSE ENTIRELY:** move
+    `PreParkPicturesForTour();` to AFTER `OnAiPlaybackTimer();`, which wipes the first step's
+    armed slide -- I do not know that any clause would notice, and saying so is more useful than
+    guessing.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- FALSIFIABILITY OF THE
+  SIX ROUTE-SLIDE CLAUSES, MEASURED BY MUTATING MY OWN FILES. ALL SIX ARE PROVEN ABLE TO FAIL.
+  AND TWO GAPS ARE RECORDED AS UNPINNABLE RATHER THAN OWED.**
+  - **WHY THIS LANE RAN IT, ON THE SAME ARGUMENT AS THE 2026-09-02 ROUTE-TWEEN PASS.**
+    `strat-test-author` wrote all six clauses and named each one's exact one-line mutation, and
+    every one of those mutations edits `AStratUnitActor::PlayRouteSlide`,
+    `AStratUnitActor::ApplyUnitView` or `UStratMatchSubsystem::EndAiPlaybackTour` -- this lane's
+    files. A green suite over a clause never shown able to fail pins nothing.
+  - **THE MUTATION WAS READ OFF EACH CLAUSE'S OWN BANNER AND NOT OFF THE DISPATCH.** Every one of
+    the six named its file, its function and its one line, and **every one was correct and
+    buildable as written** -- no banner needed reinterpreting, which is worth recording because
+    two restatements from the dispatch seat caused real defects earlier the same day.
+  - **METHOD, AND THE ONE NEW TRAP IT HIT.** Mutations applied IN PLACE (a copied tree reuses
+    `Intermediate/Build` and reports the old binary green); rebuilt before every run;
+    `Saved/AutomationReport/index.json` deleted before each run with the destroyed stamp recorded;
+    the EXPORTED report read rather than the log; every patch refused on an anchor count other
+    than 1; every revert proved by `git hash-object` AND `md5sum` against baselines captured
+    before the first mutation -- `StratUnitActor.cpp 0185e505` is superseded, the baselines for
+    this pass were `StratUnitActor.cpp c47e8a23` / md5 `fb7e30ed` and `StratMatchSubsystem.cpp
+    582514c3` / md5 `9e41da26`, and both files hashed byte-identical after every one of the six
+    reverts.
+    **THE NEW TRAP: THE FIRST PATCH REFUSED WITH ANCHOR COUNT 0 ON A LINE THAT WAS VISIBLY
+    THERE.** `Source/StratPlay/StratUnitActor.cpp` is **CRLF** while the anchor text was LF, and
+    `grep` on this box cannot see a CR -- `cat -A` through `grep` showed a bare `$`, so the
+    instrument that would have reported it is the one that is blind to it. Diagnosed by printing
+    `repr()` of the matched line in Python. The patch tool now detects the ending from the
+    TARGET's own bytes per file, because this tree's `.cpp` and `.h` files disagree with each
+    other. **The refusal is the right failure mode and it is worth saying so: a line-ending
+    mismatch presents as "anchor count 0", not as a corrupted file.**
+  - **PER MUTANT, WITH THE FULL NON-SUCCESS LIST EACH TIME. FOUR OF THE SIX REDDEN EXACTLY ONE
+    CLAUSE.**
+    - **M1, the park destroyed** -- `PlayRouteSlide`'s `TweenOffsets.Add(Point -
+      AnchorWorldPoint)` to `Point - RouteWorldPoints.Last()`. **ONE RED:**
+      `T-INT-05.RouteSlideParksOverTheRoutesLastHex`, *"the terminal waypoint is NOT zero -- it
+      is X=0.000 Y=0.000 Z=0.000, a park of 0.0 uu on a 100.0 uu tile"*. Report
+      `2026.09.02-23.00.35`.
+    - **M2, the waypoint-0 guard deleted** -- `PlayRouteSlide`'s `if (bSlideInFlight)` made
+      unconditional, which is the shape the dispatch brief specified and this lane refused.
+      **FOUR RED, AND THAT IS ENTANGLEMENT AND NOT FOUR DETECTIONS.** Only
+      `T-INT-05.AFirstRouteSlideArmsANonDegeneratePolyline` failed on its own subject --
+      *"a one-hex move from a picture at rest arms a slide with a positive duration (0.000 s)"*
+      and *"the polyline has both of its waypoints"* to be 2, but it was 0. The other three --
+      `AnActorThatMovedWithNoRouteClearsItsPark`, `AParkedPictureSurvivesAnApplyWithIdentical
+      Positions` and `T-TURN-09.SkipLeavesNoPictureStranded` -- all failed on their ARRANGE
+      GUARDS (*"the picture is genuinely displaced by it"*, *"some step of the tour parked a
+      picture (156 of 156 steps shown)"*), never reaching their own subjects. The cause is one
+      thing: the mutation collapses EVERY slide, so no park exists anywhere for any fixture to
+      arrange. Report `2026.09.02-23.02.29`.
+      **THIS IS ALSO THE STRONGEST AVAILABLE CONFIRMATION THAT REFUSING THE BRIEF'S SHAPE WAS
+      RIGHT.** The mutant IS the briefed implementation, and under it the feature does nothing on
+      a one-hex move and no park is created anywhere in a 156-step hand-over.
+    - **M3, the forbidden anchor derivation** -- `Point - AnchorWorldPoint` to `Point -
+      GetActorLocation()`. **ONE RED, AND THE PAIRING THE TEST LANE ASKED FOR HOLDS:**
+      `T-INT-05.RouteSlideWaypointsSitAtTheDrawnUnitsHeight` **ALONE**, on all four waypoints --
+      *"waypoint 1 draws at the unit's own height over hex (-1, 4): Z 0.00, expected 37.00 (plane
+      0.00 + lift 37.00)"*. Clauses 6 and 7 stayed GREEN under it, which is what proves the XY
+      clauses and the Z clause are not redundant. Report `2026.09.02-23.04.22`.
+    - **M4, `bActorMoved &&` dropped from the park-clear branch.** **TWO RED.**
+      `T-INT-05.AParkedPictureSurvivesAnApplyWithIdenticalPositions` on its own subject -- *"the
+      park survives an apply with identical positions -- the waypoint count is untouched" to be
+      3, but it was 0"* -- and the pre-existing
+      `T-INT-05.SecondApplyWithIdenticalPositionsLeavesTheTweenAlone`, *"to be 4, but it was 0"*.
+      **THAT SECOND RED IS ONE MECHANISM SEEN TWICE, NOT A SECOND DETECTION**, and it is
+      informative rather than a defect: an unguarded park-clear branch does not merely pop parked
+      AI pictures, it also destroys `ApplyUnitView`'s OWN tween on the second of the two applies a
+      player move produces -- which the older clause was already built to catch. Report
+      `2026.09.02-23.06.08`.
+    - **M5, the park-clear branch's `CancelRouteSlide();` deleted.** **ONE RED:**
+      `T-INT-05.AnActorThatMovedWithNoRouteClearsItsPark`, *"the park is retired outright -- no
+      polyline is left behind with no clock" to be 0, but it was 3"* and *"the picture is home in
+      the same call, at EXACT relative zero -- it is at X=-250.000 Y=86.603 Z=0.000"*. Report
+      `2026.09.02-23.07.59`.
+      **SO THE SECOND PAIRING HOLDS TOO, IN BOTH DIRECTIONS.** M4 reddens clause 9 and leaves
+      clause 10 green; M5 reddens clause 10 and leaves clause 9 green. The two clauses pin the two
+      halves of one `else if` -- its CONDITION and its BODY -- and each half has a mutation the
+      other clause cannot see. They are testing separate things.
+    - **M6, the cancel loop deleted from `EndAiPlaybackTour`.** **ONE RED:**
+      `T-TURN-09.SkipLeavesNoPictureStranded`, *"unit 4 has no polyline left after the skip" to be
+      0, but it was 4"*, *"unit 4's picture is home at EXACT relative zero rather than parked over
+      an intermediate hex -- it is at X=-350.000 Y=86.603 Z=0.000"* and *"nothing anywhere is
+      still sliding" to be 0, but it was 1"*. Report `2026.09.02-23.09.44`.
+  - **GAP 1 -- THE ARM-LAST ORDERING IS PINNED BY NOTHING, AND THE REPORTED CAUSE IS RIGHT IN ITS
+    CONCLUSION AND WRONG IN ITS REASON. THE CORRECTION MATTERS BECAUSE IT CHANGES WHAT WOULD FIX
+    IT.** `strat-test-author` wrote `T-TURN-09.TheLastStepsSlideSurvivesTheTourEnding`, built it,
+    ran it, found it RED on the unmutated tree, and deleted it rather than softening it -- which
+    is the right call. The reported cause was that *"the scenario's hand-over does not end on a
+    `Move` that arms"*, which reads as a property of Ferrum Crossing and therefore as something a
+    different scenario or a different fixture could fix. **IT IS NOT. IT IS STRUCTURAL, READ OFF
+    `FStratAiTurnRunner::RunTurn`:** that function records EVERY applied command including the
+    closing EndTurn, and its own comment states *"AN APPLIED EndTurn IS THE ONLY SUCCESSFUL
+    EXIT"* -- the `Record` call sits ahead of that exit test. So the last step of every
+    normally-completed hand-over is an EndTurn, `Kind != Move`, and
+    `UStratMatchSubsystem::PlayMoveSlideForStep` refuses on its first line. **There is never a
+    slide in flight when the last step is shown, on any scenario.** A hand-over could end on an
+    arming Move only if its final turn were cut short between an accepted Move and its EndTurn,
+    which no shipped path produces. Nothing is swallowing the slide; the case the ordering
+    protects does not arise. **THE ORDERING IS STILL CORRECT AND STAYS** -- `EndAiPlaybackTour`
+    cancels every slide, so arming above it would un-show the final action of every tour the day
+    a hand-over did end on a Move -- and **moving that statement above `EndAiPlaybackTour()`
+    yields a fully green suite with no warning.** Recorded at the line itself in
+    `AdvanceAiPlaybackOneStep` as well as here, on `PendingMoveRoutes.Reset()`'s precedent: this
+    is not a gap a test can close, and the comment is the only thing standing in the way.
+  - **GAP 2 -- I AGREE THAT `AdvanceOneStepStillArmsNoTimer` IS UNPINNABLE, AND THE REASON IS
+    NARROWER AND MORE HONEST THAN "UNOBSERVABLE".** Checked against the code rather than accepted:
+    `IsAiPlaybackRunning()` answers off the REEL and deliberately not off `FTimerManager`, and
+    `AiPlaybackTimer` is private with no accessor -- so no clause can ask whether a handle is
+    pending without this class growing a reader that exists only for a test. And the test lane's
+    own argument holds on the fixture shapes that exist: a one-shot is already pending throughout
+    a tour, `SetTimer` on a pending handle replaces it, and `ArmNextPlaybackStep`'s own
+    `World == nullptr` guard covers the worldless fixture -- so relocating the re-arm into
+    `AdvanceAiPlaybackOneStep` leaves identical observable state in a never-ticked world.
+    **THE ONE PLACE IT WOULD BE OBSERVABLE IS NAMED RATHER THAN LEFT OUT, SO THAT "UNPINNABLE" IS
+    A MEASURED CLAIM AND NOT A CATEGORY:** in a TICKED world with a short interval, a clause that
+    hand-drove one step and then let the world run would, under the relocated shape, receive an
+    extra automatic step it never asked for. Every playback fixture in this tree uses
+    `kHarnessPlaybackInterval = 600.0f` on worlds that are never ticked, precisely to avoid
+    timing flakes, so that observation is unavailable here by a deliberate choice made for a
+    different reason. **RECORDED AS UNPINNABLE, NOT AS OWED.** The property it would have pinned
+    is a claim about WHERE A LINE WAS PUT, and `OnAiPlaybackTimer`'s and
+    `AdvanceAiPlaybackOneStep`'s own blocks are what carry it.
+  - **WHAT I CHANGED IN THIS PASS, WHICH IS ONE COMMENT AND NO BEHAVIOUR.**
+    `UStratMatchSubsystem::AdvanceAiPlaybackOneStep` gained the gap-1 paragraph above the
+    `LastArmedSlideSeconds = PlayMoveSlideForStep(Current);` statement. Every other file this pass
+    touched hashes byte-identical to its pre-mutation baseline; `StratUnitActor.cpp` is
+    `c47e8a23` / `fb7e30ed` again, unchanged from before the first mutant.
+  - **THE TREE WAS RESTORED AND RE-MEASURED, AND THAT FINAL RUN IS THE ONE THIS ENTRY VOUCHES
+    FOR** -- the six mutant runs vouch for mutants, not for what is left behind. Rebuild
+    `Result: Succeeded`; exported report **`reportCreatedOn 2026.09.02-23.12.30`, with ZERO
+    non-success entries of any kind**. Neither a count nor a verdict is written here and neither
+    may be: `global.md` is the only file that may carry either. **No file under any `Tests/`
+    directory was edited by this lane on any pass**; `git status --porcelain` after the pass is
+    the same set that stood before it.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- AI MOVES NOW SLIDE:
+  `AStratUnitActor::PlayRouteSlide`, `UStratMatchSubsystem::PlayMoveSlideForStep`, AND A TOUR
+  THAT WAITS FOR EACH PICTURE. THIS REVERSES A USER DECISION AND THE REVERSAL IS THE HEADLINE.**
+  - **THE REVERSAL, STATED AS A USER DECISION AND NOT AS AN IMPROVEMENT.** Until earlier the same
+    day this tree carried, in six prose sites, the rule *"AI moves must not slide (user
+    decision)"*. **THE USER REVERSED IT ON 2026-09-02.** AI moves now animate along the hexes
+    `FStratBridge::MovePathToHex` actually walked, during §2.11.2's playback tour, ONE UNIT AT A
+    TIME with the tour's clock waiting for each slide to finish. Nothing about that reversal was
+    inferred from the code and nothing in the code argued for it; it is recorded here as a
+    decision so that a future reader who greps the retracted sentences lands on WHO changed it
+    rather than on a lane that talked itself out of a constraint.
+  - **THE SIX SITES WERE COUNTED RATHER THAN ACCEPTED, AND SIX IS RIGHT.** The dispatch brief
+    said six and asked for the count to be verified. Measured with `grep -rn -i "moves must not
+    slide|moves do not slide"` across `Source/` and then read at each site, because a phrase
+    sweep over a claim this old catches near-misses: `StratMatchSubsystem.h`'s
+    `NotePendingMoveRoute` block, `StratMatchSubsystem.cpp`'s `ApplyUnitView` call site,
+    `StratUnitActor.cpp`'s empty-route-is-the-first-condition block, `StratUnitActor.h`'s
+    `RouteWorldPoints` param doc, `StratUnitActor.h`'s header-block `[EXTENDED 2026-09-02]`
+    bullet, and `StratPlayerController.cpp`'s *"ONE CALL AND ONE UNIT"* block. **TWO FURTHER HITS
+    ARE NOT THIS CLAIM AND WERE LEFT ALONE**, which is worth recording because a count that
+    swept them would have been seven and would have overturned a live rule by accident:
+    `AStratUnitActor::SnapToWorldLocation`'s *"a unit that just appeared must not slide in from
+    wherever it was standing"* and the two `Tests/` sites quoting it are about a SPAWNED unit,
+    a different subject that is untouched and still true.
+  - **EACH CORRECTION SEPARATES WHAT STANDS FROM WHAT IS RETRACTED, AND THE CONTROLLER'S IS THE
+    ONE THAT WOULD HAVE BEEN CHEAPEST TO BOTCH.** `StratPlayerController.cpp`'s sentence is
+    *"ONE CALL AND ONE UNIT. Nothing here notes a route for anything the AI does, and that
+    absence is the entire implementation of the user's decision that AI moves must not slide."*
+    **THE FIRST HALF REMAINS TRUE AND ONLY THE CLAUSE AFTER THE COMMA IS RETRACTED** -- that file
+    still notes exactly one route for one unit on one accepted player command and still contains
+    no detection of an AI turn. A correction that struck the whole sentence would have deleted a
+    live rule about the input path while claiming to record a decision about animation.
+  - **FIVE MORE BLOCKS WERE FALSIFIED INCIDENTALLY AND ALL FIVE WERE CORRECTED.** `ApplyView`'s
+    *"CONVERTED HERE AND NOWHERE ELSE"* (now: two named call sites, still one expression);
+    `OnAiPlaybackTimer`'s *"IT HOLDS NO LOGIC OF ITS OWN ON PURPOSE"* (now: it holds the CLOCK's
+    logic and none of the STEP's, which is what keeps the step hand-drivable); `SkipAiPlayback`'s
+    *"NOTHING IS RECONCILED HERE"* (re-scoped, not retracted -- a park cancel recomputes no
+    position, reads and writes no transform and consults no model); `TweenOffsets`' terminal-zero
+    paragraph (below); and `FStratAiPlaybackStep::RouteHexes`' *"THE CONSUMER CHECKS"*, which
+    named a singular and now has two readers. **THE "SIX INTS" COPY COMMENT NEEDED NOTHING** --
+    the step-1 pass had already corrected it in place, verified by reading rather than assumed.
+  - **THE TERMINAL-ZERO INVARIANT WAS RE-SCOPED AND NOT WEAKENED, AND THE LINE THAT MAKES IT TRUE
+    IS UNCHANGED BYTE FOR BYTE.** `AStratUnitActor::ApplyUnitView` still runs
+    `TweenOffsets.Add(FVector::ZeroVector)` -- APPENDED, never computed -- and that is legitimate
+    on its path because `UStratMatchSubsystem::ApplyView` has already checked
+    `PendingRoute->Last() == View.Hex` before converting, so zero is both the right answer AND a
+    construction. `PlayRouteSlide`'s terminal is COMPUTED and is zero only by arithmetic, on a
+    unit's final move of a hand-over. **The member now carries one invariant true of both paths:
+    `Body` at relative `TweenOffsets.Last()` draws the unit over the route's own last hex**, of
+    which terminal zero is the special case where that hex is also the actor's.
+  - **THE BRIEF'S ARITHMETIC FOR WAYPOINT 0 WAS WRONG AND WOULD HAVE SHIPPED A FEATURE THAT DID
+    NOTHING IN ITS COMMONEST CASE. THIS IS THE MOST CONSEQUENTIAL CALL IN THE PASS.** The brief
+    required `TweenOffsets[0]` to be overwritten unconditionally with `Drawn - Destination`, on
+    `ApplyUnitView`'s recorded anti-pop reason, asserting that *"at rest `Drawn - Destination`
+    equals `RouteWorldPoints[0] - Anchor` exactly"*. **THAT EQUALITY HOLDS FOR A UNIT'S SECOND
+    AND LATER MOVES AND IS FALSE FOR ITS FIRST.** Read off the code rather than run: before a
+    tour the board already holds the FINAL state -- `RunAiTurnsNow` reconciles to it, every actor
+    is at its last hex, every picture is at exact relative zero -- so on a unit's first slide
+    `Drawn - Destination` is ZERO while `RouteWorldPoints[0] - Anchor` is where the move began.
+    Unconditionally overwriting therefore sets waypoint 0 to zero, and **for the commonest reel
+    entry of all, a one-step move with two waypoints, the polyline becomes {0, 0}, the arc length
+    is zero, `FinishTween` runs and NOTHING ANIMATES.** The feature would have been absent
+    exactly where it is most expected, with a green build and a green suite.
+    **THE FIX KEEPS THE RECORDED REASON AND CONDITIONS IT:** waypoint 0 is overwritten with the
+    drawn position ONLY when a slide is already in flight, captured before the array is rebuilt.
+    At rest with a park the two expressions are equal anyway -- the park is
+    `previousRoute.Last() - Anchor`, this route's `[0]` is that same hex, both through
+    `AStratBoardActor::WorldLocationOfHex` on the same hex, so they agree to the bit -- so the
+    condition costs nothing where the brief was right and saves the case where it was not.
+    **THE GUARD IS FOR A RE-ARM NOBODY HAS WRITTEN**: `ArmNextPlaybackStep` waits out the seconds
+    the actor reports before showing the next step, so mid-slide is unreachable from the tour as
+    paced today. It is kept because that pacing is a property of another class.
+  - **THE ANCHOR IS THE CALLER'S AND MAY NOT BE DERIVED, WHICH IS WHERE THE HEIGHT CLAUSE LIVES
+    OR DIES.** `PlayRouteSlide` takes a TILE-PLANE point and differences every route point
+    against it, so `BodyZOffset` cancels exactly and this function holds no second copy of the
+    `+ BodyZOffset` expression `ApplyUnitView` and `SnapToWorldLocation` are paired on. The
+    obvious derivation -- `GetActorLocation() - FVector(0, 0, BodyZOffset)` -- is forbidden in
+    the declaration by name, because it reintroduces the exact expression whose removal is why
+    `T-INT-05.TweenWaypointsSitAtTheDrawnUnitsHeight` is green, and that clause was measured able
+    to fail on it earlier the same day. `UStratMatchSubsystem::PlayMoveSlideForStep` supplies the
+    anchor from `AppliedModel`'s entry for the unit through `WorldLocationOfHex` -- the same
+    expression the route goes through, so the two cannot disagree by construction.
+  - **THE PARK IS THE NEW STATE AND IT IS BOUNDED BY THE SAME THREE TESTS THE OTHER TWEEN MEMBERS
+    ARE.** `AStratUnitActor::TweenRestOffset` is where `Body` rests when the tween retires;
+    `FinishTween` writes it instead of a zero literal, and it is ZERO on every path but
+    `PlayRouteSlide`'s -- so `ApplyUnitView`'s tween, `SnapToWorldLocation`, `CancelRouteSlide`
+    and the whole `MoveTweenSeconds <= 0` C++ FIELD default are byte-for-byte unchanged
+    **[CORRECTED 2026-09-03, same pass and same cause as the two stamps in this entry: this read
+    "the whole shipped `MoveTweenSeconds <= 0` default" and `MoveTweenSeconds` is serialised as an
+    override in `BP_StratUnit.uasset`, so that configuration is the C++ FIELD default and not the
+    shipped one. The byte-for-byte claim itself is unchanged and true at that default.]**. Its
+    terminal value is zero, three writers drive it there (`ApplyUnitView`'s arming branch,
+    `CancelRouteSlide`, and `SnapToWorldLocation` which zeroes it BEFORE `FinishTween` because a
+    hard cut must clear a park rather than retire into one), and it is not a BIT -- no marker,
+    mesh or material answers off it.
+    **IT SITS OUTSIDE `T-INT-05.NoActorHoldsPresentationBits`' SUBJECT, READ OFF THE CLAUSE
+    RATHER THAN ASSUMED.** Every assertion in that clause compares a field of
+    `GetLastAppliedView()` against the model; a non-cached-view member is on the same footing as
+    the three tween members already there.
+  - **THE ONE BEHAVIOUR CHANGE IN `ApplyUnitView`, AND THE HAZARD IT WAS WRITTEN AROUND.** When
+    the actor genuinely moved AND nothing armed, a park left by a previous tour is cleared.
+    **IT IS CONDITIONED ON `bActorMoved` AND MUST NEVER BE UNCONDITIONAL:**
+    `AStratPlayerController::Tick` calls `UpdateHoverFromCursor` every frame and a hover crossing
+    into a new hex reaches `ApplyView`, so `ApplyUnitView` FIRES DURING A TOUR whenever the player
+    moves the mouse across a hex boundary. An unconditional clear would pop every parked unit to
+    its final hex on the next mouse move and would read as a random glitch. A hover applies
+    identical positions, so `bActorMoved` is false and the park survives.
+    **IT IS A HARD CUT AND NOT A ZEROED REST OFFSET, WHICH WAS THE OTHER SHAPE AND IS THE ONE
+    THAT POPS.** Zeroing `TweenRestOffset` on a running slide would let it walk the polyline to
+    `TweenOffsets.Last()` -- the park -- and only THEN snap to zero. `CancelRouteSlide` retires
+    immediately and the picture is home in the same call. The branch also carries a second term,
+    `TweenOffsets.Num() > 0 || !TweenRestOffset.IsZero()`, so at the C++ FIELD default both terms
+    are false and no automation fixture executes a line of it **[CORRECTED 2026-09-03,
+    `strat-gameplay-engineer` (ACTING and WRITING; IN LANE), base commit `283d711`, UNCOMMITTED:
+    THIS SENTENCE READ "at the shipped default" AND THAT HALF WAS FALSE. `MoveTweenSeconds` IS
+    SERIALISED AS AN OVERRIDE IN `Content/StratPlay/BP_StratUnit.uasset` -- **[WARRANT AMENDED
+    2026-09-03 ON THE THIRD RE-GATE'S F7, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE,
+    main tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED). CONCLUSION
+    UNCHANGED, WARRANT REPLACED. This read that the override was "measured this pass with
+    `grep -aF` over the raw bytes, with `AiPlaybackStepSeconds` absent from that asset and present
+    in both GameMode Blueprints as the discriminating control and a fabricated name absent from all
+    three". That CROSS-ASSET control does not license the inference on an ACTOR Blueprint: the
+    within-class control recorded in this file's topmost entry measures PRESENCE as proving nothing
+    on `BP_StratUnit`. The name IS present and the override IS real, but it now stands on the
+    INDEPENDENT evidence alone -- `content.md` records the authored value, and the tween path is
+    inert at the `0.0f` C++ field default while the user watched units slide on 2026-09-03. This is
+    the warrant the other two stamps in this entry rest on as well; none of the three may be cited
+    to a byte hit.]** So this branch IS
+    reachable in the shipped game and is inert only at `MoveTweenSeconds = 0.0f`, the C++ FIELD
+    default -- which is why no automation fixture executes it, that half being unchanged and true.
+    The header this paragraph documents, `StratUnitActor.h`'s `PlayRouteSlide` block, already said
+    "the C++ default", so the record contradicted the code it describes. NOT RAISED BY THE
+    RE-GATE -- found by the user in the same pass as F4 and treated as one defect with one
+    cause.]**.
+  - **THE RE-ARM WENT IN `OnAiPlaybackTimer` AND NOT IN `AdvanceAiPlaybackOneStep`, WHICH IS WHAT
+    KEPT TWO BLOCKS TRUE THAT THE OBVIOUS IMPLEMENTATION FALSIFIES.** The tour's interval is now
+    variable -- `ActiveConfig.AiPlaybackStepSeconds + LastArmedSlideSeconds` -- so the looping
+    handle became a one-shot armed by a new private `ArmNextPlaybackStep`, which refuses on two
+    independent reasons (`!AiPlaybackReel.IsPlaying()`, and no world). Putting that inside the
+    stepping function would have falsified its own block's *"IT DOES NOT ARM, RE-ARM OR REQUIRE A
+    TIMER"* and put a timer in front of every clause in `StratAiPlaybackClauses.cpp`, which drives
+    it at `kHarnessPlaybackInterval = 600.0f` on worlds that are never ticked. **BOTH SURVIVING
+    SENTENCES ARE NOW STATED EXPLICITLY IN THEIR OWN BLOCKS RATHER THAN LEFT TO BE RE-DERIVED**:
+    that one, and `AiPlaybackStepSeconds`' *"this subsystem never reads it"* about
+    `AStratUnitActor::MoveTweenSeconds` -- kept true by `PlayRouteSlide` RETURNING the seconds it
+    armed, so this class adds what the actor TOLD it instead of predicting what the actor will do.
+  - **`BeginAiPlayback` KEPT EVERY GUARD AND EVERY RETIRE-ON-DECLINE EXIT BYTE FOR BYTE.** Only
+    the looped `SetTimer` plus its trailing `OnAiPlaybackTimer()` were replaced, by
+    `OnAiPlaybackTimer();` alone. *"The first step shows now, not one interval later"* is now
+    STRUCTURAL rather than a second call, which is what preserves
+    `GATE-AITURN.StepFocusesAndStopsOnTheLast`'s `cursor == 1` assertion -- and that clause is
+    green in the run cited below.
+  - **THE SLIDE IS ARMED LAST IN `AdvanceAiPlaybackOneStep` -- AFTER `FocusPlaybackStep`, AFTER
+    `Advance()`, AND AFTER THE LAST-STEP `EndAiPlaybackTour()`.** That order is the feature:
+    `EndAiPlaybackTour` cancels every unit's slide, so arming before it would show the final
+    action of every tour and immediately un-show it. Armed after, the last step's slide runs with
+    no timer behind it, which is correct -- nothing waits on it and `AStratUnitActor::Tick`
+    retires it.
+  - **THE CANCEL WENT IN `EndAiPlaybackTour` AND NOT IN `SkipAiPlayback`, BY THE ARGUMENT THAT
+    CREATED THAT VERB.** There must be no way to stop a tour without clearing what the tour left
+    behind, so a seventh call site cannot reopen the hazard by being written by somebody who
+    wanted only to stop a clock. Without it a skip mid-slide strands a picture over an
+    intermediate hex forever, with the model and the actor transform both saying otherwise. It is
+    a no-op at most of the six sites and at every automation fixture, and that is the point.
+    **ONE COST IS NAMED RATHER THAN LEFT TO BE FOUND: it is unconditional over every unit actor,
+    so a PLAYER's slide still in flight when a tour ends is hard-cut too.** Distinguishing them
+    would need this class to remember which pictures it parked -- presentation state on the
+    subsystem bought to avoid presentation state on the actor, which is the wrong trade.
+  - **ONE EXPRESSION FOR THE DURATION, AND THE BRIEF SAID THREE CALL SITES WHERE THERE ARE TWO.**
+    `AStratUnitActor::TweenDurationSeconds()` holds `MoveTweenSeconds * (waypoints - 1)`, the
+    per-hex-step user decision, with the same operands, casts and order `Tick` had inline. It is
+    used by `Tick`, which divides `TweenElapsed` by it, and by `PlayRouteSlide`, which returns it.
+    `ApplyUnitView` arms a tween and needs no duration, because nothing waits on its slide. The
+    discrepancy is recorded in the helper's own block so the next reader does not hunt a third.
+  - **AT THE C++ FIELD DEFAULT THE TOUR IS BIT-IDENTICAL TO THE ONE THAT SHIPPED BEFORE THIS.**
+    **[CORRECTED 2026-09-03, same pass and same cause as the other stamps in this entry: the
+    heading read "AT THE SHIPPED C++ DEFAULT", which names one configuration by two contradictory
+    words. `MoveTweenSeconds` is serialised as an override in `BP_StratUnit.uasset`, so the
+    bit-identical tour is the one an automation fixture runs, NOT the one the shipped game runs.
+    The sentence below it already said "is the C++ default" and needed no change.]**
+    `MoveTweenSeconds <= 0` is the C++ default and every automation fixture runs at it, so
+    `PlayRouteSlide` returns 0 having written nothing, `LastArmedSlideSeconds` stays 0, the
+    interval collapses to `AiPlaybackStepSeconds`, no park is ever created and the new
+    `ApplyUnitView` branch is never entered.
+  - **MEASURED.** Build: `Build.bat StratocracyEditor Win64 Development` at the full engine path
+    -- 37 actions, `StratUnitActor.cpp`, `StratMatchSubsystem.cpp`, `StratPlayerController.cpp`,
+    `StratAiPlayback.cpp` and both links among them, **`Result: Succeeded`**, no warning emitted
+    on any of the edited translation units. Suite: `Saved/AutomationReport/index.json` DELETED
+    first, recording the stamp destroyed -- `reportCreatedOn 2026.09.02-22.09.31` -- and the full
+    headless run read from the EXPORTED report rather than the log, which undercounts by one.
+    **The run this entry vouches for is stamped `reportCreatedOn 2026.09.02-22.28.08`, with zero
+    non-success entries of any kind.** Neither the count nor a verdict is written here and
+    neither may be: `global.md` is the only file that may carry either. **The control held:**
+    `Stratocracy.StratPlay.T-TURN-09.PlaybackDispositionsAgreeOnState` -- whose fixture drives the
+    runner and reel with no world and no subsystem, and which must therefore never reach this
+    change -- reports `Success`.
+  - **NO FILE UNDER ANY `Tests/` DIRECTORY WAS EDITED BY THIS LANE.** `git status --porcelain`
+    after the pass is byte-for-byte the set that stood at dispatch; the three modified and two
+    untracked files under `Source/StratPlay/Tests/` are `strat-test-author`'s and were already
+    there.
+  - **WHAT THE TEST LANE IS OWED, NAMED RATHER THAN LEFT AS "ADD CLAUSES".** In
+    `Stratocracy.StratPlay.<ID>.<Clause>` form, each with the property it must pin: the park
+    (`PlayRouteSlide` retires with `Body` over the route's LAST hex, not over the actor);
+    **the first-slide arithmetic, which is the defect this pass caught and which no existing
+    clause can see** (a two-waypoint route from a picture at rest arms a non-degenerate polyline
+    -- it is the mutation `TweenOffsets[0] = Drawn - Destination` unconditionally that must redden
+    it); the anchor's height cancellation on this new path, mirroring
+    `TweenWaypointsSitAtTheDrawnUnitsHeight`; skip-leaves-nothing-stranded (`SkipAiPlayback`
+    mid-slide returns every picture to relative zero); the `ApplyUnitView` park-clear behaviour
+    change AND its hover companion (an apply with identical positions must LEAVE a park alone --
+    that is the half a naive clause will omit, and it is the one that catches the glitch);
+    the tour's variable interval as an interval and not as a cursor; and that
+    `AdvanceAiPlaybackOneStep` still arms no timer, which is now a claim about where a line was
+    put rather than about a line not existing. **A clause over the last step's slide surviving
+    `EndAiPlaybackTour` is the sharpest of them**, because the ordering that makes it true is
+    three statements apart and nothing else reports it.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- THE AI ROUTE REACHES
+  THE REEL: `FStratAiPlaybackStep::RouteHexes` AND A WIDENED `IStratAiTurnPort::Submit`. THIS
+  STEP LEAVES THE TREE DELIBERATELY UNCOMPILABLE AND THE DEBT IS NAMED BELOW.**
+  - **WHAT LANDED, IN TWO PIECES THAT ARE USELESS APART.** (1) `FStratAiPlaybackStep` gains
+    `RouteHexes`, a `TArray<FIntPoint>` -- the ordered hexes an accepted Move walked, `[0]` the
+    from-hex and `.Last()` equal to `Hex`, empty on every other kind and empty when the path
+    query refused. `FStratAiPlaybackReel::Record` gains a fourth parameter and copies it
+    VERBATIM. (2) `IStratAiTurnPort::Submit` gains a third parameter,
+    `TArray<FIntPoint>& OutMoveRoute`, and `FStratBridgeAiTurnPort::Submit`'s Move arm fills it.
+    `FStratAiTurnRunner::RunTurn` declares one local per command and passes it through to
+    `Record`. Nothing consumes `RouteHexes` yet -- that is the wave's step 4/5 and is NOT here.
+  - **A ROUTE AND NOT A FROM-HEX, ON TWO REASONS ALREADY IN THIS TREE RATHER THAN TWO NEW ONES.**
+    A from-hex reconstructs a CHORD, and the arming block in `AStratUnitActor::ApplyUnitView`
+    records that the degenerate two-point fallback was DELETED rather than kept because "a chord
+    is the artefact this whole change exists to remove". And a from-hex would need a companion
+    `bHasFromHex` for exactly `FStratAiPlaybackStep::bHasHex`'s own recorded reason -- `(0,0)` is
+    a real hex and a value legal in the domain cannot signal absence -- whereas an empty
+    `TArray` signals its own absence and cannot acquire that companion's drift.
+  - **THE `.Last() == Hex` EQUALITY IS NOT REPEATED IN `Record`, AND THAT IS THE DECISION.**
+    `UStratMatchSubsystem::ApplyView` already performs exactly that check on the player's route
+    before converting it, and the AI's route arrives at that same check by that same path. One
+    checking rule, one place, reused. A second copy in `Record` would be a second thing to keep
+    in step; `StratAiTurnRunner.h` already records what that costs, where a second spelling of
+    one rule existed for the length of one diff and had drifted inside it.
+  - **THE PATH QUERY RUNS BEFORE THE SUBMIT AND IS COPIED OUT ONLY AFTER ACCEPTANCE, AND BOTH
+    HALVES ARE LOAD-BEARING.** Asked AFTER the submit, `FStratBridge::MovePathToHex` would answer
+    about a board on which the unit already stands on the goal -- a one-hex route at cost 0,
+    STRUCTURALLY VALID AND SILENTLY WRONG, satisfying every invariant a consumer could test
+    (`[0]` is the from-hex, `.Last()` is the goal, non-empty), so no downstream check could
+    catch it. Copied out before acceptance, a refused move would leave a route behind and arm a
+    slide for a command the rules module rejected -- which is the player path's own second
+    recorded reason for noting a route only on an accepted command. A refused path query
+    degrades that one step to a snap; it does not refuse the move.
+  - **THE PORT'S RECORDED `IsMatchOver()` RULING WAS RESPECTED AND ONLY ONE OF ITS TWO GROUNDS
+    REACHES THIS CHANGE. THE COST OF THE OTHER IS NOT PRETENDED TO BE ZERO.** That ruling
+    rejected `IsMatchOver()` because (1) it would let a runner DECIDE and (2) every test double
+    would have to grow an arm. GROUND (1) does not reach an out-param: it is an answer handed
+    out, never a question, `RunTurn` is forbidden in the interface prose from branching on it,
+    and the only thing it does with the value is copy it into a list the PACING bullet already
+    documents as written and never read. GROUND (2) DOES reach it and was paid: three test
+    doubles must grow the parameter. What makes it payable is what the arm costs to WRITE -- two
+    of the three forward to an inner port and pass it straight through, and the third accepts
+    without applying and needs one `Reset()`; an `IsMatchOver()` arm would have obliged each
+    double to INVENT AN ANSWER about match state, a fact a double has no source for.
+  - **`Record`'S NEW PARAMETER IS REQUIRED AND NOT DEFAULTED, DELIBERATELY.** A default of `{}`
+    would compile any future caller that forgot the route, and "forgot the route" is
+    indistinguishable from "this kind has no route" once it is in the reel -- both are an empty
+    array and both snap. There is exactly one caller in this tree, so the default buys nothing
+    today and costs a silent failure mode later.
+  - **ONE PROSE CORRECTION MADE FLAT, BECAUSE THIS CHANGE FALSIFIED IT IN THE LETTER.**
+    `UStratMatchSubsystem::AdvanceAiPlaybackOneStep` said of its step copy "the copy is six
+    ints, so the cost of not having to re-establish that argument is zero." `RouteHexes` makes
+    that a heap allocation. THE COPY IS KEPT -- it runs once per ~0.5 s playback tick -- and the
+    sentence was restated rather than deleted, naming the new cost and why it is still paid.
+  - **THE TREE DOES NOT COMPILE AT THIS ENTRY, ON PURPOSE, AND HERE IS WHAT DISCHARGES IT.**
+    Widening `IStratAiTurnPort::Submit` breaks every implementation. Four sites, ALL under
+    `Source/StratPlay/Tests/`, WHICH IS NOT THIS LANE AND WAS NOT TOUCHED: the three doubles
+    `FStratRecordingAiPort` (`Tests/StratAiPlaybackClauses.cpp`), `FStratFaultInjectingAiPort`
+    and `FStratNeverEndingAiPort` (`Tests/StratAiTurnRunnerClauses.cpp`), plus a fourth site the
+    dispatching brief did not name -- a DIRECT two-argument `Port.Submit(C, PortReason)` on a
+    production `FStratBridgeAiTurnPort` inside
+    `Stratocracy.StratPlay.T-AI-01.EveryKindRoutesToARecordingSubmit`. **DISCHARGED WHEN
+    `strat-test-author` lands the four signatures and the tree builds green.** Until then no
+    suite figure from this tree means anything, and none is claimed here.
+  - **NO BUILD DIAGNOSTIC WAS OBTAINED, AND THE REASON IS RECORDED RATHER THAN THE ATTEMPT BEING
+    RESTATED AS A RESULT.** `Build.bat StratocracyEditor` refused before compiling anything:
+    *"Unable to build while Live Coding is active. Exit the editor and game, or press
+    Ctrl+Alt+F11"*, `Result: Failed (OtherCompilationError)`, 2.43 s. `UnrealEditor.exe` was
+    running (PID 48268). **SO THE FOUR SITES ABOVE ARE A STATIC ENUMERATION AND NOT A COMPILER'S
+    LIST**, and a reader is entitled to know which -- the enumeration is a grep over every
+    `Submit(` and `Record(` call and override in `Source/`, and nothing in it has been confirmed
+    by a compiler on this tree. Whether the set is EXACTLY these four is unproven until the
+    editor is closed and the build is run.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- FALSIFIABILITY OF THE
+  FIVE ROUTE-TWEEN CLAUSES, MEASURED BY MUTATING MY OWN FILES.
+  **[UPDATED 2026-09-02, SAME DAY, SECOND PASS, AFTER `strat-test-author` REWROTE THE TWO CLAUSES
+  THIS PASS PROVED INERT. THE HEADLINE IS RESTATED FLAT, NOT APPENDED TO, BECAUSE A READER WHO
+  GREPS THE OLD ONE MUST LAND ON THE CURRENT RESULT.]** It said:
+  RETRACTED> "**THREE ARE PROVEN ABLE TO FAIL, TWO ARE INERT AND ARE NOT DISCHARGED**, and the
+  RETRACTED>  more useful of the two negatives is that one of them CANNOT be fixed by rewriting
+  RETRACTED>  the clause."
+  **ALL FIVE CURRENT CLAUSES ARE NOW PROVEN ABLE TO FAIL, AND THE DEBT IS DISCHARGED FOR EVERY
+  ONE OF THEM.** The two negatives were acted on rather than argued away: one clause was rewritten
+  and now reddens under the very mutation it survived, and the other was RETIRED and replaced by a
+  clause over the mechanism that actually forecloses the hazard. The per-clause detail below is
+  kept in its original form and each entry carries its own second-pass result, so the first pass's
+  findings remain readable as the reason the rewrites happened.**
+  - **WHY THIS LANE RAN IT.** `strat-test-author` wrote the five clauses and named the mutation
+    each needed, but every one of those mutations edits `AStratUnitActor::ApplyUnitView` or
+    `UStratMatchSubsystem::ApplyView` -- this lane's files. A green suite over a clause never
+    shown able to fail pins nothing, so the clauses were green and the debt was open.
+  - **METHOD, AND THE FOUR TRAPS IT WAS BUILT AGAINST.** Mutations applied **IN PLACE** (a copied
+    tree reuses `Intermediate/Build` and the mutant build is a silent no-op that reports the old
+    binary green); **rebuilt before every run**; `Saved/AutomationReport/index.json` **deleted
+    before each run** and the EXPORTED report read rather than the log; and every revert proved by
+    `git hash-object` AND `md5sum` against baselines captured before the first mutation --
+    `StratUnitActor.cpp 0185e505...` / `md5 cd14daff...` and `StratMatchSubsystem.cpp
+    a238de29...` / `md5 87b29c7f...`. Every patch refused on an anchor count other than 1, which
+    caught one real error: `PendingMoveRoutes.Reset();` occurs **twice** (in `ApplyView` and in
+    `TearDownPresentation`) and the naive anchor would have mutated both.
+  - **PER CLAUSE. THE THREE THAT ARE DISCHARGED.**
+    - `TweenWaypointsFollowTheNotedRoute` -- **DISCHARGED.** Collapsing the per-hex loop to the
+      deleted two-point chord reddens it: *"Expected 'the armed polyline has one waypoint per hex
+      of the noted route' to be 4, but it was 2."*
+    - `TweenWaypointsSitAtTheDrawnUnitsHeight` -- **DISCHARGED, AND IT IS THE SHARPEST RESULT
+      HERE.** Changing `const FVector RouteEnd = RouteWorldPoints.Last();` to `= Destination;`
+      reddens **it alone** -- *"waypoint 1 draws at the unit's own height over hex (-1, 4): Z
+      0.00, expected 37.00 (plane 0.00 + lift 37.00)."* That is the exact `BodyZOffset` defect
+      this lane refused while writing the comment, now reproduced and caught by a clause. **AND
+      `TweenWaypointsFollowTheNotedRoute` STAYED GREEN UNDER IT**, which is what proves the two
+      clauses are not redundant: one asserts X/Y, the other Z, and only the split sees this.
+    - `NoNotedRouteArmsNoTween` -- **DISCHARGED.** Restoring the degenerate empty-route fallback
+      reddens it: *"Expected 'a move with no noted route arms no tween at all' to be 0, but it was
+      2."*
+  - **THE TWO THAT WERE NOT DISCHARGED ON THE FIRST PASS, EACH NOW FOLLOWED BY ITS SECOND-PASS
+    RESULT. THE FIRST-PASS FINDING IS LEFT STANDING BECAUSE IT IS WHY THE REWRITE EXISTS.**
+    - `SecondApplyWithIdenticalPositionsLeavesTheTweenAlone` -- **FIRST PASS: INERT.**
+      Dropping the `bActorMoved` half of the arming condition in `AStratUnitActor::ApplyUnitView`
+      reddens **nothing**; the suite stayed fully green. The mutant was verified to have REACHED
+      THE BINARY rather than being a stale-build artefact: an immediately repeated build reported
+      `Target is up to date`, so the compile had happened. **THE CAUSE, READ OFF THE CLAUSE RATHER
+      THAN GUESSED:** it applies the same model twice, and the FIRST `ApplyView` already emptied
+      `PendingMoveRoutes`, so the second is refused by the `RouteWorldPoints.Num() > 0` term and
+      never reaches `bActorMoved` at all. The clause exercises the map reset, not the guard it is
+      named for. **`bActorMoved` was at that point pinned by nothing.**
+      **SECOND PASS, AFTER THE REWRITE: DISCHARGED.** `strat-test-author` rewrote it so the second
+      apply carries **the chord** rather than the same route -- and it caught, before I ran
+      anything, that re-noting the SAME route would have been unfalsifiable in a subtler way: the
+      rebuilt waypoint array is identical element by element, because `Drawn` sits at
+      `TweenOffsets[0]` so `Drawn - Destination` reproduces it and every other waypoint is the same
+      expression over the same route, so a re-arm would be invisible to any assertion about
+      numbers. With the chord carried instead, both earlier terms of the arming condition are
+      satisfied and `&& bActorMoved` is the only thing that can refuse the re-arm. **THE SAME
+      MUTATION THAT REDDENED NOTHING ON THE FIRST PASS NOW REDDENS IT**, by the predicted
+      mechanism and not merely in the predicted direction: *"Expected 'the second apply leaves the
+      waypoint count untouched -- 4, not the chord's 2' to be 4, but it was 2."* `bActorMoved` is
+      now pinned.
+    - `PendingRouteIsEmptiedByEveryApply` -- **INERT. NOT DISCHARGED, AND IT IS NOT FIXABLE BY
+      REWRITING THE CLAUSE.** Replacing the unconditional `PendingMoveRoutes.Reset()` with a
+      removal of only the consumed ids reddens nothing. **THE CAUSE IS THE CLAUSE'S OWN MIDDLE
+      STEP:** it revives the unit with `ApplyView(AtStart)` before the move, and that apply puts
+      the unit back into `Seen` -- so the mutant removes the route exactly there, and the map is
+      empty by the final move regardless. **AND A FURTHER DIAGNOSTIC SHOWS IT IS AN EQUIVALENT
+      MUTANT, NOT MERELY AN AWKWARD CLAUSE.** Running the mutation TOGETHER WITH `bActorMoved`
+      removed, and again together with the last-hex equality guard removed, left the suite green
+      in both cases. The reason is structural: a unit absent from a model has its actor
+      **destroyed** by `ApplyView`'s own destroy loop, so when its id next appears the actor is
+      newly spawned and `SnapToWorldLocation`'d onto its hex -- `bActorMoved` is therefore false on
+      the very apply a stranded route could have attached to. **The hazard the unconditional
+      `Reset()` was written for is already foreclosed by a second, independent mechanism, so no
+      rewriting of this clause can observe the mutation.**
+      **SECOND PASS: THE CLAUSE WAS RETIRED, WHICH IS THE RIGHT ANSWER TO AN EQUIVALENT MUTANT AND
+      NOT A CONCESSION.** `strat-test-author` removed it and added
+      `Stratocracy.StratPlay.T-INT-05.ASpawnedUnitDoesNotSlideEvenWithARouteNoted` in its place,
+      over the mechanism this pass identified as the one that actually forecloses the hazard --
+      destroy, respawn, snap, actor-not-moved. **IT IS PROVEN ABLE TO FAIL TWICE OVER, BY TWO
+      DIFFERENT MUTATIONS IN TWO DIFFERENT FILES.** Dropping `&& bActorMoved` in
+      `AStratUnitActor::ApplyUnitView` reddens it, and so does deleting
+      `Spawned->SnapToWorldLocation(Where);` from `UStratMatchSubsystem::ApplyView`'s spawn branch
+      -- both with the same message, *"Expected 'a freshly spawned actor arms no tween, though a
+      4-hex route ending on its own hex was noted' to be 0, but it was 4."* So the new clause pins
+      BOTH halves of the spawn defence, and the retired clause's subject is covered by something
+      that can actually fail. **DISCHARGED.**
+      **AND THE SPAWN-SNAP MUTATION SHOWED NO ENTANGLEMENT, WHICH WAS WORTH CHECKING BECAUSE IT
+      LOOKED LIKELY.** It reddens that clause ALONE -- notably
+      `Stratocracy.StratPlay.T-INT-05.ApplyViewSpawnsMovesAndDestroys` stays GREEN, because
+      `ApplyUnitView`'s own `SetActorLocation` still writes the destination immediately afterwards,
+      so the spawn snap is unobservable in the FINAL position and observable only in whether a
+      tween arms. That is exactly the split the two clauses are meant to have.
+  - **WHAT I AM NOT DOING ABOUT THAT, AND WHY.** The unconditional `Reset()` STAYS. It is the
+    cheaper and more direct of the two guarantees, it does not depend on reasoning about actor
+    lifetimes two functions away, and "this line is currently unobservable" is not a reason to
+    delete a correct one. What changes is the CLAIM: **this lane's ROUTE TWEEN entry said of the
+    two protections that "neither relies on the other", and that is true of the CODE and was never
+    true of the TESTS** -- no clause distinguishes them, and one of them cannot be distinguished
+    even in principle. That sentence should be read as a statement about the code only.
+    **AND THE RETIREMENT LEAVES THAT LINE PINNED BY NOTHING, WHICH IS STATED AS A STANDING DEBT
+    RATHER THAN CLOSED BY THE GREEN RESULT ABOVE.** With
+    `PendingRouteIsEmptiedByEveryApply` gone, no clause reddens if `PendingMoveRoutes.Reset()`
+    becomes conditional. That is not a gap a test can close -- it is the equivalent-mutant finding
+    restated -- so the honest record is: the line stays, it is correct, it is defence in depth
+    behind `bActorMoved`, and **no clause will ever report its removal.** A future reader deleting
+    it as dead code would get a green suite; this bullet is the only thing standing in the way.
+  - **ONE ENTANGLEMENT WORTH RECORDING, SINCE IT IS NOT A DEFECT BUT WILL LOOK LIKE ONE.** The
+    two-point-chord mutation reddens THREE clauses, not one -- `FollowTheNotedRoute`,
+    `SitAtTheDrawnUnitsHeight` and `SecondApply...` -- and all three fail on the same message
+    shape, *"to be 4, but it was 2"*. Two of them fail on their shared arrange-guard ("a tween is
+    in flight to measure"), never reaching their own subject. That guard is reasonable, but it
+    means a future reader must not read "three clauses reddened" as three independent detections.
+  - **THE TREE WAS RESTORED AND RE-MEASURED, WHICH IS THE RUN THAT VOUCHES FOR IT.** After the
+    last revert of EACH PASS both files hash byte-identical to the pre-mutation baselines above --
+    `git hash-object` and `md5sum` both, on both files -- and a final rebuild
+    (`Result: Succeeded`) and full suite were run over the restored bytes with **zero non-success
+    entries**; the mutant runs vouch for mutants, not for what is left behind. The second pass
+    added three more mutant runs on the same baseline, and the deleted report stamp it began from
+    was `2026.09.02-20.41.19`, which matched `strat-test-author`'s own reported run and so
+    corroborated it rather than taking it on trust.
+    **NEITHER THE COUNT NOR THE VERDICT IS WRITTEN HERE AND NEITHER MAY BE: `global.md` is the
+    only file that may carry a live suite count or a phase verdict.** The restored run's exported
+    report is stamped `reportCreatedOn 2026.09.02-20.30.33`; cite that rather than any number,
+    since a re-run replaces that file in place. No file under any `Tests/` directory was edited by
+    this lane on any pass.
+  - **HANDOFF TO `strat-test-author`, STATED AS TWO DIFFERENT ASKS.** (1)
+    `SecondApplyWithIdenticalPositionsLeavesTheTweenAlone` IS fixable: note the route again before
+    the second `ApplyView`, so that apply genuinely carries one and `bActorMoved` is the only
+    thing that can refuse it. (2) `PendingRouteIsEmptiedByEveryApply` is NOT fixable as written,
+    per the equivalent-mutant finding above; it should either be retired, or restated as a clause
+    about the mechanism that ACTUALLY forecloses the hazard -- a respawned actor does not slide --
+    which is a claim about `SnapToWorldLocation` and `bActorMoved` rather than about the map.
+    **[BOTH ASKS WERE ACTED ON THE SAME DAY AND BOTH ARE NOW MEASURED -- SEE THE SECOND-PASS
+    RESULTS ON EACH CLAUSE ABOVE. THIS HANDOFF IS CLOSED.]** Ask (1) was taken up but NOT as
+    written: my proposed fix -- re-note the same route -- would itself have been unfalsifiable,
+    and `strat-test-author` caught that and carried the chord instead. Recorded because a handoff
+    that was improved by its recipient is worth more to the next reader than one that was merely
+    obeyed.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED, ON TOP OF THE ENTRY
+  BELOW WHICH IS ALSO UNCOMMITTED) — THE ROUTE TWEEN: THE PICTURE NOW
+  WALKS THE HEXES THE RULES MODULE MOVED THE UNIT THROUGH, AND THE THING WORTH READING IS
+  THAT THE ANIMATION AND THE COMMIT ASK THE SAME QUESTION OF THE SAME METHOD, SO THE PATH
+  DRAWN CANNOT DIVERGE FROM THE PATH TAKEN. **COMPILED CLEAN AND THE SUITE RAN OVER IT** —
+  the discharge, and the one thing green does NOT cover, are stated at the end.**
+  - **THE GAP.** The entry below eased `Body`'s offset to zero over a SINGLE vector, so a unit
+    ordered three hexes around a mountain slid along the STRAIGHT CHORD and cut the corner it
+    had just been routed around. The user asked for travel along the actual route.
+  - **NO PATHFINDING WAS WRITTEN AND NONE MAY BE, WHICH IS THE CONSTRAINT THAT SHAPED
+    EVERYTHING ELSE.** The only neighbour math in this tree is vendored `strat::` in `Hex.h`
+    and is unreachable from `StratPlay` by the `LNK2019` rule. `FStratBridge::MovePathToHex`
+    already returns the ordered route and its own block records that it is THE SAME ROUTE THE
+    COMMIT TAKES — §2.5's tie-break is decided solely in `Move.h` — and `FStratBridgePathQuery`
+    already forwards to it for §2.11.1's preview. **The capture below constructs that existing
+    adapter and calls `IStratPathQuery::PathTo`.** No bridge method, no query type, no hex
+    arithmetic and no reach filter were added. A local walk downhill through the reach set
+    would have been fifteen lines and would have been `Move.h`'s tie-break restated in the
+    input path — the substitution `T-UI-02` exists to catch, one layer over.
+  - **THE CAPTURE IS BEFORE THE SUBMIT, AND THAT IS THE ONLY CORRECT POSITION RATHER THAN A
+    PREFERENCE.** `AStratPlayerController::HandleSelectionEvent` asks for the route inside the
+    `Outcome.Command != None` block and above `StratSubmitSelectionCommand`. After the submit
+    the unit is STANDING ON THE GOAL, so `MovePathToHex` answers `{goal}` at cost 0 — a
+    one-point route, structurally valid and silently wrong, indistinguishable downstream from
+    a real answer. It is held in a local and handed to
+    `UStratMatchSubsystem::NotePendingMoveRoute` only after the bridge accepts, so a refused
+    move leaves nothing behind.
+  - **THE CARRIER IS A MAP ON THE SUBSYSTEM AND NOT A FIELD ON THE MODEL, ON A PRECEDENT
+    RATHER THAN AN INVENTED ARGUMENT.** `UStratMatchSubsystem::PendingMoveRoutes` sits beside
+    `AiPlaybackReel`, whose own block already refused `FStratViewModel` for the playback cursor
+    in these words: *"`T-INT-05`'s subject is every member of the view model, so a playback
+    cursor placed there would enter that ID's subject by its own words and owe a clause under
+    it."* A route is the sharper case — it is where a unit CAME FROM, and no statement of what
+    IS can carry that. **`FStratPathPreviewView` was the other candidate and is structurally
+    disqualified, which is a second and independent reason:** `StratDecoratePathPreview` clears
+    the preview for a unit whose `bHasMoved` is set, and that is the state one microsecond
+    after a move applies — a carrier that is empty exactly when the animation needs it.
+  - **THE PENDING MAP IS ITSELF THE AI SIGNAL, AND NO AI DETECTION EXISTS OR MAY BE ADDED.**
+    USER DECISION: AI moves snap. A player move notes a route; nothing else calls
+    `NotePendingMoveRoute`; `AStratUnitActor::ApplyUnitView` arms a tween ONLY when handed a
+    non-empty route. So AI moves, loads, reseeds, spawns and a path query that refused all
+    take one arm and all snap. **THIS CHANGED PHASE 1'S BEHAVIOUR AND THE CHANGE IS
+    INTENDED:** "no route" used to mean a chord slide and now means a snap. The degenerate
+    two-point fallback was DELETED rather than kept beside the new path — keeping it would
+    have made the commonest AI move slide along the very line this change exists to remove.
+  - **THE ROUTE IS CONVERTED IN EXACTLY ONE PLACE, WHICH IS WHY `NotePendingMoveRoute` TAKES
+    AXIAL HEXES.** `UStratMatchSubsystem::ApplyView` converts it beside the existing `Where`
+    hoist through `AStratBoardActor::WorldLocationOfHex` — the project's one axial→world
+    expression. A second copy anywhere on the route's journey would be a slide half a tile off
+    the day `HexSize` changes, and off by a DIFFERENT amount than the destination it ends at,
+    so the unit would not arrive where it stopped.
+  - **AND THE MAP IS EMPTIED WHOLE, UNCONDITIONALLY, AFTER THE DESTROY LOOP.** Not after the
+    unit loop: a player's move is followed by the AI's reply before any model is built, so the
+    noted unit CAN BE DEAD by then — no model entry, no actor, never seen by the unit loop. A
+    "remove the ones I used" clear would strand that route for a later unit the rules module
+    reissued the id to. `TearDownPresentation` clears it too, beside `AiPlaybackReel.Reset()`,
+    for the match-boundary reason that member's own comment gives.
+  - **THE RE-ENTRANCY FIX, WHICH IS THE ONE THING A CHORD DID NOT NEED AND A ROUTE CANNOT DO
+    WITHOUT.** A player move produces TWO `ApplyView` calls with identical positions — the
+    controller documents that ordering as deliberate. Re-arming a zero-length chord was
+    harmless; re-arming a route would COLLAPSE IT IN THE SAME FRAME. `ApplyUnitView` now reads
+    the actor's previous location alongside `Drawn`, before the snap, and arms only when the
+    actor ACTUALLY MOVED. **This is neither an event inference nor a remembered bit, and both
+    halves are stated at the code:** it asks nothing about what happened and labels nothing —
+    only whether this class's own last transform write differs from the one it is about to
+    make, the same permission `Drawn` already exercises — and it is a LOCAL that does not
+    survive the call, so there is still no `LastAppliedLocation` member and
+    `Stratocracy.StratPlay.T-INT-05.NoActorHoldsPresentationBits` is untouched. Two
+    independent things now protect a running slide, and neither relies on the other: this
+    guard, and the fact that `ApplyView` emptied the map before the second apply ran.
+  - **THE PROFILE IS A TRAPEZOID AND NOT `SmoothStep`, AND THE OLD BLOCK'S ARGUMENT SURVIVES
+    RATHER THAN BEING DELETED WITH THE CURVE.** The user asked for constant speed between
+    eased ends; `SmoothStep` has no constant middle at all — its velocity peaks at the
+    midpoint, so a unit crossing four hexes visibly races the middle two.
+    `AStratUnitActor::MoveTweenEaseFraction` (0.25, clamped to [0, 0.5] where it is READ, not
+    where it is declared) drives the closed-form integral of a trapezoidal velocity profile,
+    with the plateau speed DERIVED as `1/(1-E)` rather than tuned. **What the `SmoothStep`
+    block actually argued was never that curve — it was ZERO VELOCITY AT BOTH ENDS**, so a
+    tween replaced mid-flight begins from rest and the seam is invisible. This profile has
+    exactly that property and is continuous throughout, so the argument is restated at
+    `MoveTweenEaseFraction` and at `AStratUnitActor::Tick` rather than dropped.
+  - **A SCALAR AND DELIBERATELY NOT A `UCurveFloat`:** a curve is a `/Game/` asset this file
+    may not name, so it would arrive as a second `EditDefaultsOnly` property that is unset by
+    default — and an unset curve is an animation that silently does nothing.
+  - **ONE REGRESSION IS DECLARED RATHER THAN LEFT TO BE FOUND.** A ONE-HEX HOP MOVED FROM
+    `SmoothStep` TO THE TRAPEZOID over the same duration — same endpoints, same zero-velocity
+    ends, a slightly different feel between them. Keeping `SmoothStep` for one-step routes was
+    the alternative and is REFUSED: two profiles is two numbers to tune, two blocks of prose
+    to keep true, and a discontinuity in behaviour at a route length nobody would think to
+    test either side of.
+  - **DURATION IS PER HEX STEP, A USER DECISION** — `MoveTweenSeconds * (waypoints - 1)`. A
+    four-hex move takes four times a one-hex hop, which is what makes speed read as constant
+    across moves of different lengths.
+  - **`MoveTweenSeconds` IS NOT RENAMED, AND THE COST OF RENAMING IT IS MEASURED IN ADVANCE
+    RATHER THAN GUESSED.** `MoveTweenSecondsPerHex` is the better name.
+    `Content/StratPlay/BP_StratUnit.uasset` stores the authored value keyed by the property's
+    `FName`, so a rename ORPHANS it: the Blueprint falls back to the C++ default of 0.0, the
+    animation switches off ENTIRELY, the build is green, no log fires and no clause reddens —
+    because zero is a supported configuration. Mitigating it needs a `+PropertyRedirects` line
+    in `Config/DefaultEngine.ini`, which is the DATA STEWARD's lane. **So the MEANING was
+    redefined in the property's own block using this file's `RETRACTED>` convention** — its
+    sentence about a single offset decaying is now false in the letter — and the name is
+    recorded as under-specific by one word with the cost of fixing it named.
+  - **ONE ARITHMETIC DEFECT WAS CAUGHT BY WRITING THE COMMENT, AND IT WOULD HAVE SHIPPED
+    VISIBLY RATHER THAN LATENTLY.** The obvious offset expression is `RouteWorldPoints[i] -
+    GetActorLocation()`, and it is WRONG: the route points sit on the tile plane while the
+    actor sits at that plane PLUS `BodyZOffset`, so every intermediate waypoint would be
+    `BodyZOffset` below the drawn unit and the picture would dip into the board and climb back
+    out.
+    **[CORRECTED 2026-09-02, SAME DAY, BY THE LANE THAT WROTE IT, AFTER THE `coordinator`
+    CHALLENGED THE PREMISE. WRITTEN FLAT AND NOT APPENDED TO, BECAUSE A CORRECTION THAT ONLY
+    ADDS LEAVES BOTH CLAIMS LIVE.]** It said:
+    RETRACTED> "**It is invisible today because the shipped `BodyZOffset` is 0.0.**"
+    **THAT IS FALSE, AND IT UNDERSTATED THE FIX IN THE ONE DIRECTION THAT MATTERS.** `0.0f` is
+    the C++ default in `StratUnitActor.h`; **`BP_StratUnit` OVERRIDES IT.**
+    `Tools/architect/state/content.md` records `strat-editor-builder` reading the live CDO twice
+    on 2026-09-02 -- once enumerating the surviving `EditDefaultsOnly` overrides
+    (`BodyZOffset = 50.0`) and once, in a later pass, using `BodyZOffset = 50.000000` as the
+    positive control that its reader could see a float of that kind at all, beside
+    `MoveTweenSeconds = 0.200000`. **So the shipped value is 50, the defect was NOT latent, and
+    with the shipped Blueprint every multi-hex move would have visibly dipped the unit 50 units
+    into the board and climbed back out.** The retracted sentence would have told a future
+    reader that differencing against the route's own last point was cosmetic and could be
+    undone; it is load-bearing and must not be.
+    **WHAT I MYSELF COULD NOT VERIFY, STATED RATHER THAN GLOSSED.** I did not read that 50 from
+    the asset. `Content/StratPlay/BP_StratUnit.uasset` is LFS -- `git check-attr filter` returns
+    `filter: lfs` and `git show HEAD:<path>` hands back the pointer
+    (`oid sha256:e605800b...`, `size 26623`), not content -- and it is binary, and the editor
+    that could answer is open and is not this lane's to drive. **The number above is
+    `content.md`'s RECORDED MEASUREMENT by another lane, cited as such, and not an observation
+    of mine.** What I can say from a checkout is the half that does not depend on it: `0.0f` is
+    the C++ default, a Blueprint may override it, and the corrected expression is right for
+    EVERY value of it including zero -- which is why the fix stands on its own and does not rest
+    on this figure.
+    The offsets are therefore differenced against the route's OWN last point, which cancels the
+    lift exactly, needs no knowledge of it, and adds no third copy of the `+ BodyZOffset`
+    expression the header pairs across `ApplyUnitView` and `SnapToWorldLocation`.
+  - **THE SAME FALSE SENTENCE WAS ALSO IN THE CODE, AND IS NOW CORRECTED THERE TOO -- DEBT
+    RAISED AND DISCHARGED THE SAME DAY, RECORDED AS BOTH RATHER THAN AS NEITHER.**
+    `AStratUnitActor::ApplyUnitView`'s offset block carried it in prose -- *"It is invisible
+    today because the shipped `BodyZOffset` is 0, which is the worst kind of latent defect"* --
+    the exact claim retracted above. **The condition written here for discharging it was "the
+    next pass that touches `StratUnitActor.cpp` corrects that sentence in place, in the same
+    build that compiles this feature", and that is the pass that happened.** The comment now
+    carries the flat retraction, the C++-default-versus-Blueprint-override distinction, the
+    `content.md` citation attributed to `strat-editor-builder` as another lane's measurement,
+    and the half that survives regardless of the number -- the expression is correct for EVERY
+    value of `BodyZOffset` including zero. **A tree-wide grep for the claim's vocabulary
+    (`BodyZOffset`, `invisible today`, `latent`) now returns the sentence ONLY inside
+    `RETRACTED>` lines, in both files.** The record and the code no longer disagree.
+    **AND THE COMMENT-ONLY EDIT WAS REBUILT RATHER THAN ASSUMED SAFE**, which was not
+    ceremonial: `StratPlay` runs an adaptive non-unity working set and the build log names
+    `[Adaptive Build] Excluded from StratPlay unity file: StratMatchSubsystem.cpp,
+    StratPlayerController.cpp, StratUnitActor.cpp`, so this file has its own translation unit
+    and a real compile action ran for it -- `[1/4] Compile [x64] StratUnitActor.cpp`, then a
+    relink of `UnrealEditor-StratPlay.dll`. "Comments cannot break a build" would have skipped a
+    genuine compile.
+  - **TWO SMALL THINGS THE PLAN DID NOT NAME, LISTED BECAUSE A SILENT ADDITION IS THE ONE A
+    GATE CANNOT SEE.** (1) `SnapToWorldLocation` now CALLS `FinishTween()` instead of carrying
+    four hand-copied clear lines — there are two arrays and a scalar to retire now, and a
+    caller that cleared two of the three would leave a spent polyline behind
+    `GetTweenWaypointCount`. (2) `ApplyView` checks that the noted route's LAST HEX equals
+    `View.Hex` before converting it. It is an equality and not a rule — no legality is decided
+    — and a mismatch degrades to a snap; it makes "these waypoints describe THIS unit's
+    arrival" checkable rather than assumed across the AI's reply.
+  - **THE ACCESSOR PAIR EXISTS FOR THE CLAUSE AND SAYS SO, on `IsGuidedMarkerVisible`'s
+    permission.** `AStratUnitActor::GetTweenWaypointCount` and
+    `AStratUnitActor::GetTweenWaypoint` report the live arrays and not a cache. They are here
+    because **"the picture follows the route's hexes rather than the chord" is a claim about a
+    POLYLINE, and a polyline is unassertable from a position sampled at one instant** — a
+    chord and a route agree at both ends. `Tick` stays protected and NO test-only advance
+    entry point was added.
+  - **[DISCHARGED 2026-09-02, SAME DAY, ONCE THE EDITOR WAS CLOSED. THE CAVEAT IS RESTATED FLAT
+    RATHER THAN DELETED, because a reader who arrives by a citation to "uncompiled" must land on
+    what replaced it.]** It said:
+    RETRACTED> "**WHAT I COULD NOT VERIFY, AND IT IS EVERYTHING A BUILD WOULD HAVE TOLD ME.** An
+    RETRACTED>  editor was open (`UnrealEditor.exe`, PID 24336) and `Build.bat` refused before
+    RETRACTED>  compiling anything ... so **this entry describes UNCOMPILED CODE**: no compiler
+    RETRACTED>  verdict, no UHT verdict on `MoveTweenEaseFraction`, and no suite run."
+    **THE CODE IN THIS ENTRY IS NOW COMPILED AND THE SUITE HAS RUN OVER IT.** `Build.bat`
+    returned `Result: Succeeded` with no warnings; `StratUnitActor.cpp` was compiled and
+    `UnrealEditor-StratPlay.dll` linked, so `MoveTweenEaseFraction` has a UHT verdict and the
+    widened `AStratUnitActor::ApplyUnitView` signature has a compiler one. A full headless run
+    followed over that binary, exported to `Saved/AutomationReport/index.json`, and no file
+    under any `Tests/` directory was edited on any pass. **NEITHER THE COUNT NOR THE VERDICT IS
+    WRITTEN HERE, AND NEITHER MAY BE: `global.md` is the only file that may carry a live suite
+    count or a phase verdict**, and the non-success side of the figure is still the figure.
+    Read both there. A citation should name the exported report's own `reportCreatedOn` rather
+    than any number, since a re-run replaces that file IN PLACE and invalidates every figure
+    quoted against the old one.
+    **ONE THING THE BUILD DID NOT SETTLE AND THE SUITE CANNOT:** the polyline is unpinned by any
+    clause, so green here does not mean the unit walks the right hexes. See the risk bullet
+    below, which is unchanged by the discharge.
+    **THE ENTRY BELOW IS DISCHARGED BY THE SAME BUILD AND THE SAME RUN**, which is what "the two
+    must be re-checked together" asked for -- the chord tween it describes no longer exists as
+    written, so nothing could have validated one without the other, and nothing did.
+  - **AND ONE RISK NO BUILD AND NO SUITE WOULD CATCH.** The polyline is a purely visual thing
+    that no clause reads today, so a route that eases along the wrong hexes, or eases along
+    the right ones at a visibly wrong speed, reddens nothing. The accessor pair above is what
+    makes a clause POSSIBLE; until one exists the only gate is a human watching a unit move.
+
+- **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) — THE MOVE TWEEN:
+  THE ACTOR STILL TELEPORTS AND ONLY THE PICTURE OF IT SLIDES, WHICH IS WHAT LETS AN EASED
+  MOVE EXIST WITHOUT EDITING A SINGLE TEST FILE. **THE CODE IS NOW COMPILED AND THE SUITE HAS
+  RUN OVER IT** — discharged at the end, by the same build and run as the ROUTE TWEEN entry
+  above, which is what "the two must be re-checked together" required.**
+  - **THE GAP, AND IT IS THE PLAYER'S OWN REPORT.** Units jump between hexes.
+    `AStratUnitActor::ApplyUnitView` wrote the destination straight onto the actor and the
+    comment over that line said so in terms — "TELEPORTED, NOT INTERPOLATED".
+  - **THE CONSTRAINT THAT MADE IT MORE THAN A LERP, AND IT IS A FACT ABOUT ROOTS RATHER THAN
+    ABOUT ANIMATION.** `AStratUnitActor::Body` was the RootComponent, and **a root's relative
+    location IS the actor's world location** — so there was nowhere to put a visual offset
+    that `GetActorLocation()` would not also report. Interpolating the actor transform was
+    the obvious shape and is the one that had to be refused: the reconcile clause
+    `Stratocracy.StratPlay.T-INT-05.ApplyViewSpawnsMovesAndDestroys` reads
+    `AStratUnitActor::GetActorLocation()` **synchronously** after
+    `UStratMatchSubsystem::ApplyView` and compares it to
+    `AStratBoardActor::WorldLocationOfHex`, so a tweened actor transform reddens it on the
+    first frame and the only repair would be editing a file this lane does not own.
+  - **THE DESIGN, IN ONE SENTENCE: THE TRANSFORM SNAPS AND `Body`'s RELATIVE LOCATION
+    CARRIES A DECAYING OFFSET.** `AStratUnitActor::UnitRoot` is a new empty
+    `USceneComponent` inserted above `Body` as the root — the shape
+    `AStratBoardActor::BoardRoot` and `AStratCameraPawn::PivotRoot` already use.
+    `AStratUnitActor::ApplyUnitView`'s `SetActorLocation` line is **unchanged, byte for
+    byte**, and that is deliberate: it makes "this feature does not move the actor"
+    checkable by reading rather than by argument. `AStratUnitActor::Tick` eases the offset
+    to zero and `AStratUnitActor::FinishTween` writes exactly zero and switches the tick
+    back off.
+  - **THE THREE MARKERS STAY ON `Body` AND THAT STOPPED BEING FREE.** `GuidedMarker`,
+    `FlagMarker` and `UnactedPip` keep `SetupAttachment(Body)`, so they follow THE VISUAL
+    and arrive with the unit. On `UnitRoot` they would follow THE DESTINATION and sit at the
+    far hex while their unit was still sliding. The constructor comment that used to say
+    "attached to `Body` and not to the actor root separately" was true and idle; it is now
+    rewritten to say that moving any marker up to the root is a visible defect with a green
+    build.
+  - **NO REMEMBERED LOCATION AND NO "IS THIS THE FIRST APPLY" BIT, WHICH IS THE T-INT-05
+    ANSWER RATHER THAN A STYLE CHOICE.** The tween's start is measured off
+    `Body->GetComponentLocation()` immediately before the snap, so a second `ApplyView`
+    arriving mid-tween restarts from where the unit is ACTUALLY DRAWN and cannot pop — and
+    there is therefore no `LastAppliedLocation` field and no `bHasAppliedAView` flag on the
+    actor, which is what `Stratocracy.StratPlay.T-INT-05.NoActorHoldsPresentationBits` is
+    about. The one fact the model cannot supply — *this actor is new, do not animate* — is
+    known by the spawner and said by it: `UStratMatchSubsystem::ApplyView` calls the new
+    `AStratUnitActor::SnapToWorldLocation` on the spawn branch and nowhere else.
+  - **AND THAT BRANCH NEEDED A PURE MOVE, MEASURED BEFORE IT WAS MADE.** The `Where`
+    computation was hoisted above the spawn branch so both the snap and the apply take ONE
+    value rather than two computations. It reads `Board` and `View.Hex`; the spawn branch
+    writes neither; its comment moved with it.
+  - **NO CROSS-BOARD-TELEPORT GUARD, AND THE REASON WAS CHECKED RATHER THAN ASSUMED.**
+    `UStratMatchSubsystem::StartMatchInternal` calls
+    `UStratMatchSubsystem::TearDownPresentation` **unconditionally**, and that function
+    `Destroy()`s every entry of `UnitActors` and empties the map — so after any load or
+    reseed every actor is brand new and takes `SnapToWorldLocation`. There is no path on
+    which a live actor is asked to slide across a different board.
+  - **NO DISTANCE CLAMP EITHER, AND THE ABSENCE IS PRINCIPLED.** A "don't animate a jump
+    longer than N" threshold needs a length scale and the only honest one is
+    `AStratBoardActor`'s `HexSize`, which this class cannot see and must not — it holds no
+    board pointer, by the same discipline that makes `ApplyUnitView` take a world location
+    instead of computing one. Any constant here would be a magic number the file cannot
+    derive.
+  - **`AStratUnitActor::MoveTweenSeconds` SHIPS AT ZERO BY USER DECISION, ON
+    `FStratMatchConfig::AiPlaybackStepSeconds`' OWN ARGUMENT RESTATED LOCALLY RATHER THAN
+    CITED.** A C++ default is a second place the pace is stated and the designer-facing one
+    on the Blueprint is then the one nobody can find; and a non-zero default would change
+    the path every existing test runs down. At `<= 0` no offset is written, no tick is
+    enabled, and `bStartWithTickEnabled` is false — so an actor whose Blueprint leaves it
+    alone never ticks once, not a tick that early-returns. The shipped duration goes on
+    `BP_StratUnit`, which is the content lane's. `FStratMatchConfig::AiPlaybackStepSeconds`'
+    block now names it as the third pacing number and says where it lives, so a reader
+    tuning pace finds all three from one place.
+  - **TWO PROSE CORRECTIONS, WRITTEN FLAT, BECAUSE THE CHANGE FALSIFIED SENTENCES NOBODY
+    EDITED.** (1) `StratUnitActor.h`'s "NOT IN THIS ROUND" bullet on movement interpolation
+    is NARROWED and quoted — what stands is that nothing here may LABEL a position
+    difference, and the ordered event list §4.9 part 2 names is still not built; what is now
+    built eases this actor's own previous RENDERING to its new one, which is a fact about a
+    transform this class wrote and can read back. (2) the header block's heading sentence
+    "IT HOLDS NO STATE THE VIEW MODEL DOES NOT ALSO HOLD" became false in the letter and is
+    retracted in place — it now reads "NO *BIT*", and the exception is named:
+    `AStratUnitActor::TweenStartOffset` and `TweenElapsed` are state no model holds, their
+    terminal value is zero, a clock drives them there, nothing reads either to decide
+    anything, and neither is a bit. **THE DEFENSIBLE CLAIM IS NOW NARROWER AND IS WRITTEN
+    NARROWLY WHEREVER IT APPEARS: the actor transform is a function of the last model alone,
+    always and synchronously; the RENDERED position is a function of the last model alone AT
+    REST.**
+  - **ONE HAZARD WRITTEN INTO THE COMMENT RATHER THAN ASSUMED AWAY.** The start offset is a
+    WORLD-SPACE difference applied as a RELATIVE location, which is exact only while the
+    actor is unrotated. That holds on every path today — `SetActorLocation` in
+    `ApplyUnitView` is this class's only transform write, nothing here sets a rotation, and
+    `UStratMatchSubsystem::ApplyView` spawns at `FTransform::Identity` — and it is **not
+    enforced anywhere**. The fix if a Blueprint ever rotates a unit is named in the comment:
+    `InverseTransformVectorNoScale` on the difference before it is stored.
+  - **`FMath::SmoothStep` AND NOT LINEAR, AND NOT A ONE-SIDED EASE-OUT.** C1-continuity at
+    BOTH ends is what stops a pop when a tween is replaced mid-flight: the replacement
+    begins at whatever velocity the curve has at its own alpha 0, and both a linear ramp and
+    an ease-out start at full speed.
+  - **THE BRIEF THAT DISPATCHED THIS CARRIED ONE FALSE FIGURE AND IT IS RECORDED RATHER THAN
+    QUIETLY CORRECTED.** It said "the three `Stratocracy.StratPlay.T-INT-05` clauses in
+    `Source/StratPlay/Tests/StratMatchReconcile.cpp` that read `GetActorLocation()`". That
+    file declares **two** T-INT-05 clauses and only **one** —
+    `ApplyViewSpawnsMovesAndDestroys` — reads `GetActorLocation()`, at two call sites; the
+    other, `NoActorHoldsPresentationBits`, does not read it at all. The design requirement
+    the figure was carrying is unaffected, which is why it is a note and not a stop.
+  - **[DISCHARGED 2026-09-02, SAME DAY, BY THE ROUTE TWEEN ENTRY'S BUILD AND RUN. RESTATED FLAT
+    RATHER THAN DELETED, so a reader arriving by a citation to "uncompiled" lands on what
+    replaced it.]** It said:
+    RETRACTED> "**WHAT I COULD NOT VERIFY, AND IT IS EVERYTHING A BUILD WOULD HAVE TOLD ME.**
+    RETRACTED>  The editor was open (`UnrealEditor.exe`, PID 36876) and `Build.bat` refused
+    RETRACTED>  before compiling anything ... so **this entry describes UNCOMPILED CODE**: there
+    RETRACTED>  is no compiler verdict, no UHT verdict on the new `UPROPERTY`s, and no suite
+    RETRACTED>  run."
+    **THIS CODE IS NOW COMPILED AND THE SUITE HAS RUN OVER IT.** `Build.bat` returned
+    `Result: Succeeded` with no warnings and `UnrealEditor-StratPlay.dll` linked, so the new
+    `UPROPERTY`s have a UHT verdict; a full headless run followed over that binary, and no file
+    under any `Tests/` directory was edited. **NEITHER THE COUNT NOR THE VERDICT IS WRITTEN HERE
+    AND NEITHER MAY BE — `global.md` is the only file that may carry a live suite count or a
+    phase verdict.** Cite the exported report's own `reportCreatedOn` instead, since a re-run
+    replaces that file in place.
+    **BUT NOTE WHAT THE DISCHARGE DOES NOT REACH: THE FEATURE THIS ENTRY DESCRIBES NO LONGER
+    EXISTS AS WRITTEN.** The single-vector chord tween was replaced by the polyline in the entry
+    above; `AStratUnitActor::TweenStartOffset` is gone and `FMath::SmoothStep` is no longer the
+    profile. Read this entry for the ROOT-COMPONENT design -- `UnitRoot` above `Body`, the
+    markers staying on `Body`, the byte-identical `SetActorLocation` -- all of which stand
+    unchanged. Its tween-shape paragraphs are history, and the corrections are in the entry
+    above rather than restated here.
+  - **AND ONE RISK A BUILD ALONE WOULD NOT CATCH.** Changing the native RootComponent of a
+    class a Blueprint derives from means `BP_StratUnit` re-parents its component hierarchy on
+    load. No test in `Source/StratPlay/Tests/` spawns that Blueprint, so a green suite would
+    NOT clear it; the gate is opening `BP_StratUnit` in the editor and confirming `Body`
+    still sits under `UnitRoot` with a zero relative transform. That is a content-lane
+    observation and is filed as one.
+
 - **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `fcf64d3`, UNCOMMITTED) — THE ON-SCREEN COMMAND
   BAR, C++ HALF: THE LATCH IS AN INPUT INTENT AND THE DRAWN BIT IS RECOMPUTED EVERY REFRESH,

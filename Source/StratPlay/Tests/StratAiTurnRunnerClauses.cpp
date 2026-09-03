@@ -59,6 +59,14 @@
 #include "Misc/Paths.h"
 #include "UObject/UObjectGlobals.h"
 
+// `StratAiTurnRunner.h` only FORWARD-DECLARES `FStratAiCommandEffect` -- it takes it by
+// reference and never touches a member -- so a file that CONSTRUCTS one or calls `Reset()` on
+// it needs the definition. Measured 2026-09-02: without this line, `C2027 use of undefined
+// type` at `FStratNeverEndingAiPort::Submit` and `C2079` on the local in
+// `EveryKindRoutesToARecordingSubmit`, with the header's own forward declaration cited as the
+// note. This file is the only one under `Tests/` that needed it; the playback clauses already
+// include it for the reel.
+#include "StratAiPlayback.h"
 #include "StratAiTurnRunner.h"
 #include "StratViewModel.h"
 
@@ -374,7 +382,21 @@ namespace StratAiTurnRunnerClauses
 			return Inner.NextCommand(Side, OutCommand, OutFailureReason);
 		}
 
-		virtual bool Submit(const FStratAiCommand& Command, FString& OutFailureReason) override
+		/**
+		 * STRAIGHT THROUGH, WITH NO SECOND `OutEffect.Reset()`. The inner port is an
+		 * implementation of this interface and the contract puts the clear at entry of every
+		 * implementation, so it has already cleared before it branches. A clear here would be
+		 * a second owner of one obligation. On the injected-refusal arm the inner port is
+		 * never reached and the effect is left exactly as the runner handed it in -- which the
+		 * contract requires to be empty, and the runner's fresh per-command local makes so.
+		 *
+		 * [WIDENED 2026-09-02, SAME DAY, FROM `TArray<FIntPoint>& OutMoveRoute` TO THE WHOLE
+		 * EFFECT. NOTHING ABOVE CHANGED IN MEANING: forwarding a struct is the same act as
+		 * forwarding an array, and the "second owner" argument now covers all three members
+		 * rather than one.]
+		 */
+		virtual bool Submit(const FStratAiCommand& Command, FString& OutFailureReason,
+		                    FStratAiCommandEffect& OutEffect) override
 		{
 			const int32 Step = SubmitCalls++;
 			if (Step == RefuseSubmitAtStep)
@@ -382,7 +404,7 @@ namespace StratAiTurnRunnerClauses
 				OutFailureReason = InjectedSubmitReason;
 				return false;
 			}
-			return Inner.Submit(Command, OutFailureReason);
+			return Inner.Submit(Command, OutFailureReason, OutEffect);
 		}
 	};
 
@@ -425,8 +447,32 @@ namespace StratAiTurnRunnerClauses
 			return true;
 		}
 
-		virtual bool Submit(const FStratAiCommand& /*Command*/, FString& /*OutFailureReason*/) override
+		/**
+		 * THIS ONE CLEARS `OutEffect` ITSELF, AND IT IS THE ONLY DOUBLE THAT MUST.
+		 *
+		 * `IStratAiTurnPort::Submit`'s contract requires the clear at entry of EVERY
+		 * implementation, unconditionally, before any branch. The other two doubles discharge
+		 * it by forwarding to an inner port that clears; this one accepts WITHOUT APPLYING and
+		 * has no inner port to forward to, so nothing else in the call chain would ever touch
+		 * the effect. Omitting this line does not fail to compile -- it silently inherits
+		 * whatever the caller passed in, and an inherited route and a real one are the same
+		 * bytes downstream.
+		 *
+		 * It also satisfies the second sentence of the contract for free: this port applies
+		 * nothing, so no Move is ever ACCEPTED here and the route is correctly left empty on
+		 * every path.
+		 *
+		 * [WIDENED 2026-09-02, SAME DAY, AND THIS IS THE DOUBLE THE WIDENING ACTUALLY COSTS
+		 * SOMETHING. It is still the only one that must clear for itself, and it now clears
+		 * THREE THINGS rather than one -- `FStratAiCommandEffect::Reset()` is one verb over
+		 * all three members precisely so that this site cannot clear the route, forget the
+		 * roster delta, and attribute command N's appearances to command N+1. The paragraph
+		 * above is unchanged in meaning; only the noun is wider.]
+		 */
+		virtual bool Submit(const FStratAiCommand& /*Command*/, FString& /*OutFailureReason*/,
+		                    FStratAiCommandEffect& OutEffect) override
 		{
+			OutEffect.Reset();
 			++SubmitCalls;
 			return true;
 		}
@@ -944,7 +990,15 @@ bool FStratAiEveryKindRoutesToARecordingSubmitTest::RunTest(const FString& /*Par
 		const int32 PortedCountBefore = Ported.RecordedCommandCount();
 
 		FString PortReason;
-		const bool bPorted = Port.Submit(C, PortReason);
+		// A FRESH LOCAL PER COMMAND, matching `FStratAiTurnRunner::RunTurn`'s own shape. This
+		// clause's subject is the RECORDING of the submission and it asserts nothing about the
+		// route or the roster delta; the local exists so the widened signature is satisfied
+		// without this file acquiring an opinion about a value it does not read. [WIDENED
+		// 2026-09-02, SAME DAY, FROM `TArray<FIntPoint> PortRoute`. THE RATIONALE ABOVE
+		// SURVIVES UNCHANGED -- a wider value this clause still does not read is still a value
+		// this clause does not read.]
+		FStratAiCommandEffect PortEffect;
+		const bool bPorted = Port.Submit(C, PortReason, PortEffect);
 		if (!bPorted)
 		{
 			AddError(FString::Printf(

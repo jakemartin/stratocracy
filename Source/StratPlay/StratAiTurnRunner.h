@@ -98,6 +98,10 @@ class FStratBridge;
 // not name it. Callers that DO record include that header themselves.
 struct FStratAiPlaybackReel;
 
+/** Defined in `StratAiPlayback.h`. Named by reference only in this header, on
+ *  `FStratAiPlaybackReel`'s own line, so this file still includes nothing. */
+struct FStratAiCommandEffect;
+
 /**
  * The rules side of one AI turn, and nothing else.
  *
@@ -162,8 +166,75 @@ struct STRATPLAY_API IStratAiTurnPort
 	 * blocked on a submission path whose recording could not be pinned, and an AI that applied
 	 * commands outside `RecordedLog()` would produce a match whose save replays to a different
 	 * state with nothing to point at.
+	 *
+	 * @param OutEffect     what the accepted command did: the Move route AND the roster delta.
+	 *
+	 *                      [WIDENED 2026-09-02, SAME DAY, FROM `TArray<FIntPoint>&
+	 *                      OutMoveRoute` TO A STRUCT. WRITTEN FLAT BECAUSE THE PARAGRAPHS BELOW
+	 *                      NAME A PARAMETER THAT NO LONGER EXISTS UNDER THAT NAME, AND EVERY
+	 *                      OBLIGATION THEY STATE NOW BINDS ALL THREE MEMBERS.] The second
+	 *                      widening of this signature in one day is what decided the shape: two
+	 *                      more out-params would have made five and broken the same three
+	 *                      doubles again on the next fact. `FStratAiCommandEffect::Reset()`
+	 *                      clears all three members in one verb, so an implementation cannot
+	 *                      clear two of them -- which a five-parameter form would have made
+	 *                      easy and silent.
+	 *
+	 *                      **THE ROSTER DELTA IS NOT A THIRD ROUTE AND IS NOT PER-KIND.**
+	 *                      `AppearedUnitIds` and `DepartedUnitIds` are what changed on the
+	 *                      board, whatever the kind: a Build spawns zero or more units and a
+	 *                      death can be the ATTACKER, so no field of the command names either.
+	 *                      See `FStratAiPlaybackStep::AppearedUnitIds`.
+	 *
+	 *                      THE MOVE ROUTE IS `OutEffect.MoveRoute`: the ordered hexes an
+	 *                      ACCEPTED Move walked, `[0]` the from-hex and `.Last()` the goal. THE
+	 *                      CONTRACT, AND EVERY WORD OF IT BINDS EVERY IMPLEMENTATION INCLUDING
+	 *                      THE DOUBLES:
+	 *                        - `Reset()` AT ENTRY, unconditionally, before any branch. A
+	 *                          caller reusing one local across a loop must not inherit the
+	 *                          previous command's route, and the alternative -- "the caller
+	 *                          clears it" -- puts the obligation where it cannot be checked.
+	 *                        - LEFT EMPTY ON EVERY PATH BUT AN ACCEPTED MOVE. A Build, an
+	 *                          Attack, an EndTurn, a refused submission and a refused path
+	 *                          query all leave it empty, and empty means SNAP downstream.
+	 *                        - AN ANSWER HANDED OUT, NEVER A QUESTION. It is written on the
+	 *                          way out and read by nobody on the way in.
+	 *                        - `FStratAiTurnRunner` MAY NOT BRANCH ON IT. It carries the value
+	 *                          to `FStratAiPlaybackReel::Record` and does nothing else with
+	 *                          it; no `if`, no `Num()`, no length test anywhere in `RunTurn`.
+	 *
+	 * A REFERENCE AND NOT AN OPTIONAL POINTER, unlike `RunTurn`'s own `OutReel`. `RunTurn`
+	 * always has a local to hand at this call, so a null would never be passed by anything in
+	 * this tree and would exist purely as a second shape every implementation must reason
+	 * about. `OutReel` earns its pointer because it spans a whole hand-over and most callers
+	 * genuinely do not want one; this spans one call and every caller has one.
+	 *
+	 * THIS RESPECTS THE `IsMatchOver()` RULING ABOVE, AND ONE OF THAT RULING'S TWO GROUNDS
+	 * DOES REACH THIS PARAMETER. That ruling rejected `IsMatchOver()` because (1) it would let
+	 * a runner DECIDE, and (2) every test double would have to grow an arm for a question the
+	 * shipping runner must not ask.
+	 *
+	 * GROUND (1) DOES NOT REACH THIS CHANGE, and the reason is structural rather than a
+	 * promise: an out-param is not a question a runner can ask, the runner is forbidden above
+	 * from branching on it, and the only thing it does with the value is copy it into a list
+	 * `StratAiTurnRunner.h`'s PACING bullet already documents as WRITTEN AND NEVER READ. The
+	 * turn still resolves in one synchronous call and nothing about what the AI does next
+	 * depends on this value.
+	 *
+	 * GROUND (2) DOES REACH IT, AND ITS COST IS NOT ZERO AND IS NOT PRETENDED TO BE. Widening
+	 * this signature breaks every implementation of this interface -- measured on this tree as
+	 * THREE test doubles (`FStratRecordingAiPort` in `Tests/StratAiPlaybackClauses.cpp`;
+	 * `FStratFaultInjectingAiPort` and `FStratNeverEndingAiPort` in
+	 * `Tests/StratAiTurnRunnerClauses.cpp`) plus `FStratBridgeAiTurnPort` below. Each must
+	 * grow the parameter. What makes the cost worth paying here and not there is WHAT the arm
+	 * costs to write: two of the three doubles forward to an inner port and pass the parameter
+	 * straight through, and the third accepts without applying and needs one `Reset()`. An
+	 * `IsMatchOver()` arm would have obliged each double to INVENT AN ANSWER about match
+	 * state, which is a fact a double has no source for; this obliges each to forward a value
+	 * it already receives. Cheap is not free, and the three doubles are the price.
 	 */
-	virtual bool Submit(const FStratAiCommand& Command, FString& OutFailureReason) = 0;
+	virtual bool Submit(const FStratAiCommand& Command, FString& OutFailureReason,
+	                    FStratAiCommandEffect& OutEffect) = 0;
 
 	/** §4.10's canonical state hash, for the log line. Never compared here. */
 	virtual FString StateHash() const = 0;
@@ -189,7 +260,8 @@ struct STRATPLAY_API FStratBridgeAiTurnPort final : public IStratAiTurnPort
 	virtual int32   SideToMove() const override;
 	virtual bool    NextCommand(int32 Side, FStratAiCommand& OutCommand,
 	                            FString& OutFailureReason) const override;
-	virtual bool    Submit(const FStratAiCommand& Command, FString& OutFailureReason) override;
+	virtual bool    Submit(const FStratAiCommand& Command, FString& OutFailureReason,
+	                       FStratAiCommandEffect& OutEffect) override;
 	virtual FString StateHash() const override;
 
 private:

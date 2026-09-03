@@ -1217,6 +1217,44 @@ public:
 	//                    iteration order.
 	FStratResult RepairsAtTurnOpen(TArray<FStratRepairApplication>& OutRepairs) const;
 
+	/**
+	 * Which unit ids APPEARED and which DEPARTED across the last ACCEPTED command.
+	 *
+	 * THIS IS THE DELIVERY MECHANISM `StratCombatLog.h` LEFT AS "A SEPARATE RULING", AND THE
+	 * RULING IS MADE HERE. That header declined an accessor for `FStratCombatOutcome` and said
+	 * a reader needs "an event list, a return channel" decided separately. This is a return
+	 * channel for a SMALLER FACT, shaped exactly like `RepairsAtTurnOpen` -- the bridge retains
+	 * the last one and hands over a copy -- because that function is this tree's existing
+	 * precedent for delivering an observation rather than only logging it.
+	 *
+	 * **IT DOES NOT DELIVER `FStratCombatOutcome` AND THAT BLOCK'S REFUSAL STILL STANDS.** The
+	 * combat outcome is per-attack, role-keyed and thirty fields wide; this is two lists of ids
+	 * with no roles. An id in `OutDeparted` IS exactly a unit that died, so the information
+	 * overlaps -- but the outcome's users need to know WHICH of the attacker and defender it
+	 * was, and that is a question this answer cannot be asked. Two answers, one question each.
+	 *
+	 * WHY IT IS NOT A PER-KIND ANSWER, WHICH IS THE DESIGN AND IS FORCED BY MEASUREMENT. A
+	 * Build command spawns ZERO OR MORE units -- `applyCommand`'s Build arm calls
+	 * `resolveBuilds` and pushes every spawn that can be placed, so a boxed-in factory spawns
+	 * none and a build queued earlier spawns on a LATER command -- and a death can be the
+	 * ATTACKER, whom no field of the command names. So neither "the unit this Build built" nor
+	 * "the unit this Attack killed" is a well-formed question, and the roster delta is the
+	 * question that is.
+	 *
+	 * BOTH LISTS ARE ASCENDING BY ID AND THAT IS PART OF THE CONTRACT, not an artefact of how
+	 * they were assembled: they come from a `std::set_difference` over two sorted rosters, so
+	 * two runs of one hand-over produce identical lists and a clause may compare them.
+	 *
+	 * EMPTY IS THE ORDINARY ANSWER. Most commands change no roster at all -- 61 of 68 attacks
+	 * in a measured hand-over killed nobody -- and an unmeasurable observation is also empty,
+	 * deliberately not distinguished from it: a caller's response to either is to do nothing.
+	 *
+	 * REFUSED WITHOUT A SEED, on `RepairsAtTurnOpen`'s rule, with both lists already emptied
+	 * before the refusal so a caller that ignores the result reads no stale answer.
+	 */
+	FStratResult RosterDeltaOfLastCommand(TArray<int32>& OutAppeared,
+	                                      TArray<int32>& OutDeparted) const;
+
 	// ---- The engine-typed façade -----------------------------------------
 	// EVERY METHOD IN THIS SECTION SAYS, IN `int32` AND `FIntPoint`, EXACTLY WHAT THE TYPED
 	// METHOD OF THE SAME SUBJECT SAYS -- EXCEPT `Turn()` AND `SideToMove()`, WHICH MIRROR
@@ -1886,6 +1924,16 @@ private:
 	// here at all: `strat::RepairApplied` never leaves `openTurn`, and rebuilding one would
 	// claim a provenance this value does not have. Every consumer is engine-side.
 	std::vector<FStratRepairApplication> RepairsAtLastTurnOpen;
+
+	/** §2.11.2's roster delta: what `RosterDeltaOfLastCommand` hands back. Written ONLY by
+	 *  `Submit` -- filled on the accepted path and CLEARED on the refused one, so the pair
+	 *  always describes the command that just returned and never the one before it. Ascending
+	 *  by id, which the accessor's block states as contract rather than as accident.
+	 *  `std::vector<int32>` and not `TArray`, on `RepairsAtLastTurnOpen`'s own line: the
+	 *  retained form is this file's private business and the engine container appears only at
+	 *  the accessor, where a caller can use it. */
+	std::vector<int32> AppearedOfLastCommand;
+	std::vector<int32> DepartedOfLastCommand;
 
 	// Assembles the combat stat block for one unit exactly as the driver's
 	// `combatUnit` does: every stat LOOKED UP from the UnitDef at `defIndex`,

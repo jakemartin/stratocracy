@@ -9,6 +9,11 @@
 
 // `std::sort`, for the unit-id ordering `StratRepairObservation::CaptureAfter` declares.
 #include <algorithm>
+// `std::back_inserter`, for `StratRosterObservation::CaptureAfter`'s two `set_difference`
+// calls. Named here beside `<algorithm>` for the reason that include carries its own note:
+// this file's vendored half is C++17 and its standard-library dependencies are declared
+// rather than inherited from whatever `StratBridge.h` happens to pull in.
+#include <iterator>
 
 // A REAL module object, unlike Source/StratRules/. That directory holds vendored
 // C++ with no IMPLEMENT_MODULE, and listing it in Stratocracy.uproject once made
@@ -549,6 +554,121 @@ namespace StratRepairObservation
 	{
 		Before.bValid = Bridge.MakeUiSnapshot(Before.Snapshot).bOk;
 	}
+} // namespace StratRepairObservation
+
+/**
+ * §2.11.2's ROSTER DELTA: which unit ids appeared and which departed across ONE accepted
+ * command.
+ *
+ * THIS IS THE RULING `StratCombatLog.h` DEFERRED, MADE. That header's "WHAT IS DELIBERATELY NOT
+ * IN IT" block says a caller wanting to READ an outcome "needs a delivery mechanism (an event
+ * list, a return channel) that is a separate ruling", and that its own struct "is the payload
+ * such a mechanism would carry, landed early because assembling it is the hard part". The block
+ * is AMENDED there rather than deleted, because what it disclaims is still true of the COMBAT
+ * outcome -- no accessor was added for that -- and what is delivered here is a different and
+ * smaller thing.
+ *
+ * WHY A ROSTER DELTA AND NOT THE COMBAT OUTCOME, WHICH IS THE WHOLE DESIGN AND RESTS ON TWO
+ * MEASUREMENTS. A Build command spawns ZERO OR MORE units (`resolveBuilds` pushes every spawn
+ * it can place, so a boxed-in factory spawns none and a previously blocked build spawns on a
+ * later command), and a death can be the ATTACKER (the counter arm erases it when
+ * `atkHp - counter <= 0`), so neither `TargetId` nor a per-kind field can name what changed.
+ * "Which ids appeared, which departed" is one question, asked once, with no `Kind` switch.
+ *
+ * IT DOES NOT DUPLICATE `FStratCombatOutcome`'s DEATH TEST AND IT DOES NOT REPLACE IT, AND THE
+ * DISTINCTION IS WORTH THE SENTENCE. That struct answers "did the unit I NAMED die", keyed to an
+ * attacker and a defender it identified BEFORE the submit, and it feeds `STRAT-COMBAT resolved`
+ * where a reader needs those two identities. This answers "what left the roster", named by
+ * nothing and keyed to no role. **The delta SUBSUMES the outcome's death facts as a matter of
+ * information -- an id in `Departed` is exactly a unit that died -- but not as a matter of
+ * USE**: the log line needs to say WHICH of the attacker and defender it was, and the delta
+ * cannot say that without a role it deliberately does not carry. Two answers, one question
+ * each; neither is redundant and neither was rewritten to serve the other.
+ *
+ * IT BRACKETS EVERY KIND AND NOT ONE, unlike its two neighbours, because a Build appears and an
+ * Attack departs and a future kind may do either. That is a COST and it is stated: two roster
+ * reads per submit where Move and Build previously paid none. It is bounded by what it reads --
+ * `strat::GameState::units`' ids and nothing else, no projection, no HP, no hexes -- which is
+ * the cheapest possible observation of this fact and is why it is affordable on every command.
+ *
+ * IT READS `GameState` DIRECTLY AND NOT `MakeUiSnapshot`, WHICH IS A DEPARTURE FROM BOTH
+ * NEIGHBOURS AND IS DELIBERATE. A `UiSnapshot` is a PROJECTION, and "did this id survive" must
+ * be asked of the authoritative roster rather than of a view that could one day filter a unit
+ * for a presentation reason -- at which point a filtered unit would read as a death. It is also
+ * far cheaper, which is what makes bracketing every kind affordable.
+ */
+namespace StratRosterObservation
+{
+	/** The ids on the board before the command. A sorted vector and not a `TSet`: the rosters
+	 *  are ten to thirty units, a linear scan beats a hash on that size, and a deterministic
+	 *  order means the delivered arrays are reproducible run to run -- which a `TSet`'s
+	 *  iteration order is not, and which a clause comparing two runs would need. */
+	struct FBefore
+	{
+		bool               bValid = false;
+		std::vector<int32> Ids;
+	};
+
+	void ReadIds(const strat::GameState& State, std::vector<int32>& Out)
+	{
+		Out.clear();
+		Out.reserve(State.units.size());
+		for (const strat::GameUnit& U : State.units)
+		{
+			Out.push_back(static_cast<int32>(U.id));
+		}
+		std::sort(Out.begin(), Out.end());
+	}
+
+	void CaptureBefore(const FStratBridge& Bridge, FBefore& Before)
+	{
+		// SEEDED IS THE ONLY PRECONDITION. An unseeded bridge refuses the submit above this
+		// anyway; the flag is read so that `bValid` means "these ids are a real roster" rather
+		// than "this vector happens to be empty", which is the same distinction
+		// `StratRepairObservation::FBefore::bValid` draws for its snapshot.
+		Before.bValid = Bridge.IsSeeded();
+		if (Before.bValid)
+		{
+			ReadIds(Bridge.State(), Before.Ids);
+		}
+	}
+
+	/**
+	 * Fills the two lists with the ids that appeared and departed.
+	 *
+	 * A SET DIFFERENCE OVER TWO SORTED VECTORS, WHICH IS WHY THE ORDER ABOVE IS PART OF THE
+	 * CONTRACT. Departed is Before minus After; appeared is After minus Before. Both come out
+	 * ascending, so the delivered arrays are stable and two runs of the same hand-over produce
+	 * byte-identical reels.
+	 *
+	 * UNMEASURABLE LEAVES BOTH EMPTY RATHER THAN GUESSING, on both neighbours' stated rule. An
+	 * empty delta means "nothing changed OR nothing could be read", and those are deliberately
+	 * not distinguished: the consumer's only response to either is to hold nothing, and a
+	 * sentinel would be a third state nobody would handle.
+	 */
+	void CaptureAfter(const FStratBridge& Bridge, const FBefore& Before,
+	                  std::vector<int32>& OutAppeared, std::vector<int32>& OutDeparted)
+	{
+		OutAppeared.clear();
+		OutDeparted.clear();
+
+		if (!Before.bValid || !Bridge.IsSeeded())
+		{
+			return;
+		}
+
+		std::vector<int32> After;
+		ReadIds(Bridge.State(), After);
+
+		std::set_difference(After.begin(), After.end(), Before.Ids.begin(), Before.Ids.end(),
+		                    std::back_inserter(OutAppeared));
+		std::set_difference(Before.Ids.begin(), Before.Ids.end(), After.begin(), After.end(),
+		                    std::back_inserter(OutDeparted));
+	}
+} // namespace StratRosterObservation
+
+namespace StratRepairObservation
+{
 
 	/**
 	 * Fills `Out` with one entry per unit whose HP ROSE across the submit.
@@ -674,6 +794,16 @@ FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 		StratRepairObservation::CaptureBefore(*this, RepairBefore);
 	}
 
+	// §2.11.2's ROSTER DELTA, BRACKETED AROUND EVERY KIND AND NOT ONE. A Build appears and an
+	// Attack departs, and the two neighbours above are gated by kind precisely because each
+	// answers a question only one kind can raise. This one cannot be gated without deciding in
+	// advance which kinds can change a roster -- which is the assumption
+	// `FStratAiPlaybackStep::AppearedUnitIds` records as measured-false for Build, where one
+	// command spawns zero or more. See `StratRosterObservation` on what that costs and why it
+	// is affordable.
+	StratRosterObservation::FBefore RosterBefore;
+	StratRosterObservation::CaptureBefore(*this, RosterBefore);
+
 	const strat::ReplayResult R = strat::applyCommand(GameState, Command, Tables());
 	if (!R.ok)
 	{
@@ -681,6 +811,15 @@ FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 		{
 			StratCombatObservation::EmitRefused(Outcome, FromStd(R.reason));
 		}
+
+		// CLEARED ON THE REFUSAL PATH, WHICH IS NOT SYMMETRY FOR ITS OWN SAKE. §4.9 says a
+		// refused command changes nothing, so its delta is empty by definition -- and leaving
+		// the PREVIOUS command's delta readable would let a caller attribute an appearance to
+		// the command that was rejected. That is the same reasoning `Recorded.push_back` sits
+		// below this return for, applied to a field instead of to a log.
+		AppearedOfLastCommand.clear();
+		DepartedOfLastCommand.clear();
+
 		return FStratResult::Fail(FromStd(R.reason), FromStd(R.failedId));
 	}
 
@@ -701,6 +840,40 @@ FStratResult FStratBridge::Submit(const strat::SaveCommand& Command)
 	if (bIsEndTurn)
 	{
 		StratRepairObservation::CaptureAfter(*this, RepairBefore, RepairsAtLastTurnOpen);
+	}
+
+	// AND THE ROSTER DELTA, ON THE SUCCESS PATH ONLY. Unconditional by kind, for the reason the
+	// capture above gives.
+	StratRosterObservation::CaptureAfter(*this, RosterBefore,
+	                                     AppearedOfLastCommand, DepartedOfLastCommand);
+
+	return FStratResult::Ok();
+}
+
+FStratResult FStratBridge::RosterDeltaOfLastCommand(TArray<int32>& OutAppeared,
+                                                    TArray<int32>& OutDeparted) const
+{
+	// EMPTIED BEFORE THE GUARD, so a refusal leaves no stale list behind -- `RepairsAtTurnOpen`'s
+	// own rule, restated here rather than cited because a caller reads one of these functions
+	// and not both.
+	OutAppeared.Reset();
+	OutDeparted.Reset();
+
+	if (!bSeeded)
+	{
+		return FStratResult::Fail(TEXT("no scenario is loaded"));
+	}
+
+	OutAppeared.Reserve(static_cast<int32>(AppearedOfLastCommand.size()));
+	for (const int32 Id : AppearedOfLastCommand)
+	{
+		OutAppeared.Add(Id);
+	}
+
+	OutDeparted.Reserve(static_cast<int32>(DepartedOfLastCommand.size()));
+	for (const int32 Id : DepartedOfLastCommand)
+	{
+		OutDeparted.Add(Id);
 	}
 
 	return FStratResult::Ok();

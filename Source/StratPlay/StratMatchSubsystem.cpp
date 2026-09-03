@@ -604,6 +604,66 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 
 		TObjectPtr<AStratUnitActor>* Existing = UnitActors.Find(View.UnitId);
 
+		// THE LOCATION COMES FROM THE BOARD AND IS NOT COMPUTED HERE.
+		// `AStratBoardActor::WorldLocationOfHex` is the only axial -> world conversion in
+		// the project; a second copy in this file is a set of units half a tile off the day
+		// `HexSize` changes. With no board there is nowhere to stand, so the unit sits at
+		// the world origin and is still spawned -- a visible pile at the origin is a
+		// diagnosable state; a silently absent army is not.
+		//
+		// [MOVED 2026-09-02 FROM BELOW THE SPAWN BRANCH TO ABOVE IT. A PURE MOVE: it reads
+		// `Board` and `View.Hex`, the spawn branch writes neither, so the value is the same
+		// on every path it was computed on before. Its comment moved with it rather than
+		// being left behind pointing at nothing.]
+		const FVector Where = Board != nullptr
+			? Board->WorldLocationOfHex(View.Hex)
+			: FVector::ZeroVector;
+
+		// AND THE ROUTE, CONVERTED THROUGH THE ONE EXPRESSION, FROM TWO NAMED CALL SITES.
+		// `NotePendingMoveRoute` takes AXIAL hexes precisely so that
+		// `AStratBoardActor::WorldLocationOfHex` stays the project's only axial -> world
+		// conversion: a second COPY of that arithmetic anywhere on the route's journey from the
+		// input path to the actor is a slide half a tile off the day `HexSize` changes -- and off
+		// by a DIFFERENT amount than the destination it ends at, so the unit would not even
+		// arrive where it stopped.
+		//
+		// [AMENDED 2026-09-02, SAME DAY. WRITTEN FLAT BECAUSE A HEADING THAT SAYS "NOWHERE ELSE"
+		// IS AN ABSENCE CLAIM AND A READER GREPPING IT MUST LAND ON THE SECOND SITE.] It said:
+		// RETRACTED> "AND THE ROUTE, CONVERTED HERE AND NOWHERE ELSE, THROUGH THE SAME ONE
+		// RETRACTED>  EXPRESSION."
+		// There are now TWO call sites and still ONE expression, which is the property that
+		// mattered. The second is `PlayMoveSlideForStep`, which converts a reel step's
+		// `RouteHexes` for the AI's playback slide -- through `WorldLocationOfHex`, and taking
+		// its anchor from the same function so the two cannot disagree by construction.
+		//
+		// HOISTED BESIDE `Where` FOR ITS REASON: both the spawn branch's snap and the apply
+		// below want one value, and the spawn branch writes neither `Board` nor `View.Hex`.
+		//
+		// THE LAST HEX MUST BE THE HEX THE MODEL PUTS THIS UNIT ON, AND THAT IS CHECKED RATHER
+		// THAN ASSUMED. A route is noted immediately before a submit and the model is built
+		// after it, so they agree on every path that exists today -- but the AI replies in
+		// between, and "the route ends where the unit now is" is what makes the polyline's
+		// waypoints describe this unit's arrival rather than some other board. An equality, not
+		// a rule: no legality is decided here and a mismatch degrades to a snap.
+		//
+		// A COPY AND NOT A POINTER INTO THE MAP, because the map is `Reset()` below while these
+		// values have already been handed over and consumed.
+		TArray<FVector> RouteWorldPoints;
+		if (Board != nullptr)
+		{
+			if (const TArray<FIntPoint>* const PendingRoute = PendingMoveRoutes.Find(View.UnitId))
+			{
+				if (PendingRoute->Num() > 0 && PendingRoute->Last() == View.Hex)
+				{
+					RouteWorldPoints.Reserve(PendingRoute->Num());
+					for (const FIntPoint& RouteHex : *PendingRoute)
+					{
+						RouteWorldPoints.Add(Board->WorldLocationOfHex(RouteHex));
+					}
+				}
+			}
+		}
+
 		if (Existing == nullptr || *Existing == nullptr)
 		{
 			if (ActiveConfig.UnitActorClass == nullptr)
@@ -627,18 +687,27 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 				continue;
 			}
 
+			// A NEW ACTOR DOES NOT ANIMATE, AND THIS IS THE ONE PLACE THAT FACT IS KNOWN.
+			// `SpawnActor` puts it at `FTransform::Identity`, so without this line every unit
+			// on a fresh board would ease in from the world origin the moment
+			// `AStratUnitActor::MoveTweenSeconds` is positive on the Blueprint. It is said
+			// here, on the spawn branch, because NEWNESS IS THIS FUNCTION'S KNOWLEDGE: the
+			// alternative was a `bHasAppliedAView` bit on the actor suppressing its first
+			// tween, which is exactly a presentation bit on an actor that no model holds --
+			// what `T-INT-05.NoActorHoldsPresentationBits` is about.
+			//
+			// IT IS HANDED THE SAME `Where` THE `ApplyUnitView` CALL BELOW GETS, not a second
+			// computation, which is why the location above was hoisted over this branch rather
+			// than copied into it.
+			//
+			// IT COSTS NOTHING AT THE SHIPPED DEFAULT. `MoveTweenSeconds` is zero in C++, so
+			// with no Blueprint override this is a redundant `SetActorLocation` a few
+			// microseconds before the one `ApplyUnitView` makes -- which is also why it does
+			// not disturb any clause that reads `GetActorLocation()` after `ApplyView`.
+			Spawned->SnapToWorldLocation(Where);
+
 			Existing = &UnitActors.Add(View.UnitId, Spawned);
 		}
-
-		// THE LOCATION COMES FROM THE BOARD AND IS NOT COMPUTED HERE.
-		// `AStratBoardActor::WorldLocationOfHex` is the only axial -> world conversion in
-		// the project; a second copy in this file is a set of units half a tile off the day
-		// `HexSize` changes. With no board there is nowhere to stand, so the unit sits at
-		// the world origin and is still spawned -- a visible pile at the origin is a
-		// diagnosable state; a silently absent army is not.
-		const FVector Where = Board != nullptr
-			? Board->WorldLocationOfHex(View.Hex)
-			: FVector::ZeroVector;
 
 		// THE VIEWING SIDE COMES OFF THE MODEL AND NOT OFF THIS CLASS'S OWN `ViewingSide`
 		// MEMBER, even though the two are equal on every path that reaches here. The model's
@@ -654,7 +723,24 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 		// "the ring and the turn-1a unit marker clear in the same frame as the strip" is a
 		// property of this function's structure rather than of three surfaces agreeing. This
 		// function still decides nothing: it forwards two fields it already holds.
-		(*Existing)->ApplyUnitView(View, Where, Model.ViewingSide, Model.Guidance.bActive);
+		//
+		// AND THE ROUTE IS THE FIFTH OPERAND, HANDED IN RATHER THAN FETCHED. `AStratUnitActor`
+		// holds no board pointer and no pending map; it is given world points and eases along
+		// them. An EMPTY array is the ordinary case and means SNAP -- see that function's
+		// declaration.
+		//
+		// [CORRECTED 2026-09-02, SAME DAY, BECAUSE THE USER REVERSED THE DECISION THIS LINE
+		// CITED. WRITTEN FLAT.] It said:
+		// RETRACTED> "-- see that function's declaration, which states why that is the whole of
+		// RETRACTED>  'AI moves do not slide'."
+		// AI MOVES NOW SLIDE, during §2.11.2's tour, and they do not arrive through this call.
+		// What stands is everything about THIS call site: the array handed here is filled only
+		// from `PendingMoveRoutes`, that map is written only by an accepted player command, and
+		// an empty array still means snap. The AI's slide is `PlayMoveSlideForStep` reaching
+		// `AStratUnitActor::PlayRouteSlide` -- a different verb, taken after the board is
+		// already showing the final state, and one that moves no actor.
+		(*Existing)->ApplyUnitView(View, Where, Model.ViewingSide, Model.Guidance.bActive,
+		                           RouteWorldPoints);
 	}
 
 	// DESTROY WHAT THE MODEL NO LONGER CARRIES. `FStratViewModel::Units` is "every LIVING
@@ -667,6 +753,32 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 			continue;
 		}
 
+		// §2.11.2's EXISTENCE HOLD: A UNIT THE TOUR HAS NOT YET SHOWN DYING IS RETAINED.
+		//
+		// **BOTH TERMS ARE REQUIRED AND EACH GUARDS AGAINST THE OTHER'S FAILURE, WHICH IS WHY
+		// THIS IS A CONJUNCTION AND NOT EITHER TEST ALONE.** The gate alone cannot say WHICH
+		// ids -- it would retain every unit that left the model for any reason, including a
+		// reseed. The membership test alone would let a map that outlived its tour strand an
+		// actor FOREVER: nothing else in this function can tell a stale entry from a live one,
+		// and there is no second reconcile that would notice. Together, a retention requires a
+		// tour that is running AND an id that tour recorded as departing.
+		//
+		// IT IS A `continue` AND NOT A HIDE. The actor stays in `UnitActors` and stays visible;
+		// what is deferred is its DESTRUCTION, until `ApplyTourExistenceAtCursor` passes the
+		// step that killed it or `EndAiPlaybackTour` releases the hold. Hiding it here would
+		// make it vanish at exactly the moment the hold exists to prevent.
+		//
+		// THE COST IS NAMED RATHER THAN DISCOVERED: a retained corpse stands WHERE THE LAST
+		// RECONCILE PUT IT. For a human-vs-AI hand-over that is right -- the unit never moved
+		// after the player last saw it. For a unit that MOVED and then died in the same
+		// hand-over it is wrong: the corpse waits at the hex it started from rather than the one
+		// it walked to. Fixing that needs the dead unit's final hex, which no surviving model
+		// carries, and it is out of scope for this pass.
+		if (bTourExistenceHeld && HideAfterStep.Contains(It.Key()))
+		{
+			continue;
+		}
+
 		if (It.Value() != nullptr)
 		{
 			It.Value()->Destroy();
@@ -674,12 +786,45 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 		It.RemoveCurrent();
 	}
 
+	// THE PENDING ROUTES ARE SPENT, AND THE WHOLE MAP GOES -- UNCONDITIONALLY, INCLUDING
+	// ENTRIES NO LOOP ABOVE READ.
+	//
+	// AFTER THE DESTROY LOOP AND NOT AFTER THE UNIT LOOP, WHICH IS THE PLACEMENT THAT MAKES THE
+	// SENTENCE ABOVE TRUE OF THE CASE THAT MATTERS. A player's move is followed by the AI's
+	// reply before any model is built, so the unit that was noted CAN BE DEAD by the time this
+	// function runs: it has no entry in `Model.Units`, the unit loop never sees its id, and the
+	// destroy loop is what removes its actor. A conditional clear -- "remove the ones I used" --
+	// would leave that route in the map, and the next player move by a unit whose id the rules
+	// module later reissued would slide along a dead unit's path. `Reset()` cannot get that
+	// wrong because it does not ask.
+	//
+	// AND IT IS WHAT MAKES THE SECOND `ApplyView` OF A PLAYER MOVE HARMLESS RATHER THAN MERELY
+	// TOLERABLE. `AStratPlayerController::HandleSelectionEvent` produces two applies with
+	// identical positions; this reset means the second one carries no route at all, and
+	// `AStratUnitActor::ApplyUnitView`'s re-entrancy guard means it arms nothing and retires
+	// nothing. Two independent reasons the running slide survives, and neither relies on the
+	// other.
+	//
+	// ONE CONSUMER, ONE CLEAR. Nothing outside this function reads the map, so "noted for the
+	// next apply" is a property of the code rather than a convention a later caller could break
+	// by reading it twice.
+	PendingMoveRoutes.Reset();
+
 	// ---- Sec 2.11.6-B's objective ring --------------------------------------
 	// ONE CALL SITE AND IT IS THIS ONE. `ApplyView` is the only place every model reaches
 	// the screen through, so driving the ring here makes "the ring and the marker clear in
 	// the same frame as the strip" -- `FStratGuidedOpening::SkipGuidance`'s wording --
 	// structural rather than a promise: the clear and the strip's push are eight lines
 	// apart in one function, on one value.
+	//
+	// [ONE SENTENCE ADDED 2026-09-02 RATHER THAN REWRITING THE PARAGRAPH, WHICH SURVIVES AS
+	// WRITTEN AND WILL BE OVER-READ.] "The only place every model reaches the screen" is a claim
+	// about MODELS, and it is unchanged: nothing else applies a `FStratViewModel`. It is NOT a
+	// claim that this function is the only thing that touches an actor. §2.11.2's tour hides,
+	// reveals and destroys actors from `ApplyTourExistenceAtCursor` and `EndAiPlaybackTour`,
+	// against a cursor no model carries -- which is why the destroy loop above takes an
+	// instruction from the hold rather than deciding alone, and why the hold is released by a
+	// verb of its own rather than by the next refresh.
 	//
 	// UNCONDITIONAL IN BOTH DIRECTIONS, with an else. Showing without clearing would leave
 	// the ring standing after the window closed, and the model would carry no record of why
@@ -1522,6 +1667,25 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 	// still showing the pre-AI board disagrees with the rules module either way. The refresh's
 	// own refusal does not overwrite an AI refusal -- the AI's is the one that explains the
 	// other.
+	//
+	// ---- §2.11.2's EXISTENCE HOLD, DECIDED ABOVE THIS RECONCILE -----------
+	// **THE HOIST, AND IT IS THE ONE THING IN THIS FEATURE THAT CANNOT BE PLACED ANYWHERE
+	// ELSE.** `RefreshPresentation` is where a killed unit's actor is DESTROYED and a built
+	// unit's actor is SPAWNED. After it, "which units did this hand-over create and destroy" is
+	// no longer answerable from anything on this object. So the hold is built here, from the
+	// reel, before the reconcile that would erase the evidence -- and `ApplyView`'s destroy
+	// loop then consults it on the very call the line below makes.
+	//
+	// GATED ON `WillAiPlaybackRun` AND NOT ON A SECOND COPY OF ITS THREE CONDITIONS, which is
+	// what makes the stranding hazard unreachable rather than merely unlikely. If this raised
+	// the gate and `BeginAiPlayback` then declined to arm, every retained actor would stand on
+	// the board forever with no verb left to release it. One function answers for both, so
+	// "gate up, no tour" cannot be constructed.
+	if (WillAiPlaybackRun())
+	{
+		BuildTourExistenceHolds();
+	}
+
 	FString RefreshReason;
 	const bool bRefreshed = RefreshPresentation(RefreshReason);
 
@@ -1562,6 +1726,143 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 // command -- rather than a promise this file is making about its own behaviour.
 // ---------------------------------------------------------------------------
 
+void UStratMatchSubsystem::BuildTourExistenceHolds()
+{
+	RevealAfterStep.Reset();
+	HideAfterStep.Reset();
+
+	// ONE WALK OF THE REEL, AND THE STEP INDEX IS THE VALUE. `Cursor` counts steps SHOWN, so a
+	// unit recorded as appearing at index `i` has been seen to appear once `Cursor > i`, and one
+	// recorded as departing at index `i` is still alive while `Cursor <= i`. Those two
+	// comparisons are the whole of `ApplyTourExistenceAtCursor`, and storing the index rather
+	// than a computed threshold is what keeps them readable against this loop.
+	for (int32 Index = 0; Index < AiPlaybackReel.Num(); ++Index)
+	{
+		const FStratAiPlaybackStep* const Step = AiPlaybackReel.StepAt(Index);
+		if (Step == nullptr)
+		{
+			continue;
+		}
+
+		for (const int32 Id : Step->AppearedUnitIds)
+		{
+			RevealAfterStep.Add(Id, Index);
+		}
+
+		for (const int32 Id : Step->DepartedUnitIds)
+		{
+			// **ONLY A UNIT THAT ALREADY HAS AN ACTOR CAN BE RETAINED**, and `UnitActors` is the
+			// pre-hand-over roster at this instant because the hoist runs ABOVE
+			// `RefreshPresentation`. A departed id with no actor here is a unit that was built
+			// and killed inside this same hand-over; there is nothing to retain and nothing
+			// this pass may spawn. See the scope paragraph on the declaration.
+			if (UnitActors.Contains(Id))
+			{
+				HideAfterStep.Add(Id, Index);
+			}
+		}
+	}
+
+	// AND ANYTHING IN BOTH MAPS IS DROPPED FROM BOTH, EXPLICITLY, EVEN THOUGH THE `UnitActors`
+	// TEST ABOVE ALREADY MAKES THE CASE UNREACHABLE. A unit built and killed in one hand-over is
+	// in NEITHER the pre-hand-over roster nor the final model, so it never had an actor and
+	// never gets one -- both entries would be inert. This loop is here so that "in both is out
+	// of scope" is a line of code a reader can find rather than a property they have to derive
+	// from two other conditions. Measured: three of the seven deaths in a real hand-over were
+	// units built during that same hand-over, so this is the common case and not a corner.
+	for (auto It = RevealAfterStep.CreateIterator(); It; ++It)
+	{
+		if (HideAfterStep.Contains(It.Key()))
+		{
+			HideAfterStep.Remove(It.Key());
+			It.RemoveCurrent();
+		}
+	}
+
+	// THE GATE LAST, AFTER BOTH MAPS ARE FINAL. Nothing between here and `EndAiPlaybackTour`
+	// may find the gate up over a half-built hold.
+	bTourExistenceHeld = true;
+}
+
+void UStratMatchSubsystem::ApplyTourExistenceAtCursor()
+{
+	if (!bTourExistenceHeld)
+	{
+		return;
+	}
+
+	// **RECOMPUTED FROM THE CURSOR EVERY TIME AND NEVER APPLIED AS A DELTA**, which is this
+	// class's reconcile posture applied to existence rather than to position. A delta would have
+	// to know what it last did, and the two places that would be wrong -- a skip that jumps the
+	// cursor by 150 steps, and a unit that is both revealed and hidden -- are exactly the cases
+	// with no incremental answer. Two comparisons against one number cannot get either wrong.
+	const int32 Cursor = AiPlaybackReel.GetCursor();
+
+	for (const TPair<int32, TObjectPtr<AStratUnitActor>>& Entry : UnitActors)
+	{
+		if (Entry.Value == nullptr)
+		{
+			continue;
+		}
+
+		// PERMISSIVE DEFAULTS, WHICH IS WHAT MAKES A UNIT IN BOTH MAPS -- OR IN NEITHER -- FALL
+		// OUT WITH NO SPECIAL CASE. Absent from `RevealAfterStep` means "was always here", which
+		// is `-1`: every cursor is greater. Absent from `HideAfterStep` means "never leaves",
+		// which is `MAX_int32`: every cursor is less. A unit in both is then visible exactly
+		// between its two steps, and the expression needs no arm for it.
+		const int32* const Reveal = RevealAfterStep.Find(Entry.Key);
+		const int32* const Hide   = HideAfterStep.Find(Entry.Key);
+
+		const bool bVisible = (Cursor > (Reveal != nullptr ? *Reveal : -1))
+		                   && (Cursor <= (Hide != nullptr ? *Hide : MAX_int32));
+
+		// `SetActorHiddenInGame` AND NOT `Destroy`, WHICH IS THE WHOLE DIFFERENCE BETWEEN THE
+		// TWO HALVES OF THIS FEATURE. A unit not yet built is hidden and will be shown; a unit
+		// already killed is hidden here and DESTROYED by `EndAiPlaybackTour`. Destroying at the
+		// step would be irreversible against a cursor that a skip can move, and this function
+		// promises to be a pure function of that cursor.
+		Entry.Value->SetActorHiddenInGame(!bVisible);
+	}
+}
+
+bool UStratMatchSubsystem::WillAiPlaybackRun() const
+{
+	// THE THREE REASONS A TOUR DOES NOT RUN, EACH KEPT AS ITS OWN BLOCK AND ITS OWN `return`.
+	// They were three separate exits in `BeginAiPlayback` and each carried a different
+	// argument; folding them into one boolean expression would have merged three reasons into
+	// one anonymous `false`, and the next reader would have to re-derive which of them fired.
+
+	if (ActiveConfig.AiPlaybackStepSeconds <= 0.0f)
+	{
+		// THE SHIPPED DEFAULT, AND ORDINARY. See the field: zero plays nothing, so every
+		// existing caller and every automation test runs down the path it always did -- which
+		// now includes the input path, because a retired reel consumes no click.
+		return false;
+	}
+
+	if (AiPlaybackReel.Num() <= 0)
+	{
+		// The AI did nothing this hand-over -- a side with no units, or a turn that refused on
+		// its first command. Not a fault and nothing to tour. Retired for form and for the
+		// next reader rather than out of need: an empty reel is already not playing, and an
+		// exit here that did not retire would be the one exception someone later has to
+		// re-derive.
+		return false;
+	}
+
+	if (GetWorld() == nullptr)
+	{
+		// CONFIGURED FOR PLAYBACK WITH NO WORLD TO TIME AGAINST, which is `RunAiTurnsIfDue`'s
+		// case and gets the same treatment for the same reason: presentation degrades and the
+		// match does not. The reel keeps its CONTENTS, so `GetAiPlaybackStepCount()` still
+		// answers; the cursor is retired, so nothing waits on a clock that does not exist.
+		// THIS IS THE EXIT A CONFIG GATE ON `SkipAiPlayback` WOULD HAVE MISSED.
+		return false;
+	}
+
+	return true;
+}
+
 void UStratMatchSubsystem::BeginAiPlayback()
 {
 	// ---- THE ARMING HALF OF THE INVARIANT ---------------------------------
@@ -1599,63 +1900,135 @@ void UStratMatchSubsystem::BeginAiPlayback()
 	// distinguishes a tour that was cut short from a reel that was never filled. `Reset()`
 	// belongs to the START of a hand-over and to a MATCH boundary, and is called from exactly
 	// those two places.
-	const auto RetireReel = [this]()
+	// [RESHAPED 2026-09-02: THE THREE GUARDS MOVED TO `WillAiPlaybackRun` AND ONLY THE SHARED
+	// CONSEQUENCE STAYED HERE. WRITTEN FLAT BECAUSE A READER LOOKING FOR THE `RetireReel`
+	// LAMBDA AND THE THREE `return`s WILL GREP THIS FUNCTION FOR THEM.] Every one of the three
+	// reasons is preserved WORD FOR WORD in that function, one per guard, and this is still the
+	// only place that arms `AiPlaybackTimer`.
+	//
+	// WHY THEY MOVED, AND IT IS NOT TIDINESS. The existence hold must be built BEFORE
+	// `RefreshPresentation` runs -- that is where a killed unit's actor is destroyed and a
+	// built unit's actor is spawned, and after it the information is gone. So "will a tour run"
+	// has to be answerable from `RunAiTurnsNow`, ABOVE the reconcile, and the only alternative
+	// was a second copy of these three conditions there. **A second copy is exactly how the
+	// gate could be raised for a tour that then declined to run -- which strands every held
+	// unit forever.** One function, two callers, and gate-true-with-no-tour is unreachable by
+	// construction rather than by care.
+	//
+	// `RetireReel` WAS A LAMBDA AND IS NOW ONE STATEMENT, which is what folding the guards
+	// bought: the lambda existed because three exits needed the same line, and there is one
+	// exit now. Its own block argued `SkipToEnd` over `Reset` -- retiring moves the cursor and
+	// KEEPS `Steps`, so `GetAiPlaybackStepCount()` survives and a tour cut short is still
+	// distinguishable from a reel that was never filled. That reasoning is unchanged and is
+	// restated here rather than deleted with the lambda.
+	if (!WillAiPlaybackRun())
 	{
 		AiPlaybackReel.SkipToEnd();
-	};
-
-	if (ActiveConfig.AiPlaybackStepSeconds <= 0.0f)
-	{
-		// THE SHIPPED DEFAULT, AND ORDINARY. See the field: zero plays nothing, so every
-		// existing caller and every automation test runs down the path it always did -- which
-		// now includes the input path, because a retired reel consumes no click.
-		RetireReel();
 		return;
 	}
 
-	if (AiPlaybackReel.Num() <= 0)
-	{
-		// The AI did nothing this hand-over -- a side with no units, or a turn that refused on
-		// its first command. Not a fault and nothing to tour. Retired for form and for the
-		// next reader rather than out of need: an empty reel is already not playing, and an
-		// exit here that did not retire would be the one exception someone later has to
-		// re-derive.
-		RetireReel();
-		return;
-	}
+	// THE FIRST STEP IS SHOWN IMMEDIATELY AND NOT ONE INTERVAL LATER, AND SINCE 2026-09-02 THAT
+	// IS STRUCTURAL RATHER THAN A SECOND CALL.
+	//
+	// [REPLACED 2026-09-02 BY THE VARIABLE-INTERVAL RESHAPE. WRITTEN FLAT BECAUSE THE DELETED
+	// LINES WERE THE ONLY `SetTimer` IN THIS FUNCTION AND A READER LOOKING FOR THE ARMING WILL
+	// GREP FOR THEM.] It was:
+	// RETRACTED> "ONE TIMER, RESET RATHER THAN STACKED ... SetTimer(AiPlaybackTimer, this,
+	// RETRACTED>  &UStratMatchSubsystem::OnAiPlaybackTimer, ActiveConfig.AiPlaybackStepSeconds,
+	// RETRACTED>  /*bLoop=*/true); ... OnAiPlaybackTimer();"
+	// A LOOPING HANDLE HAS ONE RATE FOR THE WHOLE TOUR, and the tour now waits for each AI
+	// move's slide, so the interval differs from step to step. `OnAiPlaybackTimer` arms the next
+	// one, one-shot, through `ArmNextPlaybackStep`. What that buys HERE is that "the first step
+	// shows now, not one interval later" stops being a second call after an arming and becomes
+	// the only way this function can start a tour at all -- so
+	// `GATE-AITURN.StepFocusesAndStopsOnTheLast`'s `cursor == 1` assertion is preserved by the
+	// shape rather than by remembering to keep a line.
+	//
+	// EVERY GUARD AND EVERY RETIRE-ON-DECLINE EXIT ABOVE IS UNCHANGED, BYTE FOR BYTE. This
+	// function still owns the arming half of the invariant its block describes; what it arms is
+	// now the first STEP rather than a repeating clock.
+	//
+	// AND THE PICTURES GO BACK BEFORE THE FIRST STEP IS SHOWN, ADDED 2026-09-02 FOR A DEFECT A
+	// HUMAN SAW IN PIE. The board is already final by the time this function runs -- that
+	// ordering is `RunAiTurnsNow`'s and is load-bearing and is NOT what changed -- so without
+	// this every AI unit is drawn at its destination and then visibly snaps back when its own
+	// step arms a slide. See `PreParkPicturesForTour`.
+	//
+	// **BELOW ALL THREE GUARDS, WHICH IS THE PLACEMENT AND NOT A READING ORDER.** A non-positive
+	// `AiPlaybackStepSeconds` -- the shipped default and every automation fixture -- an empty
+	// reel and a missing world have all returned above, so none of them parks anything and each
+	// stays bit-identical to the tour that shipped before this. AND BEFORE `OnAiPlaybackTimer`,
+	// which is the other half of the placement: that call shows step one, and a park applied
+	// after it would wipe the slide that step had just armed.
+	PreParkPicturesForTour();
 
-	UWorld* const World = GetWorld();
-	if (World == nullptr)
-	{
-		// CONFIGURED FOR PLAYBACK WITH NO WORLD TO TIME AGAINST, which is `RunAiTurnsIfDue`'s
-		// case and gets the same treatment for the same reason: presentation degrades and the
-		// match does not. The reel keeps its CONTENTS, so `GetAiPlaybackStepCount()` still
-		// answers; the cursor is retired, so nothing waits on a clock that does not exist.
-		// THIS IS THE EXIT A CONFIG GATE ON `SkipAiPlayback` WOULD HAVE MISSED.
-		RetireReel();
-		return;
-	}
+	// AND THE EXISTENCE HOLD IS APPLIED FOR THE FIRST TIME, AT CURSOR ZERO.
+	//
+	// **HERE AND NOT AT THE HOIST, WHICH CORRECTS THE OBVIOUS PLACEMENT.** The hold is BUILT
+	// above `RefreshPresentation`, because that is the last moment the evidence exists -- but a
+	// unit BUILT during the hand-over has no actor until that reconcile SPAWNS one, so a call at
+	// the hoist would iterate `UnitActors` and find nothing to hide. This is the first point at
+	// which every actor the tour will talk about exists.
+	//
+	// NO FRAME IS RENDERED BETWEEN THE SPAWN AND THIS CALL. `RefreshPresentation` and
+	// `BeginAiPlayback` are two statements of one synchronous call in `RunAiTurnsNow`, so a
+	// unit that must not be seen yet is never drawn once.
+	ApplyTourExistenceAtCursor();
 
-	// ONE TIMER, RESET RATHER THAN STACKED, on `RunAiTurnsIfDue`'s line. The reset above
-	// already cleared it; this is the arming.
-	World->GetTimerManager().SetTimer(AiPlaybackTimer, this,
-		&UStratMatchSubsystem::OnAiPlaybackTimer,
-		ActiveConfig.AiPlaybackStepSeconds, /*bLoop=*/true);
-
-	// THE FIRST STEP IS SHOWN IMMEDIATELY AND NOT ONE INTERVAL LATER. A looping timer fires
-	// first at `Rate`, so without this the camera would sit still for half a second at the
-	// start of every hand-over -- which reads as the playback having failed to start rather
-	// than as pacing.
 	OnAiPlaybackTimer();
 }
 
 void UStratMatchSubsystem::OnAiPlaybackTimer()
 {
-	// ONE LINE, AND THE WHOLE POINT OF IT IS THAT IT IS ONE LINE. See the declaration: the
-	// step-and-stop body used to live here, where nothing without a ticking world could reach
-	// it, and so nothing did. It is `AdvanceAiPlaybackOneStep` now and this is a caller of it
-	// rather than a second copy of it.
-	AdvanceAiPlaybackOneStep();
+	// THE STEP, THEN THE CLOCK, AND THE ORDER IS THE WHOLE FUNCTION. See the declaration: the
+	// step-and-stop body lives in `AdvanceAiPlaybackOneStep` -- world-free, hand-drivable, and
+	// promising in its own block that it neither arms nor requires a timer -- so the re-arm sits
+	// on THIS side of the callback, where only an `FTimerManager` ever reaches it.
+	//
+	// GUARDED ON THE RETURN VALUE RATHER THAN ON THE REEL, because "there was a step to take" is
+	// the question the stepping function already answers and asking the reel again here would be
+	// a second spelling of it. False means the cursor found nothing, and
+	// `AdvanceAiPlaybackOneStep` has already called `EndAiPlaybackTour` in that case.
+	if (AdvanceAiPlaybackOneStep())
+	{
+		ArmNextPlaybackStep();
+	}
+}
+
+void UStratMatchSubsystem::ArmNextPlaybackStep()
+{
+	// THE REEL IS ASKED FIRST AND IT IS AN INDEPENDENT REASON, NOT A RESTATEMENT OF THE CALLER'S
+	// GUARD. The caller checked that a step WAS TAKEN; this checks whether another one REMAINS.
+	// On the last step of a tour both are true at once -- a step was taken and the reel has
+	// stopped -- and `AdvanceAiPlaybackOneStep` has already run `EndAiPlaybackTour`, so arming
+	// here would put a handle back immediately after the one verb that exists to remove it.
+	if (!AiPlaybackReel.IsPlaying())
+	{
+		return;
+	}
+
+	// NO WORLD, NO CLOCK. `BeginAiPlayback`'s third exit for the same reason, and the headless
+	// case: a clause may hold a subsystem with no world and drive the tour by hand.
+	UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		return;
+	}
+
+	// THE PACE PLUS THE PICTURE, AND THE SECOND TERM IS THE ACTOR'S OWN ANSWER. See
+	// `LastArmedSlideSeconds`: `AStratUnitActor::PlayRouteSlide` returns how long it armed and
+	// this class stores it, rather than multiplying `MoveTweenSeconds` by a route length --
+	// which `AiPlaybackStepSeconds`' block forbids in as many words. At the shipped
+	// `MoveTweenSeconds <= 0` default the second term is zero on every step and this interval is
+	// bit-identical to the constant the loop used to run at.
+	const float Interval = ActiveConfig.AiPlaybackStepSeconds + LastArmedSlideSeconds;
+
+	// ONE-SHOT AND NOT LOOPING, which is the reshape. `SetTimer` on a handle that is already
+	// pending replaces it, so this is reset-rather-than-stacked on `RunAiTurnsIfDue`'s line; in
+	// practice the handle has already fired by the time this runs.
+	World->GetTimerManager().SetTimer(AiPlaybackTimer, this,
+		&UStratMatchSubsystem::OnAiPlaybackTimer,
+		Interval, /*bLoop=*/false);
 }
 
 bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
@@ -1677,12 +2050,28 @@ bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
 
 	// A COPY AND NOT THE POINTER, because `FocusPlaybackStep` reaches actors and this
 	// function calls `Advance()` afterwards. Neither can reallocate `Steps` today -- nothing
-	// on either path records -- and the copy is six ints, so the cost of not having to
-	// re-establish that argument after some later change is zero.
+	// on either path records -- and the copy is what buys not having to re-establish that
+	// argument after some later change.
+	//
+	// THE COST OF THAT COPY IS NO LONGER ZERO, AND THE SENTENCE THAT SAID SO IS CORRECTED
+	// RATHER THAN LEFT STANDING. It read "the copy is six ints, so the cost ... is zero", and
+	// `FStratAiPlaybackStep` now carries `RouteHexes`, a `TArray<FIntPoint>` -- so this is a
+	// heap allocation and a memcpy of a handful of `FIntPoint`s, not six ints. THE COPY IS
+	// KEPT ANYWAY, which is the decision: it happens once per playback tick, and the tick is
+	// the ~0.5 s §2.11.2 asks for, so the cost is a few dozen bytes twice a second against a
+	// lifetime guarantee that does not have to be re-argued every time this file changes. A
+	// `const FStratAiPlaybackStep&` would be free and would put that argument back.
 	const FStratAiPlaybackStep Current = *Step;
 
 	FocusPlaybackStep(Current);
 	AiPlaybackReel.Advance();
+
+	// AND EXISTENCE IS RECOMPUTED FROM THE NEW CURSOR. Immediately after the advance and before
+	// the last-step retirement below, so the step just shown is the one whose appearances and
+	// departures are now on screen. See `ApplyTourExistenceAtCursor`: it is a pure function of
+	// the cursor, so calling it here rather than tracking what changed is what makes a skip --
+	// which moves the cursor by any amount -- need no separate handling.
+	ApplyTourExistenceAtCursor();
 
 	if (!AiPlaybackReel.IsPlaying())
 	{
@@ -1693,7 +2082,197 @@ bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
 		EndAiPlaybackTour();
 	}
 
+	// AND THE SLIDE IS ARMED LAST -- AFTER THE FOCUS, AFTER THE ADVANCE, AND AFTER THE
+	// LAST-STEP RETIREMENT ABOVE. THE ORDER IS THE FEATURE AND NOT TIDINESS. `EndAiPlaybackTour`
+	// cancels every unit's route slide, so arming before it would mean the FINAL action of every
+	// tour was shown and then immediately un-shown -- the one step a viewer is most likely to be
+	// looking at. Armed here, the last step's slide runs with no timer behind it, which is
+	// correct: nothing waits on it and `AStratUnitActor::Tick` retires it on its own clock.
+	//
+	// THIS DOES NOT ARM, RE-ARM OR REQUIRE A TIMER, AND THAT SENTENCE IN THIS FUNCTION'S OWN
+	// BLOCK SURVIVES THIS LINE VERBATIM. What is armed is a `Body` offset and a tick flag on one
+	// actor. The tour's clock is `ArmNextPlaybackStep`'s and lives on the far side of
+	// `OnAiPlaybackTimer`, precisely so that a clause hand-driving this function on a world that
+	// is never ticked touches no timer at all.
+	//
+	// AT THE SHIPPED `AStratUnitActor::MoveTweenSeconds <= 0` DEFAULT THIS RETURNS 0 HAVING
+	// WRITTEN NOTHING, so every automation fixture leaves this line with the state it had before
+	// it and the tour is bit-identical to the one that shipped before slides existed.
+	//
+	// **AND NO CLAUSE WILL EVER REPORT THIS LINE BEING MOVED ABOVE `EndAiPlaybackTour()`. THAT
+	// IS A STANDING GAP, RECORDED HERE BECAUSE A FUTURE READER TIDYING THIS FUNCTION WOULD GET A
+	// GREEN SUITE AND NO WARNING.** `strat-test-author` wrote
+	// `T-TURN-09.TheLastStepsSlideSurvivesTheTourEnding`, built it, ran it, and it FAILED ON THE
+	// UNMUTATED TREE; it was deleted rather than softened. **THE CAUSE IS STRUCTURAL AND IS NOT
+	// A PROPERTY OF FERRUM CROSSING**, which is worth stating because it means no scenario
+	// change and no fixture rewrite can close it: `FStratAiTurnRunner::RunTurn` records the
+	// closing EndTurn and makes an applied EndTurn its ONLY successful exit, so the last step of
+	// every normally-completed hand-over is an EndTurn -- `Kind != Move`, and
+	// `PlayMoveSlideForStep` refuses on its first line. There is never a slide in flight when
+	// the last step is shown, so the ordering that protects one is correct and unobservable at
+	// the same time. A hand-over could end on an arming Move only if its final turn were cut
+	// short between an accepted Move and its EndTurn, which no shipped path produces.
+	// The ordering STAYS -- it is correct, it costs nothing, and "no clause can see it" is not
+	// a reason to write the wrong order. This comment is the only thing standing in the way.
+	LastArmedSlideSeconds = PlayMoveSlideForStep(Current);
+
 	return true;
+}
+
+float UStratMatchSubsystem::PlayMoveSlideForStep(const FStratAiPlaybackStep& Step)
+{
+	// SIX REFUSALS, NONE LOGGED, ALL ORDINARY -- see the declaration. They are written as six
+	// early returns rather than one conjunction because each names a different ordinary state
+	// and a reader debugging a missing slide needs to know WHICH.
+	if (Step.Kind != EStratAiCommandKind::Move)
+	{
+		return 0.0f;
+	}
+
+	// FEWER THAN TWO HEXES IS NOT A ROUTE. `FStratAiPlaybackStep::RouteHexes` is empty on every
+	// non-Move kind and empty when `FStratBridge::MovePathToHex` refused -- which that field's
+	// own block records as degrading one step to a snap rather than refusing the move.
+	if (Step.RouteHexes.Num() < 2)
+	{
+		return 0.0f;
+	}
+
+	if (Board == nullptr)
+	{
+		return 0.0f;
+	}
+
+	// THE UNIT MAY BE DEAD, AND THAT IS THE ORDINARY CASE THIS BRANCH EXISTS FOR. The reel is
+	// what the AI DID and the board is the aftermath: a unit that moved on the AI's first command
+	// and was destroyed on its ninth has no actor by the time the tour reaches step one. Nothing
+	// is shown and nothing is reported.
+	AStratUnitActor* const Actor = FindUnitActor(Step.UnitId);
+	if (Actor == nullptr)
+	{
+		return 0.0f;
+	}
+
+	// THE ANCHOR IS THE HEX THE LAST APPLIED MODEL PUTS THIS UNIT ON -- where the picture rests
+	// when nothing is sliding, which is what `AStratUnitActor::PlayRouteSlide` measures its
+	// offsets against. THROUGH `FindAppliedUnitHex` AND NOT A LOOP WRITTEN HERE, because
+	// `PreParkPicturesForTour` needs the identical answer for the identical unit: a park
+	// measured against one hex and a slide measured against another is a jump at the moment the
+	// step is shown, which is the very defect the pre-park exists to remove.
+	FIntPoint AnchorHex = FIntPoint::ZeroValue;
+	if (!FindAppliedUnitHex(Step.UnitId, AnchorHex))
+	{
+		return 0.0f;
+	}
+
+	// ONE EXPRESSION FOR THE ANCHOR AND FOR EVERY ROUTE POINT, WHICH IS WHAT MAKES THE LIFT
+	// CANCEL. `AStratBoardActor::WorldLocationOfHex` puts both on the TILE PLANE, so the
+	// differences the actor takes are free of `BodyZOffset` by construction -- see
+	// `AStratUnitActor::PlayRouteSlide`, whose declaration forbids deriving the anchor from the
+	// actor transform and records the measurement that caught that defect on the player's path.
+	const FVector Anchor = Board->WorldLocationOfHex(AnchorHex);
+
+	TArray<FVector> RouteWorldPoints;
+	RouteWorldPoints.Reserve(Step.RouteHexes.Num());
+	for (const FIntPoint& RouteHex : Step.RouteHexes)
+	{
+		RouteWorldPoints.Add(Board->WorldLocationOfHex(RouteHex));
+	}
+
+	// AND THE ACTOR ANSWERS HOW LONG IT WILL TAKE. This class does not compute that number; see
+	// `LastArmedSlideSeconds` and `AiPlaybackStepSeconds`, which record why it may not.
+	return Actor->PlayRouteSlide(RouteWorldPoints, Anchor);
+}
+
+bool UStratMatchSubsystem::FindAppliedUnitHex(int32 UnitId, FIntPoint& OutHex) const
+{
+	// A LINEAR SCAN AND NOT A MAP, on ten units and at most once per playback step. A second
+	// index keyed by unit id would be a second thing to keep in step with `ApplyView`'s own
+	// reconciliation, and `UnitActors` is already that map for the thing that needs one.
+	//
+	// `OutHex` IS LEFT UNTOUCHED ON FAILURE. A caller that ignored the return value would then
+	// be reading whatever it initialised the variable to rather than a hex belonging to some
+	// other unit, which is the safer of the two wrong answers.
+	for (const FStratUnitView& View : AppliedModel.Units)
+	{
+		if (View.UnitId == UnitId)
+		{
+			OutHex = View.Hex;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void UStratMatchSubsystem::PreParkPicturesForTour()
+{
+	// NO BOARD, NO CONVERSION, NO PARK. `WorldLocationOfHex` is the project's one axial -> world
+	// expression and this function may not have a second; with no board there is nothing to
+	// measure against and the tour degrades to what it did before this existed.
+	if (Board == nullptr)
+	{
+		return;
+	}
+
+	// THE FIRST MOVE PER UNIT. `Parked` is what makes "first" mean first rather than last -- a
+	// unit that moves three times must go back to leg 1's start, and a loop without this would
+	// leave it at leg 3's, which is a smaller version of the very defect being fixed.
+	//
+	// A UNIT IS ADDED ONLY WHEN IT IS ACTUALLY PARKED, WHICH IS DELIBERATE AND IS NOT THE SAME
+	// AS ADDING IT WHEN ITS FIRST MOVE IS SEEN. A leg whose path query refused carries an empty
+	// route and cannot be parked at; recording the unit there would suppress the park for its
+	// LATER legs too, which do have routes and would then rubber-band exactly as before. So a
+	// refusal is skipped and the next usable leg parks. See the declaration, which names what
+	// that leaves visible.
+	TSet<int32> Parked;
+
+	for (int32 Index = 0; Index < AiPlaybackReel.Num(); ++Index)
+	{
+		const FStratAiPlaybackStep* const Step = AiPlaybackReel.StepAt(Index);
+		if (Step == nullptr)
+		{
+			continue;
+		}
+
+		// THE SAME FOUR REFUSALS `PlayMoveSlideForStep` MAKES, IN THE SAME ORDER, BECAUSE A
+		// PICTURE MUST NOT BE PARKED FOR A STEP THAT WILL NOT ANIMATE IT. A park with no slide
+		// coming is a unit drawn away from its hex for the whole tour with nothing to bring it
+		// back until `EndAiPlaybackTour` -- worse than the defect being repaired.
+		if (Step->Kind != EStratAiCommandKind::Move || Step->RouteHexes.Num() < 2)
+		{
+			continue;
+		}
+
+		if (Parked.Contains(Step->UnitId))
+		{
+			continue;
+		}
+
+		// THE UNIT MAY BE DEAD -- it moved early in the hand-over and was destroyed later, so
+		// `ApplyView` never spawned an actor for it. Ordinary, and skipped rather than reported,
+		// exactly as `PlayMoveSlideForStep` skips the same case at its own step.
+		AStratUnitActor* const Actor = FindUnitActor(Step->UnitId);
+		if (Actor == nullptr)
+		{
+			continue;
+		}
+
+		FIntPoint AnchorHex = FIntPoint::ZeroValue;
+		if (!FindAppliedUnitHex(Step->UnitId, AnchorHex))
+		{
+			continue;
+		}
+
+		// BOTH POINTS THROUGH THE ONE EXPRESSION, so `BodyZOffset` cancels in the actor and no
+		// third copy of that arithmetic exists. The anchor is the SAME hex
+		// `PlayMoveSlideForStep` will use when this unit's step comes round -- guaranteed by
+		// both asking `FindAppliedUnitHex` rather than by two loops agreeing -- so the park and
+		// the slide's waypoint 0 are the same value and the step begins with no jump.
+		Actor->ParkPictureAt(Board->WorldLocationOfHex(Step->RouteHexes[0]),
+		                     Board->WorldLocationOfHex(AnchorHex));
+
+		Parked.Add(Step->UnitId);
+	}
 }
 
 void UStratMatchSubsystem::EndAiPlaybackTour()
@@ -1718,6 +2297,102 @@ void UStratMatchSubsystem::EndAiPlaybackTour()
 	// line -- is unaffected. The cost of the guarantee is one comparison on the paths that
 	// did not need it.
 	AiPlaybackReel.SkipToEnd();
+
+	// AND THE PICTURES THE TOUR PARKED, ADDED 2026-09-02 BY THIS FUNCTION'S OWN FOUNDING
+	// ARGUMENT RATHER THAN BY A NEW ONE. `AStratUnitActor::PlayRouteSlide` leaves a picture
+	// resting over an INTERMEDIATE hex with no clock behind it -- that is what a tour's slide
+	// is -- so a tour stopped mid-slide strands it there permanently. **AND SINCE THE PRE-PARK
+	// LANDED THERE IS A SECOND WAY TO BE STRANDED THAT THIS ALREADY COVERS, WHICH IS WORTH
+	// STATING BECAUSE IT IS THE CASE A READER WOULD ASSUME NEEDS ITS OWN HANDLING:** a unit
+	// parked by `PreParkPicturesForTour` and never yet stepped has an EMPTY polyline and a
+	// non-zero rest offset, and `CancelRouteSlide` zeroes the offset before retiring, so it
+	// comes home on the same call as one caught mid-slide. A tour skipped in its first second
+	// strands nothing. The clear belongs here and
+	// not in `SkipAiPlayback` for the reason that created this verb: there must be no way to
+	// stop a tour without clearing what the tour left behind, so the SEVENTH call site cannot
+	// reopen the hazard.
+	//
+	// A NO-OP AT MOST OF THE SIX SITES AND AT EVERY AUTOMATION FIXTURE. `CancelRouteSlide`
+	// writes a relative zero the actor already holds when nothing is sliding, and at the shipped
+	// `AStratUnitActor::MoveTweenSeconds <= 0` default nothing can ever slide.
+	//
+	// UNCONDITIONAL OVER EVERY ACTOR, AND THE COST IS NAMED: a PLAYER's slide still in flight is
+	// hard-cut too. Telling the two apart would need this class to remember which pictures it
+	// parked, which is presentation state on the subsystem bought to avoid presentation state on
+	// the actor -- the wrong trade, and the one `AStratUnitActor::SnapToWorldLocation`'s
+	// declaration already refuses in the other direction.
+	for (const TPair<int32, TObjectPtr<AStratUnitActor>>& Entry : UnitActors)
+	{
+		if (Entry.Value != nullptr)
+		{
+			Entry.Value->CancelRouteSlide();
+		}
+	}
+
+	// AND §2.11.2's EXISTENCE HOLD IS RELEASED, HERE AND NOWHERE ELSE, ON THIS FUNCTION'S OWN
+	// FOUNDING ARGUMENT: there must be no verb in this class that stops a tour without clearing
+	// what the tour left behind. A hidden unit and a retained corpse are both things a tour left
+	// behind, and a seventh call site cannot reopen either.
+	//
+	// **IT DESTROYS HERE AND DOES NOT DEFER TO THE NEXT `ApplyView`, WHICH IS THE LOAD-BEARING
+	// CHOICE AND THE ONE THAT LOOKS OPTIONAL.** Deferring is tempting -- the destroy loop would
+	// do it correctly the moment the gate came down. But `ApplyView` runs when a model is
+	// applied, and after a tour ends the next one may be a mouse crossing a hex boundary, or a
+	// command, or NOTHING AT ALL. If the player's cursor never moves again there is no next
+	// `ApplyView`, and a unit the rules module killed forty steps ago stands on the board for
+	// the rest of the match. That is worse than the defect this whole feature repairs.
+	//
+	// ORDERED: UNHIDE, THEN DESTROY, THEN DROP THE GATE. Unhiding first is unconditional over
+	// every actor, so nothing can be left invisible by an id this function failed to think
+	// about; destroying second uses the APPLIED MODEL as the authority on who should still be
+	// there, which is the same authority `ApplyView`'s own destroy loop uses and not a second
+	// one; dropping the gate last means no reader can see a half-released hold.
+	if (bTourExistenceHeld)
+	{
+		for (const TPair<int32, TObjectPtr<AStratUnitActor>>& Entry : UnitActors)
+		{
+			if (Entry.Value != nullptr)
+			{
+				Entry.Value->SetActorHiddenInGame(false);
+			}
+		}
+
+		// THE APPLIED MODEL AND NOT `HideAfterStep`, and the difference matters. Asking the map
+		// would destroy exactly what this feature retained -- correct today. Asking the model
+		// destroys every actor the model does not carry, which is the same question
+		// `ApplyView` asks and is right even if a retention was recorded for a unit that
+		// turned out to survive, or missed for one that did not.
+		TSet<int32> InModel;
+		InModel.Reserve(AppliedModel.Units.Num());
+		for (const FStratUnitView& View : AppliedModel.Units)
+		{
+			InModel.Add(View.UnitId);
+		}
+
+		for (auto It = UnitActors.CreateIterator(); It; ++It)
+		{
+			if (InModel.Contains(It.Key()))
+			{
+				continue;
+			}
+
+			if (It.Value() != nullptr)
+			{
+				It.Value()->Destroy();
+			}
+			It.RemoveCurrent();
+		}
+
+		bTourExistenceHeld = false;
+		RevealAfterStep.Reset();
+		HideAfterStep.Reset();
+	}
+
+	// AND THE REMEMBERED SLIDE LENGTH, WHICH IS BOOKKEEPING AND NOT A GUARANTEE. Nothing reads
+	// it before `AdvanceAiPlaybackOneStep` writes it again -- `ArmNextPlaybackStep` is the only
+	// reader and refuses on a retired reel -- so this is here so that a stale figure cannot
+	// outlive the tour it described and be read by a call site nobody has written yet.
+	LastArmedSlideSeconds = 0.0f;
 }
 
 void UStratMatchSubsystem::FocusPlaybackStep(const FStratAiPlaybackStep& Step) const
@@ -1781,6 +2456,15 @@ bool UStratMatchSubsystem::SkipAiPlayback()
 	// began, so the end state has been on screen the whole time. A `RefreshPresentation` call
 	// here would repaint an unchanged screen and would be the first thing to look at when
 	// somebody later believes this function moves the board. It does not.
+	//
+	// [AMENDED 2026-09-02, SAME DAY, BY THE AI ROUTE SLIDE. THE CLAIM ABOVE IS RE-SCOPED AND NOT
+	// RETRACTED, WHICH IS WRITTEN OUT BECAUSE THE TWO LOOK ALIKE AND ONLY ONE IS TRUE.] The
+	// `EndAiPlaybackTour` call above now cancels every unit's parked slide as well. **NOTHING IS
+	// RECONCILED BY THAT EITHER**: `AStratUnitActor::CancelRouteSlide` recomputes no position,
+	// reads no transform, writes no transform and consults no model -- it puts one component
+	// back at the relative zero it holds at rest on every path that does not park. The board,
+	// the model and every actor transform are exactly what they were, which is the sense in
+	// which the paragraph above was ever a claim worth making.
 	UE_LOG(LogStratPlay, Verbose,
 		TEXT("STRAT-AI playback skipped at step %d of %d"),
 		AiPlaybackReel.GetCursor(), AiPlaybackReel.Num());
@@ -2386,6 +3070,32 @@ bool UStratMatchSubsystem::LoadMatchFromSlot(const FString& SlotName, FString& O
 	return bStarted;
 }
 
+void UStratMatchSubsystem::NotePendingMoveRoute(int32 UnitId, const TArray<FIntPoint>& RouteHexes)
+{
+	// AN EMPTY ROUTE NOTES NOTHING AND CLEARS NOTHING, which is the shape a caller that could
+	// not get an answer needs. `FStratBridge::MovePathToHex` reports "no route" as an `Ok()`
+	// with an empty array -- an ordinary board fact and not a fault -- and a refusal leaves the
+	// caller's array empty too, so both arrive here as this branch and both degrade to a snap.
+	//
+	// AND IT DOES NOT REMOVE AN EXISTING ENTRY, deliberately. This function's contract is "note
+	// a route"; making an empty argument also mean "forget the one you have" would give it two
+	// jobs and would let a later caller cancel a route it did not note. `ApplyView` empties the
+	// map, unconditionally and in one place.
+	if (RouteHexes.Num() <= 0)
+	{
+		return;
+	}
+
+	// A COPY, WHICH IS THE POINT OF THE PARAMETER BEING A REFERENCE TO SOMEBODY ELSE'S ARRAY.
+	// The caller's local goes out of scope at the end of the input event; this map outlives it
+	// by exactly one `ApplyView`.
+	//
+	// `Add` AND NOT `FindOrAdd` + append: a second note for the same unit in one apply window
+	// REPLACES the first, which is the right answer -- the later route is the later truth, and
+	// concatenating two routes would produce a polyline that visits a hex twice.
+	PendingMoveRoutes.Add(UnitId, RouteHexes);
+}
+
 void UStratMatchSubsystem::TearDownPresentation()
 {
 	// THE TIMER FIRST AND BEFORE ANYTHING IS FREED, for `Deinitialize`'s reason exactly:
@@ -2425,6 +3135,15 @@ void UStratMatchSubsystem::TearDownPresentation()
 	// pointer, and the timer that could be holding one is cleared on the line above. Same
 	// ordering as `RunAiTurnsNow`, for the same reason.
 	AiPlaybackReel.Reset();
+
+	// AND THE PENDING ROUTES, BESIDE THE REEL AND FOR ITS MATCH-BOUNDARY REASON. `ApplyView`
+	// already empties this map on every apply, so this line is reachable only when a route was
+	// noted and no apply followed -- a load or a reseed between the submit and the refresh.
+	// A MATCH BOUNDARY IS DIFFERENT IN KIND: unit ids are the rules module's and the next match
+	// reissues them from the same small range, so a surviving entry would attach the previous
+	// match's path to a completely unrelated unit that happens to share its id. Cheaper to say
+	// here than to reason about.
+	PendingMoveRoutes.Reset();
 
 	for (const TPair<int32, TObjectPtr<AStratUnitActor>>& Entry : UnitActors)
 	{

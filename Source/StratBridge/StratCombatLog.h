@@ -41,6 +41,21 @@
 //     screens down records: a line range written during a diff is invalidated by that
 //     same diff.) This struct is the payload such a mechanism
 //     would carry, landed early because assembling it is the hard part.
+//
+//     [AMENDED 2026-09-02: THAT RULING WAS MADE, AND FOR A DIFFERENT AND SMALLER PAYLOAD
+//     THAN THIS STRUCT. THE PARAGRAPH ABOVE IS NOT RETRACTED -- every sentence of it is
+//     still true of `FStratCombatOutcome`, which still has no accessor and is still only
+//     emitted.] `FStratBridge::RosterDeltaOfLastCommand` now delivers, per accepted
+//     command, the unit ids that APPEARED and the ids that DEPARTED -- a return channel
+//     shaped like `RepairsAtTurnOpen`, which is this tree's precedent for delivering an
+//     observation rather than only logging it. **IT DELIVERS A ROSTER DELTA AND NOT THIS
+//     STRUCT, AND THE DIFFERENCE IS THE REASON THE REFUSAL ABOVE SURVIVES IT.** The delta
+//     is two lists of ids with no roles; this struct is per-attack, role-keyed and thirty
+//     fields wide, and `STRAT-COMBAT resolved` needs to say WHICH of the attacker and the
+//     defender died -- a question the delta cannot be asked. So the information overlaps
+//     (an id in `Departed` IS a unit that died) while the USES do not, and neither answer
+//     was rewritten to serve the other. Anyone widening the delta toward this struct's
+//     fields should read the paragraph above first: it is still the argument against.
 //   - No `strat::UiForecast` by value. The forecast's seven fields are flattened into
 //     engine scalars here precisely so this header stays free of the vendored headers.
 //   - No damage FORMULA. Every predicted number is `uiForecast`'s and every measured

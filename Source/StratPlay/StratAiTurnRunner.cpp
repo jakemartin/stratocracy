@@ -138,9 +138,21 @@ bool FStratBridgeAiTurnPort::NextCommand(int32            Side,
 	return true;
 }
 
-bool FStratBridgeAiTurnPort::Submit(const FStratAiCommand& Command, FString& OutFailureReason)
+bool FStratBridgeAiTurnPort::Submit(const FStratAiCommand& Command,
+                                    FString&               OutFailureReason,
+                                    FStratAiCommandEffect& OutEffect)
 {
 	OutFailureReason.Reset();
+
+	// FIRST STATEMENT, BEFORE EVERY BRANCH, WHICH IS THE INTERFACE'S CONTRACT AND NOT A
+	// courtesy. `RunTurn` reuses one local across the whole turn, so a route left behind by
+	// command N would otherwise be recorded against command N+1 -- and command N+1 might be an
+	// EndTurn, which would slide a unit that did not move. Clearing here rather than at the
+	// caller puts the obligation where the interface can state it.
+	// ALL THREE MEMBERS IN ONE VERB SINCE 2026-09-02, which is why the widening added a struct
+	// rather than two more parameters: this line could not clear two of three and leave the
+	// caller a stale roster delta from command N against command N+1.
+	OutEffect.Reset();
 
 	if (Bridge == nullptr)
 	{
@@ -167,8 +179,48 @@ bool FStratBridgeAiTurnPort::Submit(const FStratAiCommand& Command, FString& Out
 		break;
 
 	case EStratAiCommandKind::Move:
+	{
+		// THE PATH QUERY RUNS BEFORE THE SUBMIT, AND "BEFORE" IS LOAD-BEARING RATHER THAN A
+		// PREFERENCE. `MovePathToHex` answers about the board as it stands at the instant it
+		// is asked. After the submit the unit is STANDING ON `Command.Hex`, so the same
+		// question answers a one-hex route at cost 0 -- a structurally valid answer, silently
+		// describing a journey nobody took, and one that no downstream check could catch
+		// because it satisfies every invariant the consumer tests (`[0]` is the from-hex,
+		// `.Last()` is the goal, it is non-empty). Asking first is the only ordering under
+		// which the answer means what the field says it means.
+		//
+		// IT IS A QUERY AND NOT A LEGALITY CHECK, and nothing branches on it. `Pathed.bOk` is
+		// read below only to decide whether there is a route to HAND OUT; the submission's
+		// acceptance is `SubmitMoveToHex`'s answer and nothing else's. A refused path query
+		// does not refuse the move -- it degrades that one step to a snap, which is exactly
+		// what `AStratUnitActor::ApplyUnitView` does with an empty route.
+		//
+		// `Costs` AND `Total` ARE ASKED FOR AND DISCARDED because `MovePathToHex`'s signature
+		// requires them. They are not read here and must not become read here: §2.5's cost
+		// model is the rules module's and this file computes nothing.
+		TArray<FIntPoint> Route;
+		TArray<int32>     Costs;
+		int32             Total = 0;
+		const FStratResult Pathed =
+			Bridge->MovePathToHex(Command.UnitId, Command.Hex, Route, Costs, Total);
+
 		Applied = Bridge->SubmitMoveToHex(Command.UnitId, Command.Hex);
+
+		// COPIED OUT ONLY AFTER ACCEPTANCE, WHICH IS THE PLAYER PATH'S OWN SECOND RECORDED
+		// REASON: a refused move must leave no route behind. `UStratMatchSubsystem` notes the
+		// player's route only on an accepted command for that reason, and an AI route escaping
+		// on a refusal would arm a slide for a move the rules module rejected.
+		//
+		// BOTH TERMS ARE REQUIRED. `Applied.bOk` alone would copy a route the query refused to
+		// produce (an empty one, harmlessly, today -- but "harmlessly today" is how a
+		// degenerate fallback gets reintroduced); `Pathed.bOk` alone would leak a route past a
+		// refusal.
+		if (Applied.bOk && Pathed.bOk)
+		{
+			OutEffect.MoveRoute = MoveTemp(Route);
+		}
 		break;
+	}
 
 	case EStratAiCommandKind::Attack:
 		Applied = Bridge->SubmitAttackAtHex(Command.UnitId, Command.Hex);
@@ -195,6 +247,28 @@ bool FStratBridgeAiTurnPort::Submit(const FStratAiCommand& Command, FString& Out
 			: FString::Printf(TEXT("[%s] %s"), *Applied.Id, *Applied.Reason);
 		return false;
 	}
+
+	// AND THE ROSTER DELTA, ASKED AFTER ACCEPTANCE AND OF EVERY KIND. `FStratBridge::Submit`
+	// bracketed the observation around the one `applyCommand` call and retained the answer; this
+	// is the read.
+	//
+	// AFTER, AND THE ORDERING IS THE SAME ONE THE MOVE ROUTE'S OWN BLOCK ARGUES ONE PARAGRAPH
+	// UP -- FOR THE OPPOSITE REASON, WHICH IS WHY IT IS SAID RATHER THAN ASSUMED. The path
+	// query must run BEFORE the submit because it answers about the board it is asked on. This
+	// must run AFTER because it is a DELTA the submit itself produced; asked before, there
+	// would be nothing to compare against.
+	//
+	// UNCONDITIONAL BY KIND. A Build appears, an Attack departs, and an EndTurn does neither --
+	// but the arm that would decide which kinds can change a roster is exactly the assumption
+	// `FStratAiPlaybackStep::AppearedUnitIds` records as measured-false. The bridge answers
+	// empty for a command that changed nothing, which costs a caller nothing to receive.
+	//
+	// ITS REFUSAL IS IGNORED AND THAT IS DELIBERATE. `RosterDeltaOfLastCommand` refuses only
+	// with no seed, and it empties both arrays before refusing -- so a refusal leaves exactly
+	// the empty lists an unmeasurable observation should produce. Branching on it here would
+	// let a presentation fact refuse a command the rules module accepted, which is the
+	// inversion the Move route's own block already forbids one line at a time.
+	Bridge->RosterDeltaOfLastCommand(OutEffect.AppearedUnitIds, OutEffect.DepartedUnitIds);
 
 	return true;
 }
@@ -301,8 +375,18 @@ FStratAiTurnOutcome FStratAiTurnRunner::RunTurn(IStratAiTurnPort& Port,
 		const int32 TurnBefore = Port.Turn();
 		const int32 SideBefore = Port.SideToMove();
 
-		FString ApplyReason;
-		if (!Port.Submit(Command, ApplyReason))
+		// THE ROUTE LOCAL. DECLARED HERE, INSIDE THE LOOP BODY, so its lifetime is one
+		// command; and `Port.Submit` is contracted to `Reset()` it at entry anyway, so the two
+		// halves agree rather than either one carrying the whole obligation.
+		//
+		// THIS LOOP NEVER BRANCHES ON IT, which is `IStratAiTurnPort::Submit`'s contract and
+		// is what keeps this runner from having become a decider. It is written by the port
+		// and read once, by `Record`, below. There is no `if (MoveRoute.Num() ...)` anywhere
+		// in this function and there must not be one -- grep it: an empty route and a full one
+		// take exactly the same path through here.
+		FString               ApplyReason;
+		FStratAiCommandEffect Effect;
+		if (!Port.Submit(Command, ApplyReason, Effect))
 		{
 			Outcome.FailureReason = FString::Printf(
 				TEXT("the rules module refused the AI's %s for side %d after %d applied ")
@@ -336,9 +420,16 @@ FStratAiTurnOutcome FStratAiTurnRunner::RunTurn(IStratAiTurnPort& Port,
 		// were read immediately before this submission. For every command but the EndTurn they
 		// agree; for the EndTurn they are the values the log line beside them carries, so a
 		// step and its `STRAT-AI applied` line can never disagree about which turn it was.
+		//
+		// `MoveRoute` GOES THROUGH UNINSPECTED, AND `Record` STAYS EXACTLY WHERE IT IS -- after
+		// `Port.Submit` returned true. Moving the append up to hand the route down into the
+		// port was the other shape and is refused for the reason stated three paragraphs above:
+		// the reel must remain a RECORD and not a PREDICTION. The route is an out-param of a
+		// call that has already succeeded, which is the same "after the acceptance" ordering
+		// the rest of this block is built on.
 		if (OutReel != nullptr)
 		{
-			OutReel->Record(Command, SideBefore, TurnBefore);
+			OutReel->Record(Command, SideBefore, TurnBefore, Effect);
 		}
 
 		UE_LOG(LogStratPlay, Log,

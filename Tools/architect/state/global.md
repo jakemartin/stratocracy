@@ -659,6 +659,18 @@ chosen off the two sibling overlays that sit on PLAINS instead of the one that s
 FACTORY tile -- the backdrop this overlay always has. Corrected and approved.
 AND IT STILL DOES NOT PULSE. A static tint ships where Sec 2.11.5 asks for a pulse, because
 the master material family has no time input and this route cannot author a material graph.
+**[STAMPED 2026-09-04 BY THE `coordinator`, WHOSE FILE THIS IS, IN LANE -- BOTH SENTENCES ABOVE
+ARE NOW FALSE OF THIS TREE AND ARE STAMPED HERE, AT THEIR OWN SITE. RAISED AS A NON-GATING
+OBSERVATION BY `strat-integration-reviewer` IN THE SAME PASS THAT BLOCKED ON THE INDEX, AND IT
+WAS RIGHT THAT THE STAMPS BELOW DO NOT COVER THIS: each of them names the SUITE FIGURE or the
+PASS PROVENANCE as its subject, and a reader checking whether the pulse pulses would have found
+a live present-tense sentence saying it does not, with nothing above it to say otherwise.
+(1) THE PULSE PULSES, confirmed by the user at the keyboard on the hex in a match. (2) The
+second clause was never true of the editor as such: it was true of the LUA API this session
+held, and `unreal.MaterialEditingLibrary` authors graphs through
+`create_material_expression` / `connect_material_property`, which is how the chain was built.
+`content.md`'s topmost `## NEXT` entry is the authority on both and nothing of it is restated
+here.]**
 **[STAMPED, AND IT DESCRIBES THE PASS RATHER THAN THE TREE ANY LATER SWEEP RUNS IN: the
 editor session, the PIE run and the asset writes behind this block were performed in
 `E:/MultiAgent/Stratocracy` on branch `master` on this developer box, driven over raw HTTP to
@@ -4318,6 +4330,21 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     is the useful part -- the engine turns instances on and off and the material owns how it
     looks. Discharged by a hand-authored master with a time-driven opacity, or by swapping
     this instance's parent to one.
+    **[STAMPED 2026-09-04 BY THE `coordinator`, WHOSE FILE THIS IS, IN LANE AND UNDER NO
+    EXCEPTION CLAUSE FOR THIS WRITE -- THIS BULLET IS DISCHARGED. THE PULSE PULSES, AND A HUMAN
+    CONFIRMED IT AT THE KEYBOARD ON THE HEX IN A MATCH:** *"I saw it on the hex in a match, the
+    cycle speed is fine."* The second route this bullet names was the one taken -- the instance's
+    parent was swapped to a new master carrying a time-driven opacity -- and the bullet's own
+    prediction held: **NO C++ CHANGED**, no Blueprint default moved, and no clause was added or
+    retired. `content.md`'s topmost `## NEXT` entry is the authority on the asset, the four
+    controls it was verified against, the three instruments that measured NOTHING, and the route
+    question it leaves for the user to rule; none of it is restated here. **THE ACTING WAS THE
+    `coordinator`'s UNDER `CLAUDE.md`'s EDITOR-DRIVER CLAUSE and the `content.md` WRITE WAS
+    UNDER THAT FILE'S FALLBACK CONDITION, both measured with a control; THIS stamp needs
+    neither, since `global.md` is already this seat's to write.** With this, W8 is closed --
+    the sentence above it, that W8 is complete except for asset work, was the last thing
+    standing between it and done. **WHAT IS NOT CLOSED BY THIS STAMP** is the bullet below,
+    which is unchanged and still open in every part.]**
   - **AND THE OTHER OPEN ITEMS ARE UNCHANGED BY THIS PASS, NAMED SO THE ENTRY IS NOT READ AS
     CLOSING THEM:** the three clause gaps that need production surface the test author
     refused to write, the `enemy adjacent` one-shot still blocked upstream, and the sweep's

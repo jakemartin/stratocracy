@@ -43,6 +43,147 @@
 
 ## NEXT
 
+- **THE BUILD PULSE PULSES, AND A HUMAN SAW IT ON THE HEX IN A MATCH -- W8's LAST OWED ITEM IS
+  DISCHARGED.** 2026-09-04, in `E:/MultiAgent/Stratocracy` on branch `master` over base
+  `4e4e2d1`, no worktree and no merge, uncommitted. **ACTING: the `coordinator`, under
+  `CLAUDE.md`'s EDITOR-DRIVER CLAUSE. WRITING: the `coordinator`, under THIS FILE'S FALLBACK
+  CONDITION.** Two authorities for two halves, cited separately because this file's header says
+  an entry citing one for both is a finding. `strat-editor-builder` was not dispatched and could
+  not have acted: it holds the NeoStack tools and no Bash, and the tool it needs was not served.
+  No suite count and no verdict is stated here; both are `global.md`'s alone.
+  - **THE ABSENCE, MEASURED WITH A CONTROL -- AND THIS TIME THE EDITOR WAS GENUINELY ABSENT,
+    WHICH IS A DIFFERENT CONDITION FROM THE THREE PASSES BELOW.** Four tools were requested BY
+    NAME in one lookup: `mcp__NeoStack_Connect__execute_script` and
+    `mcp__unreal-editor-direct__execute_script` did NOT come back, while
+    `mcp__NeoStack_Connect__unreal_status` and `mcp__NeoStack_Connect__list_unreal_projects` --
+    same lookup, same server -- did. Every prior entry here then found the editor ALIVE and the
+    connector latched; **this time there was no editor at all.** `tasklist` returned 364
+    processes and matched `unreal` ZERO times; `netstat` saw 37 LISTENING sockets and NONE on
+    9315. All seven `runtimes.json` entries were fossils with `mcpRunning:true` on dead PIDs, the
+    newest being that afternoon's CI suite run -- the shape this record already names.
+  - **SO THE ROUTE WAS NEITHER OF THE TWO THIS FILE HAS RECORDED, AND WHETHER IT SATISFIES THE
+    CLAUSE IS THE USER'S TO RULE.** Not the NeoStack client and not raw HTTP to a live editor:
+    a HEADLESS `UnrealEditor-Cmd.exe ... -run=pythonscript` commandlet, which needs no running
+    editor and is available to Bash alone. `PythonScriptPlugin` is enabled TRANSITIVELY by
+    `PCGPythonInterop` in the `.uproject`, so no `Config/` or `.uproject` change was needed and
+    none was made. The editor-driver clause is written about DRIVING THE LIVE EDITOR; its
+    condition held and its purpose held -- `strat-editor-builder` could not have done this by
+    any route -- but the route is not the one the clause names, and that is flagged here rather
+    than assumed covered, on the same reasoning the 2026-08-29 entry used for its own HTTP
+    wrinkle.
+  - **WHAT WAS AUTHORED.** `/Game/StratArt/Materials/M_OverlayPulse`, a **DUPLICATE** of
+    `M_Translucent` rather than a fresh material -- so every render setting is preserved BY
+    CONSTRUCTION instead of reimplemented from a reading. Its Opacity input was then rewired:
+    `Opacity <- Multiply(Color.A, Lerp(PulseMin, PulseMax, Add(Multiply(Sine(Multiply(Time,
+    PulseSpeed)), 0.5), 0.5)))`. Three new scalar parameters carry the tuning -- `PulseSpeed`
+    0.8, `PulseMin` 0.45, `PulseMax` 1.0 -- so the peak is EXACTLY the alpha the user approved on
+    2026-09-02 and the trough is 45% of it. `MI_Overlay_BuildPulse` was reparented to it and
+    keeps its `Color` at `(0.00, 0.95, 0.90, A 0.90)`. Retuning needs no graph edit, no C++ and
+    no rebuild, which is the split `StratBoardActor.h` asks for in terms.
+  - **THE MASTER THE WHOLE FAMILY SHARES WAS READ AND NOT TOUCHED, and it is one node.**
+    `M_Translucent` is a single `Color` VectorParameter (group `Wall`, default
+    `(0.5,0.5,0.5, A 0.6)`) with `RGB -> Base Color` and `A -> Opacity`; Translucent, DEFAULT
+    LIT, Surface, two-sided false, `used_with_instanced_static_meshes` true. It is third-party
+    toolkit content and three sibling overlays plus both markers ride it, which is why the pulse
+    got a duplicate of its own.
+  - **VERIFIED FROM A FRESH PROCESS READING THE SAVED BYTES, WITH FOUR CONTROLS.** The setters'
+    return values were not taken as evidence. A second commandlet walked the graph BACKWARD from
+    `MP_OPACITY` edge by edge and reached `MaterialExpressionTime`; the CONTROLS were the
+    untouched `M_Translucent`, where the same walker reports NO time node, plus `M_Translucent`
+    still holding exactly one expression with `Opacity <- Color.A`, all three sibling instances
+    still parented to it, and `BP_StratBoard.BuildPulseMaterial` still resolving to the
+    reparented instance. **THE WALKER'S FIRST VERSION WAS BROKEN AND THE CONTROL IS WHAT CAUGHT
+    IT:** `get_inputs_for_material_expression` takes `(material, expression)` and was called with
+    one argument, so it answered `False` on BOTH sides. A subject and a control agreeing is the
+    tell; the pair was uninformative, not negative.
+  - **THREE INSTRUMENTS SAID NOTHING, AND ARE RECORDED AS SILENT RATHER THAN AS CLEAN.** (1)
+    `get_statistics` returned ALL ZEROS -- for the shipped, known-good `M_Translucent` as well as
+    for the new master, which is how the instrument was known dead rather than the material bad.
+    (2) The authoring log carried ZERO `LogMaterial` lines, so "no errors in the log" measured
+    nothing. **A CONTROL WAS BUILT FOR THAT AND IT FAILED TO DISCRIMINATE:** a deliberately
+    broken material -- a dangling `Sine` feeding Opacity -- was recompiled beside the subject and
+    NEITHER logged anything. So material translation errors do not surface on this route at all.
+    (3) After the editor was later opened, its own log still named the new material zero times.
+    **THEREFORE NOTHING IN THIS TREE ESTABLISHED THAT THE MATERIAL COMPILES; the human sighting
+    below is what establishes it**, since a material with translation errors renders as the
+    default checker and does not animate.
+  - **THE HUMAN CONFIRMED IT AT THE KEYBOARD, IN A MATCH, AND THAT IS THE DISCHARGE.** The editor
+    was opened for the user; they reported first *"I see the color changing in a sine pattern"*
+    and then, asked explicitly whether that was the Material Editor's preview sphere or the game,
+    *"I saw it on the hex in a match, the cycle speed is fine."* **THE QUESTION WAS WORTH ASKING
+    AND IS RECORDED WITH ITS ANSWER:** the preview would have proved only that the material
+    animates, while the in-match sighting proves the pulse is DRAWN WHERE Sec 2.11.5 ASKS FOR IT,
+    through predicate, bridge, view model, board actor and screen. **ONE READING WAS CORRECTED IN
+    PASSING:** what oscillates is OPACITY, not colour -- a translucent overlay fading over a
+    factory tile reads as the colour shifting because more or less of the tile blends through.
+  - **THE BROKEN-PROBE ASSET COULD NOT BE DELETED BY THE EDITOR AND WAS REMOVED BY HAND.**
+    `EditorAssetLibrary.delete_asset` returned `False` on `_TmpBrokenProbe` with *"this package
+    is now potentially corrupt ... deleting them from the file system manually"*; a read-back
+    confirmed it still existed. It was deleted from disk and from the index, and
+    `Content/StratArt/Materials/` is clean of it. **RECORDED BECAUSE IT IS A STANDING HAZARD ON
+    THIS ROUTE:** `duplicate_asset` SAVES IMMEDIATELY, so a throwaway probe on this route is a
+    file on disk from the moment it exists, and the delete that is supposed to retire it can fail.
+  - **AND ONE THING IN THE TREE WAS NOT DONE BY THIS SEAT, NAMED SO IT IS NOT READ AS A STAGING
+    DECISION.** `M_OverlayPulse.uasset` is STAGED and no `git add` was run. The cause was
+    measured, not guessed: `Saved/Config/WindowsEditor/SourceControlSettings.ini` carries
+    `Provider=Git`, so the editor auto-added the newly saved packages; the MODIFIED
+    `MI_Overlay_BuildPulse` is unstaged, which is the tell. `_TmpBrokenProbe` was staged the same
+    way and unstaged with the removal above. Staging and commits remain the user's call.
+    **[CORRECTED 2026-09-04 BY THE `coordinator`, SAME DAY, AFTER `strat-integration-reviewer`
+    BLOCKED ON IT. THE BULLET ABOVE DISCLOSED THE CONDITION AND MISSED THE HAZARD, AND THE
+    DIFFERENCE WAS A SHIPPABLE DEFECT.** The staged blob was not a stale copy of the delivered
+    material -- it was the **PRE-REWIRE DUPLICATE**, because `duplicate_asset` SAVES IMMEDIATELY
+    and the Git provider auto-added the package at that instant, BEFORE the opacity chain was
+    built and saved over it. Index blob `c1c9d54`, LFS `oid 64ec50f...`, size 6477; working tree
+    `oid 3a8aa7c...`, size 11384. **MEASURED IN THE STAGED LFS OBJECT ITSELF**, read out of
+    `.git/lfs/objects/64/ec/` rather than inferred from the size difference:
+    `MaterialExpressionTime` ABSENT, `MaterialExpressionSine` ABSENT, `PulseSpeed` ABSENT, with
+    `MaterialExpressionVectorParameter` PRESENT as the control proving the search could see
+    strings in that object at all. **SO A COMMIT AGAINST THAT INDEX WOULD HAVE SHIPPED A MATERIAL
+    THAT DOES NOT PULSE, with the reparent left unstaged, under the message of the pass that
+    fixes it.** The path was unstaged with `git restore --staged`, which emptied the index of it.
+    **[STAMPED 2026-09-04 BY THE `coordinator`, SAME DAY, AFTER THE RE-GATE BLOCKED ON IT. THE
+    SENTENCE ABOVE ONCE READ `and now shows ?? ; the index holds nothing for it`, AND THAT WAS
+    TRUE WHEN WRITTEN AND FALSE OF THE COMMIT THAT CARRIES IT** -- the user instructed a commit
+    in session while the re-gate was open, and that commit records the path as ADDED. The tell in
+    the bullet above -- *"the MODIFIED `MI_Overlay_BuildPulse` is unstaged"* -- is retired the
+    same way and by the same commit. **THE DEFECT IS NOT THE STALENESS, IT IS THE TENSE:** a
+    record sentence asserting the state of its own index is falsified by the act of recording it,
+    and this file has the hazard under its own name already. **THE DURABLE FORM, which the
+    sentence now uses, IS CONTENT ANCHORED TO THE CARRYING COMMIT INSTEAD OF STATE ANCHORED TO
+    `now`:** the commit that carries this entry records
+    `Content/StratArt/Materials/M_OverlayPulse.uasset` as ADDED with LFS `oid 3a8aa7c...` size
+    11384 -- the REWIRED master, verified in that commit itself by comparing its pointer against
+    the working file's own sha256 and size -- so the hazard this bullet describes was measured
+    and did NOT occur. That claim stays true in every later checkout, which `and now shows ??`
+    could not.
+    **AND ONE LEVEL UP, BECAUSE THIS STAMP'S FIRST VERSION COMMITTED THE DEFECT IT EXISTS TO
+    NAME.** It anchored to a LITERAL SHA, which read as the durable choice and was not: the
+    amendment that repaired the subject line ORPHANED that very hash, so the citation pointed at
+    a commit unreachable from `master` and absent from any clone -- a pointer no checkout can
+    follow, which is this record's own standing rule about citing evidence. **A SHA IS NOT AN
+    ANCHOR WHEN THE COMMIT IT NAMES IS THE ONE BEING WRITTEN**, because that hash is not knowable
+    until the write is over and stops being true if the commit is ever amended or rebased. The
+    phrase `the commit that carries this entry` survives both, and the CONTENT HASH beside it --
+    `oid 3a8aa7c...` -- is checkable in any clone with no SHA at all.
+    **THE COST OF THE AMENDMENT IS PAID BY THE RE-GATE REPORT AND IS NAMED HERE RATHER THAN LEFT
+    TO AMBUSH A READER:** `Tools/architect/gate_reports/2026-09-04-build-pulse-material-regate.md`
+    inlines its instruments as `git show 54709ac:...` and `git cat-file -p 54709ac:...`, and
+    those commands FAIL IN ANY CLONE because that hash was orphaned by the amendment the report
+    itself asked for. The report is NOT edited to agree with the newer tree -- a gate report
+    rewritten to match what came after it is not evidence -- so it stands as written, describing
+    the tree it actually gated. What a reader should substitute is the CONTENT: the objects it
+    names, `oid 64ec50f...` size 6477 (pre-rewire) and `oid 3a8aa7c...` size 11384 (delivered),
+    are the durable half of every one of its measurements and neither depends on a SHA.]**
+    **THE GENERALISABLE PART, and it is why this is corrected in place
+    rather than quietly fixed:** on this route an asset is a file on disk from the moment
+    `duplicate_asset` returns, so WHAT SOURCE CONTROL AUTO-ADDS IS THE ASSET AS IT WAS AT
+    CREATION, not as delivered. "Something is staged that I did not stage" is the visible half;
+    "what is staged is a DIFFERENT ARTIFACT from what was verified" is the half that costs, and
+    no instrument in this tree compares the two -- the verification in this entry was run against
+    the WORKING TREE, which was correct, and would have passed identically while the index held
+    the wrong bytes.]**
+
 - **BP_StratUnit SURVIVED THE NATIVE ROOT CHANGE, `MoveTweenSeconds` IS 0.2 ON DISK, AND THE
   SLIDE ITSELF IS STILL UNOBSERVED -- THE ONE NUMERIC INSTRUMENT THAT COULD HAVE SEEN IT WAS
   MEASURED TOO SLOW TO.** 2026-09-02, in `E:/MultiAgent/Stratocracy` on branch `master` over
@@ -282,6 +423,18 @@
     when this instance's parent is swapped to one. Neither needs a C++ change**: the engine
     turns instances on and off and the material owns how it looks, which is the split
     `strat-gameplay-engineer` chose deliberately.
+    **[STAMPED 2026-09-04 BY THE `coordinator` -- THIS BULLET IS DISCHARGED AND IS STAMPED IN
+    PLACE RATHER THAN DELETED, so a reader arriving by a citation lands on the correction. The
+    second of the two routes it names was taken: `MI_Overlay_BuildPulse`'s parent was swapped to
+    a new master with a time-driven opacity, and no C++ changed, exactly as this bullet
+    predicted. THE TOPMOST `## NEXT` ENTRY IS THE AUTHORITY and nothing of it is restated here.
+    ONE SENTENCE ABOVE IS NARROWER THAN IT READS AND IS CORRECTED RATHER THAN LEFT TO MISLEAD:
+    *"there is no node-graph authoring through this route"* was true of THE LUA API, which is
+    what that session held, and the clause naming Lua says so. It is NOT true of the editor as
+    such -- `unreal.MaterialEditingLibrary` exposes `create_material_expression`,
+    `connect_material_expressions` and `connect_material_property`, and the graph was authored
+    through them. The refusal to build one BLIND out of raw property calls remains correct; what
+    changed is that the graph no longer had to be built blind.]**
 - **THE SHELL GAMEMODE NOW POINTS AT THE SHELL HUD AND HAS STOPPED BUILDING THE MENU ITSELF, AND
   THE TWO HALVES ARE ONE CHANGE RATHER THAN TWO.** 2026-08-31, in the integration tree
   `E:/MultiAgent/Stratocracy` on branch `master`, with no worktree and no merge. **ACTING AND

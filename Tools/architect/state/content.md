@@ -24,10 +24,17 @@
 > licenses writing this file only — it is not a general licence to act in the content lane.
 >
 > **WHERE THE OTHER PERMISSION LIVES, since 2026-08-26.** The sentence above is correct and is
-> not being widened: this clause has never licensed driving the editor, and three consecutive
+> not being widened: this clause has never licensed **doing the asset work** (that phrase read
+> *"driving the editor"* until 2026-09-04, and is corrected here for the same reason
+> `CLAUDE.md`'s mirror of it was — a NEGATIVE-SCOPE sentence left in the narrow wording denies
+> the wrong thing), and three consecutive
 > `strat-integration-reviewer` gates turned on that exact distinction while the asset in question
-> was clean from the first read. The permission it kept being stretched to cover — who may drive
-> the live editor when `strat-editor-builder` cannot reach it — is now stated in `CLAUDE.md`'s
+> was clean from the first read. The permission it kept being stretched to cover — **who may do
+> the ASSET WORK, BY ANY ROUTE, when `strat-editor-builder` cannot reach the editor** (**amended
+> 2026-09-04 by the `coordinator` under this file's fallback condition, measured with its
+> control**; it read *"who may drive the live editor"* until the 2026-09-04 route ruling, and a
+> citation landing here must not be sent to a narrower rule than the one that governs) — is now
+> stated in `CLAUDE.md`'s
 > **The crew** section as the *editor-driver clause*, with its own two obligations, because it is
 > a lane rule and lane rules belong where lanes are defined. Cite THAT for the acting and THIS
 > for the file write; an entry that cites one authority for both halves is a finding. This
@@ -52,7 +59,7 @@
   not have acted: it holds the NeoStack tools and no Bash, and the tool it needs was not served.
   No suite count and no verdict is stated here; both are `global.md`'s alone.
   - **THE ABSENCE, MEASURED WITH A CONTROL -- AND THIS TIME THE EDITOR WAS GENUINELY ABSENT,
-    WHICH IS A DIFFERENT CONDITION FROM THE THREE PASSES BELOW.** Four tools were requested BY
+    WHICH IS A DIFFERENT CONDITION FROM THE THREE RAW-HTTP PASSES BELOW.** Four tools were requested BY
     NAME in one lookup: `mcp__NeoStack_Connect__execute_script` and
     `mcp__unreal-editor-direct__execute_script` did NOT come back, while
     `mcp__NeoStack_Connect__unreal_status` and `mcp__NeoStack_Connect__list_unreal_projects` --
@@ -71,6 +78,25 @@
     any route -- but the route is not the one the clause names, and that is flagged here rather
     than assumed covered, on the same reasoning the 2026-08-29 entry used for its own HTTP
     wrinkle.
+    **[STAMPED 2026-09-04, LATER THE SAME DAY, BY THE `coordinator` UNDER THIS FILE'S FALLBACK
+    CONDITION, RE-MEASURED WITH ITS CONTROL FOR THIS WRITE (both `execute_script` names absent
+    from one lookup that returned `unreal_status` and `list_unreal_projects` from the same
+    server). THE RULING THIS BULLET ASKED FOR WAS MADE, SO THE SENTENCE ABOVE IS NO LONGER LIVE:
+    USER RULING, IN SESSION, 2026-09-04 -- THE ROUTE IS FINE AND THE CLAUSE NOW SAYS SO.**
+    `CLAUDE.md`'s editor-driver clause reads *"by whatever route it has"*, and **the route is
+    explicitly not part of its condition** -- the NeoStack client, raw HTTP, a headless
+    commandlet, or one not yet invented, with no new ruling needed for a new route. **THE
+    CLAUSE ALSO RESTATED ITS TRIGGER, which is the larger half and is what this bullet's own
+    measurement fed:** the condition is that `strat-editor-builder` CANNOT REACH THE EDITOR,
+    measured AT THE TOOL SURFACE, and explicitly NOT "the editor is unreachable" -- the two came
+    apart on all FOUR passes the ruling is drawn from: three times with the editor alive and
+    serving `execute_script` behind a latched connector, and once, in this pass, with no editor
+    at all. **READ THE CLAUSE IN `CLAUDE.md`
+    AND NOT THIS STAMP:** that file loads every session and a second copy of a rule drifts from
+    it, which this record has already been caught doing. **WHAT THE RULING DID NOT REACH,** named
+    so this stamp is not read as closing it: the separate gap raised further down this file --
+    whether an actor whose tool is BLOCKED BY THE CLIENT rather than ABSENT from it falls inside
+    any clause -- is untouched and still open.]**
   - **WHAT WAS AUTHORED.** `/Game/StratArt/Materials/M_OverlayPulse`, a **DUPLICATE** of
     `M_Translucent` rather than a fresh material -- so every render setting is preserved BY
     CONSTRUCTION instead of reimplemented from a reading. Its Opacity input was then rewired:
@@ -316,6 +342,18 @@
     before, and still the gap neither clause models: A TOOL ABSENT FROM THE CLIENT SURFACE
     WHILE THE SERVER STILL SERVES IT. The route used was raw HTTP from Bash, which
     `strat-editor-builder` does not have.
+    **[STAMPED 2026-09-04 BY THE `coordinator` UNDER THIS FILE'S FALLBACK CONDITION, MEASURED
+    WITH ITS CONTROL -- THE GAP NAMED IN THIS BULLET IS CLOSED AND THE SENTENCE IS RETIRED WHERE
+    IT SITS.** `CLAUDE.md`'s editor-driver clause now states its condition as
+    `strat-editor-builder` CANNOT REACH THE EDITOR, **measured at the TOOL SURFACE and explicitly
+    not "the editor is unreachable"**, and names this very pass as one of the three it is drawn
+    from. So a tool absent from the client while the server still serves it is not a gap in the
+    clause -- it is the clause's ordinary case, and the editor's own liveness, measured so
+    carefully in this bullet, was never what the condition turned on. **WHAT IS NOT CLOSED, since
+    this file raises it separately and the two are easy to conflate:** a tool PRESENT on the
+    surface but BLOCKED BY THE CLIENT is a different condition, untouched by the ruling and still
+    the user's. Found by `strat-integration-reviewer`, which caught this site and the one below
+    after this seat's own sweep stamped a third and missed both.]**
   - **WHAT LANDED.** `WBP_CommandBar` (new, parented `/Script/StratUI.StratCommandBarWidget`);
     `CommandBarWidgetClass` set on `BP_StratScoreboardHUD`; an `ExitButton` on
     `WBP_ProductionMenu` calling the CONTROLLER's `CloseProductionMenu`, which owns the
@@ -499,6 +537,18 @@
     how a lane rule stops describing practice. Whether an actor whose tool is BLOCKED BY THE
     CLIENT, rather than absent from it, falls inside any existing clause is the user's to rule;
     the entry below this one already raised the mirror-image gap and it is still open.
+    **[STAMPED 2026-09-04 BY THE `coordinator` UNDER THIS FILE'S FALLBACK CONDITION, MEASURED
+    WITH ITS CONTROL -- THE LAST CLAUSE IS NOW FALSE AND THE ONE BEFORE IT IS STILL TRUE, WHICH
+    IS WHY THIS IS STAMPED RATHER THAN LEFT.** The MIRROR-IMAGE gap the entry below raises -- a
+    tool ABSENT FROM THE CLIENT SURFACE while the server still serves it -- **is CLOSED**, by the
+    2026-09-04 route ruling and the restatement of the editor-driver clause's condition as the
+    LANE AGENT's reach measured at the TOOL SURFACE; it is stamped closed at that entry's own
+    site. **THIS bullet's own question -- a tool PRESENT but BLOCKED BY THE CLIENT -- IS
+    UNTOUCHED AND REMAINS THE USER'S**, so the sentence above it stands. **THE TWO ARE ONE WORD
+    APART AND WERE WORTH SEPARATING:** absent-from-the-surface is the clause's ordinary case,
+    blocked-while-present is not modelled by any clause. Found by `strat-integration-reviewer` --
+    stamping the entry below without stamping this pointer at it left this file asserting that a
+    gap it had just closed was still open.]**
     **WHAT THIS BATCH DID WITH THAT ASSET IS UNCHANGED: IT VERIFIED IT READ-ONLY AND RE-AUTHORED
     NOTHING.** Parent `StratShellHUD`, `MenuWidgetClass = /Game/UI/WBP_TitleMenu.WBP_TitleMenu_C`,
     and `MenuZOrder = 0`, `bTakeUiOnlyInputMode = True`, `MaxConfigurationWaitTicks = 4` -- the
@@ -764,6 +814,35 @@
     actor who reaches a live editor by some other transport falls inside these clauses or needs
     a sentence of its own is the user's to rule; until it is, this entry is the only place the
     question is visible.
+    **[STAMPED 2026-09-04 BY THE `coordinator` UNDER THIS FILE'S FALLBACK CONDITION, MEASURED
+    WITH ITS CONTROL -- RULED, AND EVERY CLAUSE OF THE PARAGRAPH ABOVE IS RETIRED. USER RULING,
+    IN SESSION: THE ROUTE IS FINE.** `CLAUDE.md`'s editor-driver clause now reads *"by whatever
+    route it has"*, so an actor reaching a live editor by another transport falls INSIDE it and
+    needs no sentence of its own; the condition is restated as the LANE AGENT's reach, measured
+    at the TOOL SURFACE. This entry is also no longer the only place the question is visible --
+    the clause names this pass among the three it is drawn from. **AND THE SHARPEST THING HERE
+    IS THAT THIS ENTRY HAD THE ANSWER TWO SENTENCES EARLIER AND FILED THE GAP ANYWAY:** it says
+    in terms that *"the clause is about what the LANE AGENT can reach, not about what every actor
+    can"* -- which is exactly the reading the ruling adopted -- and then reported as a GAP that
+    both clauses *"read that absence as meaning the editor is unreachable"*. That second sentence
+    was about a GLOSS, not about the written condition, which has said *"absent from the session's
+    tool surface"* since 2026-08-26 and still does, unchanged by this ruling. **A correct reading
+    and a misreading of the same rule stood four lines apart in one entry**, from this entry's own
+    date until the 2026-09-04 ruling, and the misreading is the one that spread: it recurs in the
+    2026-08-31 and 2026-09-02 entries of this file and in one bullet of `global.md`, each stamped
+    at its own site.
+    **AND A PARAGRAPH TRACING WHERE THE NARROW WORDING CAME FROM STOOD HERE AND IS DELETED RATHER
+    THAN REWRITTEN, WHICH IS THE POINT WORTH KEEPING.** It went through THREE wordings and each
+    was falsified by the next gate -- carried INTO the header pointer, then the pointer was its
+    SOURCE, then a one-commit delete-and-requote that `git show` shows never happened. **The
+    archaeology was load-bearing for NOTHING**: no rule, no obligation and no reader's action
+    turned on which file first carried the phrase, and the seat kept re-deriving it from
+    `git log -1 -S`, which answers *the most recent commit to touch a string*, never the first.
+    This record already carries the general form of the fix under its own name -- a passage that
+    narrates the gating of the pass it sits in should be DELETED, not repaired -- and it took four
+    gate rounds here to apply it. **What a reader actually needs is one sentence, and it is
+    checkable:** the wording was narrow, `CLAUDE.md` is the authority and now reads *"by whatever
+    route it has"*.]**
   - **EVERY `open_asset` PRECEDED PIE, WHICH IS THIS FILE'S OWN RECORDED CRASH.** All asset reads
     and writes ran with `playtest_status()` reporting no PIE world; the playtest below was started
     only after the last write and its script calls no `open_asset`. The recorded failure -- that

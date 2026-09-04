@@ -93,25 +93,66 @@ tool `strat-editor-builder` has no route to the editor and cannot write anything
 and the two obligations that ride with it are stated in that file's own header, which is the
 authority. No other record file has a fallback writer.
 
-**Writing `content.md` and driving the editor are two different permissions, and until
-2026-08-26 only one of them was granted.** The fallback above licenses the FILE WRITE — its own
+**Writing `content.md` and doing the asset work are two different permissions, and until
+2026-08-26 only one of them was granted.** (That second permission was worded *"driving the
+editor"* until the 2026-09-04 route ruling below, which is why the clause it introduces now says
+"by whatever route it has".) The fallback above licenses the FILE WRITE — its own
 header says so in terms — and it kept being cited for the ASSET WORK as well, because the same
 absent tool causes both. Three consecutive `strat-integration-reviewer` gates turned on that
 wording while the asset it governed was clean from the first read. So the second permission is
 now stated here, where lanes are defined, rather than inferred from a record file's header:
 
 > **The editor-driver clause.** When `execute_script` is absent from the session's tool surface,
-> the `coordinator` may drive the live editor to do content-lane work — author and edit assets,
+> the `coordinator` may do content-lane work **by whatever route it has** — author and edit assets,
 > set Blueprint defaults, run PIE — because `strat-editor-builder` holds the NeoStack tools and
 > no Bash and has no route to the editor at all. **Two obligations ride with it, and they mirror
 > the file-write clause's own.** (1) **Measure the absence with a control before invoking it.**
 > An absent tool name proves nothing alone; show the same lookup returning the tools that ARE
 > served. (2) **Attribute the acting and the writing separately in the record entry.** This
-> clause covers the driving; the `content.md` header covers the file write; neither covers the
+> clause covers the acting; the `content.md` header covers the file write; neither covers the
 > other half, and naming one actor while leaving the other unnamed is itself a finding.
+>
+> **THE ROUTE IS NOT PART OF THE CONDITION. USER RULING, 2026-09-04.** This clause once read
+> *"may drive the live editor"*, and **FOUR passes in a row** used a route that wording did not
+> name — raw HTTP to `127.0.0.1:9315` on 2026-08-29, again over base `4a89ac2` on 2026-09-01/02,
+> and again over base `91927e9` on 2026-09-02; then on 2026-09-04 a
+> **headless `UnrealEditor-Cmd.exe -run=pythonscript` commandlet, with no editor running at
+> all.** Three of the four left the question open in the record — as an unruled route, or as a
+> gap no clause modelled; the `4a89ac2` pass named its route and moved on without raising it at
+> all, which is its own small evidence that the wording had stopped being noticed. The fourth was
+> ruled instead, because
+> four identical exceptions are a condition and not four accidents. **Any route the
+> `coordinator` can reach is covered: the NeoStack client, raw HTTP to a live editor, a headless
+> commandlet, or one not yet invented.** A new route needs no new ruling. (The count read
+> *"three passes"* in this clause's first draft and was corrected before it was ever committed —
+> `content.md` records a fourth, the pulse-material pass over `4a89ac2`, which that draft folded
+> into the command-bar pass sharing its date.)
+>
+> **WHAT THE CONDITION ACTUALLY IS, restated because the old wording invited the wrong reading.**
+> The trigger is that **`strat-editor-builder` cannot reach the editor**, which obligation (1)
+> measures at the TOOL SURFACE. It is NOT "the editor is unreachable" and never was: on the
+> **three raw-HTTP passes** above the editor was **alive and serving `execute_script` the whole
+> time** while the connector sat latched stale, and on 2026-09-04 there was no editor at all —
+> **two different states of the editor across four passes, one unchanged state of the lane
+> agent.** **So do not measure the
+> editor to decide whether this clause applies; measure the lane agent's tool surface.** The
+> editor's own state is worth recording, and says nothing about whether the clause is open.
+>
+> **AND THE ROUTE STILL GETS RECORDED, which is the half the ruling does not relax.** Name the
+> route taken and how its precondition was measured, so a reader knows whether an asset was
+> authored against a live editor or by a commandlet that never opened one — those differ in what
+> can be observed afterwards. A commandlet, in particular, **cannot prove a material compiles
+> and has no pixels**: `get_statistics` returns zeros for a known-good asset and translation
+> errors log nothing, both measured against controls on 2026-09-04. A human at the keyboard
+> remains the only instrument for any visual claim, exactly as before.
 
-Nothing here widens the lane rule for a session where the editor IS reachable — when
-`strat-editor-builder` can work at all, `Content/` is its lane and only its lane.
+Nothing here widens the lane rule for a session where **`strat-editor-builder` can reach the
+editor** — when that agent can work at all, `Content/` is its lane and only its lane. (This
+sentence said *"where the editor IS reachable"* until 2026-09-04, and that was the same gloss the
+ruling above deletes: on **three of the four passes** the clause covers, **the editor was perfectly
+reachable and the lane agent still could not reach it**, so the old wording made this limit read
+as closing a clause that was in fact open. The limit itself is unchanged — it turns on the lane
+agent, exactly as the condition does.)
 
 **A defect reported in a live session has no lane to route it to, and for four passes that was
 handled by writing a fresh exception block each time.** Lanes are assigned per dispatched phase,

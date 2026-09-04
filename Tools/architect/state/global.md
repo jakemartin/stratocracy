@@ -5039,6 +5039,16 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     rather than either MCP client, and whether that satisfies this record's fallback condition
     is the user's to rule. WHAT IS NOT DISCHARGED is the human confirmation of marker
     placement at the shipped camera pitch, which no capture can stand in for.]**
+    **[STAMPED 2026-09-04 BY THE `coordinator`, WHOSE FILE THIS IS, IN LANE, FLAT AND NOT NESTED
+    INSIDE THE STAMP ABOVE -- THE QUESTION THAT STAMP LEFT WITH THE USER IS ANSWERED. USER
+    RULING, IN SESSION, 2026-09-04: THE ROUTE IS FINE.** `CLAUDE.md`'s editor-driver clause now
+    reads *"by whatever route it has"* and states outright that **the route is not part of its
+    condition**, so Bash over HTTP -- the wrinkle this stamp flagged -- is covered, as is the
+    headless commandlet that came later. The clause names this 2026-08-29 batch as the FIRST of the
+    four passes the ruling is drawn from. **THIS WAS THE FOURTH LIVE COPY OF ONE RETIRED
+    QUESTION AND THE ONLY ONE OUTSIDE `content.md`**; found by `strat-integration-reviewer` after
+    this seat had stamped the other three and swept for the shape without finding this one. The
+    clause is the authority and is not restated here.]**
     **[STAMPED AGAIN 2026-08-29, LATER THE SAME DAY, BY THE `coordinator`, FLAT AND NOT
     NESTED INSIDE THE STAMP ABOVE: IT IS NOW DISCHARGED.** The user confirmed at the keyboard
     -- "I can confirm all markers and they are good where they are. Camera pitch looks good."

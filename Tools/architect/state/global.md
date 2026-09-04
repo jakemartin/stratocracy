@@ -4345,6 +4345,25 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
     the sentence above it, that W8 is complete except for asset work, was the last thing
     standing between it and done. **WHAT IS NOT CLOSED BY THIS STAMP** is the bullet below,
     which is unchanged and still open in every part.]**
+    **[STAMPED AGAIN 2026-09-04 BY THE `coordinator`, FLAT AND NOT NESTED INSIDE THE STAMP
+    ABOVE -- THE PASS IS GATED AND THE VERDICT IS RECORDED HERE, WHICH IS THE ONLY FILE THAT MAY
+    CARRY ONE. `strat-integration-reviewer` RETURNED `VERDICT: PASS` WITH ZERO FINDINGS AND SIX
+    NON-GATING OBSERVATIONS**, its report committed at
+    `Tools/architect/gate_reports/2026-09-04-build-pulse-material-regate-2.md`. It is the THIRD
+    gate on this pass; the first two BLOCKED and their reports are committed beside it, both
+    describing older trees. **THE TWO EARLIER FINDINGS WERE BOTH SELF-INFLICTED AND NEITHER WAS
+    IN THE ASSET:** a staged blob that was the pre-rewire duplicate rather than the delivered
+    material, and a record sentence asserting the state of its own index. The asset was clean
+    from the first read, which is the same shape three gates in this record already have.
+    **AND ONE CLAUSE IN THE CARRYING COMMIT'S OWN MESSAGE IS SUPERSEDED BY THIS STAMP, NAMED
+    BECAUSE GIT HISTORY IS THE ONE PLACE THIS PROJECT CANNOT STAMP IN PLACE.** That message
+    reads *"NO GATE HAS RETURNED PASS ON THIS TREE -- the two findings above are repaired, not
+    re-gated"*. Both clauses were TRUE WHEN THE COMMIT WAS MADE and were falsified by the gate
+    the sentence itself provoked -- the same tense defect this pass repaired one level in, and
+    the reason it was not fixed by amending is that the PASS report cites the carrying commit,
+    so an amendment would orphan the hash and break the citations of the very report certifying
+    it. **USER RULING, IN SESSION: a follow-up commit rather than an amendment.** The gate
+    raised it as non-gating and time-limited and was right on both counts.]**
   - **AND THE OTHER OPEN ITEMS ARE UNCHANGED BY THIS PASS, NAMED SO THE ENTRY IS NOT READ AS
     CLOSING THEM:** the three clause gaps that need production surface the test author
     refused to write, the `enemy adjacent` one-shot still blocked upstream, and the sweep's

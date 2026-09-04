@@ -282,9 +282,14 @@ bool FStratDifficultyTierDeltasTest::RunTest(const FString& /*Parameters*/)
 		StratDifficultyFameDelta(EStratDifficulty::Hard)
 			< StratDifficultyFameDelta(EStratDifficulty::Normal));
 
-	// The shipped default, which §2.11.6 names: "the first match runs on the one shipped
+	// The default tier, which §2.11.6 names: "the first match runs on the one shipped
 	// scenario at Easy by default". Read off a default-constructed config, not asserted about
-	// the enum's underlying value.
+	// the enum's underlying value -- so what this measures is the C++ default.
+	// NOT RETRACTED, and said explicitly because its neighbours in this file WERE. On THIS
+	// field the C++ default and the shipped asset agree: `BP_StratGameMode` also authors
+	// `Difficulty` Easy, measured off the live editor by the `coordinator` on 2026-09-03. The
+	// assertion's own wording below is therefore true of both. Elsewhere in this file read
+	// "default" as the C++ default unless a Blueprint measurement is cited beside it.
 	const FStratMatchConfig Defaults;
 	TestTrue(TEXT("T-FAME-02: §2.11.6's shipped default tier is Easy"),
 		Defaults.Difficulty == EStratDifficulty::Easy);
@@ -300,9 +305,25 @@ bool FStratDifficultyTierDeltasTest::RunTest(const FString& /*Parameters*/)
 // `StratMatchSubsystem.h`: §2.7 calls it "Single-player difficulty", so with no AI seat there
 // is no player-versus-opponent asymmetry for a starting-Fame handicap to express. It is a
 // reading of two words and not a GDD quotation. THE CLAUSE IS WRITTEN SO THAT OVERTURNING THE
-// RULING FAILS EXACTLY HERE rather than in twenty clauses that assumed a 200/200 opening: the
-// shipped hot seat is the default configuration, and applying the handicap to every human side
-// would move it from 200/200 to 350/350 at Easy.
+// RULING FAILS EXACTLY HERE rather than in twenty clauses that assumed a 200/200 opening: a
+// hot seat is `FStratMatchConfig`'s C++ default and is what every fixture that leaves
+// `AiSides` alone builds, and applying the handicap to every human side would move it from
+// 200/200 to 350/350 at Easy.
+// CORRECTED 2026-09-03. This header formerly read, and no longer asserts:
+// RETRACTED> "the shipped hot seat is the default configuration"
+// The DEFAULT configuration is a hot seat -- that half stands, and it is the
+// half this clause fixtures. The SHIPPED one is not: `BP_StratGameMode` authors `AiSides=(1)`
+// with `ViewingSide` 0 and `Difficulty` Easy, measured off the live editor by the
+// `coordinator` on 2026-09-03 (controls: `BP_StratGameMode_AiVsAi` reads `(0,1)`;
+// `struct_properties("StratMatchConfig")` gives the C++ default as empty;
+// `BP_StratShellGameMode` carries no `MatchConfig`). So the shipped game fails this clause's
+// first two arms and IS handicapped -- on side 0, the human's, at Easy's +150. USER RULING
+// the same day, BOTH halves: human-versus-AI is the shipped game, and Easy helping the player
+// is what Easy is for. No expectation in this file moves; every clause here constructs the
+// config it measures. `HandicapMovesThePlayersOpeningFameAtEveryTier` below is where that
+// shipped arm is pinned -- see its header -- and
+// `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeAuthorsOneAiSide` is what pins the authored
+// value itself against the asset.
 //
 // THE PURE FUNCTION IS ASSERTED DIRECTLY, WHICH IS WHY IT EXISTS. `StratHandicappedSide` holds
 // the whole ruling in one place so a clause can pin the ruling rather than infer it from an
@@ -339,7 +360,8 @@ bool FStratHandicapInertWithoutOpponentTest::RunTest(const FString& /*Parameters
 		TestEqual(TEXT("no AiSides is no AI seat, so §2.7's handicap has no side to move"),
 			HotSeat.AiSides.Num(), 0);
 		TestEqual(
-			TEXT("T-FAME-02: a hot seat is handicapped on NO side -- the shipped configuration"),
+			TEXT("T-FAME-02: a hot seat is handicapped on NO side -- ARM ONE, reached on "
+			     "FStratMatchConfig's C++ default and NOT on the shipped configuration"),
 			StratHandicappedSide(HotSeat), static_cast<int32>(INDEX_NONE));
 
 		FStratMatchConfig ScreenIsAi;
@@ -390,7 +412,15 @@ bool FStratHandicapInertWithoutOpponentTest::RunTest(const FString& /*Parameters
 		return false;
 	}
 
-	// Easy, and `AiSides` left at its empty default: the shipped configuration §2.11.6 names.
+	// Easy, and `AiSides` left at its empty C++ default -- a hot seat, which is the
+	// configuration this clause exists to measure and is correct for it.
+	// CORRECTED 2026-09-03. This comment formerly read:
+	// RETRACTED> "Easy, and `AiSides` left at its empty default: the shipped configuration
+	// RETRACTED>  §2.11.6 names."
+	// §2.11.6 names the Easy TIER, not an empty `AiSides`; the shipped `BP_StratGameMode`
+	// authors `AiSides=(1)`, measured off the live editor by the `coordinator` on 2026-09-03.
+	// USER RULING the same day: intended. The fixture below is unchanged and still correct --
+	// it builds its own config and never reads the Blueprint.
 	Config.Difficulty = EStratDifficulty::Easy;
 	TestTrue(TEXT("the tier under test has a NON-ZERO delta, so an applied handicap would be "
 	              "visible if the inertness broke"),
@@ -446,6 +476,16 @@ bool FStratHandicapInertWithoutOpponentTest::RunTest(const FString& /*Parameters
 // ---------------------------------------------------------------------------
 // T-FAME-02 -- in a single-player match, every tier moves the PLAYER's opening Fame by that
 // tier's delta and leaves the AI's on the scenario's configured value.
+//
+// AND "SINGLE-PLAYER" IS THE SHIPPED CONFIGURATION. Added 2026-09-03; nothing below changed.
+// `SinglePlayer` is built here as `ViewingSide` 0 with `AiSides = { kAiSide }` -- that is
+// field-for-field the configuration `BP_StratGameMode` authors, measured off the live editor
+// by the `coordinator` on 2026-09-03. So this clause, together with the CONTROL arm of
+// `HandicapIsInertWithoutASinglePlayerOpponent` above, is what pins `StratHandicappedSide`'s
+// ARM THREE on the path the shipped game actually takes, Easy's +150 landing on the human's
+// side included -- USER RULING the same day: intended, Easy is meant to help the player.
+// Recorded here because this file's older prose called the EMPTY `AiSides` "the shipped
+// configuration", which would send a reader looking for that coverage in the wrong clause.
 //
 // THE BASELINE IS MEASURED AND NOT WRITTEN DOWN. It is the hot-seat opening -- the
 // configuration in which `StratHandicappedSide` is `INDEX_NONE` -- read per side off the view

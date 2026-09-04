@@ -7,9 +7,28 @@
 // and `RunAiTurnsNow` had never reached `FStratAiTurnRunner::RunTurn`.
 //
 // THE THREE PROPERTIES.
-//   1. THE DEFAULT IS INERT. An empty `AiSides` runs no AI turn, moves no state, records no
-//      command and emits no `STRAT-AI` line -- and "nothing is due" is reported as SUCCESS,
-//      because it is the ordinary state of a hot-seat game and not an error.
+//   1. THE C++ DEFAULT IS INERT. An empty `AiSides` runs no AI turn, moves no state, records
+//      no command and emits no `STRAT-AI` line -- and "nothing is due" is reported as SUCCESS,
+//      because it is the ordinary state of any turn no AI seat owns, and not an error.
+//      CORRECTED 2026-09-03. The withdrawn words occupy whole lines below under this tree's
+//      marker, whose meaning comes from its POSITION at the head of the comment line and
+//      never from its presence -- `StratSelectionMachineParity.cpp` declares the convention
+//      and is the authority. This bullet formerly read, and no longer asserts:
+//      RETRACTED> "THE DEFAULT IS INERT. An empty `AiSides` runs no AI turn, moves no state,
+//      RETRACTED>  records no command and emits no `STRAT-AI` line -- and 'nothing is due' is
+//      RETRACTED>  reported as SUCCESS, because it is the ordinary state of a hot-seat game
+//      RETRACTED>  and not an error."
+//      WHAT STANDS AND WHAT DOES NOT. The empty `AiSides` this clause fixtures IS
+//      `FStratMatchConfig`'s C++ default and IS what every fixture that leaves the field
+//      alone builds -- both facts stand. What does not stand is reading it as the SHIPPED
+//      state: `BP_StratGameMode` authors `AiSides=(1)` with `ViewingSide` 0, measured off the
+//      live editor by the `coordinator` on 2026-09-03 (controls: `BP_StratGameMode_AiVsAi`
+//      reads `(0,1)`; `struct_properties("StratMatchConfig")` gives the C++ default as empty;
+//      `BP_StratShellGameMode` carries no `MatchConfig`). USER RULING the same day: the
+//      shipped game is human-versus-AI and is not a hot seat -- intended. Nothing this clause
+//      measures moves; it builds its own config and never reads a Blueprint.
+//      `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeAuthorsOneAiSide` is what pins that
+//      authored value against the asset itself.
 //   2. A CONFIGURATION FAULT IS NOT A DEAD MATCH. An unresolvable `AiBuildlistUnitIds` entry
 //      refuses BY NAME and leaves the match live: §4.8's posture is that a bad id is named
 //      rather than substituted, and `StratMatchSubsystem.cpp:253-257` states that "the match
@@ -377,9 +396,15 @@ bool FStratAiEmptyAiSidesRunsNoAiTurnTest::RunTest(const FString& /*Parameters*/
 			Subsystem->IsAiTurnDue());
 	}
 
-	// ---- THE GUARDED PATH: the shipped defaults --------------------------------
+	// ---- THE GUARDED PATH: the C++ defaults ------------------------------------
+	// CORRECTED 2026-09-03. This banner formerly read:
+	// RETRACTED> "---- THE GUARDED PATH: the shipped defaults ----"
+	// `Base` carries `FStratMatchConfig`'s C++ defaults -- which is what this fixture builds
+	// and what this clause measures, unchanged and still correct. It is NOT the shipped
+	// configuration: `BP_StratGameMode` authors `AiSides=(1)`, measured off the live editor by
+	// the `coordinator` on 2026-09-03. USER RULING the same day: human-versus-AI is intended.
 	{
-		// `Base` carries the defaults: `AiSides` empty, `AiBuildlistUnitIds` empty. This
+		// `Base` carries the C++ defaults: `AiSides` empty, `AiBuildlistUnitIds` empty. This
 		// reseeds the same subsystem -- documented behaviour, `StartMatch` is not idempotent
 		// and a second call reseeds.
 		FString StartReason;

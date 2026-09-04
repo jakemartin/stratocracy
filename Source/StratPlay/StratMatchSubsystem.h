@@ -342,11 +342,31 @@ struct FStratMatchConfig
 	TSubclassOf<AStratUnitActor> UnitActorClass;
 
 	// ---- §2.9's opponent -------------------------------------------------
-	// EVERY FIELD BELOW HAS A DEFAULT THAT PRESERVES HOT-SEAT EXACTLY. An empty `AiSides`
-	// means no side is played by the AI, which is the game phases 0-6 shipped; nothing in
-	// this block runs until a Blueprint default says otherwise. That is deliberate: a
-	// milestone that turned the AI on by defaulting it on would change the meaning of every
-	// existing test and every existing PIE session in the same pass that introduced it.
+	// EVERY C++ FIELD DEFAULT BELOW PRESERVES HOT-SEAT EXACTLY -- AND THE SHIPPED GAME DOES
+	// NOT RUN ON THOSE DEFAULTS. An empty `AiSides` means no side is played by the AI; that
+	// is what this struct initialises to, and it is what the game ran on through phases 0-6.
+	// Nothing in this block runs until a Blueprint default says otherwise. That was
+	// deliberate: a milestone that turned the AI on by defaulting it on would change the
+	// meaning of every existing test and every existing PIE session in the same pass that
+	// introduced it.
+	//
+	// A BLUEPRINT DEFAULT NOW SAYS OTHERWISE, AND IT IS THE SHIPPED STATE.
+	// `BP_StratGameMode` authors `MatchConfig.AiSides=(1)`: side 0 (Directorate) is the
+	// human, side 1 (Vanguard) is the AI. THE SHIPPED GAME IS HUMAN-VERSUS-AI AND IS NOT A
+	// HOT SEAT. USER RULING, 2026-09-03: that authored value is INTENDED and not Blueprint
+	// drift; the asset is correct as authored and no logic changes on account of it.
+	//
+	// THE MEASUREMENT BEHIND THAT RULING IS NOT THIS FILE'S AND IS NOT RESTATED AS ITS OWN.
+	// It was taken off the live editor by the `coordinator` on 2026-09-03, with controls:
+	// `BP_StratGameMode_AiVsAi` reads `AiSides=(0,1)`, `struct_properties("StratMatchConfig")`
+	// gives the C++ default as empty, and `BP_StratShellGameMode` carries no `MatchConfig` at
+	// all. `ViewingSide` 0 and `Difficulty` `Easy` are absent from both the native and the BP
+	// export, which is what a zero-valued field sitting at its C++ default looks like.
+	//
+	// SO A COMMENT IN THIS FILE THAT DESCRIBES AN EMPTY `AiSides` MUST SAY "THE C++ DEFAULT"
+	// AND MUST NOT SAY "THE SHIPPED CONFIGURATION". They are different states. Conflating
+	// them is the defect this block, the `Difficulty` block below, and `StratHandicappedSide`
+	// at both its declaration and its definition were repaired for on 2026-09-03.
 
 	/**
 	 * Which `strat` sides are played by §2.9's AI rather than by a human.
@@ -386,13 +406,31 @@ struct FStratMatchConfig
 	 * the AI. If the GDD is later read as handicapping a hot seat's first seat, the change
 	 * is to `StratHandicappedSide` alone.
 	 *
-	 * DEFAULTS TO `Easy` AND THAT DEFAULT IS INERT ON THE SHIPPED CONFIGURATION. Sec 2.11.6
-	 * says "the first match runs on the one shipped scenario at Easy by default", so `Easy`
-	 * is the honest C++ default; `AiSides` defaults empty, so on the shipped hot seat the
-	 * default reaches `StratHandicappedSide` and comes back `INDEX_NONE`. Both statements
-	 * are true at once and neither implies the other -- which is why the default is stated
-	 * as `Easy` here rather than as `Normal`, the value that would have made the inertness
-	 * true by arithmetic instead of by configuration and hidden the ruling above.
+	 * DEFAULTS TO `Easy`, AND THAT DEFAULT IS INERT ON THE C++ DEFAULTS AND LIVE ON THE
+	 * SHIPPED CONFIGURATION. Sec 2.11.6 says "the first match runs on the one shipped
+	 * scenario at Easy by default", so `Easy` is the honest C++ default. With `AiSides` at
+	 * ITS C++ default -- empty -- the tier reaches `StratHandicappedSide` and comes back
+	 * `INDEX_NONE`, and that remains exactly true of this struct's own defaults and of every
+	 * fixture that builds it without touching `AiSides`.
+	 *
+	 * [CORRECTED 2026-09-03. This paragraph read, in the words on the next three lines:
+	 * RETRACTED> "THAT DEFAULT IS INERT ON THE SHIPPED CONFIGURATION ... `AiSides` defaults
+	 * RETRACTED> empty, so on the shipped hot seat the default reaches `StratHandicappedSide`
+	 * RETRACTED> and comes back `INDEX_NONE`".
+	 * Its antecedent was the C++ default and its consequence was asserted of the SHIPPED
+	 * game, which is the conflation the block above now forbids in terms. `BP_StratGameMode` authors
+	 * `AiSides=(1)`, so on the shipped configuration ARM ONE fails (`Num()` is 1) and ARM TWO
+	 * fails (`AiSides` holds 1, `ViewingSide` is 0): `StratHandicappedSide` returns
+	 * `ViewingSide` = 0, and `Easy`'s +150 lands on the HUMAN's side. USER RULING, 2026-09-03:
+	 * THAT IS INTENDED -- Easy is meant to help the player, so the handicap landing on the
+	 * human is correct behaviour and not a defect. Nothing in `StratHandicappedSide` changes;
+	 * only this prose was wrong.]
+	 *
+	 * `Easy` RATHER THAN `Normal` STILL FOR THE REASON GIVEN, WHICH SURVIVES THE CORRECTION
+	 * INTACT. `Normal`'s delta is 0, so choosing it would have made the handicap unobservable
+	 * by ARITHMETIC rather than by configuration, and would have hidden the "single-player
+	 * only" ruling above instead of leaving it checkable. That argument never depended on
+	 * which configuration ships, which is why it needed no repair when this one did.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
 	EStratDifficulty Difficulty = EStratDifficulty::Easy;
@@ -650,12 +688,22 @@ STRATPLAY_API bool StratMatchIsConcluded(const FStratViewModel& Model);
  * configuration rather than three ways of saying one thing:
  *
  *   - `AiSides` EMPTY -> `INDEX_NONE`. A hot seat has no player-versus-opponent asymmetry
- *     for a handicap to express. This is the shipped configuration.
+ *     for a handicap to express. This is `FStratMatchConfig`'s C++ default, and the
+ *     configuration every fixture that leaves `AiSides` alone builds. IT IS NOT THE SHIPPED
+ *     CONFIGURATION. [CORRECTED 2026-09-03; this line read, in the words on the next line:
+ *     RETRACTED> "This is the shipped configuration."
+ *     `BP_StratGameMode` authors `AiSides=(1)`, so the shipped game never reaches this arm
+ *     -- see the third.]
  *   - `AiSides` CONTAINS `ViewingSide` -> `INDEX_NONE`. The seat the screen opens on is
  *     itself the AI, so either both sides are AI (phase D's AI-vs-AI gate, which must not
  *     move) or the configuration is inverted. Both fail inert rather than handicapping a
  *     computer.
- *   - OTHERWISE -> `ViewingSide`.
+ *   - OTHERWISE -> `ViewingSide`. THIS IS THE ARM THE SHIPPED GAME TAKES, and saying so is
+ *     the whole of the 2026-09-03 repair: `BP_StratGameMode` authors `AiSides=(1)` with
+ *     `ViewingSide` at its C++ default of 0, so both arms above fall through and Sec 2.9's
+ *     handicap moves side 0 -- the human's. USER RULING, 2026-09-03: intended, because Easy
+ *     is meant to help the player. See `FStratMatchConfig::Difficulty`'s own block for the
+ *     ruling, and the AI block's preamble for whose measurement the authored value is.
  *
  * `ViewingSide` IS THE PLAYER'S SEAT AND NOT `FirstSide`. Its own declaration says it is
  * "which `strat` side the screen is drawn FOR at the start of the match"; in a

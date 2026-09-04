@@ -16,6 +16,99 @@
 ## NEXT
 
 - **2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `0b17685`, working tree clean at dispatch,
+  UNCOMMITTED) -- THE OPEN `AiSides` QUESTION THIS RECORD FILED IS ANSWERED BY USER RULING, AND
+  THE THREE PRODUCTION SITES THAT TURNED ON IT ARE REPAIRED. THE DEBT BELOW STAYS OPEN AND IS
+  NOT STAMPED.** Comment-only changes; no executable line moved in any file. No count is written
+  here; the live figure is `global.md`'s alone, and this pass ran no suite (see the last bullet).
+  - **THE RULING, AND IT IS THE USER'S, 2026-09-03, IN SESSION.** (1) `BP_StratGameMode`'s
+    authored `MatchConfig.AiSides=(1)` is **INTENDED** -- the shipped game is human-versus-AI,
+    side 0 (Directorate) the human and side 1 (Vanguard) the AI. It is not Blueprint drift from a
+    hot-seat intent and the asset is correct as authored; no `Content/` byte changes.
+    (2) The `Easy` starting-Fame handicap landing on the **HUMAN** side is **ALSO INTENDED**,
+    because Easy is meant to help the player. `StratHandicappedSide` returning `ViewingSide` (0)
+    on the shipped configuration is correct behaviour, not a defect, and **no logic changed.**
+  - **THE MEASUREMENT IS NOT MINE AND IS NOT RESTATED AS MINE.** It was taken off the live editor
+    on 2026-09-03 by the `coordinator`, and this lane received it as given. Its controls:
+    `BP_StratGameMode_AiVsAi` reads `AiSides=(0,1)`; `struct_properties("StratMatchConfig")` gives
+    the C++ default as empty; `BP_StratShellGameMode` carries no `MatchConfig` at all. `ViewingSide`
+    0 and `Difficulty` `Easy` are absent from both the native and the BP export, which is what a
+    zero-valued field at its C++ default looks like. Walking `StratHandicappedSide` on those values:
+    ARM ONE wants `AiSides.Num()==0` and it is 1; ARM TWO wants `AiSides.Contains(ViewingSide)` and
+    it holds 1, not 0; both fall through and it returns `ViewingSide` = 0. **I did not read the
+    asset and this entry claims no such reading.**
+  - **WHAT WAS REPAIRED, AND WHAT WAS DELIBERATELY PRESERVED.** The false claim is *"an empty
+    `AiSides` is the shipped configuration"* and its consequence *"the `Easy` default is inert as
+    shipped"*. The TRUE half -- that an empty `AiSides` is the **C++ default** of
+    `FStratMatchConfig`, and the configuration every fixture that leaves the field alone builds --
+    is preserved everywhere and **re-attributed rather than deleted**, because that distinction is
+    the entire content of the repair. Cited by symbol, never by line:
+      - `FStratMatchConfig`'s **AI-block preamble**, `Source/StratPlay/StratMatchSubsystem.h` --
+        rewritten, and it now states the rule the rest of the file is repaired against: a comment
+        describing an empty `AiSides` must say "the C++ default" and must not say "the shipped
+        configuration".
+      - `FStratMatchConfig::Difficulty`'s **inertness block**, same file -- the
+        `THAT DEFAULT IS INERT ON THE SHIPPED CONFIGURATION` sentence is stamped `RETRACTED>` in
+        place with the ruling beside it. The `Easy`-not-`Normal` argument is kept intact and its
+        independence is now stated: it never depended on which configuration ships.
+      - `StratHandicappedSide`'s **declaration comment**, same file -- ARM ONE's *"This is the
+        shipped configuration."* stamped `RETRACTED>`; the OTHERWISE arm now says in terms that it
+        is the arm the shipped game takes.
+      - `StratHandicappedSide`'s **definition comment**, `Source/StratPlay/StratMatchSubsystem.cpp`
+        -- *"ARM ONE -- the shipped hot seat."* stamped `RETRACTED>`, and a new ARM THREE comment
+        sits on the `return Config.ViewingSide;` that the shipped game actually reaches.
+  - **A FOURTH SITE THE BRIEF'S STARTING SET DID NOT NAME, FOUND BY RUNNING THE SWEEP RATHER THAN
+    THE LIST.** `AStratGameMode`'s opening-AI-turn comment, `Source/StratPlay/StratGameMode.cpp`,
+    read *"In a hot-seat match with no `AiSides` configured -- which is the default and is every
+    match before phase C"*. The historical half is true and is kept; *"which is the default"* is
+    re-attributed to the C++ default and the shipped `AiSides=(1)` is named. The brief said to
+    treat its four sites as a starting set and not a complete one, and that instruction is what
+    produced this one.
+  - **SCOPE HELD TO `AiSides` ON THE USER'S EXPLICIT DECLINE.** The `MoveTweenSeconds` and
+    `AiPlaybackStepSeconds` sites were NOT touched. They are the other half of the debt below and
+    they are why it is not stamped.
+  - **`Source/StratPlay/Tests/StratAiMatchClauses.cpp` CARRIES THE SAME FALSE CLAIM AND I LEFT IT
+    UNTOUCHED.** Its file-header *"THE DEFAULT IS INERT"* bullet and the `Base` comment on the
+    empty-`AiSides` path call those "the shipped defaults". `Tests/` is `strat-test-author`'s lane
+    and is being dispatched separately; an engineer editing it would be an out-of-lane write with a
+    lane standing to take it.
+  - **THE THREE `RETRACTED>` MARKERS THIS PASS WROTE WERE NON-COMPLIANT WITH A CONVENTION THIS
+    TREE DECLARES, AND WERE RE-ANCHORED IN THE SAME PASS ON THE `coordinator`'S CORRECTION.**
+    The authority is the `THE CONVENTION, and it is per-LINE and not per-paragraph` block at the
+    head of `Source/StratPlay/Tests/StratSelectionMachineParity.cpp` -- cited by block rather
+    than by line, because lines move. It requires the token to sit at the head of a comment line
+    after the leader (`//` or `*`), since the meaning comes from POSITION and never from mere
+    presence, and it states in terms: *"A partial-line quotation is not retractable and must not
+    be written."* All three of mine opened MID-LINE.
+  - **MEASURED BY THE DECLARED RECIPE, BEFORE AND AFTER, NOT BY EYE.** The recipe is that block's
+    own anchored filter, `grep -vE '^[[:space:]]*(//|\*)[[:space:]]*RETRACTED> '`, run directly
+    over the file. **BEFORE: `StratMatchSubsystem.h` 45 markers / 43 anchored / 2 SURVIVING;
+    `StratMatchSubsystem.cpp` 10 / 9 / 1 SURVIVING** -- three withdrawn quotations reading as
+    LIVE PROSE to any sweep, which is the exact failure the convention exists to prevent.
+    **AFTER: `.h` 47 / 47 / 0; `.cpp` 10 / 10 / 0.** Run at the phrase level too, the three
+    withdrawn claims -- *the shipped hot seat*, *INERT ON THE SHIPPED*, *This is the shipped
+    configuration* -- now return ZERO survivors in both files.
+  - **WITH A CONTROL, BECAUSE ZERO SURVIVORS IS AN ABSENCE AND AN ABSENCE NEEDS ONE.** The same
+    anchored filter over live prose on the SAME axis still returns it: `IT IS NOT THE SHIPPED`,
+    `THE SHIPPED GAME IS HUMAN-VERSUS-AI`, `THIS IS THE ARM THE SHIPPED GAME TAKES` and
+    `WHICH IS THE SHIPPED CONFIGURATION` all survive. So the filter subtracts withdrawn
+    quotations and not live claims, and the zeroes above are evidence rather than a broken grep.
+  - **NO QUOTATION WAS DROPPED; ALL THREE WERE KEPT AND BROKEN ONTO WHOLE LINES.** The convention
+    offers "or do not quote them" as the second lawful option and I did not need it. The
+    `Difficulty` block's withdrawn paragraph now occupies THREE whole marked lines, and
+    `StratHandicappedSide`'s two withdrawn sentences one each. A greppable withdrawn claim is the
+    point, so keeping them was preferred wherever the sentence could be broken without mangling
+    the paragraph -- it could, in all three.
+  - **BUILD, AND NO SUITE RUN.**
+    `"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" StratocracyEditor
+    Win64 Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex` ->
+    `Result: Succeeded`, 36 actions, `UnrealEditor-StratPlay.dll` relinked; REBUILT after the
+    `RETRACTED>` re-anchoring above and `Result: Succeeded` again. A comment-only change still
+    changes the translation units' inputs, which is why each was built rather than assumed.
+    **The suite was deliberately NOT run**: a rebuild moves the report's identity and every
+    citation of the previous run with it, and the `coordinator` sequences that.
+
+- **2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- RECORD REPAIR ONLY, NO
   `Source/` BYTE CHANGED: F4 AND ITS UNREPORTED TWIN, AND THE CLAIM-SHAPE SWEEP RUN OVER THE WHOLE
   LANE RATHER THAN OVER `Tests/`. THE SWEEP FOUND THE SAME DEFECT IN PRODUCTION PROSE AND IT IS
@@ -151,6 +244,15 @@
     `Source/StratPlay/Tests/StratAiMatchClauses.cpp:380` and it wants the same owner's
     measurement**: the content lane reading `BP_StratGameMode`'s `AiSides` off the asset. Recorded
     here so it is greppable rather than lost.
+    **[ANSWERED 2026-09-03 BY USER RULING -- SEE THE TOPMOST ENTRY, WHICH CARRIES THE RULING AND
+    WHOSE MEASUREMENT IT IS. THE ANSWER IS `AiSides=(1)`, INTENDED: THE SHIPPED GAME IS
+    HUMAN-VERSUS-AI AND NOT A HOT SEAT, AND THE `Easy` HANDICAP LANDING ON THE HUMAN IS ALSO
+    INTENDED.** So the CONSEQUENCE this bullet declared unknowable is now known and it is FALSE:
+    the default does not come back `INDEX_NONE` on the shipped configuration, it comes back
+    `ViewingSide` = 0. The three production sites named in the SCOPE WIDENED sub-bullet below are
+    **REPAIRED** in that same entry's pass, plus a fourth in `StratGameMode.cpp` that no
+    enumeration here had reached. **THIS QUESTION IS CLOSED. THE DEBT IS NOT, AND MUST NOT BE READ
+    AS CLOSED -- see the DISCHARGED WHEN sentence below, which this ruling does not satisfy.]**
   - **[SCOPE WIDENED 2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, main
     tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED), ON THE SECOND
     RE-GATE'S F6.] THE OPEN `AiSides` QUESTION ABOVE HAS MORE THAN ONE PRODUCTION SITE AND THIS
@@ -175,6 +277,21 @@
     byte need change to clear it. **DISCHARGED WHEN** the pass that rewrites the enumerated
     `AiPlaybackStepSeconds` blocks ALSO rewrites these three. The condition now NAMES them, so
     it can no longer be satisfied while they stand, which is the only thing F6 asked for.
+    **[HALF-MET 2026-09-03, AND HALF-MET IS NOT MET. THIS DEBT REMAINS OPEN AND IS DELIBERATELY
+    NOT STAMPED.]** The topmost entry's pass repaired **TWO OF THE THREE SITES
+    LISTED IMMEDIATELY ABOVE AND NOT THE THIRD** -- both of `StratHandicappedSide`'s comments,
+    which are the two `AiSides` sites; **`IsAiPlaybackRunning`'s declaration comment was NOT
+    touched**, because it is an `AiPlaybackStepSeconds` site and the user's scope ruling excluded
+    that field. It also repaired the `Difficulty` and AI-block prose and a fourth site in
+    `StratGameMode.cpp`, on a user ruling that answered the open question. **IT DID NOT REWRITE THE ENUMERATED
+    `AiPlaybackStepSeconds` BLOCKS**, because the user explicitly declined to widen that pass
+    beyond `AiSides` -- the `AiPlaybackStepSeconds` prose on the field itself, on `BeginAiPlayback`,
+    on `WillAiPlaybackRun` and on `IsAiPlaybackRunning`, and the `MoveTweenSeconds` sites, all
+    still call a C++ field default "the shipped default" while a shipped Blueprint serialises that
+    field. **The condition above is a CONJUNCTION -- the `AiPlaybackStepSeconds` blocks AND
+    these three -- and NEITHER conjunct is fully satisfied: the first not at all, the second two
+    sites out of three. So it is not satisfied.** A reader arriving at this bullet must not stamp it: the discharging pass is the
+    one that rewrites the `AiPlaybackStepSeconds` blocks, and it has not run.
   - **THE ORIGINAL SWEEP WAS PINNED TO A TOKEN AND NOT TO A SHAPE, WHICH IS WHY IT WAS BLIND.
     RE-RUN WIDENED 2026-09-03, WITH THE PATTERN WRITTEN OUT SO THE WIDENING IS CHECKABLE RATHER
     THAN CLAIMED.** The original required the literal word `default` within 120 characters of a

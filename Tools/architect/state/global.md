@@ -11,18 +11,85 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-03 (THE SHIPPED GAME IS HUMAN-VERSUS-AI, NOT A HOT SEAT, AND THE THING
+WORTH READING IS THAT THE CLAUSE GAP ONE LANE REPORTED AS MISSING HAD BEEN IN THE TREE ALL
+ALONG -- under a name that described the configuration instead of naming it. Written by the
+`coordinator`, whose file this is, IN LANE AND UNDER NO EXCEPTION CLAUSE -- this seat wrote no
+code and no clause. The C++ prose is `strat-gameplay-engineer`'s and is in `engine.md`; the
+clause and the test prose are `strat-test-author`'s and are in `tests.md`. Each wrote its own
+entry, in lane, itself, and the two lanes were dispatched in SEPARATE messages so neither could
+write a status claim about the other's file that was false before both finished.
+The suite is **387/387**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings.
+THE COUNT MOVED 386 -> 387 AND THE NEW CLAUSE IS AN ADDITION: **+1 added, 0 removed, 0 state
+changes**, measured by set difference on the test MACRO. The new name was verified PRESENT IN
+THE REPORT BY NAME rather than inferred from the delta:
+`Stratocracy.StratPlay.T-FAME-02.ShippedGameModeAuthorsOneAiSide`.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-03.04.52`.
+THE RUN WAS MADE BY `strat-test-author` IN THIS TREE, NOT IN A WORKTREE, AFTER THE LAST SOURCE
+CHANGE. THIS SEAT DID NOT ACCEPT THE LANE'S REPORTED FIGURE: it opened
+`Saved/AutomationReport/index.json` in this tree and read `reportCreatedOn`, `succeeded`,
+`failed`, `notRun`, the entry count and the new clause's own state directly. A lane's
+self-reported count is not a measurement, and the report timestamp runs ahead of local time --
+the run is 2026.09.04-03.04.52 by the report and 2026-09-03 locally, which is why this entry is
+dated 2026-09-03.
+WHAT THE PASS DID. A USER RULING settled a question this record has carried open: the authored
+`MatchConfig` on `BP_StratGameMode` holds `AiSides=(1)`, and that is INTENDED -- side 0 is the
+human, side 1 the AI, and the Easy starting-Fame handicap landing on the HUMAN side is intended
+too. No production byte and no asset changed. Five comment sites across three source files and
+six across two test files were re-attributed from "the shipped configuration" to "the C++
+default"; the C++-default facts were PRESERVED and re-attributed rather than deleted, because
+an empty `AiSides` really is the C++ default and really is what every fixture builds.
+TWO CORRECTIONS THIS SEAT OWES, BOTH FOUND BY THE LANES AND NOT BY IT. First, this seat briefed
+`strat-test-author` to copy an inline `RETRACTED>` form from the engineer's pass without checking
+whether the tree already declared a convention. It does -- `StratSelectionMachineParity.cpp`'s
+per-LINE block, which states that a partial-line quotation is not retractable and must not be
+written -- and SEVEN withdrawn quotations were reading as LIVE PROSE to the declared anchored
+filter. All seven are re-anchored; both lanes measured before and after WITH A CONTROL showing
+the filter still returns live claims on the same axis, since a zero survivor count is an absence
+and proves nothing until the instrument is shown able to speak. Second, this seat relayed
+`strat-gameplay-engineer`'s report that no clause pinned the arm the shipped game takes. THAT
+WAS FALSE and `strat-test-author` caught it: `StratDifficultyHandicapMatchClauses.cpp`'s
+`HandicapIsInertWithoutASinglePlayerOpponent` already builds `ViewingSide 0, AiSides {1}` and
+asserts the handicap lands on side 0, labelled CONTROL. It was verified in the tree before the
+correction was relayed. The gap was a NAME, not a clause.
+WHAT WAS GENUINELY MISSING, AND BOTH LANES FOUND IT INDEPENDENTLY: nothing read
+`BP_StratGameMode`'s AUTHORED value, so a content pass could re-author it to a hot seat and leave
+the whole suite green while silently re-falsifying every comment repaired today. That is the +1.
+It fails RED on four distinct non-resolution paths and never skips, carries a fatal premise that
+the C++ default is EMPTY -- so a reader stuck on the C++ default fails rather than passes -- and
+a within-class discrimination control against `BP_StratGameMode_AiVsAi`, which must come back
+`(0,1)`. Reading a Blueprint default is asymmetric evidence: absence is decisive and presence
+proves nothing, so the control is what makes the assertion mean anything. Its falsifiability was
+proved by MUTATING THE CLAUSE'S OWN EXPECTATION, not the `.uasset`, and the red line printed the
+value read off the CDO -- one line discharging falsifiability and proving the read reaches the
+asset rather than returning a constant.
+WHAT IS STILL UNPINNED, RECORDED SO IT IS NOT REDISCOVERED: `Difficulty` on the shipped asset.
+The C++ default and the authored value happen to AGREE at `Easy`, so a content pass re-authoring
+the tier to `Hard` would invert the handicap from +150 to -100 on the human's side and every
+clause in the tree would stay green. Same class as the gap just closed, on the field beside it.
+The `AiSides` debt in `engine.md` is NOT stamped closed: its DISCHARGED WHEN is a conjunction
+naming the `AiPlaybackStepSeconds` blocks too, the user scoped this pass to `AiSides` only, and
+the engineer wrote HALF-MET into the bullet rather than rounding up.)
+
 _Last run 2026-09-03 (AI UNITS NOW WALK THEIR ROUTES ONE AT A TIME, AND THE THING WORTH READING
 IS THAT THE RULING EVERYBODY CITED AS FORBIDDING THIS FORBIDS SOMETHING ELSE. Written by the
 `coordinator`, whose file this is, IN LANE AND UNDER NO EXCEPTION CLAUSE -- this seat wrote no
 code and no clause. The C++ is `strat-gameplay-engineer`'s and is in `engine.md`; the clauses are
 `strat-test-author`'s and are in `tests.md`. Each wrote its own entry, in lane, itself.
-The suite is **386/386**, every entry Success, zero failed, zero notRun, zero
-succeededWithWarnings, and the macro census of this tree agrees at 386.
+**[STAMPED 2026-09-03 -- superseded by the AiSides prose-repair pass in the banner
+ABOVE, which added one clause and moved the figure to 387/387. Kept, not deleted, per this
+file's own convention.]**
+STAMPED> "The suite is 386/386, every entry Success, zero failed, zero notRun, zero
+STAMPED>  succeededWithWarnings, and the macro census of this tree agrees at 386."
+STAMPED>  -- true of the existence-hold wave and superseded, not retracted.
 THE COUNT MOVED 381 -> 386 AND EVERY ONE OF THE NEW CLAUSES IS AN ADDITION: **+5 added, 0
 removed, 0 state changes**, measured by set difference on the test MACRO with one collector on
 both sides. All five new clause names were verified PRESENT IN THE REPORT BY NAME rather than
 inferred from the delta.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.03-19.47.45`, RESTAMPED 2026-09-03.
+STAMPED> "THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.03-19.47.45`, RESTAMPED
+STAMPED>  2026-09-03." -- ONE REPORT PATH, ONE ARTIFACT: that report no longer exists to be
+STAMPED>  read, having been overwritten by the run cited in the banner above.
 The citation is a run THIS SEAT made in THIS tree after the last source change, on the reverted
 tree, and the five names were read back out of that report by name.
 THE FIVE EXISTENCE-HOLD CLAUSES ARE THE +5, and they close the debt this record carried open

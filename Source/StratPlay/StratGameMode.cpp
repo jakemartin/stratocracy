@@ -164,8 +164,12 @@ void AStratGameMode::BeginPlay()
 	//
 	// IT DOES NOT CHECK WHOSE TURN IT IS. `RunAiTurnsIfDue` does, once, and a second copy of
 	// that check here would be a second authority on it. In a hot-seat match with no
-	// `AiSides` configured -- which is the default and is every match before phase C -- this
-	// call builds one view model, finds a human's turn and returns true.
+	// `AiSides` configured -- which is the C++ DEFAULT of `FStratMatchConfig`, and was every
+	// match before phase C, but is NOT the shipped game: `BP_StratGameMode` authors
+	// `AiSides=(1)`, ruled intended by the user 2026-09-03, see `FStratMatchConfig::AiSides`
+	// -- this call builds one view model, finds a human's turn and returns true. On the
+	// shipped configuration side 1 is the AI, so whether this call runs a turn depends on
+	// which side moves first, and not on this comment.
 	if (Match->IsMatchLive())
 	{
 		FString AiReason;

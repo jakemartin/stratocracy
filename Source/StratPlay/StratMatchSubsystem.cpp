@@ -2747,10 +2747,16 @@ int32 StratDifficultyFameDelta(EStratDifficulty Difficulty)
 
 int32 StratHandicappedSide(const FStratMatchConfig& Config)
 {
-	// ARM ONE -- the shipped hot seat. See the declaration: Sec 2.7 calls this
-	// "Single-player difficulty", and with no AI seat there is no player-versus-opponent
-	// asymmetry for a starting-Fame handicap to express. This is the arm that keeps every
-	// existing hot-seat opening at the scenario's own 200/200.
+	// ARM ONE -- a hot seat, which is `FStratMatchConfig`'s C++ default and is NOT the
+	// shipped game. See the declaration: Sec 2.7 calls this "Single-player difficulty", and
+	// with no AI seat there is no player-versus-opponent asymmetry for a starting-Fame
+	// handicap to express. This is the arm that keeps every hot-seat opening -- and every
+	// fixture that leaves `AiSides` empty -- at the scenario's own 200/200.
+	// [CORRECTED 2026-09-03; this comment opened with the words on the next line:
+	// RETRACTED> "ARM ONE -- the shipped hot seat."
+	// `BP_StratGameMode` authors `AiSides=(1)`, so the shipped game fails this arm's test and
+	// the next one and is handicapped on side 0. USER RULING the same day: intended, and no
+	// arm below moves on account of it.]
 	if (Config.AiSides.Num() == 0)
 	{
 		return INDEX_NONE;
@@ -2764,6 +2770,10 @@ int32 StratHandicappedSide(const FStratMatchConfig& Config)
 		return INDEX_NONE;
 	}
 
+	// ARM THREE -- a human seat facing an AI seat, WHICH IS THE SHIPPED CONFIGURATION:
+	// `BP_StratGameMode` authors `AiSides=(1)` and leaves `ViewingSide` at 0. Sec 2.9's
+	// handicap therefore moves the human's side on the shipped game, at `Easy`'s +150.
+	// USER RULING, 2026-09-03: intended -- Easy is meant to help the player.
 	return Config.ViewingSide;
 }
 

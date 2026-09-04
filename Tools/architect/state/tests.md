@@ -16,6 +16,227 @@
 
 - **2026-09-03 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
   only, plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
+  `0b17685`, UNCOMMITTED) -- **THE ASSET-PIN CLAUSE EXISTS, THE RETRACTION MARKERS ARE ANCHORED,
+  AND THE THING WORTH READING IS THAT THE MUTANT'S OWN FAILURE MESSAGE IS WHAT PROVED THE
+  READER WAS READING THE ASSET -- it printed the value it had read, `(1)`, while asserting the
+  mutated `0`, so one line of output discharged falsifiability AND non-vacuity together.** Cite
+  this pass's run by its exported `reportCreatedOn 2026.09.04-03.04.52` (UTC in the report;
+  local date 2026-09-03), never by a number -- the figure lives in
+  `Tools/architect/state/global.md` and nowhere else. Follows the pass recorded immediately
+  below, which the `coordinator` and the user reopened on three counts.
+
+  - **THE CLAUSE.** `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeAuthorsOneAiSide`, in the
+    new file `Source/StratPlay/Tests/StratShippedGameModeMatchConfig.cpp`. It loads
+    `/Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C` and reads the CDO's
+    `MatchConfig.AiSides` and `MatchConfig.ViewingSide`. Counted by MACRO with a multiline
+    set-difference against `HEAD` (`0b17685`) -- **exactly one clause name added, none removed,
+    none renamed.** A single-line name grep returns zero here; the macro spans three lines.
+
+  - **WHERE THE EXPECTATION COMES FROM.** A literal, `AiSides == {1}` and `ViewingSide == 0`,
+    and it is legitimate as one because the module is not the author of the value -- the ASSET
+    is, and a test that asked the asset and then asserted the answer would assert nothing. The
+    reading is the `coordinator`'s off the live editor, 2026-09-03, with its three controls;
+    the user ruled it intended. Same posture and same justification as
+    `StratShippedGameModeOptIn.cpp`'s `true`, which the file's header cites by name.
+
+  - **HOW IT FAILS WHEN IT CANNOT TELL, WHICH IS THE PART THAT MATTERS.** Four separate
+    explicit failures, none of them a skip: the package failing to load, the path resolving to
+    a NATIVE class rather than a Blueprint-generated one, the class not deriving from
+    `AStratGameMode`, and a null CDO. Each names what to fix. A clause that goes quiet when the
+    asset moves reads green while pinning nothing, which is worse than no clause -- it also
+    occupies the space a real gate would go in.
+
+  - **TWO CONTROLS, BOTH ASSERTIONS RATHER THAN REMARKS, BECAUSE A CDO READ IS ASYMMETRIC
+    EVIDENCE.** A CDO reports the asset's override if there is one and the C++ default if there
+    is not, and the two are indistinguishable at the call site. (1) A FATAL PREMISE asserts
+    `FStratMatchConfig::AiSides` is EMPTY in C++, so the value sought is one the C++ default
+    cannot supply and a reader stuck on the C++ default fails rather than passes. (2) The SAME
+    reader is run against `BP_StratGameMode_AiVsAi` and must come back `(0,1)`, with an explicit
+    `TestNotEqual` between the two packages' answers -- three distinct answers counting the C++
+    default's empty, which is what makes it a reader OF AN ASSET rather than a constant.
+
+  - **THE MUTANT, RUN AND SHOWN RED.** Expectation mutated in my own clause -- not in the
+    `.uasset`, which is LFS and not this lane's -- from `ShippedAiSides[0], 1` to
+    `..., 0`; rebuilt; run alone with its report exported OUTSIDE the repo so it could not
+    clobber the suite report this entry cites. Result `Fail`, and the framework's own message:
+    `Expected '§2.7: the AI seat BP_StratGameMode authors is side 1, the Vanguard (read: (1)).
+    Side 0 is the Directorate and is the human's.' to be 0, but it was 1.` **The `read: (1)` in
+    that message is the evidence, not the failure itself** -- it is the value taken off the CDO,
+    printed by the clause, so the run proves the read reaches the asset and is not returning a
+    constant or the C++ default. Then restored (verified byte-identical to the pre-mutant copy),
+    rebuilt, and the full suite re-run green.
+
+  - **WHAT THE NEW CLAUSE DOES NOT PIN, and its own header says each one.** It does NOT pin
+    `ViewingSide` as an OVERRIDE: `FStratMatchConfig::ViewingSide` initialises to 0 and the
+    asset reads 0, so on that one field the effective read cannot tell an authored value from an
+    untouched one. The assertion still earns its place -- a shipped `ViewingSide` of 1 would put
+    the human on the AI's seat, `StratHandicappedSide`'s second arm, and make §2.9's handicap
+    silently inert in the shipped game -- but it pins the VALUE, not the authorship, and the
+    assertion message says exactly that so a reader cannot mistake the one for the other. It
+    also pins no BEHAVIOUR, no other field of the same struct, and not that `BP_StratGameMode`
+    is the map's GameMode (that binding is a single unguarded line in `Config/DefaultEngine.ini`).
+
+  - **THE MARKERS ARE RE-ANCHORED, AND THE COORDINATOR'S BRIEF WAS THE CAUSE, NOT A LANE
+    ERROR.** I was told to match the engineer's inline `[CORRECTED ...; this comment read
+    RETRACTED> "..."]` form; the tree already declared a different one and the declared one is
+    the authority -- `StratSelectionMachineParity.cpp`'s `THE CONVENTION, and it is per-LINE and
+    not per-paragraph` block: the marker's meaning comes from its POSITION at the head of the
+    comment line, never from its presence, and *"a partial-line quotation is not retractable and
+    must not be written."* All four of my markers were mid-line. Restructured so every withdrawn
+    quotation occupies whole lines. **MEASURED, before and after, with the BEFORE state
+    reconstructed by reverse-applying the patch to the current files rather than remembered:
+    4 marker instances / 0 line-anchored, becoming 8 marker LINES / 8 line-anchored.** Withdrawn
+    text surviving the declared anchored filter on the shipped-claim axis: **2 -> 0**. **AND THE
+    CONTROL, because a zero survivor count is an absence and proves nothing until the instrument
+    is shown able to speak: the same anchored filter still returns LIVE claims on the same axis
+    -- 3 of them, including this file-pair's `SINGLE-PLAYER IS THE SHIPPED CONFIGURATION`
+    paragraph.** It returned 4 before; the one that went away is the false `TestEqual` message
+    corrected in the same pass, so the drop is a repair and not the instrument going quiet.
+
+  - **WHY THE BEFORE FIGURE IS 2 AND NOT 4, STATED BECAUSE IT LOOKS LIKE AN UNDERCOUNT.** The
+    axis regex is per-line, and two of the four withdrawn quotations had their claim phrase
+    WRAPPED across a line break (`... the shipped` / `defaults ...`), so no single-line pattern
+    could see them. They were equally unretracted; they were simply invisible to that instrument
+    as well as to the filter. **The decisive figure is therefore the marker census -- 0 of 4
+    anchored -- not the phrase survivor count**, and this is the same wrapped-claim blind spot
+    this record has been bitten by before.
+
+  - **THE `:360` MESSAGE, AND THE TWO BESIDE IT.** `T-FAME-02.HandicapIsInertWithoutASingle`
+    `PlayerOpponent`'s first `TestEqual` message lost its false tail; it now reads *"a hot seat
+    is handicapped on NO side -- ARM ONE, reached on FStratMatchConfig's C++ default and NOT on
+    the shipped configuration"*. **The expectation, the value and the call are untouched.** The
+    coordinator asked me to check the two messages below it in the same block: the `ScreenIsAi`
+    message (*"the screen opening on an AI seat ... either both sides are AI or the
+    configuration is inverted"*) and the `BothAi` message (*"phase D's AI-vs-AI configuration is
+    handicapped on NO side"*) **carry no shipped claim and are both true** -- `BothAi` describes
+    `BP_StratGameMode_AiVsAi`, whose `(0,1)` genuinely contains its `ViewingSide`. Neither was
+    changed.
+
+  - **WHAT IS STILL NOT PINNED AFTER ALL OF THIS.** `Difficulty` on the shipped asset. The
+    Easy-tier clause reads it off a default-constructed config, and the C++ default and the
+    asset agree at `Easy`, so nothing in the tree would go red if the asset's tier were
+    re-authored to `Hard` -- the handicap would silently invert from +150 to -100 on the human's
+    side and every clause would stay green. It is the same gap class this pass just closed for
+    `AiSides`, on the field next to it, and the new file's header names it as unpinned. **Not
+    written: outside what the user approved.**
+
+- **2026-09-03 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
+  only, plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
+  `0b17685`, UNCOMMITTED) -- **A USER RULING FALSIFIED PROSE IN TWO TEST FILES AND THE THING
+  WORTH READING IS THAT THE RULING MOVED NO EXPECTATION AND EXPOSED NO GAP: THE ARM THE SHIPPED
+  GAME TAKES WAS ALREADY PINNED, TWICE, UNDER A CLAUSE NAME THAT DID NOT SAY SO.** Comment-only.
+  No clause added, removed, renamed or weakened; no expectation, no fixture setup and no
+  assertion argument changed -- `git diff -U0` over `Source/StratPlay/Tests/` yields ZERO
+  changed lines that are not comment lines, which is the measurement, not the intent.
+  **I did not run the suite** -- the coordinator is sequencing the rebuild-and-restamp after
+  both lanes land -- so this entry cites no run and no figure. The figure lives in
+  `Tools/architect/state/global.md` and nowhere else.
+
+  - **THE RULING, AND WHOSE MEASUREMENT IT RESTS ON -- WHICH IS NOT MINE.**
+    `BP_StratGameMode`'s authored `MatchConfig` carries `AiSides=(1)` with `ViewingSide` 0 and
+    `Difficulty` Easy. **Read off the LIVE EDITOR by the `coordinator` on 2026-09-03**, with
+    three controls: `BP_StratGameMode_AiVsAi` reads `(0,1)`,
+    `struct_properties("StratMatchConfig")` gives the C++ default as empty, and
+    `BP_StratShellGameMode` carries no `MatchConfig` at all -- so the instrument discriminates
+    per asset rather than answering the same thing to everything. Neither this lane nor
+    `strat-gameplay-engineer` took that reading, and every site I corrected attributes it to
+    the `coordinator` in its own text rather than to the file it sits in. USER RULING the same
+    day, BOTH halves: (a) the shipped game is human-versus-AI and is NOT a hot seat, and (b)
+    Easy's +150 landing on the HUMAN side is intended, because Easy is meant to help the player.
+
+  - **WHAT WAS FALSE, AND THE NARROWER THING THAT WAS NOT.** The false claim class is calling an
+    EMPTY `AiSides` "the shipped configuration" / "the shipped default" / "the shipped hot seat".
+    An empty `AiSides` is still `FStratMatchConfig`'s C++ default and is still what every fixture
+    that leaves the field alone builds -- **both facts stand and were re-attributed rather than
+    deleted**, because deleting them would have removed the reason those fixtures are correct.
+    Every correction is stamped in place with this tree's `RETRACTED>` token quoting the old
+    words, so the old claim is greppable and neither claim is left live.
+
+  - **THE SITES, BY ENCLOSING SYMBOL AND CLAUSE, NOT BY LINE.** In
+    `Source/StratPlay/Tests/StratAiMatchClauses.cpp`: the file-header property bullet 1 ("THE
+    DEFAULT IS INERT ... the ordinary state of a hot-seat game"), and the guarded-path banner
+    plus its `Base` provenance comment inside
+    `FStratAiEmptyAiSidesRunsNoAiTurnTest::RunTest` (`T-INT-05.EmptyAiSidesRunsNoAiTurn`). In
+    `Source/StratPlay/Tests/StratDifficultyHandicapMatchClauses.cpp`: the header block of
+    `T-FAME-02.HandicapIsInertWithoutASinglePlayerOpponent` ("the shipped hot seat is the
+    default configuration") and that clause's live-half fixture comment ("the shipped
+    configuration §2.11.6 names"); the Easy-tier provenance comment in
+    `T-FAME-02.DifficultyTierDeltasAreSection29sThreeNumbers`, which was NOT retracted and now
+    says why; and a new paragraph on the header of
+    `T-FAME-02.HandicapMovesThePlayersOpeningFameAtEveryTier`.
+
+  - **THE ONE SITE THAT WAS NOT FALSE, AND IS NOW LABELLED AS SUCH ON PURPOSE.**
+    `T-FAME-02.DifficultyTierDeltasAreSection29sThreeNumbers` reads `Difficulty` off a
+    default-constructed config and its message says "§2.11.6's shipped default tier is Easy".
+    **On THIS field the C++ default and the shipped asset agree** -- `BP_StratGameMode` also
+    authors Easy -- so the message is true of both and nothing was retracted there. It is
+    called out in the file because it sits three lines from claims about `AiSides` that were
+    NOT true of both, and an unlabelled survivor beside four corrections reads as an oversight.
+
+  - **THE "ARM THREE IS UNPINNED" GAP IS NOT REAL, AND THIS IS THE FINDING OF THE PASS.** The
+    handoff asked me to confirm whether any clause pins the arm the shipped game actually takes
+    -- `StratHandicappedSide` returning `ViewingSide` on `AiSides` non-empty and not containing
+    `ViewingSide`. **Two do, and both build EXACTLY the shipped field values.** In
+    `StratDifficultyHandicapMatchClauses.cpp`, `kViewingSide` is `0` and `kAiSide` is `1`; the
+    CONTROL arm of `T-FAME-02.HandicapIsInertWithoutASinglePlayerOpponent` constructs
+    `ViewingSide = 0, AiSides = {1}` and asserts `StratHandicappedSide` returns `0`, and
+    `T-FAME-02.HandicapMovesThePlayersOpeningFameAtEveryTier` runs a LIVE match on that same
+    configuration and pins the player's opening Fame moving by every tier's delta, Easy's +150
+    included, while the AI side stays on the scenario's configured value. **What was missing was
+    a NAME, not a clause**: both call the configuration "single-player", the ruling's news is
+    that single-player IS the shipped game, and the file's old prose pointed a reader at the
+    empty-`AiSides` clause instead. That is now said in the second clause's header. **No clause
+    is owed on this account and none was written this pass.**
+
+  - **WHAT THESE CLAUSES STILL DO NOT PIN, STATED SO IT IS NOT INFERRED FROM THE ABOVE.** Nothing
+    in `Source/*/Tests/` reads `BP_StratGameMode`'s authored `AiSides` and compares it to
+    anything. Every clause named here constructs its own `FStratMatchConfig` in C++, so the
+    coverage is of `StratHandicappedSide`'s arms and of the subsystem's behaviour on a given
+    config -- **not of the ASSET being authored `(1)`**. If a content pass re-authored
+    `BP_StratGameMode` to an empty `AiSides` tomorrow, every clause in both files would stay
+    green and the corrected prose above would silently become false again.
+    `StratShippedGameModeOptIn.cpp` is the shape that would close it -- it loads
+    `/Game/StratPlay/BP_StratGameMode.BP_StratGameMode_C` and reads a CDO field, failing RED when
+    it cannot resolve rather than passing. **Not written this pass: the user scoped it to prose.**
+    **[STAMPED 2026-09-03 -- WRITTEN later the same day, on the user's approval, as
+    `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeAuthorsOneAiSide` in
+    `Source/StratPlay/Tests/StratShippedGameModeMatchConfig.cpp`, in exactly the shape this
+    bullet names. See the entry above.]**
+
+  - **[STAMPED 2026-09-03 -- CLOSED later the same day; see the entry above. The message now
+    reads "ARM ONE, reached on FStratMatchConfig's C++ default and NOT on the shipped
+    configuration". The coordinator lifted the off-limits instruction for this one string on
+    the user's ruling.]** ONE FALSE CLAIM IS STILL LIVE IN THIS TREE AND I WAS FORBIDDEN TO
+    TOUCH IT. In
+    `T-FAME-02.HandicapIsInertWithoutASinglePlayerOpponent`, the first `TestEqual`'s message
+    argument reads `"T-FAME-02: a hot seat is handicapped on NO side -- the shipped
+    configuration"`. Its expectation is CORRECT and unchanged -- an empty `AiSides` is
+    `INDEX_NONE` -- but the trailing four words are the exact falsified claim, and **an assertion
+    message reaches the exported automation report**, which is the same defect class a gate
+    blocked on 2026-09-03 for `"an AI-vs-AI config assembles at the shipped playback default"`.
+    The dispatching brief forbade changing any assertion argument, so it stands. **Declared open
+    here rather than fixed.** The neighbouring messages on the same call site are fine: the
+    `ScreenIsAi`, `BothAi` and CONTROL messages make no shipped claim.
+
+  - **[STAMPED 2026-09-03 -- CLOSED later the same day. The coordinator confirmed its brief
+    was wrong, the engineer re-anchored its three markers and this lane re-anchored its four;
+    see the entry above for the before/after measurement and its control. The finding below
+    was correct and is kept for the reasoning.]** TWO `RETRACTED>` CONVENTIONS NOW COEXIST IN
+    `Source/StratPlay/Tests/` AND THE ANCHORED FILTER ONLY UNDERSTANDS ONE. `StratSelectionMachineParity.cpp`'s declaration is explicit
+    that the marker's meaning comes from its POSITION -- head of the comment line, after the
+    leader -- and that **"a partial-line quotation is not retractable and must not be written"**,
+    because a line-oriented filter can only subtract whole lines. The form
+    `strat-gameplay-engineer` introduced on 2026-09-03 in `StratMatchSubsystem.cpp`, and which
+    this pass was told to match, is INLINE: `[CORRECTED <date>; this comment read RETRACTED>
+    "..."]`. **Consequence, measured by reading the declared recipe against my own output:** run
+    `grep -vE '^[[:space:]]*(//|\*)[[:space:]]*RETRACTED> '` over either file I edited and the
+    withdrawn sentences SURVIVE the filter, because their marker is mid-line. They are honestly
+    labelled to a human reader and invisible-as-withdrawn to the sweep. I did not resolve this
+    -- picking a convention across two lanes' files is not this pass's scope -- but a sweep that
+    trusts the anchored filter will read six withdrawn quotations as live prose.
+
+- **2026-09-03 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
+  only, plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
   `283d711`, UNCOMMITTED) -- **GATE FINDING F1 IS REPAIRED, AND THE THING WORTH READING IS THAT
   THE FINDING WAS NARROWER THAN THE DEFECT: THE REVIEWER NAMED THREE SITES IN ONE FILE, AND A
   CLAIM-SHAPE SWEEP FOUND TEN IN TWO, PLUS ONE STILL-OPEN INSTANCE ON A DIFFERENT PROPERTY IN A

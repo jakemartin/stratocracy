@@ -42,11 +42,11 @@ was not used. The report timestamp runs ahead of local time -- `reportCreatedOn
 2026.09.04-04.47.20` by the report against 2026-09-04 locally -- which is why this entry is
 dated 2026-09-04.
 THAT SENTENCE WAS A BLOCKING FINDING AND IS FIXED HERE RATHER THAN QUIETLY. It cited
-`2026.09.04-04.09.26` -- retired by the rename re-run -- LIVE and UNSTAMPED, twelve lines
-above the block that stamps that very citation as overwritten, so this banner asserted both.
-Found by `strat-integration-reviewer` on the 2026-09-04 RE-GATE, not by the sweep, and the
-reason the sweep could not find it is itself the debt below. Owner: the `coordinator`, in
-lane on its own file.
+`2026.09.04-04.09.26` -- retired by the rename re-run -- LIVE and UNSTAMPED, above the block
+stamped `the two claims below were true of this banner as first written`, which re-quotes that
+very citation as history, so this banner asserted both. Found by `strat-integration-reviewer`
+on the 2026-09-04 RE-GATE, not by the sweep, and the reason the sweep could not find it is
+itself the debt below. Owner: the `coordinator`, in lane on its own file.
 CARRIED DEBT, INSTRUMENT, DISCHARGED 2026-09-04: **`strat_banner_sweep.py` could not see a BARE
 report timestamp.** `_CITED_REPORT_STAMP_RE` required the literal `reportCreatedOn` token
 before the stamp, so a stamp written on its own -- the retired one, still quoted in this

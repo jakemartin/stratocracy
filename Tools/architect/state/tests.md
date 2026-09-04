@@ -15,6 +15,109 @@
 > file was split; completed 2026-08-22, no meaning changed.)
 
 - **2026-09-04 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- one file under
+  `Source/StratPlay/Tests/`, plus this file -- on `master` in the main tree
+  `E:/MultiAgent/Stratocracy`, base commit `15bd1b0`, UNCOMMITTED) -- **WHO OWNS THE SHIPPED
+  DIFFICULTY TIER IS NOW A MEASURED FACT AND NOT AN OPEN QUESTION, AND THE THING WORTH READING
+  IS THAT THE ANSWER IS "NOBODY IN CONTENT": the Blueprint contributes no value for that field
+  at all, so the tier the shipped game runs at is the C++ initialiser's, reaching the package by
+  inheritance.** Cite this pass by its exported `reportCreatedOn 2026.09.04-16.30.20` -- never by
+  a number; the figure lives in `Tools/architect/state/global.md` and nowhere else. That run is
+  the FINAL one of the pass: it followed the mutant's revert and the rebuild, and it overwrote
+  the earlier `2026.09.04-16.26.11` run of identical source, which is therefore not citable.
+  - **The clause.** `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeInheritsDifficultyFromCpp`,
+    the THIRD clause in `Source/StratPlay/Tests/StratShippedGameModeMatchConfig.cpp`, reusing
+    that file's `ResolveCdoOrFail`, `Describe` and `DescribeDifficulty`. **It is not another
+    reading of the same instrument the two clauses beside it use.** Those read an EFFECTIVE value
+    off a CDO -- the number a spawned GameMode would start from -- and an effective read cannot
+    say where the number came from. This one reads no value against an expectation at all: it
+    takes the reflected `FProperty` for `FStratMatchConfig::Difficulty` and asks
+    `Identical_InContainer` whether the shipped `BP_StratGameMode_C` CDO differs from its
+    ARCHETYPE, the native `Default__StratGameMode`, on that one member.
+  - **WHAT IT ESTABLISHES, POSITIVELY.** `BP_StratGameMode` contributes NO delta on
+    `Difficulty`; the value is inherited from `FStratMatchConfig::Difficulty`'s C++ initialiser.
+    The operational consequence, and the reason it earns a clause: **change that initialiser and
+    the shipped game moves with it.** Had the asset authored a tier, it would not have. This is
+    strictly more than the "cannot tell" the sibling clause was left with, and it is the reason
+    that clause's header now carries a `<SUPERSEDED 2026-09-04>` block instead of its old
+    closing sentence that no reader of overrides could exist.
+  - **WHAT IT DOES NOT PIN, AND THE FIRST ONE IS THE REAL LIMIT OF THE WHOLE APPROACH.**
+    (a) **It does not pin that a designer never touched the tier.** A property set in the editor
+    to the value its parent already holds contributes no delta either, so "never set" and "set to
+    Easy, which is what the parent said anyway" are the SAME reading here and this clause does not
+    separate them. It does not need to -- the claim is about where the RUNTIME value comes from,
+    which is answered either way -- and the clause is worded "inherits", never "the designer left
+    it alone", for exactly that reason. The failure message says this in its own words.
+    (b) **It does not pin the VALUE.** That the inherited tier is `Easy` and not `Hard` remains
+    `T-FAME-02.ShippedGameModeRunsAtEasy`'s, immediately above it. This clause would stay GREEN if
+    the C++ initialiser moved to `Normal` and the Blueprint still said nothing. **The two clauses
+    are a pair and neither is redundant: together they pin the tier and its owner; separately,
+    neither does.** Do not delete one as duplicative of the other.
+    (c) It pins no behaviour, and it pins no other field. `AiSides` appears in it ONLY as a
+    control; `ShippedGameModeAuthorsOneAiSide` is what pins `AiSides`.
+  - **THE INSTRUMENT, MEASURED BEFORE IT WAS TRUSTED.** A throwaway probe clause was built and
+    run first, and deleted before the deliverable; what it reported, on the shipped package:
+    super class `StratGameMode` and native, archetype `Default__StratGameMode`, `Difficulty`
+    identical with both sides exporting `Easy`, `AiSides` NOT identical with `(1)` against the
+    C++ default's empty, and the whole `MatchConfig` struct NOT identical. On
+    `BP_StratGameMode_AiVsAi_C`, the same shape with `(0,1)`. **The hypothesis the brief offered
+    was confirmed rather than assumed, and the probe was the thing that confirmed it.**
+  - **GRANULARITY IS LOAD-BEARING AND IS ASSERTED, NOT COMMENTED.** The WHOLE `MatchConfig`
+    property compares NON-identical between those two objects, because `AiSides` differs. So a
+    future "simplification" to a struct-level compare would conclude that the Blueprint authors
+    the tier and would be WRONG. The clause asserts the struct-level non-identity precisely so
+    that the granularity the answer depends on is pinned by a test rather than by prose.
+  - **THE LIVENESS CONTROL RUNS ON THE FIELD IN QUESTION, WHICH IS THE ONE THING THE SIBLING
+    CLAUSE CANNOT DO.** `ShippedGameModeRunsAtEasy`'s liveness rides `AiSides`, a different field.
+    Here, control 1 copies the shipped CDO's own `FStratMatchConfig`, asserts the copy still
+    compares IDENTICAL to the archetype on `Difficulty` (so the copy is faithful), then moves
+    ONLY `Difficulty` on the copy and asserts the SAME call against the SAME archetype now
+    reports a DIFFERENCE. The tier it moves to is chosen relative to the one read, so the control
+    survives a future change of shipped tier. Control 2 is the older shape -- `AiSides` on the
+    CDO/archetype pair must differ -- and its job is narrower than it looks: it kills the case
+    where the clause has accidentally compared an object to ITSELF, which would read as a clean
+    inheritance for the worst possible reason.
+  - **Falsifiability: ONE mutant, RUN IN PLACE, and the reason it has that shape.** The honest
+    mutant -- authoring a tier on the asset, or moving the C++ default -- touches
+    `Content/` or `Source/StratPlay/` outside `Tests/`, and this lane may do neither. So the
+    subject was simulated at the exact call the claim rests on: a local copy of the shipped
+    `MatchConfig` with `Difficulty` moved to `Hard`, substituted for the shipped container in
+    THE CLAIM's `Identical_InContainer` only. Built in place (a copied tree's cached
+    `Intermediate/Build` makes a mutant a silent no-op) and run: the clause went **RED at THE
+    CLAIM**, with its own message printing `(both read 'Easy')`, and **only that clause** --
+    the other five `Stratocracy.StratPlay.T-FAME-02.*` clauses stayed green in the same run,
+    so the mutant is specific and not a blast. The mutant run was exported to
+    `Saved/AutomationReportMutant` so the full-suite `index.json` was not overwritten by it;
+    that directory was then deleted, the file restored, the editor target rebuilt, and the FULL
+    suite re-run. `grep -n MUTANT` over the file returns nothing.
+    **What this mutant does NOT prove, said plainly: it demonstrates that the claim's comparison
+    reports a difference when the shipped side's `Difficulty` moves. It does not exercise a real
+    re-authored asset, because this lane cannot produce one.** The standing in-suite equivalent
+    is control 1b, which makes that same demonstration on every run rather than once.
+  - **The build is not optional before the run, and it is why the mutant was rebuilt twice.** A
+    clause name is compiled into the binary; a stale `UnrealEditor-StratPlay.dll` reports the OLD
+    name green and the new clause simply absent. Presence was therefore confirmed BY NAME in the
+    exported report and not inferred from a count delta.
+  - **The `autocrlf` warning on this file's `.cpp` is PRE-EXISTING and this pass preserved it.**
+    `git diff` emits "warning: in the working copy of ... LF will be replaced by CRLF the next
+    time Git touches it"; the file is LF in the worktree and LF in the HEAD blob. Same condition
+    the entry below reports; not a change this diff made.
+  - **Housekeeping at the end of the pass, stated as artifacts rather than as a path count:**
+    the probe file was deleted, the `Saved/AutomationReportMutant` directory was deleted, the
+    mutated `.cpp` was restored (`grep -n MUTANT` returns nothing), and `Saved/` is ignored via
+    `.gitignore:68`. **No untracked strays were left by this pass, and nothing was staged and
+    nothing was committed.**
+    **[STAMPED 2026-09-04: this bullet originally opened "Working tree at the end of the pass:
+    STAMPED> `git status --porcelain --untracked-files=all` lists exactly one path,
+    STAMPED> `Source/StratPlay/Tests/StratShippedGameModeMatchConfig.cpp` (modified)".
+    That was a working-tree self-measurement inside the tree it measured, and it moved its own
+    subject: this entry was the second path, `global.md` the third, and the gate report the
+    fourth, so a checkout read it as false. `strat-integration-reviewer` raised it as
+    OBSERVATION 1 in `Tools/architect/gate_reports/2026-09-04-difficulty-ownership-pin.md`.
+    The retired clause is NOT replaced with a corrected count, because any count is false again
+    on the next write to any record file; only the half that stays true -- the named artifacts
+    cleaned up, nothing staged, nothing committed -- is carried forward above.]**
+
+- **2026-09-04 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- one file under
   `Source/*/Tests/`, plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`,
   base commit `9d705ca`, UNCOMMITTED) -- **`Difficulty` ON THE SHIPPED ASSET IS PINNED, AND THE
   THING WORTH READING IS THAT THIS CLAUSE IS DELIBERATELY WEAKER THAN THE ONE BESIDE IT AND
@@ -27,6 +130,12 @@
   over it. The old stamp is kept as the historical name of the run this entry first
   described; it is no longer re-readable from a checkout, and every citation of it
   elsewhere is a citation of a report that no longer exists.]**
+  **[STAMPED 2026-09-04, SECOND TIME, AND FOR THE SAME MECHANISM: `reportCreatedOn
+  2026.09.04-04.47.20` IS NOW ALSO GONE. The pass recorded at the top of this file rebuilt and
+  re-ran the full suite over that same single path. The stamp above predicted this in general
+  terms; this one records that it happened, so that a reader holding either figure knows both
+  name runs a checkout can no longer produce. The live report is whichever
+  `reportCreatedOn` the topmost entry cites.]**
   - **The clause.** `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeRunsAtEasy`, in
     `Source/StratPlay/Tests/StratShippedGameModeMatchConfig.cpp`, beside
     `T-FAME-02.ShippedGameModeAuthorsOneAiSide` and reusing that file's `ResolveCdoOrFail` and
@@ -56,7 +165,16 @@
     came from the asset rather than from the C++ default underneath it, and no arrangement of
     assertions can while `Easy` is also the C++ default.** Closing it needs either a different
     C++ default or a reader that reports whether a property was overridden; neither is this
-    lane's to build.
+    lane's to build. **[STAMPED 2026-09-04: the last eight words are RETIRED. The second of
+    those two exits WAS this lane's to build and was built the same day -- see the entry at the
+    top of this file, whose clause
+    `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeInheritsDifficultyFromCpp` compares the
+    shipped CDO against its archetype through the reflected `FProperty` and reports whether the
+    field carries a delta, needing no asset edit and no C++ edit. The rest of this bullet stands
+    unchanged and is still the correct account of THIS clause: it reads an effective value, its
+    liveness rides `AiSides`, and it still cannot separate an authored `Easy` from an untouched
+    one on its own. What changed is that the file now answers the question elsewhere, not that
+    this clause got stronger.]**
   - **Why the value is worth pinning at that weaker warrant.** GDD Sec 2.11.6, quoted from the
     document: "The first match runs on the one shipped scenario at **Easy** by default (player
     +150 opening Fame, Sec 2.9)". `StratDifficultyFameDelta` gives +150 / 0 / -100, so Easy is

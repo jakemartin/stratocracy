@@ -11,6 +11,105 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-04 (`Difficulty`'S OWNER IS PINNED, AND THE THING WORTH READING IS THAT THE
+DEBT THE BANNER BELOW LEFT OPEN NAMED ITS TWO INSTRUMENTS CORRECTLY AND THEN SENT THEM TO THE
+WRONG LANE -- it called the override reader "library work, not in `Source/*/Tests/`, and
+`strat-gameplay-engineer`'s". It needed no library and no new seam: an `FProperty` comparison
+against the superclass CDO is callable from inside a test, and that is where it now lives.
+Written by the `coordinator`, whose file this is, IN LANE AND UNDER NO EXCEPTION CLAUSE -- this
+seat wrote no code and no clause. The clause and the test prose are `strat-test-author`'s and are
+in `tests.md`; that lane was DISPATCHED and wrote its own entry, in lane, itself. This entry is
+not a transcription of anything.
+THE ROUTE WAS A USER CHOICE AND IS RECORDED AS ONE, on the same ambiguity as the pass below:
+both slot branches are merged into `master` so no wave was in flight, but `git worktree list`
+still shows seven worktrees and the in-session clause names "no worktree" as one half of its
+condition. Both routes were offered with their costs named -- dispatch is slower and rests on a
+brief this seat has been measured getting wrong; in-session is faster, writes outside lane, and
+STILL needs a dispatch afterwards for the record entry. THE USER CHOSE DISPATCH. No exception
+clause was invoked and none was needed. Obligation (1) of that clause is unfalsifiable from a
+checkout, as `CLAUDE.md` declares: this banner SAYS both routes were offered, and no instrument
+in this tree can confirm that they were.
+The suite is **389/389**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings.
+THE COUNT MOVED 388 -> 389 AND THE NEW CLAUSE IS AN ADDITION: **+1 added, 0 removed, 0 state
+changes**, measured by set difference on the test MACRO with one collector run over both sides
+-- the worktree and `HEAD` -- and the tree's and the report's name sets are equal in BOTH
+directions. The new name was verified PRESENT IN THE REPORT BY NAME rather than inferred from
+the delta: `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeInheritsDifficultyFromCpp`. No name
+was retired; the two clauses beside it were edited in their prose only and both remain.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-16.30.20`.
+THE RUN WAS MADE BY `strat-test-author` IN THIS TREE, NOT IN A WORKTREE, AFTER THE LAST SOURCE
+CHANGE, AND THIS SEAT DID NOT ACCEPT THE LANE'S REPORTED FIGURE. It opened
+`Saved/AutomationReport/index.json` in this tree with `utf-8-sig` and read `reportCreatedOn`,
+`succeeded`, `failed`, `notRun`, `succeededWithWarnings`, the entry count and the new clause's
+presence BY NAME directly; the exported report is the source and the log -- which undercounts by
+exactly one every run -- was not used. The macro census above was run by this seat too, with its
+own collector, rather than restated from the lane's.
+WHAT THE PASS ESTABLISHES, AND IT IS A DIFFERENT KIND OF CLAIM FROM THE ONE BELOW.
+`ShippedGameModeRunsAtEasy` pins the shipped tier's VALUE and cannot say where the value came
+from, because `Easy` is also the C++ default and the enum's zero. The new clause does not read
+an effective value at all: it compares `BP_StratGameMode_C`'s CDO against ITS ARCHETYPE -- the
+native `AStratGameMode` class default -- through the reflected `FProperty`, and reports that the
+two are IDENTICAL on `Difficulty` while NON-identical on `AiSides`. So the Blueprint contributes
+no `Difficulty`, and the shipped tier is INHERITED. The operational consequence is the reason it
+is worth a clause: move `FStratMatchConfig::Difficulty`'s C++ initialiser and the shipped game
+moves with it. Had the asset authored a tier, it would not have.
+THE INSTRUMENT WAS MEASURED BEFORE IT WAS ASSERTED. A throwaway probe was built and run first,
+and deleted before delivery; it reported the super class native, the archetype the super CDO,
+`Difficulty` identical, `AiSides` not, and -- the finding that shaped the clause -- the WHOLE
+`MatchConfig` struct non-identical, because `AiSides` differs. A struct-level comparison would
+therefore have concluded that the Blueprint authors the tier. The clause compares per member and
+asserts that granularity rather than leaving it to a comment.
+THE LIVENESS CONTROL IS PROVED ON THE FIELD IN QUESTION, WHICH IS THE WEAKNESS THE CLAUSE BELOW
+COULD NOT FIX. It copies the shipped CDO's own `FStratMatchConfig`, asserts the copy still reads
+identical to the archetype on `Difficulty`, then moves ONLY `Difficulty` and asserts the same
+call now reports a difference -- so the exact comparison the claim rests on is shown capable of
+answering "different", on this property, against this archetype. A second control requires the
+two objects to differ on `AiSides`, which kills the object-compared-to-itself case. The clause's
+name also owes the word "FromCpp" a check, and pays it: the super class must BE `AStratGameMode`,
+so a Blueprint interposed as a base fails rather than quietly making "from C++" false.
+FALSIFIABILITY: ONE MUTANT, IN PLACE, AND ITS SHAPE WAS A CONSTRAINT RATHER THAN A CHOICE. The
+honest mutant -- re-authoring the asset, or moving the C++ default -- is out of the test lane in
+both directions, so the subject was simulated at the exact call the claim rests on: a copy of the
+shipped `MatchConfig` with `Difficulty` moved to `Hard`, substituted into the claim's own
+comparison. It went RED at the claim and nowhere else; the other `T-FAME-02` clauses stayed green
+in that same run. It was built IN PLACE, since a copied tree's cached `Intermediate/Build` makes a
+mutant a silent no-op, and exported to a SEPARATE report path so the live citation above was not
+overwritten. Restored, rebuilt, full suite re-run; that final run is what is cited. WHAT THE
+MUTANT DOES NOT PROVE, recorded rather than glossed: it never exercises a genuinely re-authored
+asset, because this lane cannot produce one.
+STILL UNPINNABLE, AND IT IS A PROPERTY OF THE DATA RATHER THAN A MISSING SEAM: whether a designer
+ever TOUCHED the tier in the editor. A property set to the value its parent already holds
+contributes no delta, so "never set" and "set to `Easy`" leave identical bytes and no instrument
+can separate them. No code change fixes that. The clause is worded `Inherits`, never "the
+designer left it alone", and says so in its own failure message -- the name is the artifact that
+travels without its header, which is the lesson the pass below was re-gated over.
+`strat_banner_sweep.py` EXITED 1 ON THIS FILE WHILE THE LANE HELD, ON THREE STALE CLAIMS IN THIS
+BANNER'S PREDECESSOR -- a live `388/388` and two citations of an artifact that had been
+overwritten -- all of them this seat's to move and none of them in `tests.md`. They are stamped
+below, in place, rather than deleted. The lane measured that exit code WITHOUT a pipe, `$?` after
+a pipe reporting the tail's status and not the sweep's.
+THIS PASS WAS GATED, AND THE GATE REPORTS ARE THE FILES MATCHING
+`Tools/architect/gate_reports/2026-09-04-difficulty-ownership-pin*.md`. Each is a new file that
+leaves its predecessors byte-identical and carries its own `VERDICT:` line, its own findings and
+its own observations. No number of them is written here and none is enumerated -- that set was
+still growing while this was written, and a closed statement about a moving subject is false on
+landing, which is the lesson the banner below was re-gated into learning.
+CARRIED DEBT, INSTRUMENT, OPEN: **a `SWEEP CLEAN` DOES NOT VOUCH FOR EVERY STAMP IN THESE FILES.**
+`strat_banner_sweep.py` collects claims BY SHAPE -- an `N/N`, a `reportCreatedOn`, a tracked-item
+line -- so a retired claim of any other shape is never collected at all, and the sweep prints
+CLEAN whether that stamp is sound, half-written or absent. The live example is this pass's own:
+the `git status` path count stamped in `tests.md` carries none of those shapes, so no check
+touched it, and the stamp rests on a grep a reviewer ran by hand rather than on the instrument.
+Raised by `strat-integration-reviewer` as a non-gating observation. It is the same shape as the
+bare-report-stamp blind spot the banner below records as discharged, and it is NOT fixed.
+Whoever picks it up: the check to add collects a stamped quotation and asks whether what it
+retires is greppable as live anywhere else, and the control it needs is a stamp of a shape the
+sweep already covers -- so a mutant that unstamps it must redden.)
+
+**[STAMPED 2026-09-04 -- superseded by the `Difficulty` OWNERSHIP-pin pass in the banner ABOVE,
+which added one clause and moved the figure to 389/389. Kept, not deleted, per this file's own
+convention.]**
 _Last run 2026-09-04 (`Difficulty` ON THE SHIPPED ASSET IS PINNED, AND THE THING WORTH READING
 IS THAT THE NEW CLAUSE IS WEAKER THAN THE ONE BESIDE IT BY CONSTRUCTION AND SAYS SO IN ITS OWN
 FAILURE MESSAGE. Written by the `coordinator`, whose file this is, IN LANE AND UNDER NO EXCEPTION
@@ -25,22 +124,29 @@ condition names "no worktree" as one of its halves. Both routes were offered to 
 their costs named: dispatch is slower and rests on a brief this seat has been measured getting
 wrong, in-session is faster but writes outside lane and STILL needs a dispatch afterwards for the
 record entry. THE USER CHOSE DISPATCH. No exception clause was invoked and none was needed.
-The suite is **388/388**, every entry Success, zero failed, zero notRun, zero
-succeededWithWarnings.
+**[STAMPED 2026-09-04 -- the figure on the rest of this line was retired the same day by the
+ownership-pin pass in the banner ABOVE, which added one clause. It stood at:]**
+STAMPED> The suite is 388/388, every entry Success, zero failed, zero notRun, zero
+STAMPED> succeededWithWarnings.
 THE COUNT MOVED 387 -> 388 AND THE NEW CLAUSE IS AN ADDITION: **+1 added, 0 removed, 0 state
 changes**, measured by set difference on the test MACRO with one collector over both sides. The
 new name was verified PRESENT IN THE REPORT BY NAME rather than inferred from the delta, and
 the OLD one verified ABSENT by name in the same read after the rename described below:
 `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeRunsAtEasy`.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-04.47.20`.
+**[STAMPED 2026-09-04 -- ONE REPORT PATH, ONE ARTIFACT: the ownership-pin pass's rebuild and
+re-run overwrote this artifact, so the citation below is history and the live one is in the
+banner ABOVE. It read:]**
+STAMPED> "THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-04.47.20`."
 THE RUN WAS MADE BY `strat-test-author` IN THIS TREE, NOT IN A WORKTREE, AFTER THE LAST SOURCE
 CHANGE, AND THIS SEAT DID NOT ACCEPT THE LANE'S REPORTED FIGURE. It opened
 `Saved/AutomationReport/index.json` in this tree with `utf-8-sig` and read `reportCreatedOn`,
 `succeeded`, `failed`, `notRun`, the entry count and the new clause's presence BY NAME directly;
 the exported report is the source and the log -- which undercounts by exactly one every run --
-was not used. The report timestamp runs ahead of local time -- `reportCreatedOn
-2026.09.04-04.47.20` by the report against 2026-09-04 locally -- which is why this entry is
-dated 2026-09-04.
+was not used. **[STAMPED 2026-09-04 -- the stamp quoted in the rest of this sentence is the
+overwritten artifact named above, not the live one. The point it illustrates -- report stamps
+run ahead of local time -- still holds and is why this entry is dated 2026-09-04. It read:]**
+STAMPED> "The report timestamp runs ahead of local time -- `reportCreatedOn
+STAMPED> 2026.09.04-04.47.20` by the report against 2026-09-04 locally".
 THAT SENTENCE WAS A BLOCKING FINDING AND IS FIXED HERE RATHER THAN QUIETLY. It cited
 `2026.09.04-04.09.26` -- retired by the rename re-run -- LIVE and UNSTAMPED, above the block
 stamped `the two claims below were true of this banner as first written`, which re-quotes that
@@ -156,11 +262,20 @@ a real discriminator. Both were built IN PLACE, since a copied tree's cached `In
 makes a mutant a silent no-op, and both probe runs were exported to SEPARATE report paths so the
 live citation above was not overwritten by them. The pristine file was restored, rebuilt, and the
 FULL suite re-run; that final run is what is cited.
-STILL OPEN, RECORDED SO IT IS NOT REDISCOVERED: pinning `Difficulty`'s AUTHORSHIP needs either a
-different C++ default or a reader that reports whether a property was OVERRIDDEN -- comparing
-`BP_StratGameMode_C`'s CDO against its `GetSuperClass()`'s, or an `FProperty::Identical` check
-against the native default. That is library work, it is not in `Source/*/Tests/`, and it is
-`strat-gameplay-engineer`'s. It is not written.)
+**[STAMPED 2026-09-04 -- DISCHARGED THE SAME DAY by the ownership-pin pass in the banner ABOVE,
+and the paragraph below got its LANE ASSIGNMENT WRONG, which is the part worth keeping. It
+read:]**
+STAMPED> "STILL OPEN, RECORDED SO IT IS NOT REDISCOVERED: pinning `Difficulty`'s AUTHORSHIP needs
+STAMPED> either a different C++ default or a reader that reports whether a property was
+STAMPED> OVERRIDDEN -- comparing `BP_StratGameMode_C`'s CDO against its `GetSuperClass()`'s, or an
+STAMPED> `FProperty::Identical` check against the native default. That is library work, it is not
+STAMPED> in `Source/*/Tests/`, and it is `strat-gameplay-engineer`'s. It is not written."
+STAMPED>  -- The two INSTRUMENTS it named were right and are what was built. The sentence after
+STAMPED>  them was wrong: it needed no library and no new seam, so it was never the engineer's.
+STAMPED>  `FProperty::Identical_InContainer` against `GetSuperClass()`'s CDO is callable from
+STAMPED>  inside a test, and the clause that does it lives in `Source/StratPlay/Tests/` and was
+STAMPED>  written by `strat-test-author` in lane. A debt entry may name an instrument without
+STAMPED>  also fixing which lane owns it; this one did, and the lane half was the wrong half.)
 
 _Last run 2026-09-03 (THE SHIPPED GAME IS HUMAN-VERSUS-AI, NOT A HOT SEAT, AND THE THING
 WORTH READING IS THAT THE CLAUSE GAP ONE LANE REPORTED AS MISSING HAD BEEN IN THE TREE ALL

@@ -73,15 +73,18 @@
 //     and `T-FAME-02.HandicapMovesThePlayersOpeningFameAtEveryTier`; both construct that config
 //     in C++ and neither reads an asset. This clause is the missing half that ties those two to
 //     the shipped package, and it is useless without them.
-//   - IT DOES NOT PIN `Difficulty`. That field is now the subject of the SECOND clause in
-//     this file, `T-FAME-02.ShippedGameModeRunsAtEasy`, and that clause is a
-//     WEAKER instrument than this one for exactly the reason the `ViewingSide` bullet above
-//     gives: `FStratMatchConfig::Difficulty` initialises to `EStratDifficulty::Easy` in C++,
+//   - IT DOES NOT PIN `Difficulty`. That field is the subject of the SECOND and THIRD
+//     clauses in this file -- `T-FAME-02.ShippedGameModeRunsAtEasy`, which pins its VALUE,
+//     and `T-FAME-02.ShippedGameModeInheritsDifficultyFromCpp`, which pins WHO SUPPLIES IT.
+//     The second is a WEAKER instrument than this one for exactly the reason the `ViewingSide`
+//     bullet above gives: `FStratMatchConfig::Difficulty` initialises to `EStratDifficulty::Easy` in C++,
 //     `Easy` is the enum's first value and therefore 0, and the shipped asset also reads
 //     `Easy`. So the effective read there pins the VALUE and cannot tell an authored tier
 //     from an untouched one. Read that clause's own header before citing it: it establishes
-//     that the shipped game runs at Easy, and it establishes NOTHING about whether a designer
-//     put that tier there.
+//     that the shipped game runs at Easy, and on its own it establishes NOTHING about whether
+//     a designer put that tier there. The THIRD clause is the one that answers that, by a
+//     different instrument -- a per-property comparison against the archetype -- and its
+//     answer is that the Blueprint contributes no `Difficulty` at all.
 //   - IT DOES NOT PIN `SaveSlotName`, `AiPlaybackStepSeconds`, `ScenarioFile`, `FirstSide`,
 //     the definition tables, the buildlist OR ANY OTHER FIELD of the same struct. Each is a
 //     separate claim and would need its own assertion.
@@ -94,6 +97,7 @@
 #include "Containers/UnrealString.h"
 #include "UObject/Class.h"
 #include "UObject/ObjectMacros.h"
+#include "UObject/UnrealType.h"
 #include "UObject/UObjectGlobals.h"
 
 #include "StratGameMode.h"
@@ -357,8 +361,20 @@ bool FStratShippedGameModeAuthorsOneAiSideTest::RunTest(const FString& /*Paramet
 // COMES FROM A DIFFERENT FIELD THAN THE ONE BEING PINNED. That is a strictly weaker warrant than
 // `ShippedGameModeAuthorsOneAiSide` enjoys: it proves the reader reads assets, and it does not
 // prove that THIS field's answer came from the asset rather than from the C++ default underneath
-// it. No arrangement of assertions can close that gap while `Easy` is also the C++ default; only
-// a different C++ default, or a reader that reports whether a property was overridden, could.
+// it.
+//
+// <SUPERSEDED 2026-09-04> This block previously closed: "No arrangement of assertions can close
+// that gap while `Easy` is also the C++ default; only a different C++ default, or a reader that
+// reports whether a property was overridden, could." The second of those two exits was then
+// built. `T-FAME-02.ShippedGameModeInheritsDifficultyFromCpp`, the third clause in this file,
+// compares the shipped CDO's `Difficulty` against its ARCHETYPE -- the native `AStratGameMode`
+// class default -- through the reflected `FProperty`, and reports that the two are identical
+// while `AiSides` on the same pair of objects is not. So the question this clause could not
+// answer HAS an answer now, and the answer is that the value comes from the C++ default: the
+// Blueprint contributes no delta on this field. That does NOT retroactively give THIS clause an
+// authorship warrant -- this clause still reads an effective value and still cannot tell the two
+// apart on its own, which is why its name and its message are unchanged. It means the FILE
+// answers it, in a clause that says so in its own name. Cite that one, not this one.
 //
 // WHAT IT DOES NOT PIN. Not authorship, per the whole of the above. Not any behaviour: that Easy
 // moves the player's opening Fame by +150 is
@@ -406,8 +422,12 @@ bool FStratShippedGameModeRunsAtEasyTest::RunTest(const FString& /*Parameters*/)
 			     "pins the VALUE and CANNOT tell an authored Easy from an untouched one -- unlike "
 			     "ShippedGameModeAuthorsOneAiSide's AiSides assertions, which the C++ default "
 			     "cannot satisfy. Do not cite this clause as evidence that a designer set the "
-			     "tier. The fix for a red here is in Content/StratPlay/BP_StratGameMode.uasset's "
-			     "class defaults (strat-editor-builder's lane), not in this test."),
+			     "tier -- ShippedGameModeInheritsDifficultyFromCpp is the clause that reads "
+			     "authorship, and what it reports is that the Blueprint authors NOTHING here. "
+			     "The fix for a red here is EITHER in Content/StratPlay/BP_StratGameMode.uasset's "
+			     "class defaults (strat-editor-builder's lane) OR in FStratMatchConfig::Difficulty's "
+			     "C++ initialiser, and that sibling clause tells you which of the two moved. It is "
+			     "not in this test."),
 			*DescribeDifficulty(ShippedTier)),
 		ShippedTier, EStratDifficulty::Easy);
 
@@ -433,6 +453,276 @@ bool FStratShippedGameModeRunsAtEasyTest::RunTest(const FString& /*Parameters*/)
 			     "have answered too."),
 			*Describe(Shipped->MatchConfig.AiSides), *Describe(AiVsAi->MatchConfig.AiSides)),
 		Describe(Shipped->MatchConfig.AiSides), Describe(AiVsAi->MatchConfig.AiSides));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// T-FAME-02 -- the shipped GameMode INHERITS its difficulty tier from C++ and does not author
+// one. A POSITIVE CLAIM ABOUT OWNERSHIP, and the sentence above is the whole of it.
+//
+// WHAT IT ESTABLISHES, IN THE FORM A READER WHO MEETS ONLY THE NAME SHOULD READ IT.
+// `BP_StratGameMode` contributes NO value for `FStratMatchConfig::Difficulty`. The tier the
+// shipped game runs at is the one `FStratMatchConfig::Difficulty`'s C++ initialiser supplies,
+// and it reaches the shipped package by inheritance rather than by authorship. The operational
+// consequence, which is why this is worth a clause rather than a remark: change the C++
+// initialiser and THE SHIPPED GAME MOVES WITH IT. Had the Blueprint authored a tier, it would
+// not have.
+//
+// WHY THIS IS A DIFFERENT INSTRUMENT FROM THE TWO CLAUSES ABOVE, AND NOT A THIRD READING OF THE
+// SAME ONE. Both of those read an EFFECTIVE value off a CDO -- the number a spawned GameMode
+// would start from -- and an effective read cannot say where the number came from, which is the
+// limit `ShippedGameModeRunsAtEasy`'s header spends five paragraphs on. This clause does not read
+// a value and compare it to an expectation at all. It compares the shipped CDO against ITS
+// ARCHETYPE, property by property, through the reflected `FProperty`, and reports whether this
+// one field carries a delta. That is a question about the ASSET's contribution, and it has an
+// answer that no expectation had to be invented for.
+//
+// THE ARCHETYPE IS THE NATIVE CLASS DEFAULT, AND THAT IS ASSERTED RATHER THAN ASSUMED. The
+// clause's name says "FromCpp", so it owes a check that the thing inherited FROM is C++ and not
+// another Blueprint: `BP_StratGameMode_C`'s super class must be `AStratGameMode` itself. If a
+// content pass ever interposed a `BP_StratGameModeBase` between them, "inherited" would still be
+// true and "from C++" would have quietly stopped being, and the name would be overclaiming. It
+// fails instead.
+//
+// WHERE THE EXPECTATION COMES FROM -- AND IT IS NOT A LITERAL, WHICH IS THE POINT. Nothing in
+// this clause is a value read off the GDD or off a live editor. Both sides of every comparison
+// are module-side objects the engine produced: the shipped generated class's CDO, and the native
+// class's CDO. The clause asks the engine's own comparator whether they differ on this property
+// and asserts the answer. There is no number here that a future re-authoring could make stale
+// without also making this clause red, which is the property the file header's first paragraph
+// says was missing from the whole subject.
+//
+// THE INSTRUMENT IS PROVED ON THE FIELD IN QUESTION, WHICH IS THE ONE THING
+// `ShippedGameModeRunsAtEasy` CANNOT DO. Its liveness control rides `AiSides`, a different field,
+// so it proves the reader reads assets and not that THIS field's answer was read. Two controls
+// here, and the first of them runs on `Difficulty` itself:
+//
+//   1. THE COMPARATOR IS SHOWN TO REPORT A DIFFERENCE ON `Difficulty`, AGAINST THE REAL
+//      ARCHETYPE. The clause takes a copy of the shipped CDO's own `FStratMatchConfig`, asserts
+//      the copy still compares identical to the archetype on this property, then moves ONLY
+//      `Difficulty` on the copy and asserts the same comparison now reports a difference. So the
+//      exact call whose "identical" answer carries this clause's claim is demonstrated, on this
+//      property and against this archetype, to be capable of answering "different". An
+//      `Identical` that had gone inert -- always true, wrong property, wrong offset -- fails
+//      here. The tier moved to is chosen relative to the one read, so the control stays valid if
+//      the shipped tier ever changes.
+//   2. THE TWO OBJECTS ARE SHOWN TO HOLD DIFFERENT DATA. `AiSides` on the same CDO/archetype pair
+//      must compare NON-identical -- `(1)` against the C++ default's empty. Without it, a clause
+//      that had accidentally compared an object to ITSELF would report "identical" to everything
+//      and would read as a clean inheritance for the worst possible reason.
+//
+// A THIRD ASSERTION RECORDS WHY THE COMPARISON IS PER-MEMBER AND NOT PER-STRUCT: the whole
+// `MatchConfig` property compares NON-identical between the two objects, because `AiSides`
+// differs. A future simplification to a struct-level compare would therefore conclude that the
+// Blueprint authors the tier, and it would be wrong. The assertion pins the granularity the
+// answer depends on rather than leaving it to a comment.
+//
+// WHAT THIS CLAUSE DOES **NOT** PIN, and the first bullet is the real limit of the whole
+// approach:
+//
+//   - IT DOES NOT PIN THAT A DESIGNER NEVER TOUCHED THE TIER. It reads what the asset
+//     CONTRIBUTES, and a property set in the editor to the same value the parent already holds
+//     contributes nothing -- it is stored as a delta or not at all. So "never set" and "set to
+//     Easy, which is what the parent said anyway" are the same reading here and this clause does
+//     not separate them. It does not need to: the claim it makes is about where the runtime value
+//     comes from, which is answered either way, and it is written to say "inherits" rather than
+//     "the designer left it alone" for exactly this reason.
+//   - IT DOES NOT PIN THE VALUE. That the inherited tier is `Easy` rather than `Hard` is
+//     `T-FAME-02.ShippedGameModeRunsAtEasy`, immediately above. This clause would stay green if
+//     the C++ initialiser changed to `Normal` and the Blueprint still said nothing -- that is
+//     precisely the division of labour, and it is why the two clauses are both needed and neither
+//     is redundant. Together they pin the tier and its owner; separately, neither does.
+//   - IT DOES NOT PIN ANY BEHAVIOUR, and it does not pin `AiSides`, `ViewingSide`, `SaveSlotName`
+//     or any other field. `AiSides` appears only as a control on the reader; the clause that
+//     pins it is `ShippedGameModeAuthorsOneAiSide`.
+//   - IT DOES NOT PIN THAT `BP_StratGameMode` IS THE MAP'S GAMEMODE. Same `Config/` line, same
+//     different subject, as the file header says.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratShippedGameModeInheritsDifficultyFromCppTest,
+	"Stratocracy.StratPlay.T-FAME-02.ShippedGameModeInheritsDifficultyFromCpp",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratShippedGameModeInheritsDifficultyFromCppTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratShippedMatchConfigClauses;
+
+	const AStratGameMode* const Shipped = ResolveCdoOrFail(*this, kShippedGameModeClassPath);
+	if (Shipped == nullptr)
+	{
+		return false;
+	}
+
+	// ---- the thing it inherits FROM must be C++, or the name overclaims -------------------
+	UClass* const Generated = Shipped->GetClass();
+	UClass* const Super = Generated ? Generated->GetSuperClass() : nullptr;
+
+	if (!TestTrue(
+			FString::Printf(
+				TEXT("PREMISE: BP_StratGameMode's parent class is the NATIVE AStratGameMode "
+				     "(read: '%s'). This clause's name says the tier is inherited FROM C++, so "
+				     "the archetype it compares against has to BE C++. If a Blueprint was "
+				     "interposed as a base, 'inherited' is still true and 'from C++' is not, and "
+				     "this clause would be wearing a name it no longer earns. It fails instead."),
+				Super ? *Super->GetName() : TEXT("<null>")),
+			Super == AStratGameMode::StaticClass()))
+	{
+		return false;
+	}
+
+	const AStratGameMode* const NativeDefaults = Super->GetDefaultObject<AStratGameMode>();
+	if (!TestNotNull(
+			TEXT("the native AStratGameMode class default object -- the archetype the shipped "
+			     "Blueprint's own class default is a delta against"),
+			NativeDefaults))
+	{
+		return false;
+	}
+
+	if (!TestTrue(
+			TEXT("the shipped CDO and the native CDO are two DIFFERENT objects. If they were the "
+			     "same object every comparison below is a value against itself and this clause "
+			     "reports a clean inheritance no matter what the asset says."),
+			NativeDefaults != Shipped))
+	{
+		return false;
+	}
+
+	// ---- the reflected handles ------------------------------------------------------------
+	FProperty* const MatchConfigProp =
+		AStratGameMode::StaticClass()->FindPropertyByName(TEXT("MatchConfig"));
+	if (!TestNotNull(
+			TEXT("AStratGameMode reflects a property named 'MatchConfig'. This clause reaches the "
+			     "field through reflection because that is what can answer 'does this carry a "
+			     "delta'; a renamed property must fail here rather than silently comparing "
+			     "nothing."),
+			MatchConfigProp))
+	{
+		return false;
+	}
+
+	FProperty* const DifficultyProp =
+		FStratMatchConfig::StaticStruct()->FindPropertyByName(TEXT("Difficulty"));
+	if (!TestNotNull(
+			TEXT("FStratMatchConfig reflects a member named 'Difficulty' -- the property whose "
+			     "authorship is this clause's entire subject"),
+			DifficultyProp))
+	{
+		return false;
+	}
+
+	FProperty* const AiSidesProp =
+		FStratMatchConfig::StaticStruct()->FindPropertyByName(TEXT("AiSides"));
+	if (!TestNotNull(
+			TEXT("FStratMatchConfig reflects a member named 'AiSides' -- used BELOW ONLY AS A "
+			     "CONTROL that the two objects hold different data"),
+			AiSidesProp))
+	{
+		return false;
+	}
+
+	const void* const ShippedStruct = MatchConfigProp->ContainerPtrToValuePtr<void>(Shipped);
+	const void* const NativeStruct = MatchConfigProp->ContainerPtrToValuePtr<void>(NativeDefaults);
+
+	// ---- the reflected property IS the C++ member the rest of the tree reads ---------------
+	//
+	// Without this, a correct-looking comparison could be running over some other property and
+	// every answer below would be about a field nobody uses.
+	{
+		FString ReflectedText;
+		DifficultyProp->ExportTextItem_InContainer(
+			ReflectedText, ShippedStruct, nullptr, nullptr, PPF_None);
+
+		TestEqual(
+			*FString::Printf(
+				TEXT("the reflected 'Difficulty' property this clause compares reads the same "
+				     "tier as the typed C++ member Shipped->MatchConfig.Difficulty (reflected: "
+				     "'%s', typed: '%s'). If these disagree the comparison below is being run "
+				     "over a different field than the one the game uses."),
+				*ReflectedText, *DescribeDifficulty(Shipped->MatchConfig.Difficulty)),
+			ReflectedText, DescribeDifficulty(Shipped->MatchConfig.Difficulty));
+	}
+
+	// ---- CONTROL 1: the comparator can say "different" ON THIS FIELD, against THIS archetype
+	//
+	// This is the control `ShippedGameModeRunsAtEasy` cannot have. It runs the exact call whose
+	// "identical" answer carries this clause's claim, over a copy of the shipped struct that
+	// differs from the shipped struct in `Difficulty` and in nothing else.
+	{
+		FStratMatchConfig Copy = Shipped->MatchConfig;
+
+		if (!TestTrue(
+				TEXT("CONTROL 1a: a byte copy of the shipped CDO's MatchConfig compares IDENTICAL "
+				     "to the archetype on Difficulty, exactly as the original does. If this "
+				     "failed the copy is not faithful and control 1b proves nothing."),
+				DifficultyProp->Identical_InContainer(&Copy, NativeStruct)))
+		{
+			return false;
+		}
+
+		const EStratDifficulty OtherTier =
+			(Shipped->MatchConfig.Difficulty == EStratDifficulty::Hard)
+				? EStratDifficulty::Easy
+				: EStratDifficulty::Hard;
+		Copy.Difficulty = OtherTier;
+
+		TestFalse(
+			*FString::Printf(
+				TEXT("CONTROL 1b, AND IT IS THE ONE THAT MAKES THIS CLAUSE WORTH MORE THAN "
+				     "ShippedGameModeRunsAtEasy: move ONLY Difficulty on that copy, to '%s', and "
+				     "the same comparison against the same archetype must now report a "
+				     "DIFFERENCE. This proves the instrument is live ON THE FIELD BEING PINNED "
+				     "rather than on a neighbouring one. A red here means Identical_InContainer "
+				     "is answering 'identical' regardless of the data -- wrong property, wrong "
+				     "offset, or an inert comparator -- and the claim below would have passed for "
+				     "the same reason it always would."),
+				*DescribeDifficulty(OtherTier)),
+			DifficultyProp->Identical_InContainer(&Copy, NativeStruct));
+	}
+
+	// ---- CONTROL 2: the shipped CDO and its archetype genuinely hold different data ---------
+	TestFalse(
+		*FString::Printf(
+			TEXT("CONTROL 2: on AiSides the shipped CDO and the native archetype must DIFFER -- "
+			     "shipped %s against the C++ default %s. This is a control and not a pin; "
+			     "ShippedGameModeAuthorsOneAiSide is what pins AiSides. Its job here is to show "
+			     "that these two objects are not the same data, so that the 'identical' answer "
+			     "asserted below for Difficulty is a fact about Difficulty and not a fact about "
+			     "the comparison having nothing to compare."),
+			*Describe(Shipped->MatchConfig.AiSides),
+			*Describe(NativeDefaults->MatchConfig.AiSides)),
+		AiSidesProp->Identical_InContainer(ShippedStruct, NativeStruct));
+
+	// ---- the granularity the answer depends on ---------------------------------------------
+	TestFalse(
+		TEXT("the WHOLE MatchConfig struct compares NON-identical between the shipped CDO and its "
+		     "archetype, because AiSides differs. Asserted so the granularity is pinned and not "
+		     "merely commented: a per-STRUCT comparison would conclude that the Blueprint authors "
+		     "the difficulty tier, and it would be wrong. The claim below is per-MEMBER on "
+		     "purpose."),
+		MatchConfigProp->Identical_InContainer(Shipped, NativeDefaults));
+
+	// ---- THE CLAIM --------------------------------------------------------------------------
+	TestTrue(
+		*FString::Printf(
+			TEXT("THE CLAIM: BP_StratGameMode contributes NO value for Difficulty -- its class "
+			     "default compares IDENTICAL to the native AStratGameMode archetype on this "
+			     "property (both read '%s'), while differing from it on AiSides. So the tier the "
+			     "shipped game runs at is INHERITED from FStratMatchConfig::Difficulty's C++ "
+			     "initialiser, not authored in the asset, and changing that initialiser moves the "
+			     "shipped game. WHAT THIS CANNOT TELL YOU, and it is a limit of the data and not "
+			     "of the test: a property set in the editor to the value its parent already holds "
+			     "contributes no delta either, so this does not distinguish 'never touched' from "
+			     "'set to the same tier'. It is a claim about WHERE THE RUNTIME VALUE COMES FROM, "
+			     "which is answered either way. A RED HERE MEANS THE BLUEPRINT NOW AUTHORS A "
+			     "TIER: the shipped game has stopped following the C++ default, and every "
+			     "sentence in this file and in StratMatchSubsystem.h that describes Difficulty as "
+			     "the C++ default is now false. Decide which owner is intended -- that is a "
+			     "content decision (strat-editor-builder's lane) or a C++ one "
+			     "(strat-gameplay-engineer's), and in neither case is it a change to this test."),
+			*DescribeDifficulty(Shipped->MatchConfig.Difficulty)),
+		DifficultyProp->Identical_InContainer(ShippedStruct, NativeStruct));
 
 	return true;
 }

@@ -11,6 +11,148 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-04 (`Difficulty` ON THE SHIPPED ASSET IS PINNED, AND THE THING WORTH READING
+IS THAT THE NEW CLAUSE IS WEAKER THAN THE ONE BESIDE IT BY CONSTRUCTION AND SAYS SO IN ITS OWN
+FAILURE MESSAGE. Written by the `coordinator`, whose file this is, IN LANE AND UNDER NO EXCEPTION
+CLAUSE -- this seat wrote no code and no clause. The clause and the test prose are
+`strat-test-author`'s and are in `tests.md`; that lane was DISPATCHED and wrote its own entry, in
+lane, itself. This entry is not a transcription of anything.
+THE ROUTE WAS A USER CHOICE AND IS RECORDED AS ONE, because the condition that would have
+licensed writing in session was AMBIGUOUS RATHER THAN CLEARLY MET. Both slot branches
+(`feat/w8-path-preview`, `feat/w8-transient-receipts`) are merged into `master`, so no wave was in
+flight -- but `git worktree list` still shows seven worktrees, and the in-session clause's
+condition names "no worktree" as one of its halves. Both routes were offered to the user with
+their costs named: dispatch is slower and rests on a brief this seat has been measured getting
+wrong, in-session is faster but writes outside lane and STILL needs a dispatch afterwards for the
+record entry. THE USER CHOSE DISPATCH. No exception clause was invoked and none was needed.
+The suite is **388/388**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings.
+THE COUNT MOVED 387 -> 388 AND THE NEW CLAUSE IS AN ADDITION: **+1 added, 0 removed, 0 state
+changes**, measured by set difference on the test MACRO with one collector over both sides. The
+new name was verified PRESENT IN THE REPORT BY NAME rather than inferred from the delta, and
+the OLD one verified ABSENT by name in the same read after the rename described below:
+`Stratocracy.StratPlay.T-FAME-02.ShippedGameModeRunsAtEasy`.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-04.47.20`.
+THE RUN WAS MADE BY `strat-test-author` IN THIS TREE, NOT IN A WORKTREE, AFTER THE LAST SOURCE
+CHANGE, AND THIS SEAT DID NOT ACCEPT THE LANE'S REPORTED FIGURE. It opened
+`Saved/AutomationReport/index.json` in this tree with `utf-8-sig` and read `reportCreatedOn`,
+`succeeded`, `failed`, `notRun`, the entry count and the new clause's presence BY NAME directly;
+the exported report is the source and the log -- which undercounts by exactly one every run --
+was not used. The report timestamp runs ahead of local time -- `reportCreatedOn
+2026.09.04-04.47.20` by the report against 2026-09-04 locally -- which is why this entry is
+dated 2026-09-04.
+THAT SENTENCE WAS A BLOCKING FINDING AND IS FIXED HERE RATHER THAN QUIETLY. It cited
+`2026.09.04-04.09.26` -- retired by the rename re-run -- LIVE and UNSTAMPED, twelve lines
+above the block that stamps that very citation as overwritten, so this banner asserted both.
+Found by `strat-integration-reviewer` on the 2026-09-04 RE-GATE, not by the sweep, and the
+reason the sweep could not find it is itself the debt below. Owner: the `coordinator`, in
+lane on its own file.
+CARRIED DEBT, INSTRUMENT, OPEN: **`strat_banner_sweep.py` cannot see a BARE report
+timestamp.** `_CITED_REPORT_STAMP_RE` requires the literal `reportCreatedOn` token before the
+stamp, so `2026.09.04-04.09.26` written on its own is invisible to REPORT PROVENANCE -- which
+is exactly how a stale citation survived a CLEAN sweep and needed a human-dispatched gate to
+catch. The reviewer proved it with an in-memory mutant that adds ONLY that token and makes
+the check fire. The fix -- matching a bare `YYYY.MM.DD-HH.MM.SS` stamp too -- is in
+`strat-data-steward`'s lane and is NOT written. Until it is, every citation in this file must
+carry the `reportCreatedOn` token or it is ungated; the sentence repaired above now does.
+THE CLAUSE WAS RENAMED AFTER THE GATE PASSED IT, ON A USER RULING, AND THE REASON IS THE ONE
+GENERAL LESSON THIS PASS PRODUCED. `strat-integration-reviewer` gated the pass **PASS with zero
+findings and FOUR observations**, all four in that report under `## Observations`. THE FIRST
+IS THE ONE ACTED ON, and it is the one this paragraph is about: the clause was named
+`...ShippedGameModeAuthorsEasyDifficulty`,
+with the verb `Authors`, beside `ShippedGameModeAuthorsOneAiSide` where that verb is EARNED and
+here it is not. **A CLAUSE NAME IS READ WITHOUT ITS HEADER.** The name is the one artifact that
+travels alone -- into `index.json`, a CI summary line, a grep, the "+1 added" line of this file
+and of `tests.md` -- so a reader who sees only the name concludes exactly what five correct
+disclaimers were written to prevent. Five correct disclaimers do not repair a name that
+contradicts them. The user ruled: rename. It is now `...ShippedGameModeRunsAtEasy`, which states
+what the clause establishes.
+THE OTHER THREE OBSERVATIONS ARE RECORDED HERE BECAUSE THE SENTENCE ABOVE ONCE SAID "ONE" AND
+THEREFORE DROPPED THEM -- a live miscount found on the third re-gate, against the first gate
+report's own `## Observations` section. (2) The `autocrlf` warning on the `.cpp` is REAL and PRE-EXISTING: the file
+is LF in the worktree and LF in the `HEAD` blob and both passes preserved that; watch it at
+staging time. (3) The liveness control compares the RENDERED STRINGS `(1)` and `(0,1)` rather
+than the two `TArray<int32>`s -- correct here because digits and commas cannot be bitten by
+`FString`'s case-insensitive comparison, recorded so a future edit rendering a case-bearing
+field through the same helper knows the property is not free. (4) Obligation (1) of the
+in-session clause is unfalsifiable from a checkout, as `CLAUDE.md` itself declares: the gate
+verified that this banner SAYS both routes were offered and the user chose dispatch, in the
+required inline shape, and records that it cannot verify that it HAPPENED. Neither can any
+reader. None of the three is a defect and none is closed by anything in this pass.
+**[STAMPED 2026-09-04 -- the two claims below were true of this banner as first written, before
+the rename above. Kept, not deleted, per this file's own convention.]**
+STAMPED> "THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-04.09.26`."
+STAMPED>  -- ONE REPORT PATH, ONE ARTIFACT: the rename's rebuild-and-re-run overwrote it. The
+STAMPED>  figure did NOT move (388 both sides, as a rename must); only the artifact did.
+STAMPED> "`Stratocracy.StratPlay.T-FAME-02.ShippedGameModeAuthorsEasyDifficulty`"
+STAMPED>  -- the clause's name before the rename. Retired from `Source/`, where it does not
+STAMPED>  occur at all; it survives deliberately in record-file stamps and in gate reports.
+THE RENAME POST-DATES THE FIRST GATE, AND NO GATE REPORT WAS EDITED.
+Gate reports name the OLD identifier, and that is correct and must stay: each is the record of a
+gate on a tree that no longer exists, and editing one would falsify what was actually gated. The
+old name also survives in record-file stamps, so a reader arriving from a report's citations can
+follow it forward to the live name. **It does not occur under `Source/` at all** -- the one
+property of its distribution that a checkout can RE-EXECUTE, and the one that stays true as
+the reports accumulate. No count of where else it survives is written, here or in `tests.md`.
+**THE FIRST GATE'S `VERDICT: PASS` DESCRIBES A TREE THIS ONE IS NO LONGER**, since a
+verdict describes a tree and not a phase and the rename touched a compiled identifier. It was
+therefore re-gated. **The gate reports are the files matching
+`Tools/architect/gate_reports/2026-09-04-shipped-difficulty-pin*.md`. Each is a new file leaving
+its predecessors byte-identical and carries its own `VERDICT:` line and its own findings.**
+WHAT THIS BANNER DOES AND DOES NOT RESTATE, SAID EXACTLY, BECAUSE A LOOSER VERSION OF THIS
+SENTENCE WAS ITSELF A FINDING. It restates the FIRST gate -- its `VERDICT: PASS`, its zero
+findings, and its four observations in substance -- because that gate is CLOSED: it is a
+finished artifact that nothing further will add to, its first observation is why the rename
+happened, and the other three are live caveats a reader of this pass needs. **It NEITHER
+ENUMERATES NOR COUNTS the re-gates** -- no number of them, no list of them, no closed
+statement of their verdicts -- because that set was still growing while this was written.
+IT DOES REFER TO INDIVIDUAL RE-GATE FINDINGS ABOVE, and the sentence here formerly denied that
+and was a finding for it: the paragraphs repairing a stale citation and a miscount name where
+each came from. Referring to one is safe; counting them is not. That is the whole distinction,
+and it is what "does not narrate the process" means in practice.
+THAT SILENCE IS DELIBERATE AND IS THE LESSON OF THIS PASS, STATED ONCE AND WITHOUT AN EXAMPLE.
+Every attempt to narrate this file's own gating history inside this file produced a fresh live
+claim that the next gate falsified -- a count, then an enumeration with the count merely implied,
+then a universal. **A RECORD MUST NOT NARRATE THE PROCESS THAT IS STILL GATING IT.** The subject
+is still moving, so any closed statement about it -- a number, "both", "each", "every", a
+terminated list -- is false on landing, and the artifact that falsifies it is usually the very
+report that reads it. Point at the pattern the reports are named by; let a reader open them.
+WHAT THE PASS DID, AND WHAT IT DELIBERATELY DOES NOT CLAIM. The debt the banner below recorded as
+open -- nothing in the tree read `Difficulty` off `BP_StratGameMode` -- is now CLOSED FOR THE
+VALUE AND STILL OPEN FOR THE AUTHORSHIP, and that difference is not a quibble.
+`FStratMatchConfig::Difficulty` initialises to `EStratDifficulty::Easy`, `Easy` is the enum's
+FIRST value and therefore 0, and the 2026-09-03 live-editor measurement found the field ABSENT
+from both the native and the Blueprint export -- which is what a zero-valued field sitting at its
+C++ default looks like. So a CDO read CANNOT tell an authored `Easy` from an untouched one. The
+new clause pins the VALUE and says exactly that in its assertion message, in its header, and in
+`tests.md`. It carries NO premise block, deliberately: `ShippedGameModeAuthorsOneAiSide`'s "the
+C++ default cannot supply the expectation" is FALSE on this field, and copying it would have
+produced a clause that fails on a healthy tree.
+IT STILL CATCHES THE HAZARD THE DEBT NAMED. A content pass re-authoring the tier to `Hard` would
+invert the handicap from +150 to -100 on the human's side, and this clause is the one that goes
+red. What it cannot catch is a pass that CLEARS the override, since the tier would fall back to
+the same `Easy` the clause asserts.
+THE LIVENESS CONTROL IS MEASURED ON A DIFFERENT FIELD, WHICH IS A WEAKER WARRANT AND IS LABELLED
+AS ONE IN EVERY PLACE IT APPEARS. A reader that had silently stopped seeing asset overrides
+answers the C++ default to everything, and here the C++ default IS the expectation, so the
+assertion cannot be its own control. The clause runs the same `ResolveCdoOrFail` over
+`BP_StratGameMode_AiVsAi` and requires the two packages to disagree on `AiSides` -- `(1)` against
+`(0,1)`. That proves the reader reads ASSETS; it does not prove that THIS field's answer came
+from one.
+FALSIFIABILITY: TWO MUTANTS RUN, THE ASSET ITSELF NEVER TOUCHED -- it is not the test lane's and
+the editor was unreachable this session. Expectation `Easy` -> `Normal` went RED printing
+`(read: Easy)`, so the assertion is reached and the value comes back from a runtime CDO read;
+the control repointed at the shipped package went RED on the differ assertion, so the control is
+a real discriminator. Both were built IN PLACE, since a copied tree's cached `Intermediate/Build`
+makes a mutant a silent no-op, and both probe runs were exported to SEPARATE report paths so the
+live citation above was not overwritten by them. The pristine file was restored, rebuilt, and the
+FULL suite re-run; that final run is what is cited.
+STILL OPEN, RECORDED SO IT IS NOT REDISCOVERED: pinning `Difficulty`'s AUTHORSHIP needs either a
+different C++ default or a reader that reports whether a property was OVERRIDDEN -- comparing
+`BP_StratGameMode_C`'s CDO against its `GetSuperClass()`'s, or an `FProperty::Identical` check
+against the native default. That is library work, it is not in `Source/*/Tests/`, and it is
+`strat-gameplay-engineer`'s. It is not written.)
+
 _Last run 2026-09-03 (THE SHIPPED GAME IS HUMAN-VERSUS-AI, NOT A HOT SEAT, AND THE THING
 WORTH READING IS THAT THE CLAUSE GAP ONE LANE REPORTED AS MISSING HAD BEEN IN THE TREE ALL
 ALONG -- under a name that described the configuration instead of naming it. Written by the
@@ -19,13 +161,20 @@ code and no clause. The C++ prose is `strat-gameplay-engineer`'s and is in `engi
 clause and the test prose are `strat-test-author`'s and are in `tests.md`. Each wrote its own
 entry, in lane, itself, and the two lanes were dispatched in SEPARATE messages so neither could
 write a status claim about the other's file that was false before both finished.
-The suite is **387/387**, every entry Success, zero failed, zero notRun, zero
-succeededWithWarnings.
+**[STAMPED 2026-09-04 -- superseded by the `Difficulty` asset-pin pass in the banner ABOVE,
+which added one clause and moved the figure to 388/388. Kept, not deleted, per this file's
+own convention.]**
+STAMPED> "The suite is 387/387, every entry Success, zero failed, zero notRun, zero
+STAMPED>  succeededWithWarnings."
+STAMPED>  -- true of the AiSides prose-repair pass and superseded, not retracted.
 THE COUNT MOVED 386 -> 387 AND THE NEW CLAUSE IS AN ADDITION: **+1 added, 0 removed, 0 state
 changes**, measured by set difference on the test MACRO. The new name was verified PRESENT IN
 THE REPORT BY NAME rather than inferred from the delta:
 `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeAuthorsOneAiSide`.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-03.04.52`.
+**[STAMPED 2026-09-04 -- ONE REPORT PATH, ONE ARTIFACT.]**
+STAMPED> "THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-03.04.52`."
+STAMPED>  -- that report no longer exists to be read, having been overwritten by the run
+STAMPED>  cited in the banner above. Kept as the historical name of this pass's run.
 THE RUN WAS MADE BY `strat-test-author` IN THIS TREE, NOT IN A WORKTREE, AFTER THE LAST SOURCE
 CHANGE. THIS SEAT DID NOT ACCEPT THE LANE'S REPORTED FIGURE: it opened
 `Saved/AutomationReport/index.json` in this tree and read `reportCreatedOn`, `succeeded`,
@@ -64,10 +213,17 @@ proves nothing, so the control is what makes the assertion mean anything. Its fa
 proved by MUTATING THE CLAUSE'S OWN EXPECTATION, not the `.uasset`, and the red line printed the
 value read off the CDO -- one line discharging falsifiability and proving the read reaches the
 asset rather than returning a constant.
-WHAT IS STILL UNPINNED, RECORDED SO IT IS NOT REDISCOVERED: `Difficulty` on the shipped asset.
-The C++ default and the authored value happen to AGREE at `Easy`, so a content pass re-authoring
-the tier to `Hard` would invert the handicap from +150 to -100 on the human's side and every
-clause in the tree would stay green. Same class as the gap just closed, on the field beside it.
+**[STAMPED 2026-09-04 -- ADDRESSED IN PART by the pass in the banner ABOVE. The re-authoring
+hazard this named is now caught: `T-FAME-02.ShippedGameModeRunsAtEasy` reads the
+CDO and goes red on a shipped `Hard`. What the debt got WRONG is that it read as closable by
+a clause at all -- because the C++ default and the authored value agree at `Easy`, no
+assertion can pin the AUTHORSHIP, and a pass that CLEARS the override still leaves the tree
+green. That half stays open and is restated in the banner above. Kept, not deleted.]**
+STAMPED> "WHAT IS STILL UNPINNED, RECORDED SO IT IS NOT REDISCOVERED: `Difficulty` on the
+STAMPED>  shipped asset. The C++ default and the authored value happen to AGREE at `Easy`,
+STAMPED>  so a content pass re-authoring the tier to `Hard` would invert the handicap from
+STAMPED>  +150 to -100 on the human's side and every clause in the tree would stay green.
+STAMPED>  Same class as the gap just closed, on the field beside it."
 The `AiSides` debt in `engine.md` is NOT stamped closed: its DISCHARGED WHEN is a conjunction
 naming the `AiPlaybackStepSeconds` blocks too, the user scoped this pass to `AiSides` only, and
 the engineer wrote HALF-MET into the bullet rather than rounding up.)

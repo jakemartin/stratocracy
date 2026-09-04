@@ -14,13 +14,196 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-04 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- one file under
+  `Source/*/Tests/`, plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`,
+  base commit `9d705ca`, UNCOMMITTED) -- **`Difficulty` ON THE SHIPPED ASSET IS PINNED, AND THE
+  THING WORTH READING IS THAT THIS CLAUSE IS DELIBERATELY WEAKER THAN THE ONE BESIDE IT AND
+  SAYS SO IN ITS OWN ASSERTION MESSAGE.** Cite this pass by its exported
+  `reportCreatedOn 2026.09.04-04.47.20` (UTC in the report; local date 2026-09-04), never by a
+  number -- the figure lives in `Tools/architect/state/global.md` and nowhere else.
+  **[STAMPED 2026-09-04: this entry originally cited `reportCreatedOn 2026.09.04-04.09.26`.
+  That run is gone -- `Saved/AutomationReport/index.json` is a SINGLE PATH every run
+  overwrites, and the rename recorded in the bullet below rebuilt and re-ran the full suite
+  over it. The old stamp is kept as the historical name of the run this entry first
+  described; it is no longer re-readable from a checkout, and every citation of it
+  elsewhere is a citation of a report that no longer exists.]**
+  - **The clause.** `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeRunsAtEasy`, in
+    `Source/StratPlay/Tests/StratShippedGameModeMatchConfig.cpp`, beside
+    `T-FAME-02.ShippedGameModeAuthorsOneAiSide` and reusing that file's `ResolveCdoOrFail` and
+    both path constants. It reads `BP_StratGameMode_C`'s CDO and requires
+    `MatchConfig.Difficulty == EStratDifficulty::Easy`.
+  - **WHAT IT PINS: THE VALUE. WHAT IT DOES NOT PIN: THE AUTHORSHIP.** This is the `ViewingSide`
+    situation in that same file, NOT the `AiSides` situation, and the distinction is the whole
+    reason the clause needed a design rather than a copy. `FStratMatchConfig::Difficulty`
+    initialises to `EStratDifficulty::Easy` in `Source/StratPlay/StratMatchSubsystem.h`; `Easy`
+    is the FIRST value of `UENUM EStratDifficulty` and is therefore 0; and the 2026-09-03
+    live-editor measurement found `Difficulty` ABSENT from both the native and the Blueprint
+    export, which is what a zero-valued field at its C++ default looks like. So a CDO read
+    cannot distinguish an authored `Easy` from an untouched one, and **nobody may cite this
+    clause as evidence that a designer set the tier.** The assertion's own failure message says
+    so, so a reader who lands on a red without reading any header still learns it.
+  - **THERE IS NO PREMISE BLOCK, AND ITS ABSENCE IS DELIBERATE.**
+    `ShippedGameModeAuthorsOneAiSide` opens by asserting, first and fatally, that the C++ default
+    cannot supply its expectation. On `Difficulty` that premise is FALSE -- the C++ default IS
+    the expectation -- so copying the block would have produced a clause that fails on a healthy
+    tree. Do not "restore" it.
+  - **The liveness control is measured on a DIFFERENT FIELD, and that is the caveat to carry
+    forward.** A reader that had silently stopped seeing asset overrides answers the C++ default
+    to everything, and here the C++ default is the expectation, so the `Difficulty` assertion
+    cannot be its own liveness check. The clause runs the same `ResolveCdoOrFail` over
+    `BP_StratGameMode_AiVsAi_C` and requires the two packages to disagree on `AiSides` (`(1)` vs
+    `(0,1)`). That proves the reader reads ASSETS. **It does not prove that this field's answer
+    came from the asset rather than from the C++ default underneath it, and no arrangement of
+    assertions can while `Easy` is also the C++ default.** Closing it needs either a different
+    C++ default or a reader that reports whether a property was overridden; neither is this
+    lane's to build.
+  - **Why the value is worth pinning at that weaker warrant.** GDD Sec 2.11.6, quoted from the
+    document: "The first match runs on the one shipped scenario at **Easy** by default (player
+    +150 opening Fame, Sec 2.9)". `StratDifficultyFameDelta` gives +150 / 0 / -100, so Easy is
+    the only tier whose delta is non-zero in the player's favour. A shipped `Normal` would make
+    Sec 2.9's handicap ARITHMETICALLY unobservable while every existing handicap clause stayed
+    green, because all of them construct their own tier in C++ and read no asset.
+  - **Falsifiability: two mutants RUN, and the honest limit on both.** The subject is an asset
+    this lane may not edit, so the asset itself was never mutated. (a) Expectation `Easy` ->
+    `Normal`, built in place and run: RED, and its message printed `(read: Easy)` -- so the
+    assertion is reached and the value genuinely came back from a CDO read at runtime, though
+    that still cannot separate asset from C++ default. (b) Control package pointed at the
+    shipped package so both sides name one asset: RED --
+    `Expected '...' to differ from "(1)", but it was "(1)"` -- which proves the liveness control
+    is a real discriminator and not an assertion that always passes. Both mutants were built IN
+    PLACE (a copied tree's cached `Intermediate/Build` makes a mutant a silent no-op) and both
+    probe runs were exported to `Saved/ProbeReportA` and `Saved/ProbeReportB` so the full-suite
+    `index.json` cited above was not overwritten by them. The pristine file was restored,
+    rebuilt, and the FULL suite re-run afterwards; the citation above is that final run.
+  - **A stale header claim was repaired in the same pass.** That file's "WHAT THIS CLAUSE DOES
+    NOT PIN" bullet read *"IT DOES NOT PIN `Difficulty`, `SaveSlotName`, `AiPlaybackStepSeconds`
+    OR ANY OTHER FIELD"* -- true until this clause landed and false the moment it did. It is now
+    two bullets: one narrowed to the fields still unpinned, and one that hands `Difficulty` to
+    the new clause and states in the same breath that the new clause is the weaker instrument
+    and why.
+  - **THE CLAUSE WAS RENAMED AFTER THE GATE, AND THE REASON IS THE LESSON: A CLAUSE NAME IS
+    READ WITHOUT ITS HEADER.** This clause first landed as
+    `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeAuthorsEasyDifficulty`
+    **[STAMPED 2026-09-04: that name is retired. It is written out here in full so that a
+    reader who arrives holding it can follow the trail forward to the live name. WHERE ELSE IT
+    SURVIVES IS DELIBERATELY NOT STATED HERE, in a number or a list or a "the one": the set of
+    files carrying it is still growing, so any such construction in this file is false by the
+    next write, and three attempts to state it were falsified exactly that way. The one
+    property about its distribution that a checkout can re-execute, and that stays true as that
+    set grows, is that IT DOES NOT OCCUR UNDER `Source/` AT ALL -- `grep -rl` over `Source/`
+    returns nothing for it while returning the live name, which is the control showing the
+    search can see that tree.]** The live name is `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeRunsAtEasy`.
+    - **Where the rename came from, and HOW MANY OBSERVATIONS THAT GATE ACTUALLY RAISED.**
+      `strat-integration-reviewer` gated the pass PASS with zero findings -- its `## Findings`
+      section reads "**None.**" -- and raised **FOUR observations**, all marked "Non-gating."
+      **[STAMPED 2026-09-04: this sentence originally read "gated the pass PASS with zero
+      findings but raised **one observation**". THAT WAS FALSE BY THREE, AND IT WAS FALSE THE
+      INSTANT IT WAS WRITTEN -- not merely falsified later. An earlier stamp in this slot
+      explained it as *"written before that report existed to be checked against"*; THAT
+      EXPLANATION IS ITSELF FALSE and is retired together with the claim it excused, because a
+      stamp that retires a claim for a wrong reason teaches the wrong lesson to the next
+      reader. What was measured: `Tools/architect/gate_reports/2026-09-04-shipped-difficulty-pin.md`
+      is the source both of the rename this bullet describes and of the "zero findings" wording
+      standing beside the miscount, so the miscount was written with that report in hand; and
+      `git show HEAD:Tools/architect/state/tests.md` finds neither the miscount nor this bullet
+      in the committed file, so both were authored in the same uncommitted pass, which began
+      after that report was on disk. Counted in the report's own `## Observations` section the
+      numbered items are four; only the first is the one this bullet goes on to describe, and
+      the other three are recorded in the sibling bullet below rather than merely counted. The
+      retired claim is kept visible here per this file's convention. The lesson is not about
+      timing: a miscount of a document you are quoting while you quote it is an uncounted
+      count, and the repair is to count it.]** The FIRST observation is
+      the one that produced the rename: the verb `Authors` sat beside
+      `ShippedGameModeAuthorsOneAiSide`, where that verb is genuinely earned by a premise
+      block that proves the C++ default cannot supply the expectation -- and here it is not
+      earned at all, since the bullet two above says in terms that this clause CANNOT
+      distinguish an authored `Easy` from an untouched one. The report calls this "the
+      sharpest thing in the pass" and records deliberately that it is NOT a block, for three
+      stated reasons: no prose anywhere asserts the false claim, the file's own header
+      intercepts a reader arriving by the name within a few lines, and the assertion message
+      itself ends "Do not cite this clause as evidence that a designer set the tier." It
+      offered `ShippedGameModeRunsAtEasy` "or similar" as a rename, called it a lane decision
+      rather than a gate fix because it would move the suite's clause-name set and every
+      citation of it, and named this lane as owner if pursued. The user ruled on the
+      observation and named the replacement. This lane did not choose it.
+    - **THE OTHER THREE OBSERVATIONS, IN SUBSTANCE -- so this entry is not merely counted
+      right while still dropping what was raised.** All three are non-gating; none is a
+      finding.
+      - **(2) The `autocrlf` warning this file reports is real and is PRE-EXISTING.** The
+        gate confirms the lane's account: `git diff` on the `.cpp` emits "warning: in the
+        working copy of ... LF will be replaced by CRLF the next time Git touches it"; the
+        file is LF in the worktree and LF in the HEAD blob, and this pass preserved that.
+        Worth watching at staging time; not a change this diff made. It is the same condition
+        the last bullet of this entry reports from the lane side.
+      - **(3) The liveness control compares STRINGS, not arrays -- and that property is not
+        free.** `TestNotEqual(..., Describe(A), Describe(B))` compares the rendered `(1)`
+        against `(0,1)` rather than the two `TArray<int32>`s. The gate judges it correct
+        HERE, because the values are digits and commas, so the case-insensitivity of
+        `FString` comparison in this engine cannot bite, and because the string form is what
+        the failure message needs anyway. It is recorded only so that a future edit rendering
+        a CASE-BEARING field through the same helper knows the property is not free. **That
+        is a live caveat on this lane's own instrument and is exactly what this file exists to
+        hold: the day someone routes a name, a tag or a tier label through the same describe
+        helper, this control stops discriminating case, and it will not say so.**
+      - **(4) Obligation (1) of the in-session clause is unfalsifiable from a checkout, as
+        `CLAUDE.md` itself declares.** The gate verified that `global.md`'s banner SAYS both
+        routes were offered with their costs named, and which route the user chose, in the
+        required inline shape; it records that it could NOT verify that the offer happened,
+        and states which of the two it did. It concerns no clause and no test, and the fact
+        it is about belongs to `global.md`, not to this file.
+    - **Later re-gates of this same tree are on disk and are NOT enumerated here.** Read them
+      by the glob `Tools/architect/gate_reports/2026-09-04-shipped-difficulty-pin-regate*.md`
+      and count them yourself. A number, a "both", or a terminated list of them written into
+      this entry would be a count of a set that this very edit can grow -- the defect that
+      produced the correction stamped above, one layer down.
+    - **Why five correct disclaimers did not make the old name acceptable.** They did not
+      travel with it. The name alone reaches `Saved/AutomationReport/index.json`, a CI
+      summary line, a `grep` hit, and the "+1 added" line of this file and `global.md`; the
+      header, the assertion message and the four caveats above all stay behind. A reader who
+      meets only the name concludes exactly the authorship the disclaimers exist to prevent.
+      **Generalise it: an overclaiming clause name is a defect in its own right, not a
+      cosmetic one, and no amount of correct surrounding prose repairs it.** Judge a name by
+      what it asserts to someone who will never read the file.
+    - **What the rename did NOT change.** Not one assertion, not the liveness control, not
+      the expectation, not the warrant. Everything the bullets above record about what this
+      clause pins and fails to pin still holds verbatim under the new name; only the label
+      moved. The two mutants recorded below were run against the OLD name and were not
+      re-run, because a rename cannot alter what they proved -- but note that as a limit,
+      not as a re-measurement.
+    - **How the rename was verified, since a rename is the one edit a stale binary reports as
+      a success.** The editor target was REBUILT first (a clause name is compiled; an unbuilt
+      tree would have reported the old name green and the new one absent). The full suite was
+      then re-run and read from the exported `index.json` opened `utf-8-sig`, never from the
+      log, which undercounts by exactly one. Both directions were asserted by name against
+      the report: the old name ABSENT, the new name PRESENT and `Success`. The macro-based
+      multiline set-difference against `HEAD` (`9d705ca`, which predates the whole clause)
+      showed exactly ONE added and ZERO removed. **A collector asymmetry was caught in the
+      middle of that check and is worth carrying forward:** the `HEAD` side of the difference
+      initially swept 82 test `.cpp` files to the worktree side's 81, because a fossil copy
+      of `StratScoreboardParity.cpp` is committed under
+      `Tools/architect/evidence/02-scoreboard-widget/generated/Source/StratUI/Tests/` and a
+      `git ls-tree` path filter reaches it while an `os.walk` of `Source/` cannot. It changed
+      no verdict here -- its clause names duplicate the real file's -- but a set difference
+      whose two sides enumerate different file sets is not measuring what it claims, and any
+      future clause census must scope BOTH sides to `Source/` explicitly.
+  - **Reported to the coordinator, NOT fixed here (out of lane).** `git diff` on that file emits
+    `warning: ... LF will be replaced by CRLF the next time Git touches it`. The file is LF in
+    the worktree and LF in the HEAD blob and this pass preserved that exactly; the warning is a
+    pre-existing repo-wide `autocrlf` condition, not a change this pass introduced. Worth
+    watching at staging time.
+
 - **2026-09-03 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
   only, plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
   `0b17685`, UNCOMMITTED) -- **THE ASSET-PIN CLAUSE EXISTS, THE RETRACTION MARKERS ARE ANCHORED,
   AND THE THING WORTH READING IS THAT THE MUTANT'S OWN FAILURE MESSAGE IS WHAT PROVED THE
   READER WAS READING THE ASSET -- it printed the value it had read, `(1)`, while asserting the
   mutated `0`, so one line of output discharged falsifiability AND non-vacuity together.** Cite
-  this pass's run by its exported `reportCreatedOn 2026.09.04-03.04.52` (UTC in the report;
+  this pass's run by its exported `reportCreatedOn 2026.09.04-03.04.52`
+  **[STAMPED 2026-09-04: that report no longer exists.
+  `Saved/AutomationReport/index.json` is a SINGLE PATH that every run overwrites, and the
+  2026-09-04 pass recorded above this entry re-ran the full suite over it. The citation is
+  kept as the historical name of the run this entry describes; it is no longer re-readable
+  from a checkout.]** (UTC in the report;
   local date 2026-09-03), never by a number -- the figure lives in
   `Tools/architect/state/global.md` and nowhere else. Follows the pass recorded immediately
   below, which the `coordinator` and the user reopened on three counts.

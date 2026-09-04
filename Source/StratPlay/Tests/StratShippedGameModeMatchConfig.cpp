@@ -73,8 +73,18 @@
 //     and `T-FAME-02.HandicapMovesThePlayersOpeningFameAtEveryTier`; both construct that config
 //     in C++ and neither reads an asset. This clause is the missing half that ties those two to
 //     the shipped package, and it is useless without them.
-//   - IT DOES NOT PIN `Difficulty`, `SaveSlotName`, `AiPlaybackStepSeconds` OR ANY OTHER FIELD
-//     of the same struct. Each is a separate claim and would need its own assertion.
+//   - IT DOES NOT PIN `Difficulty`. That field is now the subject of the SECOND clause in
+//     this file, `T-FAME-02.ShippedGameModeRunsAtEasy`, and that clause is a
+//     WEAKER instrument than this one for exactly the reason the `ViewingSide` bullet above
+//     gives: `FStratMatchConfig::Difficulty` initialises to `EStratDifficulty::Easy` in C++,
+//     `Easy` is the enum's first value and therefore 0, and the shipped asset also reads
+//     `Easy`. So the effective read there pins the VALUE and cannot tell an authored tier
+//     from an untouched one. Read that clause's own header before citing it: it establishes
+//     that the shipped game runs at Easy, and it establishes NOTHING about whether a designer
+//     put that tier there.
+//   - IT DOES NOT PIN `SaveSlotName`, `AiPlaybackStepSeconds`, `ScenarioFile`, `FirstSide`,
+//     the definition tables, the buildlist OR ANY OTHER FIELD of the same struct. Each is a
+//     separate claim and would need its own assertion.
 //   - IT DOES NOT PIN THAT `BP_StratGameMode` IS THE MAP'S GAMEMODE. That binding is a single
 //     unguarded line in `Config/DefaultEngine.ini` and is a different subject entirely.
 // ---------------------------------------------------------------------------
@@ -119,6 +129,22 @@ namespace StratShippedMatchConfigClauses
 			Out += FString::FromInt(Sides[Index]);
 		}
 		return Out + TEXT(")");
+	}
+
+	/**
+	 * `Easy` -- the reflected name, so a failure message names the tier that was read.
+	 *
+	 * ASKED OF THE `UENUM` RATHER THAN SWITCHED OVER IN THIS FILE. A hand-written switch here
+	 * would be a second author of the tier names and would print a stale one the day a tier is
+	 * added or renamed. This is display only; nothing is asserted about the string.
+	 */
+	FString DescribeDifficulty(const EStratDifficulty Tier)
+	{
+		if (const UEnum* const Reflected = StaticEnum<EStratDifficulty>())
+		{
+			return Reflected->GetNameStringByValue(static_cast<int64>(Tier));
+		}
+		return FString::Printf(TEXT("<unreflected tier %d>"), static_cast<int32>(Tier));
 	}
 
 	/**
@@ -289,6 +315,124 @@ bool FStratShippedGameModeAuthorsOneAiSideTest::RunTest(const FString& /*Paramet
 			     "asset at all, and every assertion above passed for the wrong reason."),
 			*Describe(ShippedAiSides), *Describe(ControlAiSides)),
 		Describe(ShippedAiSides), Describe(ControlAiSides));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// T-FAME-02 -- the shipped GameMode runs at Easy.
+//
+// A PIN ON THE VALUE AND NOT ON THE AUTHORSHIP, AND THAT IS THE FIRST THING TO KNOW ABOUT IT.
+// This is the `ViewingSide` situation from this file's header, NOT the `AiSides` situation, and
+// the two must not be conflated. `FStratMatchConfig::Difficulty` initialises to
+// `EStratDifficulty::Easy` in `Source/StratPlay/StratMatchSubsystem.h`; `Easy` is the FIRST
+// value of `UENUM EStratDifficulty` and is therefore 0. The 2026-09-03 live-editor measurement
+// recorded in this file's header found `ViewingSide` 0 and `Difficulty` `Easy` ABSENT from both
+// the native and the Blueprint export -- which is what a zero-valued field sitting at its C++
+// default looks like. So the CDO read below CANNOT distinguish an authored `Easy` from an
+// untouched one, and there is deliberately NO premise block here asserting that the C++ default
+// cannot supply the expectation: on this field that premise is FALSE, and asserting it would
+// fail. The assertion's own message says all of this, so a reader who arrives at a failure
+// without reading this block still learns it.
+//
+// WHY THE VALUE IS WORTH PINNING ANYWAY. Sec 2.11.6: "The first match runs on the one shipped
+// scenario at **Easy** by default (player +150 opening Fame, Sec 2.9)". Easy is the only tier
+// whose delta is non-zero in the player's favour -- `StratDifficultyFameDelta` gives +150 / 0 /
+// -100 -- so a shipped `Normal` would make Sec 2.9's handicap ARITHMETICALLY unobservable in the
+// shipped game while every existing handicap clause stayed green, because all of them construct
+// their own tier in C++. That is the same shape of gap this file's first clause was written to
+// close, and it is worth a clause even at the weaker warrant.
+//
+// WHERE THE EXPECTATION COMES FROM. The GDD sentence quoted above, at Sec 2.11.6. It is a
+// literal because the module is not the author of what the shipped package configures. That the
+// C++ default happens to agree with it is a coincidence of this field and is precisely what
+// costs this clause its authorship warrant -- it is not the source of the expectation.
+//
+// THE LIVENESS CONTROL, AND ITS LIMIT SAID PLAINLY. A reader that had silently stopped seeing
+// asset overrides would answer the C++ default to everything -- and on THIS field the C++
+// default IS the expectation, so the `Difficulty` assertion alone proves nothing about whether
+// the reader is alive. The control below discharges that by running the SAME `ResolveCdoOrFail`
+// over the AI-vs-AI package and requiring the two packages to disagree on `AiSides`, where they
+// are known to differ (`(1)` shipped against `(0,1)` control). THE LIVENESS EVIDENCE THEREFORE
+// COMES FROM A DIFFERENT FIELD THAN THE ONE BEING PINNED. That is a strictly weaker warrant than
+// `ShippedGameModeAuthorsOneAiSide` enjoys: it proves the reader reads assets, and it does not
+// prove that THIS field's answer came from the asset rather than from the C++ default underneath
+// it. No arrangement of assertions can close that gap while `Easy` is also the C++ default; only
+// a different C++ default, or a reader that reports whether a property was overridden, could.
+//
+// WHAT IT DOES NOT PIN. Not authorship, per the whole of the above. Not any behaviour: that Easy
+// moves the player's opening Fame by +150 is
+// `T-FAME-02.HandicapMovesThePlayersOpeningFameAtEveryTier`, which constructs its own config in
+// C++ and reads no asset. Not `SaveSlotName`, `AiPlaybackStepSeconds` or any other field.
+//
+// WHY THE NAME SAYS `RunsAt` AND NOT `Authors`. Renamed 2026-09-04 on the user's ruling, after
+// `strat-integration-reviewer` observed that the prior name's verb was `Authors` -- sitting
+// beside `ShippedGameModeAuthorsOneAiSide`, where that verb is earned -- and so claimed the exact
+// warrant the five paragraphs above spend their length disclaiming. THE NAME IS THE ONE ARTIFACT
+// THAT TRAVELS WITHOUT ITS HEADER: into `Saved/AutomationReport/index.json`, a CI summary line, a
+// grep hit and a record file's "+1 added" line. A reader who meets only the name would conclude
+// authorship, which is the thing this clause cannot establish. Correct disclaimers do not repair
+// an overclaiming name. `RunsAt` states the value and claims nothing about who set it.
+// The prior name is written out in full, stamped, in `Tools/architect/state/tests.md`, which is
+// where a reader arriving from that gate report's four citations of it should be sent. It is
+// deliberately NOT repeated here: a tree-wide census of the old identifier scoped to `Source/`
+// must come back empty, and a comment would be an indistinguishable hit.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratShippedGameModeRunsAtEasyTest,
+	"Stratocracy.StratPlay.T-FAME-02.ShippedGameModeRunsAtEasy",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratShippedGameModeRunsAtEasyTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratShippedMatchConfigClauses;
+
+	const AStratGameMode* const Shipped = ResolveCdoOrFail(*this, kShippedGameModeClassPath);
+	if (Shipped == nullptr)
+	{
+		return false;
+	}
+
+	const EStratDifficulty ShippedTier = Shipped->MatchConfig.Difficulty;
+
+	TestEqual(
+		*FString::Printf(
+			TEXT("Sec 2.11.6: the shipped game runs at Easy -- \"the first match runs on the one "
+			     "shipped scenario at Easy by default (player +150 opening Fame, Sec 2.9)\" (read: "
+			     "%s). A shipped Normal would make Sec 2.9's handicap arithmetically unobservable, "
+			     "since Normal's delta is 0 and Easy's is the only one non-zero in the player's "
+			     "favour. NOTE, AND IT IS THE POINT OF THIS CLAUSE'S HEADER: Easy is ALSO "
+			     "FStratMatchConfig's C++ default and is the enum's zero value, so this assertion "
+			     "pins the VALUE and CANNOT tell an authored Easy from an untouched one -- unlike "
+			     "ShippedGameModeAuthorsOneAiSide's AiSides assertions, which the C++ default "
+			     "cannot satisfy. Do not cite this clause as evidence that a designer set the "
+			     "tier. The fix for a red here is in Content/StratPlay/BP_StratGameMode.uasset's "
+			     "class defaults (strat-editor-builder's lane), not in this test."),
+			*DescribeDifficulty(ShippedTier)),
+		ShippedTier, EStratDifficulty::Easy);
+
+	// ---- THE CONTROL: the reader is alive -- MEASURED ON A DIFFERENT FIELD ----------------
+	//
+	// The assertion above cannot be its own liveness check, because a reader that had stopped
+	// seeing asset overrides would answer the C++ default and the C++ default is the expectation.
+	// So liveness is measured on `AiSides`, where the two packages are known to differ. THIS IS A
+	// WEAKER WARRANT THAN `ShippedGameModeAuthorsOneAiSide` HAS, and deliberately so: it proves
+	// this reader reads ASSETS, not that the `Difficulty` value above came from the asset.
+	const AStratGameMode* const AiVsAi = ResolveCdoOrFail(*this, kAiVsAiGameModeClassPath);
+	if (AiVsAi == nullptr)
+	{
+		return false;
+	}
+
+	TestNotEqual(
+		*FString::Printf(
+			TEXT("LIVENESS CONTROL, ON A DIFFERENT FIELD: the same reader gives the two packages "
+			     "DIFFERENT answers for AiSides -- shipped %s against AI-vs-AI %s. If these were "
+			     "equal the reader is not reading assets at all, and the Difficulty assertion "
+			     "above passed for the wrong reason, because Easy is what the C++ default would "
+			     "have answered too."),
+			*Describe(Shipped->MatchConfig.AiSides), *Describe(AiVsAi->MatchConfig.AiSides)),
+		Describe(Shipped->MatchConfig.AiSides), Describe(AiVsAi->MatchConfig.AiSides));
 
 	return true;
 }

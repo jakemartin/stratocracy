@@ -15,6 +15,113 @@
 
 ## NEXT
 
+- **FIXED, 2026-09-04 -- closed the OPEN carried instrument debt `global.md` recorded against
+  this lane: `strat_banner_sweep.py`'s REPORT PROVENANCE part (a) could not see a BARE
+  `reportCreatedOn` stamp.** Base commit `2a43ca8`. Working tree: `E:/MultiAgent/Stratocracy`,
+  branch `master`.
+  - **THE DEFECT.** `_CITED_REPORT_STAMP_RE` required the literal `reportCreatedOn` token
+    immediately before the stamp digits, so a citation written as bare digits
+    (`2026.09.04-04.09.26`, no token) was never collected by part (a) at all — not exempted,
+    not stamped, simply never seen. That is how a stale bare citation survived a `SWEEP CLEAN`
+    on 2026-09-04 and needed a human-dispatched `strat-integration-reviewer` gate to catch it
+    instead.
+  - **THE FIX.** `_CITED_REPORT_STAMP_RE` in `Tools/architect/strat_banner_sweep.py` is now
+    `re.compile(r"(?:reportCreatedOn\s+)?(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})")` — the token
+    is optional rather than a second, separate bare-stamp pattern, so a token-prefixed occurrence
+    is consumed as ONE match and is never also reported a second time as a bare one. **Proved,
+    not assumed**: a fixture asserted directly against the live module object
+    (`check_self_test`'s new "BARE-STAMP WIDENING" block) finds the digits exactly once on
+    `"...report is reportCreatedOn 2026.08.26-00.28.42, unstamped."`, and finds nothing extra
+    beyond that one match. `\s+` already tolerated a line wrap between the token and the stamp
+    before this change; unchanged.
+  - **`_PARAGRAPH_STAMP_MARKERS` (the general suite-figure stamp set) is deliberately LEFT
+    UNCHANGED**, stated in a code comment at the regex's own site. That marker set governs check
+    1 (SUITE COUNT AGREEMENT) across every file, and widening it to match any bare
+    `YYYY.MM.DD-HH.MM.SS`-shaped string would risk exempting an unrelated timestamp (a filename,
+    a quoted log line, a fixture's own scratch stamp) as if it were a report citation — a
+    broader, unreported risk on a different check than the one this defect was filed against.
+    `_CITED_REPORT_STAMP_RE` is used only by REPORT PROVENANCE part (a), whose entire subject is
+    comparing report-identity stamps, so widening only that one is the narrower fix.
+  - **MASKING AND THE QUOTING PATH BOTH STILL HOLD, CHECKED, NOT ASSUMED.** `_mask_span` masks
+    the whole matched span (`m.start()` to `m.end()`), which for a bare match is just the digits
+    and for a token-prefixed match is the token plus the digits — either way the citation's own
+    span cannot self-exempt via `is_stamped`, proved by the new
+    `_BAD_PROVENANCE_BARE_STAMP`/`_GOOD_PROVENANCE_BARE_STAMP` pair below both verifying
+    correctly. The `_QUOTED_FIGURE_RE`/`quoting_window` reporting-verb exemption is untouched —
+    it operates on the text *before* the match, independent of whether the match itself carries a
+    token, and the real `global.md` sentence "It cited `2026.09.04-04.09.26`" (the "cited" verb
+    sits immediately before the now-widened match) confirmed exempt in the real-tree run below.
+  - **FALSIFIABILITY, POSITIVE FIXTURE AND NEGATIVE CONTROL, ADDED TO `--self-test`.**
+    `check_provenance_self_test` gained two cases built on the same scratch
+    report/source harness every other provenance fixture in that function uses (a
+    `reportCreatedOn 2026.08.26-01.30.10` scratch report):
+    `_BAD_PROVENANCE_BARE_STAMP` (an unstamped, unquoted bare `2026.08.26-00.28.42` — differs
+    from the scratch report — expected FAIL) and `_GOOD_PROVENANCE_BARE_STAMP` (the identical
+    shape citing the matching bare `2026.08.26-01.30.10` — expected PASS). Both report `[OK]`
+    under `python Tools/architect/strat_banner_sweep.py --self-test`.
+  - **PROOF, OLD BYTES ON BOTH SIDES.** `git show 2a43ca8:Tools/architect/strat_banner_sweep.py`
+    written to a scratch copy and imported (registered in `sys.modules` before `exec_module`,
+    required for its `@dataclass` decorators to resolve their own module), then run via that old
+    module's own `run_sweep` against the identical `_BAD_PROVENANCE_BARE_STAMP` text and the
+    identical scratch report/source pair the new positive fixture uses:
+    `OLD CODE result on BARE positive fixture: passed = True` — the pre-fix bytes are blind to
+    the defect on the exact text the new fixture pins, confirming the fixture actually exercises
+    the fixed mechanism rather than something else.
+  - **PROOF, THE HEALTHY PATH.** `python Tools/architect/strat_banner_sweep.py --self-test` ->
+    `SELF-TEST: ALL FIXTURES CORRECT`, exit 0 (checked directly, not through a pipe) — every
+    pre-existing fixture unchanged in verdict, plus the two new provenance fixtures and the new
+    direct regex-differential pin, all `[OK]`.
+  - **PROOF, RUN AGAINST THE REAL RECORD, BOUND TO ITS MOMENT.** Over base `2a43ca8`, before the
+    `coordinator`'s own edit to `global.md` landed in this same uncommitted tree,
+    `python Tools/architect/strat_banner_sweep.py` (real `Tools/architect/state/`, unpiped) exited
+    1 with exactly one new finding:
+    `[REPORT PROVENANCE] global.md:52: cites \`reportCreatedOn 2026.09.04-04.09.26\`, but the
+    report this sweep actually opened is \`reportCreatedOn 2026.09.04-04.47.20\`` — see "NEW
+    FIRING ON `global.md`, REPORTED NOT FIXED" below, itself now stamped superseded. `global.md`
+    and its banner and suite count are the `coordinator`'s file; not edited here. **This no longer
+    describes the tree these three files ship from**: `strat-integration-reviewer`'s
+    2026-09-04 gate (`Tools/architect/gate_reports/2026-09-04-bare-stamp-sweep-fix.md`, Finding 2)
+    caught that this entry and `global.md` shipped asserting opposite states of the same
+    instrument, because the `coordinator` had since taken a variant of option (2) below plus the
+    stamp deletion in this same tree. Re-measured for this repair, unpiped:
+    `python Tools/architect/strat_banner_sweep.py` -> `SWEEP CLEAN`, `EXIT=0`. `global.md:52` no
+    longer carries the cited stamp.
+  - **NEW FIRING ON `global.md`, REPORTED NOT FIXED, PER INSTRUCTION AT THE TIME — SUPERSEDED,
+    SEE ABOVE.** The now-widened check
+    fires on exactly one bare stamp: the sentence "`_CITED_REPORT_STAMP_RE` requires the literal
+    `reportCreatedOn` token before the stamp, so `2026.09.04-04.09.26` written on its own is
+    invisible to REPORT PROVENANCE" — this is `global.md`'s own CARRIED DEBT paragraph
+    *describing this very defect as an example*, and the bare stamp inside it now trips the fix
+    it is describing, because no reporting verb (`_QUOTED_FIGURE_RE`) sits close enough before it
+    and no `[STAMPED ...]`/`CORRECTION,` marker sits within
+    `_PROVENANCE_CITATION_WINDOW` (400 chars) of it. **A second, earlier bare occurrence in the
+    same banner (the sentence "It cited `2026.09.04-04.09.26` — retired by the rename re-run")
+    is NOT flagged** — "cited" sits immediately before it and the `_QUOTED_FIGURE_RE` cite-family
+    exemption reaches it correctly, so that one is not part of this finding. This is a genuine
+    self-referential case, not a bug in the fix: the debt paragraph names the exact bare stamp
+    that used to be a live drift, for illustration, and the fix now (correctly) cannot tell that
+    illustration apart from an assertion without either a reporting verb close enough or an
+    explicit stamp/quote marker. **Resolution is the `coordinator`'s call, three options, none
+    applied here:** (1) add a quoting/reporting verb ahead of the bare digits in that sentence
+    (e.g. "so a bare stamp like `2026.09.04-04.09.26`" already reads this way informally, but the
+    verb sits too far upstream of the digits for `quoting_window`'s 120-character reach); (2)
+    mark the CARRIED DEBT paragraph `[STAMPED ...]` now that this fix has landed, since the debt
+    it describes is closing; (3) no code-side exemption was added for this shape deliberately —
+    a debt-description sentence quoting its own bug's symptom is exactly the shape this fix
+    exists to catch elsewhere, so carving out an exemption for it here would reopen a hole
+    matching this project's own recorded "a census quoting its own search token" lesson.
+    **[STAMPED 2026-09-04, SAME TREE — a variant of option (2) has since been taken.** The
+    `coordinator`, in `global.md`'s own file and its own lane, marked the CARRIED DEBT paragraph
+    `[STAMPED 2026-09-04 -- the debt is discharged; this paragraph is history.]` and additionally
+    deleted the illustrative bare stamp the paragraph used to carry, rather than leaving it in
+    place for a reporting verb or quote marker to cover. That is why the re-measurement two
+    bullets above now reads `SWEEP CLEAN` where this entry's own earlier measurement read exit 1.
+    Options (1) and (3) were not taken and are not needed now that the cited stamp itself is
+    gone. Caught by `strat-integration-reviewer`'s 2026-09-04 gate, Finding 2, over this same
+    uncommitted tree, base `2a43ca8`: had the tree been committed as it then stood, this entry
+    and `global.md` would have asserted opposite states of the sweep in one commit, before this
+    stamp was added.]
+
 - **FIXED, 2026-09-01 -- two `strat_banner_sweep.py` defects the `coordinator` filed in
   `global.md` this evening, both now closed.** Working tree: `E:/MultiAgent/Stratocracy`,
   branch `master`, base HEAD `cada741`. `strat-test-author` was concurrently diagnosing a red

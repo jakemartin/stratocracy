@@ -439,8 +439,39 @@ _ANY_DATE_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 # the artifact's own timestamp; it has nothing that reads an entry's PROSE claim about which
 # run or which tree produced it. A stale provenance sentence was invisible to this sweep by
 # construction until now.
+#
+# THE TOKEN IS OPTIONAL, ADDED 2026-09-04 -- A BARE STAMP WAS INVISIBLE TO PART (a) BY
+# CONSTRUCTION. The pre-fix pattern required the literal `reportCreatedOn` token immediately
+# before the digits, so a stamp written on its own -- `2026.09.04-04.09.26`, no token, exactly
+# the shape a maintainer writes when the sentence around it already says "the report" or "this
+# pass" -- was never collected as a citation at all, and REPORT PROVENANCE part (a) had no
+# opinion on it whatever the report on disk said. That is how a stale bare citation survived a
+# `SWEEP CLEAN` on 2026-09-04 and needed a human-dispatched `strat-integration-reviewer` gate
+# instead. `(?:reportCreatedOn\s+)?` makes the token optional rather than adding a second,
+# separate bare-stamp pattern: a token-prefixed occurrence is consumed as ONE match (the
+# optional group is greedy and the token, when present, is always immediately followed by the
+# digits in this record's own idiom), so `re.finditer` never also reports the same digits a
+# second time as a bare match starting mid-way through an already-consumed span -- confirmed
+# directly (not assumed) in `check_self_test`'s regex-differential block below, which asserts
+# `_CITED_REPORT_STAMP_RE.findall(...)` returns exactly one hit on a token-prefixed stamp, not
+# two. `\s+` already tolerated a line wrap between the token and the stamp; that is unchanged,
+# and this record wraps at ~95 columns, so a wrapped citation like this still matches.
+#
+# `_PARAGRAPH_STAMP_MARKERS` (the SUITE-FIGURE stamp set) IS DELIBERATELY LEFT UNCHANGED, NOT
+# WIDENED TO MATCH A BARE STAMP TOO. That marker set exists so a suite figure sitting near a
+# report citation reads as historical, and its scope is "does ANY recognisable stamp-shaped
+# thing sit near this claim" -- widening it to a bare `\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2}`
+# would make it match any timestamp-shaped string in this record's prose, including ones that
+# are not report citations at all (a filename, a quoted log line, a scratch-file stamp used in a
+# fixture description). That is a real risk specifically for check 1 (SUITE COUNT AGREEMENT),
+# which is not the check this defect was reported against: widening the marker there would trade
+# a narrow, reported false-negative for a broader, unreported false-negative risk on a different
+# check. `_CITED_REPORT_STAMP_RE`, by contrast, is used only by REPORT PROVENANCE part (a),
+# whose entire job is comparing report-identity stamps against each other -- there a bare stamp
+# genuinely is the same claim as a token-prefixed one, so widening THAT pattern costs nothing.
+# So: this regex changes; `_PARAGRAPH_STAMP_MARKERS` does not.
 _CITED_REPORT_STAMP_RE = re.compile(
-    r"reportCreatedOn\s+(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})")
+    r"(?:reportCreatedOn\s+)?(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})")
 
 # `[A-Za-z]:[\\/]` is this project's own path shape (`E:/...`), matched rather than typed --
 # the DRIVE LETTER is never fixed to `E`, so the check does not silently assume its own box.
@@ -1673,6 +1704,44 @@ branch `feat/match-result-screen`, and the earlier pass's own report was `report
 - **Nothing else here.**
 """
 
+# THE 2026-09-04 BARE-STAMP DEFECT ITSELF, PINNED AS A FIXTURE. Identical shape to
+# `_BAD_PROVENANCE_STAMP` above, EXCEPT the citation carries no `reportCreatedOn` token at all --
+# just the bare digits, unstamped, unquoted, differing from the scratch report's own
+# `2026.08.26-01.30.10`. Before the 2026-09-04 fix this was invisible to part (a) by
+# construction (`_CITED_REPORT_STAMP_RE` required the literal token) and the sweep printed
+# `SWEEP CLEAN` on it; the fix makes the token optional, so this must now FAIL exactly as the
+# token-prefixed `_BAD_PROVENANCE_STAMP` does.
+_BAD_PROVENANCE_BARE_STAMP = """# global
+
+_Last run 2026-08-26 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+THIS PASS'S OWN CERTIFYING REPORT IS NAMED HERE, UNSTAMPED AND WITH NO TOKEN AT ALL:
+2026.08.26-00.28.42, and the figure above rests on it.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# THE NEGATIVE CONTROL FOR THE SAME SHAPE: a BARE stamp that AGREES with the report this sweep
+# actually opened (`2026.08.26-01.30.10`, the same scratch report `_BAD_PROVENANCE_BARE_STAMP`
+# is checked against). No token, no stamp marker, no reporting verb -- it PASSES purely because
+# the digits match, proving the broadened regex does not turn every bare timestamp into a
+# finding, only a bare timestamp that actually disagrees with the report on disk.
+_GOOD_PROVENANCE_BARE_STAMP = """# global
+
+_Last run 2026-08-26 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+THIS PASS'S OWN CERTIFYING REPORT IS NAMED HERE, UNSTAMPED AND WITH NO TOKEN AT ALL:
+2026.08.26-01.30.10, and the figure above rests on it.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
 # THE 2026-08-26 PARAGRAPH-WIDE-INERTNESS DEFECT ITSELF, PINNED AS A FIXTURE. A single unbroken
 # paragraph -- no blank line -- carrying an unstamped, WRONG `reportCreatedOn` citation far from
 # every stamp marker in it (over 400 characters of plain filler prose on both sides, carrying no
@@ -2339,6 +2408,12 @@ def check_provenance_self_test() -> tuple[bool, list[str]]:
     # FIRST DAY`, quoted rather than cited by a line number that moves whenever that file grows.
     run_case("an honest account of a superseded citation, using the reporting verb 'cited', "
              "PASSES", _CITED_ACCOUNT_PROVENANCE, True)
+    # 2026-09-04, the bare-stamp fix: a citation with no `reportCreatedOn` token at all, just
+    # the digits, must now be reachable by part (a) just as a token-prefixed one is.
+    run_case("a BARE stamp (no token) disagreeing with the report this sweep opened FAILS",
+              _BAD_PROVENANCE_BARE_STAMP, False)
+    run_case("the same BARE stamp shape, agreeing with the report this sweep opened, PASSES",
+              _GOOD_PROVENANCE_BARE_STAMP, True)
     return ok, lines
 
 
@@ -2598,6 +2673,31 @@ def check_self_test() -> tuple[bool, str]:
                  f"`is_stamped` call launders the buried citation (True) while the shipped "
                  f"windowed call does not (False), on the identical paragraph and match -- the "
                  f"regression that pins the 2026-08-26 inertness fix itself")
+
+    # THE BARE-STAMP WIDENING OF `_CITED_REPORT_STAMP_RE` ITSELF, PINNED DIRECTLY -- not only
+    # against `_BAD_PROVENANCE_BARE_STAMP`'s verdict in `check_provenance_self_test`. Two
+    # properties, asserted against the live module-level object:
+    # (1) a BARE stamp with no token is now found at all -- the pre-fix pattern, reconstructed
+    #     here as the literal it shipped as before this fix, finds nothing on bare digits.
+    # (2) a TOKEN-PREFIXED stamp is still found exactly ONCE, not twice -- the optional group
+    #     consumes the token when present, so `re.finditer` never re-reports the same digits a
+    #     second time starting mid-match. This is the property the file's own comment above the
+    #     regex claims; asserted here rather than left as an unverified claim in a comment.
+    _pre_fix_cited_stamp_re = re.compile(
+        r"reportCreatedOn\s+(\d{4}\.\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{2})")
+    _bare_text = "the certifying report is 2026.08.26-00.28.42, unstamped."
+    _prefixed_text = "the certifying report is reportCreatedOn 2026.08.26-00.28.42, unstamped."
+    _bare_found_now = _CITED_REPORT_STAMP_RE.findall(_bare_text)
+    _bare_found_pre_fix = _pre_fix_cited_stamp_re.findall(_bare_text)
+    _prefixed_found_now = _CITED_REPORT_STAMP_RE.findall(_prefixed_text)
+    good = (_bare_found_now == ["2026.08.26-00.28.42"] and _bare_found_pre_fix == []
+            and _prefixed_found_now == ["2026.08.26-00.28.42"])
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] `_CITED_REPORT_STAMP_RE` now finds a "
+                 f"BARE stamp (the pre-fix literal pattern finds none, on the identical text) "
+                 f"and still finds a TOKEN-PREFIXED stamp exactly ONCE, not twice -- the "
+                 f"regression that pins the 2026-09-04 bare-stamp fix and its non-double-count "
+                 f"property together")
 
     # THE `cite`-FAMILY ADDITION TO `_QUOTED_FIGURE_RE`, PINNED DIRECTLY -- not only against
     # `_CITED_ACCOUNT_PROVENANCE`'s verdict above. Extracted straight from the real

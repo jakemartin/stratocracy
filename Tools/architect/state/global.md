@@ -47,14 +47,23 @@ above the block that stamps that very citation as overwritten, so this banner as
 Found by `strat-integration-reviewer` on the 2026-09-04 RE-GATE, not by the sweep, and the
 reason the sweep could not find it is itself the debt below. Owner: the `coordinator`, in
 lane on its own file.
-CARRIED DEBT, INSTRUMENT, OPEN: **`strat_banner_sweep.py` cannot see a BARE report
-timestamp.** `_CITED_REPORT_STAMP_RE` requires the literal `reportCreatedOn` token before the
-stamp, so `2026.09.04-04.09.26` written on its own is invisible to REPORT PROVENANCE -- which
-is exactly how a stale citation survived a CLEAN sweep and needed a human-dispatched gate to
-catch. The reviewer proved it with an in-memory mutant that adds ONLY that token and makes
-the check fire. The fix -- matching a bare `YYYY.MM.DD-HH.MM.SS` stamp too -- is in
-`strat-data-steward`'s lane and is NOT written. Until it is, every citation in this file must
-carry the `reportCreatedOn` token or it is ungated; the sentence repaired above now does.
+CARRIED DEBT, INSTRUMENT, DISCHARGED 2026-09-04: **`strat_banner_sweep.py` could not see a BARE
+report timestamp.** `_CITED_REPORT_STAMP_RE` required the literal `reportCreatedOn` token
+before the stamp, so a stamp written on its own -- the retired one, still quoted in this
+banner's own `THAT SENTENCE WAS A BLOCKING FINDING` block above and again in the `STAMPED>`
+re-quote below it, both of them exempt and neither of them live -- was invisible to REPORT
+PROVENANCE, which is exactly how a stale citation survived a CLEAN sweep and needed a
+human-dispatched gate to catch. `strat-integration-reviewer` proved it with an in-memory mutant
+that adds ONLY that token and makes the check fire. **FIXED by `strat-data-steward` over base
+`2a43ca8`:** the token is now optional in that regex, pinned by a positive fixture and a
+negative control in `--self-test` and proved blind on the pre-fix bytes;
+`Tools/architect/state/data.md`'s 2026-09-04 entry carries the measurements. The illustrative
+bare stamp this paragraph used to carry is no longer written here: it was itself an unstamped
+citation of a retired run. The requirement this paragraph announced is now enforced by the
+instrument IN THIS FILE'S LIVE BANNER -- which is the whole of part (a)'s scope, narrower than
+the file-wide requirement the retired sentence announced -- rather than by a sentence asking
+authors to remember it.
+**[STAMPED 2026-09-04 -- the debt is discharged; this paragraph is history.]**
 THE CLAUSE WAS RENAMED AFTER THE GATE PASSED IT, ON A USER RULING, AND THE REASON IS THE ONE
 GENERAL LESSON THIS PASS PRODUCED. `strat-integration-reviewer` gated the pass **PASS with zero
 findings and FOUR observations**, all four in that report under `## Observations`. THE FIRST

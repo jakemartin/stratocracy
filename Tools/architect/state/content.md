@@ -96,10 +96,12 @@
   while `WBP_Options`'s is NOT (the control that makes the check discriminate); all four
   `Btn_0..Btn_3` survived the reparent; every bound name resolves in all three widgets; all three
   GameModes name `WBP_Options_C`; and zero Blueprint errors across all three compiles.
-  **NOTHING HAS BEEN SEEN AND NO CLAUSE COVERS ANY OF IT.** A commandlet has no pixels. This entry
-  does not claim either button is visible, hittable or sensibly placed, nor that the sliders move
-  anything a player can hear -- and the in-match panel takes no input mode, which no clause can
-  observe either. NO GATE HAS RUN ON THIS PASS.
+  **NOTHING HAS BEEN SEEN.** A commandlet has no pixels. This entry does not claim either button
+  is visible, hittable or sensibly placed, nor that the sliders move anything a player can hear --
+  and the in-match panel takes no input mode, which no clause can observe either.
+  [STAMPED 2026-09-05: "NO CLAUSE COVERS ANY OF IT" stood here and is now FALSE -- thirteen
+  clauses were written the same day under `GATE-TITLEMENU` and `GATE-AUDIO-SETTINGS`, and the
+  figures are `global.md`'s. The unseen half above is unchanged and still owed.]
 
 - **THE TITLE THEME AND THE OPTIONS WIDGET EXIST; THE OPTIONS SCREEN HAS NO CONTROLS ON IT AND
   THAT IS A HUMAN'S WORK, NOT A MISSING STEP.** 2026-09-05 (local), `E:/MultiAgent/Stratocracy`,

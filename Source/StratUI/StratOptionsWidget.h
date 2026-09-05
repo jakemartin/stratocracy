@@ -378,11 +378,39 @@ private:
 	 * value the control submitted, and a thumb left where the control put it would then be a
 	 * position the model does not have.
 	 *
-	 * THE RE-ENTRANCY GUARD IS STRUCTURAL AND NOT DEFENSIVE. `USlider::SetValue` is not
-	 * documented here to re-broadcast `OnValueChanged` and this file does not assert that it
-	 * does not -- an unmeasured claim about an engine internal is exactly what this project
-	 * refuses to write down. `bSyncingBoundWidgets` makes the no-feedback-loop property true of
-	 * THIS class whichever way that engine question resolves.
+	 * THE RE-ENTRANCY GUARD IS STRUCTURAL AND NOT DEFENSIVE, AND THE ENGINE QUESTION IT WAS
+	 * WRITTEN AROUND IS NOW ANSWERED.
+	 *
+	 *   RESOLVED> 2026-09-05: "`USlider::SetValue` is not documented here to re-broadcast
+	 *   `OnValueChanged` and this file does not assert that it does not -- an unmeasured claim
+	 *   about an engine internal is exactly what this project refuses to write down."
+	 *
+	 * IT RE-BROADCASTS. `USlider::SetValue` (`Slider.cpp:152-163`, UE 5.8) calls
+	 * `HandleOnValueChanged` whenever `Value != InValue`, and that broadcasts `OnValueChanged`
+	 * unconditionally -- OUTSIDE the `MySlider.IsValid()` block, so it needs no Slate widget, no
+	 * `TakeWidget`, and no user drag. The feedback loop is REAL AND REACHABLE HEADLESSLY. The
+	 * discipline the retracted sentence was practising was right; the conclusion a reader drew
+	 * from it -- that no clause could reach this path -- was wrong, and cost a proposed seam.
+	 *
+	 * WHICH MAKES THE TWO GUARD SITES DIFFERENT THINGS, and only one of them is load-bearing.
+	 * The early returns in the three `Handle*SliderChanged` handlers are what stop a seed from
+	 * being recorded as a commit. Measured 2026-09-05 by deleting all three: it reddens
+	 * `EachOptionsSliderReachesOnlyItsOwnChannel` ("dragging the master slider produces exactly
+	 * one commit ... it was 2"), `EveryOptionsValueTextEqualsItsOwnModelField` ("seeding the
+	 * planted screen still commits nothing ... it was 6") and
+	 * `TheOptionsBackButtonDismissesWithoutCommitting`. They are already pinned by three
+	 * clauses and need no seam.
+	 *
+	 * The early return in `SyncBoundWidgetsToModel` itself is NOT reachable while those three
+	 * hold -- deleting it alone was measured green across the whole suite the same day, because
+	 * a handler guard catches the re-entry before it can reach a second sync. It is kept anyway,
+	 * for a reason the same pair of measurements supplies: with the handler guards gone, it is
+	 * the line that turns an unbounded sync/broadcast recursion into a BOUNDED double commit,
+	 * which is why deleting them produced three legible assertion failures instead of a stack
+	 * overflow. It buys a diagnosable failure for a future regression, and that is its whole
+	 * job. IT IS DELIBERATELY NOT GIVEN A TEST SEAM: a clause that could reach it would first
+	 * have to disable the guards that make it unreachable, and would then be asserting against
+	 * its own fixture rather than against this class.
 	 */
 	void SyncBoundWidgetsToModel();
 

@@ -14,6 +14,104 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-05 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- six new files under
+  `Source/*/Tests/`, two of them test-only headers, plus one existing test-only header extended,
+  plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
+  `374398a` (clean and pushed), and this pass is UNCOMMITTED) -- **THE OPTIONS SCREEN AND ITS TWO
+  BUTTONS, AND THE THING WORTH READING IS THAT A FIXTURE PREMISE AND A CLAUSE DEFECT PRINTED THE
+  SAME SENTENCE.** Cite this pass by its exported `reportCreatedOn 2026.09.05-22.19.02`; the
+  figure lives in `Tools/architect/state/global.md` and nowhere else. That run is the FINAL one
+  of the pass and followed the last rebuild; every earlier run of this pass was overwritten and
+  is not citable.
+  - **THIRTEEN CLAUSES, COUNTED BY MACRO AND NOT BY NAME.**
+    `Source/StratUI/Tests/StratOptionsWidgetBindingClauses.cpp` (3, `GATE-AUDIO-SETTINGS`),
+    `Source/StratUI/Tests/StratCommandBarOptionsClauses.cpp` (2, `GATE-TITLEMENU`),
+    `Source/StratPlay/Tests/StratOptionsPanelDelegateClauses.cpp` (1, `GATE-TITLEMENU`),
+    `Source/StratPlay/Tests/StratOptionsPresenterClauses.cpp` (3 -- 2 `GATE-TITLEMENU`, 1
+    `GATE-AUDIO-SETTINGS`), `Source/StratPlay/Tests/StratTitleMenuOptionsRowClauses.cpp` (1,
+    `GATE-TITLEMENU`), `Source/StratPlay/Tests/StratCommandBarOptionsBindClauses.cpp` (2,
+    `GATE-TITLEMENU`), `Source/StratPlay/Tests/StratShippedOptionsWidgetClassParity.cpp` (1,
+    `GATE-TITLEMENU`). Non-clause: the new `Source/StratPlay/Tests/StratOptionsPanelDoubles.h`
+    and `Source/StratUI/Tests/StratCommandBarOptionsDouble.h`, and seven planted sub-widgets plus
+    a dismiss tally added to the existing `Source/StratUI/Tests/StratOptionsWidgetDouble.h`.
+  - **THE IDs FOLLOW THE STEWARD'S THIRD 2026-09-05 RULING AND NOT THE ENGINEER'S PROPOSAL.**
+    That proposal was `T-UI-05.CommandBarOptions*`, which would have filed a route-request button
+    under the ID that owns the `+X/turn` INCOME LINE -- `decisions.md`'s 2026-08-27 W3 mint-request
+    entry says in terms, *"`T-UI-05` covers the `+X/turn` income line"*. `T-UI-03` was refused
+    for the same six subjects on the argument this lane had already made for the options model:
+    `OptionsButton` draws no value and reads no `strat::UiSnapshot` field, so there is no
+    snapshot-fidelity fact for that ID to own. This lane read the ruling against the headers and
+    agrees with all six subjects, including the deliberate SPLIT of `UStratOptionsPresenter`
+    across both names by facet -- screen-visibility reconciliation and settings-model plumbing
+    are two quantities in one class, and `StratOptionsPresenterClauses.cpp` carries clauses under
+    both IDs for that reason.
+  - **THE FINDING OF THE PASS: A FIXTURE PREMISE AND THE DEFECT IT SITS ABOVE PRINT THE SAME
+    SENTENCE, AND ONLY THE PREMISE TELLS THEM APART.** Both command-bar bind clauses failed on
+    their first run with *"Expected ... to be 1, but it was 0"* -- which is verbatim the message
+    written for the defect they exist to catch, "the bind runs once at startup and the in-match
+    Options control is dead on every real match". IT WAS NOT THAT DEFECT. `FBarScope` did not
+    call `UWorld::InitializeActorsForPlay`, so a controller spawned into it was never added to
+    the world's `PlayerControllerList`, so `UWorld::GetFirstPlayerController` returned null and
+    `UStratMatchSubsystem::FindScoreboardHUD` -- whose first step that is -- returned null before
+    reaching the binding at all. **The subject under test was never executed and the clause
+    reported the exact wording of a real defect.** What separated them was adding two FIXTURE
+    premises that assert the subsystem can REACH the bar the way it does in a match (that the
+    world's first player controller is the fixture's own, and that its `MyHUD` is the fixture's
+    HUD); those are in both clauses now and named FIXTURE so a future red run reads as plumbing
+    rather than as a finding. The general form, for the next author: **a clause whose subject sits
+    behind two or three null-guarded lookups will report a silent early return in the words of
+    the defect, and no message wording fixes that -- only a premise that measures the lookups.**
+  - **WHAT EACH CLAUSE PINS, AND WHERE ITS EXPECTATION COMES FROM.** No clause in this pass
+    computes an expectation a module-side value could have supplied. The delegate clause reads
+    `GetOptionsPanelRequestCount()` and `IsOptionsPanelOpen()` from INSIDE the handler and
+    compares them against the same subsystem's reading afterwards -- which is the only place
+    `RequestOptionsPanel`'s stated write-then-broadcast ordering is observable. The presenter's
+    seed clause compares the panel's `Model` against `UStratSoundDirector::GetAudioSettings()`
+    and the forwarded commit against the widget's own `Model`; nothing calls
+    `StratBuildAudioOptionsModel` to predict a value. The title-menu clause compares the drawn
+    caption against `GetMenuModel()`'s own row found BY PREDICATE, never by index. The shipped
+    parity clause is three independent CDO reads and a relation. The only literals anywhere are
+    broadcast/show COUNTS, which are the properties themselves and are asserted as deltas on a
+    reading taken first.
+  - **WHAT THIS PASS DOES NOT PIN, RECORDED BECAUSE THE CLAUSE NAMES CANNOT SAY IT.**
+    - **`UStratOptionsWidget::bSyncingBoundWidgets`'s RE-ENTRANT PATH IS NOT REACHABLE AND IS NOT
+      PINNED.** The guard exists so a `USlider::SetValue` that broadcast `OnValueChanged` could
+      not turn a sync into a commit. Measured on this tree: UMG's `SetValue` does NOT broadcast
+      -- Slate fires that delegate on user interaction only -- so the early return cannot be
+      driven headlessly, and no plant makes it reachable, since the plant would have to be a
+      broadcasting `USlider` subclass this project does not have. **A guard deleted outright
+      stays green.** What IS pinned is the property it protects: a sync commits nothing, and a
+      setter commits exactly once. Stated in the file too.
+      **[SUPERSEDED 2026-09-05 -- THE "NOT REACHABLE" HALF IS FALSE; SEE THE MUTANT-BATTERY ENTRY
+      BELOW. The claim stays here because the way it was wrong is the useful part: it reasoned
+      about `SSlider` and the widget under test is the `U`.]**
+    - **NO CLAUSE PROVES A PIXEL.** `AddToViewport` in a `-nullrhi` run reaches no game viewport
+      and says so at Warning; that warning is now DECLARED with `AddExpectedMessage(...,
+      Occurrences 0)` in both presenter clauses rather than tolerated, which also makes it
+      evidence that `ShowPanel` reached its last observable step. Whether the screen is legible
+      or operable remains a human at the keyboard, as `StratOptionsPresenter.h` already records
+      for the in-match input mode.
+    - **`HandleCommandBarOptionsRequested` GOING THROUGH `AStratPlayerController::RequestOptionsScreen`
+      RATHER THAN STRAIGHT TO `ExecuteRoute` IS NOT PINNED.** Both routes move the same counter,
+      so the bind clauses are green under either. That choice is argued on the click cue in the
+      handler's own declaration and nothing in this suite holds it.
+    - **THE `bEnabled` ANSWER IS NOT PINNED, ONLY THE COPY.** `RefreshOptionsRow` copies
+      `Row->bEnabled` across without a branch; WHAT that answer should be is `IsRoutePermitted`'s
+      and `StratShellRouteClauses.cpp`'s.
+    - **NO ASSET-SIDE CHILD NAME IS PINNED.** `OptionsButton` and `OptionsLabel` on
+      `UStratShellMenuWidget`, and `OptionsButton` on `UStratCommandBarWidget`, are all
+      `BindWidgetOptional`, so nothing enforces them at Blueprint compile time. Only the three
+      GameModes' `OptionsWidgetClass` is checked as an asset fact.
+  - **AND THE `nullptr` HALF OF THE PARITY CLAUSE IS THE HALF THAT MATTERS.**
+    `OptionsWidgetClass`'s C++ default is `nullptr`, so THREE UNSET GAMEMODES AGREE PERFECTLY --
+    an agreement-only clause would have gone green on the state this milestone started in. Each
+    of the three is therefore asserted non-null in its own right, which
+    `StratShellBlueprintSlotParity.cpp`'s precedent did not need because `SaveSlotName`'s C++
+    default is a correct value. Its header also records the 2026-09-05 ENSURE HAZARD: loading a
+    GameMode CDO compiles the widget Blueprints its defaults reference, and an uncompiled saved
+    widget ensures on load -- an automation ERROR, attributed to whichever clause loaded the
+    asset first, which is how a sound-bank clause went red for a widget reason.
+
 - **2026-09-05 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- four files under
   `Source/*/Tests/` and one test-only header, plus this file -- on `master` in the main tree
   `E:/MultiAgent/Stratocracy`, base commit `089c79c`, over the UNCOMMITTED audio-milestone work,
@@ -2218,9 +2316,14 @@
       a citation of the wrong tree. So the suite was re-run to the canonical path.
     - **`Saved/AutomationReport/index.json` NOW READS `reportCreatedOn 2026.09.02-00.38.55`,
       AND TWO LINES IN `global.md` ARE STALE BECAUSE OF IT.** They are not this lane's to
-      touch and the sweep names both: `global.md:20` carries a live suite figure that no longer
-      matches the tree, and `global.md:54` cites `reportCreatedOn 2026.09.01-23.31.22`, which
-      is now a DIFFERENT run from the one the sweep opens. Handed to the `coordinator`/steward
+      touch and the sweep named both, identified here by their CONTENT because `global.md` is
+      prepended to and any line number into it rots: its banner line carrying the live suite
+      figure, which no longer matched the tree, and the line citing `reportCreatedOn
+      2026.09.01-23.31.22`, which was by then a DIFFERENT run from the one the sweep opens.
+      **[This is an account of the tree as it stood on 2026-09-02; both lines have since been
+      corrected. STAMPED 2026-09-05 -- the original wording named those two lines by NUMBER,
+      which is the rotting shape `strat_doc_citation_gate.py` refuses, and it is restated here
+      by content instead.]** Handed to the `coordinator`/steward
       with the new stamp above. **After those two lines are corrected the sweep has nothing
       else to say about this pass: no finding it raised names `tests.md`.**
 
@@ -6644,3 +6747,88 @@
 - **`ETriggerEvent::Started` on all four input actions is asserted, not measured** — no input
   asset exists yet to test against. Discharged the first time the controller runs in PIE with
   real assets, i.e. no earlier than phase 5.
+
+---
+
+## 2026-09-05, `strat-test-author` — the mutant battery's two findings against this lane, over base `374398a`
+
+Fifteen mutants were run in place by `strat-gameplay-engineer` with a clean rebuild between each.
+Thirteen killed exactly their clause. The two that did not are recorded here, with a third defect
+of the same shape found by construction while correcting the first. **Suite figures for this pass
+live in `Tools/architect/state/global.md`; nothing is restated here.**
+
+- **A CLAUSE CAN PIN A REAL PROPERTY AND CARRY A FALSE PREDICTION ABOUT A SECOND ONE, AND THE
+  PREDICTION IS THE MORE DANGEROUS ARTIFACT.**
+  `Stratocracy.StratPlay.GATE-TITLEMENU.TheTitleMenuLabelsItsOptionsRowByRouteAndNotByIndex`
+  genuinely pins **by-route-not-by-index** — the fixed-index mutant reddens it correctly. Its
+  `MUTANTS:` block also predicted "Red" for a **hardcoded-caption** mutant
+  (`OptionsLabel->SetText(FText::FromString(TEXT("Options")))`). **That mutant survived.**
+  - **Why.** `BuildMenuModel`'s `EStratShellRoute::Options` arm labels the row with the literal
+    `TEXT("Options")` and labels it *from no fact* — its own comment says the row "has no second
+    spelling". So the model's string and the hardcoded string are byte-identical in every state a
+    fixture can reach. **An equality clause cannot separate a value read from the model from the
+    same value written beside it.** No wording, no premise and no extra control changes that.
+  - **The general form, and it is the transferable part: a comparison against a CONSTANT
+    module-side value is not evidence that the value was read.** "Never compute the expectation"
+    is satisfied here — the expectation IS read from `GetMenuModel()` — and it still does not
+    discriminate, because the module-side value has exactly one possible content. **When the
+    module-side value cannot vary, reading it proves the number matches and not that the code
+    consulted it.** Ask, before writing such a clause: *can any fixture make this value differ
+    from what a hardcode would produce?* If not, say so in the file.
+  - **A false annotation is worse than no annotation, which is why the line was corrected rather
+    than deleted.** A reader takes "Red," as measured. The corrected block in
+    `Source/StratPlay/Tests/StratTitleMenuOptionsRowClauses.cpp` now names each mutant as KILLED,
+    SURVIVED-MEASURED, or SURVIVES-BY-CONSTRUCTION, and the file's `WHAT THIS DOES NOT PIN`
+    block leads with label-from-model.
+  - **THE THIRD MUTANT IN THAT SAME BLOCK IS ALSO GREEN, DERIVED FROM THE SOURCE AND NOT RUN.**
+    `OptionsButton->SetIsEnabled(true)` unconditionally. `IsRoutePermitted`'s `Options` arm
+    returns `true` with no branch on any fact, so `OptionsRow.bEnabled` is `true` in every
+    reachable state and the enabled-copy assertion compares `true` against `true`. The clause is
+    kept (it goes live the day that arm grows a refusal, which is where its own comment says a
+    refusal belongs) and is now annotated at the assertion as non-discriminating. **One
+    contradicted prediction in a block is a reason to re-derive every other line in it.**
+- **IS LABEL-FROM-MODEL REACHABLE? NO, NOT WITHOUT A SEAM — AND THE SEAM IS NAMED RATHER THAN
+  ASKED FOR.** `RefreshOptionsRow` calls `Shell->GetMenuModel()` itself, so no fixture can hand
+  it a model whose Options label differs from the shipped literal, and `GetSubsystem<T>()`
+  returns the exact class so a broadcasting/overriding subsystem subclass is not reachable
+  either. The only change that would reach it: splitting the lookup from the write —
+  `RefreshOptionsRow` keeping the `FindByPredicate` and delegating to an
+  `ApplyOptionsRow(const FStratShellOption&)` a fixture could call with a planted row — in
+  `Source/StratPlay/StratShellMenuWidget.h` / `.cpp`, which is not this lane's to make. **It is
+  recorded as the change that would be needed, not requested.** The existing clause is green
+  either way and loses nothing.
+- **A MUTANT THAT CRASHES THE PROCESS ERASES ITS OWN EVIDENCE, AND THE COUNT CANNOT TELL A
+  CRASHED MUTANT FROM A KILLED CLAUSE.**
+  `Stratocracy.StratUI.GATE-TITLEMENU.ACommandBarWithNoOptionsButtonConstructsAndBroadcastsNothing`
+  is a good clause and the guard it pins is real. Its mutant — dropping the
+  `if (OptionsButton != nullptr)` guard in `NativeConstruct` — is a null dereference that takes
+  `UnrealEditor-Cmd.exe` down with an access violation **before the report export step**, so
+  `Saved/AutomationReport/index.json` **is never written**. A reader then opens the file this
+  project treats as authoritative and reads **the previous run's** `failed: 0`.
+  - **The check that separates them: compare `index.json`'s own `reportCreatedOn` against the run
+    you just started. If the timestamp did not move, the run produced no report and every figure
+    in it is stale.** This belongs beside the existing "exit code is not a verdict" and "the log
+    undercounts by exactly one" — same family: **the instrument's silence reads as a good
+    result.**
+  - **The clause cannot do this from inside itself** and no rewrite makes it able to: a clause
+    cannot report on a process that died before it could report. The caveat is the deliverable.
+    Recorded at the clause in `Source/StratUI/Tests/StratCommandBarOptionsClauses.cpp`.
+  - The engine LOG does name the running test alongside the access violation. The old annotation
+    said only that — **true of the log, false of the report, and the report is what gets read.**
+- **CORRECTED: `bSyncingBoundWidgets`'s re-entrant path IS reachable and IS already pinned.** The
+  superseded bullet above claimed `USlider::SetValue` does not broadcast headlessly. It does:
+  `Slider.cpp` calls `MySlider->SetValue` inside `if (MySlider.IsValid())` and then, in a
+  **separate, unguarded** `if (Value != InValue)` block, assigns and calls
+  `HandleOnValueChanged`, which broadcasts. **The old reasoning was right about `SSlider` and the
+  widget under test is the `U`.** Deleting the three handler guards reddens three existing
+  clauses; **no seam is needed and none is coming.** What is still NOT pinned is the *recursion
+  brake* — the `if (bSyncingBoundWidgets) return;` at the top of `SyncBoundWidgetsToModel`, a
+  different line — which stays green when deleted alone, because the handler guards stop the loop
+  one level earlier. `Source/StratUI/Tests/StratOptionsWidgetBindingClauses.cpp` now carries the
+  split.
+  - **The lesson, and it is about this file as much as that clause: a premise recorded as
+    "Measured on this tree" was not measured on this tree — it was reasoned from the wrong class
+    in a two-class pair (`U*` wrapping `S*`) where both have a method of the same name.** The
+    engineer measured the premise instead of accepting it, which is what caught it. **When a
+    record says a path is unreachable, that claim is a mutant away from being checkable and
+    should be checked before it is cited.**

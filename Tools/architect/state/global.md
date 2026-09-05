@@ -18,17 +18,19 @@ clause asserting "the tour made some sound" stayed green while every command cue
 kept true by the death cues alone. The clause was rebuilt to count the command cues separately
 rather than reported as a limit, and its header records the survived run rather than reading as
 if it had always worked.
-The suite is **422/422**, every entry Success, zero failed, zero notRun, zero
+The suite is **435/435**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings.
-THE COUNT MOVED 389 -> 422: **+33 added, 0 removed, 0 state changes**, in three steps -- +19 for
-the cue-clause phase (10 in `StratSoundCueClauses.cpp`, 9 in `StratSoundDirectorCallSite.cpp`),
-+5 for the shipped-asset phase (`StratShippedSoundBankParity.cpp`), and +9 for the title-music
-and volume-screen phase (across `StratShellOptionsRouteClauses.cpp`,
-`StratTitleMusicLifecycle.cpp`, `StratAudioVolumeClauses.cpp` and `StratOptionsModelClauses.cpp`).
-This seat read 422 entries directly out of `Saved/AutomationReport/index.json` with `utf-8-sig`
-and counted 24 `GATE-AUDIO.` names and 6 `GATE-AUDIO-SETTINGS.` names, confirmed every entry
-`Success` and zero with warnings, rather than accepting any lane's figure. 389 + 19 + 5 + 9 = 422.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.05-21.32.57`.
+THE COUNT MOVED 389 -> 435 ACROSS THIS MILESTONE, all of it added and none removed. The
+per-phase breakdown that stood here is DELETED rather than maintained: it carried seven figures,
+each of which had to be corrected as a later phase falsified it, and the clause files it named
+are in the tree for anyone who wants the split.
+This seat read the entry count, the per-ID name counts and the state of every entry directly out
+of `Saved/AutomationReport/index.json` with `utf-8-sig` rather than accepting any lane's figure,
+and checked the additions sum to it. NO FIGURE IS RESTATED IN THIS SENTENCE, DELIBERATELY: an
+earlier form of it carried three, and they went stale while the count sentence above them was
+being corrected in the same edit -- and the sweep could not see it, because it collects
+`N/N`-shaped claims and every figure here was a bare integer.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.05-23.18.02`.
 A COMMENT-ONLY EDIT TO A TEST-DEFINING `.cpp` OWES A SUITE RE-RUN, AND THIS MILESTONE PAID IT
 TWICE -- stated as a rule rather than as the history of which report superseded which, because
 that history has rotted twice already in this file. `strat_banner_sweep.py`'s REPORT IDENTITY
@@ -47,12 +49,17 @@ and every run overwrites it, so each of this milestone's earlier reports is gone
 reader cannot open any of them. An earlier draft of this banner did keep that list, and it
 had to be corrected on FOUR CONSECUTIVE GATE ROUNDS as it grew -- a running history of
 identities is a claim that acquires a new way to be wrong every time a suite runs, and
-suites run often. What is durable is stated instead: the count reached 422 from 389 in
-three additions, +19 then +5 then +9, and those additions are the ONLY movement in the
-figure across the whole milestone. Everything else that moved was WHAT THE FIGURE WAS
-MEASURED AGAINST -- no audio assets, then assets with no clause reading them, then the
-shipped-asset clauses, then the base sound mix declared in `Config/`, then the title-music
-and volume-screen C++ with its nine clauses.
+suites run often. AND THE PARAGRAPH THAT REPLACED IT WENT STALE AT THE VERY NEXT SUITE MOVEMENT,
+which is the same defect one level up: it restated the running total and the size of each
+addition, so every later phase falsified it. What is durable is the SHAPE and not the arithmetic:
+every movement in this milestone's figure has been an ADDITION OF CLAUSES, never a removal and
+never a state change, and everything else that moved was WHAT THE FIGURE WAS MEASURED AGAINST --
+no audio assets, then assets with no clause reading them, then clauses over the shipped assets,
+then a base sound mix in `Config/`, then the title-music and volume-screen C++, then the options
+surface. THE LIVE FIGURE IS STATED ONCE, at the head of this banner. The `389 -> 435` line
+above it is this milestone's own history and does not track a future run; an earlier form of
+this sentence claimed the count appeared once and nowhere else, which a gate measured false
+because those are two different claims and both were present.
 WHAT THE PASS BUILT. Seven sound cues -- button click, turn ended, unit moved, unit attacked,
 unit destroyed, factory built a unit, match ended -- as a world-free decider in `StratUI`
 (`StratSoundCues.h/.cpp`, shaped as `StratTransientReceipts.h`'s sibling) plus a recording
@@ -190,15 +197,60 @@ GameMode CDO and that compiles a widget. THE TARGETED CHECK BEFORE IT HAD REPORT
 and was true: it counted BINDING errors, which is what was expected to fail, and an ensure is not
 a binding error. A check shaped around the anticipated defect cannot see an unanticipated one.
 The fix is ordering, not capability -- COMPILE THEN SAVE -- and the scripts now do that.
-WHAT IS STILL OWED. NO CLAUSE COVERS ANY OF THE OPTIONS SURFACE and NO GATE HAS RUN ON IT; both
-lanes named the clauses they want and they are not written. Nor has a human seen the screen: a
+THE OPTIONS SURFACE IS NOW PINNED BY 13 CLAUSES, AND TWO OF THE FIFTEEN MUTANTS ARE FINDINGS
+RATHER THAN BOOKKEEPING. Thirteen killed exactly their clause and nothing else. (a) THE
+HARDCODED-CAPTION MUTANT SURVIVED, GREEN: `StratShellSubsystem.cpp:240` sets the row's label to
+the literal `TEXT("Options")`, which is the same string the clause compares against, so an
+equality clause cannot separate a caption read from the model from one hardcoded beside it. The
+clause's own annotation predicted "Red," and that prediction is now MEASURED FALSE -- the clause
+pins by-route-not-by-index, which is real, but NOT label-from-model.
+A THIRD INSTANCE OF THE SAME DEFECT WAS THEN FOUND BY CONSTRUCTION, IN A LINE THE BATTERY
+NEVER RAN. The same clause asserts the row's `bEnabled` copy, and `IsRoutePermitted`'s
+`Options` arm returns `true` with no branch on any fact -- so that assertion compares `true`
+against `true` in every state a fixture can build. It is KEPT, because it goes live the day
+that arm grows a refusal, and annotated as non-discriminating until then. The principle the
+test lane drew from it is the transferable part: ONE CONTRADICTED PREDICTION IN A BLOCK IS A
+REASON TO RE-DERIVE EVERY OTHER LINE IN IT.
+LABEL-FROM-MODEL IS NOT REACHABLE BY ANY FIXTURE ON THIS TREE, and both lanes agree.
+`RefreshOptionsRow` calls `GetMenuModel()` itself and `GetSubsystem` returns the exact class,
+so nothing can inject a model; and `BuildMenuModel`'s `Options` arm labels the row from NO
+FACT, so the module-side value has exactly one possible content. The named discharge is an
+`ApplyOptionsRow(const FStratShellOption&)` seam splitting the lookup from the write --
+recorded as the change that would be needed, and deliberately NOT requested.
+(b) THE NULL-BUTTON MUTANT
+DESTROYS THE REPORT INSTEAD OF FAILING A CLAUSE: an access violation in `NativeConstruct` kills
+the process and no `index.json` is written at all, so a reader checking `failed:` on a
+non-regenerated report sees THE PRIOR RUN'S ZERO. A crashed mutant and a killed clause are
+indistinguishable to anyone reading the count.
+AND THE ONE SEAM THAT WAS ASKED FOR WAS NOT CUT, BECAUSE THE PREMISE FOR IT WAS FALSE. The test
+lane reported `UStratOptionsWidget`'s re-entrancy guard unpinnable, reasoning that Slate fires
+`OnValueChanged` only on user interaction. `USlider::SetValue` (`Slider.cpp:152-163`) broadcasts
+whenever the value differs, outside the `MySlider.IsValid()` block -- the reasoning was right
+about `SSlider` and wrong about `USlider`, and the widget under test is the `U`. Measured, not
+inferred: deleting the three handler guards reddens THREE existing clauses. No seam was cut and
+no executable byte moved; only a header that argued from the false premise was corrected.
+WHAT IS STILL OWED. No human has seen the screen: a
 commandlet has no pixels, so nothing here says either button is visible, hittable or sensibly
-placed, and the in-match panel takes no input mode, which no clause can observe either. No clause
-covers the content half; the steward has ruled the two names
-they will take -- `GATE-TITLEMENU` for the `Options` route and title music, and the newly minted
-`GATE-AUDIO-SETTINGS` for the settings slot, the mix application and the options widget. No
-title-music asset exists, no `WBP_Options` exists, and `GATE-AUDIO` still covers the seven-cue
-clauses ONLY.)
+placed, and the in-match panel takes no input mode, which no clause can observe either.
+THREE PROPERTIES ARE PINNED BY NOTHING AND ALL THREE ARE NAMED RATHER THAN LEFT TO BE FOUND.
+The third is the one this banner already names above as the same defect's third instance --
+the options row's `bEnabled` copy, which compares `true` against `true` because
+`IsRoutePermitted`'s `Options` arm returns `true` with no branch on any `FStratShellFacts`
+member. It is listed here as well as there because THIS is the section a reader consults for
+what is not covered, and an earlier form of this sentence said TWO while the tree said three.
+That miscount is the third round of one failure shape, one axis over each time: bare
+integers, then bare noun phrases, now a BARE NUMERAL QUANTIFIER -- every one of them
+invisible to a sweep that collects `N/N`-shaped claims.
+Label-from-model on the title menu's options row is unreachable by any fixture -- both lanes
+agree, and the discharge is an `ApplyOptionsRow(const FStratShellOption&)` seam splitting the
+lookup from the write, recorded and deliberately not requested. And `SuppressedByCooldown` reads
+`UWorld::GetTimeSeconds` while a fixture world is never ticked.
+[STAMPED 2026-09-05: THE TAIL OF THIS PARAGRAPH SAID "No title-music asset exists, no
+`WBP_Options` exists, and `GATE-AUDIO` still covers the seven-cue clauses ONLY". All three were
+false when a gate read them -- both assets are tracked in `374398a` and `GATE-AUDIO` carries
+shipped-asset clauses -- and they survived the edit that corrected this paragraph's HEAD, which
+is the same defect one sentence further down. Every false clause was a bare noun phrase, so the
+sweep could no more see them than it could see the bare integers above.])
 
 _Last run 2026-09-04 (`Difficulty`'S OWNER IS PINNED, AND THE THING WORTH READING IS THAT THE
 DEBT THE BANNER BELOW LEFT OPEN NAMED ITS TWO INSTRUMENTS CORRECTLY AND THEN SENT THEM TO THE
@@ -4520,6 +4572,117 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-09-05, STRAT-DATA-STEWARD -- THIRD ACCEPTANCE ID RULING FOR THE AUDIO MILESTONE, OVER BASE
+  `374398a` (CLEAN, PUSHED), COVERING SIX SUBJECTS THE SECOND RULING BELOW DID NOT REACH BECAUSE
+  THEY DID NOT YET EXIST: `UStratOptionsPresenter`, `UStratShellSubsystem::FStratOptionsPanelStateChanged`,
+  `UStratOptionsWidget`'s bound sub-widgets, `UStratCommandBarWidget::OptionsButton`, the
+  `UStratShellMenuWidget` title-menu parent class, and `OptionsWidgetClass` shipped-asset parity
+  across the three GameModes. NO NEW NAME IS MINTED. RECORD-ONLY; NO SOURCE, NO TEST, NO ASSET AND
+  NO CONFIG FILE WAS TOUCHED; NO SUITE WAS RUN AND NO SUITE FIGURE MOVES -- the live figure is the
+  one this file's banner cites, above. Both proposals brought to this ruling by the dispatching
+  task -- `T-UI-05.CommandBarOptions*` and unspecified names under `T-UI-03` -- are refused below.
+  - **RE-DERIVED AGAIN, NOT CITED FROM EITHER PRIOR RULING.** The two existing local names are
+    read from their own authorizing text, quoted below rather than paraphrased from memory, and
+    the six subjects are read from `Source/StratPlay/StratOptionsPresenter.h`,
+    `Source/StratPlay/StratShellSubsystem.h`, `Source/StratUI/StratOptionsWidget.h`,
+    `Source/StratUI/StratCommandBarWidget.h`, `Source/StratPlay/StratShellMenuWidget.h` and the
+    three shipped GameMode Blueprints, not from the dispatching task's summary of them.
+  - **`T-UI-05` IS CONFIRMED WRONG FOR ALL SIX, AND THE READ IN THE DISPATCH IS RIGHT.**
+    `decisions.md`'s `T-UI-05` entry and its 2026-08-29 amendment both read the same way on a
+    direct check: `T-UI-05` is *"snapshot fidelity ... it owns whether `incomePerTurn` is
+    faithfully PROJECTED"*, quantified over `uiEnumerateSnapshot` and the `+X/turn` income line
+    specifically, with no widget, screen, route, button or settings model anywhere in its subject.
+    None of the six items touches `strat::UiSnapshot` at all -- a player's audio gain is not a
+    rules fact, by the SAME argument `strat-test-author` already made for `T-UI-03` on this same
+    day, quoted from `Source/StratUI/Tests/StratOptionsModelClauses.cpp:7-22` -- and a command-bar
+    button that broadcasts an event and a route request is not a snapshot readout either.
+    `T-UI-05.CommandBarOptions*` would file a route-request button under an income-projection ID;
+    refused, on the same evidence the dispatch itself supplied.
+  - **`T-UI-03` IS CONFIRMED WRONG FOR ALL SIX, FOR THE SAME REASON `strat-test-author` ALREADY
+    RULED IT OUT FOR THE OPTIONS MODEL, EXTENDED HERE TO THE REMAINING FIVE.** `T-UI-03`'s
+    defining sentence, quoted at `StratOptionsModelClauses.cpp:7-9`, is *"no widget-side
+    arithmetic; every number a widget draws equals exactly one `strat::UiSnapshot` field."* It
+    already governs `UStratCommandBarWidget`'s BUILD affordance clauses (`tests.md`, under the clause named next,
+    `Stratocracy.StratUI.T-UI-03.CommandBarBuildButtonFollowsFactoryOwnershipOnEveryDecorate` and
+    siblings) precisely because those clauses check a widget-drawn value against a snapshot field
+    (factory ownership). `OptionsButton` draws no value and reads no snapshot field -- it broadcasts
+    `OnOptionsRequested` and nothing else, per its own header (`StratCommandBarWidget.h:285`,
+    *"Decides nothing and calls no verb"*) -- so there is no snapshot-fidelity fact for `T-UI-03`
+    to own here, the identical gap already found in the widget model. Sitting on the SAME command
+    bar as clauses that do ride `T-UI-03` does not pull `OptionsButton` onto that ID; the test is
+    the subject sentence, not the file.
+  - **THE SIX, RULED PER SUBJECT AGAINST THE TWO EXISTING NAMES' OWN AUTHORIZING TEXT.**
+    - **`UStratShellSubsystem::FStratOptionsPanelStateChanged`, broadcast unfiltered by
+      `RequestOptionsPanel` and `CloseOptionsPanel` -- `GATE-TITLEMENU`.** This is the shell's
+      route-state signal for the SAME `Options` arm `GATE-TITLEMENU`'s authorizing text already
+      claims (*"no acceptance ID in the GDD has a screen, a navigation route ... in its
+      subject"*). It is the identical class and the identical two verbs the existing
+      `GATE-TITLEMENU.ExecuteRouteOptionsRequestsThePanelOncePerCall` clause
+      (`StratShellOptionsRouteClauses.cpp:220-222`) already exercises; a new clause on the
+      delegate's own unfiltered-broadcast property is the same subject, not a new one.
+    - **`UStratCommandBarWidget::OptionsButton`, `OnOptionsRequested`, and
+      `UStratMatchSubsystem`'s bind-and-reconcile-on-`ApplyView` -- `GATE-TITLEMENU`, AND NO NAME
+      NEEDS MINTING.** The button's whole job, by its own header, is reaching the `Options` route
+      from a second surface -- a match, rather than the title screen -- and `GATE-TITLEMENU`'s
+      subject is the ROUTE, not the screen that requests it: title music already rides this ID
+      for reasoning about the SAME class and lifecycle as the screen itself
+      (the entry above), so a second entry point onto the same enum arm is the
+      identical extension, not a stretch. It is not `GATE-AUDIO-SETTINGS` (no volume state,
+      persistence or mix is touched) and, per the two bullets above, not `T-UI-03` or `T-UI-05`
+      either. **It does not sit in a seam between two IDs; it sits inside one of them,** because
+      the fact that decides it -- which route it reaches -- has nothing to do with which widget
+      class asks.
+    - **`UStratShellMenuWidget`, labelling its options row from the model by route and calling
+      `ExecuteRoute(Options)` -- `GATE-TITLEMENU`.** This is the title menu's own C++ parent,
+      named in `GATE-TITLEMENU`'s own subject already (*"the screen and its routes"*); nothing
+      about a by-route label instead of a by-index one changes which domain owns the class.
+    - **`OptionsWidgetClass` shipped-asset parity across the three GameModes -- `GATE-TITLEMENU`,
+      ON DIRECT PRECEDENT AND NOT BY ANALOGY TO A DEFAULT MAP.**
+      `Stratocracy.StratPlay.GATE-TITLEMENU.BothShippedGameModeBlueprintsNameOneSaveSlot`
+      (ruled in this file under `GATE-TITLEMENU`, landed `Source/StratPlay/Tests/StratShellBlueprintSlotParity.cpp`)
+      already rides `GATE-TITLEMENU` for the identical shape -- do the shipped GameMode Blueprints
+      agree on one CDO default -- for `SaveSlotName`, a field with nothing to do with a screen or
+      a route either. The precedent is "cross-shipped-GameMode-default parity, when no other ID
+      names the field," not "any GameMode default is `GATE-TITLEMENU`'s"; `OptionsWidgetClass`
+      satisfies it on the same terms `SaveSlotName` did, and `GATE-AUDIO-SETTINGS`'s own three
+      named facets (save-slot fields, `ApplyVolumes`, the widget's push-model setters) do not
+      include a GameMode-default parity fact at all.
+    - **`UStratOptionsWidget`'s bound sub-widgets (three sliders, three value texts, the back
+      button, model-driven sync, the re-entrancy guard) -- `GATE-AUDIO-SETTINGS`, ALREADY THE
+      CASE AND CONFIRMED RATHER THAN RE-DECIDED.** `GATE-AUDIO-SETTINGS`'s own authorizing text
+      (its own authorizing entry above) already names *"`UStratOptionsWidget`'s push-model
+      setters"* as one of its three facets, and `StratOptionsModelClauses.cpp` already carries
+      two clauses under this ID against a double of the same class. The additional bound widgets
+      (the two sliders and texts not yet exercised, and the back button) are the SAME class and
+      the SAME push-model facet; nothing about them is a new technical fact.
+    - **`UStratOptionsPresenter` -- SPLIT BY FACET, NOT BY CLASS, BECAUSE ITS TWO HALVES ARE TWO
+      DIFFERENT FACTS AND NOT TWO VIEWS OF ONE.** This is the one subject where the two existing
+      names' own reasoning pulls in different directions for the same class, so it is ruled
+      facet by facet rather than forced onto one ID whole. (a) Showing and hiding the panel by
+      reconciling against `IsOptionsPanelOpen`, and closing that flag on `Deinitialize`, is
+      screen-visibility-tracks-route-state -- the SAME lifecycle shape `GATE-TITLEMENU` already
+      reasons about for title music's `BeginPlay`/`EndPlay` on `AStratShellGameMode`
+      (the entry above: *"the SAME class and the SAME lifecycle ... it is screen
+      behaviour, not cue-reaction"*). This facet rides `GATE-TITLEMENU`. (b) Seeding the widget
+      without committing, and forwarding the widget's own commits onward, is the push-model wiring
+      `GATE-AUDIO-SETTINGS` already claims for `UStratOptionsWidget` one class over -- the
+      Presenter's seed/forward step is the mechanism that keeps a spurious echo commit from
+      firing when the screen opens, which is the identical hazard
+      `GATE-AUDIO-SETTINGS.SeedingTheOptionsScreenCommitsNothing` already pins on the widget side.
+      This facet rides `GATE-AUDIO-SETTINGS`. **This is not the three-facets-one-domain reasoning
+      `GATE-AUDIO-SETTINGS` used to justify ONE name for persistence/mix/widget** -- those three
+      describe the SAME underlying quantity (the current volume value) at three technical layers;
+      here, panel-visibility-tracks-shell-state and settings-model-seeded-without-commit are two
+      different quantities that happen to be implemented in one class, and the existing two-name
+      split (the two-name split entry above) was itself made by subject, not by file or class, for
+      exactly this reason.
+  - **WHAT THIS RULING DOES NOT DO.** It mints no acceptance ID and claims none. It does not widen
+    `GATE-AUDIO`, whose three named files are untouched. It does not touch the banner above, which
+    is this seat's to leave alone today; the ruling above found nothing false in it. It authorizes
+    no code, no test and no asset, all of which stay in the lanes `CLAUDE.md` already assigns them
+    to. Clauses under either name take the shape `Stratocracy.<Module>.<ID>.<Clause>`, consistent
+    with both names' existing use.
 
 - **2026-09-05, STRAT-DATA-STEWARD -- SECOND ACCEPTANCE ID RULING FOR THE AUDIO MILESTONE, COVERING
   THE PHASE `GATE-AUDIO` DELIBERATELY DEFERRED ON 2026-09-04: THE OPTIONS ROUTE, THE VOLUME

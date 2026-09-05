@@ -16,6 +16,124 @@
 ## NEXT
 
 - **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `374398a`, worktrees exist for other lanes but NO
+  lane was in flight over this work, UNCOMMITTED) -- THE MUTANT BATTERY FOR THE OPTIONS SURFACE,
+  AND THE ONE SEAM IT WAS SUPPOSED TO JUSTIFY DOES NOT NEED CUTTING.** Every mutation edits a
+  file outside `Source/*/Tests/`, so the 2026-08-14 ruling puts the battery in this lane. Method:
+  in place, one mutation at a time, `Build.bat` between each, each suite run exported to its own
+  `Saved/AutomationReport_m<NN>` path, then restore and verify. The live figure is `global.md`'s
+  and is not restated here.
+
+- **THE RESTORE EVIDENCE, because a battery that cannot prove it put the tree back is worth
+  nothing.** Eight of the nine mutated files are byte-identical to their pre-battery bytes by
+  `sha256sum -c`: `StratShellSubsystem.cpp` `44c00d4f…`, `StratOptionsPresenter.cpp` `bc33c7e9…`,
+  `StratShellMenuWidget.cpp` `8c3ae1ec…`, `StratMatchSubsystem.cpp` `afeb4427…`,
+  `StratCommandBarWidget.cpp` `291cc87d…`, and the three GameMode `.uasset`s `e787cd68…`,
+  `a3ffc72d…`, `1b4678b0…` — **which were never opened, never loaded and never written**, for the
+  lane reason below. The ninth, `StratOptionsWidget.cpp`, deliberately does NOT match, and its
+  delta is comment-only: `git diff -U0` over it and its header, filtered to lines that are not
+  comments or blank, returns **nothing**. That is a stronger instrument than the comment-strip
+  diff this file used on 2026-09-05 for `StratShellGameMode.cpp`, and it is the one to reuse.
+
+- **THIRTEEN OF THE FIFTEEN BRIEFED MUTANTS REDDENED EXACTLY THE INTENDED CLAUSE AND NOTHING
+  ELSE.** Delegate filtering, write-then-broadcast ordering, reconcile idempotence, teardown
+  close, seed-commits-nothing, commit forwarding, by-route labelling, bind dedup,
+  one-click-one-broadcast, slider-reaches-own-channel, value-text-own-field and
+  back-dismisses-without-committing each moved one clause and left the rest of the suite where it
+  was. Two did not, and both are findings rather than bookkeeping.
+
+- **MUTANT 8 SURVIVED. `OptionsLabel->SetText(FText::FromString(TEXT("Options")))` — a hardcoded
+  caption — IS GREEN, and the clause file predicts in terms that it is red.**
+  `StratTitleMenuOptionsRowClauses.cpp:152` lists that exact mutant and annotates it "Red,". It is
+  not. The cause is agreement, not a broken assertion: `StratShellSubsystem.cpp:240` sets
+  `Option.Label = FText::FromString(TEXT("Options"))`, so the model's label for that route IS the
+  literal the mutant substitutes, and an equality clause cannot separate reading the model from
+  printing a constant when the two are the same string. **This is the identical shape the test
+  lane itself anticipated for the asset mutant** — it wrote a non-null assertion beside the
+  equality one precisely because three unset GameModes agree perfectly — and it recurred one file
+  away undetected. The clause still earns its place: mutant 7 (by index, not by route) reddens it
+  loudly. What is NOT pinned is label-from-model, and no fixture can pin it while
+  `RefreshOptionsRow` calls `Shell->GetMenuModel()` itself and the shipped label equals the
+  constant. Filed as a handoff; the honest short-term fix is to delete the false "Red,"
+  annotation rather than leave a prediction the run contradicts.
+
+- **MUTANT 12 DOES NOT FAIL A CLAUSE; IT KILLS THE PROCESS AND NO REPORT IS WRITTEN AT ALL.**
+  Dropping `if (OptionsButton != nullptr)` from `UStratCommandBarWidget::NativeConstruct` gives
+  `Unhandled Exception: EXCEPTION_ACCESS_VIOLATION reading address 0x0000000000000738`, reported
+  from `UnrealEditor-StratUI.dll!UStratCommandBarWidget::NativeConstruct()
+  [Source\StratUI\StratCommandBarWidget.cpp:57]` under
+  `TDynamicMulticastDelegate<...>::AddDynamicImpl<UStratCommandBarWidget>`, inside
+  `ACommandBarWithNoOptionsButtonConstructsAndBroadcastsNothing` — the clause written for it. So
+  the guard IS falsifiable and the clause IS the instrument, but the failure mode is a dead
+  process: `Saved/AutomationReport_m12/index.json` **does not exist**, so every one of the
+  suite's entries is unmeasured, not merely one red. **A reader checking `failed:` on a report
+  that was not regenerated would see the previous run's zero.** This is the standing "exit code
+  is not a verdict" lesson arriving from its other side — here even the report is absent, and
+  absence is the signal.
+
+- **Mutant 10 reddened its own clause and one sibling, and the sibling is not collateral damage
+  to explain away.** Moving `EnsureCommandBarOptionsBinding()` out of `ApplyView` reddens
+  `ACommandBarCreatedAfterTheFirstRefreshIsBoundOnTheNext` as intended and also
+  `TheCommandBarOptionsBindSurvivesManyRefreshesWithoutAccumulating`, because both fixtures drive
+  `ApplyView` without starting a match, so under the mutant neither binds at all. Noted because
+  the brief asked whether anything outside the intended clause moved: it did, for a stated
+  reason. **The brief's mutation was also not applicable as written** — `UStratMatchSubsystem`
+  declares no `Initialize` override, only `Deinitialize`, so "move it to `Initialize`" has no
+  site. The one-shot early call site used instead was the top of `StartMatchInternal`, which
+  preserves the property under test (bound once, early, rather than reconciled per refresh).
+
+- **THE ASSET MUTANTS (16) WERE REFUSED AS OUT OF LANE, AND THE CLAIM THEY WOULD HAVE TESTED WAS
+  CHECKED BY READING INSTEAD — WHICH IS A WEAKER INSTRUMENT AND IS LABELLED AS ONE.** `Content/`
+  is `strat-editor-builder`'s, and nothing in this pass met the editor-driver clause's condition.
+  No `.uasset` was opened or written; the three hashes above are the control that says so. On the
+  substance: `StratShippedOptionsWidgetClassParity.cpp` does assert non-null on all three reads
+  in its section 1, separately from the two `TestEqual`s in section 2, so the all-three-cleared
+  variant would redden on three `TestNotNull`s and the test lane's reasoning is sound. **That is
+  read, not run.** A diff is not a run and neither is a close reading; the variant remains
+  unproven until someone with the lane executes it.
+
+#### The `bSyncingBoundWidgets` seam: the premise was false, so there is no seam to cut, 2026-09-05
+
+- **THE ASK WAS TO JUDGE BEFORE WRITING, AND THE JUDGEMENT IS THAT THE PROPERTY IS ALREADY PINNED
+  BY THREE CLAUSES.** The proposal rested on *"UMG's `USlider::SetValue` does not broadcast
+  `OnValueChanged` (Slate fires it on user interaction only), so the guard's early return is
+  unreachable headlessly and a guard deleted outright stays green."* **It broadcasts.**
+  `USlider::SetValue` (`Engine/Source/Runtime/UMG/Private/Components/Slider.cpp:152-163`, UE 5.8)
+  calls `HandleOnValueChanged` whenever `Value != InValue`, and that broadcasts `OnValueChanged`
+  **outside** the `MySlider.IsValid()` block — so it needs no Slate widget, no `TakeWidget` and no
+  user drag. The reasoning about Slate was correct and about the wrong layer: `SSlider` is quiet,
+  `USlider` is not, and the widget under test is the `U`.
+
+- **MEASURED, NOT INFERRED, BECAUSE THE ENGINE SOURCE IS ONLY A READING.** Deleting the early
+  return from all three `Handle*SliderChanged` handlers — a production-file edit, this lane's —
+  reddens **three** clauses: `EachOptionsSliderReachesOnlyItsOwnChannel` ("dragging the master
+  slider produces exactly one commit ... it was 2"),
+  `EveryOptionsValueTextEqualsItsOwnModelField` ("seeding the planted screen still commits
+  nothing ... it was 6") and `TheOptionsBackButtonDismissesWithoutCommitting` ("premise: nothing
+  has been committed yet ... it was 6"). The "2" is the whole mechanism in one number: the drag
+  commits once, the sync's `SetValue` re-broadcasts, and the unguarded handler commits again.
+
+- **AND THE ONE LINE THAT REALLY IS UNREACHABLE IS NOT THE ONE THE PROPOSAL NAMED.** Deleting
+  *only* the early return inside `SyncBoundWidgetsToModel`, with the handler guards intact, is
+  green across the whole suite — and it is unreachable in **every** world rather than only
+  headlessly, because a handler guard catches the re-entry before it can reach a second sync.
+  **It is kept anyway, and the same two runs supply the reason:** with the handler guards gone it
+  is the line that turns an unbounded sync/broadcast recursion into a bounded double commit,
+  which is why deleting them produced three legible assertion failures instead of a stack
+  overflow. It buys a diagnosable failure for a future regression.
+
+- **SO THE CODE IS UNCHANGED AND THE PROSE IS CORRECTED, WHICH IS THE WHOLE OF THIS PASS'S
+  WRITE.** `StratOptionsWidget.h` argued the guard's shape from an explicitly unmeasured premise
+  — *"`USlider::SetValue` is not documented here to re-broadcast … this file does not assert that
+  it does not"* — and that discipline was right while the question was open. It is now answered,
+  so the sentence is retired in a `RESOLVED>` block quoting its old words, on this file's own
+  `RETRACTED>` precedent, and the measurement replaces it. The two `.cpp` blocks resting on the
+  same premise are corrected to match, and the header now states in terms that the sync-function
+  guard **is deliberately given no test seam**: a clause that could reach it would first have to
+  disable the guards that make it unreachable, and would then be asserting against its own
+  fixture rather than against this class.
+
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `c13eb81`, NO worktree lane in flight,
   UNCOMMITTED) -- THE TWO OPTIONS BUTTONS ACQUIRE C++ HOOKS, AND THE BRIEF'S PROPOSED MODULE FOR
   ONE OF THEM WAS THE MODULE THAT CANNOT HOLD IT.** Adds the in-match control on

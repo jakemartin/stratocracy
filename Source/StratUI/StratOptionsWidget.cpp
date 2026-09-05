@@ -207,9 +207,12 @@ void UStratOptionsWidget::NativeDestruct()
 
 void UStratOptionsWidget::SyncBoundWidgetsToModel()
 {
-	// SEE THE DECLARATION. The guard makes "a sync cannot produce a commit" true of this class
-	// regardless of what `USlider::SetValue` does inside Slate, which this file declines to
-	// assert either way.
+	// SEE THE DECLARATION, WHICH NOW RECORDS WHAT `USlider::SetValue` ACTUALLY DOES -- it
+	// re-broadcasts `OnValueChanged`, measured, so this is a real loop and not a hypothetical
+	// one. THIS early return is the RECURSION BRAKE and is not the line that makes "a sync
+	// cannot produce a commit" true; the three handler guards below are that line. Deleting
+	// this one alone is green across the whole suite and deleting those three reddens three
+	// clauses, which is the measurement that tells the two apart.
 	if (bSyncingBoundWidgets)
 	{
 		return;
@@ -253,9 +256,11 @@ void UStratOptionsWidget::SyncBoundWidgetsToModel()
 
 void UStratOptionsWidget::HandleMasterSliderChanged(const float InValue)
 {
-	// A SYNC IN PROGRESS IS NOT A PLAYER. If Slate ever does re-broadcast from `SetValue`, this
-	// is the line that stops a seed from being recorded as a commit -- which is the exact
-	// distinction `PushAudioOptions`'s block calls the easiest thing in this file to get wrong.
+	// A SYNC IN PROGRESS IS NOT A PLAYER. `USlider::SetValue` DOES re-broadcast -- the
+	// declaration carries the measurement -- so this is the line that stops a seed from being
+	// recorded as a commit, which is the exact distinction `PushAudioOptions`'s block calls the
+	// easiest thing in this file to get wrong. It is load-bearing on the shipped path rather
+	// than belt-and-braces: deleting these three guards reddens three clauses.
 	if (bSyncingBoundWidgets)
 	{
 		return;

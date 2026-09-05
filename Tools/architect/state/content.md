@@ -97,9 +97,17 @@
   SOURCE CONTROL AUTO-STAGED SIXTEEN ASSETS AGAIN, and the widget after that. All force-unstaged;
   `Content/StratAudio/` and `Content/UI/WBP_Options.uasset` are untracked and the Blueprints are
   unstaged modifications. Staging remains the user's call.
-  **STILL NOT AUDIBLE, AND NOTHING HERE CLAIMS OTHERWISE.** No envelope has been heard to open, no
-  loop has been heard to seam or not seam, and a commandlet has no audio device. The listening
-  pass is owed and is the only instrument for any of it.
+  **[STAMPED 2026-09-05: THE LISTENING PASS IS DISCHARGED. The user reports hearing ALL SEVEN
+  CUES AND THE TITLE MUSIC, and that they work properly.** That is the report as given and it is
+  not expanded here into the individual failure modes a checklist had named -- a human report is
+  the only valid instrument for an audible claim, and inflating it would be the same overclaim
+  this milestone spent twelve gate rounds removing from prose. It does NOT cover the three volume
+  sliders, which no surface reaches, nor the options screen. The paragraph below is kept as
+  written because it was true of this pass and states why the debt could not be discharged from
+  here.]
+  **STILL NOT AUDIBLE FROM THIS SEAT, AND NOTHING HERE CLAIMED OTHERWISE.** No envelope was heard
+  to open, no loop was heard to seam or not seam, and a commandlet has no audio device. The
+  listening pass was owed and was the only instrument for any of it.
 
 - **THE SEVEN CUE METASOUNDS EXIST, THE MIX EXISTS, AND THE BANK IS ON ALL THREE SHIPPED GAME
   MODES -- BUT NOTHING HAS BEEN HEARD.** 2026-09-05 (local), in `E:/MultiAgent/Stratocracy` on
@@ -170,8 +178,12 @@
   -- "Audio Device Manager not initializing due to all audio being disabled". Nothing in this pass
   proves an envelope opens, that a voice is not silent, or that any frequency is pleasant. A human
   at the keyboard remains the only instrument for every one of those, and the listening pass is
-  owed. The suite figure after this pass is the one `global.md`'s banner cites; this file states
-  none.
+  owed. [STAMPED 2026-09-05: THE PASS HAS SINCE BEEN DONE and the user reports all seven cues
+  audible and working; see the entry at the head of this file. The sentences above are true of
+  THIS pass and of what a commandlet can establish, which is why they are kept rather than
+  rewritten -- what changed is not the instrument's limits but that a human finally supplied the
+  reading it could never give.] The suite figure after this pass is the one `global.md`'s banner
+  cites; this file states none.
 
 - **THE BUILD PULSE PULSES, AND A HUMAN SAW IT ON THE HEX IN A MATCH -- W8's LAST OWED ITEM IS
   DISCHARGED.** 2026-09-04, in `E:/MultiAgent/Stratocracy` on branch `master` over base

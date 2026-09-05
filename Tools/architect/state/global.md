@@ -116,11 +116,18 @@ overrides can have any effect at all. `DefaultSoundClassName` and `DefaultSoundC
 were DECLINED and the refusal recorded in `decisions.md`: both are project-wide with no
 per-directory scope, would capture the vendored toolkit's own sounds, and no acceptance ID in
 this milestone asks for them. The full trace is in `data.md` and is not restated here.
-STILL NOT AUDIBLE, AND NOTHING HERE CLAIMS OTHERWISE. A commandlet has no audio device. Nothing
-in this milestone so far proves an envelope opens or that any voice is not silent -- and
-`content.md` records the control that makes the point sharp, a deliberately EMPTY MetaSound whose
-`build_to_asset` returned `SUCCEEDED` exactly as the seven real ones did. A human at the keyboard
-is the only instrument, and the listening pass is owed.
+IT IS AUDIBLE. THE LISTENING PASS IS DISCHARGED, BY THE USER, 2026-09-05, AND NO INSTRUMENT IN
+THIS TREE COULD HAVE DONE IT. The user reports hearing ALL SEVEN CUES AND THE TITLE MUSIC, and
+that they work properly. That is the whole of the claim and it is not elaborated here: it is a
+human report, which is the ONLY valid instrument for an audible claim, and it is recorded in the
+words it was given rather than expanded into the specific failure modes a checklist had listed.
+WHY THIS COULD NOT BE ESTABLISHED ANY OTHER WAY, kept because it is the reason the debt stood so
+long. A commandlet has no audio device and says so in its own log. `content.md` records the
+control that makes the point sharp: a deliberately EMPTY MetaSound, built by the same call path,
+whose `build_to_asset` returned `SUCCEEDED` exactly as the eight real ones did -- so nothing the
+build reported was ever evidence that an envelope opens or that a voice is not silent.
+WHAT THE REPORT DOES NOT COVER. The three volume sliders, which are untestable because no surface
+reaches them, and the options screen itself. See the paragraph on the `Options` row below.
 TITLE MUSIC AND THE VOLUME SCREEN NOW HAVE THEIR C++, AND ONE OF THEM UNCOVERED A BUG NOTHING
 COULD HAVE CAUGHT. `ExecuteRoute`'s quit arm was reached by `!RouteTravels(Route)` under a
 comment calling it "the only non-travelling route" -- an inference, not a fact, equating "opens

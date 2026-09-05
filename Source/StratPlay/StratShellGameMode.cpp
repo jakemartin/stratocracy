@@ -7,6 +7,7 @@
 #include "Sound/SoundBase.h"
 
 #include "StratMatchSubsystem.h"
+#include "StratOptionsPresenter.h"
 #include "StratPlay.h"
 #include "StratShellSubsystem.h"
 #include "StratSoundBank.h"
@@ -55,6 +56,22 @@ void AStratShellGameMode::BeginPlay()
 		if (UStratSoundDirector* const Director = World->GetSubsystem<UStratSoundDirector>())
 		{
 			Director->AdoptSoundBank(SoundBank);
+		}
+
+		// ---- Sec 2.11.5's options panel -------------------------------------
+		// AHEAD OF THE THREE REFUSALS BELOW, for the bank's stated reason and one more of its
+		// own: the options route is PERMITTED IN EVERY STATE -- `IsRoutePermitted` has no
+		// precondition for it -- so a title map whose shell failed to configure still offers
+		// the row, and a panel class withheld on that path would make the one route that
+		// cannot be greyed the one route that cannot work.
+		//
+		// A NULL CLASS IS HANDED OVER AS READILY AS A REAL ONE, on `AdoptSoundBank`'s
+		// reasoning: it is how a map says "no options panel here", and a guarded call could
+		// not clear a stale configuration.
+		if (UStratOptionsPresenter* const Presenter =
+				World->GetSubsystem<UStratOptionsPresenter>())
+		{
+			Presenter->ConfigureOptionsPanel(OptionsWidgetClass, OptionsPanelZOrder);
 		}
 	}
 

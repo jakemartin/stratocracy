@@ -2422,6 +2422,69 @@ private:
 	/** The scoreboard HUD of the first local player, or null. */
 	AStratScoreboardHUD* FindScoreboardHUD() const;
 
+	// ---- §2.11.5's OPTIONS control on the in-match command bar ----------------------------
+	// THIS MODULE IS THE BINDER BECAUSE IT IS THE ONLY ONE THAT CAN BE, AND THE ARROW IS THE
+	// WHOLE ARGUMENT. `UStratCommandBarWidget::OnOptionsRequested` is broadcast in `StratUI`;
+	// `AStratPlayerController::RequestOptionsScreen` is a verb in `StratPlay`; `StratPlay ->
+	// StratUI` and never back, so the widget cannot call the verb and something on this side of
+	// the arrow has to. `AStratScoreboardHUD` -- which creates and owns the widget, and would
+	// otherwise be the obvious binder -- is in `StratUI` and fails on the same boundary, exactly
+	// as `StratOptionsPresenter.h` records it failing to be the options screen's owner.
+	//
+	// THIS CLASS AND NOT `UStratOptionsPresenter`, WHICH WAS THE OTHER CANDIDATE AND IS THE ONE
+	// SYMMETRY ARGUES FOR. The presenter already binds `OnOptionsDismissed` on the volume screen
+	// and is the options lane's owner, so binding the request half there would put both halves
+	// in one file. It was rejected on LIFETIME rather than on taste: the presenter's only
+	// repeated hook is `OnOptionsPanelStateChanged`, which fires when the panel opens and closes
+	// and therefore cannot be relied on to have run when the HUD creates the command bar; a
+	// `OnWorldBeginPlay` bind would race the HUD's `BeginPlay` and would not survive a HUD
+	// respawn. `ApplyView` runs on every refresh, so a bind placed there is RECONCILED rather
+	// than evented -- it repairs itself the frame after a new widget appears, which is the same
+	// discipline the units loop and the ring apply to actors.
+
+	/**
+	 * Binds `OnOptionsRequested` on this world's command bar if it is not already bound.
+	 *
+	 * IDEMPOTENT BY CONSTRUCTION AND CALLED ON EVERY `ApplyView`. `IsAlreadyBound` is what makes
+	 * a per-refresh call cost a pointer comparison instead of accumulating a binding per frame;
+	 * an unguarded `AddDynamic` on a dynamic multicast does not deduplicate, so the handler
+	 * would run once per elapsed refresh on a single click.
+	 *
+	 * NO UNBIND ANYWHERE. The widget and this subsystem die with the same world, and
+	 * `UStratCommandBarWidget::NativeDestruct` drops the button's side regardless. A teardown
+	 * path here would be a second lifetime to reason about for no observable difference.
+	 *
+	 * SILENT WHEN THERE IS NO HUD AND WHEN THERE IS NO BAR. Both are legitimate configurations
+	 * -- `AStratScoreboardHUD::PushCommandBar`'s own block says an unset `CommandBarWidgetClass`
+	 * is one -- and neither is reported, on `PushGuidance`'s stated reasoning.
+	 */
+	void EnsureCommandBarOptionsBinding();
+
+	/**
+	 * Runs `AStratPlayerController::RequestOptionsScreen` for the first local player.
+	 *
+	 * A `UFUNCTION` BECAUSE `FStratCommandBarOptionsRequested` IS A DYNAMIC MULTICAST and can
+	 * bind nothing else. It takes no parameter, so nothing of `StratUI`'s needs to be complete
+	 * in `Module.StratPlay.gen.cpp` and this header includes no UMG header on its account --
+	 * unlike `UStratOptionsPresenter::HandleAudioOptionsCommitted`, whose struct-by-reference
+	 * parameter forced exactly that and is recorded in `StratPlay.Build.cs`.
+	 *
+	 * THROUGH THE CONTROLLER AND NOT STRAIGHT TO `UStratShellSubsystem::ExecuteRoute`, WHICH IS
+	 * THE LOAD-BEARING CHOICE AND IS NOT THE SHORTEST ONE. Both compile from here. Going to the
+	 * shell directly would skip the click cue that `RequestOptionsScreen` emits at entry, and
+	 * would make the button the one control in the match that does not pass through the
+	 * controller -- so the day the input path acquires anything the verb must do first, this
+	 * caller would silently not do it. That verb's own declaration makes the mirror of this
+	 * argument about `ExecuteRoute` versus `RequestOptionsPanel`; this is the same rule applied
+	 * one layer out.
+	 *
+	 * A REFUSAL IS LOGGED AND NOT PROPAGATED. There is nothing a broadcast can return to and no
+	 * caller to hand a reason to; `RequestOptionsScreen`'s own block says a `false` from it is a
+	 * fault rather than the interface working, so it is `Warning` and not `Log`.
+	 */
+	UFUNCTION()
+	void HandleCommandBarOptionsRequested();
+
 	/**
 	 * This world's `UStratSoundDirector`, or null.
 	 *

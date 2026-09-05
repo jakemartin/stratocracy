@@ -139,6 +139,37 @@ public class StratPlay : ModuleRules
 			// Private here for the same reason it is private there: no header in this module
 			// includes a UMG header, `StratShellHUD.h` holding a `TSubclassOf<UUserWidget>` over
 			// a forward declaration, which is all UHT needs.
+			//
+			// THAT LAST SENTENCE STOPPED BEING TRUE ON 2026-09-05 AND IS CORRECTED RATHER THAN
+			// DELETED, because it is the reason this line reads `Private` and a later reader is
+			// entitled to see that the reason changed.
+			//   RETRACTED>  "no header in this module includes a UMG header"
+			// `StratOptionsPresenter.h` includes `StratOptionsWidget.h`, which includes
+			// `Blueprint/UserWidget.h`. It was FORCED and the forcing is mechanical:
+			// `UStratOptionsPresenter::HandleAudioOptionsCommitted` binds a DYNAMIC multicast
+			// delegate, so it must be a `UFUNCTION`, so UHT emits
+			// `P_GET_STRUCT_REF(FStratAudioOptionsModel, ...)` into `Module.StratPlay.gen.cpp`
+			// -- a translation unit that includes that header and nothing else of ours -- and a
+			// struct-by-reference parameter cannot be marshalled from a forward declaration.
+			//
+			// A SECOND HEADER JOINED IT LATER THE SAME DAY, AND IT IS A DIFFERENT KIND OF
+			// REACH RATHER THAN A REPEAT OF THE ONE ABOVE. `StratShellMenuWidget.h` includes
+			// `Blueprint/UserWidget.h` because it DERIVES FROM `UUserWidget` -- this module
+			// now declares a widget class of its own, not merely a subsystem that holds one.
+			// Why a widget parent lives here at all is argued in that file: a `StratUI` class
+			// cannot name `UStratShellSubsystem` or call `ExecuteRoute`, so the title menu's
+			// parent has to be on this side of the arrow. Named separately so that a reader
+			// counting UMG-reaching headers against the retraction above finds two and knows
+			// the second was not forced by a UHT thunk.
+			//
+			// THE LINE STAYS `Private` ANYWAY, AND THE REASON IS MEASURED RATHER THAN ASSUMED.
+			// `Private` matters only to a module that depends on this one, and **no module
+			// depends on `StratPlay`**: `grep -n "StratPlay" Source/*/*.Build.cs
+			// Stratocracy.uproject` returns exactly two lines, this file and the `uproject`'s
+			// `Modules` array. So the header exception costs nothing today. THE DAY A MODULE
+			// DEPENDS ON `StratPlay`, this is the first thing that will bite -- that module
+			// either gains `UMG` or `FStratAudioOptionsModel` moves to a header no UMG type
+			// reaches -- and `StratOptionsPresenter.h` carries the same warning at the include.
 			"UMG",
 
 			// Enhanced Input. `AStratPlayerController` adds a `UInputMappingContext` on

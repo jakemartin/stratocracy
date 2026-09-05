@@ -16,6 +16,171 @@
 ## NEXT
 
 - **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `c13eb81`, NO worktree lane in flight,
+  UNCOMMITTED) -- THE TWO OPTIONS BUTTONS ACQUIRE C++ HOOKS, AND THE BRIEF'S PROPOSED MODULE FOR
+  ONE OF THEM WAS THE MODULE THAT CANNOT HOLD IT.** Adds the in-match control on
+  `UStratCommandBarWidget` and creates `UStratShellMenuWidget` as the title menu's C++ parent.
+  No count and no verdict is written here; the live figure is `global.md`'s alone.
+  - **THE BUILD IS GREEN AND THE EDITOR WAS CLOSED FIRST, WHICH IS THE OPPOSITE OF THE ENTRY
+    BELOW AND IS WORTH THE SENTENCE.** `tasklist | grep -i UnrealEditor` returned no process
+    before the attempt. `Build.bat StratocracyEditor Win64 Development` ran **46 actions**,
+    including `Compile [x64] StratShellMenuWidget.cpp`, `Compile [x64] StratCommandBarWidget.cpp`,
+    both `Module.Strat*.gen.cpp`, and `Link [x64] UnrealEditor-StratPlay.dll` --
+    `Result: Succeeded`, 43.12 s, shell exit `0`, and **not one warning or error line in the
+    output**. The suite was re-run over that binary from
+    `Saved/AutomationReport/index.json` (`utf-8-sig`), `reportCreatedOn 2026.09.05-21.22.13`,
+    with `failed 0`, `notRun 0`, `succeededWithWarnings 0` and no entry in a state other than
+    `Success`; **the live figure is `global.md`'s and is not restated here.** **NO CLAUSE WAS
+    ADDED BY THIS PASS AND THE FIGURE IS THEREFORE UNMOVED BY DESIGN** -- what this pass built is
+    unpinned, and the named clauses are owed to `strat-test-author`.
+  - **THE TITLE MENU'S PARENT IS IN `StratPlay`, NOT IN `StratUI` WHERE IT WAS ASKED FOR, AND THE
+    ARROW IS WHY. The brief asked for the check and this is the answer: the class it described
+    cannot be written.** `UStratShellSubsystem` and `EStratShellRoute` are declared in
+    `StratPlay`; `StratPlay -> StratUI` publicly and never back. A `StratUI` widget cannot name
+    the shell, cannot name the enum, and cannot call `ExecuteRoute`. This is the same boundary
+    `StratOptionsPresenter.h` records defeating the same shape of request one pass earlier.
+  - **AND PUTTING IT IN `StratPlay` IS `StratCommandBarWidget.h`'S OWN RULE, NOT A CONCESSION TO
+    ONE.** That file places itself in `StratUI` because *"`FStratCommandBarView` lives in
+    StratUI"* -- a widget parent goes where its model lives. `FStratShellMenuModel` and
+    `FStratShellOption` live in `StratPlay`. The rule stated for the opposite conclusion decides
+    this one. Nothing about the title menu is a projection of `FStratViewModel`.
+  - **`AStratShellHUD::MenuWidgetClass` NEEDED NO CHANGE AND THAT IS THE CHEAPEST FACT IN THIS
+    ENTRY.** It is typed `TSubclassOf<UUserWidget>`, so a reparented `WBP_TitleMenu` is still
+    assignable with no property edit on any Blueprint default. The bullet in that header that
+    called this class *"the StratUI-side follow-up"* and *"a different lane's asset work"* is
+    amended in place -- **both clauses were wrong**, the module for the reason above and the lane
+    because a native bind standing in for an unauthorable graph is engineer work by definition.
+  - **THE COMMAND-BAR BUTTON CANNOT CALL `RequestOptionsScreen` EITHER, AND THE BRIEF NAMED THAT
+    DIRECT CALL TOO.** Same arrow, opposite direction from the one the brief flagged: the verb is
+    on `AStratPlayerController` in `StratPlay` and the widget is in `StratUI`. So
+    `UStratCommandBarWidget::OnOptionsRequested` is a `BlueprintAssignable` dynamic multicast on
+    `OnOptionsDismissed`'s exact precedent, and the call to the verb happens on the `StratPlay`
+    side of the boundary.
+  - **`UStratMatchSubsystem` BINDS IT AND `UStratOptionsPresenter` DOES NOT, WHICH IS THE ONE
+    CHOICE HERE THAT SYMMETRY ARGUES AGAINST.** The presenter already owns `OnOptionsDismissed`
+    and putting both halves in one file would read better. It was rejected on LIFETIME: its only
+    repeated hook is `OnOptionsPanelStateChanged`, which fires when the panel opens and closes, so
+    it cannot be relied on to have run when `AStratScoreboardHUD` creates the bar, and an
+    `OnWorldBeginPlay` bind would race that `BeginPlay` and would not survive a HUD respawn.
+    `EnsureCommandBarOptionsBinding` is called from **`ApplyView`, every refresh**, guarded by
+    `IsAlreadyBound` -- so the wiring is RECONCILED like the units and the ring, and repairs
+    itself the frame after a new widget appears. Unguarded it would bind once per elapsed
+    refresh, and one click would take the route dozens of times.
+  - **THE IN-MATCH PATH GOES THROUGH THE CONTROLLER AND THE TITLE PATH GOES STRAIGHT TO
+    `ExecuteRoute`, AND THE ASYMMETRY IS DELIBERATE.** From the match subsystem, `ExecuteRoute`
+    would compile and would skip the click cue `RequestOptionsScreen` emits at entry, and would
+    make this the one in-match control that bypasses the controller. At the title there is no
+    `AStratPlayerController` at all -- `AStratShellGameMode` sets only `DefaultPawnClass` and the
+    slot -- and the four sibling buttons already call `ExecuteRoute` from their graphs, so a fifth
+    that did anything else would be `EStratShellRoute::Options`'s own *"two wiring conventions"*
+    defect. **Neither path emits a cue from a widget:** the match one gets it from the verb, and
+    the title one has no controller to emit from and no sibling that does.
+  - **BOTH BUTTONS ARE `BindWidgetOptional` AND ON THE TITLE MENU THAT IS NOT MERELY PRUDENT, IT
+    IS FORCED.** `BindWidget` is enforced by the Widget Blueprint compiler, so on the command bar
+    a hard bind would red the whole shipped bar before the asset caught up. On the title menu it
+    is worse: an asset cannot be reparented onto a class whose hard bind it does not yet satisfy,
+    so `BindWidget` would make the reparent step itself impossible. **Both members produce a value
+    and are optional anyway, which is the stated exception to `UStratOptionsWidget.h`'s
+    produces-a-value-means-`BindWidget` aesthetic**, written at both declarations so a reader
+    applying that rule does not read the optionality as "decorative". DISCHARGED BY each asset
+    acquiring its button.
+  - **THE `Options` ROW IS LOOKED UP BY ROUTE AND NOT BY INDEX, WHICH CONTRADICTS THE ADVICE IN
+    `FStratShellMenuModel`'S OWN BLOCK AND DOES SO ON PURPOSE.** That block says the list is
+    assertable by index and a clause should pin ordering that way -- advice to a TEST, whose job
+    is to fail when the order moves. A shipped widget wants the opposite instrument: a sixth route
+    inserted before `Options` must not silently relabel this button. The four graph-bound siblings
+    cannot be given the same protection without a graph.
+  - **THE CLASS ADOPTS NOTHING ELSE ON THAT MENU.** `Btn_0`..`Btn_3` keep their bindings and their
+    fixed `Array_Get_Item` indices; reparenting a `UUserWidget` asset onto a subclass of
+    `UUserWidget` leaves tree and graph untouched. Adopting them would mean four more `BindWidget`
+    names an asset nobody is re-authoring must satisfy.
+  - **`StratCommandBarWidget.cpp`'S "THERE IS NOT EVEN AN `if` IN THIS FILE" IS NOW FALSE AND IS
+    RETRACTED IN PLACE RATHER THAN DELETED.** There are two, both `if (OptionsButton != nullptr)`.
+    The claim it was making survives in narrower words -- no branch in that file reads a
+    VIEW-MODEL value -- and the guards are required by a C++ fact `UStratOptionsWidget::
+    NativeConstruct` already states: `BindWidget` is enforced by the Blueprint compiler and says
+    nothing about a native subclass, so an unguarded `AddDynamic` crashes any clause that
+    constructs one.
+  - **NO MODULE WAS ADDED, NO DEPENDENCY WAS ADDED, AND NO LINKER ERROR WAS NEEDED TO JUSTIFY
+    ANYTHING.** `UMG` was already on `StratPlay`'s private line and on `StratUI`'s. `StratPlay.
+    Build.cs`'s existing `RETRACTED>` block now names the SECOND header in this module to include
+    a UMG header and marks it a different kind of reach -- `StratShellMenuWidget.h` DERIVES from
+    `UUserWidget`, where `StratOptionsPresenter.h`'s include was forced by a UHT thunk. No
+    `/Game/` literal was written and no widget-side arithmetic exists in either class.
+  - **WHAT WAS WRONG IN THE BRIEF, COLLECTED.** (a) The title-menu class in `StratUI` -- the brief
+    asked to be checked and it does not compile. (b) The command-bar button binding *"natively to
+    reach `AStratPlayerController::RequestOptionsScreen`"* -- the native bind is right, the reach
+    is not, for the same arrow. (c) *"`Content/UI/WBP_CommandBar` already derives from
+    `UStratCommandBarWidget` (`StratUI`)"* is correct and is the only structural claim in the
+    brief that survived unamended.
+
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `c13eb81`, NO worktree lane in flight,
+  UNCOMMITTED) -- THE OPTIONS SCREEN'S C++ HALF, AND THE MODULE ARROW THAT DECIDED WHERE ITS
+  OWNER LIVES.** Discharges the owner half of the debt stated in `StratShellSubsystem.h` (*"on
+  the tree as it stands, clicking the row runs `RequestOptionsPanel` and nothing appears"*) and
+  the owner half of `StratOptionsWidget.h`'s (*"nothing binds `OnAudioOptionsCommitted` and no
+  WBP derives from this class"*). No count and no verdict is written here; the live figure is
+  `global.md`'s alone.
+  - **THE BUILD IS UNVERIFIED AND THAT IS THE FIRST THING A READER NEEDS. `Build.bat` refused in
+    3.54 seconds with `Unable to build while Live Coding is active. Exit the editor and game, or
+    press Ctrl+Alt+F11 if iterating on code in the editor or game` / `Result: Failed
+    (OtherCompilationError)`.** `tasklist` showed `UnrealEditor.exe` PID 49616 before the
+    attempt, so the cause was known in advance and the run was made to get the diagnostic in the
+    engine's own words rather than to work around it. **NOT ONE COMPILE ACTION RAN** -- this is
+    an earlier refusal than the write-lock failure `.agents/ue-project-context.md` describes,
+    which lets every compile succeed and fails at the link. So nothing below has been through a
+    compiler or through UHT. Six new reflected members and one new `UCLASS` mean this needs a
+    full close -> build -> reopen either way; Live Coding does not support new `UCLASS`es.
+  - **THE OWNER IS A `UWorldSubsystem` AND NOT A HUD, AND THE REASON IS AN ARROW RATHER THAN A
+    PREFERENCE. `AStratScoreboardHUD` -- the MATCH map's HUD -- is in `StratUI`, and
+    `UStratShellSubsystem` is in `StratPlay`.** `StratPlay -> StratUI` and never back, so the
+    match HUD cannot read `IsOptionsPanelOpen` at all. A HUD-shaped owner could only ever have
+    shown this screen at the title, which is half of what was asked for. **The player controller
+    fails on the mirror of that:** `AStratGameMode`'s constructor sets `PlayerControllerClass =
+    AStratPlayerController::StaticClass()` and `AStratShellGameMode`'s constructor sets
+    `DefaultPawnClass` and `SaveSlotName` and nothing else, so the title map runs a bare
+    `APlayerController`. `UStratOptionsPresenter` is the one owner shape that exists in both
+    worlds without any asset opting in.
+  - **IT RECONCILES RATHER THAN REACTS.** Every path -- `OnWorldBeginPlay`, the shell's new
+    `OnOptionsPanelStateChanged` delegate, `ConfigureOptionsPanel`, a direct Blueprint call --
+    ends in `ReconcileOptionsPanel`, which reads the flag and makes the viewport match. The
+    delegate's payload is explicitly discarded. A missed broadcast costs a late reconcile and
+    never a wrong screen.
+  - **THE DELEGATE FIRES UNFILTERED, WHICH IS A DECISION AND NOT AN OVERSIGHT.** A
+    change-filtered broadcast would make "the route was taken again" invisible, and
+    `GetOptionsPanelRequestCount` exists precisely because a flag that was already true records
+    nothing about a call. The presenter is idempotent instead.
+  - **A PUSH FROM `ExecuteRoute` WAS REJECTED AND IS THE ONE THAT LOOKED CHEAPEST.** It would put
+    the show call on the shipped path only, invisible to every clause that drives
+    `RequestOptionsPanel` directly -- the exact defect `PendingSlotForRoute` was extracted to
+    fix. A tick poll was rejected on `AStratShellHUD`'s own stated grounds.
+  - **THE BACK BUTTON CANNOT CALL `CloseOptionsPanel` AND THE BRIEF THAT ASKED FOR IT NAMED AN
+    IMPOSSIBLE CALL** -- same arrow as above. `UStratOptionsWidget::OnOptionsDismissed` is the
+    outward half instead, on `OnAudioOptionsCommitted`'s exact precedent. The presenter's handler
+    closes the SHELL FLAG and lets the delegate come back round to take the panel down, so the
+    shipped path and the path a clause drives are one line.
+  - **`BindWidget` ON THE THINGS THAT PRODUCE A VALUE, `BindWidgetOptional` ON THE THINGS THAT
+    ONLY DISPLAY ONE.** Three `USlider`s and one `UButton` are hard: nothing else in the class can
+    substitute for them and a WBP missing one is a volume screen with no volume control. The
+    three `UTextBlock`s are optional because `OnAudioOptionsRefreshed` hands the whole model to
+    the graph, so a percentage has a second sanctioned route and a hard bind would fail the
+    compile of a whole screen over a label.
+  - **A HEADER IN `StratPlay` NOW REACHES A UMG HEADER FOR THE FIRST TIME, AND IT WAS FORCED.**
+    `HandleAudioOptionsCommitted` binds a dynamic multicast, so it must be a `UFUNCTION`, so UHT
+    emits `P_GET_STRUCT_REF(FStratAudioOptionsModel, ...)` into `Module.StratPlay.gen.cpp` -- a
+    translation unit that includes `StratOptionsPresenter.h` and nothing else of ours -- and a
+    struct-by-reference parameter cannot be marshalled from a forward declaration. `UMG` stays
+    `Private` because **no module depends on `StratPlay`**: `grep -n "StratPlay"
+    Source/*/*.Build.cs Stratocracy.uproject` returns exactly two lines, that module's own
+    `.Build.cs` and the `uproject`'s `Modules` array. `StratPlay.Build.cs` carries a `RETRACTED>`
+    block over the sentence this falsified, and names what will bite the day a module does
+    depend on it.
+  - **NO MODULE WAS ADDED AND NO DEPENDENCY WAS ADDED.** `UMG`, `StratUI` and `StratBridge` were
+    already on `StratPlay`'s lines; no linker error was needed to justify anything, because
+    nothing new was needed. No `/Game/` literal was written.
+
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `089c79c`, NO worktree lane in flight,
   UNCOMMITTED) -- THE RETRACTED OWNERSHIP PREMISE, FOUND TWICE MORE IN THE FILE THAT RETRACTS
   IT, AND THE RECORD SENTENCE THAT SAID IT WOULD NOT BE.** Raised as Finding 1 of

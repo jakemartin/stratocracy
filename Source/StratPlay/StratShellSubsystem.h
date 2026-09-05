@@ -122,6 +122,15 @@
 //   clause over the enabled path vacuous. DISCHARGED BY the options WBP and an owner that
 //   shows it on `IsOptionsPanelOpen`; the request flag and its count exist so that owner has
 //   something to bind to and so a clause can prove the route reached it.
+//     THE OWNER HALF LANDED 2026-09-05 AND THE ASSET HALF DID NOT, WHICH IS WHY THE PARAGRAPH
+//   ABOVE IS AMENDED RATHER THAN STRUCK. `UStratOptionsPresenter` is a `UWorldSubsystem` in this
+//   module that binds `OnOptionsPanelStateChanged` below and reconciles a `UStratOptionsWidget`
+//   onto the viewport, so the sentence "clicking the row runs `RequestOptionsPanel` and nothing
+//   appears" is no longer true OF THE CODE. IT REMAINS TRUE OF ANY MAP WHOSE GameMode BLUEPRINT
+//   HAS NO `OptionsWidgetClass` SET, and that is every map until the editor lane authors the
+//   WBP -- so the weak point named above has moved from "nothing can show it" to "nothing is
+//   configured to", which is a different and much smaller thing but is not nothing. FULLY
+//   DISCHARGED BY the WBP existing and both GameMode Blueprints naming it.
 // - THE BRIEFING SCREEN, which is the second name on §2.11.5's list. It is §2.11.6-A's
 //   pre-match overlay, it lives inside the match level rather than beside it, and it is a
 //   guidance surface rather than a route. No shell route opens it.
@@ -139,6 +148,34 @@
 #include "StratShellSubsystem.generated.h"
 
 class UWorld;
+
+/**
+ * Fired whenever `RequestOptionsPanel` or `CloseOptionsPanel` runs. Carries the new flag.
+ *
+ * ADDED 2026-09-05, WHEN THE OPTIONS PANEL ACQUIRED AN OWNER. `UStratOptionsPresenter` is a
+ * `UWorldSubsystem` and this is a `UGameInstanceSubsystem`, so the owner cannot be reached by
+ * a member call from here and must be told.
+ *
+ * A DELEGATE AND NOT A TICK POLL, WHICH WAS THE OTHER SHAPE AND IS THE ONE THIS PROJECT HAS
+ * ALREADY PAID FOR. `AStratPlayerController` polls the hover on tick and its block gives the
+ * reason it had to -- a measured-dead input route -- which is precisely NOT the situation here:
+ * both writers of this flag are functions in this file, so an edge exists to fire on and no
+ * frame budget has to be spent discovering it. `AStratShellHUD`'s own block already argues the
+ * same way about its next-tick timer versus a `Tick` override: a per-frame hook that is dead
+ * after the first few frames is not the shape to reach for.
+ *
+ * IT FIRES ON EVERY CALL AND NOT ONLY ON A CHANGE, AND THE ASYMMETRY IS DELIBERATE.
+ * `RequestOptionsPanel` on an already-open panel still increments the count, and the count is
+ * this route's whole observability -- see `GetOptionsPanelRequestCount`. A change-filtered
+ * delegate would make "the route was taken again" invisible to an observer for exactly the
+ * reason the count exists. The presenter is idempotent instead, which is the same discipline
+ * `AStratShellHUD::ResolveMenuTiming` applies to its own re-entrancy.
+ *
+ * THE FLAG IS PASSED AS WELL AS BEING READABLE OFF THIS OBJECT, on `OnScoreboardRefreshed`'s
+ * stated reason: so an observer has no motive to cache a copy that can go stale.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStratOptionsPanelStateChanged,
+                                            bool, bIsOpen);
 
 /**
  * The routes a menu can drive.
@@ -646,6 +683,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
 	int32 GetOptionsPanelRequestCount() const { return OptionsPanelRequestCount; }
 
+	/** Every `RequestOptionsPanel` and every `CloseOptionsPanel`. See the declaration of
+	 *  `FStratOptionsPanelStateChanged` for why it is unfiltered and why it is not a poll. */
+	UPROPERTY(BlueprintAssignable, Category = "Stratocracy|Shell")
+	FStratOptionsPanelStateChanged OnOptionsPanelStateChanged;
+
 	// ---- THE CROSS-LEVEL HANDOFF. ----
 
 	/** The slot a `ContinueMatch` route asked the next world to restore. Empty when none. */
@@ -749,6 +791,14 @@ private:
 	 * travel -- so the state is not reachable across a map today. The day something can, an owner
 	 * that does not close it will find the panel already open on the next map, and the fix is a
 	 * `CloseOptionsPanel` in that owner's `EndPlay` rather than a lifetime change here.
+	 *
+	 * THAT FIX IS NOW WRITTEN, 2026-09-05, AND IT IS WRITTEN AHEAD OF THE CONDITION THAT NEEDS
+	 * IT. `UStratOptionsPresenter::Deinitialize` calls `CloseOptionsPanel` unconditionally --
+	 * including when it never showed a panel, since an unconfigured world can hold a true flag
+	 * with nothing on screen and that is precisely the case no other owner covers. So the
+	 * paragraph above describes a hazard this member no longer carries; it is kept because it is
+	 * the reason the presenter has that line, and a reader who deletes the line should have to
+	 * read this first.
 	 */
 	UPROPERTY(Transient)
 	bool bOptionsPanelOpen = false;

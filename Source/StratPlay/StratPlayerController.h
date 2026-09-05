@@ -413,6 +413,38 @@ public:
 	bool RequestEndTurn(FString& OutFailureReason);
 
 	/**
+	 * Sec 2.11.5's volume screen, asked for from inside a match.
+	 *
+	 * WHAT GAP THIS CLOSES. `EStratShellRoute::Options` was reachable from the TITLE menu and
+	 * from nowhere else, because the title menu is the only surface that calls `ExecuteRoute`.
+	 * A player mid-match had no way to change the volume without quitting to the title, which
+	 * is the same "reachable exactly once per launch" condition `UStratShellSubsystem`'s own
+	 * enum block derives all five of its routes from.
+	 *
+	 * `RequestEndTurn`'S EXACT SHAPE -- a named verb, no enum, `bool` plus an out reason -- and
+	 * that is deliberate rather than incidental. The command bar is the caller for both, so a
+	 * WBP author has ONE wiring convention for the two buttons on it rather than two.
+	 *
+	 * IT GOES THROUGH `ExecuteRoute` AND NOT STRAIGHT TO `RequestOptionsPanel`, WHICH IS THE
+	 * LOAD-BEARING CHOICE. Both would work today, because `IsRoutePermitted` grants `Options`
+	 * in every fact combination. Calling the flag setter directly would make the in-match
+	 * button the one control in the project that bypasses the shell's permission check, so the
+	 * day `Options` acquires a precondition -- a resolution section that needs a live viewport,
+	 * say -- the title row would grey and this button would not, silently. `ExecuteRoute` is
+	 * the single authority and this is one more caller of it.
+	 *
+	 * IT DOES NOT ASK WHETHER A MATCH IS LIVE and a caller must not either. Nothing about the
+	 * volume depends on the match, `Options` does not travel, and `RequestEndTurn`'s block
+	 * gives the general form of why a widget must not submit a command to find out how to draw.
+	 *
+	 * @return false with the shell's own refusal sentence, or with a reason of its own when
+	 *         there is no game instance to hold a shell. A `false` here is a fault, unlike
+	 *         `RequestEndTurn`'s, which is routinely the interface working.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Input")
+	bool RequestOptionsScreen(FString& OutFailureReason);
+
+	/**
 	 * Which hex the cursor is over, if any.
 	 *
 	 * AN INSTANCE-INDEX LOOKUP, NEVER AN INVERSE OF `WorldLocationOfHex`. See the header

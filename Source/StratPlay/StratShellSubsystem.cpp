@@ -326,12 +326,19 @@ void UStratShellSubsystem::RequestOptionsPanel()
 	// that was already true records nothing about this call, and this route's whole
 	// observability rests on there being something only the call can move.
 	++OptionsPanelRequestCount;
+
+	// BROADCAST LAST, AFTER BOTH MEMBERS ARE WRITTEN. An observer that reads
+	// `GetOptionsPanelRequestCount` from inside the handler -- which is the natural thing for a
+	// clause to do -- must not see a count that lags the flag it was just handed.
+	OnOptionsPanelStateChanged.Broadcast(bOptionsPanelOpen);
 }
 
 void UStratShellSubsystem::CloseOptionsPanel()
 {
 	// THE COUNT IS NOT DECREMENTED. It is a history and not a depth -- see the declaration.
 	bOptionsPanelOpen = false;
+
+	OnOptionsPanelStateChanged.Broadcast(bOptionsPanelOpen);
 }
 
 void UStratShellSubsystem::ArmPendingLoadSlot(const FString& InSlotName)

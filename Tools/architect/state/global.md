@@ -28,7 +28,7 @@ and volume-screen phase (across `StratShellOptionsRouteClauses.cpp`,
 This seat read 422 entries directly out of `Saved/AutomationReport/index.json` with `utf-8-sig`
 and counted 24 `GATE-AUDIO.` names and 6 `GATE-AUDIO-SETTINGS.` names, confirmed every entry
 `Success` and zero with warnings, rather than accepting any lane's figure. 389 + 19 + 5 + 9 = 422.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.05-16.43.13`.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.05-21.32.57`.
 A COMMENT-ONLY EDIT TO A TEST-DEFINING `.cpp` OWES A SUITE RE-RUN, AND THIS MILESTONE PAID IT
 TWICE -- stated as a rule rather than as the history of which report superseded which, because
 that history has rotted twice already in this file. `strat_banner_sweep.py`'s REPORT IDENTITY
@@ -169,7 +169,32 @@ otherwise pass, and is skipped only on one that is ALREADY RED. The original mea
 taken on an already-failing clause, the single state in which the engine never reaches the
 check, and two clauses in the same directory had already measured it working. THE MECHANISM IS
 CONDITIONAL, NOT ABSENT.
-WHAT IS STILL OWED. No clause covers the content half; the steward has ruled the two names
+THE OPTIONS SCREEN NOW EXISTS AND IS REACHABLE FROM BOTH WORLDS -- AND THE THING WORTH READING
+IS THAT A GREEN TARGETED CHECK MISSED WHAT THE SUITE CAUGHT. `WBP_Options` carries three
+labelled sliders and a Back button; `WBP_TitleMenu` is REPARENTED to `UStratShellMenuWidget` and
+gains an options row; `WBP_CommandBar` gains one beside Build and End Turn; and
+`OptionsWidgetClass` is set on all three shipped GameModes, each `<UNSET>` before. A
+`UStratOptionsPresenter` world subsystem shows and hides the panel by reconciling against
+`IsOptionsPanelOpen`.
+THREE PROTECTED UPROPERTIES BOUND THE HEADLESS ROUTE, and naming them is more useful than the
+workaround. `UWidgetTree::RootWidget`, `UWidget::bIsVariable` and
+`UWidgetBlueprint::WidgetVariableNameToGuidMap` all answer "protected and cannot be read" to
+Python. The first is why a widget is built by DUPLICATING a donor that already has a root rather
+than by creating one. The third caused a real failure: a widget made by `new_object` has no GUID
+entry, the FIRST compile is what assigns one, and it ENSURES while doing it -- so an asset saved
+WITHOUT being compiled ensures on every later load, and the automation framework counts a handled
+ensure as a test error.
+THAT REDDENED A CLAUSE ABOUT THE SOUND BANK, WHICH IS THE PART TO REMEMBER.
+`GATE-AUDIO.EveryCueInTheShippedBankHasASound` failed for a widget reason, because it loads a
+GameMode CDO and that compiles a widget. THE TARGETED CHECK BEFORE IT HAD REPORTED ZERO ERRORS
+and was true: it counted BINDING errors, which is what was expected to fail, and an ensure is not
+a binding error. A check shaped around the anticipated defect cannot see an unanticipated one.
+The fix is ordering, not capability -- COMPILE THEN SAVE -- and the scripts now do that.
+WHAT IS STILL OWED. NO CLAUSE COVERS ANY OF THE OPTIONS SURFACE and NO GATE HAS RUN ON IT; both
+lanes named the clauses they want and they are not written. Nor has a human seen the screen: a
+commandlet has no pixels, so nothing here says either button is visible, hittable or sensibly
+placed, and the in-match panel takes no input mode, which no clause can observe either. No clause
+covers the content half; the steward has ruled the two names
 they will take -- `GATE-TITLEMENU` for the `Options` route and title music, and the newly minted
 `GATE-AUDIO-SETTINGS` for the settings slot, the mix application and the options widget. No
 title-music asset exists, no `WBP_Options` exists, and `GATE-AUDIO` still covers the seven-cue

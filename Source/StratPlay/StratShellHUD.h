@@ -103,6 +103,21 @@
 //   subsystem's reflected surface by index; the slot below is typed `UUserWidget` so it
 //   accepts that asset as it stands. A `UStratShellMenuWidget` with `BindWidget` members
 //   would be the StratUI-side follow-up and it is a different lane's asset work.
+//
+//   [AMENDED 2026-09-05.] `UStratShellMenuWidget` now exists and the paragraph above is kept in
+//   its original tense, as the record of the gap it names. Two of its clauses turned out wrong
+//   and are corrected here rather than in place. **IT IS NOT StratUI-SIDE** -- it is in THIS
+//   module, because a `StratUI` class cannot name `UStratShellSubsystem` or call `ExecuteRoute`
+//   at all; that file's header block is the argument. **AND IT IS NOT PURELY ASSET WORK** -- the
+//   editor lane has no route to author a widget GRAPH, measured 2026-09-05, so a button added to
+//   `WBP_TitleMenu`'s tree arrives with no `OnClicked` wiring and can acquire none. A native bind
+//   in a C++ parent is what stands in for the graph, and that is engineer-lane work by
+//   definition.
+//
+//   THE SLOT BELOW NEEDS NO CHANGE AND THAT IS WHY IT WAS TYPED THIS WAY. `MenuWidgetClass` is
+//   `TSubclassOf<UUserWidget>`, so a `WBP_TitleMenu` reparented onto `UStratShellMenuWidget` is
+//   still assignable to it, with no property edit and no re-pointing on any Blueprint default.
+//   Nothing in this class knows or needs to know which parent the menu asset has.
 // - REFRESHING THE MENU. `GetMenuModel` touches the disk on every call and the widget
 //   refreshes itself at Construct; a HUD-driven refresh cadence is not knowable until the
 //   menu has events that can move the answer. This class creates the menu and nothing else.

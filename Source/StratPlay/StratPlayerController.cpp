@@ -27,6 +27,7 @@
 #include "StratPathPreviewQuery.h"
 #include "StratPlay.h"
 #include "StratScoreboardHUD.h"
+#include "StratShellSubsystem.h"
 #include "StratSoundDirector.h"
 // IWYU: this file now names `StratDecorateInfoPanel` directly. It arrived transitively
 // through `StratForecastQuery.h` before, which is a dependency on somebody else's include
@@ -43,6 +44,7 @@
 // undefined type 'ULocalPlayer'" plus a cascading C2275 and C2737 on the same line -- the
 // last of which blamed the `const` on the variable and would have sent a reader to the wrong
 // place entirely.
+#include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 
@@ -542,6 +544,31 @@ bool AStratPlayerController::RequestEndTurn(FString& OutFailureReason)
 	// from it.
 	return HandleSelectionEvent(
 		EStratSelectionEvent::EndTurn, FIntPoint::ZeroValue, OutFailureReason);
+}
+
+bool AStratPlayerController::RequestOptionsScreen(FString& OutFailureReason)
+{
+	// AT ENTRY, UNCONDITIONALLY, BEFORE ANY CHECK AND REGARDLESS OF THE RETURN -- the seventh
+	// site of the rule `SubmitProductionChoice` states in full. The cue acknowledges the INPUT
+	// and never the outcome.
+	StratSoundClick(this);
+
+	UGameInstance* const Instance = GetGameInstance();
+	UStratShellSubsystem* const Shell =
+		(Instance != nullptr) ? Instance->GetSubsystem<UStratShellSubsystem>() : nullptr;
+
+	if (Shell == nullptr)
+	{
+		// A REAL FAULT AND NOT A CONFIGURATION. Every Game and PIE world has a game instance
+		// and a `UGameInstanceSubsystem` is created unconditionally, so reaching here means
+		// something structural is wrong rather than that a designer left a slot empty.
+		OutFailureReason = TEXT("no UStratShellSubsystem on this game instance");
+		return false;
+	}
+
+	// THROUGH `ExecuteRoute` AND NOT `RequestOptionsPanel` -- see the declaration for why the
+	// permission check must not be skipped by this one caller.
+	return Shell->ExecuteRoute(EStratShellRoute::Options, OutFailureReason);
 }
 
 void AStratPlayerController::OnToggleProductionMenu()

@@ -17,6 +17,7 @@
 #include "StratGameMode.h"
 
 #include "StratCameraPawn.h"
+#include "StratOptionsPresenter.h"
 #include "StratPlay.h"
 #include "StratPlayerController.h"
 #include "StratShellSubsystem.h"
@@ -70,6 +71,20 @@ void AStratGameMode::BeginPlay()
 		LastFailureReason = TEXT("this GameMode has no world");
 		UE_LOG(LogStratPlay, Error, TEXT("No match this session: %s"), *LastFailureReason);
 		return;
+	}
+
+	// ---- Sec 2.11.5's options panel, DURING A MATCH ------------------------
+	// AHEAD OF EVERY REFUSAL BELOW, which is the same placement `AStratShellGameMode::BeginPlay`
+	// gives the sound bank and for a reason of its own: a map whose match failed to start still
+	// has a player looking at it, and the volume screen is the one control on this map that has
+	// nothing to do with whether a match exists. Withholding it on the failure path would make
+	// the misconfigured map the one you cannot turn down.
+	//
+	// A NULL CLASS IS HANDED OVER AS READILY AS A REAL ONE -- it is how a map says "no options
+	// panel here", and a guarded call could not clear a stale configuration.
+	if (UStratOptionsPresenter* const Presenter = World->GetSubsystem<UStratOptionsPresenter>())
+	{
+		Presenter->ConfigureOptionsPanel(OptionsWidgetClass, OptionsPanelZOrder);
 	}
 
 	UStratMatchSubsystem* const Match = World->GetSubsystem<UStratMatchSubsystem>();

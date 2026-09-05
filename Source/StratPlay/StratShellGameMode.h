@@ -95,12 +95,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Templates/SubclassOf.h"
 #include "UObject/SoftObjectPtr.h"
 
 #include "StratShellGameMode.generated.h"
 
 class UAudioComponent;
 class USoundBase;
+class UStratOptionsWidget;
 class UStratSoundBank;
 
 /**
@@ -227,6 +229,33 @@ public:
 	 */
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Shell")
 	TObjectPtr<UAudioComponent> TitleMusicComponent;
+
+	/**
+	 * Sec 2.11.5's volume screen, for `UStratOptionsPresenter` to create when the shell's
+	 * `IsOptionsPanelOpen` says so. Null means the title map shows no options panel.
+	 *
+	 * IT IS ON A GameMode AND NOT ON THE HUD, AND THE REASON IS NOT LOCAL TO THIS FILE.
+	 * `StratOptionsPresenter.h` carries it in full: the owner has to be a `UWorldSubsystem`
+	 * because `AStratScoreboardHUD` -- the MATCH map's HUD -- is in `StratUI` and cannot name
+	 * `UStratShellSubsystem` at all, and a subsystem has no details panel to hold this.
+	 *
+	 * THE SAME ASSET IS NAMED BY `AStratGameMode::OptionsWidgetClass` AND NOTHING ASSERTS THE
+	 * TWO AGREE. That is the identical shape `SoundBank` records above and `SaveSlotName`
+	 * before it, and it is a real cost rather than a formality: a match map pointed at an
+	 * older options WBP would be a second, differently-behaved volume screen reachable only
+	 * mid-match, which nobody will file as a bug. DISCHARGED BY a clause reading both
+	 * Blueprint CDOs and asserting the two class pointers equal, on
+	 * `StratShellBlueprintSlotParity.cpp`'s existing precedent. That clause is the test lane's
+	 * and is not this file's to write.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Options")
+	TSubclassOf<UStratOptionsWidget> OptionsWidgetClass;
+
+	/** Where the options panel sits in the viewport stack. Above the title menu by default,
+	 *  since a panel drawn under the menu it was opened from is indistinguishable from a panel
+	 *  that never appeared -- which is the failure this whole route exists to fix. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Options")
+	int32 OptionsPanelZOrder = 100;
 
 	/** Why the shell is unconfigured, when it is. Empty on success. */
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Shell")

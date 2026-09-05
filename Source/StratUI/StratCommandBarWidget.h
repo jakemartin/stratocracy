@@ -76,6 +76,40 @@
 //   menu's exit calls `CloseProductionMenu`. All three are `BlueprintCallable` verbs on the
 //   controller, where the input path lives, and a verb here would be a second route into a
 //   sequence whose ordering is written down in exactly one place.
+//
+//   [AMENDED 2026-09-05 -- AND THE AMENDMENT IS AN EXCEPTION TO THE SENTENCE ABOVE RATHER
+//   THAN A RESTATEMENT OF IT, WRITTEN HERE SO THAT A READER MEETS IT WITH THE RULE INSTEAD OF
+//   DISCOVERING IT IN THE `.cpp`.] `OptionsButton` below is bound NATIVELY, in
+//   `NativeConstruct`, which the three controls above are not. The rule the sentence states is
+//   unchanged and this class STILL DECIDES NOTHING AND CALLS NO VERB -- `HandleOptionsClicked`
+//   broadcasts `OnOptionsRequested` and returns; every question about what that means is
+//   answered in `StratPlay`, one module over, by whatever bound the delegate.
+//
+//   WHAT FORCED IT, MEASURED RATHER THAN PREFERRED. The three controls above are wired in the
+//   WBP's EVENT GRAPH, and this project has no route to author a widget graph: the editor lane
+//   holds no Python or Lua API that can add a graph node to a `UWidgetBlueprint`, measured
+//   2026-09-05 by the only agent that can drive the editor at all. So a button added to
+//   `WBP_CommandBar`'s tree by the only available instrument arrives with NO `OnClicked`
+//   WIRING AND NO WAY TO ACQUIRE ANY. A native bind in a C++ parent is the one remaining
+//   route, and the same forcing produced `UStratOptionsWidget`'s four native binds and
+//   `UStratShellMenuWidget` in `StratPlay`.
+//
+//   WHY THE CONTRACT IS NOT SIMPLY AMENDED TO "NATIVE BINDS ARE FINE". Because the reason for
+//   it was never that native binds are distasteful -- it is that a VERB here would be a second
+//   route into a sequence written down in one place, and that reason survives intact. The
+//   distinction the contract now draws is between BINDING an input and DECIDING what it means.
+//   This class does the first and still refuses the second. The day the editor lane can author
+//   a widget graph, `OptionsButton` may go back to the graph and this exception may be
+//   deleted; nothing below depends on it staying.
+//
+//   IT CANNOT CALL `AStratPlayerController::RequestOptionsScreen` DIRECTLY AND THE ARROW IS
+//   WHY. That verb is in `StratPlay`; this module is `StratUI`; `StratPlay -> StratUI` and
+//   never back, exactly as `StratUI.Build.cs` states. So the request leaves by a
+//   `BlueprintAssignable` delegate on `UStratOptionsWidget::OnOptionsDismissed`'s precedent,
+//   and `UStratMatchSubsystem` -- which already reaches this widget through
+//   `AStratScoreboardHUD::CommandBar` on every `ApplyView` -- is what binds it and what calls
+//   the controller. The brief that asked for this named a direct call; the direct call does
+//   not compile.
 // - NO `TSubclassOf` AND NO `/Game/` PATH. This class is a parent, not a spawner. The asset
 //   reference that instantiates it lives on `AStratScoreboardHUD::CommandBarWidgetClass` as
 //   an `EditDefaultsOnly` property set on a Blueprint default.
@@ -102,6 +136,24 @@
 #include "StratViewModel.h"
 
 #include "StratCommandBarWidget.generated.h"
+
+class UButton;
+
+/**
+ * Fired when the command bar's OPTIONS control is clicked. Carries nothing.
+ *
+ * NO PAYLOAD, AND THE EMPTINESS IS THE POINT. The click is an intention and not a value; the
+ * only thing a binder needs to know is that it happened. A payload -- the model, the viewing
+ * side, anything -- would be this class handing over a fact it does not own, and every fact it
+ * holds is already readable off `Model` by anyone who has the pointer.
+ *
+ * IT ANNOUNCES A REQUEST AND NOT AN OUTCOME. Nothing here knows whether the options screen
+ * opened; `UStratShellSubsystem::IsRoutePermitted` decides that a module away, and
+ * `AStratPlayerController::RequestOptionsScreen` returns the refusal sentence to whoever asked.
+ * A delegate named `OnOptionsOpened` would be a claim this class is in no position to make --
+ * the same refusal `OnOptionsDismissed` makes on the volume screen's own back button.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStratCommandBarOptionsRequested);
 
 /**
  * §2.11.2's persistent command bar: the BUILD control and the END TURN control.
@@ -172,4 +224,76 @@ public:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Stratocracy|CommandBar")
 	void OnCommandBarRefreshed(const FStratCommandBarView& InCommandBar);
+
+	// ---- §2.11.5's OPTIONS control, reached from inside a match --------------------------
+	// See this file's header block for why this one control is bound natively while BUILD and
+	// END TURN are wired in the graph, and for why the request leaves by a delegate instead of
+	// by the direct call the brief asked for.
+
+	/**
+	 * Broadcast by `HandleOptionsClicked`, once per click, whatever comes of it.
+	 *
+	 * `BlueprintAssignable` SO THAT A GRAPH CAN BIND IT TOO, on `OnAudioOptionsCommitted`'s
+	 * reasoning: the delegate is the sanctioned outward route, and a second binder is not a
+	 * second author of anything, because this class produces no value for either of them to
+	 * disagree about.
+	 *
+	 * NOTHING IN THIS MODULE BINDS IT. `UStratMatchSubsystem` does, in `StratPlay`. If that
+	 * binding is ever removed, this control becomes a button that broadcasts into an empty
+	 * delegate and nothing on screen says so -- which is the same inert-surface condition this
+	 * file's header records `FStratGuidanceView` having lived in, and it is why the binder's
+	 * side is pinned by a clause rather than left to inspection.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Stratocracy|CommandBar")
+	FStratCommandBarOptionsRequested OnOptionsRequested;
+
+protected:
+	/**
+	 * §2.11.5's OPTIONS control on the in-match bar.
+	 *
+	 * `BindWidgetOptional` AND NOT `BindWidget`, AND THE CHOICE IS ABOUT THE SHIPPED ASSET
+	 * RATHER THAN ABOUT THIS CONTROL'S IMPORTANCE. `WBP_CommandBar` already derives from this
+	 * class and has no such button in its tree; `BindWidget` is enforced by the Widget
+	 * Blueprint compiler, so a hard bind would turn the entire command bar -- BUILD, END TURN
+	 * and all -- into a compile error the moment this class lands, and would stay one until an
+	 * asset pass caught up. The two changes are in two different lanes and cannot be atomic.
+	 *
+	 * THIS IS THEREFORE THE ONE PLACE IN THE PROJECT WHERE `BindWidgetOptional` DOES NOT MEAN
+	 * "ONLY DISPLAYS A VALUE". `UStratOptionsWidget.h` states the aesthetic -- produces a value
+	 * means `BindWidget`, displays one means `BindWidgetOptional` -- and this member produces
+	 * one and is optional anyway. Said here rather than left to be inferred, because a reader
+	 * applying that rule to this member would read the optionality as a claim that the button
+	 * is decorative. DISCHARGED BY `WBP_CommandBar` acquiring the button: at that point this
+	 * may become `BindWidget` in a pass that touches nothing else.
+	 *
+	 * `protected` FOR `UStratOptionsWidget::MasterSlider`'S STATED REASON: so a test double can
+	 * plant one. `BindWidget*` is indifferent to access, being resolved by reflection at
+	 * Blueprint compile time.
+	 */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UButton> OptionsButton;
+
+	/** Binds `OptionsButton`. Safe on a native subclass with no widget tree: the pointer is
+	 *  null there and the bind is guarded, exactly as `UStratOptionsWidget::NativeConstruct`
+	 *  records for its own four. */
+	virtual void NativeConstruct() override;
+
+	/** Unbinds in the same shape. See `UStratOptionsWidget::NativeDestruct`. */
+	virtual void NativeDestruct() override;
+
+	/**
+	 * Broadcasts `OnOptionsRequested`. Decides nothing and calls no verb.
+	 *
+	 * A `UFUNCTION` BECAUSE `FOnButtonClickedEvent` IS A DYNAMIC MULTICAST and can bind nothing
+	 * else -- the same mechanical forcing `UStratOptionsWidget::HandleBackClicked` records.
+	 *
+	 * NO CLICK CUE HERE, AND THE ABSENCE IS DELIBERATE AND WOULD OTHERWISE BE A DOUBLE.
+	 * `AStratPlayerController::RequestOptionsScreen` already emits `StratSoundClick` at entry,
+	 * unconditionally, before any check -- it is the sixth site of that rule -- and that
+	 * function is what this broadcast reaches. A cue here would play two clicks on one press.
+	 * `HandleBackClicked` gives the other half of the reason: the cue helper is `StratPlay`'s
+	 * and this module cannot name it.
+	 */
+	UFUNCTION()
+	void HandleOptionsClicked();
 };

@@ -30,9 +30,14 @@
 #include "StratPlay.h"
 #include "StratSaveGame.h"
 #include "StratSoundBank.h"
+#include "StratPlayerController.h"
 #include "StratSoundDirector.h"
 #include "StratUnitActor.h"
 
+// IWYU: `EnsureCommandBarOptionsBinding` names `UStratCommandBarWidget::OnOptionsRequested`, and
+// `StratScoreboardHUD.h` forward declares that class rather than including it -- the same reason
+// `StratScoreboardHUD.cpp` carries this line for itself.
+#include "StratCommandBarWidget.h"
 #include "StratScoreboardHUD.h"
 
 // See the block above. This line is legal here and nowhere else in this class.
@@ -1009,6 +1014,19 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 		HUD->PushInfoPanel(Model.InfoPanel, Model.ViewingSide);
 		HUD->PushCommandBar(Model.CommandBar);
 	}
+
+	// §2.11.5's OPTIONS control, RECONCILED AND NOT WIRED ONCE. Every refresh re-checks that the
+	// bar's `OnOptionsRequested` is bound, so a widget created after this subsystem -- or
+	// re-created by a HUD respawn -- is wired the next frame instead of never. See the
+	// declaration for why this class is the binder at all and why the presenter is not.
+	//
+	// OUTSIDE THE BLOCK ABOVE AND DOING ITS OWN LOOKUP, WHICH IS ONE `FindScoreboardHUD` MORE
+	// THAN IS STRICTLY NEEDED AND IS DELIBERATE. Nested in the `if`, this line would read as
+	// part of the three-push sequence and would acquire that sequence's ordering constraints;
+	// it has none -- it is a bind, not a push, and nothing above or below depends on when it
+	// runs. The cost is a `GetHUD` pointer read; the gain is that its null handling is stated
+	// once, in its own body, where the reason it is silent is written down.
+	EnsureCommandBarOptionsBinding();
 
 	// §2.11.2's TRANSIENT LAYER, AND IT IS THE ONE THING IN THIS FUNCTION THAT LOOKS AT TWO
 	// FRAMES. Everything above is a set difference against `Model` alone -- deliberately, per
@@ -3423,6 +3441,60 @@ AStratScoreboardHUD* UStratMatchSubsystem::FindScoreboardHUD() const
 	}
 
 	return Cast<AStratScoreboardHUD>(PC->GetHUD());
+}
+
+void UStratMatchSubsystem::EnsureCommandBarOptionsBinding()
+{
+	const AStratScoreboardHUD* const HUD = FindScoreboardHUD();
+	if (HUD == nullptr || HUD->CommandBar == nullptr)
+	{
+		// BOTH ARE LEGITIMATE CONFIGURATIONS AND NEITHER IS REPORTED. A fixture drives this
+		// subsystem with no HUD at all, and a map whose HUD Blueprint leaves
+		// `CommandBarWidgetClass` unset has no bar by design -- `AStratScoreboardHUD::
+		// PushCommandBar`'s own block says so in terms. A log line here would fire every
+		// refresh of every headless clause.
+		return;
+	}
+
+	UStratCommandBarWidget* const Bar = HUD->CommandBar;
+
+	// THE GUARD IS WHAT MAKES A PER-REFRESH CALL CORRECT. `AddDynamic` on a dynamic multicast
+	// does not deduplicate, so without this the handler would be bound once per elapsed refresh
+	// and one click would open the options route dozens of times.
+	if (!Bar->OnOptionsRequested.IsAlreadyBound(
+	        this, &UStratMatchSubsystem::HandleCommandBarOptionsRequested))
+	{
+		Bar->OnOptionsRequested.AddDynamic(
+			this, &UStratMatchSubsystem::HandleCommandBarOptionsRequested);
+	}
+}
+
+void UStratMatchSubsystem::HandleCommandBarOptionsRequested()
+{
+	UWorld* const World = GetWorld();
+	AStratPlayerController* const PC =
+		(World != nullptr) ? Cast<AStratPlayerController>(World->GetFirstPlayerController())
+		                   : nullptr;
+
+	if (PC == nullptr)
+	{
+		// UNLIKE THE TWO NULLS ABOVE, THIS ONE IS REPORTED. Reaching here means the bar was
+		// clicked -- so a bar exists, so a HUD exists, so a local player exists -- in a world
+		// whose controller is not this project's. `AStratGameMode`'s constructor sets
+		// `PlayerControllerClass`, so that is a broken map and not a configuration.
+		UE_LOG(LogStratPlay, Warning,
+		       TEXT("Options: the command bar was clicked in a world with no AStratPlayerController."));
+		return;
+	}
+
+	FString Reason;
+	if (!PC->RequestOptionsScreen(Reason))
+	{
+		// AT WARNING AND NOT LOG, on the verb's own declaration: a `false` from
+		// `RequestOptionsScreen` is a fault, unlike `RequestEndTurn`'s, which is routinely the
+		// interface working. Logged and not propagated -- a broadcast has nowhere to return to.
+		UE_LOG(LogStratPlay, Warning, TEXT("Options: %s"), *Reason);
+	}
 }
 
 UStratSoundDirector* UStratMatchSubsystem::FindSoundDirector() const

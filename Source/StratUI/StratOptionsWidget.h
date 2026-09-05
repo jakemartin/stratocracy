@@ -47,6 +47,14 @@
 // one, since it already creates the menu on `MenuWidgetClass` and already holds the shell -- that
 // creates this widget on `IsOptionsPanelOpen` and binds the delegate. That owner is a later
 // phase's and is not this file's to write.
+//   THE OWNER LANDED 2026-09-05 AND IT IS NOT THE ONE THIS PARAGRAPH GUESSED, WHICH IS WORTH
+// SAYING BECAUSE THE GUESS WAS WRONG FOR A STRUCTURAL REASON RATHER THAN A PREFERENCE.
+// `AStratShellHUD` runs on the TITLE map only; the MATCH map's HUD is `AStratScoreboardHUD`,
+// which is in THIS module and therefore cannot name `UStratShellSubsystem` at all -- the arrow
+// runs `StratPlay -> StratUI` and never back. A HUD-shaped owner could only ever have shown this
+// screen at the title. `UStratOptionsPresenter`, a `UWorldSubsystem` in `StratPlay`, is the owner
+// instead, and it exists in both worlds; its file header carries the full derivation. What is
+// still owed is the WBP.
 //
 // NOT IN THIS ROUND, with reasons:
 // - RESOLUTION, WHICH IS THE OTHER HALF OF Sec 2.11.5's OWN SENTENCE. It is `UGameUserSettings`:
@@ -64,12 +72,64 @@
 // - LOCALIZATION. `FText::FromString` throughout, matching `StratResultLineFor` and
 //   `StratGuidedOpening::DirectiveTextFor`; see `FStratGuidanceView`'s block on why localization
 //   is deliberately not started.
+//
+// ===========================================================================================
+// AMENDED 2026-09-05 -- THE CLASS NOW BINDS ITS OWN SUB-WIDGETS AND WIRES ITS OWN DELEGATES,
+// AND THE REASON IS A MEASURED LIMIT OF THE ONLY AVAILABLE AUTHORING ROUTE RATHER THAN A
+// PREFERENCE.
+//
+// The paragraph above headed "HOW THE VALUE GETS OUT" assumed the WBP's own graph would wire a
+// slider's `OnValueChanged` to `SetMasterVolume`. THAT GRAPH CANNOT BE AUTHORED FROM THIS
+// PROJECT'S TOOLING, and the boundary was measured rather than assumed: a widget TREE can be
+// built headlessly (`unreal.new_object(unreal.Slider, outer=tree)` succeeds, properties set,
+// `PanelWidget.add_child` is a Python method), but `UWidgetTree::RootWidget` is a PROTECTED
+// `UPROPERTY` and Python reports *"Property 'RootWidget' ... is protected and cannot be read"*,
+// so an empty widget cannot be given a root and no event graph can be authored beside the tree.
+// A wiring convention that only a human in the editor can satisfy is a wiring convention this
+// project cannot check, which is the same objection the header already makes to "the WBP calling
+// `Get World Subsystem -> Commit Volumes` directly": the shipped path would live in a `.uasset`
+// no clause reads.
+//
+// SO THE WIRING MOVES INTO `NativeConstruct`, WHICH MAKES IT TESTABLE FOR THE FIRST TIME. The
+// asset's remaining job is to CONTAIN widgets with the declared names and nothing else -- no
+// nodes, no bindings, no arithmetic. What the asset can still get wrong is a missing or
+// misnamed child, and `BindWidget` turns that into a Blueprint compile error naming the member.
+//
+// WHICH BINDINGS ARE HARD AND WHICH ARE OPTIONAL, AND THE LINE IS PRINCIPLED RATHER THAN
+// AESTHETIC: **a widget that PRODUCES a value is `BindWidget`; a widget that only DISPLAYS one
+// is `BindWidgetOptional`.** The three sliders and the back button are the only things on this
+// screen that can originate a player's intent, and nothing else in this class can substitute for
+// them -- a WBP missing `MasterSlider` is a volume screen with no volume control, and failing its
+// compile is the correct, loud outcome. The three value texts are NOT the only sanctioned route
+// to the percentages: `OnAudioOptionsRefreshed` hands the whole model to the graph, so an asset
+// may draw `MasterVolumeText` through a designer-authored `UTextBlock` under any name, or in a
+// larger composed line, or not at all. A hard bind on a readout would forbid all three of those
+// for no gain and would fail the compile of the whole screen over a label.
+//
+// NOTHING HERE CLOSES THE PANEL, AND THE BRIEF THAT ASKED FOR IT NAMED AN IMPOSSIBLE CALL. The
+// back button was specified as reaching `UStratShellSubsystem::CloseOptionsPanel()`. That class
+// is in `StratPlay` and the arrow runs `StratPlay -> StratUI` and never back, so this module
+// cannot name it -- the same structural refusal the header already records about `USoundMix`.
+// `OnOptionsDismissed` is the outward-facing half instead, on `OnAudioOptionsCommitted`'s exact
+// precedent: a dynamic multicast a `StratPlay`-side owner binds, costing no `#include` in either
+// direction.
+//
+// THE SLIDER RANGE IS SET FROM C++ AND NOT LEFT TO THE ASSET. `StratClampVolume` is the one
+// authority on the gain domain and it is `[0, 1]`; a `USlider` authored `0..100` would submit
+// `73` to a clamp that answers `1.0`, so every position above the first percent would read
+// "100%" and the screen would look broken in a way no clause could see. Overriding the asset's
+// `MinValue`/`MaxValue` in `NativeConstruct` costs an author the ability to choose a range this
+// class could not honour anyway.
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 
 #include "StratOptionsWidget.generated.h"
+
+class UButton;
+class USlider;
+class UTextBlock;
 
 /**
  * Everything the volume screen draws, in one value.
@@ -144,6 +204,17 @@ STRATUI_API FStratAudioOptionsModel StratBuildAudioOptionsModel(float InMasterVo
  */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStratAudioOptionsCommitted,
                                             const FStratAudioOptionsModel&, Model);
+
+/**
+ * Fired when the player asked to leave the screen. Carries nothing.
+ *
+ * NO PAYLOAD, DELIBERATELY. "Close me" is not a value and the last committed model has already
+ * been broadcast by whichever setter produced it; a dismissal carrying a model would be a second
+ * copy of a value an observer already has, and the observer would have to decide whether the two
+ * agree. The one thing this event means is that a `StratPlay`-side owner should call
+ * `UStratShellSubsystem::CloseOptionsPanel` -- see the file header on why this class cannot.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStratOptionsDismissed);
 
 /**
  * Sec 2.11.5's volume screen.
@@ -234,4 +305,109 @@ public:
 	 */
 	UPROPERTY(BlueprintAssignable, Category = "Stratocracy|Options")
 	FStratAudioOptionsCommitted OnAudioOptionsCommitted;
+
+	/**
+	 * Fired when `BackButton` was clicked. The owner closes the panel; this class does not.
+	 *
+	 * IT DOES NOT REMOVE ITSELF FROM THE VIEWPORT, AND THAT IS THE SAME SPLIT `AStratShellHUD`
+	 * MAKES ABOUT ITS MENU. Whoever added a widget to the screen is the one thing that knows
+	 * what else is on it and what should be there instead; a widget that tears itself down
+	 * leaves its owner holding a pointer to something no longer drawn, and this project already
+	 * records a defect of exactly that shape ("a blank widget may still be the widget").
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Stratocracy|Options")
+	FStratOptionsDismissed OnOptionsDismissed;
+
+protected:
+	// ---- THE BOUND SUB-WIDGETS. Names are the asset's contract; see the file header. ----
+
+	/**
+	 * The master gain control. `BindWidget` -- a screen without it is not this screen.
+	 *
+	 * `protected` AND NOT `private`, so `UStratOptionsWidgetDouble` and any later test double can
+	 * plant one. `BindWidget` itself is indifferent to access, since the binding is done by
+	 * reflection at Blueprint compile time; the access level is chosen for the clause author.
+	 */
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<USlider> MasterSlider;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<USlider> SfxSlider;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<USlider> MusicSlider;
+
+	/**
+	 * Leaves the screen. `BindWidget`, because a screen a player cannot leave is worse than a
+	 * screen that fails to compile -- and this one takes a UI-only input mode.
+	 */
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UButton> BackButton;
+
+	/**
+	 * The percentage label beside `MasterSlider`. `BindWidgetOptional` -- see the file header
+	 * for why the readouts are optional and the controls are not.
+	 *
+	 * ITS TEXT IS ASSIGNED FROM `Model.MasterVolumeText` AND IS NEVER COMPOSED HERE. That is
+	 * `T-UI-03`'s clause on this surface: one field, one drawn number, no expression between
+	 * them.
+	 */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> MasterValueText;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> SfxValueText;
+
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> MusicValueText;
+
+	/** Binds the four controls. Safe on a native subclass with no widget tree: every bound
+	 *  pointer is null there and every bind is guarded. */
+	virtual void NativeConstruct() override;
+
+	/** Unbinds exactly what `NativeConstruct` bound. */
+	virtual void NativeDestruct() override;
+
+private:
+	/**
+	 * Pushes `Model` at the bound sub-widgets. The ONLY writer of a slider value or a label.
+	 *
+	 * IT IS CALLED FROM `PushAudioOptions` AND FROM ALL THREE SETTERS, INCLUDING THE SETTER A
+	 * SLIDER JUST CALLED, and that is deliberate rather than wasteful: `StratClampVolume` maps
+	 * NaN to silence and clamps out of range, so the value the model holds is not always the
+	 * value the control submitted, and a thumb left where the control put it would then be a
+	 * position the model does not have.
+	 *
+	 * THE RE-ENTRANCY GUARD IS STRUCTURAL AND NOT DEFENSIVE. `USlider::SetValue` is not
+	 * documented here to re-broadcast `OnValueChanged` and this file does not assert that it
+	 * does not -- an unmeasured claim about an engine internal is exactly what this project
+	 * refuses to write down. `bSyncingBoundWidgets` makes the no-feedback-loop property true of
+	 * THIS class whichever way that engine question resolves.
+	 */
+	void SyncBoundWidgetsToModel();
+
+	/** True for the duration of `SyncBoundWidgetsToModel`. See its block. */
+	bool bSyncingBoundWidgets = false;
+
+	/**
+	 * The three slider handlers, one per channel.
+	 *
+	 * `UFUNCTION` BECAUSE `FOnFloatValueChangedEvent` IS A DYNAMIC MULTICAST and can bind
+	 * nothing else -- the same constraint `UStratOptionsWidgetDouble::HandleCommitted` records.
+	 * THREE FUNCTIONS AND NOT ONE TAKING A CHANNEL, on the `.cpp`'s stated reasoning about the
+	 * three setters: a channel in a runtime value is how the music slider ends up writing the
+	 * SFX gain, silently.
+	 */
+	UFUNCTION()
+	void HandleMasterSliderChanged(float InValue);
+
+	UFUNCTION()
+	void HandleSfxSliderChanged(float InValue);
+
+	UFUNCTION()
+	void HandleMusicSliderChanged(float InValue);
+
+	/** Broadcasts `OnOptionsDismissed`. Closes nothing itself -- see that delegate. */
+	UFUNCTION()
+	void HandleBackClicked();
 };

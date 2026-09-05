@@ -68,11 +68,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "Templates/SubclassOf.h"
 
 #include "StratMatchSubsystem.h"
 
 #include "StratGameMode.generated.h"
 
+class UStratOptionsWidget;
 class UWorld;
 
 /**
@@ -118,6 +120,33 @@ public:
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Shell")
 	TSoftObjectPtr<UWorld> TitleLevel;
+
+	/**
+	 * Sec 2.11.5's volume screen, DURING A MATCH. Null means no options panel on this map.
+	 *
+	 * THIS PROPERTY IS THE WHOLE OF WHAT "THE SAME SCREEN, REACHABLE IN GAMEPLAY" COSTS ON
+	 * THIS SIDE, and that is the point of doing it this way. There is no second widget class,
+	 * no second flag, no second state: `AStratPlayerController::RequestOptionsScreen` takes
+	 * `EStratShellRoute::Options` through the same `ExecuteRoute` the title menu's row takes,
+	 * sets the same `bOptionsPanelOpen` on the same `UGameInstanceSubsystem`, and the match
+	 * world's `UStratOptionsPresenter` shows the same class of widget the title world's does.
+	 * A separate in-match options path would have been two screens that can disagree about
+	 * how loud the game is, which is the drift `FStratAudioOptionsModel` pairs its fields to
+	 * prevent one layer down.
+	 *
+	 * IT IS A SECOND BLUEPRINT DEFAULT NAMING THE ASSET `AStratShellGameMode` ALSO NAMES, and
+	 * that duplication is a debt with a stated discharge. `AStratShellGameMode::
+	 * OptionsWidgetClass` carries it; `StratOptionsPresenter.h` explains why no owner shape
+	 * avoids it.
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Options")
+	TSubclassOf<UStratOptionsWidget> OptionsWidgetClass;
+
+	/** Where the options panel sits in the viewport stack. Above the match HUD's five widgets
+	 *  by default -- a volume screen drawn under the scoreboard is a volume screen that did not
+	 *  appear. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Options")
+	int32 OptionsPanelZOrder = 100;
 
 	/**
 	 * Why there is no match, when there is none. Empty on success.

@@ -50,6 +50,57 @@
 
 ## NEXT
 
+- **THE OPTIONS SCREEN AND ITS TWO BUTTONS EXIST; THE HEADLESS ROUTE IS BOUNDED BY THREE
+  PROTECTED PROPERTIES AND ONE ORDERING RULE.** 2026-09-05 (local), `E:/MultiAgent/Stratocracy`
+  on `master` over base `c13eb81`, no worktree and no merge, uncommitted at time of writing.
+  **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE. WRITING: the
+  `coordinator`, under THIS FILE'S FALLBACK CONDITION.** Two authorities, cited separately. The
+  absence was re-measured with a control this pass: one `ToolSearch` naming four tools returned
+  both `execute_script` names ABSENT while `unreal_status` and `list_unreal_projects`, from the
+  SAME server in the SAME lookup, came back served.
+  WHAT WAS BUILT. `/Game/UI/WBP_Options` -- duplicated from `WBP_PreMatchBriefing`, reparented to
+  `UStratOptionsWidget`, donor contents cleared, and a `Stack` holding three label/slider/value
+  triples plus `BackButton`. `WBP_TitleMenu` REPARENTED to `/Script/StratPlay.StratShellMenuWidget`
+  and given `OptionsButton` + `OptionsLabel`, with `Btn_0..Btn_3` and their graph bindings intact.
+  `WBP_CommandBar` given `OptionsButton` in its `Bar`. `OptionsWidgetClass` set on
+  `BP_StratGameMode`, `BP_StratGameMode_AiVsAi` and `BP_StratShellGameMode`, each `<UNSET>`
+  before. Scripts checked in at `Tools/editor/make_options_wbp.py` and `add_options_buttons.py`.
+  **THREE PROTECTED UPROPERTIES ARE THE REAL BOUNDARY, and the record's previous note --
+  "`WidgetTree::ConstructWidget` has no stable Python binding" -- was true but pointed at the
+  wrong thing.** `UWidgetTree::RootWidget`, `UWidget::bIsVariable` and
+  `UWidgetBlueprint::WidgetVariableNameToGuidMap` each answer "protected and cannot be read".
+  Everything else works: `new_object` into a tree, property writes, `add_child`,
+  `add_child_to_canvas`, `clear_children`, and a hierarchy walk by `get_parent` from any child
+  reached by name. So a tree CAN be built; it just cannot be ROOTED, which is why this pass
+  duplicates a donor.
+  **COMPILE BEFORE SAVING. THIS IS THE ORDERING RULE AND IT COST A RED SUITE.** A widget made by
+  `new_object` has no GUID entry; the FIRST compile assigns one and ENSURES while doing it
+  ("Widget [OptionsButton] was added but did not get a GUID"). Save AFTER that compile and the
+  populated map persists; save without compiling and the asset ensures on every load forever.
+  `WBP_CommandBar` was saved without being compiled, and the suite went RED ON EXACTLY ONE CLAUSE
+  (the figures are `global.md`'s and are not restated here) --
+  **`GATE-AUDIO.EveryCueInTheShippedBankHasASound` failed for a WIDGET reason**, because it loads
+  a GameMode CDO and that compiles a widget. Fixed by compiling first; the script now does.
+  **THE TARGETED VERIFICATION BEFORE IT SAID ZERO ERRORS AND WAS TRUE AND USELESS.** It counted
+  BINDING errors -- the failure that was expected -- and an ensure is not a binding error. A check
+  shaped around the anticipated defect cannot see an unanticipated one; the suite found it.
+  Recorded because the same shape will recur.
+  ALSO MEASURED. `duplicate_asset` returns `None` with no Python error while the Git source-control
+  provider is active, the log carrying "Operation 'CheckOut' not supported by revision control
+  provider 'Git'"; `-SCCProvider=None` fixes it AND stops the provider auto-staging every package
+  it saves, which had been undone by hand four times before this pass. `reparent_blueprint`
+  triggers a compile BEFORE any tree edit, so binding errors seen during a build run may belong to
+  that compile and not the final one -- bracket the real compile with log markers rather than
+  counting errors across a run.
+  VERIFIED IN A COLD PROCESS THAT WROTE NOTHING: `WBP_TitleMenu`'s CDO is a `UStratShellMenuWidget`
+  while `WBP_Options`'s is NOT (the control that makes the check discriminate); all four
+  `Btn_0..Btn_3` survived the reparent; every bound name resolves in all three widgets; all three
+  GameModes name `WBP_Options_C`; and zero Blueprint errors across all three compiles.
+  **NOTHING HAS BEEN SEEN AND NO CLAUSE COVERS ANY OF IT.** A commandlet has no pixels. This entry
+  does not claim either button is visible, hittable or sensibly placed, nor that the sliders move
+  anything a player can hear -- and the in-match panel takes no input mode, which no clause can
+  observe either. NO GATE HAS RUN ON THIS PASS.
+
 - **THE TITLE THEME AND THE OPTIONS WIDGET EXIST; THE OPTIONS SCREEN HAS NO CONTROLS ON IT AND
   THAT IS A HUMAN'S WORK, NOT A MISSING STEP.** 2026-09-05 (local), `E:/MultiAgent/Stratocracy`,
   branch `master`, base `089c79c`, no worktree and no merge, uncommitted and UNSTAGED.

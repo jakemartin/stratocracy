@@ -15,6 +15,505 @@
 
 ## NEXT
 
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `089c79c`, NO worktree lane in flight,
+  UNCOMMITTED) -- THE RETRACTED OWNERSHIP PREMISE, FOUND TWICE MORE IN THE FILE THAT RETRACTS
+  IT, AND THE RECORD SENTENCE THAT SAID IT WOULD NOT BE.** Raised as Finding 1 of
+  `Tools/architect/gate_reports/2026-09-05-audio-milestone-final-gate-options-and-title-music.md`,
+  owner this lane. Comment text only; no compiled byte moved. No count and no verdict is written
+  here; the live figure is `global.md`'s alone.
+  - **THE TWO SITES, AND WHY THE DISTANCE FROM THE RETRACTION IS THE WHOLE PROBLEM.**
+    `Source/StratPlay/StratShellGameMode.h:52-54` -- the paragraph the `RETRACTED>` block is
+    *about* -- still ended *"nothing frees this component on its own and `EndPlay` is the one
+    place that stops the track and drops the handle"*, which is the retracted conclusion restated
+    four lines above its own retraction. `:247-250`, the doc comment on the **`EndPlay`
+    declaration**, said *"without this override the component -- spawned with `bAutoDestroy`
+    false, so nothing else will free it -- keeps playing the title track over the match."* The
+    measurement says actor teardown WOULD reach it, so that sentence is false. **A maintainer who
+    jumps to `EndPlay` lands on the declaration and never passes the header block**, which is the
+    same reason `CLAUDE.md` requires attribution INLINE in a record entry rather than in a header
+    above it.
+  - **REWORDED, NOT RETRACTED A SECOND TIME, AND THE CHOICE IS DELIBERATE.** A second
+    `RETRACTED>` block would have quoted a sentence that was already retracted once in the same
+    file, which reads as two independent findings rather than one claim with three copies. The
+    header paragraph now says what `bAutoDestroy=false` actually removes -- *THE ENGINE'S OWN*
+    release, the self-free when the sound finishes -- and states in terms that this is **NOT THE
+    SAME AS SAYING NOTHING ELSE COULD FREE IT**, handing the reader to the measurement below. The
+    declaration comment now carries the diagnostic itself
+    (`outer=StratShellGameMode_1 owner=StratShellGameMode_1 registered=1 ownedCount=1`) and the word BELT-AND-BRACES,
+    **so it is true read in isolation** -- which is the property the finding actually asked for.
+    The single `RETRACTED>` block at `:56-70` is untouched and remains the file's one retraction.
+  - **THE `Stop()` → `DestroyComponent()` → NULL SEQUENCE IS UNCHANGED AND THE REASON IS NOW AT
+    THE DECLARATION.** Deleting it would make this class's guarantee depend on `SpawnSound2D`
+    *continuing* to own what it spawns -- the very premise that was measured and found wrong once
+    already, in the other direction. That argument used to live only in the file header and in the
+    `.cpp`; it is now also where a maintainer minded to delete the override would be standing.
+  - **THE SWEEP, REPORTED BY WHAT IT COVERED AND NOT ONLY BY WHAT IT FOUND**, because this premise
+    had by then been found in three separate rounds by three readers, each in a place the previous
+    round did not look. Four claim-shape greps over the whole of `Source/`, not a phrase grep:
+    (a) `nothing (else )?(will |would |can )?(free|frees|release|releases|destroy|destroys)`;
+    (b) `the one place|only place|only thing|the only net|sole|nothing but` narrowed to lines also
+    naming `endplay|free|releas|destro|component|track|music`; (c)
+    `outlive|keeps playing|keep playing|play(ing)? on over|over the match|into the match`;
+    (d) `audio device`. Plus a full-vocabulary sweep of both `StratShellGameMode.h` and `.cpp` on
+    `free|frees|freed|releas|destroy|teardown|owns|owned|owner`, and every `bAutoDestroy` site in
+    `Source/`. **NO THIRD SITE EXISTS IN THIS LANE** -- "this lane" meaning every non-`Tests/`
+    file under `Source/`, which is the set the greps actually ran over, and not the two
+    `StratShellGameMode` files alone. ~~Outside it the premise survives only in
+    `Source/StratPlay/Tests/StratTitleMusicLifecycle.cpp`, which is the test lane's file, carries
+    its own `RETRACTED>` block at `:15-31`, and whose one remaining flat copy is a compiled
+    assertion string the gate explicitly declined to charge.~~ Not touched.
+    **[CORRECTED 2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master`
+    in the main tree `E:/MultiAgent/Stratocracy`, base commit `089c79c`, UNCOMMITTED). Charged as
+    Finding 2 of
+    `Tools/architect/gate_reports/2026-09-05-audio-milestone-final-gate-options-and-title-music-regate.md`.
+    **TWO COPIES STOOD IN THAT FILE WHEN THE SWEEP RAN, NOT ONE, AND THE ONE THE STRUCK SENTENCE
+    NAMED IS THE ONE THAT MATTERED LESS.** (i) The copy it named is a COMPILED ASSERTION MESSAGE
+    -- *"the component is not self-destroying, so `EndPlay` is the only thing that can release
+    it"* -- deliberately frozen by the test lane so that a prose pass moved no compiled byte, and
+    declined by the gate on exactly those stated grounds. (ii) The copy it did not name is LIVE
+    COMMENT PROSE in that file's own header, eleven lines above the retraction, with no freeze
+    defence of any kind, and it was the VERBATIM sentence charged in `StratShellGameMode.h` the
+    round before and reworded there: *"`SpawnSound2D(..., bAutoDestroy=false)` removes the
+    engine's own release, so nothing frees the component on its own and `EndPlay` is the one
+    place that stops the track and drops the handle."*
+    **THE INSTRUMENT WAS NOT AT FAULT; THE SUMMARY WAS, AND THAT DISTINCTION IS THE FINDING.**
+    Grep (a) as recorded four lines above -- the one beginning
+    `nothing (else )?(will |would |can )?` -- matches that prose's *"so nothing frees the
+    component"* with BOTH optional groups empty. The sweep saw the site; the sentence collapsed
+    it into the single hit that had a ready-made defence. So an entry framed as REPORTED BY WHAT
+    IT COVERED was summarised by what was convenient, which is the one failure mode that framing
+    exists to prevent. The sentence struck one bullet below was struck for being true of a FILE
+    SET and false of a FILE; this replacement was true of a FILE and false of a PARAGRAPH -- the
+    same defect one scale down, in the repair's own coverage report. It is struck rather than
+    quietly rewritten for the identical reason given there: it travelled into a gate report as a
+    quoted claim, and a reader arriving by that quotation must land on the correction.
+    **THE STATE OF THE TREE AS FOUND, NOT AS FORECAST.** The dispatch said the test lane was
+    fixing that prose in parallel; it HAS LANDED, and this was measured rather than assumed --
+    grep (a) re-run alone over the whole of `Source/` now returns ZERO lines where it previously
+    returned that site. The header paragraph now reads *"THAT IS NOT THE SAME CLAIM AS 'nothing
+    else could free the component', and this paragraph asserted the second one until 2026-09-05"*.
+    **WHAT IS TRUE OF THAT FILE NOW:** the premise survives in it only as TWO COMPILED ASSERTION
+    STRINGS, both frozen on purpose and both disclaimed in place -- (i) above, and the message
+    reading *"contradicts the class header's stated premise and is recorded as a finding"*, which
+    REFERENCES the premise rather than restating it and is kept because the ownership is what
+    makes the lifecycle legible. No live prose copy of the premise remains anywhere in `Source/`,
+    in this lane or the test lane. Still not touched by me: no byte of `Source/` moved for this
+    correction, and none was needed.
+    **LINE NUMBERS ARE THE WEAK ANCHOR HERE, WHICH IS WHY EACH SITE ABOVE IS GIVEN BY ITS QUOTED
+    TEXT.** Every number the struck sentence carried had moved by the time this was written --
+    the `RETRACTED>` markers from `:15-31` to `:29-31`, the assertion message from the previous
+    gate's `:293-294` to `:304-305` -- moved by the OTHER lane's prose edit, with not a byte of
+    either subject changed. Cite the words.
+    **NO BUILD AND NO SUITE RUN, CONFIRMED BY CONSTRUCTION RATHER THAN ASSERTED.** This
+    correction edits one `.md` file and nothing else. `engine.md` is not a `.cpp` and carries no
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` or `IMPLEMENT_COMPLEX_AUTOMATION_TEST(_CLASS)`, so
+    `read_macro_census` drops it on the extension test before the macro test is ever reached and
+    it is not in the REPORT IDENTITY comparison set at all -- the rule established in the
+    CORRECTED block inside the NO SUITE RUN bullet below, and measured there with a control. The
+    live figure is `global.md`'s alone and no edit to this file can move it.
+    **AND THAT IS A CLAIM ABOUT THIS EDIT, NOT ABOUT THE TREE, WHICH IS THE VERY CONFUSION THIS
+    CORRECTION IS ABOUT -- SO THE TREE WAS MEASURED SEPARATELY, AND WHAT IT MEASURED MOVED WHILE
+    IT WAS BEING MEASURED. NO LIVE SWEEP VERDICT IS RECORDED HERE FOR THAT REASON; the two
+    readings below are STAMPED OBSERVATIONS OF PAST MOMENTS and neither may be cited as the
+    current state of anything.** At the first reading, `python
+    Tools/architect/strat_banner_sweep.py` reported one REPORT IDENTITY failure, whose cause was
+    NOT this file: the newest test-defining `.cpp` in `Source/` was
+    `Source/StratPlay/Tests/StratTitleMusicLifecycle.cpp` at mtime `1788626485` (local
+    `2026-09-05 12:41:25`), the OTHER lane's comment-only fix landing after the then-current
+    automation report was written. That is exactly the case the CORRECTED block below names as
+    the dangerous direction -- a comment-only edit to a macro-defining file under
+    `Source/*/Tests/` DOES enter the comparison set and DOES owe a re-run -- so the rule was
+    applied to its own author rather than only quoted. At the second reading, minutes later and
+    with no further edit from this lane, that failure was GONE, because a suite had been re-run
+    in the interval by another actor and the report's `reportCreatedOn` had advanced; a different
+    check was firing instead, on a citation in `global.md`, which is not this file's to correct.
+    **THE POINT WORTH KEEPING IS NOT EITHER READING BUT THE PAIR:** a parallel session can
+    falsify a sweep result between two runs of the same command over an unchanged edit of mine,
+    so a record entry that states one is stating a moment. This one says which moment, and says
+    the durable half -- an `.md` edit is not in the comparison set at any moment at all.]**
+  - **AND THE SENTENCE IN THIS FILE THAT PROMISED OTHERWISE IS STRUCK RATHER THAN QUIETLY
+    REPLACED**, in the 2026-09-05 entry below: *"Nothing outside those two files in `Source/`
+    repeats it."* It was true of the FILE SET and false of the FILE -- the `.h` is one of "those
+    two files" and repeated the premise twice inside itself. The struck text is left visible
+    because the sentence travelled into the gate report as a quoted claim, and a reader arriving
+    by that quotation must land on the correction rather than on a paragraph that no longer says
+    what they were sent to check.
+  - **NO SUITE RUN, AND THAT IS A CLAIM ABOUT CONSTRUCTION RATHER THAN A JUDGEMENT.** Every
+    changed line is a comment: the comment-stripped `StratShellGameMode.h` is **30 code lines**,
+    identical in content and order to the pre-edit file -- `#pragma once`, three includes, the
+    `.generated.h`, three forward declarations, the `UCLASS` line, the `class STRATPLAY_API` line,
+    the opening brace, `GENERATED_BODY()`, `public:`, the constructor, six `UPROPERTY` pairs,
+    `protected:`, the two `virtual ... override` declarations, and the closing brace. Nothing UHT
+    or the linker can see moved. **THE SIX STRUCTURAL LINES IN THAT LIST -- the class line, the
+    two braces, `public:`, the constructor and `protected:` -- WERE ADDED 2026-09-05 by
+    `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, base `089c79c`, UNCOMMITTED) because
+    the list as first written named 24 items under a count of 30**, which is the same
+    summary-narrower-than-its-evidence shape as the struck sentence above and was raised as a
+    non-gating Observation of the re-gate report. The count was right both times; the enumeration
+    now matches it, so a reader can check the count against the list instead of against the file.
+    ~~So the live report identity stands unchanged. **Had a compiled byte moved, a re-run would
+    have been owed regardless of the change's meaning** -- `strat_banner_sweep.py`'s REPORT
+    IDENTITY check is mtime-based and reddens on any source touch until the suite is re-run.~~
+    **[CORRECTED 2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master`
+    in the main tree `E:/MultiAgent/Stratocracy`, base commit `089c79c`, UNCOMMITTED), on the
+    user's reading and re-verified against the script rather than accepted from the quotation.
+    THE STRUCK CLAUSE STATES THE RULE TOO BROADLY, AND REACHES THE RIGHT VERDICT FOR THE WRONG
+    REASON -- the same defect class this whole entry exists to repair. THE REAL RULE: REPORT
+    IDENTITY's staleness half DOES compare source mtimes against the report --
+    `check_report_identity` fires when `result.newest_test_mtime > result.report_mtime`, the
+    report artifact's own filesystem write time (not its `reportCreatedOn`, which is only the
+    second, separate requirement that the run be NAMEABLE). But the set it compares against is
+    narrow: `read_macro_census` walks `Source/`, `continue`s on anything not ending `.cpp`, and
+    updates `newest_mtime` ONLY inside `if s or c:` -- only for a `.cpp` containing
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` or `IMPLEMENT_COMPLEX_AUTOMATION_TEST(_CLASS)`. The
+    script's own words, at its head: the report *"must not predate any **test-defining** `.cpp`
+    file on disk; either failure is a hard FAIL, never a warning."* **SO THE REAL REASON THIS
+    EDIT WAS EXEMPT IS THE FILE'S KIND, NOT THE EDIT'S SIZE:** `StratShellGameMode.h` is a
+    header, dropped by the `.cpp` extension test before the macro test is ever reached, so it was
+    never in the comparison set -- and it would have been exempt from THIS CHECK even if a
+    compiled byte HAD moved. (A moved compiled byte still owes a rebuild and a re-run for a
+    different reason -- the built binary would be stale -- which is a build question check 4
+    cannot see.) THIS FILE ALREADY CARRIED THE MEASURED RULE: the 2026-09-03 CORRECTED block in
+    the debt below establishes it with two probes and a control -- touching a production `.cpp`
+    with no test macro gave EXIT 0 / `SWEEP CLEAN`, touching
+    `Source/StratPlay/Tests/StratTourExistenceHoldClauses.cpp` gave EXIT 1 and one REPORT
+    IDENTITY finding. The struck sentence contradicted a measurement sitting in its own file.
+    **AND THE MIRROR ERROR IS THE DANGEROUS ONE, NAMED SO THAT NEITHER READING SURVIVES:** "no
+    source edit can invalidate the report" would license trusting a stale report after editing a
+    test file, which is precisely the 2026-08-21 case check 4's own comment cites -- the count
+    agreed, the sweep printed CLEAN, and the report described a pre-merge tree. A comment-only
+    edit to a file under `Source/*/Tests/` that defines a macro DOES redden the sweep and DOES
+    force a re-run. No suite was run for this pass and none was owed; nothing else in this entry
+    moves.]**
+
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `089c79c`, NO worktree lane in flight,
+  UNCOMMITTED) -- PHASES F1 AND G1 OF THE AUDIO MILESTONE: TITLE MUSIC WITH A STOPPABLE HANDLE,
+  AND THE VOLUME SCREEN'S C++ FROM THE SLIDER TO THE SLOT.** Four new files, seven modified. No
+  count and no verdict is written here; the live figure is `global.md`'s alone.
+  - **WHAT LANDED.** New: `Source/StratPlay/StratAudioSettings.h/.cpp`
+    (`UStratAudioSettings : USaveGame`, three unity-defaulted floats, `DefaultSlotName()`,
+    `kUserIndex`, `Sanitize`) and `Source/StratUI/StratOptionsWidget.h/.cpp`
+    (`FStratAudioOptionsModel`, `StratBuildAudioOptionsModel`, `FStratAudioOptionsCommitted`,
+    `UStratOptionsWidget : UUserWidget` with `PushAudioOptions` and three `BlueprintCallable`
+    setters). Modified: `StratSoundCues.h/.cpp` (`StratClampVolume`), `StratSoundBank.h`
+    (`BaseMix` plus `MasterSoundClass` / `SfxSoundClass` / `MusicSoundClass`),
+    `StratSoundDirector.h/.cpp` (`EStratVolumeDisposition`, `FStratVolumeApplicationRecord`,
+    `OnWorldBeginPlay`, `ApplyCurrentVolumes`, `ApplyVolumes`, `CommitVolumes`,
+    `GetAudioSettings`, `WasLoadedFromSlot`, `UseAudioSettingsSlot`,
+    `GetAudioSettingsSlotName`, `GetVolumeApplications`, `ResetVolumeApplications`),
+    `StratShellGameMode.h/.cpp` (`TitleMusic`, `TitleMusicComponent`, `EndPlay`), and
+    `StratShellSubsystem.h/.cpp` (`EStratShellRoute::Options`, `RouteExitsProcess`,
+    `RouteOpensOptions`, `RequestOptionsPanel`, `CloseOptionsPanel`, `IsOptionsPanelOpen`,
+    `GetOptionsPanelRequestCount`). **ZERO NEW MODULE DEPENDENCIES AGAIN, and this time it is
+    load-bearing on a specific claim rather than incidental:** `UAudioComponent`, `USoundMix`,
+    `USoundClass`, `USaveGame` and `UGameplayStatics::{SpawnSound2D, SetSoundMixClassOverride,
+    LoadGameFromSlot, SaveGameToSlot}` are all module `Engine`, so `StratPlay.Build.cs` and
+    `StratUI.Build.cs` are UNTOUCHED by this pass. Phase A's argued absence of
+    `MetasoundEngine` therefore still stands unmeasured and unchallenged.
+  - **THE ONE CHANGE THAT WOULD HAVE SHIPPED A DEFECT, AND IT IS NOT IN EITHER PHASE'S BRIEF.**
+    `ExecuteRoute` read `if (!RouteTravels(Route)) { UKismetSystemLibrary::QuitGame(...); }`,
+    with the comment *"The only non-travelling route."* That was TRUE of a four-arm enum and it
+    is an INFERENCE, not a fact: it equates "does not open a level" with "exits the process".
+    `Options` is the second non-travelling route, so the arm as written **would have QUIT THE
+    GAME when a player asked for the volume screen.** Nothing in the existing suite could have
+    caught it -- every clause over `RouteTravels` stays green, `QuitGame` does nothing
+    observable under `-nullrhi`, and the menu model would still be correct. The fix is
+    `RouteExitsProcess` and `RouteOpensOptions` as separate `static` predicates, on
+    `PendingSlotForRoute`'s own precedent (the deciding must be reachable by a clause that
+    cannot execute past `ExecuteRoute`'s body), plus a REFUSAL for any non-travelling route with
+    no arm -- so a sixth one fails loudly instead of exiting the process. `RouteTravels` also
+    became a `switch` with no `default:`: it answered by EXCLUSION, so a new enumerator's default
+    answer was *"travels"*, which is the one direction that function must never be wrong in.
+  - **`ExecuteRoute` NOW HAS A GRANTED ARM A CLAUSE CAN EXECUTE END TO END, WHICH IT NEVER HAD.**
+    That function's own header records that *"what no clause reaches is the arm on which
+    permission was GRANTED"* -- travel cannot survive a fixture and `QuitGame` is unobservable.
+    `ExecuteRoute(Options)` is granted, local, and leaves `GetOptionsPanelRequestCount`
+    incremented. The count is separate from `bOptionsPanelOpen` deliberately: a flag that was
+    already true records nothing about the call that just happened, which is
+    `NoteApplyViewObserved`'s argument applied to a second seam.
+  - **THE VOLUME PATH IS BUILT ON `EmitCue`'S NO-EARLY-RETURN RULE AND THE CLAIM IS RESTATED AS A
+    SECOND CLAIM RATHER THAN BY WIDENING THE FIRST.** `ApplyVolumes` contains NO `return` at all.
+    Five arms: `NoWorld`, `NoBank`, `NoMix`, `Applied`, and `NoSettings` -- and `NoSettings` is
+    the one worth reading, because **it still makes the `SetSoundMixClassOverride` calls, with
+    unity gains.** A null settings object is the state every fresh checkout is in, so a guard
+    there would have made the whole feature vacuous in exactly the configuration the suite runs
+    under. `FStratVolumeApplicationRecord` carries the three gains THAT WERE USED (not the ones
+    asked for), a `ChannelsApplied` count of 0..3, and `bSettingsCameFromSlot` -- so "the player
+    chose unity" and "the player has never chosen anything" stay two readable states, which
+    `Disposition` alone cannot express.
+  - **THE SHIPPED PATH TAKES TWO VOLUME RECORDS PER WORLD AND THE FIRST IS EXPECTED TO ACHIEVE
+    NOTHING.** `UStratSoundDirector::OnWorldBeginPlay` runs BEFORE any actor's `BeginPlay`, so
+    no GameMode has adopted a bank yet and that record reads `NoBank` with zero channels. It is
+    kept because it is the evidence that the world-start seam is ALIVE -- the same question
+    `NoteApplyViewObserved` answers for the emission half, and one an empty list cannot answer
+    for either. The second record comes from the tail of `AdoptSoundBank`, which is where the
+    mix and the three sound classes first exist.
+  - **`StratClampVolume` IS IN `StratUI` AND NOT BESIDE EITHER OF ITS CALLERS, AND THAT IS THE
+    ONE PLACEMENT IN THIS PASS THAT NEEDED AN ARGUMENT.** Two files clamp -- the widget's setters
+    (`StratUI`) and `UStratAudioSettings::Sanitize` (`StratPlay`) -- and the arrow runs
+    `StratPlay -> StratUI` and never back, so the rule had to sit at or below `StratUI` or have
+    two authors. It landed in `StratSoundCues.h` specifically because `StratSoundBank.h` ALREADY
+    INCLUDES IT, so the clamp crosses the boundary at the cost of zero new includes. That file's
+    standing *"not one arithmetic operation"* claim was RE-CHECKED rather than assumed: `IsNaN`
+    and `Clamp` are comparisons and a select. **NaN maps to 0 and not to 1**, argued: `FMath::Clamp`
+    passes a NaN through unchanged (both comparisons are false), and silence is a failure a player
+    can diagnose while unity is one they cannot. Infinities are deliberately NOT special-cased --
+    `IsFinite` would have caught both in one line and mapped `+INF` to silence.
+  - **TITLE MUSIC IS A HELD `UAudioComponent` FROM `SpawnSound2D(..., bAutoDestroy=false)`, NOT A
+    `CreateDefaultSubobject`, AND THE REASON IS CONCRETE.** `AGameModeBase` derives `AInfo`, which
+    has NO `RootComponent`; a `UAudioComponent` is a `USceneComponent` and would have had to
+    become the root of an actor with no position, purely so a 2D sound could attach to something.
+    `PlaySound2D` was never a candidate -- it returns no handle, and the requirement is that the
+    track STOPS when a route travels. The cost is that `bAutoDestroy=false` transfers ownership,
+    which `AStratShellGameMode::EndPlay` discharges with `Stop()` then `DestroyComponent()`, and
+    unconditionally -- every reason this actor stops is a reason the music should.
+    `bPersistAcrossLevelTransition` is left FALSE deliberately: persisting is the one setting that
+    would defeat the whole shape.
+  - **A BRIEF CLAIM THAT DOES NOT HOLD, RECORDED BECAUSE IT WAS THE STATED REASON FOR A DESIGN.**
+    The brief justified a separate save slot partly on the grounds that a volume field in
+    `UStratSaveGame` *"would move a field the save-parity clauses hash"*. **It would not.**
+    `FStratBridge::StateHash` hashes `strat::canonicalStateBytes`, produced by the rules module
+    from the board; `UStratSaveGame` is engine-side bookkeeping AROUND that text and no clause
+    hashes its members. The separate slot is right anyway and `StratAudioSettings.h` states the
+    three reasons it actually stands on -- volume is not match state, it would become PER-SLOT,
+    and it would join a payload whose versioning discipline exists to protect a deterministic
+    replay. The false fourth reason is named there too rather than dropped.
+  - **THE STEWARD'S `DefaultBaseSoundMix` JUSTIFICATION IS UNCHANGED BY THIS PASS, CHECKED RATHER
+    THAN ASSUMED.** Nothing here calls `SetBaseSoundMix` or `PushSoundMixModifier`, so the INI key
+    remains the only route by which an override against `SMX_Strat_Base` has any effect. Pushing
+    the mix explicitly WAS considered and refused: a pushed mix is a modifier on a stack with its
+    own lifetime, priority and pop -- state this class would then own across a level travel -- to
+    buy a guarantee one line of configuration already provides. `UStratSoundBank::BaseMix`'s block
+    carries the argument and names what would flip it (a second mix, or a screen that must duck
+    one against another).
+  - **DEBTS TAKEN ON, EACH WITH ITS DISCHARGE.**
+    - **The `Options` row is ENABLED and no surface exists behind it.** No WBP derives from
+      `UStratOptionsWidget` and nothing binds `OnAudioOptionsCommitted`, so clicking the row today
+      runs `RequestOptionsPanel` and nothing appears -- one step worse than the greyed row
+      `StratShellSubsystem.h` originally argued against. Taken anyway because a
+      `bOptionsSurfaceAvailable` fact would ship FALSE with nothing able to set it, which is this
+      project's measured shipped-zero-default defect. DISCHARGED BY the options WBP plus an owner
+      (`AStratShellHUD` is the obvious one) that creates the widget on `IsOptionsPanelOpen` and
+      binds the delegate.
+    - **`UStratSoundBank::BaseMix` must equal `Config/DefaultEngine.ini`'s `DefaultBaseSoundMix`
+      and NOTHING IN THIS TREE CHECKS IT.** Point it elsewhere and every override lands in a map
+      nobody reads: the calls succeed, the record says `Applied`, and the volume does nothing.
+      DISCHARGED BY a clause reading the INI key and the bank CDO and asserting them equal.
+    - **`AStratShellGameMode::TitleMusic`'s Sound Class must be the bank's `MusicSoundClass` and
+      nothing checks that either.** A track authored into the SFX class, or into none, plays at
+      unity however far the music slider is pulled. DISCHARGED BY a clause comparing the asset's
+      `SoundClassObject` against the bank's `MusicSoundClass`, once both assets exist.
+    - **`UStratAudioSettings` carries no version field**, unlike `UStratSaveGame`. Argued rather
+      than copied: every wrong value here reads as unity, is audible immediately, and is repaired
+      by moving a slider. BECOMES OWED the moment a field is added whose default is not also its
+      safe value.
+    - **`VolumeApplications` is unbounded**, on `Emissions`' own stated cost and discharge.
+    - **The bank now carries WHAT to play and WHAT TO PLAY IT THROUGH**, which is two jobs.
+      DISCHARGED WHEN a second bank exists: the mix moves to its own `UDataAsset` and the bank
+      holds a pointer to it, which is one property change and no call-site change because every
+      consumer already reads these through the bank.
+  - **WHAT I REFUSED.** Nothing in `Source/StratRules/`, `Data/`, `Source/Stratocracy/`,
+    `Tests/`, `Content/` or `Config/` was touched. Match music was left out on the user's stated
+    scope; `AStratGameMode` is unchanged. Resolution was left out of the options screen --
+    `UGameUserSettings` already owns and persists it, and a second copy here would be the same
+    duplication `UStratAudioSettings` refuses from the save side.
+  - **TESTS THIS NEEDS**, named for `strat-test-author` and not written here:
+    `Stratocracy.StratPlay.GATE-TITLEMENU.OptionsRouteDoesNotExitTheProcess`,
+    `Stratocracy.StratPlay.GATE-TITLEMENU.OptionsRouteRequestsThePanel`,
+    `Stratocracy.StratPlay.T-UI-03.ApplyVolumesRecordsEveryPath`,
+    `Stratocracy.StratPlay.T-UI-03.MissingSettingsSlotAppliesUnityAndStillApplies`,
+    `Stratocracy.StratPlay.T-UI-03.CommitVolumesRoundTripsThroughASlot`,
+    `Stratocracy.StratUI.T-UI-03.OptionsModelTextEqualsItsOwnClampedField`,
+    `Stratocracy.StratUI.T-UI-03.SeedingTheOptionsScreenCommitsNothing`,
+    `Stratocracy.StratPlay.GATE-TITLEMENU.TitleMusicStopsOnEndPlay`.
+
+  **APPENDED 2026-09-05, SAME AGENT, SAME BASE `089c79c`, STILL UNCOMMITTED -- THE ABSENT AUDIO
+  SLOT STOPPED WARNING, AND THE FINDING THAT PRODUCED IT WAS A READING DEFECT OF MINE.**
+
+  - **I REPORTED THE SUITE AS "UNMOVED", HAVING READ ONE OF THE FOUR SUMMARY FIELDS.** The entry
+    count was unmoved and every per-test `state` was `Success`, both true. But
+    `Saved/AutomationReport/index.json` carries FOUR summary fields and two of them had moved:
+    `succeeded` fell from 413 to 304 and `succeededWithWarnings` rose from 0 to 109. The warning
+    was sitting in the same file I was quoting the count out of. **THE RULE THIS BUYS: read
+    `succeeded`, `succeededWithWarnings`, `failed` AND `notRun`, and check they sum to the entry
+    count.** A green `failed 0` with a moved `succeededWithWarnings` is a real change that the
+    count cannot see, and it is the shape that hides a NEW warning inside a normal one. This
+    record already carries that the log undercounts the entry count by exactly one; that is a
+    different defect in a different instrument, and neither covers the other.
+  - **THE WARNING: 109 tests, one line, `LogStreaming: Failed to read file
+    'E:/MultiAgent/Stratocracy/Saved/SaveGames/StratocracyAudio.sav' error.`**
+    `UStratSoundDirector::GetAudioSettings` called `UGameplayStatics::LoadGameFromSlot`
+    unconditionally, and `FFileHelper::LoadFileToArray` beneath it logs when the file is not
+    there. **Absence IS the shipped first-run state** -- every fresh checkout, every CI job,
+    every player's first launch -- so the noise was on the expected path, not an error one.
+  - **THE FIX IS ONE GUARD AND IT REACHES ONLY THE ABSENT CASE.** The load is now taken only
+    when `UGameplayStatics::DoesSaveGameExist(AudioSettingsSlotName,
+    UStratAudioSettings::kUserIndex)` says yes; the else arm hands the existing null path the
+    null it already handled. **When the file exists this is byte-for-byte the old call**, so
+    nothing that was loud before is quieter now -- true by construction, not by measurement.
+    None of the semantics moved: `ApplyVolumes` still contains no `return` on any path,
+    `EStratVolumeDisposition::NoSettings` is still recorded from the arm that APPLIED, unity
+    gains are still applied, `ChannelsApplied` is still non-zero against a bank with a mix, and
+    `bSettingsCameFromSlot` still separates "chose unity" from "never chose".
+  - **`DoesSaveGameExist` WAS CHECKED FOR NOISE OF ITS OWN RATHER THAN ASSUMED SILENT.** It
+    reaches `IFileManager::FileSize` and returns a number; it opens nothing. Measured, on a
+    machine where the slot is genuinely absent (`Saved/SaveGames/` held only
+    `StratocracyMatch.sav` before and after): the 109 warning entries became 0 while the check
+    itself ran on all 109 paths. The absent condition was real for the verifying run, not
+    assumed.
+  - **A MUTANT FALSIFIED THE PROSE I HAD ALREADY WRITTEN, AND THE CORRECTION IS IN THE SOURCE.**
+    I wrote that a present-but-undeserializable slot "still logs". Planting a 14-byte
+    `StratocracyAudio.sav` reading `not a savegame` and re-running measured
+    `succeededWithWarnings 0` -- the file READS fine, so `LoadFileToArray` is content and the
+    failure is a header parse inside `LoadGameFromMemory`, which returns null without a word.
+    **The loud case is an UNREADABLE FILE, not UNPARSEABLE BYTES.** The mutant file was deleted
+    and the tree rebuilt and re-run afterwards.
+  - **DEBT, PRE-EXISTING AND UNTOUCHED BY THIS CHANGE: a present slot whose BYTES are garbage
+    reverts to unity in total silence.** It predates the guard -- the same bytes were equally
+    silent before it, since that path is unchanged -- and it is a state a player caused and
+    cannot see. **Discharged by** the day `GetAudioSettings` can tell "no file" from "a file
+    that would not parse": the existence check now in hand already answers half of it, so the
+    remaining work is one `UE_LOG` in the arm where `DoesSaveGameExist` said yes and the `Cast`
+    still produced null. Deliberately not done in this pass, because it adds a log line no
+    clause pins and this pass's whole subject is unpinned log lines.
+  - **JUDGEMENT ASKED FOR AND RECORDED: yes, a failed read of a slot that DOES exist should stay
+    loud, and it does.** Absence is a state the player is entitled to be in and the design says
+    so by making `NoSettings` first-class; an I/O failure on a file that is really there means
+    something wrote bytes and the disk will not return them, which no slider can diagnose and
+    which no other instrument in this tree would report. The asymmetry is the point of the
+    guard rather than a side effect of it -- a blanket suppression around the whole load would
+    have silenced both, and would have been the cheaper edit.
+
+- **2026-09-04, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `089c79c`, NO worktree lane in flight,
+  UNCOMMITTED) -- PHASE A OF THE AUDIO MILESTONE: THE C++ HALF OF A SEVEN-CUE SOUND SYSTEM, ON
+  `StratTransientReceipts.h`'S SHAPE AND SPLIT ON THE SAME MODULE ARROW.** Six new files, seven
+  modified. No count and no verdict is written here; the live figure is `global.md`'s alone.
+  - **WHAT LANDED.** `Source/StratUI/StratSoundCues.h/.cpp` -- `EStratSoundCue`,
+    `FStratUnitSoundMark`, `FStratSoundMark`, `FStratSoundEmission`, and the two world-free
+    deciders `StratSoundMarkFromView` / `StratDecideSoundCues`.
+    `Source/StratPlay/StratSoundBank.h/.cpp` -- `UStratSoundBank : UDataAsset`, seven
+    `EditDefaultsOnly` `TObjectPtr<USoundBase>` slots, a `USoundConcurrency`, a
+    `TMap<EStratSoundCue,float> MinSecondsBetween`, and `SoundFor` / `MinSecondsBetweenFor`.
+    `Source/StratPlay/StratSoundDirector.h/.cpp` -- `UStratSoundDirector : UWorldSubsystem`,
+    `EStratSoundDisposition`, `FStratSoundEmissionRecord`, and the seam
+    (`AdoptSoundBank`, `EmitCue`, `EmitCues`, `NoteApplyViewObserved`, `GetEmissions`,
+    `GetEmitCallCount`, `GetApplyViewObservationCount`, `ResetEmissions`). Wiring in
+    `StratMatchSubsystem.h/.cpp`, `StratPlayerController.cpp`, `StratShellSubsystem.cpp`,
+    `StratShellGameMode.h/.cpp`, and one argued absence in `StratPlay.Build.cs`.
+  - **ZERO NEW MODULE DEPENDENCIES, CLAIMED IN ADVANCE AND THEN HELD BY THE BUILD.** `USoundBase`,
+    `USoundConcurrency`, `UDataAsset`, `UWorldSubsystem` and `UGameplayStatics::PlaySound2D` are
+    all module `Engine`, already public on both `StratPlay` and `StratUI`. The slots are typed
+    `USoundBase` and NOT `UMetaSoundSource` precisely so no `MetasoundEngine` arrow is needed:
+    `UMetaSoundSource` derives `USoundWaveProcedural` -> `USoundWave` -> `USoundBase`, so phase
+    C's MetaSounds assign into these slots with no cast. **That absence is ARGUED AND NOT
+    MEASURED**, and `StratPlay.Build.cs`'s own new note says so in those words -- it is a green
+    build in which the symbol was never referenced, which is weaker evidence than the 2 x LNK2019
+    behind the `InputCore` note directly below it in that file. `Stratocracy.uproject`'s `Modules`
+    array is UNCHANGED and correctly so: no new module was created.
+  - **THE SPLIT IS ON THE `StratPlay -> StratUI` ARROW, and it is the same split
+    `Source/StratPlay/Tests/StratTransientReceiptCallSite.cpp` records for the receipts.** The
+    decider reads only `FStratViewModel`, names no `UWorld`, no subsystem, no bridge and no sound
+    type, so it lives in `StratUI` where a clause can reach every arm with no viewport. Everything
+    needing a world -- the asset, the player, the call sites -- is in `StratPlay`.
+  - **`EmitCue` HAS NO EARLY RETURN ON ANY PATH, AND THAT IS THE WHOLE TESTABILITY ANSWER.** It
+    appends the record FIRST and decides SECOND; a null bank, an unset slot, a cooldown and a null
+    world each produce a record with a NAMED `EStratSoundDisposition`. The suite runs `-nullrhi`
+    with no audio device, so no clause will ever assert audibility -- what a clause asserts is one
+    record, of the right cue, at the right moment, with `Disposition == NoBank`. **An
+    `if (Bank == nullptr) return;` at the top would read as defensive hygiene and would make every
+    phase-B clause vacuous at once**, because the shipped state of this tree has no bank. That is
+    this project's own twice-measured defect class (a shipped zero default making clauses vacuous;
+    a default that cannot signal unset), and it is written into both the header block and the top
+    of the `.cpp` so that a reader tidying the function meets it in the file they are editing.
+  - **`GetApplyViewObservationCount` IS NOT DECORATION.** An empty emission list has two causes
+    that look identical -- everything was suppressed, or the `ApplyView` seam is dead. The counter
+    separates them in one assertion, and it is a SEPARATE call from `EmitCues` rather than a side
+    effect of it, because the case worth detecting is exactly the one where `EmitCues` is handed
+    nothing.
+  - **THE TOUR GATE IS THE LOAD-BEARING MEASUREMENT OF THE DESIGN, AND IT WAS VERIFIED AGAINST THE
+    TREE RATHER THAN TAKEN FROM THE BRIEF.** A whole AI hand-over is ONE `ApplyView`:
+    `UStratMatchSubsystem::RunAiTurnsNow` loops turns synchronously and calls
+    `RefreshPresentation` exactly once, after the loop. The per-command surface is
+    `AdvanceAiPlaybackOneStep`, which voices the REEL -- a recording, not a diff. Ungated, every
+    AI event would sound twice. The gate REUSES `bTourExistenceHeld` rather than inventing a
+    second condition: it is raised only under `WillAiPlaybackRun()`, and it is raised ABOVE the
+    `RefreshPresentation` call (the existence-hold hoist), so it is already up on the very
+    `ApplyView` the gate must suppress. "Gate up, no tour" is unconstructable and audio inherits
+    that for free. At the shipped `AiPlaybackStepSeconds <= 0` -- every headless fixture -- the
+    gate is DOWN and one refresh voices one cue of each kind for the whole hand-over, which is
+    correct because there is nothing to synchronise to.
+  - **THREE DEATH-CUE HAZARDS, ALL CLOSED, AND THE FOURTH DELIBERATELY LEFT SILENT.** (1) First
+    reconcile: `bSeeded == false` emits nothing -- without it Ferrum Crossing's ten seeded units
+    all read as `FactoryBuiltUnit` on the opening refresh, and the one-per-kind collapse would
+    make that ONE wrong cue that sounds exactly like a right one. (2) Teardown:
+    `SoundMark = FStratSoundMark();` sits beside the existing `ReceiptMark` reset at both of the
+    two places, `Deinitialize` and `TearDownPresentation`. (3) Tour existence hold:
+    `ApplyTourExistenceAtCursor` HIDES rather than destroys and never calls `ApplyView`, so the
+    diff never sees those deaths; the cue is emitted there off the `HideAfterStep` half of the
+    visibility expression -- **not off `!bVisible`, because a unit can be invisible for not having
+    been BUILT yet** -- guarded by a `TSet<int32> AnnouncedDeaths` because that function is a pure
+    function of the cursor and re-runs every step. (4) `EndAiPlaybackTour` emits NOTHING: a skip is
+    reachable from any click or Esc, and five simultaneous death cues at the moment a player asks
+    to stop watching is worse than silence.
+  - **THE APPROVED PLAN'S SEVENTH CLICK SITE IS REFUSED, AND THE REFUSAL WAS RE-MEASURED HERE.**
+    `AStratPlayerController::ToggleProductionMenu` gets NO `ButtonClick`. A printable-string scan
+    of all eleven `Content/UI/*.uasset` files finds `RequestEndTurn` and
+    `OpenProductionMenuAtFocusedFactory` in `WBP_CommandBar`, `SkipGuidance` in
+    `WBP_DirectiveStrip`, `CloseProductionMenu` and `SubmitProductionChoice` in
+    `WBP_ProductionMenu`, `ExecuteRoute` in `WBP_TitleMenu`, and `ToggleProductionMenu` in NONE of
+    them. **The six found are the control for the seventh's absence** -- the instrument is shown
+    able to speak before its silence is read as evidence. Its only non-test caller is
+    `OnToggleProductionMenu`, the Enhanced Input handler. A key is not a button, which is the same
+    rule that keeps `OnEndTurn` out.
+  - **AN OBSERVATION, NOT WORK, AND NOT CHASED.** `WBP_MatchResult.uasset` contains no `CallFunc_`
+    string for any of the seven verbs; the same scan finds only `Array_Get_Item` in it. So the
+    end-of-match screen's controls reach no C++ verb in this tree today. Nothing in this pass
+    depends on that and nothing in this pass changes it.
+  - **A NAMED GAP RATHER THAN A FIX: AN ATTACK THAT KILLS OUTRIGHT SOUNDS ONLY `UnitDestroyed`.**
+    The defender leaves `FStratViewModel::Units` entirely -- `ApplyView`'s destroy loop is the
+    authority for that array being every LIVING unit -- so there is no HP fall to see and no
+    `UnitAttacked`. Deliberate: the death cue subsumes the hit, and synthesising a "was attacked"
+    for a unit that is gone would mean guessing a cause this layer cannot observe.
+  - **PLAYBACK IS 2D BY DECISION AND THE AFFORDANCE IS KEPT.** `AStratCameraPawn` is a spring-arm
+    camera, so attenuation would make the same event quieter purely because the player zoomed out;
+    and `FocusPlaybackStep` snaps the camera per tour step, so a spatialized cue armed before a
+    snap is heard after it, panned toward where the camera went. `FStratSoundEmission::UnitId` is
+    carried through to `FStratSoundEmissionRecord::UnitId` anyway, so with
+    `UStratMatchSubsystem::FindUnitActor` the reversal is ONE LINE inside `EmitCue`.
+  - **TWO PLACES THE BANK COMES FROM, AND THE DRIFT BETWEEN THEM IS NAMED IN BOTH HEADERS RATHER
+    THAN LEFT TO BE FOUND.** `FStratMatchConfig::SoundBank` (adopted in `StartMatchInternal`,
+    immediately after `ActiveConfig = Config` and before the first `ApplyView`) and
+    `AStratShellGameMode::SoundBank` (handed over in that class's `BeginPlay`, ABOVE all three of
+    its early returns, because a title screen that failed to configure its shell still draws its
+    menu). **This is `SaveSlotName`'s drift and it is STRICTLY WORSE:** that property's two copies
+    are reconciled in C++ -- `AStratShellGameMode`'s constructor derives it from
+    `FStratMatchConfig()`'s default -- and **an asset pointer has no C++ author to derive from**.
+    Nothing in this tree can make the two agree by construction, and the failure is not a wrong
+    restore but two maps with different-sounding buttons, which nobody files as a bug.
+    **DISCHARGED BY** a clause reading both Blueprint CDOs and asserting the two pointers equal.
+  - **THE DEBTS TAKEN ON, EACH WITH ITS DISCHARGE, EACH ALSO WRITTEN IN THE HEADER THAT OWNS IT.**
+    (a) The two-Blueprint bank drift above. (b) `UStratSoundDirector::Emissions` is UNBOUNDED for
+    the life of the world -- a ring buffer would silently drop the early records a first-reconcile
+    clause depends on; DISCHARGED WHEN a shipping build measures it as costing something, at which
+    point the cap belongs behind `#if !UE_BUILD_SHIPPING` around the recording rather than behind a
+    smaller buffer. (c) `UnitAttacked` names the DEFENDER only, because the attacker lives in
+    `FStratCombatOutcome`, which `StratBridge.h` says the bridge does not retain; DISCHARGED WHEN
+    the `bridge_event_list` ruling lands.
+  - **ONE DELIBERATE DEVIATION FROM THE DISPATCHED DESIGN, AND IT IS AN ADDITION.**
+    `FStratUnitSoundMark` carries FOUR fields, not three: `Side` was added beside `UnitId`, `Hex`
+    and `Hp`. `UnitDestroyed` is the only cue whose subject is ABSENT from the current model, so
+    the model cannot say whose unit died; without the field that cue's `Side` would be
+    `INDEX_NONE` and it CANNOT be recovered after the fact, because the unit is gone. It is stored
+    and compared nowhere, and both the struct doc and the `.cpp` say so, so the "what is stored is
+    exactly what is compared" property the struct is written around is stated with its one
+    exception named rather than quietly broken.
+  - **BUILD: GREEN, FIRST ATTEMPT, NO WARNINGS.** `Build.bat StratocracyEditor Win64 Development`
+    with the absolute project path; `Result: Succeeded`, 41 actions, 31.52 s. No linker diagnostic
+    of any kind, which is the evidence behind the zero-dependency claim above.
+
 - **2026-09-03, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `0b17685`, working tree clean at dispatch,
   UNCOMMITTED) -- THE OPEN `AiSides` QUESTION THIS RECORD FILED IS ANSWERED BY USER RULING, AND
@@ -6804,3 +7303,134 @@ does not restate either.
   Nothing about the constraint that governs that header is loosened: `StratBridge.h` remains
   forbidden there, forever, and `StratViewModel.h` is this module's own reflected header with nothing
   vendored behind it.
+
+#### The nine audio-milestone mutants, run in the engine lane, 2026-09-05
+
+- **`strat-test-author` wrote nine clauses and ran no mutant, correctly, and this is where that
+  work landed instead.** Every one of the nine one-liners edits a file outside `Source/*/Tests/`,
+  and the 2026-08-14 user ruling forbids that lane from editing outside its own directory *"for
+  any reason … explicitly including temporary edits the agent intends to revert."* So the
+  falsifiability evidence for that set is recorded here, in the lane that owns the files, over
+  base `089c79c`.
+- **Method, and the two hazards it was shaped around.** Each mutant was applied **in place** in
+  `E:\MultiAgent\Stratocracy` — a copied tree's cached `Intermediate/Build` makes a mutant a
+  silent no-op — with a full `Build.bat` between mutants, because a stale binary reports the old
+  behaviour green. Each run exported to its own `Saved/AutomationReport-M<N>/`, so the live report
+  was never overwritten by a red run. Anchors were applied by exact-string match with a hit-count
+  assertion, so a missed anchor is a hard stop rather than a green no-op — **which fired
+  immediately**: `StratShellSubsystem.cpp` and `StratShellGameMode.cpp` are CRLF while
+  `StratSoundDirector.cpp` and `StratOptionsWidget.cpp` are LF, and the first multi-line anchor
+  missed on the line ending alone. That is this repository's recorded per-file line-ending hazard
+  arriving in a new instrument; the mutator now translates every anchor to the file's own ending.
+- **All nine went red, each on real assertion failures rather than on a crash or a skip.** Seven
+  reddened exactly one clause; two reddened more, and both spreads are explainable rather than
+  loose:
+  - `RouteExitsProcess` → `return !RouteTravels(Route);` reddened
+    `TheOptionsRouteDoesNotExitTheProcess` **and** `ExecuteRouteOptionsRequestsThePanelOncePerCall`.
+    That is the defect's own shape, not a leak: once `Options` exits the process, `ExecuteRoute`'s
+    quit arm fires first and the options arm is never reached, so the panel request count stays 0.
+    The first clause's message is the one worth keeping — `route Options is exactly one of
+    travelling, exiting or options-opening (travels=0 exits=1 opens=1)` — because it names the
+    overlap directly instead of reporting a downstream absence.
+  - `bSettingsCameFromSlot = true;` unconditionally in `GetAudioSettings` reddened
+    `AMissingSettingsSlotAppliesUnityAndStillApplies` **and** the two clauses that assert the
+    *premise* of their own fixture: `CommittedVolumesRoundTripThroughASlot` ("premise: the writing
+    director has not loaded a slot") and `AbsentAudioSlotLoadsWithoutTouchingTheFile` ("the
+    director reports it loaded from a slot that does not exist; the premise of this clause is
+    broken"). Both refused to run on a director whose state contradicted their setup rather than
+    measuring through it — the shape this project has a standing lesson about, working.
+- **The early return is caught, and by exactly one clause.** `if (SoundBank == nullptr) return;`
+  at the top of `ApplyVolumes` — the return the whole design forbids — reddened
+  `ApplyVolumesRecordsEveryDisposition` and nothing else, on *`a worldless ApplyVolumes recorded 0
+  entries, not 1; nothing further was observed on this director.`* **The other three volume
+  clauses survive it**, which is a fact about the net rather than about the mutant: they each
+  drive a director that has a bank, so none of them can see a bank-shaped early return. One clause
+  is the whole net under that defect. Recorded so the next reader does not assume the four cover
+  each other.
+- **The unguarded `LoadGameFromSlot`, restored, reintroduced the noise — and the number moved.**
+  It reddened `AbsentAudioSlotLoadsWithoutTouchingTheFile` on its own capture-based assertion
+  (*`resolving an absent slot through the director names the file nowhere in the log (1 lines did)`*)
+  **and** took `succeededWithWarnings` from 0 to **113**. Of those, **111** carry
+  `LogStreaming: Failed to read file 'E:/MultiAgent/Stratocracy/Saved/SaveGames/StratocracyAudio.sav'
+  error.` and four are the audio fixtures' own named slots. **The figure recorded in
+  `GetAudioSettings`' own block is 109, and it is not wrong — it is stale**: it was measured over a
+  suite with fewer entries than this one carries, so the count tracks the SUITE SIZE and not the
+  defect. The live entry count is `global.md`'s to state and is deliberately not restated here.
+  Anyone re-measuring should compare *zero against non-zero*, never 109 against 113. This is the
+  second, independent signal that the `DoesSaveGameExist` guard is what silenced them: the clause
+  and the warning count move together and neither is derived from the other.
+- **The remaining six each reddened their own clause and nothing else**: dropping
+  `RequestOptionsPanel()` from `ExecuteRoute`'s options arm →
+  `ExecuteRouteOptionsRequestsThePanelOncePerCall`; emptying `AStratShellGameMode::EndPlay` above
+  `Super` → `TheTitleTrackIsReleasedWhenTheShellMapEnds`; dropping `SaveGameToSlot` from
+  `CommitVolumes` and returning true → `CommittedVolumesRoundTripThroughASlot`; building the
+  percent texts from the raw inputs → `OptionsModelTextRendersItsOwnClampedField`, which reports
+  *`it says '140%'; the stored field renders as '100%'`* and so names the clamp it lost; and a
+  `Broadcast` added to `PushAudioOptions` → `SeedingTheOptionsScreenCommitsNothing`, which caught
+  it on the seed AND on every subsequent count, so an off-by-one in either direction is visible.
+- **The exit code was measured on the failing runs first and is usable here.** Every red mutant
+  run exited **255**; the final clean run exited **0**. That is a control on a failing run before
+  the passing one, which is the order this project's record requires before an exit code may be
+  read as anything at all — and it is still not the verdict. The report is.
+- **The restore is verified by content, not by the fact that a restore ran.** sha256 was captured
+  before the first mutation and re-checked after the last:
+  `StratShellSubsystem.cpp` `f2119447…`, `StratSoundDirector.cpp` `d1ca1638…`,
+  `StratOptionsWidget.cpp` `630ff2e8…`, `StratShellGameMode.cpp` `f0d0b3f0…`, all four matching.
+  `StratShellGameMode.cpp` then took the prose correction below, so its only remaining delta from
+  the pristine bytes is a comment block — checked by diffing out every `//` line and finding
+  nothing left. `Saved/SaveGames/StratocracyMatch.sav` is also byte-identical (`c78b5af5…`) and no
+  `StratocracyAudio.sav` was created by any of the nine runs, including the two that read a slot
+  and the one that stopped writing one.
+
+#### The title component's ownership: a stated reason that was false, 2026-09-05
+
+- **`StratShellGameMode.h` argued for the whole `SpawnSound2D` shape on a premise this engine does
+  not honour, and the premise is now retracted in place rather than reworded.** It read *"the
+  component is owned by the audio device rather than by this actor's component list, so `EndPlay`
+  must stop AND destroy it explicitly … a non-owned one that nobody destroyed would outlive the
+  map."* Measured by `Stratocracy.StratPlay.GATE-TITLEMENU.TheTitleTrackIsReleasedWhenTheShellMapEnds`:
+  `DIAG outer=StratShellGameMode_1 owner=StratShellGameMode_1 registered=1 ownedCount=1`.
+  `UGameplayStatics::SpawnSound2D` outers **and** owns the component to the spawning actor and
+  registers it; it is that actor's only owned component, so actor teardown *would* reach it.
+- **What survives the correction, because half the sentence was carrying real weight.**
+  `bAutoDestroy=false` is the load-bearing half: with the engine default the component frees
+  itself and nulls the member, which reads identically to a correct release and is not one. So
+  `EndPlay` remains the one place that stops the track and drops the handle, and the code is
+  **unchanged** — `Stop()` then `DestroyComponent()` then null, then `Super`. What changed is the
+  claim's strength: those two calls are belt-and-braces and a statement of intent, not the only
+  thing between a menu track and a match map. Relying on teardown order for a guarantee this class
+  is the one making is still refused.
+- **The retraction is written as a `RETRACTED>` block quoting the old words**, on this file's own
+  precedent in `ExecuteRoute`, so a reader who arrives holding the old sentence — it travelled: it
+  was repeated in a brief to the test lane and in that lane's own record — lands on the reason it
+  is wrong instead of on a silently different paragraph. `StratShellGameMode.cpp`'s `EndPlay`
+  comment carried the same premise ("relying on the audio device's teardown order") and is
+  corrected to match. ~~Nothing outside those two files in `Source/` repeats it; the two
+  remaining copies are in `Source/StratPlay/Tests/StratTitleMusicLifecycle.cpp` and are that
+  lane's.~~ **CORRECTED 2026-09-05, see the next entry — that sentence was true of the file set
+  and false of the file. The `.h` is one of "those two files" and repeated the premise TWICE
+  MORE, at the paragraph the retraction is about and at the `EndPlay` declaration.**
+
+#### A caveat about expected-message declarations that is bigger than this pass, 2026-09-05
+
+- **An unfulfilled `AddExpectedMessagePlain(…, Occurrences = 1)` does not fail its clause in this
+  engine.** Measured by `strat-test-author` and recorded in `tests.md`; the consequence reaches
+  this lane, so it is restated here rather than left one file away. **Any clause anywhere in this
+  tree that uses an expected-message declaration as proof that a path RAN is resting on nothing.**
+- **What I know of, asked and answered rather than audited.** There are **128**
+  `AddExpectedMessage*` calls in `Source/`, and **every one of them is under a `Tests/`
+  directory** — none in shipping code. So nothing I own has its *implementation* shaped around the
+  mechanism. What shipping code could have done — and deliberately does not — is make a log line
+  the only observable of a path: `UStratSoundDirector::ApplyVolumes` appends its
+  `FStratVolumeApplicationRecord` **before** it decides anything, `UStratShellSubsystem`
+  counts `OptionsPanelRequestCount` separately from `bOptionsPanelOpen` precisely because a flag
+  that was already true records nothing about a call, and every shell refusal returns its reason
+  through `OutFailureReason`. Those are state observables, and none of them depends on a log line
+  being captured, matched or declared. **The one place I found the assumption stated as an
+  assertion is a comment in the test lane, and it is filed as a handoff rather than fixed here.**
+- **The mutant evidence bears on it, which is why it belongs in this entry.** The clause carrying
+  that comment, `AbsentAudioSlotLoadsWithoutTouchingTheFile`, went red under the restored
+  unguarded load on a **capture-count assertion**, not on the declaration — so the clause's
+  falsifiability does not rest on the unreliable mechanism even though its stated reason for the
+  control does. The prose is wrong about *why* it works; the clause works. Those are two separate
+  findings and collapsing them would cost the second one.

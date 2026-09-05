@@ -11,6 +11,163 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-05 (THE GAME HAS A VOICE, AND THE THING WORTH READING IS THAT THE ONE MUTANT
+THAT SURVIVED DID NOT REVEAL A WEAK MUTANT BUT A CONTROL SATISFIED THROUGH THE WRONG CHANNEL --
+`AdvanceAiPlaybackOneStep` emits from TWO call sites and only one is behind the slide gate, so a
+clause asserting "the tour made some sound" stayed green while every command cue was silenced,
+kept true by the death cues alone. The clause was rebuilt to count the command cues separately
+rather than reported as a limit, and its header records the survived run rather than reading as
+if it had always worked.
+The suite is **422/422**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings.
+THE COUNT MOVED 389 -> 422: **+33 added, 0 removed, 0 state changes**, in three steps -- +19 for
+the cue-clause phase (10 in `StratSoundCueClauses.cpp`, 9 in `StratSoundDirectorCallSite.cpp`),
++5 for the shipped-asset phase (`StratShippedSoundBankParity.cpp`), and +9 for the title-music
+and volume-screen phase (across `StratShellOptionsRouteClauses.cpp`,
+`StratTitleMusicLifecycle.cpp`, `StratAudioVolumeClauses.cpp` and `StratOptionsModelClauses.cpp`).
+This seat read 422 entries directly out of `Saved/AutomationReport/index.json` with `utf-8-sig`
+and counted 24 `GATE-AUDIO.` names and 6 `GATE-AUDIO-SETTINGS.` names, confirmed every entry
+`Success` and zero with warnings, rather than accepting any lane's figure. 389 + 19 + 5 + 9 = 422.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.05-16.43.13`.
+A COMMENT-ONLY EDIT TO A TEST-DEFINING `.cpp` OWES A SUITE RE-RUN, AND THIS MILESTONE PAID IT
+TWICE -- stated as a rule rather than as the history of which report superseded which, because
+that history has rotted twice already in this file. `strat_banner_sweep.py`'s REPORT IDENTITY
+check fires on `newest_test_mtime > report_mtime`, comparing against the report FILE'S OWN
+mtime, and `read_macro_census` populates `newest_test_mtime` ONLY from `.cpp` files carrying an
+`IMPLEMENT_*_AUTOMATION_TEST` macro. So a HEADER is dropped by the EXTENSION test before the
+macro test is ever reached and is exempt even if a compiled byte moved; a COMMENT in a `Tests/`
+file reddens the sweep and forces a re-run. The record asserted both of those wrong before
+anyone read the script -- once as "reddens on any source touch", once as "ignores source mtimes
+entirely" -- and the dangerous direction is the second, which would license trusting a stale
+report after editing a test file.
+NO RUNNING LIST OF SUPERSEDED REPORTS IS KEPT HERE, DELIBERATELY -- the single predecessor named
+just above is named because the REASON for that re-run is itself worth recording, not to start a
+chronology. The export path is one file
+and every run overwrites it, so each of this milestone's earlier reports is gone and a
+reader cannot open any of them. An earlier draft of this banner did keep that list, and it
+had to be corrected on FOUR CONSECUTIVE GATE ROUNDS as it grew -- a running history of
+identities is a claim that acquires a new way to be wrong every time a suite runs, and
+suites run often. What is durable is stated instead: the count reached 422 from 389 in
+three additions, +19 then +5 then +9, and those additions are the ONLY movement in the
+figure across the whole milestone. Everything else that moved was WHAT THE FIGURE WAS
+MEASURED AGAINST -- no audio assets, then assets with no clause reading them, then the
+shipped-asset clauses, then the base sound mix declared in `Config/`, then the title-music
+and volume-screen C++ with its nine clauses.
+WHAT THE PASS BUILT. Seven sound cues -- button click, turn ended, unit moved, unit attacked,
+unit destroyed, factory built a unit, match ended -- as a world-free decider in `StratUI`
+(`StratSoundCues.h/.cpp`, shaped as `StratTransientReceipts.h`'s sibling) plus a recording
+player in `StratPlay` (`UStratSoundDirector`, a `UWorldSubsystem`) and a `UStratSoundBank`
+`UDataAsset` reached through TWO C++ properties -- `FStratMatchConfig::SoundBank` and
+`AStratShellGameMode::SoundBank` -- which are carried on THREE Blueprint defaults, because
+`BP_StratGameMode_AiVsAi` sets the match config too. (Two C++ headers say "two Blueprints" and
+are short by one; that is the engineer's lane and `tests.md` records it.)
+[STAMPED 2026-09-05: AT THIS PHASE no sound asset existed and none was set, so the whole C++ half
+was green with every cue recording `Disposition == NoBank` -- the property that keeps the clauses
+sharp under `-nullrhi` where nothing can be heard. THE ASSET PASS BELOW CHANGED BOTH HALVES OF
+THAT, and this sentence is kept only to say what the C++ phase was measured against.]
+ZERO NEW MODULE DEPENDENCIES, and that is a measured claim rather than an omission -- `Build.bat`
+returned `Result: Succeeded` on the first attempt with no diagnostic of any kind. A MetaSound is
+a `USoundBase` at runtime, so the bank's slots are typed `USoundBase` and nothing in the C++
+names a plugin type; `StratPlay.Build.cs` records the argued absence in its existing NOTE ON
+WHAT IS NOT HERE list.
+THE ROUTE WAS A USER CHOICE AND IS RECORDED AS ONE. The same ambiguity stands as the two passes
+below -- both slot branches are merged and no wave was in flight, but `git worktree list` still
+shows seven worktrees. Both routes were offered with their costs named: dispatch is slower and
+rests on a brief this seat cannot check against the conversation, and briefs from this seat have
+been measured wrong before. THE USER CHOSE DISPATCH, and the brief was in fact wrong in five
+places -- four line references and one clause specified against a surface that does not exist --
+each caught by a lane against the tree. Obligation (1) is unfalsifiable from a checkout, as
+`CLAUDE.md` declares: this banner SAYS both routes were offered and no instrument here can
+confirm it.
+NO EXCEPTION CLAUSE WAS INVOKED AND NONE WAS NEEDED. `strat-gameplay-engineer` wrote all
+`Source/` outside `Tests/` and its own `engine.md`; `strat-test-author` wrote both `Tests/` files
+and its own `tests.md`; `strat-data-steward` authorized `GATE-AUDIO` here. This seat wrote no
+code and no clause. This entry is not a transcription of anything.
+CARRIED DEBT, INSTRUMENT, OPEN. Two properties of the AI playback tour are NOT pinned and are
+not pinnable from the public surface. (a) The per-step kind mapping (Move/Attack/Build/EndTurn
+-> one cue, one cue, one cue, none) needs `GetAiPlaybackStepAt(int32)` on
+`UStratMatchSubsystem`; `AiPlaybackReel` is private and the module publishes step COUNTS only.
+The clause that stands asserts the strongest observable form instead. (b) `Deinitialize`'s
+`SoundMark` reset is unobservable, because it runs as the world dies and the director holding
+the record dies with it -- the identical gap `StratTransientReceiptCallSite.cpp` already records
+for the receipts' own mark. Neither is a defect in the shipped code; both are limits of what a
+clause can see.
+THE ASSET PASS LANDED THE NEXT DAY, 2026-09-05, AND IS RECORDED IN `content.md` RATHER THAN
+RESTATED HERE. Seven `MetaSoundSource` cues, a class/submix/mix set, a concurrency asset and
+`DA_StratSoundBank` now exist under `/Game/StratAudio`, and all three shipped GameMode Blueprints
+name the bank -- verified in a COLD commandlet process that wrote nothing. The suite was re-run
+against that tree and did NOT move, which was itself the finding: the fixtures build their own
+`FStratMatchConfig` and never read the shipped Blueprint, so the `NoBank` clauses still held and
+the bank-is-set path was exercised by nothing. THE SHIPPED-ASSET CLAUSES CLOSED THAT, and the
+lane found the gap was wider than this seat had put it -- THREE of `EmitCue`'s five dispositions
+(`Played`, `NoSoundConfigured`, `SuppressedByCooldown`) appeared nowhere in `Source/` outside a
+display-only `switch`, so THE ENTIRE PLAY ARM WAS DELETABLE WITH THE SUITE STAYING GREEN. It is
+now reached: one clause drives the shipped bank through a real director and reads `Played` back.
+`SuppressedByCooldown` REMAINS UNPINNED and is recorded as such -- it compares against
+`UWorld::GetTimeSeconds`, and a fixture world is never ticked, so a second emission would
+measure the fixture's frozen clock rather than the bank.
+THE `Config/` HALF IS ONE KEY, AND THE STEWARD MADE IT SMALLER THAN THE PLAN ASKED FOR.
+`[/Script/Engine.AudioSettings] DefaultBaseSoundMix` names `SMX_Strat_Base`, and the reason is
+traced through engine source rather than taken from a doc comment: `SetSoundMixClassOverride`
+writes only into `SoundMixClassEffectOverrides`, which is read only by `ApplyClassAdjusters`,
+which runs only over mixes present in `SoundMixModifiers` -- and nothing in `Source/` pushes a
+mix today, so `DefaultBaseSoundMix` is the ONLY route by which the coming volume screen's
+overrides can have any effect at all. `DefaultSoundClassName` and `DefaultSoundConcurrencyName`
+were DECLINED and the refusal recorded in `decisions.md`: both are project-wide with no
+per-directory scope, would capture the vendored toolkit's own sounds, and no acceptance ID in
+this milestone asks for them. The full trace is in `data.md` and is not restated here.
+STILL NOT AUDIBLE, AND NOTHING HERE CLAIMS OTHERWISE. A commandlet has no audio device. Nothing
+in this milestone so far proves an envelope opens or that any voice is not silent -- and
+`content.md` records the control that makes the point sharp, a deliberately EMPTY MetaSound whose
+`build_to_asset` returned `SUCCEEDED` exactly as the seven real ones did. A human at the keyboard
+is the only instrument, and the listening pass is owed.
+TITLE MUSIC AND THE VOLUME SCREEN NOW HAVE THEIR C++, AND ONE OF THEM UNCOVERED A BUG NOTHING
+COULD HAVE CAUGHT. `ExecuteRoute`'s quit arm was reached by `!RouteTravels(Route)` under a
+comment calling it "the only non-travelling route" -- an inference, not a fact, equating "opens
+no level" with "exits the process". A second non-travelling route would therefore HAVE QUIT THE
+GAME WHEN A PLAYER ASKED FOR THE VOLUME SCREEN, invisibly: every clause over `RouteTravels`
+stays green, `QuitGame` is unobservable under `-nullrhi`, and the menu model would still have
+been right. `RouteExitsProcess` and `RouteOpensOptions` are now separate predicates and
+`RouteTravels` is a total switch, because it had been answering by exclusion and a new
+enumerator's default answer was "travels".
+AND THE SUITE'S OWN SUMMARY CAUGHT A SECOND ONE THE ENTRY COUNT HID. That pass reported the
+count unmoved at 413, which was true, while the summary fields moved from `succeeded 413,
+succeededWithWarnings 0` to `304 / 109`: the settings-slot load logged
+`LogStreaming: Failed to read file 'StratocracyAudio.sav'` on every world-creating test, which
+is every fresh checkout, every CI run and every player's first launch. An existence guard now
+silences the ABSENT case only, so anything loud before is provably still loud. READ ALL FOUR
+SUMMARY FIELDS, NOT THE ENTRY COUNT -- this record already carried that the log undercounts by
+one, and now carries this too.
+EVERY ONE OF THE NINE NEW CLAUSES HAS A RED RUN, AND THE MUTANT PASS TAUGHT MORE THAN IT
+PROVED. `strat-test-author` wrote the nine and correctly ran NONE of them: each mutant edits a
+file outside `Source/*/Tests/`, which a 2026-08-14 user ruling forbids that lane "for any reason
+... explicitly including temporary edits the agent intends to revert". `strat-gameplay-engineer`
+ran all nine in its own lane, in place, rebuilding between each. Three results are worth
+carrying: (1) THE ANCHORS ASSERTED THEIR OWN HIT COUNT, and the very first multi-line anchor
+missed -- this tree's per-file line endings differ, two of the four mutated files being CRLF and
+two LF -- so without that check one mutant would have built green and been RECORDED AS RUN while
+changing nothing. (2) The `ApplyVolumes` early return, the defect the whole design forbids,
+reddens EXACTLY ONE clause; the other three volume clauses each drive a director that has a
+bank and are blind to it, so they do not cover each other. (3) Restoring the unguarded slot load
+brought the warnings back as 113, not the 109 measured earlier -- the figure tracks SUITE SIZE,
+not the defect, so the comparison is ZERO AGAINST NON-ZERO and never one count against another.
+The exit code was itself controlled: all nine failing runs exited 255 against the clean run's 0.
+AND ONE FINDING FROM THAT PASS WAS ITSELF AN OVERCLAIM, CORRECTED BY THE LANE THAT MADE IT. It
+was recorded that an unfulfilled `AddExpectedMessagePlain(..., Occurrences = 1)` does not fail
+its clause, generalised to "any clause using one as evidence that code RAN is resting on
+nothing". `Runtime/Core/Private/Misc/AutomationTest.cpp` falsifies the generalisation:
+`InternalStopTest` computes `bTestSuccessful && !HasAnyErrors() && HasMetExpectedMessages()`,
+and `&&` SHORT-CIRCUITS -- so the declaration is a real assertion on a clause that would
+otherwise pass, and is skipped only on one that is ALREADY RED. The original measurement was
+taken on an already-failing clause, the single state in which the engine never reaches the
+check, and two clauses in the same directory had already measured it working. THE MECHANISM IS
+CONDITIONAL, NOT ABSENT.
+WHAT IS STILL OWED. No clause covers the content half; the steward has ruled the two names
+they will take -- `GATE-TITLEMENU` for the `Options` route and title music, and the newly minted
+`GATE-AUDIO-SETTINGS` for the settings slot, the mix application and the options widget. No
+title-music asset exists, no `WBP_Options` exists, and `GATE-AUDIO` still covers the seven-cue
+clauses ONLY.)
+
 _Last run 2026-09-04 (`Difficulty`'S OWNER IS PINNED, AND THE THING WORTH READING IS THAT THE
 DEBT THE BANNER BELOW LEFT OPEN NAMED ITS TWO INSTRUMENTS CORRECTLY AND THEN SENT THEM TO THE
 WRONG LANE -- it called the override reader "library work, not in `Source/*/Tests/`, and
@@ -29,15 +186,40 @@ STILL needs a dispatch afterwards for the record entry. THE USER CHOSE DISPATCH.
 clause was invoked and none was needed. Obligation (1) of that clause is unfalsifiable from a
 checkout, as `CLAUDE.md` declares: this banner SAYS both routes were offered, and no instrument
 in this tree can confirm that they were.
-The suite is **389/389**, every entry Success, zero failed, zero notRun, zero
-succeededWithWarnings.
+[STAMPED 2026-09-04] The suite WAS **389/389**, every entry Success, zero failed, zero
+notRun, zero succeededWithWarnings, at the time of the pass this banner describes. The
+LIVE figure is the audio pass's, in the banner above this one.
 THE COUNT MOVED 388 -> 389 AND THE NEW CLAUSE IS AN ADDITION: **+1 added, 0 removed, 0 state
 changes**, measured by set difference on the test MACRO with one collector run over both sides
 -- the worktree and `HEAD` -- and the tree's and the report's name sets are equal in BOTH
 directions. The new name was verified PRESENT IN THE REPORT BY NAME rather than inferred from
 the delta: `Stratocracy.StratPlay.T-FAME-02.ShippedGameModeInheritsDifficultyFromCpp`. No name
 was retired; the two clauses beside it were edited in their prose only and both remain.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.04-16.30.20`.
+THE LIVE FIGURE'S REPORT WAS `reportCreatedOn 2026.09.04-16.30.20`. [STAMPED 2026-09-04:
+THAT REPORT NO LONGER EXISTS AND A READER CANNOT OPEN IT.
+`Saved/AutomationReport/index.json` is the export path and every run OVERWRITES IT IN
+PLACE; the audio pass's phase-A suite run replaced it with `reportCreatedOn
+2026.09.05-03.53.31`.
+-- [STAMPED 2026-09-05: `03.53.31` IS GONE TOO, overwritten by every run since, and NO COUNT OF
+THOSE RUNS IS KEPT HERE. This stamp did keep one and it was stale within a day -- it named four
+supersessions where six had happened -- which is the same defect, at the same file, that the
+head banner's own chronology was deleted for. TAKE THE LIVE REPORT FROM THE BANNER'S OWN
+CITATION AT THE HEAD OF THIS FILE, never from this sentence and never from a number in it.
+THE OFFSET IS MEASURED HERE SO THAT NOBODY DERIVES IT WRONG. `reportCreatedOn` IS UTC;
+THIS RECORD'S DATES ARE LOCAL; THE OFFSET IS FOUR HOURS. The instrument is not
+self-confirming: `index.json`'s UTC mtime equals its own `reportCreatedOn` to the second
+while its LOCAL mtime does not, on a box reporting Eastern time at -04:00. So `03.53.31`
+is local 2026-09-04 23:53:31 -- six minutes and twenty-nine seconds before midnight, and
+therefore falls on the day the outer stamp is dated -- while `04.55.48` is local
+2026-09-05 00:55:48 and does not.
+An earlier and much longer form of this stamp, which recounted its own successive wordings,
+was DELETED rather than amended again; `Tools/architect/gate_reports/` holds that history
+and a stamp is not the place for it.]
+-- `03.53.31` read 389 entries, all Success, zero failed, zero notRun, zero
+succeededWithWarnings, read from that file by this seat with `utf-8-sig`. THE FIGURE ABOVE
+IS UNCHANGED AND IS TRUE OF BOTH RUNS; what is stale is only which report backs it. The
+two runs are not the same tree -- the later one carries the audio pass's C++ and no
+`Tests/` file differs between them, which is why the count did not move.]
 THE RUN WAS MADE BY `strat-test-author` IN THIS TREE, NOT IN A WORKTREE, AFTER THE LAST SOURCE
 CHANGE, AND THIS SEAT DID NOT ACCEPT THE LANE'S REPORTED FIGURE. It opened
 `Saved/AutomationReport/index.json` in this tree with `utf-8-sig` and read `reportCreatedOn`,
@@ -4306,6 +4488,123 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-09-05, STRAT-DATA-STEWARD -- SECOND ACCEPTANCE ID RULING FOR THE AUDIO MILESTONE, COVERING
+  THE PHASE `GATE-AUDIO` DELIBERATELY DEFERRED ON 2026-09-04: THE OPTIONS ROUTE, THE VOLUME
+  SETTINGS SAVE SLOT, THE MIX APPLICATION, AND TITLE MUSIC. TWO NAMES ARE USED AND NEITHER IS
+  `GATE-AUDIO` WIDENED. RECORD-ONLY; NO SOURCE, NO TEST, NO ASSET AND NO CONFIG FILE WAS TOUCHED;
+  NO SUITE WAS RUN AND NO SUITE FIGURE MOVES -- the live figure is the one this file's banner
+  cites, above.** `strat-gameplay-engineer` is building the C++ this ruling covers in a parallel
+  session; no file it will write yet exists in this tree, so this ruling is by SUBJECT, not by
+  filename, exactly as the 2026-08-29 wave rulings did for work not yet built.
+  - **RE-DERIVED, NOT EXTENDED FROM THE 2026-09-04 RULING.** That ruling's own convention statement
+    was re-applied here rather than cited as authority: `Tools/architect/gdd_snapshot/Stratocracy_Prototype_GDD.md`
+    was grepped again for `T-[A-Z]+-\d+` near `settings|mix|submix|options|route|GameMode` and for
+    the settings-screen sentence itself. Sec 2.11.5's full sentence reads: *"That is the complete
+    screen list for the prototype: title/menu, briefing, match, result. No settings screen beyond
+    volume + resolution is budgeted (Enhanced Input remap is a polish item)."* Two facts follow
+    from its own wording, not from inference: (a) it is a budget sentence, not an acceptance
+    criterion -- no `T-` ID's defining text (Sec 4.7, Sec 4.11) has a settings screen, a save slot,
+    a mix bus or a sound class in its subject, measured the same way the 2026-09-04 ruling measured
+    it for cues; (b) **the settings/options screen is explicitly NOT one of the four screens Sec
+    2.11.5 names as "the complete screen list."** That second fact matters: it is why this ruling
+    does not fold the whole phase into `GATE-TITLEMENU` by adjacency, and instead asks per subject
+    which of the two existing local names, if either, already owns it.
+  - **NO EXISTING `T-` ID OWNS THE SAVE SLOT, CHECKED RATHER THAN ASSUMED.** `T-SAVE-01..07` are
+    §4.10's canonical-hash / replay-log domain -- `T-SAVE-04` is the header-refusal-without-
+    applying-a-command clause, `T-SAVE-06` is *"the one clause asserting that a slot written at
+    another tier is refused"* (this file's own 2026-08-29 W7 ruling, above) and is already ridden
+    by `Source/StratBridge/Tests/StratBridgeRestoreParity.cpp`'s cross-tier refusal. Read against
+    the brief: a missing `UStratAudioSettings` slot is asked to yield unity gains **and still
+    record that it applied**, which is a graceful-default behaviour on an ABSENT slot, not a
+    refusal on a VERSION-MISMATCHED one -- the opposite shape from `T-SAVE-06`'s own subject, and
+    a different `USaveGame` subclass in a different slot besides. `T-SAVE-06` does not own it, and
+    no other `T-SAVE-*` ID's text comes closer. **A local `GATE-` name is this project's standing
+    convention for exactly this shape.**
+  - **TWO NAMES, SPLIT BY SUBJECT THE SAME WAY THE 2026-08-29 RULING SPLIT W7 ACROSS THREE
+    EXISTING IDS RATHER THAN MINTING ONE FOR THE WHOLE WAVE.**
+    - **`GATE-TITLEMENU` -- the fifth `EStratShellRoute` arm and the title-music lifecycle on
+      `AStratShellGameMode`.** `GATE-TITLEMENU`'s own authorizing text, above, already reads *"THE
+      SCREEN AND ITS ROUTES CARRY NO ACCEPTANCE ID AND RIDE `GATE-TITLEMENU`"* and *"no acceptance
+      ID in the GDD has a screen, a navigation route or a default map in its subject."* A new
+      `Options` arm that does not travel is a route on the same enum that ID already covers, full
+      stop -- not an adjacency call. Title music played and stopped by `AStratShellGameMode` is
+      the SAME class and the SAME lifecycle (`BeginPlay`/`EndPlay`) `GATE-TITLEMENU` already
+      reasons about for the screen itself; it is screen behaviour, not cue-reaction, so it does not
+      ride `GATE-AUDIO` either. Clauses under it take the shape
+      `Stratocracy.<Module>.GATE-TITLEMENU.<Clause>`, consistent with the name's existing use.
+    - **`GATE-AUDIO-SETTINGS` -- NEW, MINTED HERE. `UStratAudioSettings`'s own save slot and its
+      defaults/clamp, `UStratSoundDirector::ApplyVolumes`'s `SetSoundMixClassOverride` calls
+      against `SMX_Strat_Base` and the three sound classes, and `UStratOptionsWidget`'s
+      push-model setters.** These are three facets of one domain -- volume state, PERSISTED,
+      APPLIED through the mix, and PRESENTED on a widget -- not three subjects competing for
+      different IDs, the same reasoning `GATE-AUDIO` and `GATE-BUILDMENU` already rest on for
+      spanning `StratPlay` and `StratUI`. It is a NEW name and not `GATE-AUDIO` widened, because
+      `GATE-AUDIO`'s own authorizing text scopes itself to *"audio presentation reacting to the
+      view model"* -- cue selection and playback -- and was pinned to three named files precisely
+      so it would not be read as a grant over the wider audio domain. Settings persistence and mix
+      override are a different technical fact from cue-reaction, and the file set is disjoint
+      (none of `GATE-AUDIO`'s three named files is a settings, mix or widget file). Clauses under
+      it take the shape `Stratocracy.<Module>.GATE-AUDIO-SETTINGS.<Clause>`.
+  - **THE MIX TREE ABOVE `SCL_Strat_SFX` IS NAMED BUT NOT RULED ON, on the same standard the
+    2026-09-04 ruling used for the phases it deferred.** The dispatching task notes
+    `strat-test-author` explicitly scoped the parent-class/default-submix/`SMX_Strat_Base` mix
+    tree OUT of phase D rather than silently widening its own scope. This ruling does not widen it
+    either. If a clause for it is written, it rides `GATE-AUDIO-SETTINGS` by the same reasoning
+    above (it is the same mix-application facet), but no clause exists yet and none is quantified
+    over here.
+  - **WHAT THIS RULING DOES NOT DO.** It mints no acceptance ID and claims none. It files no
+    upstream mint. It does not widen `GATE-AUDIO`, whose three named files and cue-reaction subject
+    are unchanged. It does not touch the banner above, which is this seat's to leave alone today.
+    It authorizes no code, no test and no asset, all of which stay in the lanes `CLAUDE.md` already
+    assigns them to.
+
+- **2026-09-04, STRAT-DATA-STEWARD -- ACCEPTANCE ID RULING FOR THE AUDIO WORK, DISPATCHED BY THE
+  USER'S OWN TASK NAMING THIS PHASE A′ OF AN APPROVED AUDIO MILESTONE. `GATE-AUDIO` IS AUTHORIZED.
+  ONE LOCAL NAME, NO ACCEPTANCE ID MINTED AND NONE CLAIMED. RECORD-ONLY; NO SOURCE, NO TEST, NO
+  ASSET AND NO CONFIG FILE WAS TOUCHED; NO SUITE WAS RUN AND NO SUITE FIGURE MOVES -- the live
+  figure is the one this file's banner cites, above.** The dispatching task proposed `GATE-AUDIO`
+  as a placeholder and asked that it be checked against the tree rather than adopted on say-so;
+  it is checked here and turns out to be the right shape, for the reasons below, so it stands as
+  proposed and not by default.
+  - **NO `T-` ID'S OWN TEXT OWNS AUDIO, MEASURED RATHER THAN ASSUMED.** `Tools/architect/gdd_snapshot/Stratocracy_Prototype_GDD.md`
+    was grepped for `audio|sound|music|SFX|volume` and for every `T-[A-Z]+-\d+` occurrence. The
+    only hit on the first search that is a GDD RULE rather than a citation elsewhere in this
+    project's own record is Sec 2.11.5's screen-list sentence: *"No settings screen beyond
+    volume + resolution is budgeted."* That sentence budgets a settings screen; it does not
+    state an acceptance criterion, and no acceptance ID's own defining text (Sec 4.7's Stub
+    table, Sec 4.11's list) has audio, sound, music or a mix bus in its subject. A local `GATE-`
+    name is therefore this project's standing convention for exactly this shape -- a specified
+    surface with no ID -- with `GATE-BUILDMENU`, `GATE-INFOPANEL`, `GATE-TITLEMENU`,
+    `GATE-MAPMARKERS`, `GATE-AITURN` and `GATE-TRANSIENT` the precedents already in this tree,
+    each authorized the same way: by a ruling here, minting no acceptance ID, claiming none.
+  - **ONE ID, NOT FOUR, FOR THE SAME REASON `GATE-TRANSIENT` COVERS TWO UNLIKE FACTS AND
+    `GATE-BUILDMENU` COVERS CLAUSES SPREAD ACROSS `StratUI`, `StratBridge` AND `StratPlay`.**
+    The decider's logic (`StratUI`'s `StratSoundCues.h/.cpp`), the recording player's call sites
+    (`StratPlay`'s `UStratSoundDirector`) and the shipped `UStratSoundBank` asset's parity are
+    three technical facets of one unowned domain -- audio presentation reacting to the view
+    model -- not three separate subjects competing for different IDs. The precedent for one
+    local name spanning modules and test files is already in this tree; splitting audio into
+    per-file IDs would be a distinction this record has not drawn for any other `GATE-` name.
+  - **THIS RULING IS PER SUBJECT AND STATES NO QUANTIFIER OVER A CLAUSE SET THAT DOES NOT YET
+    EXIST**, on the standard the 2026-08-29 W4/W5/W6/W8 ruling above set for itself. `GATE-AUDIO`
+    is authorized for exactly three named files: `Source/StratUI/Tests/StratSoundCueClauses.cpp`,
+    `Source/StratPlay/Tests/StratSoundDirectorCallSite.cpp` and
+    `Source/StratPlay/Tests/StratShippedSoundBankParity.cpp`. Clauses under it take the shape
+    `Stratocracy.<Module>.GATE-AUDIO.<Clause>`.
+  - **WHAT THIS RULING DOES NOT COVER, NAMED SO IT IS NOT READ AS A WIDER GRANT.** The later
+    phases named in the dispatching task -- a sound class/submix mix, title music, and an
+    options screen with three volume sliders backed by a `USaveGame` -- have no clause proposed
+    yet, and by this record's own standard an omission is a gap and not a grant. Whether that
+    work rides `GATE-AUDIO`, rides `GATE-TITLEMENU` (the existing screen-list name, since Sec
+    2.11.5's volume+resolution sentence is that section's own budget), or needs a new name is
+    undecided and is left for the ruling that has an actual clause set in front of it to reason
+    about, exactly as the 2026-08-29 ruling above declined to rule on W2's, W3's or W7's clause
+    sets sight-unseen.
+  - **WHAT THIS RULING DOES NOT DO.** It mints no acceptance ID and claims none. It files no
+    upstream mint. It touches no other `GATE-` name and widens none of them. It is a naming
+    ruling only; it authorizes no code, no test and no asset, all of which stay in the lanes
+    `CLAUDE.md` already assigns them to.
 
 - **2026-09-02, THE `coordinator` (ACTING under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE; WRITING
   THIS FILE IN LANE, AND `content.md` UNDER ITS FALLBACK CONDITION) -- W8 IS NOW COMPLETE

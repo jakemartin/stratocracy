@@ -19,9 +19,12 @@
 // does not list this screen at all.
 //   THE CONSEQUENCE, SAID PLAINLY: the route set below is OURS and is not the GDD's.
 // Nothing here is derived from a design sentence, because there is no design sentence. The
-// four routes are derived from CAPABILITIES THAT ALREADY EXIST IN THIS TREE and would
+// five routes are derived from CAPABILITIES THAT ALREADY EXIST IN THIS TREE and would
 // otherwise stay unreachable -- level travel to a seeded match (`AStratGameMode::BeginPlay`),
-// `UStratMatchSubsystem::LoadMatchFromSlot`, and process exit. This is the same species of
+// `UStratMatchSubsystem::LoadMatchFromSlot`, process exit, and (since the audio milestone's
+// phase G) `UStratSoundDirector::CommitVolumes`. The GDD's silence is unchanged by the fifth:
+// the ONE sentence quoted above is still the only place §2.11.5 mentions this screen, and it
+// mentions settings only to say how little of one is budgeted. This is the same species of
 // declaration `StratMatchResultWidget.h` makes about its faction binding: a decision the
 // design declined to make, made here so a screen can be drawn, and labelled so a reader can
 // see whose decision it was. IF §2.11 EVER SPECIFIES THE MENU, THIS ENUM DEFERS TO IT.
@@ -83,8 +86,10 @@
 // UNAVAILABLE OPTIONS ARE GREYED AND NAMED, NEVER HIDDEN, and that is §2.11.5's own rule
 // applied to a second surface: "Unaffordable rows are greyed with the shortfall named ...
 // never hidden -- the price list is also the strategy lesson." `FStratShellOption` therefore
-// carries `bEnabled` AND `DisabledReason`, and `BuildMenuModel` returns all four routes in a
-// fixed order in every state. A WBP that dropped a row would be contradicting that sentence.
+// carries `bEnabled` AND `DisabledReason`, and `BuildMenuModel` returns EVERY declared route in
+// a fixed order in every state -- stated as a quantifier rather than as a numeral because this
+// one IS restated a third time in `FStratShellMenuModel` and in the clause file, and three
+// copies of a count is where the enum's own deliberate numeral stops being worth the risk. A WBP that dropped a row would be contradicting that sentence.
 //
 // ZERO WIDGET-SIDE ARITHMETIC (T-UI-03's clause, third surface). Every string and every bool
 // a menu WBP draws is a field on `FStratShellOption`. In particular `bEnabled` is a FIELD and
@@ -94,9 +99,29 @@
 // NOT IN THIS ROUND, with reasons:
 // - A DIFFICULTY-TIER CONTROL. Ruled out by the user on 2026-08-30. `EStratDifficulty` is
 //   configured on the match GameMode's defaults and the menu neither reads nor moves it.
-// - A SETTINGS SCREEN. §2.11.5 budgets "volume + resolution" and nothing else, and neither
-//   has any engine-side surface in this tree to bind to yet. There is no `Settings` route,
-//   deliberately, rather than a disabled one -- a greyed row promises a thing that exists.
+// - A SETTINGS SCREEN, WHICH THIS FILE REFUSED UNTIL THE AUDIO MILESTONE'S PHASE G AND NOW
+//   HALF-CARRIES. The refusal is quoted rather than deleted, because it names the exact
+//   condition that has since changed and a reader must be able to check that it did:
+//     RETRACTED>  "A SETTINGS SCREEN. §2.11.5 budgets "volume + resolution" and nothing else,
+//     RETRACTED>   and neither has any engine-side surface in this tree to bind to yet. There
+//     RETRACTED>   is no `Settings` route, deliberately, rather than a disabled one -- a greyed
+//     RETRACTED>   row promises a thing that exists."
+//   VOLUME NOW HAS ONE AND RESOLUTION STILL DOES NOT. `UStratAudioSettings` persists three
+//   gains, `UStratSoundDirector::ApplyVolumes` makes them audible and `UStratOptionsWidget`
+//   is the surface -- so exactly one of that sentence's two subjects acquired what the
+//   sentence was waiting for. `EStratShellRoute::Options` is therefore added and named for the
+//   half that exists; resolution stays out, and its home when it arrives is
+//   `UGameUserSettings`, which the engine already owns and persists.
+//     WHAT THE ROW STILL PROMISES THAT DOES NOT EXIST, SAID PLAINLY BECAUSE IT IS THE WEAK
+//   POINT OF THIS ARM. The route is ENABLED in every fact combination, and no `WBP` bound to
+//   `UStratOptionsWidget` exists yet -- so on the tree as it stands, clicking the row runs
+//   `RequestOptionsPanel` and nothing appears. That is one step worse than the greyed row the
+//   retracted sentence was arguing against, and it is taken anyway because the alternative was
+//   worse in a way this project has already measured: a `bOptionsSurfaceAvailable` fact would
+//   ship FALSE with nothing able to set it, which is a shipped zero default that makes every
+//   clause over the enabled path vacuous. DISCHARGED BY the options WBP and an owner that
+//   shows it on `IsOptionsPanelOpen`; the request flag and its count exist so that owner has
+//   something to bind to and so a clause can prove the route reached it.
 // - THE BRIEFING SCREEN, which is the second name on §2.11.5's list. It is §2.11.6-A's
 //   pre-match overlay, it lives inside the match level rather than beside it, and it is a
 //   guidance surface rather than a route. No shell route opens it.
@@ -118,8 +143,18 @@ class UWorld;
 /**
  * The routes a menu can drive.
  *
- * FOUR, AND THE GDD NAMES NONE OF THEM -- see the file header for the measurement. Each one
+ * FIVE, AND THE GDD NAMES NONE OF THEM -- see the file header for the measurement. Each one
  * exists because a capability already in this tree is otherwise unreachable after boot.
+ *
+ * IT READ "FOUR" UNTIL THE AUDIO MILESTONE'S PHASE G AND THE NUMERAL IS UPDATED RATHER THAN
+ * REPLACED BY A QUANTIFIER, WHICH IS THE OPPOSITE OF WHAT THIS FILE DOES ELSEWHERE AND IS A
+ * DELIBERATE EXCEPTION. `ExecuteRoute`'s own block deletes a count for a growing list on the
+ * reasoning that "a numeral restated beside a suite that grows is a second site that rots".
+ * That reasoning is about a SUITE, which grows without anyone deciding to. This list does not:
+ * every arm below is a paragraph somebody had to write, and the count is the thing the file
+ * header's measurement is ABOUT -- "the route set below is OURS and is not the GDD's" is a
+ * claim whose weight is the size of the set. A quantifier here would delete the claim to
+ * protect the numeral.
  */
 UENUM(BlueprintType)
 enum class EStratShellRoute : uint8
@@ -150,8 +185,48 @@ enum class EStratShellRoute : uint8
 	/** Leave a live match and open the title level. The match world is destroyed with it. */
 	ReturnToTitle UMETA(DisplayName = "Return to Title"),
 
-	/** Exit the process. The only route that does not travel. */
-	QuitGame UMETA(DisplayName = "Quit")
+	/** Exit the process. The only route that leaves it. */
+	QuitGame UMETA(DisplayName = "Quit"),
+
+	/**
+	 * Open the volume screen. Does not travel and does not leave the process.
+	 *
+	 * THE CAPABILITY IT MAKES REACHABLE, ON THIS ENUM'S OWN STANDARD: `UStratAudioSettings` is a
+	 * slot holding three gains and `UStratSoundDirector::CommitVolumes` is the only thing that
+	 * writes it. Without a route to a screen, that slot is written by nothing a player can
+	 * operate -- so the whole volume feature would be reachable by a Blueprint author, by a
+	 * console and by a fixture, and by no player, which is the same "unreachable after boot"
+	 * condition the four arms above were each derived from.
+	 *
+	 * IT IS SEC 2.11.5'S "VOLUME" AND NOT ITS "VOLUME + RESOLUTION", AND THE HALF THAT IS
+	 * MISSING IS NAMED RATHER THAN IMPLIED. Resolution is `UGameUserSettings` and is not in this
+	 * tree; a route called `Settings` would have promised it. `Options` is the wider word for
+	 * the narrower thing, chosen so that adding resolution later is a row on a screen rather
+	 * than a second route and a second enumerator.
+	 *
+	 * IT DOES NOT TRAVEL, WHICH MAKES IT THE SECOND SUCH ROUTE AND BREAKS AN EQUATION THE CODE
+	 * WAS QUIETLY MAKING. `ExecuteRoute` used to read `if (!RouteTravels(Route)) { QuitGame(); }`
+	 * -- true only while "does not travel" and "exits the process" named the same single arm.
+	 * `RouteExitsProcess` now states the second fact separately, so the collapse cannot be
+	 * reintroduced by accident and a sixth non-travelling route is a refusal rather than an
+	 * unexplained process exit.
+	 *
+	 * IT IS PERMITTED IN EVERY STATE, LIKE `QuitGame` AND FOR A WEAKER REASON THAN THAT ARM HAS.
+	 * Quit has no precondition because a menu whose exit could be greyed is the defect this file
+	 * exists to fix. This one has no precondition because there is no fact in `FStratShellFacts`
+	 * -- or anywhere else this subsystem can see -- that says whether an options SURFACE exists,
+	 * and inventing one that nothing sets would ship false forever. The file header carries what
+	 * that costs and what discharges it.
+	 *
+	 * A ROUTE AND NOT A METHOD ON `AStratShellHUD`, WHICH WAS THE OTHER SHAPE. Putting "open the
+	 * options panel" on the HUD would have kept the enum at four and would have given the title
+	 * menu two kinds of button -- four that go through `ExecuteRoute`'s permission check and one
+	 * that does not -- so a WBP author would have had two wiring conventions and a clause would
+	 * have had two surfaces to sweep. The menu model is asserted BY INDEX against the enum's own
+	 * declaration order for exactly this reason; a fifth button outside the model would have been
+	 * invisible to every clause in `StratShellRouteClauses.cpp`.
+	 */
+	Options UMETA(DisplayName = "Options")
 };
 
 /**
@@ -243,7 +318,7 @@ struct FStratShellOption
 /**
  * The whole menu.
  *
- * ALL FOUR ROUTES, ALWAYS, IN DECLARATION ORDER. The model does not shrink with the facts --
+ * EVERY DECLARED ROUTE, ALWAYS, IN DECLARATION ORDER. The model does not shrink with the facts --
  * only `bEnabled` and the strings move. That makes the option list assertable by INDEX,
  * which is what lets a clause pin ordering without matching on label text (and this project
  * has measured that `FString` comparison is case-insensitive, so text-keyed lookup is a
@@ -311,9 +386,42 @@ public:
 	                               TSoftObjectPtr<UWorld>&       OutLevel,
 	                               FText&                        OutRefusalReason);
 
-	/** False for `QuitGame` alone. Stated as a function so no caller re-derives it. */
+	/**
+	 * Whether a route opens a level. False for `QuitGame` and for `Options`.
+	 *
+	 * IT SAID "FALSE FOR `QuitGame` ALONE" UNTIL THE FIFTH ARM AND THAT WAS A TRUE SENTENCE
+	 * ABOUT A FOUR-ARM ENUM, not a rule. What made it dangerous is not the sentence but the
+	 * INFERENCE `ExecuteRoute` drew from it -- that the non-travelling route is the quitting
+	 * route -- which is why `RouteExitsProcess` now exists beside this rather than this one
+	 * being widened.
+	 */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
 	static bool RouteTravels(EStratShellRoute Route);
+
+	/**
+	 * True for `QuitGame` alone. The route that ends the process.
+	 *
+	 * IT EXISTS BECAUSE `!RouteTravels(Route)` STOPPED MEANING THIS THE MOMENT A SECOND
+	 * NON-TRAVELLING ROUTE WAS DECLARED, and the failure that would have followed is worth
+	 * naming: `ExecuteRoute`'s quit arm was reached by that test, so an `Options` route added
+	 * without this function would have EXITED THE GAME when a player asked for the volume
+	 * screen. Nothing in the four-arm suite could have caught it -- every clause over
+	 * `RouteTravels` would still be green, `UKismetSystemLibrary::QuitGame` does nothing
+	 * observable in a `-nullrhi` fixture, and the menu model would look correct.
+	 *
+	 * A SEPARATE PREDICATE AND NOT AN EXTRA ARM IN `ExecuteRoute`'s SWITCH, on
+	 * `RouteLoadsSaveSlot`'s stated reasoning: the deciding is what a clause must be able to
+	 * reach, and a decision written inside the one member no clause can execute past is the
+	 * defect `PendingSlotForRoute` was extracted to fix.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
+	static bool RouteExitsProcess(EStratShellRoute Route);
+
+	/** True for `Options` alone. The route that opens a panel in place. Stated as a function
+	 *  for `RouteExitsProcess`'s reason: `ExecuteRoute`'s local arm must be decidable by a
+	 *  clause that cannot execute `ExecuteRoute`'s body. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
+	static bool RouteOpensOptions(EStratShellRoute Route);
 
 	/**
 	 * True for `ContinueMatch` alone.
@@ -496,6 +604,48 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Shell")
 	bool ExecuteRoute(EStratShellRoute Route, FString& OutFailureReason);
 
+	// ---- THE OPTIONS PANEL. In-world state, not a travel. ----
+
+	/**
+	 * Arms the options panel without going through `ExecuteRoute`.
+	 *
+	 * IT EXISTS FOR THE REASON `ArmPendingLoadSlot` EXISTS AND THE PARALLEL IS EXACT: the
+	 * shipped path is `ExecuteRoute(Options)`, whose other arms a headless clause cannot survive,
+	 * so the state change is split out and `ExecuteRoute` calls THIS rather than writing the
+	 * member itself. The tested path and the shipped path are the same line.
+	 *
+	 * IT COUNTS AS WELL AS SETS, AND THE COUNT IS THE HALF THAT IS NOT OBVIOUS. A bool cannot
+	 * distinguish "the route was taken twice" from "the route was taken once and the panel is
+	 * still up", and it cannot distinguish a route that reached this function from a panel some
+	 * other caller opened. `UStratSoundDirector::NoteApplyViewObserved` carries the same argument
+	 * for the same reason: a seam that is asked whether it ran needs something that only running
+	 * increments.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Shell")
+	void RequestOptionsPanel();
+
+	/** Closes the panel. Does not decrement the count -- the count is a history of requests and
+	 *  not a depth. */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Shell")
+	void CloseOptionsPanel();
+
+	/** Whether the options panel should be on screen. The one fact an owner binds to. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
+	bool IsOptionsPanelOpen() const { return bOptionsPanelOpen; }
+
+	/**
+	 * How many times `RequestOptionsPanel` has been called this process.
+	 *
+	 * ZERO AFTER AN `ExecuteRoute(Options)` MEANS THE ARM IS DEAD, whatever `IsOptionsPanelOpen`
+	 * says -- a panel left open by an earlier request reads true on that flag and proves nothing
+	 * about this call. This is the instrument that separates the two, and it is the reason a
+	 * clause over the `Options` arm can be written at all: `ExecuteRoute`'s travelling arm is
+	 * unreachable in a fixture and its quit arm is unobservable, so this route is the FIRST
+	 * granted arm of that function any clause has ever been able to execute end to end.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
+	int32 GetOptionsPanelRequestCount() const { return OptionsPanelRequestCount; }
+
 	// ---- THE CROSS-LEVEL HANDOFF. ----
 
 	/** The slot a `ContinueMatch` route asked the next world to restore. Empty when none. */
@@ -590,4 +740,21 @@ private:
 	/** Written by `ExecuteRoute(ContinueMatch)`, read once by the next world's GameMode. */
 	UPROPERTY(Transient)
 	FString PendingLoadSlot;
+
+	/**
+	 * See `IsOptionsPanelOpen`. `Transient`, like every member here.
+	 *
+	 * IT SURVIVES A LEVEL TRAVEL BECAUSE THIS SUBSYSTEM DOES, AND THAT IS A CONSEQUENCE RATHER
+	 * THAN A FEATURE. Nothing in this tree opens the panel and then travels -- `Options` does not
+	 * travel -- so the state is not reachable across a map today. The day something can, an owner
+	 * that does not close it will find the panel already open on the next map, and the fix is a
+	 * `CloseOptionsPanel` in that owner's `EndPlay` rather than a lifetime change here.
+	 */
+	UPROPERTY(Transient)
+	bool bOptionsPanelOpen = false;
+
+	/** See `GetOptionsPanelRequestCount`. Never reset; the question it answers is "has this
+	 *  route ever been taken in this process", which has one answer over a game instance. */
+	UPROPERTY(Transient)
+	int32 OptionsPanelRequestCount = 0;
 };

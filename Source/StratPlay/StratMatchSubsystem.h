@@ -125,6 +125,7 @@
 #include "Templates/SubclassOf.h"
 
 #include "StratAiPlayback.h"
+#include "StratSoundCues.h"
 #include "StratTransientReceipts.h"
 #include "StratViewModel.h"
 
@@ -139,6 +140,8 @@ class AStratScoreboardHUD;
 class AStratUnitActor;
 class UDataTable;
 class UStratSaveGame;
+class UStratSoundBank;
+class UStratSoundDirector;
 
 /**
  * The seam that completes a freshly built model before anything is drawn from it.
@@ -340,6 +343,30 @@ struct FStratMatchConfig
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Presentation")
 	TSubclassOf<AStratUnitActor> UnitActorClass;
+
+	/**
+	 * The AUDIO milestone's cue assets for this match. Null means the match runs silent, which
+	 * is the shipped state until a GameMode Blueprint points at a bank.
+	 *
+	 * A POINTER SET ON A BLUEPRINT DEFAULT AND NEVER A `/Game/` LITERAL, per CLAUDE.md #4 and
+	 * the pattern `StratGameMode.h` states: this struct is the object that HAS the map's asset
+	 * references, and a renamed bank must not be a compile break.
+	 *
+	 * ADOPTED IN `StartMatchInternal` BEFORE THE FIRST `ApplyView`, so the director is
+	 * configured by the time anything could ask it for a sound. The first reconcile emits
+	 * nothing anyway -- `FStratSoundMark` is unseeded -- but ordering it after the first apply
+	 * would make that a coincidence rather than a guarantee.
+	 *
+	 * THE DRIFT IT CREATES IS NAMED HERE RATHER THAN LEFT TO BE FOUND. `AStratShellGameMode`
+	 * carries its own `SoundBank` for the title map, so TWO Blueprints hold an answer to "which
+	 * bank". Unlike `SaveSlotName` -- whose two copies are reconciled in C++, because
+	 * `AStratShellGameMode`'s constructor derives it from `FStratMatchConfig()`'s default -- an
+	 * ASSET POINTER HAS NO C++ AUTHOR to derive from. Nothing in this tree can make the two
+	 * agree by construction, so nothing here pretends to. DISCHARGED BY a clause comparing the
+	 * two CDOs, which is phase D's and is not this file's to write.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Presentation")
+	TObjectPtr<UStratSoundBank> SoundBank;
 
 	// ---- §2.9's opponent -------------------------------------------------
 	// EVERY C++ FIELD DEFAULT BELOW PRESERVES HOT-SEAT EXACTLY -- AND THE SHIPPED GAME DOES
@@ -2396,6 +2423,21 @@ private:
 	AStratScoreboardHUD* FindScoreboardHUD() const;
 
 	/**
+	 * This world's `UStratSoundDirector`, or null.
+	 *
+	 * NULL IS AN ORDINARY ANSWER AND NOT A FAULT, AND EVERY CALLER TREATS IT AS ONE. A world
+	 * that is neither Game nor PIE has no director by that class's own
+	 * `DoesSupportWorldType`, and a subsystem hand-driven with no world at all has no route to
+	 * one either. Audio is emphasis; a match with none is correct in every rules-visible
+	 * respect, exactly as `StratTransientReceipts.h` says of a screen with no receipts drawn.
+	 * So no caller below logs, refuses or propagates on a null return.
+	 *
+	 * A LOOKUP AND NOT A CACHED POINTER. Caching would be a second lifetime to reason about
+	 * for a `GetSubsystem` call that is a pointer read off the world.
+	 */
+	UStratSoundDirector* FindSoundDirector() const;
+
+	/**
 	 * §2.11.6's match-ended hook: if the model says the match has a result, record it on the
 	 * slot.
 	 *
@@ -2579,6 +2621,37 @@ private:
 	 */
 	UPROPERTY(Transient)
 	FStratReceiptMark ReceiptMark;
+
+	/**
+	 * The AUDIO milestone's previous reading. `ApplyView` is the only writer.
+	 *
+	 * RESET WHEREVER `ReceiptMark` IS RESET, AND THE PAIRING IS THE SAME ONE AND FOR THE SAME
+	 * REASON. `FStratSoundMark`'s own doc gives the audio-specific cost of getting it wrong: a
+	 * mark carried across a teardown makes every unit of the OLD match read as destroyed and
+	 * every unit of the NEW one read as newly built, on the next match's very first refresh.
+	 * The two marks are separate structs rather than one because they watch different fields
+	 * for different layers; they are reset on the same two lines so they cannot drift.
+	 */
+	UPROPERTY(Transient)
+	FStratSoundMark SoundMark;
+
+	/**
+	 * Unit ids whose death cue has already sounded during the CURRENT playback tour.
+	 *
+	 * IT EXISTS BECAUSE `ApplyTourExistenceAtCursor` IS A PURE FUNCTION OF THE CURSOR AND RUNS
+	 * EVERY STEP. That is its stated design and it is correct -- a skip can move the cursor by
+	 * any amount, so recomputing beats tracking -- but it means the same unit is found hidden
+	 * on every step after the one that killed it. Without this set a tour of 150 steps would
+	 * sound one unit's death up to 149 times.
+	 *
+	 * A SET AND NOT A "LAST ANNOUNCED STEP" COUNTER, because the cursor can go BACKWARDS in
+	 * principle and because two units can die on one step. Membership answers both with no
+	 * ordering assumption.
+	 *
+	 * EMPTIED WHERE THE HOLD IS RAISED AND WHERE IT IS DROPPED, so a second hand-over starts
+	 * clean. NOT A `UPROPERTY`, on `RevealAfterStep`'s line: a set of `int32` owns no `UObject`.
+	 */
+	TSet<int32> AnnouncedDeaths;
 
 	/** Retained from `StartMatch` so `ApplyView` knows which class to spawn. */
 	UPROPERTY(Transient)

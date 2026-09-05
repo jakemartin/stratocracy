@@ -15,6 +15,135 @@
 
 ## NEXT
 
+- **DONE, 2026-09-05 -- Phase C' of the audio milestone: `Config/DefaultEngine.ini` now names
+  `[/Script/Engine.AudioSettings]`, and `DefaultSoundClassName` was considered and declined.**
+  Working tree: `E:/MultiAgent/Stratocracy`, branch `master`, base commit `089c79c`. Phases
+  A'/A/B/C/D are landed and uncommitted; this entry does not stage or commit anything, and this
+  seat found nothing already staged by the machine's auto-stage provider at the time of this
+  edit (`git status --short` before this write showed only the pre-existing uncommitted
+  engineer/content changes and `?? Content/StratAudio/`, `?? Source/StratPlay/StratSoundBank.*`
+  etc. from the earlier phases -- nothing this entry itself produced was auto-staged, since
+  `Config/*.ini` is not the auto-stager's asset-save trigger).
+  **CONFIRMED FIRST, AS ASKED: no audio section existed.** `grep -rn "AudioSettings\|DefaultBaseSoundMix\|DefaultSoundClassName\|\[Audio\]" Config/`
+  returned nothing before this edit. The only audio-adjacent keys in `Config/` were the
+  `[/Script/WindowsTargetPlatform.WindowsTargetSettings]` platform block the brief named
+  (`AudioSampleRate=48000`, `AudioCallbackBufferFrameSize=1024`, `AudioMaxChannels=0`, four empty
+  plugin slots, `CompressionOverrides=...`) -- confirmed by reading the file directly, not by
+  trusting the grep alone.
+  **THE EDIT, `Config/DefaultEngine.ini`, appended after the existing
+  `[/Script/EngineSettings.GameMapsSettings]` block (unchanged) as a new section (was absent):**
+  ```
+  [/Script/Engine.AudioSettings]
+  DefaultBaseSoundMix=/Game/StratAudio/SMX_Strat_Base.SMX_Strat_Base
+  ```
+  CRLF preserved: 138 `\r\n`, 0 LF-only, before and after (measured by counting `\r\n` against
+  total `\n` on the raw bytes).
+  **WHY `DefaultBaseSoundMix`, READ FROM THE ENGINE SOURCE RATHER THAN FROM THE MIX'S NAME.**
+  `USoundMix`'s doc comment alone ("the mix pushed at startup") would not settle whether the
+  future volume screen's `SetSoundMixClassOverride(WorldContextObject, SMX_Strat_Base, ...)`
+  needs this key to take effect, so the mechanism was traced rather than assumed.
+  `UGameplayStatics::SetSoundMixClassOverride`
+  (`Engine/Private/GameplayStatics.cpp:2052-2069`) forwards straight to
+  `FAudioDevice::SetSoundMixClassOverride` (`Engine/Private/AudioDevice.cpp:3839-3889`), which
+  does exactly one thing: it writes an entry into `SoundMixClassEffectOverrides`, a map keyed by
+  the `USoundMix*` passed in.
+  **[CORRECTED 2026-09-05, SAME PASS -- the two enumerations below were stated too narrowly and
+  a `strat-integration-reviewer` gate (`Tools/architect/gate_reports/2026-09-05-audio-milestone-phases-c-c-prime-d.md`,
+  Finding 3) caught it; re-derived against the same file on this box before writing this
+  correction, not taken on the gate's word alone --
+  `grep -n "SoundMixClassEffectOverrides" AudioDevice.cpp` returns SEVEN lines
+  (`:943`, `:2942`, `:3031`, `:3111`, `:3860`, `:3913`, `:3960`), and `:2942` is a genuine read,
+  inside `FAudioDevice::ClearSoundMix`, looking the map up to reset `bOverrideApplied` on
+  teardown -- not the sole read this entry claimed. `grep -n "ApplyClassAdjusters"` returns
+  THREE lines: the definition at `:3021` and TWO callers, `:2713` inside
+  `FAudioDevice::ApplySoundMix` and `:3236` inside the per-tick loop over `SoundMixModifiers` --
+  not the one caller this entry claimed. Kept below rather than rewritten, on this record's
+  standing practice; corrected reasoning follows immediately after.]**
+  ~~That map is read in exactly one place~~ **[FALSE, see above -- read at seven sites, one of
+  which, `ClearSoundMix` at `:2942`, is a genuine lookup, not merely a write site]**,
+  `FAudioDevice::ApplyClassAdjusters` (`:3021` on, the override-lookup block at `:3031-3060`),
+  and ~~`ApplyClassAdjusters` is itself called from exactly one place~~ **[FALSE, see above --
+  TWO callers]**, the per-tick loop over
+  `SoundMixModifiers` -- THE ACTIVE-MIX MAP -- at `:3190/:3236`. **[The second caller, `:2713`
+  inside `ApplySoundMix`, does not change the conclusion below: read in context
+  (`AudioDevice.cpp:2695-2717` on this box, inside `FAudioDevice::ApplySoundMix` -- no
+  `ApplySoundMix.cpp` exists anywhere in the engine tree; the citation named the function, not
+  the file, and is corrected in place rather than stamped, since this was a plain wrong name and
+  not a claim that changed), `ApplyClassAdjusters(NewMix, ...)` at `:2713` fires
+  at the moment a mix TRANSITIONS TO active -- immediately after `SoundMixState->InterpValue` is
+  reset to `0.0f` on activation -- so this caller, exactly like the tick-loop caller, only ever
+  invokes `ApplyClassAdjusters` for a mix that is (becoming) a member of `SoundMixModifiers`. A
+  `USoundMix` absent from that map is reached by neither caller.]** A `USoundMix` the override
+  targets but that is absent from `SoundMixModifiers` has its override recorded and never
+  applied: `ApplyClassAdjusters` is simply never invoked for it, by either caller. `SoundMixModifiers` is
+  populated by `SetBaseSoundMix` (`:3735-3751`, adds `NewMix`) and by `PushSoundMixModifier`
+  (not read this pass, same map). At project start, with no gameplay code pushing anything yet
+  (confirmed: no call to `PushSoundMixModifier`/`SetBaseSoundMix`/`SetSoundMixClassOverride`
+  exists anywhere in `Source/` today -- `StratSoundDirector.cpp` calls only `PlaySound2D`), the
+  ONLY way `SMX_Strat_Base` becomes an active mix is via `UAudioSettings::DefaultBaseSoundMix`,
+  **[RE-CONFIRMED 2026-09-05, SAME CORRECTION PASS: `grep -rn "PushSoundMixModifier\|SetBaseSoundMix\|SetSoundMixClassOverride" Source/` still returns ZERO lines, matching the original claim and the gate's own independent check of the same grep. The narrowed enumerations above do not change this: the conclusion --
+  that `DefaultBaseSoundMix` is the only route today by which `SMX_Strat_Base` can become active,
+  and therefore the only route by which a future `SetSoundMixClassOverride` against it can have
+  any effect -- SURVIVES. Both of `ApplyClassAdjusters`'s two callers, not one, require the mix
+  to already be a member of `SoundMixModifiers`; neither reaches a mix that is merely recorded in
+  `SoundMixClassEffectOverrides`. The word that was wrong was "exactly one place", stated twice;
+  the reasoning chain built on top of it was not.]**
+  which `FAudioDevice::Init` reads once at startup and hands to `SetBaseSoundMix`
+  (`AudioDevice.cpp:513-520` loads it; `:2448-2474`,
+  `FAudioDevice::SetDefaultBaseSoundMix`, is the fallback path that reloads the same config key
+  when a null mix is passed and then calls `SetBaseSoundMix` on it). **So: yes, `SMX_Strat_Base`
+  needs to be the project's base mix (or be pushed at runtime, which nothing in this tree does
+  yet) for a future `SetSoundMixClassOverride` against it to have any audible effect, and setting
+  this key now is inert today** -- `SMX_Strat_Base` "currently carries no adjusters" per the
+  brief, confirmed by this seat reading nothing but the class/submix/mix wiring in the phase-C
+  entries in `content.md`; making it the active base mix with zero adjusters changes nothing a
+  clause or a listener could observe. This is therefore groundwork for a later phase's engine
+  code, laid in the one lane that can touch `Config/`, not a behavior change of its own.
+  **`DefaultSoundClassName` -- CONSIDERED AND DECLINED, ON THE BRIEF'S OWN GROUNDS.**
+  `UAudioSettings::DefaultSoundClassName` (`Engine/Classes/Sound/AudioSettings.h:138-140`) is
+  documented "The SoundClass assigned to newly created sounds" with no scoping to this project's
+  own content -- it is a project-wide default with no per-directory carve-out available in the
+  engine's own settings surface. All seven shipped `MetaSoundSource` cues already carry
+  `SoundClassObject = SCL_Strat_SFX` explicitly (per the brief; this seat did not re-open the
+  `.uasset` binaries, which is `content.md`'s territory), so this key would add nothing for
+  them. Its only effect would be on sounds that name no class at all -- which, per the brief,
+  includes every asset under the vendored `AdvancedTurnBasedTileToolkit` content this project did
+  not author and this steward has no acceptance ID authorizing a change to. **Declined**: no
+  acceptance ID in this milestone calls for a project-wide default sound class, the blast radius
+  named in the brief is real and unbounded from this seat's vantage (this steward did not audit
+  every non-Strat sound asset in `Content/` to bound it), and the safer default -- explicit
+  `SoundClassObject` on every asset this project authors, which is already true -- costs nothing
+  to keep. If a future phase wants a fallback class for content this project owns, that is a
+  scope call for the `coordinator`/Director, not a steward default; recorded as a candidate in
+  `decisions.md` rather than applied here.
+  **NOTHING ELSE ADDED.** Concurrency defaults
+  (`UAudioSettings::DefaultSoundConcurrencyName`) were considered and declined for the same
+  reason as `DefaultSoundClassName`: `SC_StratCues` is already named explicitly wherever it is
+  used (`DA_StratSoundBank`'s `concurrency` slot, per the brief), and a project-wide concurrency
+  default has the identical unbounded-blast-radius shape. No other `[/Script/Engine.AudioSettings]`
+  key was judged to serve an acceptance ID this milestone names.
+  **SUITE, RE-RUN AFTER THE EDIT, NOT ASSERTED.** Headless run, unpiped, `REAL_EXIT=0` read on
+  the line after the command (no pipe): `reportCreatedOn 2026.09.05-13.12.09`, `succeeded=413`,
+  `succeededWithWarnings=0`, `failed=0`, `notRun=0`, total `413`. **Unmoved** from the
+  `2026.09.05-13.03.00` figure `global.md` already carries for this HEAD -- a `Config/`-only
+  change to an audio-settings key with no gameplay code reading it yet does not, on its own,
+  change suite behaviour, and this run confirms rather than assumes that. This entry does not
+  edit `global.md`; the new stamp is handed to the `coordinator` to decide whether the citation
+  needs updating (the count itself did not move, only the report file timestamp, since every run
+  overwrites the same export path).
+  **BANNER SWEEP.** Not run by this pass as a gating step against `global.md` (out of this
+  seat's lane per the brief), but `data.md` and `decisions.md` were greped for the status strings
+  this project's banner-sweep discipline checks (`grep -niE "COMPLETE|CLOSED|VERDICT|is now|current|next|still open|[0-9]+/[0-9]+"`
+  over both files after this edit): the only `N/N`-shaped hits in this entry are the suite counts
+  above, both correctly attributed to a specific dated report rather than stated as live figures
+  (no bare bolded `N/N` banner claim is made here) -- consistent with the RECORD OWNERSHIP rule
+  that only `global.md` may carry a live suite count.
+  **NOT VERIFIED FROM A CHECKOUT.** Whether the future volume screen will call
+  `SetSoundMixClassOverride` against `SMX_Strat_Base` by name, or push a different mix at
+  runtime and leave this key unused, is that later phase's design and not fixed by this edit --
+  this key only ensures the asset already authored under that name is the one active at startup
+  if and when that call is made against it.
+
 - **FIXED, 2026-09-04 -- closed the OPEN carried instrument debt `global.md` recorded against
   this lane: `strat_banner_sweep.py`'s REPORT PROVENANCE part (a) could not see a BARE
   `reportCreatedOn` stamp.** Base commit `2a43ca8`. Working tree: `E:/MultiAgent/Stratocracy`,

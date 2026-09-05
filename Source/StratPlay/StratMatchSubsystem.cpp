@@ -29,6 +29,8 @@
 #include "StratCameraPawn.h"
 #include "StratPlay.h"
 #include "StratSaveGame.h"
+#include "StratSoundBank.h"
+#include "StratSoundDirector.h"
 #include "StratUnitActor.h"
 
 #include "StratScoreboardHUD.h"
@@ -151,6 +153,11 @@ void UStratMatchSubsystem::Deinitialize()
 	ReceiptMark  = FStratReceiptMark();
 	LastReceipts = FStratTransientReceipts();
 
+	// AND SO DOES THE AUDIO MARK, ON THE SAME TWO LINES AND FOR THE SAME REASON.
+	// `FStratSoundMark`'s doc states the audio-specific cost: a surviving mark makes the next
+	// match's first refresh report every old unit destroyed and every new one built.
+	SoundMark = FStratSoundMark();
+
 	Super::Deinitialize();
 }
 
@@ -219,6 +226,24 @@ bool UStratMatchSubsystem::StartMatchInternal(const FStratMatchConfig& Config,
 	TearDownPresentation();
 
 	ActiveConfig = Config;
+
+	// ---- The AUDIO milestone's bank, before anything can ask for a sound ---
+	// AFTER `TearDownPresentation` AND BEFORE THE FIRST `ApplyView` BELOW, which is the whole
+	// of the placement. The teardown resets `SoundMark`, so adopting after it cannot be undone
+	// by it; the first apply is what would fire the first cue, so adopting before it means the
+	// director is never asked a question it was not yet configured to answer.
+	//
+	// A NULL BANK IS ADOPTED AS READILY AS A REAL ONE, DELIBERATELY. `AdoptSoundBank(nullptr)`
+	// is how a match map with no audio authored says so, and it CLEARS whatever a previous
+	// match on this world adopted -- which a guarded call would not. See
+	// `UStratSoundDirector::AdoptSoundBank`.
+	//
+	// A NULL DIRECTOR IS NOT REPORTED. `FindSoundDirector` states why: no world, or a world
+	// type that correctly has none. A match runs silent and every other surface is right.
+	if (UStratSoundDirector* const Director = FindSoundDirector())
+	{
+		Director->AdoptSoundBank(ActiveConfig.SoundBank);
+	}
 	ViewingSide = Config.ViewingSide;
 
 	// A NEW MATCH HAS NOT BEEN RECORDED AS COMPLETED, whatever the last one did. Cleared
@@ -1044,6 +1069,52 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	StratDecideTransientReceipts(ReceiptMark, Model, TurnRepairs, LastReceipts);
 	ReceiptMark = StratMarkFromView(Model);
 
+	// THE AUDIO MILESTONE'S CUES, ON THE RECEIPTS' OWN SHAPE AND IN THEIR ORDER: DECIDE FROM
+	// THE PREVIOUS READING, THEN RE-MARK. Swapping the two lines compares the model against
+	// itself and no cue can ever fire again -- and that failure is SILENT, because a match
+	// that makes no noise is indistinguishable from a match with no sound assets configured,
+	// which is also the shipped state. `StratTransientReceiptCallSite.cpp` records the
+	// identical hazard for the receipts and is why the order is stated rather than assumed.
+	TArray<FStratSoundEmission> Cues;
+	StratDecideSoundCues(SoundMark, Model, Cues);
+	SoundMark = StratSoundMarkFromView(Model);
+
+	// AND THE GATE, WHICH IS THE LOAD-BEARING MEASUREMENT OF THIS WHOLE DESIGN.
+	//
+	// A WHOLE AI HAND-OVER IS ONE `ApplyView`. `RunAiTurnsNow` loops turns synchronously and
+	// calls `RefreshPresentation` exactly ONCE, after the loop -- so the diff this function
+	// takes spans every command the AI played. When a tour is armed, the per-command surface
+	// is `AdvanceAiPlaybackOneStep`, which voices each step from the REEL. The reel is a
+	// RECORDING and this is a DIFF: they describe the same events by different means, so with
+	// no gate every AI move, attack and build would sound TWICE -- once here, once on the step
+	// that shows it.
+	//
+	// IT REUSES `bTourExistenceHeld` RATHER THAN INVENTING A SECOND CONDITION, on the destroy
+	// loop's own reasoning about that flag. It is raised only under `WillAiPlaybackRun()`, so
+	// "gate up, no tour" is unconstructable -- and audio inherits that property for free
+	// instead of restating three conditions that could drift from it. A second flag here would
+	// be a second answer to "is a tour about to voice these", and the two would disagree the
+	// first time either moved.
+	//
+	// WITH NO TOUR ARMED -- the shipped `AiPlaybackStepSeconds <= 0`, and every headless
+	// fixture -- the gate is DOWN and this one refresh voices one cue of each kind for the
+	// whole hand-over. That is correct rather than a degradation: there is no step sequence to
+	// synchronise to, so the alternative is silence.
+	//
+	// `NoteApplyViewObserved` IS CALLED INSIDE THE GATE AND BEFORE `EmitCues`, which is
+	// deliberate on both counts. Inside, because the counter answers "did the seam that emits
+	// run", and on a gated refresh it did not emit -- counting it would make the counter agree
+	// with a dead seam. Before, because an empty `Cues` must still advance it; that is the
+	// entire reason it is a separate call. See `UStratSoundDirector::NoteApplyViewObserved`.
+	if (!bTourExistenceHeld)
+	{
+		if (UStratSoundDirector* const Director = FindSoundDirector())
+		{
+			Director->NoteApplyViewObserved();
+			Director->EmitCues(Cues);
+		}
+	}
+
 	// CACHED AFTER THE FACT AND NEVER READ BACK. See `GetViewModel`: this is a record of
 	// what was applied, not an input to anything above.
 	AppliedModel = Model;
@@ -1273,6 +1344,30 @@ bool UStratMatchSubsystem::RefreshProductionMenu(FIntPoint FactoryHex, FString& 
 bool UStratMatchSubsystem::SubmitProductionChoice(int32 DefIndex, FString& OutFailureReason)
 {
 	OutFailureReason.Reset();
+
+	// ---- The AUDIO milestone's `ButtonClick` -------------------------------
+	// AT FUNCTION ENTRY, UNCONDITIONALLY, BEFORE EVERY CHECK BELOW AND REGARDLESS OF WHAT THIS
+	// FUNCTION RETURNS. A refused control that makes no sound reads as a DEAD control -- the
+	// player learns nothing about whether the click registered -- so the click is
+	// acknowledgement of the INPUT and never of the outcome. That is why it is above the
+	// refusals rather than beside the success.
+	//
+	// SIX SITES CARRY THIS BLOCK, one per verb a `WBP_*` asset actually calls, and each was
+	// confirmed by name against the widget assets' own bytes rather than assumed from a
+	// binding. `AStratPlayerController::ToggleProductionMenu` deliberately does NOT carry it:
+	// it appears in no widget and its only non-test caller is the Enhanced Input handler
+	// `OnToggleProductionMenu`. A KEY IS NOT A BUTTON, which is the same rule that keeps
+	// `OnEndTurn` out.
+	//
+	// AND THIS SITE GETS THE CLICK AND NOTHING ELSE. It does NOT sound `FactoryBuiltUnit`:
+	// §2.7 can HOLD a build (`FStratFactoryView::bBuildWaiting`), so a build cue at submit time
+	// would announce a unit that has not spawned and may not spawn this turn. The build cue is
+	// the decider's, off a unit appearing in the model.
+	if (UStratSoundDirector* const ClickDirector = FindSoundDirector())
+	{
+		ClickDirector->EmitCue(EStratSoundCue::ButtonClick, ViewingSide, INDEX_NONE,
+		                       AppliedModel.Match.Turn);
+	}
 
 	if (bAiTurnRunning)
 	{
@@ -1779,6 +1874,11 @@ void UStratMatchSubsystem::BuildTourExistenceHolds()
 		}
 	}
 
+	// AND THE AUDIO MILESTONE'S PER-TOUR DEATH LEDGER, EMPTIED WITH THE MAPS RATHER THAN WITH
+	// THE GATE. `AnnouncedDeaths` is scoped to one tour exactly as `HideAfterStep` is, and
+	// clearing it in the same place is what keeps the two from ever describing different tours.
+	AnnouncedDeaths.Reset();
+
 	// THE GATE LAST, AFTER BOTH MAPS ARE FINAL. Nothing between here and `EndAiPlaybackTour`
 	// may find the gate up over a half-built hold.
 	bTourExistenceHeld = true;
@@ -1822,6 +1922,32 @@ void UStratMatchSubsystem::ApplyTourExistenceAtCursor()
 		// step would be irreversible against a cursor that a skip can move, and this function
 		// promises to be a pure function of that cursor.
 		Entry.Value->SetActorHiddenInGame(!bVisible);
+
+		// ---- The AUDIO milestone's DEATH cue, at the step that shows it ----
+		// THIS IS WHERE A TOUR'S DEATHS ARE AUDIBLE AND `ApplyView` IS NOT, and the reason is
+		// the same one the whole existence hold exists for: during a tour a killed unit is
+		// HIDDEN here and DESTROYED later by `EndAiPlaybackTour`, so `ApplyView`'s destroy loop
+		// never removes it and its diff never sees it leave. The hidden step is the only moment
+		// at which the death is on screen.
+		//
+		// GUARDED BY A SET BECAUSE THIS FUNCTION IS A PURE FUNCTION OF THE CURSOR AND RE-RUNS
+		// EVERY STEP -- its own block above states that, and it is correct. Without the guard a
+		// unit killed at step 3 of 150 would sound its death 147 times. See `AnnouncedDeaths`.
+		//
+		// THE CONDITION IS `Hide` HAVING FIRED AND NOT `!bVisible`. A unit can be invisible
+		// because it has not been BUILT yet -- the `RevealAfterStep` half of that expression --
+		// and announcing a death for a unit that has not appeared would be the exact inversion
+		// of the cue. `Hide != nullptr && Cursor > *Hide` is the departure half alone.
+		if (Hide != nullptr && Cursor > *Hide && !AnnouncedDeaths.Contains(Entry.Key))
+		{
+			AnnouncedDeaths.Add(Entry.Key);
+
+			if (UStratSoundDirector* const Director = FindSoundDirector())
+			{
+				Director->EmitCue(EStratSoundCue::UnitDestroyed, INDEX_NONE, Entry.Key,
+				                  AppliedModel.Match.Turn);
+			}
+		}
 	}
 }
 
@@ -2116,6 +2242,50 @@ bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
 	// a reason to write the wrong order. This comment is the only thing standing in the way.
 	LastArmedSlideSeconds = PlayMoveSlideForStep(Current);
 
+	// ---- The AUDIO milestone's PER-STEP cues -------------------------------
+	// THIS IS THE OTHER HALF OF `ApplyView`'S TOUR GATE. When a tour runs, the diff there is
+	// suppressed and these three lines are the only voice the hand-over gets -- one cue per
+	// step, in step with the camera, which is what §2.11.2 asks a tour to be for.
+	//
+	// IT DOES NOT GATE ON `PlayMoveSlideForStep`'S RETURN, AND THAT IS THE ONE MISTAKE THIS
+	// PLACEMENT IS WRITTEN AGAINST. That function refuses SIX ways -- see its own block -- and
+	// one of them is the shipped `AStratUnitActor::MoveTweenSeconds <= 0`, which is EVERY
+	// headless fixture. A move with no slide still happened, and tying the sound to the
+	// animation would make the cue unobservable in exactly the configuration the suite runs in.
+	// It is placed after that call rather than before only so the ordering block above stays
+	// the last word about the slide.
+	//
+	// THREE OF THE FOUR §4.10 KINDS. `EndTurn` is deliberately absent: the turn edge is
+	// `StratDecideSoundCues`' `TurnEnded`, which fires from the one refresh that follows the
+	// whole hand-over, and voicing it here as well would sound one `TurnEnded` per AI turn
+	// inside a tour the player experiences as a single hand-over. The `default:` arm is what
+	// makes that omission a decision a reader can see rather than a missing case.
+	//
+	// `Current.UnitId` AND NOT A LOOKUP. The step is a RECORD of what the AI did and carries
+	// the id it did it with; asking the board would ask about the aftermath, and on a step
+	// whose unit later died the board has no answer at all.
+	if (UStratSoundDirector* const Director = FindSoundDirector())
+	{
+		switch (Current.Kind)
+		{
+		case EStratAiCommandKind::Move:
+			Director->EmitCue(EStratSoundCue::UnitMoved, INDEX_NONE, Current.UnitId,
+			                  AppliedModel.Match.Turn);
+			break;
+		case EStratAiCommandKind::Attack:
+			Director->EmitCue(EStratSoundCue::UnitAttacked, INDEX_NONE, Current.UnitId,
+			                  AppliedModel.Match.Turn);
+			break;
+		case EStratAiCommandKind::Build:
+			Director->EmitCue(EStratSoundCue::FactoryBuiltUnit, INDEX_NONE, Current.UnitId,
+			                  AppliedModel.Match.Turn);
+			break;
+		default:
+			// `EndTurn`, and anything a later §4.10 adds. Silent by decision -- see above.
+			break;
+		}
+	}
+
 	return true;
 }
 
@@ -2386,6 +2556,15 @@ void UStratMatchSubsystem::EndAiPlaybackTour()
 		bTourExistenceHeld = false;
 		RevealAfterStep.Reset();
 		HideAfterStep.Reset();
+
+		// AND THE DEATH LEDGER, WITH THE MAPS. **THIS FUNCTION EMITS NO CUE, AND THAT IS A
+		// DECISION RATHER THAN AN OMISSION.** The destroy loop above can remove several units
+		// at once -- a skip jumps the cursor by any amount and `SkipAiPlayback` is reachable
+		// from "any click or Esc" -- so sounding a death here would mean five death cues
+		// arriving simultaneously the instant a player asked to STOP WATCHING. A skip is
+		// silence. The one-per-kind collapse would reduce five to one, which is not better: it
+		// would be one death cue for a moment at which nothing died.
+		AnnouncedDeaths.Reset();
 	}
 
 	// AND THE REMEMBERED SLIDE LENGTH, WHICH IS BOOKKEEPING AND NOT A GUARANTEE. Nothing reads
@@ -2880,6 +3059,28 @@ void UStratMatchSubsystem::ConcludeMatchIfEnded(const FStratViewModel& Model)
 		*StaticEnum<EStratResultTier>()->GetNameStringByValue(
 			static_cast<int64>(Model.Match.ResultTier)));
 
+	// ---- The AUDIO milestone's `MatchEnded`, INSIDE THIS LATCH -------------
+	// NOT FROM `StratDecideSoundCues`, AND THE REASON IS THAT A SECOND LATCH WOULD BE A SECOND
+	// ANSWER. `bMatchConclusionAnnounced` already decides "has this match ended yet" exactly
+	// once per match; a decider arm watching `bHasResult` would be a second place that decides
+	// the same thing, and the two would disagree the first time either changed -- a concluded
+	// match refreshes many times, so the wrong answer is a cue on every mouse move.
+	//
+	// AFTER THE LOG LINE AND BEFORE THE SCREEN. After, so that `STRAT-MATCH concluded` remains
+	// the first thing a conclusion does and no audio failure can precede it in a log. Before,
+	// so the sound is not waiting on a widget that an unconfigured `MatchResultWidgetClass`
+	// means will never appear -- a match that ends with no screen should still be audible.
+	//
+	// `INDEX_NONE` FOR THE SIDE, DELIBERATELY. The winner is NOT on the view model and is not
+	// going to be -- `FStratMatchResultView`'s own block records that decision made three times
+	// down the stack -- so there is no side available here without asking the bridge a second
+	// question this line has no business asking. A victory sting that differs by outcome is a
+	// bank with a different asset in the slot, not a side index here.
+	if (UStratSoundDirector* const Director = FindSoundDirector())
+	{
+		Director->EmitCue(EStratSoundCue::MatchEnded, INDEX_NONE, INDEX_NONE, Model.Match.Turn);
+	}
+
 	// ---- GDD Sec 2.11.4's END-OF-MATCH SCREEN ------------------------------
 	// AFTER THE LOG LINE AND INSIDE THE LATCH, which places it exactly: the log records that
 	// the transition happened whether or not anything drew it, and the latch is what makes the
@@ -3184,6 +3385,11 @@ void UStratMatchSubsystem::TearDownPresentation()
 	ReceiptMark  = FStratReceiptMark();
 	LastReceipts = FStratTransientReceipts();
 
+	// AND THE AUDIO MARK, WHICH BITES HERE HARDER THAN IN `Deinitialize` FOR THE REASON THE
+	// PARAGRAPH ABOVE GIVES: this path runs BETWEEN two matches in one session, so a surviving
+	// mark has a live successor. See `FStratSoundMark`.
+	SoundMark = FStratSoundMark();
+
 	// THE PRODUCTION MENU GOES WITH THE MATCH, not with the world. A buildlist describes one
 	// factory in one `strat::GameState`; carried across a reseed it would offer rows against a
 	// board that no longer exists, and `SubmitProductionChoice` would submit one at a hex the
@@ -3217,6 +3423,20 @@ AStratScoreboardHUD* UStratMatchSubsystem::FindScoreboardHUD() const
 	}
 
 	return Cast<AStratScoreboardHUD>(PC->GetHUD());
+}
+
+UStratSoundDirector* UStratMatchSubsystem::FindSoundDirector() const
+{
+	// A NULL WORLD IS AN ORDINARY ANSWER HERE, on `FindScoreboardHUD`'s line above: a
+	// hand-driven subsystem in a fixture may have none, and audio is emphasis. See the
+	// declaration, which states that no caller refuses on the null.
+	const UWorld* const World = GetWorld();
+	if (World == nullptr)
+	{
+		return nullptr;
+	}
+
+	return World->GetSubsystem<UStratSoundDirector>();
 }
 
 bool UStratMatchSubsystem::HandBridgeToScoreboard(FString& OutFailureReason)

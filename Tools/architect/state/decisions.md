@@ -19,6 +19,21 @@
 
 ## NEXT
 
+- **DECLINED, 2026-09-05 -- `UAudioSettings::DefaultSoundClassName` and
+  `DefaultSoundConcurrencyName` are NOT set, as part of phase C' of the audio milestone.**
+  Full reasoning and the engine-source trace are in `data.md`'s entry for the same date; this is
+  the scope call itself, recorded here per this file's own remit (`decisions.md` holds "scope
+  calls"). The approved plan named `DefaultSoundClassName` alongside `DefaultBaseSoundMix`
+  (which WAS applied); this steward's own reading of the property's doc comment and its
+  project-wide, non-scopable reach concluded the blast radius the plan's own brief flagged is
+  real -- it would assign `SCL_Strat_SFX` to every sound in the project naming no class of its
+  own, including vendored `AdvancedTurnBasedTileToolkit` content this project did not author and
+  has no acceptance ID to change. Every asset this project itself authors already names its
+  class explicitly, so the key would add nothing for them. **If a future phase wants a
+  project-wide fallback sound class, that is a Director/`coordinator` scope decision, not a
+  default this steward applies unasked.** `DefaultSoundConcurrencyName` declined on the
+  identical reasoning, substituting `SC_StratCues` for `SCL_Strat_SFX`.
+
 - **RULED, 2026-08-19 — the `chooseBuild` buildlist question is answered, and the answer is a
   per-type population cap.** Every sentence above and below that calls this question "awaiting a
   Director ruling" or "not discharged" was true when written; none is rewritten. The ruling: a side

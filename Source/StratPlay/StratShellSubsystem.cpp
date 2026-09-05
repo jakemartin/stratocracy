@@ -7,6 +7,7 @@
 
 #include "StratMatchSubsystem.h"
 #include "StratPlay.h"
+#include "StratSoundDirector.h"
 
 // THE PLAYER-FACING COPY IS C++ AND NEVER A STRING TYPED INTO A `.uasset`, following
 // `StratGuidedOpening::DirectiveTextFor`, which is the precedent this project set for
@@ -25,7 +26,39 @@ namespace
 
 bool UStratShellSubsystem::RouteTravels(const EStratShellRoute Route)
 {
-	return Route != EStratShellRoute::QuitGame;
+	// A SWITCH AND NOT `Route != QuitGame`, AND THE CHANGE OF SHAPE IS THE POINT RATHER THAN A
+	// TIDY-UP. The inequality was correct for four arms and it answered the question by
+	// EXCLUSION -- so the fifth arm's default answer was "travels", which is the one direction
+	// this function must never be wrong in: a route that does not open a level, reported as one
+	// that does, reaches `OpenLevelBySoftObjectPtr` with whatever destination happens to be
+	// configured. A switch with no `default:` makes a sixth enumerator a diagnostic here instead.
+	// (`IsRoutePermitted` below already reasons this way about its own unreachable tail; this is
+	// the same argument applied to the function that decides whether a level gets opened.)
+	switch (Route)
+	{
+	case EStratShellRoute::NewMatch:
+	case EStratShellRoute::ContinueMatch:
+	case EStratShellRoute::ReturnToTitle:
+		return true;
+	case EStratShellRoute::QuitGame:
+	case EStratShellRoute::Options:
+		return false;
+	}
+
+	return false;
+}
+
+bool UStratShellSubsystem::RouteExitsProcess(const EStratShellRoute Route)
+{
+	// THE FACT `ExecuteRoute` USED TO INFER FROM `!RouteTravels`, NOW STATED. See the
+	// declaration for what that inference would have done once a second non-travelling route
+	// existed: quit the game when a player asked for the volume screen.
+	return Route == EStratShellRoute::QuitGame;
+}
+
+bool UStratShellSubsystem::RouteOpensOptions(const EStratShellRoute Route)
+{
+	return Route == EStratShellRoute::Options;
 }
 
 bool UStratShellSubsystem::RouteLoadsSaveSlot(const EStratShellRoute Route)
@@ -104,14 +137,27 @@ bool UStratShellSubsystem::IsRoutePermitted(const EStratShellRoute  Route,
 		return true;
 
 	case EStratShellRoute::QuitGame:
-		// ALWAYS PERMITTED, AND IT IS THE ONE ROUTE WITH NO PRECONDITION. A menu whose exit
-		// could be greyed out is the defect this whole file exists to fix.
+		// ALWAYS PERMITTED. A menu whose exit could be greyed out is the defect this whole file
+		// exists to fix. (This comment read "the ONE route with no precondition" until the
+		// audio milestone's phase G; `Options` below is a second, on a weaker reason that its
+		// own declaration states rather than this arm inheriting it.)
+		return true;
+
+	case EStratShellRoute::Options:
+		// ALWAYS PERMITTED, FOR A DIFFERENT REASON FROM QUIT'S AND A WEAKER ONE. Quit has no
+		// precondition by design. This one has none because there is no fact this subsystem can
+		// see that would say whether an options SURFACE exists -- see the enumerator's own
+		// declaration, and the file header on what the enabled row currently promises and what
+		// discharges it. If a fact ever becomes available, the refusal belongs here and nowhere
+		// else, because `BuildMenuModel` asks this function and does not restate it.
 		return true;
 	}
 
-	// UNREACHABLE FOR THE FOUR DECLARED ROUTES AND KEPT ANYWAY. A fifth enumerator added
-	// without an arm above would otherwise fall out of the switch as permitted, which is the
-	// one direction this function must never fail in.
+	// UNREACHABLE FOR EVERY DECLARED ROUTE AND KEPT ANYWAY. An enumerator added without an arm
+	// above would otherwise fall out of the switch as permitted, which is the one direction this
+	// function must never fail in. (It said "the four declared routes" until the fifth arrived,
+	// which is why the sentence is now a quantifier: a numeral here has no claim resting on it,
+	// unlike the one `EStratShellRoute` deliberately keeps.)
 	OutRefusalReason = FText::FromString(TEXT("Unknown route."));
 	return false;
 }
@@ -161,7 +207,8 @@ FStratShellMenuModel UStratShellSubsystem::BuildMenuModel(const FStratShellFacts
 		EStratShellRoute::NewMatch,
 		EStratShellRoute::ContinueMatch,
 		EStratShellRoute::ReturnToTitle,
-		EStratShellRoute::QuitGame
+		EStratShellRoute::QuitGame,
+		EStratShellRoute::Options
 	};
 
 	FStratShellMenuModel Model;
@@ -185,6 +232,12 @@ FStratShellMenuModel UStratShellSubsystem::BuildMenuModel(const FStratShellFacts
 			break;
 		case EStratShellRoute::QuitGame:
 			Option.Label = FText::FromString(TEXT("Quit"));
+			break;
+		case EStratShellRoute::Options:
+			// ONE WORD, UNCHANGED BY EVERY FACT. Unlike `NewMatch`, this row has no second
+			// spelling: there is no state in which "Options" means something else, so there is
+			// no `OptionsLabel` helper beside `NewMatchLabel` and there should not be one.
+			Option.Label = FText::FromString(TEXT("Options"));
 			break;
 		}
 
@@ -265,6 +318,22 @@ FStratShellMenuModel UStratShellSubsystem::GetMenuModel() const
 	return BuildMenuModel(GatherFacts());
 }
 
+void UStratShellSubsystem::RequestOptionsPanel()
+{
+	bOptionsPanelOpen = true;
+
+	// COUNTED SEPARATELY FROM THE FLAG, AND NOT DERIVED FROM IT. See the declaration: a flag
+	// that was already true records nothing about this call, and this route's whole
+	// observability rests on there being something only the call can move.
+	++OptionsPanelRequestCount;
+}
+
+void UStratShellSubsystem::CloseOptionsPanel()
+{
+	// THE COUNT IS NOT DECREMENTED. It is a history and not a depth -- see the declaration.
+	bOptionsPanelOpen = false;
+}
+
 void UStratShellSubsystem::ArmPendingLoadSlot(const FString& InSlotName)
 {
 	PendingLoadSlot = InSlotName;
@@ -281,6 +350,27 @@ bool UStratShellSubsystem::ExecuteRoute(const EStratShellRoute Route, FString& O
 {
 	OutFailureReason.Reset();
 
+	// ---- The AUDIO milestone's `ButtonClick` -------------------------------
+	// AT ENTRY, BEFORE THE PERMISSION CHECK BELOW AND REGARDLESS OF THE RETURN. This is the
+	// site where that placement matters most: `IsRoutePermitted` refuses `Continue` with no
+	// save and `New Match` with no match level, and those are the rows a first-run player is
+	// most likely to click. A greyed row that also makes no sound is a row the player cannot
+	// tell from a broken build. `UStratMatchSubsystem::SubmitProductionChoice` carries the full
+	// argument and the list of the six sites.
+	//
+	// THROUGH `GetWorld()` FROM A GAME-INSTANCE SUBSYSTEM, which resolves through the outer
+	// chain to the instance's current world -- the same route `UKismetSystemLibrary::QuitGame`
+	// below is already handed `this` for. The director is a WORLD subsystem, so on a route that
+	// TRAVELS this necessarily sounds on the OUTGOING world: the click belongs to the menu the
+	// player was looking at, which is the one being left.
+	if (const UWorld* const World = GetWorld())
+	{
+		if (UStratSoundDirector* const Director = World->GetSubsystem<UStratSoundDirector>())
+		{
+			Director->EmitCue(EStratSoundCue::ButtonClick, INDEX_NONE, INDEX_NONE, 0);
+		}
+	}
+
 	// THE PERMISSION IS RE-ASKED HERE AND NOT TRUSTED FROM THE WIDGET. A menu asset that
 	// wired an enabled button to an impermissible route is a content defect; travelling
 	// anyway would turn it into an unexplainable one two levels later.
@@ -296,11 +386,41 @@ bool UStratShellSubsystem::ExecuteRoute(const EStratShellRoute Route, FString& O
 
 	if (!RouteTravels(Route))
 	{
-		// The only non-travelling route. `nullptr` for the controller is the documented
-		// "any local player will do" argument, and `bIgnorePlatformRestrictions` is false so
-		// a platform that forbids self-exit is obeyed rather than overridden.
-		UKismetSystemLibrary::QuitGame(this, nullptr, EQuitPreference::Quit, false);
-		return true;
+		// THE TWO LOCAL ARMS, ASKED BY NAME AND NOT BY ELIMINATION. This block read
+		//   RETRACTED>  "The only non-travelling route. ..." followed by an unconditional
+		//   RETRACTED>   `UKismetSystemLibrary::QuitGame(...)`
+		// which was correct while `!RouteTravels` and "is Quit" named the same arm. They stopped
+		// naming the same arm the moment `Options` was declared, and the failure that shape
+		// would have produced is the sharpest one in this file: A PLAYER ASKING FOR THE VOLUME
+		// SCREEN WOULD HAVE EXITED THE GAME. Both facts are now `static` predicates a clause can
+		// ask on their own -- see `RouteExitsProcess`.
+		if (RouteExitsProcess(Route))
+		{
+			// `nullptr` for the controller is the documented "any local player will do"
+			// argument, and `bIgnorePlatformRestrictions` is false so a platform that forbids
+			// self-exit is obeyed rather than overridden.
+			UKismetSystemLibrary::QuitGame(this, nullptr, EQuitPreference::Quit, false);
+			return true;
+		}
+
+		if (RouteOpensOptions(Route))
+		{
+			// THROUGH THE PUBLIC ENTRY POINT AND NOT BY WRITING THE MEMBER, on
+			// `ArmPendingLoadSlot`'s stated reasoning: the shipped path and the path a clause
+			// can drive have to be the same line, or the line that is actually shipped is the
+			// one nothing measures.
+			RequestOptionsPanel();
+			return true;
+		}
+
+		// A SIXTH NON-TRAVELLING ROUTE WITH NO ARM ABOVE LANDS HERE AND IS REFUSED. It is not
+		// `checkNoEntry()` and not a silent `return true`: the first turns a menu misconfiguration
+		// into a crash, and the second reports success for a button that did nothing, which is
+		// the failure this whole file's permission discipline exists to prevent.
+		OutFailureReason = TEXT("This route does not travel and has no local action.");
+		UE_LOG(LogStratPlay, Warning, TEXT("Shell route %d is unhandled: %s"),
+			static_cast<int32>(Route), *OutFailureReason);
+		return false;
 	}
 
 	TSoftObjectPtr<UWorld> Destination;

@@ -50,6 +50,129 @@
 
 ## NEXT
 
+- **THE TITLE THEME AND THE OPTIONS WIDGET EXIST; THE OPTIONS SCREEN HAS NO CONTROLS ON IT AND
+  THAT IS A HUMAN'S WORK, NOT A MISSING STEP.** 2026-09-05 (local), `E:/MultiAgent/Stratocracy`,
+  branch `master`, base `089c79c`, no worktree and no merge, uncommitted and UNSTAGED.
+  **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE. WRITING: the
+  `coordinator`, under THIS FILE'S FALLBACK CONDITION.** Two authorities for two halves, cited
+  separately. The absence was re-measured with a control on this pass, not carried over from the
+  earlier one: one `ToolSearch` naming four tools returned both `execute_script` names ABSENT
+  while `unreal_status` and `list_unreal_projects`, FROM THE SAME SERVER IN THE SAME LOOKUP, came
+  back served. Route: a headless `-run=pythonscript` commandlet; no editor was running.
+  WHAT WAS BUILT. `MS_Strat_TitleTheme` -- an A-minor triad (220 / 261.63 / 329.63 Hz) summed,
+  then gated by a LOOPING `AD Envelope` at 2 s attack and 3 s decay, assigned `SCL_Strat_Music`
+  so the music slider reaches it and the SFX slider does not. Script checked in at
+  `Tools/editor/make_strat_title_music.py`, deliberately SEPARATE from the cue script: that one
+  rebuilds all seven cue assets on every run, and re-running it to add an eighth would rewrite
+  seven verified files that a source-control provider auto-adds the instant they are saved.
+  **TWO THINGS ARE INVERTED RELATIVE TO A CUE AND BOTH ARE LOAD-BEARING.** The source is built
+  `is_one_shot=False`, and it carries NO `OnFinished` WIRE -- for a cue that wire is mandatory or
+  the voice is held for the life of the world, and for a music bed it would be the bug. The
+  envelope's `Looping` input is what makes one trigger at `OnPlay` a repeating swell rather than
+  a single stab.
+  `WBP_Options` was created at `/Game/UI` parented to `UStratOptionsWidget`, on
+  `make_scoreboard_wbp.py`'s pattern -- the parent class set on the FACTORY before
+  `create_asset`, because this file already records that `create_asset`'s own `parent_class`
+  option is IGNORED for a `WidgetBlueprint`. A Blueprint bakes its parent's script path
+  irreversibly, so that is the one decision worth scripting.
+  **THE OPTIONS SCREEN HAS NO SLIDERS AND CANNOT GET THEM ON THIS ROUTE.**
+  `WidgetTree::ConstructWidget` has no stable Python binding -- `make_scoreboard_wbp.py` records
+  the same limit for its own asset and builds no tree either. So this pass produced a widget with
+  the right parent and an empty canvas. THE THREE SLIDERS AND THE BACK CONTROL ARE OWED TO A
+  HUMAN IN THE EDITOR, or to `strat-editor-builder` on a session where `execute_script` is
+  served. Until then the `Options` route opens a blank panel, which is worse for a player than no
+  route at all, and the engineer's standing debt about the row being enabled with nothing behind
+  it is NOT discharged by this entry.
+  VERIFIED IN A COLD PROCESS THAT WROTE NOTHING, twice over. `BP_StratShellGameMode` names both
+  `MS_Strat_TitleTheme` and `DA_StratSoundBank`; the bank's `base_mix`, `master_sound_class`,
+  `sfx_sound_class` and `music_sound_class` are all set; `MS_Strat_TitleTheme` loads as a
+  `MetaSoundSource`, is a `USoundBase`, and carries `SCL_Strat_Music`. `BEFORE` on `title_music`
+  read `<UNSET>`, which is the half that makes the after-reading mean anything. **The widget's
+  parent was checked WITH A CONTROL**: `WBP_Options`'s CDO is a `UStratOptionsWidget` and
+  `WBP_TitleMenu`'s is NOT, so the instrument can tell the two apart rather than answering true
+  to everything.
+  SIZE AS THE ONLY AVAILABLE GRAPH EVIDENCE. `MS_Strat_TitleTheme` is 77,582 bytes against the
+  deliberately EMPTY control this file already records at 28,886 -- `build_to_asset` returns
+  `SUCCEEDED` on a graph with no nodes at all, so its verdict is not evidence and the size is.
+  SOURCE CONTROL AUTO-STAGED SIXTEEN ASSETS AGAIN, and the widget after that. All force-unstaged;
+  `Content/StratAudio/` and `Content/UI/WBP_Options.uasset` are untracked and the Blueprints are
+  unstaged modifications. Staging remains the user's call.
+  **STILL NOT AUDIBLE, AND NOTHING HERE CLAIMS OTHERWISE.** No envelope has been heard to open, no
+  loop has been heard to seam or not seam, and a commandlet has no audio device. The listening
+  pass is owed and is the only instrument for any of it.
+
+- **THE SEVEN CUE METASOUNDS EXIST, THE MIX EXISTS, AND THE BANK IS ON ALL THREE SHIPPED GAME
+  MODES -- BUT NOTHING HAS BEEN HEARD.** 2026-09-05 (local), in `E:/MultiAgent/Stratocracy` on
+  branch `master` over base `089c79c`, no worktree and no merge, uncommitted and UNSTAGED.
+  **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE. WRITING: the
+  `coordinator`, under THIS FILE'S FALLBACK CONDITION.** Two authorities for two halves, cited
+  separately because this file's header says an entry citing one authority for both is a finding.
+  THE ABSENCE WAS MEASURED WITH A CONTROL, as both clauses require. One `ToolSearch` lookup named
+  four tools: `mcp__NeoStack_Connect__execute_script` and `mcp__unreal-editor-direct__execute_script`
+  came back ABSENT, while `mcp__NeoStack_Connect__unreal_status` and
+  `mcp__NeoStack_Connect__list_unreal_projects` -- FROM THE SAME SERVER, in the SAME lookup --
+  came back SERVED. So the surface can speak and the two names are genuinely not on it.
+  THE EDITOR'S OWN STATE, recorded because it is worth knowing and NOT because it is the
+  condition: there was no editor at all. `tasklist` matched `unreal` zero times, `netstat` found
+  no listener on 9315, and all seven `runtimes.json` entries carried `mcpRunning:true` on dead
+  PIDs -- the fossil pattern this file already records. The condition remains the LANE AGENT'S
+  TOOL SURFACE, which is what was measured above.
+  THE ROUTE WAS A HEADLESS `UnrealEditor-Cmd.exe -run=pythonscript` COMMANDLET, needing no
+  editor and available to Bash alone. `PythonScriptPlugin` is enabled TRANSITIVELY by
+  `PCGPythonInterop` in the `.uproject`, so no `.uproject` and no `Config/` change was needed and
+  none was made. The script is checked in at `Tools/editor/make_strat_sound_bank.py`, beside
+  `make_scoreboard_wbp.py`.
+  WHAT WAS BUILT. Seven `MetaSoundSource` assets under `/Game/StratAudio` -- `MS_Strat_ButtonClick`,
+  `_EndTurn`, `_UnitMove`, `_UnitAttack`, `_UnitDestroyed`, `_FactoryBuild`, `_MatchEnd` -- each a
+  mono one-shot of oscillator-or-noise into a `Multiply` gated by an `AD Envelope`, with `OnPlay`
+  opening the envelope and the envelope's `On Done` wired to `OnFinished`. WITHOUT THAT SECOND
+  WIRE a one-shot never reports finished and holds its voice for the life of the world. Plus
+  `SCL_Strat_Master` parenting `SCL_Strat_SFX` and `SCL_Strat_Music`, submixes `SBM_Strat_SFX`
+  and `SBM_Strat_Music`, `SMX_Strat_Base`, `SC_StratCues` (max 4, StopOldest), and
+  `DA_StratSoundBank`.
+  **`build_to_asset` RETURNS `SUCCEEDED` ON AN EMPTY GRAPH, AND THAT IS THE MEASUREMENT THIS
+  ENTRY MOST WANTS READ.** A control source was built with no nodes and no wires by the same call
+  path and its `build_to_asset` succeeded identically to the seven real ones. So a green builder
+  result is NOT evidence that an asset contains anything. What distinguishes them here is size:
+  the empty control was 28,886 bytes against 59,143--78,189 for the seven, and the ordering tracks
+  voice count (one-voice noise smallest, two-voice chords largest). The control was then deleted.
+  **`EditorAssetLibrary.delete_asset` RETURNED `True` AND DID NOT DELETE IT** -- the asset still
+  existed by the API's own `does_asset_exist` and the file was still on disk. Removed from the
+  filesystem by hand. This file already records a `False` return on a delete that also failed; the
+  return value is not evidence in either direction.
+  **`unreal.log` DOES NOT REACH A COMMANDLET'S CAPTURED LOG.** A first probe reported only through
+  it, printed `Python script executed successfully`, ran in 0.14 s and emitted not one of its own
+  lines -- indistinguishable from a script that did nothing. The control that settled it was
+  writing to a FILE instead: the file appeared, so the script had been running all along and only
+  the reporting channel was dead. Every script in this pass reports to a file, and that is how the
+  one real defect was caught -- `create_float_meta_sound_literal` returns a 2-TUPLE, not a
+  literal, and passing it through failed at the nativizer. Through `unreal.log` that failure would
+  have been silent and the assets would have shipped unenveloped.
+  NODE CLASS NAMES WERE RESOLVED FROM THE ENGINE'S OWN SOURCES, NOT GUESSED, because
+  `add_node_by_class_name` on an unresolved name yields an invalid handle and the later
+  `build_to_asset` then succeeds anyway. Three of the seven do not follow the regular
+  `{"UE", Name, "Audio"}` shape: `AD Envelope` puts the node's own display name in the NAMESPACE
+  slot (`MetasoundADEnvelopeNode.cpp:268`), and `Multiply`/`Add` take the DATA TYPE as the variant
+  through the math macro (`MetasoundMathNodes.cpp:33`) rather than the audio-variant constant.
+  VERIFIED IN A COLD PROCESS THAT WROTE NOTHING, because a `set()` return is not evidence and a
+  same-process reload reads memory rather than bytes. A separate commandlet read back: all three
+  shipped Blueprints (`BP_StratGameMode`, `BP_StratGameMode_AiVsAi`, `BP_StratShellGameMode`)
+  naming `DA_StratSoundBank`; all seven bank slots plus `concurrency` filled; and
+  `SCL_Strat_SFX` on every one of the seven sources. The BEFORE reading of all three Blueprints
+  was `<UNSET>`, which is the half that makes the AFTER meaningful.
+  **SOURCE CONTROL AUTO-STAGED EVERY ASSET AS IT WAS SAVED, AND THE STAGED BYTES WERE NOT THE
+  FILE'S.** `git rm --cached` refused with "staged content different from both the file and the
+  HEAD" on all seven cue sources -- the provider captured them at creation, before the mix
+  assignment and final save. Everything was force-unstaged; `Content/StratAudio/` is untracked and
+  the three Blueprints are unstaged modifications, so staging remains the user's call. This is the
+  same defect that once nearly shipped a pre-rewire material under a later pass's message.
+  **NOT AUDIBLE, AND NOTHING HERE CLAIMS OTHERWISE.** A commandlet has no audio device and says so
+  -- "Audio Device Manager not initializing due to all audio being disabled". Nothing in this pass
+  proves an envelope opens, that a voice is not silent, or that any frequency is pleasant. A human
+  at the keyboard remains the only instrument for every one of those, and the listening pass is
+  owed. The suite figure after this pass is the one `global.md`'s banner cites; this file states
+  none.
+
 - **THE BUILD PULSE PULSES, AND A HUMAN SAW IT ON THE HEX IN A MATCH -- W8's LAST OWED ITEM IS
   DISCHARGED.** 2026-09-04, in `E:/MultiAgent/Stratocracy` on branch `master` over base
   `4e4e2d1`, no worktree and no merge, uncommitted. **ACTING: the `coordinator`, under

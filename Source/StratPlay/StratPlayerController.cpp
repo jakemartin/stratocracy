@@ -27,6 +27,7 @@
 #include "StratPathPreviewQuery.h"
 #include "StratPlay.h"
 #include "StratScoreboardHUD.h"
+#include "StratSoundDirector.h"
 // IWYU: this file now names `StratDecorateInfoPanel` directly. It arrived transitively
 // through `StratForecastQuery.h` before, which is a dependency on somebody else's include
 // list rather than on a header.
@@ -491,8 +492,50 @@ void AStratPlayerController::OnEndTurn()
 // whole of it. A key press has nobody to tell, so `OnEndTurn` logs at `Log` and returns void; a
 // button press has a caller, and swallowing "move the marked Infantry first" into the output
 // log would leave the player pressing a control that does nothing and says nothing.
+namespace
+{
+	/**
+	 * Sound one `EStratSoundCue::ButtonClick` for a control this controller owns.
+	 *
+	 * A FILE-LOCAL FREE FUNCTION AND NOT A METHOD, because it holds nothing, decides nothing
+	 * and is called from four places whose only common property is being a button's verb. A
+	 * method would put a fifth audio-shaped name on a class that already carries thirty.
+	 *
+	 * IT ASKS THE WORLD FOR THE DIRECTOR EVERY CALL. A click is a human-rate event; the cost
+	 * is a pointer read, and caching would be a lifetime to reason about for nothing.
+	 *
+	 * A NULL WORLD OR A NULL DIRECTOR IS SILENCE AND NOT A REFUSAL. See
+	 * `UStratMatchSubsystem::FindSoundDirector`: audio is emphasis, and a controller driven in
+	 * a fixture with no director must behave exactly as it did before this milestone.
+	 *
+	 * IT PASSES NO SIDE, NO UNIT AND NO TURN. A click is about the interface and not about the
+	 * match; the fields exist for the diegetic cues and inventing values for them here would
+	 * put numbers in a record that nothing measured.
+	 */
+	void StratSoundClick(const AStratPlayerController* const Controller)
+	{
+		const UWorld* const World = Controller != nullptr ? Controller->GetWorld() : nullptr;
+		if (World == nullptr)
+		{
+			return;
+		}
+
+		if (UStratSoundDirector* const Director = World->GetSubsystem<UStratSoundDirector>())
+		{
+			Director->EmitCue(EStratSoundCue::ButtonClick, INDEX_NONE, INDEX_NONE, 0);
+		}
+	}
+}
+
 bool AStratPlayerController::RequestEndTurn(FString& OutFailureReason)
 {
+	// ---- The AUDIO milestone's `ButtonClick` -------------------------------
+	// AT ENTRY, UNCONDITIONALLY, BEFORE ANY CHECK AND REGARDLESS OF THE RETURN. A refused
+	// control that makes no sound reads as a DEAD control, so this acknowledges the INPUT and
+	// never the outcome. `UStratMatchSubsystem::SubmitProductionChoice` carries the full
+	// argument and the list of the six sites; it is not restated at each one.
+	StratSoundClick(this);
+
 	// NO GATE, NO CHECK AND NO LOG OF ITS OWN. Everything this function could usefully decide
 	// is already decided inside `HandleSelectionEvent`, in an order that block calls the
 	// contract; anything added here would be a copy of one of those decisions that can drift
@@ -757,6 +800,13 @@ bool AStratPlayerController::OpenProductionMenuAtFocusedFactory(FString& OutFail
 {
 	OutFailureReason.Reset();
 
+	// ---- The AUDIO milestone's `ButtonClick` -------------------------------
+	// AT ENTRY, UNCONDITIONALLY, BEFORE ANY CHECK AND REGARDLESS OF THE RETURN. A refused
+	// control that makes no sound reads as a DEAD control, so this acknowledges the INPUT and
+	// never the outcome. `UStratMatchSubsystem::SubmitProductionChoice` carries the full
+	// argument and the list of the six sites; it is not restated at each one.
+	StratSoundClick(this);
+
 	// THE LATCH IS THE ONLY HEX SOURCE, AND NO CURSOR IS READ. See the declaration: this is
 	// the verb the retraction on `ToggleProductionMenu` points at, and reading `HexUnderCursor`
 	// here would reintroduce the exact defect -- a button click has the cursor on the button.
@@ -778,6 +828,13 @@ bool AStratPlayerController::OpenProductionMenuAtFocusedFactory(FString& OutFail
 bool AStratPlayerController::CloseProductionMenu(FString& OutFailureReason)
 {
 	OutFailureReason.Reset();
+
+	// ---- The AUDIO milestone's `ButtonClick` -------------------------------
+	// AT ENTRY, UNCONDITIONALLY, BEFORE ANY CHECK AND REGARDLESS OF THE RETURN. A refused
+	// control that makes no sound reads as a DEAD control, so this acknowledges the INPUT and
+	// never the outcome. `UStratMatchSubsystem::SubmitProductionChoice` carries the full
+	// argument and the list of the six sites; it is not restated at each one.
+	StratSoundClick(this);
 
 	AStratScoreboardHUD* const Hud = Cast<AStratScoreboardHUD>(GetHUD());
 	if (Hud == nullptr)
@@ -1530,6 +1587,13 @@ void AStratPlayerController::TryArmGuidedOpening()
 
 void AStratPlayerController::SkipGuidance()
 {
+	// ---- The AUDIO milestone's `ButtonClick` -------------------------------
+	// AT ENTRY, UNCONDITIONALLY, BEFORE ANY CHECK AND REGARDLESS OF THE RETURN. A refused
+	// control that makes no sound reads as a DEAD control, so this acknowledges the INPUT and
+	// never the outcome. `UStratMatchSubsystem::SubmitProductionChoice` carries the full
+	// argument and the list of the six sites; it is not restated at each one.
+	StratSoundClick(this);
+
 	GuidedOpening.SkipGuidance();
 
 	// IN THE SAME FRAME. §2.11.6 requires the ring and the turn-1a marker to "clear in the

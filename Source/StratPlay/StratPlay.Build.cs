@@ -70,6 +70,24 @@
 //   reached as an actor class (`AStratScoreboardHUD`), which is engine reflection and not
 //   Slate.
 //
+// - `MetasoundEngine`, AND THE ABSENCE IS ARGUED RATHER THAN INCIDENTAL. The audio
+//   milestone's seven cues will be authored as MetaSounds, and a reader who found that out
+//   would reasonably expect the plugin on this list. It is not needed and must not be added
+//   for a type name: `UMetaSoundSource` derives `USoundWaveProcedural` -> `USoundWave` ->
+//   `USoundBase`, so a MetaSound asset assigns into `UStratSoundBank`'s `USoundBase` slots
+//   with no cast, and `UGameplayStatics::PlaySound2D` takes `USoundBase*`. NOTHING IN THIS
+//   MODULE'S C++ NAMES `UMetaSoundSource` AT ALL, so the plugin never reaches a link line.
+//   `USoundBase`, `USoundConcurrency`, `UDataAsset` and `UWorldSubsystem` are all `Engine`,
+//   which is already public here, so the whole audio feature added ZERO dependencies -- the
+//   claim was made in advance and then held by the build.
+//
+//   THIS IS AN ARGUED ABSENCE AND NOT A MEASURED ONE, WHICH IS A WEAKER THING AND IS SAID SO.
+//   The `InputCore` note below is backed by 2 x LNK2019 with the mangled names quoted; this
+//   one is backed by a green build in which the symbol was never referenced. If some later
+//   pass DOES name a MetaSound type -- to read a parameter, to build one at runtime -- the
+//   link error will be the same species and the fix is this line becoming a dependency with
+//   the linker's own words beside it.
+//
 // - Anything under `Content/AdvancedTurnBasedTileToolkit/`. That plugin content is a
 //   harvest source for MESHES AND MATERIALS ONLY. Its grid and its pathfinding would be a
 //   second source of truth for movement beside `FStratBridge::Reachable`, which is the

@@ -16,6 +16,195 @@
 ## NEXT
 
 - **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `c5d2c65`, UNCOMMITTED) -- A SENTENCE IN
+  `Source/StratUI/StratOptionsWidget.h` SAID THE OPTIONS WBP WAS STILL OWED, AND IT WAS FALSE ON
+  THE DAY IT WAS COMMITTED RATHER THAN HAVING GONE STALE.** Comment and record only: **no
+  executable byte moved.** No exception clause applies here and none is cited -- `Source/` is this
+  lane's and `engine.md` is this lane's file. The live suite figure is `global.md`'s and does not
+  move on this work; no suite was re-run, deliberately (see the last bullet).
+  - **THE CLAIM AND ITS STATUS.** The `THE OWNER LANDED 2026-09-05` stamp closed on
+    *"What is still owed is the WBP."* -- unqualified, present tense, and false against the tree
+    it sits in. `strat-integration-reviewer` gated on it although it is not in this pass's diff
+    and predates `c5d2c65`, on the ground that a PASS from that seat describes a TREE and not a
+    PHASE. **I checked it rather than complying on trust, and the gate is right on every element.**
+  - **FALSE WHEN WRITTEN, NOT STALE -- AND THE DATE CANNOT SETTLE THAT, ONLY ANCESTRY CAN.**
+    `git log --oneline --diff-filter=A -- Content/UI/WBP_Options.uasset` names `d80b28a` as the
+    commit that ADDED the asset. `git log --oneline --reverse -S "still owed is the WBP" --
+    Source/StratUI/StratOptionsWidget.h` names `374398a` as the sentence's ORIGIN, and what
+    establishes that is the RESULT and not the flag: the query returns `374398a` AND NOTHING
+    ELSE, and a one-line answer has no first-versus-last left to get wrong. **`--reverse` is
+    inert on this query and is not load-bearing for this claim** -- run both ways it returns
+    that same single commit, measured. It is kept because it is the right habit for an origin
+    question, not because the recorded most-recent rule bit here; it did not. The weight is
+    carried instead by that single-commit result plus the `--diff-filter=A` above, which are two
+    different instruments answering two different questions. **Both commits are dated
+    `2026-09-05`, so `git log --no-walk --format='%h %ad' --date=short` cannot order them and I
+    did not rely on it.** `git merge-base --is-ancestor d80b28a 374398a` exits 0, and the linear
+    walk `git log --oneline d80b28a~1..374398a` prints `374398a`, `c13eb81`, `d80b28a` newest
+    first. So the asset was two commits old when the sentence claiming it was owed was written.
+  - **THE SENTENCE ABOVE SAID THE OPPOSITE UNTIL THE THIRD RE-GATE, AND THE REPEAT IS THE
+    FINDING RATHER THAN EITHER INSTANCE.** As first written it read *"`--reverse` deliberately,
+    this project's recorded rule that the plain form answers MOST RECENT, and here the rule
+    genuinely bites rather than being cited by analogy."* `strat-integration-reviewer` blocked
+    it and I re-ran rather than complying on trust: `git log --oneline -S "still owed is the
+    WBP" -- Source/StratUI/StratOptionsWidget.h` and the same command with `--reverse` **both
+    return `374398a` alone**, unscoped as well as path-scoped, so `--reverse` changed nothing
+    and the sentence denying exactly that was false. **This is the SAME defect the bullet four
+    entries down corrects, one pass later and in the same file, committed INSIDE the
+    correction for it.** That earlier bullet attached a true general rule to a specific command
+    where it did not apply; this one then asserted the general rule was load-bearing for a
+    second command where, run both ways, it is not. **So the transferable failure is not a
+    particular wrong command -- it is REACHING FOR A TRUE RULE THAT DOES NOT APPLY, and the
+    second instance is the evidence that fixing the first did not reach it.** The rule that
+    covers both: a sentence naming a command is a claim about THAT COMMAND ON THAT ARGUMENT,
+    and a sentence naming a general rule as the reason is a claim that the rule DISCRIMINATES
+    THERE -- which is a second, separate claim, false whenever both forms agree, and settled
+    only by running both and diffing them.
+  - **AND THE FIX IS NOT TO DELETE THE RULE, WHICH IS THE OVER-CORRECTION THIS BULLET EXISTS TO
+    REFUSE.** The rule is true and DOES discriminate elsewhere in this file: on the broad token
+    `"SetInputMode"` scoped to `Source/StratPlay/`, plain returns `374398a` first and `--reverse`
+    returns `c8c81cb` first over three commits -- re-measured today, and the stamp resting on
+    that is correct and untouched. A one-commit result and a three-commit result are the whole
+    difference, and it is cheap to check before writing the justification instead of after.
+  - **WHAT IS TRUE NOW, AND THE ASSET-SIDE INSTRUMENT NEEDED A CONTROL BEFORE IT SAID ANYTHING.**
+    The first attempt to confirm the three GameMode assets reference `WBP_Options` used `strings`,
+    which **does not exist on this box** -- `command -v strings` is empty and the extraction
+    returned **0 lines on a 39 KB asset**, so its three "no"s were a silent instrument and not
+    evidence. Re-run as `grep -a -c` on the smudged worktree bytes:
+    `Content/StratPlay/BP_StratShellGameMode.uasset`, `BP_StratGameMode.uasset` and
+    `BP_StratGameMode_AiVsAi.uasset` each return **2 for `WBP_Options` and 1 for
+    `OptionsWidgetClass`**, and the negative control `Content/TopDown/Blueprints/
+    BP_TopDownGameMode.uasset` returns **0** -- so the instrument discriminates rather than
+    matching everything.
+  - **AND NONE OF IT RESTS ON THE COMMENT, BECAUSE A NAMED CLAUSE PINS IT.**
+    `Stratocracy.StratPlay.GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass`, in
+    `Source/StratPlay/Tests/StratShippedOptionsWidgetClassParity.cpp`, reads each GameMode CDO
+    through the **reflected** `OptionsWidgetClass` property rather than through a cast to one
+    native base -- the three assets do not share one, two deriving from `AStratGameMode` and one
+    from `AStratShellGameMode` -- fails rather than passing when it cannot load or cannot tell,
+    **refuses the agreement three UNSET GameModes would otherwise produce**, and finishes on
+    `Shell.Panel->IsChildOf(UStratOptionsWidget::StaticClass())`. That last assertion is the one
+    that makes "derives from this class" a measured fact rather than a comment.
+  - **STAMPED, NOT REWRITTEN, PER THAT FILE'S OWN CONVENTION.** The paragraph the sentence closes
+    derives why `UStratOptionsPresenter` owns the panel instead of `AStratShellHUD`, and that
+    derivation is still correct -- only the closing claim went wrong. The new stamp says what is
+    true now, names the discharging clause, and says plainly that the sentence was false when
+    written, because "it aged out" and "its author never checked" call for different remedies and
+    only the second is what happened.
+  - **THE `AMENDED 2026-09-05` BLOCK BELOW IT WAS READ AND IS NOT AFFECTED, WHICH THE STAMP SAYS
+    RATHER THAN LEAVING TO BE INFERRED.** It argues how the asset must be AUTHORED -- a widget
+    tree only, no event graph, the `BindWidget` names as the whole contract -- and never claims
+    the asset had not landed, so it reads correctly against a tree that has one. It is silent on
+    the question, not wrong about it, and a later reader should not take its silence for
+    agreement with the sentence above it. The earlier *"As of this file's first commit ... no WBP
+    derives from this class"* is time-qualified and survives on its qualifier.
+  - **COMMENT-ONLY, DERIVED BY THE REVIEWER'S OWN INSTRUMENT AND WITH A CONTROL.** `git diff
+    --numstat` is `33 0`. Every added line filtered for a leading `//` leaves **zero** lines on
+    both sides. Stronger, and the one the diff filter cannot fake: HEAD's copy and the worktree
+    copy with all `//` lines stripped from both are **identical**, which also rules out a line of
+    code having been commented out or a comment uncommented. Control, because an empty difference
+    is worthless without one: renaming `PushAudioOptions` in a **disposable copy** of the stripped
+    worktree file makes the same `diff` report a difference. No file in the repository was
+    modified to obtain that.
+  - **BUILT, AND THE HEADER EDIT DID RECOMPILE DEPENDENTS.** `Build.bat StratocracyEditor Win64
+    Development -project=... -waitmutex` printed *"Invalidating makefile for StratocracyEditor
+    (working set of source files changed)"*, ran **18 actions** including
+    `Compile [x64] StratOptionsWidget.cpp`, `StratOptionsPresenter.cpp`, `StratGameMode.cpp`,
+    `StratShellGameMode.cpp`, `StratShippedOptionsWidgetClassParity.cpp` and both
+    `Module.Strat*.gen.cpp`, relinked `UnrealEditor-StratUI.dll` and `UnrealEditor-StratPlay.dll`,
+    and ended `Result: Succeeded`. No warning, no error, no diagnostic to quote. **A comment in a
+    header is not free** -- 13 translation units were rebuilt for it.
+  - **NO SUITE WAS RE-RUN, ON PURPOSE, AND THE REASONING WAS CHECKED RATHER THAN ACCEPTED.**
+    `strat_banner_sweep.py`'s report-identity check draws `newest_test_mtime` only from files
+    that BOTH end in `.cpp` AND carry an `IMPLEMENT_*_AUTOMATION_TEST` macro; a `.h` is dropped by
+    the extension test before the macro test ever runs, so touching this header cannot stale that
+    check. A re-run WOULD have moved `reportCreatedOn` and staled a citation in `global.md` that
+    is not this lane's to repair. The sweep's printed verdict after this edit is recorded in the
+    pass report; its exit code was measured with a redirect rather than through a pipeline, since
+    `cmd | tail` then `$?` reads `tail`'s status and has produced a false exit-code claim on this
+    project more than once.
+
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `c5d2c65`, UNCOMMITTED) -- THE IN-MATCH INPUT-MODE
+  DEBT IS DISCHARGED BY A HUMAN SAYING NOTHING WAS WRONG, AND A MODULE-WIDE ABSENCE CLAIM IN THIS
+  FILE HAD GONE STALE WITHOUT ITS SUBJECT MOVING.** Comment and record only: **no executable byte
+  moved.** No exception clause applies here and none is cited -- `Source/` is this lane's and
+  `engine.md` is this lane's file. The live suite figure is `global.md`'s and does not move on
+  this work.
+  - **THE DISCHARGE, AND THE DIRECTION IT WENT.** `Source/StratPlay/StratOptionsPresenter.h`'s
+    `NOT IN THIS ROUND` bullet on AN INPUT MODE named its own condition: *"DISCHARGED BY a human
+    at the keyboard reporting whether the in-match panel is operable."* On 2026-09-05 that human
+    reported the options button works, the sliders work, the panel exits, and that it worked IN A
+    MATCH -- asked with candidate symptoms named in advance (clicks landing on the board behind
+    the panel, sliders that will not drag, hover still highlighting the hexes underneath) so that
+    the answer was to something rather than to nothing. No symptom was reported. **So the mode is
+    NOT taken**, and the bullet now reads as an answered question instead of an open one.
+  - **WHAT THE DISCHARGE RESTS ON, WRITTEN DOWN BECAUSE IT IS THIN.** ONE human report. It was
+    not measured, and **no clause in this tree can observe an input mode** -- which is the same
+    property that made this a debt rather than a decision in the first place, so the discharge is
+    exactly as unfalsifiable as the debt was. The header says so in terms and says the item
+    re-opens if a later playtest contradicts it, keeping the original recipe -- a mode taken and
+    given back around the panel's lifetime -- alive as the fix should that happen.
+  - **AND IT DOES NOT SETTLE THE MOUSE-AXIS QUESTION, WHICH IS THE ADJACENT THING IT WOULD BE
+    EASIEST TO READ IT AS SETTLING.** `StratPlayerController.cpp`'s block rejects `SetInputMode`
+    with capture on separate grounds -- `bShowMouseCursor = true` is load-bearing and every mode
+    that reliably feeds a mouse axis captures, which changes how a click lands. That argument is
+    untouched, still stands, and the header edit says not to fold the two together.
+  - **THE STALE SENTENCE, AND WHY IT IS STAMPED RATHER THAN REWRITTEN.** The 2026-08-27
+    hover-polling entry below says *"No `SetInputMode` call exists anywhere in
+    `Source/StratPlay/`."* That is **false as of today** and was **true when written**, so it is
+    stamped in place per this file's header. **The instrument is a grep AT A COMMIT, not a
+    `git log -S`** -- `git grep -n "SetInputMode" c8c81cb -- Source/StratPlay/` returns exactly
+    two lines, `Source/StratPlay/StratPlayerController.cpp:443` and `:448`, both COMMENTS, and no
+    call; and the same grep at `ee4acf5` returns FOUR lines -- the same two `StratPlayerController.cpp`
+    comments, which have drifted to `:468` and `:473`, a third comment at `StratShellHUD.cpp:15`,
+    and one CALL, `StratShellHUD.cpp:243:` `OwningPlayer->SetInputMode(InputMode);`, whose
+    enclosing definition is `AStratShellHUD::ApplyMenuInputMode` opening at `StratShellHUD.cpp:225`
+    in the same blob. Two greps, a before and an after, and the call appears between them. `c8c81cb` is dated 2026-08-27 and is the commit the stale entry describes;
+    `ee4acf5` is dated 2026-08-31.
+  - **THE JUSTIFICATION THIS ENTRY FIRST CARRIED WAS FALSE ABOUT ITS OWN COMMAND, AND THE WAY IT
+    GOT THAT WAY IS THE PART WORTH KEEPING.** As first written on 2026-09-05, both this bullet and
+    the stamp at the hover-polling entry cited `git log --reverse -S "OwningPlayer->SetInputMode"
+    -- Source/StratPlay/` and justified the `--reverse` with *"the plain `-S` form answers MOST
+    RECENT and returns `374398a` first."* `strat-integration-reviewer` blocked it. Run, the plain
+    form and the `--reverse` form of THAT command return the same single line -- `ee4acf5` and
+    nothing else -- so `--reverse` changed nothing and cannot have been load-bearing for it.
+    `374398a` appears only under the BROADER token `"SetInputMode"`, which neither site named.
+    **The general rule is true and is recorded knowledge on this project** -- plain `git log -S`
+    answers MOST RECENT, not ORIGIN. What went wrong is that a true general rule was attached to a
+    specific command where it did not apply, and the demonstration was written FROM THE RULE
+    rather than from a run. **A justification sentence that names a command is a claim ABOUT THAT
+    COMMAND, and the only way to write one is to run it and paste back what came out.**
+  - **AND THE BROADER TOKEN WOULD NOT HAVE RESCUED IT EITHER, WHICH IS WHY THE COMMAND IS GONE
+    RATHER THAN WIDENED.** Under `"SetInputMode"` the plain form does list `374398a` first, so the
+    rule genuinely bites there -- but `git log --oneline --reverse -S "SetInputMode" --
+    Source/StratPlay/` returns `c8c81cb` first, and `c8c81cb` is precisely the commit where the
+    grep above shows COMMENTS AND NO CALL. `-S` counts occurrences of a string, so a commit that
+    only moves comment text is an origin as far as it is concerned. In either direction, on either
+    token, `-S` was the wrong instrument for *"when did the CALL arrive"*; the paired grep is the
+    right one and is what this bullet now rests on. **Nothing executable moved for this
+    correction and nothing was rebuilt** -- it edits this file only, `Source/` is byte-identical
+    to what the build below covers, and the live suite figure is `global.md`'s and is unmoved from
+    the run recorded there.
+  - **THE SENTENCE'S SUBJECT DID NOT MOVE, ONLY ITS QUANTIFIER.** The reasoning that sentence
+    supports is about `AStratPlayerController`, and `AStratPlayerController` still calls
+    `SetInputMode` nowhere -- verified today. What broke is the module-wide *"anywhere in
+    `Source/StratPlay/`"*, a claim broader than the thing it was evidence for. That is the
+    ordinary failure mode of an over-broad claim: it names another thing, and the other thing
+    changed under it.
+  - **BUILD, GREEN, EDITOR CLOSED.** `Build.bat StratocracyEditor Win64 Development
+    -project=... -waitmutex` -> `Result: Succeeded`, 13.29 s, 10 actions, zero warnings and zero
+    errors printed; `[Adaptive Build] Excluded from StratPlay unity file:
+    StratOptionsPresenter.cpp`, and both `UnrealEditor-StratPlay.dll` and
+    `UnrealEditor-StratUI.dll` relinked. **A comment-only header edit still recompiled five
+    translation units including `Module.StratPlay.gen.cpp`**, which is why it was built rather
+    than assumed.
+  - **SUITE RE-RUN AND READ FROM THE EXPORTED REPORT.** `Saved/AutomationReport/index.json` read
+    with `utf-8-sig`, `reportCreatedOn 2026.09.06-01.54.08`: zero `failed`, zero `notRun`, zero
+    `succeededWithWarnings`, and no test in a non-`Success` state. The figure is unmoved and is
+    `global.md`'s to state.
+
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `374398a`, worktrees exist for other lanes but NO
   lane was in flight over this work, UNCOMMITTED) -- THE MUTANT BATTERY FOR THE OPTIONS SURFACE,
   AND THE ONE SEAM IT WAS SUPPOSED TO JUSTIFY DOES NOT NEED CUTTING.** Every mutation edits a
@@ -5420,7 +5609,24 @@
     assumed it was not until I grepped:** `AStratPlayerController`'s constructor sets
     `bShowMouseCursor = true` with a comment saying a turn-based game is played with a cursor and
     that it is set in the constructor rather than `BeginPlay` so a Blueprint subclass can
-    override it. No `SetInputMode` call exists anywhere in `Source/StratPlay/`. So if the
+    override it. No `SetInputMode` call exists anywhere in `Source/StratPlay/`.
+    **[STAMPED 2026-09-05: THAT SENTENCE IS NOW HISTORY, AND IT WAS TRUE WHEN WRITTEN. Stamped
+    rather than rewritten, per this file's header. At `c8c81cb` -- the commit this entry
+    describes -- `git grep -n "SetInputMode" c8c81cb -- Source/StratPlay/` returns exactly two
+    lines, both COMMENTS in `StratPlayerController.cpp`, and no call. It became false at
+    `ee4acf5` (2026-08-31), which added `Source/StratPlay/StratShellHUD.cpp` carrying
+    `OwningPlayer->SetInputMode(InputMode)` at `StratShellHUD.cpp:243`, with an
+    `FInputModeUIOnly` in `AStratShellHUD::ApplyMenuInputMode` -- established by running the SAME
+    grep at `ee4acf5`, where it returns that call line as well as the two comments. **CORRECTED
+    2026-09-05, same day, after `strat-integration-reviewer` blocked it:** this stamp first
+    credited `git log --reverse -S`, saying the plain form *"would have named `374398a` here."*
+    Run, both `git log --oneline -S "OwningPlayer->SetInputMode" -- Source/StratPlay/` and the
+    same command with `--reverse` return `ee4acf5` alone. The conclusion was right and the
+    justification was invented; the reasoning is written out at the top of this file under the
+    2026-09-05 in-match input-mode entry.
+    The sentence's own SUBJECT is unmoved: `AStratPlayerController` still calls `SetInputMode`
+    nowhere, so the hover reasoning that rests on it is untouched. Only the module-wide
+    quantifier went stale.]** So if the
     hypothesis holds, the fix is a decision about input MODE rather than about the hover code:
     `FInputModeGameAndUI` with `SetHideCursorDuringCapture(false)`, or an explicit capture, or
     reading the cursor position on tick instead of via an axis action -- and the last of those

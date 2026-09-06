@@ -48,8 +48,14 @@
 //   - THAT ANY PIXEL APPEARS. `AddToViewport` in a `-nullrhi` run puts nothing on a screen.
 //     What is pinned is that the presenter created, seeded, bound and retained a panel, and
 //     that it let go of it again. A human at the keyboard remains the only instrument for
-//     whether the screen is legible or operable, which `StratOptionsPresenter.h` already
-//     records as an outstanding discharge for the in-match input mode.
+//     whether the screen is legible or operable -- which is why `StratOptionsPresenter.h`'s
+//     in-match input-mode item named a human report as its own discharge condition. That item
+//     is no longer outstanding: it is `DISCHARGED 2026-09-05, IN THE DIRECTION THAT LEAVES THE
+//     CODE ALONE`, on ONE human report that the in-match panel is operable. That is a report,
+//     not a measurement -- no clause in this tree can observe an input mode, which is why the
+//     debt existed -- so it is reversible if a later playtest contradicts it, and it settles
+//     NOTHING about the SEPARATE mouse-axis rejection argued on `AStratPlayerController::Tick`,
+//     which stands on `bShowMouseCursor = true` being load-bearing and is untouched by it.
 //   - THAT THE SHIPPED `WBP_Options` IS THE CLASS CONFIGURED. That is
 //     `StratShippedOptionsWidgetClassParity.cpp`'s subject; these clauses configure a double,
 //     deliberately, so that a broken asset reddens one clause about the asset rather than

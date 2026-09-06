@@ -55,6 +55,44 @@
 // screen at the title. `UStratOptionsPresenter`, a `UWorldSubsystem` in `StratPlay`, is the owner
 // instead, and it exists in both worlds; its file header carries the full derivation. What is
 // still owed is the WBP.
+//   THAT LAST SENTENCE WAS FALSE ON THE DAY IT WAS COMMITTED, WHICH IS A DIFFERENT AND MORE
+// USEFUL FACT THAN ITS HAVING GONE STALE, SO IT IS STAMPED RATHER THAN QUIETLY REWRITTEN.
+// `Content/UI/WBP_Options.uasset` was ADDED by `d80b28a`; the paragraph above it, headed
+// "THE OWNER LANDED 2026-09-05", arrived in `374398a`. Both commits carry the same calendar
+// date, so the date does not settle the order and ancestry does:
+// `git merge-base --is-ancestor d80b28a 374398a` succeeds, and `git log --reverse -S "still
+// owed is the WBP"` over this file returns `374398a` AND NOTHING ELSE, which is what makes it
+// the sentence's ORIGIN -- a one-line result has no first-versus-last left to get wrong.
+// `--reverse` IS KEPT BECAUSE IT IS THE RIGHT HABIT FOR AN ORIGIN QUESTION, NOT BECAUSE IT BIT
+// HERE: run both ways this query returns that same single commit, so the recorded rule about
+// the plain form answering most-recent is inert on it and no sentence here should imply
+// otherwise. The asset's own arrival is a separate instrument and it is the one that carries
+// the weight: `git log --diff-filter=A -- Content/UI/WBP_Options.uasset` names `d80b28a`. The
+// asset was therefore already in the tree when the sentence claiming it was owed was written.
+// A sentence wrong at the moment of writing is not an aging problem; it is a claim its author
+// carried forward without checking, and the check was that one `--diff-filter=A` away.
+//   WHAT IS TRUE NOW, each part measured rather than asserted. The asset exists and is tracked.
+// It derives from `UStratOptionsWidget`. And `OptionsWidgetClass` names it on ALL THREE shipped
+// GameModes -- the title map's, the match map's and the AI-vs-AI demo's. None of that rests on
+// this comment being read, because it is pinned by a named clause:
+// `Stratocracy.StratPlay.GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass`, in
+// `Source/StratPlay/Tests/StratShippedOptionsWidgetClassParity.cpp`. That clause reads each
+// GameMode CDO through the REFLECTED `OptionsWidgetClass` property rather than through a cast
+// to one native base (the three assets do not share one), fails rather than passing when it
+// cannot tell, refuses the agreement that three UNSET GameModes would otherwise produce, and
+// finishes on `IsChildOf(UStratOptionsWidget::StaticClass())` against the agreed class.
+//   SO THE DEBT STATED ABOVE AS "DISCHARGED BY the WBP and an owner ... that creates this
+// widget on `IsOptionsPanelOpen` and binds the delegate" IS DISCHARGED IN BOTH HALVES: the
+// owner landed as `UStratOptionsPresenter`, and the WBP landed one commit earlier than the
+// paragraph that said it had not. Read the whole run above as history.
+//   THE `AMENDED 2026-09-05` BLOCK BELOW IS UNAFFECTED AND IS DELIBERATELY NOT BEING CORRECTED
+// HERE, WHICH IS SAID SO THAT ITS SILENCE IS NOT LATER READ AS AGREEMENT WITH THE SENTENCE
+// ABOVE. It argues how the asset must be AUTHORED -- a widget tree only, no event graph, the
+// `BindWidget` names as the whole contract -- and it never claims the asset had not landed. It
+// reads correctly against a tree that has one. It is silent on the question, not wrong about it.
+// The same goes for the time-qualified sentence higher up ("As of this file's first commit ...
+// no WBP derives from this class"): its qualifier is what saves it, and this stamp is what
+// closes it.
 //
 // NOT IN THIS ROUND, with reasons:
 // - RESOLUTION, WHICH IS THE OTHER HALF OF Sec 2.11.5's OWN SENTENCE. It is `UGameUserSettings`:

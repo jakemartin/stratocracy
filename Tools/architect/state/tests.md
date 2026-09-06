@@ -14,6 +14,87 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-05 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- one comment block in
+  `Source/StratPlay/Tests/StratOptionsPresenterClauses.cpp`, plus this file -- on `master` in the
+  main tree `E:/MultiAgent/Stratocracy`, base commit `c5d2c65`, tree already carrying four other
+  lanes' uncommitted files, and this pass is UNCOMMITTED)** -- **A CLAUSE FILE'S "WHAT THESE
+  CLAUSES DO NOT PIN" BLOCK CARRIED A CLAIM ABOUT ANOTHER FILE, AND THE OTHER FILE MOVED.** No
+  assertion, no clause name, no fixture and no include moved; `git diff -- Source/StratPlay/Tests/`
+  is comment lines only. Cite this pass by its exported `reportCreatedOn 2026.09.06-02.19.18`; the
+  figure lives in `Tools/architect/state/global.md` and nowhere else.
+  - **WHAT WENT STALE, AND IT WAS ONE WORD.** The block said a human at the keyboard is the only
+    instrument for whether the options screen is legible or operable, *"which
+    `StratOptionsPresenter.h` already records as an **outstanding** discharge for the in-match
+    input mode."* Earlier the same day `strat-gameplay-engineer` closed that item; the header now
+    reads `DISCHARGED 2026-09-05, IN THE DIRECTION THAT LEAVES THE CODE ALONE`. Both halves were
+    verified against the tree rather than taken from the brief or from the gate report: the
+    header's discharge text was read in place, and the enclosing function of the mouse-axis
+    rejection was resolved by scanning FORWARD from the comment block to the next definition,
+    `void AStratPlayerController::Tick(float DeltaSeconds)`, rather than backward -- a backward
+    scan from that block lands on `OnToggleProductionMenu` and would have named the wrong function
+    in the replacement text.
+  - **THE LESSON, WHICH IS THIS LANE'S AND NOT THE ENGINEER'S.** A "what this does not pin" block
+    is the most useful prose in a clause file and it is also the only prose in it that makes
+    PRESENT-TENSE CLAIMS ABOUT FILES THIS LANE DOES NOT OWN. Nothing compiles it, no clause
+    asserts it, and the sweep is blind to it -- the sweep collects suite counts and phase verdicts
+    by shape and has no shape for "the header records X as outstanding". So a debt discharged in
+    `Source/StratPlay/` falsified a sentence in `Source/StratPlay/Tests/` with no instrument
+    between them. **When a clause file describes another file's state, describe the CONDITION and
+    not its status** -- "the header names a human report as its discharge condition" would not
+    have gone stale; "records it as outstanding" did.
+  - **WHAT THE REPLACEMENT ASSERTS, AND THE TWO THINGS IT REFUSES TO.** It keeps the main clause
+    intact, because the main clause never went stale: a human at the keyboard is still the only
+    instrument for legibility and operability, and that is exactly what these clauses do not pin.
+    It then records the discharge as a REPORT and not a measurement -- one human report, no clause
+    in this tree can observe an input mode, reversible if a later playtest contradicts it. And it
+    says in terms that the discharge settles NOTHING about the separate mouse-axis rejection
+    argued above `AStratPlayerController::Tick`, which stands on `bShowMouseCursor = true` being
+    load-bearing and is untouched.
+  - **THE NEAR-IDENTICAL SENTENCE IN THIS FILE WAS EXAMINED AND LEFT ALONE, and the reason is
+    exactly the lesson above.** It reads *"Whether the screen is legible or operable remains a
+    human at the keyboard, as `StratOptionsPresenter.h` already records for the in-match input
+    mode."* It says the header RECORDS the point; it does not say the point is owed. A header that
+    records a discharge still records the point. So it survived the same event that falsified the
+    `.cpp`, by one adjective's worth of restraint, which is the whole finding in miniature.
+  - **THE RE-RUN WAS OWED EVEN THOUGH ONLY A COMMENT MOVED, and this is the mechanism.**
+    `strat_banner_sweep.py`'s REPORT IDENTITY check populates `newest_test_mtime` from `.cpp`
+    files carrying an `IMPLEMENT_*_AUTOMATION_TEST` macro and fires when that mtime is newer than
+    the report's. It does not read the diff and cannot know the edit was a comment. Touching any
+    clause file at all therefore stales the report. Build then suite then the EXPORTED
+    `Saved/AutomationReport/index.json` read with `utf-8-sig` -- the log undercounts by one.
+  - **A MEASURED CORRECTION TO A STANDING CLAIM ABOUT THE SWEEP'S EXIT CODE.** The brief for this
+    pass stated that the sweep exits 0 even when it prints `SWEEP FAILED`. Measured here on the
+    run that printed `SWEEP FAILED -- the record contradicts itself or the tree`:
+    `python Tools/architect/strat_banner_sweep.py; echo "EXITCODE=$?"` printed `EXITCODE=1`. The
+    printed line is still the verdict to READ, and the sweep is not this lane's file to change --
+    but "the exit code is 0 on failure" is false as measured on 2026-09-05, and an agent that
+    gated on the exit code expecting 0 would have been wrong in the safe direction only by luck.
+  - **WHAT THIS PASS DID NOT TOUCH -- STATED AS AN ACT OF THIS LANE AND NOT AS A STATE OF ANOTHER
+    LANE'S FILES, AND THAT DISTINCTION IS THE WHOLE POINT OF THE REWRITE.** This pass wrote
+    exactly two files: `Source/StratPlay/Tests/StratOptionsPresenterClauses.cpp` (comment lines
+    only) and this one. It did not write `Source/StratPlay/StratOptionsPresenter.h`,
+    `Source/StratUI/StratOptionsWidget.h`, `content.md`, `engine.md`, `global.md`, `data.md` or
+    `decisions.md`. That is a fact about this lane's own actions, and no other lane can falsify
+    it. Whether those files have since MOVED is not this bullet's to say -- `git diff --stat` says
+    it, at the moment it is asked.
+  - **AND THE FIRST DRAFT OF THE BULLET ABOVE COMMITTED, IN THIS FILE, THE EXACT DEFECT THE ENTRY
+    ABOVE IT DIAGNOSES.** It read that four other-lane files "are byte-identical", that
+    `global.md:33` cited a report this pass had staled, and that the sweep carried one remaining
+    `REPORT PROVENANCE` finding naming it. **All three were true when written and all three were
+    false within the hour**, each falsified by a different lane still working: the four files had
+    moved and a fifth (`Source/StratUI/StratOptionsWidget.h`) had joined the pass; the coordinator
+    had moved `global.md:33`'s citation forward; and the sweep, re-run here, printed
+    `SWEEP CLEAN -- no self-contradiction found` with no findings at all. The entry above says a
+    "does not pin" block is the only prose in a clause file that makes present-tense claims about
+    files this lane does not own. **The same sentence is true of a RECORD entry, and this lane
+    proved it by writing one paragraph later.**
+  - **A TIME QUALIFIER WOULD NOT HAVE BEEN A FIX, WHICH IS WHY THE REPAIR IS A DIFFERENT SHAPE.**
+    "As of 2026-09-05 they were byte-identical" is unfalsifiable rather than durable: in a session
+    where lanes run concurrently the qualifier's window can be ZERO, so the sentence buys its
+    truth by describing an instant no reader can return to. The durable form asserts only what
+    this lane DID, and points at the instrument for everything else. **A record entry should name
+    the command that answers a question about another lane's files, never the answer.**
+
 - **2026-09-05 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- six new files under
   `Source/*/Tests/`, two of them test-only headers, plus one existing test-only header extended,
   plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit

@@ -88,6 +88,24 @@
 //   mode. DISCHARGED BY a human at the keyboard reporting whether the in-match panel is
 //   operable; if it is not, the fix is a mode taken and given back around this panel's lifetime,
 //   and `AStratPlayerController.h` already carries the note about who gives it back.
+//     DISCHARGED 2026-09-05, IN THE DIRECTION THAT LEAVES THE CODE ALONE. The condition above
+//   was put to a human at the keyboard, with candidate symptoms named in advance so that a "yes"
+//   would not be a "yes" to nothing -- clicks landing on the board behind the panel, sliders
+//   that will not drag, hover still highlighting the hexes underneath. The report was that the
+//   options button works, the sliders work, the panel exits, and that it worked IN A MATCH too;
+//   no symptom was reported against any of the three. So the match path needs no mode, and none
+//   is taken. **NO EXECUTABLE BYTE MOVED FOR THIS DISCHARGE.**
+//     WHAT THAT REPORT DOES NOT COVER, stated because a discharge that overstates its evidence
+//   is worse than an open debt. It rests on ONE human report and nothing else -- it was not
+//   measured, and no clause in this tree can observe an input mode, which is the same reason the
+//   debt was taken rather than guessed at in the first place. It says the panel is OPERABLE. It
+//   says NOTHING about the mouse-axis question, which is a separate rejection on separate
+//   grounds: `AStratPlayerController.cpp`'s block rejects `SetInputMode` with capture because
+//   `bShowMouseCursor = true` is load-bearing and capture changes how a click lands, and that
+//   argument is untouched by this and still stands. Do not read this discharge as settling it.
+//     AND IT IS REVERSIBLE. A later playtest that contradicts it re-opens the item, and the
+//   recipe in the sentence above -- a mode taken and given back around this panel's lifetime --
+//   is still the fix should that happen.
 // - PAUSING THE MATCH. `Options` does not travel and does not stop the world. A pause would be a
 //   rules-adjacent decision this class has no standing to make, and the match is turn-based and
 //   waits for input anyway.

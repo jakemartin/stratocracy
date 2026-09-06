@@ -169,9 +169,36 @@
   and the in-match panel takes no input mode, which no clause can observe either.
   [STAMPED 2026-09-05: "NO CLAUSE COVERS ANY OF IT" stood here and is now FALSE -- thirteen
   clauses were written the same day under `GATE-TITLEMENU` and `GATE-AUDIO-SETTINGS`, and the
-  figures are `global.md`'s. The unseen half above is unchanged and still owed.]
+  figures are `global.md`'s. The unseen half above is unchanged and still owed.
+  CORRECTED BY THE STAMP DIRECTLY BELOW, WHICH THIS SENTENCE NOW POINTS FORWARD TO: "still
+  owed" was true when this stamp was written and became FALSE later the same day. A reader
+  landing here by citation would otherwise read a false present tense and have no reason to
+  read on -- which is the same defect `StratOptionsWidget.h` was stamped for in this pass,
+  a correction that exists but does not announce itself from the sentence it corrects.]
+  [STAMPED 2026-09-05, LATER THE SAME DAY, BY THE `coordinator` UNDER THIS FILE'S FALLBACK
+  CONDITION -- re-measured with its control at the time of writing: one `ToolSearch` against the
+  NeoStack server returned `list_unreal_projects` and `unreal_status` SERVED and no
+  `execute_script`, the same lookup speaking about the same server, and the separate
+  `unreal-editor-direct` server was `ConnectionRefused` at session start. The fallback licenses
+  the FILE WRITE only; no acting clause is cited because nothing was acted on -- this stamp
+  corrects a prior entry and touches no asset.
+  THE UNSEEN HALF IS NO LONGER OWED. A human has seen and operated the screen and signed off on
+  the layout pass that followed, and the in-match input mode named in the sentence above is
+  DISCHARGED -- not by taking a mode, but by the human report that `StratOptionsPresenter.h` had
+  named as its discharge condition. The panel still takes no input mode; that is now a recorded
+  decision rather than an open question. `engine.md` is the authority on what moved in `Source/`,
+  and this stamp does not restate it.]
 
-- **THE TITLE THEME AND THE OPTIONS WIDGET EXIST; THE OPTIONS SCREEN HAS NO CONTROLS ON IT AND
+- **[STAMPED 2026-09-05, LATER THE SAME DAY, BY THE `coordinator` UNDER THIS FILE'S FALLBACK
+  CONDITION -- control re-measured this session: one `ToolSearch` returned `list_unreal_projects`
+  and `unreal_status` SERVED from the NeoStack server and no `execute_script`, and
+  `unreal-editor-direct` was `ConnectionRefused` at session start. THIS ENTIRE ENTRY IS HISTORY
+  AND ITS HEADLINE IS FALSE OF THE TREE. The screen HAS its controls: `grep -a -c MasterSlider`
+  on `Content/UI/WBP_Options.uasset` returns 1 against a negative control of 0 on
+  `WBP_TitleMenu.uasset`, and `StratOptionsWidget.h` binds all three sliders and the back
+  button. Read every sentence below as an account of what was true on ONE pass, not of the
+  tree. The two sentences that most need this warning are flagged in place.]**
+  **THE TITLE THEME AND THE OPTIONS WIDGET EXIST; THE OPTIONS SCREEN HAS NO CONTROLS ON IT AND
   THAT IS A HUMAN'S WORK, NOT A MISSING STEP.** 2026-09-05 (local), `E:/MultiAgent/Stratocracy`,
   branch `master`, base `089c79c`, no worktree and no merge, uncommitted and UNSTAGED.
   **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE. WRITING: the
@@ -196,7 +223,10 @@
   `create_asset`, because this file already records that `create_asset`'s own `parent_class`
   option is IGNORED for a `WidgetBlueprint`. A Blueprint bakes its parent's script path
   irreversibly, so that is the one decision worth scripting.
-  **THE OPTIONS SCREEN HAS NO SLIDERS AND CANNOT GET THEM ON THIS ROUTE.**
+  **THE OPTIONS SCREEN HAS NO SLIDERS AND CANNOT GET THEM ON THIS ROUTE.** [FALSE OF THE TREE
+  SINCE 2026-09-05: the sliders were added later the same day and are in the shipped asset --
+  see the stamp on this entry's headline. The ROUTE limit stated below was real and is why
+  this pass could not add them; it is not a claim about what the asset holds now.]
   `WidgetTree::ConstructWidget` has no stable Python binding -- `make_scoreboard_wbp.py` records
   the same limit for its own asset and builds no tree either. So this pass produced a widget with
   the right parent and an empty canvas. THE THREE SLIDERS AND THE BACK CONTROL ARE OWED TO A
@@ -223,7 +253,9 @@
   not expanded here into the individual failure modes a checklist had named -- a human report is
   the only valid instrument for an audible claim, and inflating it would be the same overclaim
   this milestone spent twelve gate rounds removing from prose. It does NOT cover the three volume
-  sliders, which no surface reaches, nor the options screen. The paragraph below is kept as
+  sliders, which no surface reaches [FALSE SINCE 2026-09-05: a surface reaches them -- the
+  sliders are in `WBP_Options` and a human has since operated them; see this entry's headline
+  stamp], nor the options screen. The paragraph below is kept as
   written because it was true of this pass and states why the debt could not be discharged from
   here.]
   **STILL NOT AUDIBLE FROM THIS SEAT, AND NOTHING HERE CLAIMED OTHERWISE.** No envelope was heard

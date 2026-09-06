@@ -30,7 +30,7 @@ and checked the additions sum to it. NO FIGURE IS RESTATED IN THIS SENTENCE, DEL
 earlier form of it carried three, and they went stale while the count sentence above them was
 being corrected in the same edit -- and the sweep could not see it, because it collects
 `N/N`-shaped claims and every figure here was a bare integer.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-00.22.38`.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-02.19.18`.
 A COMMENT-ONLY EDIT TO A TEST-DEFINING `.cpp` OWES A SUITE RE-RUN, AND THIS MILESTONE PAID IT
 TWICE -- stated as a rule rather than as the history of which report superseded which, because
 that history has rotted twice already in this file. `strat_banner_sweep.py`'s REPORT IDENTITY
@@ -240,9 +240,19 @@ whenever the value differs, outside the `MySlider.IsValid()` block -- the reason
 about `SSlider` and wrong about `USlider`, and the widget under test is the `U`. Measured, not
 inferred: deleting the three handler guards reddens THREE existing clauses. No seam was cut and
 no executable byte moved; only a header that argued from the false premise was corrected.
-WHAT IS STILL OWED. No human has seen the screen: a
-commandlet has no pixels, so nothing here says either button is visible, hittable or sensibly
-placed, and the in-match panel takes no input mode, which no clause can observe either.
+[STAMPED 2026-09-05: THIS PARAGRAPH READ "WHAT IS STILL OWED. No human has seen the screen"
+and is now FALSE IN BOTH HALVES. A human has seen it and operated it, twice -- see the
+paragraph above on the options screen -- and the in-match input mode is DISCHARGED rather than
+fixed: `StratOptionsPresenter.h` had named its own discharge condition as a human reporting
+whether the in-match panel is operable, the user reported that it is, and the mode is
+therefore deliberately NOT taken. `AStratPlayerController` still calls `SetInputMode` nowhere.
+TWO THINGS THE DISCHARGE DOES NOT DO. It does not settle the SEPARATE rejection recorded on
+`AStratPlayerController::Tick`, which is about feeding the mouse AXIS and stands on
+`bShowMouseCursor = true` being load-bearing; and it is exactly as unfalsifiable as the debt
+it closes, resting on one unmeasured human report that no clause in this tree can re-derive.
+The original recipe -- a mode taken and given back around the panel's lifetime -- survives in
+the header for the day a playtest contradicts this. The engineer's entry in `engine.md` is the
+authority on what moved.]
 THREE PROPERTIES ARE PINNED BY NOTHING AND ALL THREE ARE NAMED RATHER THAN LEFT TO BE FOUND.
 The third is the one this banner already names above as the same defect's third instance --
 the options row's `bEnabled` copy, which compares `true` against `true` because

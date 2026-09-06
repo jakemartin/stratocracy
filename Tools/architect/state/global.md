@@ -11,13 +11,20 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
-_Last run 2026-09-05 (THE GAME HAS A VOICE, AND THE THING WORTH READING IS THAT THE ONE MUTANT
+_Last run 2026-09-06 (THE GAME HAS A VOICE, AND THE THING WORTH READING IS THAT THE ONE MUTANT
 THAT SURVIVED DID NOT REVEAL A WEAK MUTANT BUT A CONTROL SATISFIED THROUGH THE WRONG CHANNEL --
 `AdvanceAiPlaybackOneStep` emits from TWO call sites and only one is behind the slide gate, so a
 clause asserting "the tour made some sound" stayed green while every command cue was silenced,
 kept true by the death cues alone. The clause was rebuilt to count the command cues separately
 rather than reported as a limit, and its header records the survived run rather than reading as
 if it had always worked.
+THE BANNER DATE MOVED TO 2026-09-06 WITHOUT ITS HEADLINE MOVING, AND THAT IS DELIBERATE.
+The headline still describes the audio pass, which is the last pass that changed BEHAVIOUR.
+What crossed midnight is a record-only sweep -- stale-prose stamps across ten sites in three
+lanes, no executable byte moved -- and `strat_banner_sweep.py`'s BANNER DATE FRESHNESS check
+compares this date against the newest entry date in the other record files, which is now
+2026-09-06 in `tests.md`. So the date tracks the record's last write and the headline tracks
+the last behavioural change; they are different questions and this banner answers both.
 The suite is **435/435**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings.
 THE COUNT MOVED 389 -> 435 ACROSS THIS MILESTONE, all of it added and none removed. The
@@ -30,7 +37,7 @@ and checked the additions sum to it. NO FIGURE IS RESTATED IN THIS SENTENCE, DEL
 earlier form of it carried three, and they went stale while the count sentence above them was
 being corrected in the same edit -- and the sweep could not see it, because it collects
 `N/N`-shaped claims and every figure here was a bare integer.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-02.19.18`.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-04.29.34`.
 A COMMENT-ONLY EDIT TO A TEST-DEFINING `.cpp` OWES A SUITE RE-RUN, AND THIS MILESTONE PAID IT
 TWICE -- stated as a rule rather than as the history of which report superseded which, because
 that history has rotted twice already in this file. `strat_banner_sweep.py`'s REPORT IDENTITY
@@ -134,7 +141,13 @@ control that makes the point sharp: a deliberately EMPTY MetaSound, built by the
 whose `build_to_asset` returned `SUCCEEDED` exactly as the eight real ones did -- so nothing the
 build reported was ever evidence that an envelope opens or that a voice is not silent.
 WHAT THE REPORT DOES NOT COVER. The three volume sliders, which are untestable because no surface
-reaches them, and the options screen itself. See the paragraph on the `Options` row below.
+reaches them [STAMPED 2026-09-05: THE SECOND HALF IS FALSE OF THE TREE -- a surface reaches
+them. `WBP_Options` carries all three sliders and the back button, a human has operated them,
+and thirteen clauses stand over that surface. THE FIRST HALF IS NARROWER THAN IT LOOKS AND IS
+NOT BEING STAMPED FALSE: what no clause reaches is whether moving a slider CHANGES AN AUDIBLE
+GAIN, which remains a human instrument and has still not been reported. The twin of this
+sentence in `content.md` was bracketed in the same pass; this one was missed there and caught
+by the gate], and the options screen itself. See the paragraph on the `Options` row below.
 TITLE MUSIC AND THE VOLUME SCREEN NOW HAVE THEIR C++, AND ONE OF THEM UNCOVERED A BUG NOTHING
 COULD HAVE CAUGHT. `ExecuteRoute`'s quit arm was reached by `!RouteTravels(Route)` under a
 comment calling it "the only non-travelling route" -- an inference, not a fact, equating "opens

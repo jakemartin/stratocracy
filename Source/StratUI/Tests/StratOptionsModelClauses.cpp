@@ -41,6 +41,53 @@
 //     `UStratSoundDirector::CommitVolumes` does not exist yet -- again the widget header's own
 //     statement. `Stratocracy.StratPlay.GATE-AUDIO-SETTINGS.CommittedVolumesRoundTripThroughASlot`
 //     pins the far side of that join independently.
+//
+// STAMPED 2026-09-05 -- THE TWO BULLETS ABOVE HAVE TRUE SUBJECTS AND FALSE PARENTHESES, AND ONLY
+// THE PARENTHESES ARE STAMPED. Both bullets' HEADINGS still hold and are the reason the bullets
+// exist: this file constructs no Slate, so it pins no pixel, no slider and no layout; and no
+// clause in this file observes a commit reaching a slot. Neither heading is touched. What went
+// false is the aside each one appends about what does not exist in the tree, and each was
+// measured rather than taken from the report that raised it:
+//   - A `WBP_` ASSET DOES DERIVE FROM `UStratOptionsWidget`. `Content/UI/WBP_Options.uasset`
+//     carries `/Script/StratUI.StratOptionsWidget` 4x and `Default__StratOptionsWidget` once, by
+//     `grep -a -o "[A-Za-z/._]*StratOptionsWidget[A-Za-z_]*"` piped through `sort | uniq -c`.
+//     `grep -a -c` reports 2 on the same file because it counts LINES and this is a binary, which
+//     is why the two figures differ and neither is wrong. THE NEGATIVE CONTROL IS NOT OPTIONAL
+//     HERE: `strings` IS NOT ON THIS BOX (`command -v strings` prints nothing), so a
+//     `strings`-based check returns zero lines on a 39 KB asset -- a zero that reads exactly like
+//     "not found". The same `grep -a` was therefore run against `Content/UI/WBP_TitleMenu.uasset`:
+//     0 for `StratOptionsWidget` while 16 for `Widget`, which is the instrument shown able to
+//     speak before its silence is read as an absence. The asset is pinned independently by
+//     `Stratocracy.StratPlay.GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass`.
+//   - THE BINDER EXISTS. `Source/StratPlay/StratOptionsPresenter.cpp:189` is
+//     `Created->OnAudioOptionsCommitted.AddDynamic(this, &UStratOptionsPresenter::HandleAudioOptionsCommitted)`,
+//     and `:308` inside that handler is `Director->CommitVolumes(InModel.MasterVolume, ...)`. The
+//     near side of the join is pinned by
+//     `Stratocracy.StratPlay.GATE-AUDIO-SETTINGS.ThePresenterSeedsThePanelWithoutForwardingACommitAndForwardsARealOne`,
+//     and the far side by the clause the bullet already names, which is unchanged and still
+//     correct.
+//
+// WHY "YET" DOES NOT SAVE EITHER SENTENCE, since a true sentence stamped false is as much a
+// defect as the reverse and this was the one judgement call in the repair. A bare "yet" is not a
+// time qualifier: "no asset derives from it YET" asserts the absence NOW and adds only an
+// expectation that it will change. Contrast the sentence in `StratOptionsWidget.h` that that
+// file's own stamp explicitly SPARES -- *"As of this file's first commit ... no WBP derives from
+// this class"* -- which anchors to a named moment and is therefore still true today. Neither
+// sentence here has an anchor, so neither survives, and the difference between the two forms is
+// the whole reason that header could stamp one claim and spare the other.
+//
+// AND THE CITATION IS STAMPED, NOT ONLY THE CLAIM, WHICH IS THE PART WORTH READING. Both bullets
+// rest their authority on the same file -- *"the widget header says so itself"*, *"again the
+// widget header's own statement"* -- and that authority HAD ALREADY BEEN CORRECTED at the moment
+// this block was still being read as current. `git log --reverse -S "WHAT IS TRUE NOW, each part
+// measured rather than asserted" -- Source/StratUI/StratOptionsWidget.h` returns `c69e519`, and
+// this file carried no stamp of any kind at that commit or before it. So a correction landed at
+// the cited authority and did not announce itself at the site citing it, and a reader who trusted
+// the citation instead of following it got the pre-correction answer. A CITATION IS A CLAIM ABOUT
+// ANOTHER FILE'S CURRENT TEXT AND AGES EXACTLY AS ANY OTHER CLAIM DOES. `StratOptionsWidget.h`'s
+// block is still the right thing to read here; what was wrong is the summary of it above, and
+// this file is now the place that says so rather than leaving the two to be reconciled by
+// whoever next notices they disagree.
 // ---------------------------------------------------------------------------------------
 
 #include "Misc/AutomationTest.h"

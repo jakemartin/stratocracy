@@ -162,7 +162,17 @@ public:
 	 * re-opens the drift, and no C++ can see it: a mismatch and a genuinely unwritten slot
 	 * both land on "No saved match.", the ordinary first-run state, so the failure stays
 	 * quiet. The discharge is unchanged -- a clause reading both Blueprint CDOs and asserting
-	 * the two strings equal, once the editor lane has created them.
+	 * the two strings equal, once the editor lane has created them [CONDITION MET; SEE THE
+	 * STAMP BELOW].
+	 *
+	 * WHAT IS TRUE NOW, STAMPED 2026-09-05 BY `strat-gameplay-engineer` OVER BASE `c69e519`.
+	 * The clause is
+	 * `Stratocracy.StratPlay.GATE-TITLEMENU.BothShippedGameModeBlueprintsNameOneSaveSlot` in
+	 * `Source/StratPlay/Tests/StratShellBlueprintSlotParity.cpp`, and "both" is CORRECT here
+	 * and only here: it reads TWO CDOs, `BP_StratShellGameMode` and `BP_StratGameMode`. The
+	 * AI-vs-AI demo starts no restorable match, and that file names the limit in its own
+	 * words. The paragraph above it -- the drift a mismatch produces, and its landing on the
+	 * ordinary first-run state -- is unaffected by the discharge and stays as written.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Shell")
 	FString SaveSlotName;
@@ -186,9 +196,21 @@ public:
 	 * unlike `SaveSlotName` the failure is not even a wrong restore -- it is two maps with
 	 * different-sounding buttons, which nobody will file as a bug.
 	 *
-	 * DISCHARGED BY a clause reading both Blueprint CDOs and asserting the two pointers equal,
-	 * exactly as `SaveSlotName`'s discharge is stated one property up. That clause is phase D's
-	 * and is not this file's to write.
+	 * DISCHARGED BY a clause reading both [READ: THREE] Blueprint CDOs and asserting the
+	 * two [READ: three] pointers equal,
+	 * exactly as `SaveSlotName`'s discharge is stated one property up [AND UNLIKE IT IN THE
+	 * COUNT -- that one really does read two]. That clause is phase D's
+	 * and is not this file's to write [CONDITION MET].
+	 *
+	 * WHAT IS TRUE NOW, STAMPED 2026-09-05 BY `strat-gameplay-engineer` OVER BASE `c69e519`.
+	 * The clause is `Stratocracy.StratPlay.GATE-AUDIO.EveryShippedGameModeNamesTheSameSoundBank`
+	 * in `Source/StratPlay/Tests/StratShippedSoundBankParity.cpp`, reading
+	 * `BP_StratGameMode`, `BP_StratGameMode_AiVsAi` and `BP_StratShellGameMode`. A second
+	 * clause in that file,
+	 * `Stratocracy.StratPlay.GATE-AUDIO.ShippedGameModesAuthorTheirSoundBank`, covers the hole
+	 * an agreement-only clause leaves -- three inherited nulls agree. The paragraph above
+	 * stands: an asset pointer still has no C++ author, the drift is still unreachable from
+	 * C++, and what changed is that a TEST now sees it. Nothing here reconciles anything.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Shell")
 	TObjectPtr<UStratSoundBank> SoundBank;
@@ -240,13 +262,37 @@ public:
 	 * `UStratShellSubsystem` at all, and a subsystem has no details panel to hold this.
 	 *
 	 * THE SAME ASSET IS NAMED BY `AStratGameMode::OptionsWidgetClass` AND NOTHING ASSERTS THE
-	 * TWO AGREE. That is the identical shape `SoundBank` records above and `SaveSlotName`
+	 * TWO AGREE [FALSE SINCE `8477a43`; SEE THE STAMP BELOW]. That is the identical shape
+	 * `SoundBank` records above and `SaveSlotName`
 	 * before it, and it is a real cost rather than a formality: a match map pointed at an
 	 * older options WBP would be a second, differently-behaved volume screen reachable only
-	 * mid-match, which nobody will file as a bug. DISCHARGED BY a clause reading both
-	 * Blueprint CDOs and asserting the two class pointers equal, on
+	 * mid-match, which nobody will file as a bug [STILL TRUE, AND IT IS THE REASON THE CLAUSE
+	 * IS WORTH ITS COST -- a discharge does not retire the argument that motivated it].
+	 * DISCHARGED BY a clause reading both [READ: THREE] Blueprint CDOs and asserting the
+	 * two [READ: three] class pointers equal, on
 	 * `StratShellBlueprintSlotParity.cpp`'s existing precedent. That clause is the test lane's
-	 * and is not this file's to write.
+	 * and is not this file's to write [CONDITION MET].
+	 *
+	 * WHAT IS TRUE NOW, STAMPED 2026-09-05 BY `strat-gameplay-engineer` OVER BASE `c69e519`,
+	 * EACH PART MEASURED. The clause is
+	 * `Stratocracy.StratPlay.GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass`
+	 * in `Source/StratPlay/Tests/StratShippedOptionsWidgetClassParity.cpp`. It reads THREE
+	 * CDOs and not two -- `BP_StratShellGameMode`, `BP_StratGameMode` and
+	 * `BP_StratGameMode_AiVsAi`, the last being a third world with a presenter of its own --
+	 * asserts each is non-null (three unset GameModes agree perfectly, and an agreement-only
+	 * clause would be green on the state this milestone started in), and asserts the three
+	 * agree. So the paragraph's "both" was a bare quantifier that a shape-based sweep cannot
+	 * catch and a reader would take on trust.
+	 *
+	 * IT WAS TRUE WHEN WRITTEN AND AGED INTO FALSITY ACROSS EXACTLY ONE COMMIT, WHICH IS THE
+	 * OPPOSITE FINDING TO THE ONE `StratShellSubsystem.h` CARRIES AND IS WORTH THE
+	 * DISTINCTION. `git log --reverse -S "NOTHING ASSERTS THE" -- Source/StratPlay/StratShellGameMode.h`
+	 * returns `374398a` and nothing before it; `git log --reverse -- Source/StratPlay/Tests/StratShippedOptionsWidgetClassParity.cpp`
+	 * returns `8477a43`, the commit immediately after. Nothing was carried forward unchecked
+	 * here -- the sentence was accurate for the length of one commit and then was not. That is
+	 * an aging problem and not an authoring one, and the remedy differs: no check at the
+	 * keyboard would have caught this, only the discipline of naming an instrument a later
+	 * reader can run, which is what the stamp above supplies.
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stratocracy|Options")
 	TSubclassOf<UStratOptionsWidget> OptionsWidgetClass;

@@ -122,15 +122,76 @@
 //   clause over the enabled path vacuous. DISCHARGED BY the options WBP and an owner that
 //   shows it on `IsOptionsPanelOpen`; the request flag and its count exist so that owner has
 //   something to bind to and so a clause can prove the route reached it.
-//     THE OWNER HALF LANDED 2026-09-05 AND THE ASSET HALF DID NOT, WHICH IS WHY THE PARAGRAPH
+//     THE OWNER HALF LANDED 2026-09-05 AND THE ASSET HALF DID NOT [FALSE WHEN WRITTEN, NOT
+//   MERELY STALE -- see the stamp below], WHICH IS WHY THE PARAGRAPH
 //   ABOVE IS AMENDED RATHER THAN STRUCK. `UStratOptionsPresenter` is a `UWorldSubsystem` in this
 //   module that binds `OnOptionsPanelStateChanged` below and reconciles a `UStratOptionsWidget`
 //   onto the viewport, so the sentence "clicking the row runs `RequestOptionsPanel` and nothing
 //   appears" is no longer true OF THE CODE. IT REMAINS TRUE OF ANY MAP WHOSE GameMode BLUEPRINT
-//   HAS NO `OptionsWidgetClass` SET, and that is every map until the editor lane authors the
-//   WBP -- so the weak point named above has moved from "nothing can show it" to "nothing is
-//   configured to", which is a different and much smaller thing but is not nothing. FULLY
-//   DISCHARGED BY the WBP existing and both GameMode Blueprints naming it.
+//   HAS NO `OptionsWidgetClass` SET [STILL TRUE AS A CONDITIONAL AND DELIBERATELY NOT BRACKETED
+//   FALSE -- the set it quantifies over is now empty, which is a different thing from the
+//   sentence being wrong], and that is every map until the editor lane authors the
+//   WBP [FALSE TWICE SINCE 2026-09-05: no shipped map is in that state, and the editor lane did
+//   not author it] -- so the weak point named above has moved from "nothing can show it" to
+//   "nothing is
+//   configured to" [FALSE SINCE 2026-09-05: everything that ships is configured], which is a
+//   different and much smaller thing but is not nothing. FULLY
+//   DISCHARGED BY the WBP existing and both [READ: THREE] GameMode Blueprints naming it
+//   [CONDITION MET].
+//     WHAT IS TRUE NOW, STAMPED 2026-09-05 BY `strat-gameplay-engineer` OVER BASE `c69e519`,
+//   EACH PART MEASURED RATHER THAN ASSERTED. NEITHER PARAGRAPH IS STRUCK, AND THE REASON THIS
+//   ONE ROTTING IS WORSE THAN THE FIRST ONE ROTTING IS THAT IT IS THE FIRST ONE'S AMENDMENT: a
+//   reader landing at "no `WBP` bound to `UStratOptionsWidget` exists yet" by a citation read a
+//   false absence, followed the correction that promised to fix it, and got a second one -- and
+//   the mere PRESENCE of an amendment is exactly what stops a reader checking the original. The
+//   first paragraph's `bOptionsSurfaceAvailable` argument is untouched and still correct: a fact
+//   nothing can set ships FALSE and makes every clause over the enabled path vacuous, which is
+//   why this route ships ENABLED with the weak point named rather than greyed behind a
+//   shipped-zero default.
+//     THE ASSET. `Content/UI/WBP_Options.uasset` exists and derives from `UStratOptionsWidget`.
+//   `git log --diff-filter=A --oneline -- Content/UI/WBP_Options.uasset` names `d80b28a`, and
+//   `git log --reverse -S` on this block's own opening sentence names `374398a` -- TWO COMMITS
+//   LATER. So "THE ASSET HALF DID NOT [land]" is not an aging claim; IT WAS FALSE THE DAY IT WAS
+//   TYPED, one `--diff-filter=A` away from being checked. `StratOptionsWidget.h`'s stamp records
+//   the identical error about the identical asset, so two production headers made it
+//   independently within one day, which is what makes it a shape rather than a slip.
+//     WHO AUTHORED IT -- NOT THE EDITOR LANE. `Tools/architect/state/content.md` records the
+//   `coordinator` building `/Game/UI/WBP_Options` under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE,
+//   because `strat-editor-builder` had no route to the editor. The amendment made its own
+//   discharge conditional on an actor that never acted, which is why waiting on a LANE rather
+//   than on an OBSERVABLE is the part of that sentence worth not repeating.
+//     THE CONFIGURATION, AND THE COUNT. THREE shipped GameMode Blueprints name the WBP, not two:
+//   `BP_StratGameMode`, `BP_StratGameMode_AiVsAi` and `BP_StratShellGameMode`. INSTRUMENT:
+//   `grep -a -c "WBP_Options"` returns 2 on each -- `-c` counts LINES and these are binary
+//   files, so 2 is a line count and NOT an occurrence count, said here so a reader comparing it
+//   against an `-o` figure does not conclude one instrument is broken. CONTROL, which is not
+//   optional because `command -v strings` prints nothing on this box and a missing tool returns
+//   a zero indistinguishable from a real one: the same grep returns 0 on `BP_TopDownGameMode`,
+//   `BP_StrategyGameMode` and `BP_TwinStickGameMode`, while `grep -a -c "GameMode"` returns 9, 6
+//   and 7 on those same three files -- so the zeros are measurements and the instrument is shown
+//   able to speak. None of this rests on the comment being read: it is pinned by
+//   `Stratocracy.StratPlay.GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass`.
+//     THE MAPS, WHICH IS WHAT "EVERY MAP" WAS ACTUALLY ABOUT. Two ship. `Lvl_Title` overrides to
+//   `BP_StratShellGameMode` (`grep -a -c` 2, against 3 for the bare token `GameMode`), and
+//   `Lvl_FerrumCrossing` carries no override at all (`GameMode` 0, against `World` 4 and `Level`
+//   5 as the control proving the file is readable), so it takes `DefaultEngine.ini`'s
+//   `GlobalDefaultGameMode=/Game/StratPlay/BP_StratGameMode`. Both resolve to a GameMode that
+//   names the WBP, so the set "maps with no `OptionsWidgetClass`" is empty -- which is why the
+//   conditional above is spared and only its appositive is bracketed. A true clause marked false
+//   is the same species of finding as a false one left standing.
+//     "BOTH" WAS A BARE QUANTIFIER, AND THAT IS THE TRANSFERABLE HALF. `strat_banner_sweep.py`
+//   collects claims BY SHAPE and is blind to bare integers, nouns and quantifiers, so a word
+//   that silently fixed the set at two was never going to be caught by anything mechanical in
+//   this tree; it passed every gate this project owns until a human counted the assets. A count
+//   written as a word is still a count, and it rots on the same schedule as a numeral without
+//   looking like one.
+//     CAN AN AMENDMENT BE WRITTEN SO IT AGES SAFELY? An anchor fixes the CLAIM -- `Strat
+//   OptionsWidget.h`'s "as of this file's first commit ..." is still true today where a bare
+//   "not ... yet" would already be false -- but no anchor can save a DISCHARGE, whose whole job
+//   is to be checked later; the only thing that has actually held on this subject is a discharge
+//   condition naming an instrument a reader can RUN (a clause name, a grep with its control),
+//   because meeting that is observable from outside the prose instead of depending on the author
+//   coming back.
 // - THE BRIEFING SCREEN, which is the second name on §2.11.5's list. It is §2.11.6-A's
 //   pre-match overlay, it lives inside the match level rather than beside it, and it is a
 //   guidance surface rather than a route. No shell route opens it.

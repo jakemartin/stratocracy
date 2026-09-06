@@ -358,12 +358,25 @@ struct FStratMatchConfig
 	 * would make that a coincidence rather than a guarantee.
 	 *
 	 * THE DRIFT IT CREATES IS NAMED HERE RATHER THAN LEFT TO BE FOUND. `AStratShellGameMode`
-	 * carries its own `SoundBank` for the title map, so TWO Blueprints hold an answer to "which
+	 * carries its own `SoundBank` for the title map, so TWO [READ: THREE] Blueprints hold an
+	 * answer to "which
 	 * bank". Unlike `SaveSlotName` -- whose two copies are reconciled in C++, because
 	 * `AStratShellGameMode`'s constructor derives it from `FStratMatchConfig()`'s default -- an
 	 * ASSET POINTER HAS NO C++ AUTHOR to derive from. Nothing in this tree can make the two
-	 * agree by construction, so nothing here pretends to. DISCHARGED BY a clause comparing the
-	 * two CDOs, which is phase D's and is not this file's to write.
+	 * [READ: three] agree by construction, so nothing here pretends to
+	 * [BOTH SENTENCES STILL TRUE OF THE CODE -- the discharge below is a TEST, not a
+	 * reconciliation]. DISCHARGED BY a clause comparing the
+	 * two [READ: three] CDOs, which is phase D's and is not this file's to write
+	 * [CONDITION MET].
+	 *
+	 * WHAT IS TRUE NOW, STAMPED 2026-09-05 BY `strat-gameplay-engineer` OVER BASE `c69e519`.
+	 * `Stratocracy.StratPlay.GATE-AUDIO.EveryShippedGameModeNamesTheSameSoundBank`, in
+	 * `Source/StratPlay/Tests/StratShippedSoundBankParity.cpp`, reads `BP_StratGameMode`,
+	 * `BP_StratShellGameMode` AND `BP_StratGameMode_AiVsAi`. The third is why the count above
+	 * is bracketed rather than left alone: the AI-vs-AI demo is a third world carrying its own
+	 * answer, so "TWO Blueprints" understated the drift surface at the same time as it
+	 * understated the clause. `AStratShellGameMode::SoundBank`'s declaration carries the same
+	 * stamp from the title map's side.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Presentation")
 	TObjectPtr<UStratSoundBank> SoundBank;

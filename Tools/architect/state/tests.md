@@ -14,6 +14,195 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-06 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- two comment blocks in
+  `Source/StratPlay/Tests/StratShellRouteClauses.cpp` and
+  `Source/StratPlay/Tests/StratMatchCompletionRecording.cpp`, plus this file -- on `master` in the
+  main tree `E:/MultiAgent/Stratocracy`, base commit `c69e519`, and this pass is UNCOMMITTED)** --
+  **THE FIRST SWEEP THIS LANE HAS EVER HAD, AND THE HEADLINE IS NOT THE FINDING IT WAS DISPATCHED
+  FOR: A `DOES NOT PIN` BLOCK CAN BE PARTLY DISCHARGED, AND "DISCHARGED" IS THE OVER-STAMP THAT
+  WOULD HAVE MADE IT WORSE THAN LEAVING IT ALONE.** No exception clause is cited and none applies:
+  every file touched is a `Tests/` file or this lane's own record. Cite this pass by its exported
+  `reportCreatedOn 2026.09.06-04.29.34`; the pass/fail figure lives in
+  `Tools/architect/state/global.md` and nowhere else. When this lane re-ran
+  `python Tools/architect/strat_banner_sweep.py` over base `c69e519` on 2026-09-06 it printed
+  `SWEEP CLEAN -- no self-contradiction found`; what the sweep says on any later tree is what
+  running it says, and this entry does not predict it.
+  - **THE DISPATCHED FINDING, RE-DERIVED RATHER THAN ACCEPTED.**
+    `StratShellRouteClauses.cpp`'s `WHAT IT DOES **NOT** PIN` block closed *"That discharges on a
+    clause reading both Blueprint CDOs, and those assets do not exist yet."* Both assets are
+    tracked -- `Content/StratPlay/BP_StratGameMode.uasset` (`d310aa1`) and
+    `Content/StratPlay/BP_StratShellGameMode.uasset` (`e4a21b0`) -- and the clause exists,
+    `Stratocracy.StratPlay.GATE-TITLEMENU.BothShippedGameModeBlueprintsNameOneSaveSlot`. The
+    sentence was TRUE at `a6ebbe2` (2026-08-30 19:59) and false four hours later at `e4a21b0`
+    (2026-08-31 00:03).
+  - **THE PATH IS `Content/StratPlay/`, NOT `Content/Blueprints/`, AND THAT IS WHY THE CONTROL IS
+    IN THE STAMP.** `git ls-files --error-unmatch` against the wrong directory returns exactly
+    what a genuinely missing asset returns. `Content/StratPlay/BP_ThisDoesNotExist.uasset` was run
+    as the negative control before any ABSENT was read as an absence.
+  - **PARTLY, NOT FULLY -- AND THIS IS THE ENTRY'S REASON FOR EXISTING.** The stale sentence
+    covers *"a Blueprint that OVERRIDES **either** property"*, and `either` has two readings. ONE
+    asset overridden and not the other: the two CDOs disagree and the parity clause reddens --
+    COVERED. BOTH overridden to the same new string: the two CDOs agree, the parity clause stays
+    green, and the C++ derivation `TheShellsDefaultSlotIsDerivedFromTheMatchConfigsOwn` pins has
+    stopped deciding what ships -- NOT COVERED, and deliberately, because
+    `StratShellBlueprintSlotParity.cpp` states in its own `does not pin` list that it must permit
+    a slot renamed correctly on both assets. `BP_StratGameMode_AiVsAi` is a third asset of the
+    first class and is read by neither clause. Stamping this `DISCHARGED` would have replaced a
+    stale sentence with a false one, in a file whose whole subject is which residue is left.
+  - **TWO MORE TRUE POSITIVES, FOUND BY THE SWEEP AND NOT DISPATCHED, BOTH IN
+    `StratMatchCompletionRecording.cpp`, AND ONE OF THEM IS A FALSE CLAIM ABOUT WHAT THE PACKAGED
+    GAME DOES.** At the `TheCompletionHookIsSilentWithoutTheOptIn` block: *"It does not, today --
+    `BP_StratGameMode`'s `MatchConfig` has no such checkbox yet, so the packaged game's guided
+    opening re-arms every match. That clause is owed."* All three sentences are false.
+    `Source/StratPlay/Tests/StratShippedGameModeOptIn.cpp` asserts
+    `Cdo->MatchConfig.bRecordCompletionOnMatchEnd` TRUE off `BP_StratGameMode_C`'s CDO, and
+    `Stratocracy.StratPlay.T-UI-03.TheShippedGameModeOptsIn` landed at `7d8185f` on 2026-08-21 --
+    **a fortnight before this sweep, and the two files sit in one directory.** At the
+    `TheOptInDefaultsOffInCpp` block the heading is still true and only the pointer went stale.
+  - **THE CITATION RAN ONE WAY, WHICH IS THE SHAPE WORTH REMEMBERING.**
+    `StratShippedGameModeOptIn.cpp` opens by naming `StratMatchCompletionRecording.cpp` and
+    explaining why the clause is not in it, and cross-cites `T-SAVE-06.TheOptInDefaultsOffInCpp`,
+    which lives there. The discharging file cited its creditor; the creditor never cited back. The
+    dispatched finding has the identical shape -- `StratShellBlueprintSlotParity.cpp:13` says
+    *"W6's asset tail created `BP_StratShellGameMode` and the debt became payable. This file pays
+    it."* while `StratShellRouteClauses.cpp` still said the asset did not exist. **A debt note
+    should be read as pointing at a file that may already have been written, and the cheap check
+    is `ls` on the neighbouring `Tests/` directory, not a re-derivation.**
+  - **WHAT THE SWEEP DID NOT FIND, RECORDED SO A NULL RESULT IS A MEASUREMENT.** 107 tracked files
+    under any `Tests/` directory, 83,277 lines. Five shapes, each with a control showing the
+    instrument able to speak (an impossible token returned 0; `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
+    returned 91 files). Shape 1/5 phrase sweep: 81 candidate lines. Shape 4 bare-quantifier sweep:
+    267 raw, 61 after excluding `clause`. Shape 3: 103 candidate lines, of which 48 are
+    `*"..."*` verbatim quotes machine-checked against every tracked file in `Source/`,
+    `Tools/architect/state/`, `.agents/` and `CLAUDE.md` -- **3 unmatched, all 3 false positives of
+    my own instrument** (a case-only difference, a backtick inside the quoted span, and a `*"`
+    inside a C++ string literal). **Zero stale verbatim citations.**
+  - **AND THE MOST INSTRUCTIVE NULLS ARE THE FOUR CITATIONS THAT *DID* GO STALE THIS PASS AND STILL
+    NEEDED NOTHING.** `strat-gameplay-engineer`'s sweep inserted `[READ: THREE]` and
+    `[CONDITION MET]` **inside sentences this lane quotes verbatim** --
+    `StratShellGameMode.h:165`, `:199`, `:271` and `StratMatchSubsystem.h:368`. Each quoting site
+    (`StratShellBlueprintSlotParity.cpp`, `StratShippedOptionsWidgetClassParity.cpp`,
+    `StratShippedSoundBankParity.cpp`) already reconciles the discrepancy **in its own next
+    sentence** -- *"Both headers say TWO, and they are right about CLASSES and understate the
+    ASSETS"*, *"THREE ASSETS AND NOT TWO"*, *"the debt became payable. This file pays it."*
+    Stamping them would have been pure over-stamping. Likewise the two
+    `**[THE WIDGET NOW EXISTS, 2026-08-23 ... (untracked at the time of writing)]**` stamps in
+    `StratProductionMenuSeam.cpp:11` and `StratProductionMenuRouting.cpp:24`: `WBP_ProductionMenu`
+    IS tracked now, so a shape-2 sweep flags them -- and *"at the time of writing"*, on a dated
+    stamp, is an anchored claim and is still true. **The anchor rule is what tells a real shape-2
+    instance from this one, and it is the only thing that does.**
+  - **THE JUDGEMENT ASKED FOR, ANSWERED AGAINST THIS LANE'S INTEREST: THE ANCHOR RULE AND THE
+    INSTRUMENT RULE TOGETHER COVER FOUR OF FIVE, NOT FIVE.** The engineer's rule -- *a discharge
+    condition must name an instrument a reader can run* -- catches shapes 1, 3 and 5, and the
+    anchor rule adds shape 2, because a stamp that anchors to its own date cannot itself rot (both
+    `WBP_ProductionMenu` stamps above are the worked example). **Neither rule touches shape 4.** A
+    bare *"the two GameMode Blueprints"* names no instrument and asserts no moment; it is a
+    quantifier with a silent scope, and the only thing that catches it is a reader who counts.
+    `StratShellBlueprintSlotParity.cpp` survives its own shape-4 hit purely because it happens to
+    declare the exclusion at `:77` -- **that is a house-style habit, not a rule either of us
+    stated**, and nothing in this tree would have caught it if the habit had lapsed. Four of five
+    is the honest figure; a rule for shape 4 is still owed and I do not have one.
+  - **INSTRUMENT NOTE, AND IT IS THE TRAP THE DISPATCH WARNED ABOUT.** The comment-only proof is a
+    string/char-literal-aware C++ stripper over `git show HEAD:<file>` versus the worktree,
+    remainders diffed: 957 -> 957 and 694 -> 694 code lines, both diffs empty. **A stripper that
+    crashes emits nothing on BOTH sides and empty == empty reads as "identical" while a mutation
+    control still says the instrument speaks**, so this one RAISES on zero lines rather than
+    returning, and that refusal was itself tested against an all-comment input. Two mutation
+    controls per file: `return true;` -> `return false;` IS visible, and a comment-only edit is
+    NOT.
+  - **ONE THING THIS SWEEP COULD NOT SETTLE, AND IT IS NOT A NULL.**
+    `StratTitleMusicLifecycle.cpp:132-137` records two debts conditioned on the asset pass --
+    *"after the asset pass sets it"* and *"once both assets carry it"* -- for
+    `BP_StratShellGameMode`'s `TitleMusic` and its sound-class pairing. `grep -a` finds `TitleMusic`
+    in the asset's bytes (control: `SoundBank` 2, an impossible token 0), but **presence in a
+    `.uasset` proves nothing about an override** -- `StratShellBlueprintSlotParity.cpp` states the
+    rule this lane relies on, that ABSENCE decides and presence does not -- so grep cannot tell a
+    set property from a name-table entry. Settling it needs a CDO read, which is a new clause and
+    was out of scope for a comment-only pass. **The conditions may already have fired; nothing here
+    claims they have not.**
+  - **AND THE ELEVENTH INSTANCE OF THE DEFECT THIS ENTRY REPORTS THE SWEEP FOR WAS IN THIS ENTRY,
+    THREE PARAGRAPHS UP, ABOUT THAT SWEEP.** The paragraph above read *"`strat_banner_sweep.py`
+    exits 1 on this tree with one finding, `REPORT PROVENANCE` on `global.md:33`"*. That was true
+    when written and false within the hour: the `coordinator` moved the `global.md` citation, and
+    the sweep, re-run here over base `c69e519`, printed
+    `SWEEP CLEAN -- no self-contradiction found`. The sentence named no moment -- the exact defect
+    the anchor rule four bullets up was written to catch. **This lane's earlier discipline did not
+    catch it because that discipline is phrased about FILES THIS LANE DOES NOT OWN, and this
+    sentence described a SCRIPT'S OUTPUT, which no lane owns.** The correction is that the anchor
+    rule covers both: a claim about a tool's current output is exactly as perishable as a claim
+    about a file's current contents, because the tool reads those files. **State what your own run
+    did at a named moment and name the command for everything else** -- the durable form the
+    2026-09-05 entry below already established, restated here because it was stated about files
+    and had to be re-learned about a command. Raised as the second finding of
+    `Tools/architect/gate_reports/2026-09-06-regate-stamp-density-round-4.md`. Anything read from
+    the file's own line numbers is deliberately absent: the repair moved them.
+
+- **2026-09-05 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- one comment block in
+  `Source/StratUI/Tests/StratOptionsModelClauses.cpp`, plus this file -- on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `c69e519`, and this pass is UNCOMMITTED)** --
+  **THE SAME DEFECT AS THE ENTRY BELOW, ONE FILE OVER, AND THIS TIME THE STALE PART WAS THE
+  CITATION AND NOT ONLY THE CLAIM.** No exception clause is cited and none applies: this is a
+  `Tests/` file and this lane's own record. Raised as finding 3 of
+  `Tools/architect/gate_reports/2026-09-05-content-md-stamp-density.md`; both halves of its
+  evidence were re-derived here rather than accepted. No assertion, clause name, fixture or
+  include moved -- `git show HEAD:<file> | grep -v '^\s*//'` against the same strip of the
+  worktree copy diffs empty, which is the reviewer's own instrument and also refuses a line
+  commented out or uncommented. Cite this pass by its exported `reportCreatedOn
+  2026.09.06-03.28.13`; the pass/fail figure lives in `Tools/architect/state/global.md` and
+  nowhere else. (The report's date is one day ahead of this entry's because the export stamps UTC
+  and this record is local -- the already-recorded `reportCreatedOn`-after-20:00 effect, not a
+  discrepancy.)
+  - **WHAT WENT FALSE.** The `WHAT THIS FILE DOES NOT PIN` block said *"No `WBP_` asset derives
+    from `UStratOptionsWidget` yet"* and *"The binder from this delegate to
+    `UStratSoundDirector::CommitVolumes` does not exist yet"*. Both are false of the tree.
+    `Content/UI/WBP_Options.uasset` carries `/Script/StratUI.StratOptionsWidget` 4x and
+    `Default__StratOptionsWidget` once; `Source/StratPlay/StratOptionsPresenter.cpp:189` binds
+    `OnAudioOptionsCommitted` to `HandleAudioOptionsCommitted` and `:308` calls
+    `Director->CommitVolumes(...)`.
+  - **THE ASSET MEASUREMENT NEEDED A CONTROL AND THE REASON IS A TOOL THAT IS NOT HERE.**
+    `strings` is not on this box (`command -v strings` prints nothing), so a `strings`-based
+    check returns zero lines on a 39 KB `.uasset` and that zero reads exactly like "not found".
+    `grep -a` was used instead, with `Content/UI/WBP_TitleMenu.uasset` as the negative control:
+    0 for `StratOptionsWidget`, 16 for `Widget`. The control is what separates an absence from a
+    mute instrument. Also worth keeping: `grep -a -c` says 2 and `grep -a -o | uniq -c` totals 6
+    on the SAME file, because `-c` counts LINES in a binary -- neither figure is wrong and a
+    reader comparing them without knowing that will think one of them is.
+  - **WHAT THIS PINS AND WHAT IT DOES NOT, WHICH IS WHY ONLY THE PARENTHESES WERE STAMPED.** Both
+    bullet HEADINGS are still true and were left untouched: this file constructs no Slate, so it
+    pins no pixel, slider or layout, and no clause in it observes a commit reaching a slot. Only
+    the appended asides about what does not exist were stamped. The two things that DO pin the
+    now-existing halves are named in the stamp so a reader is not left with a bare correction:
+    `Stratocracy.StratPlay.GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass` for
+    the asset, and
+    `Stratocracy.StratPlay.GATE-AUDIO-SETTINGS.ThePresenterSeedsThePanelWithoutForwardingACommitAndForwardsARealOne`
+    for the near side of the join.
+  - **"YET" IS NOT A TIME QUALIFIER, AND THIS WAS THE ONE JUDGEMENT CALL.** Over-stamping is a
+    finding in its own right, so the reading was taken deliberately: a bare *"not ... yet"*
+    asserts the absence NOW and adds only an expectation of change, with no anchor. The sentence
+    `StratOptionsWidget.h`'s own stamp explicitly SPARES -- *"As of this file's first commit ...
+    no WBP derives from this class"* -- anchors to a named moment and is still true today. Same
+    subject, opposite outcome, and the anchor is the entire difference. **The general form worth
+    carrying: a qualifier saves a sentence only if it names a MOMENT; a word that merely signals
+    an expectation of future change saves nothing.**
+  - **THE NEW LESSON, WHICH THE ENTRY BELOW DID NOT REACH: A CITATION AGES LIKE A CLAIM.** Both
+    false sentences rested on the same authority -- *"the widget header says so itself"*, *"again
+    the widget header's own statement"* -- and that authority had ALREADY been corrected.
+    `git log --reverse -S "WHAT IS TRUE NOW, each part measured rather than asserted" --
+    Source/StratUI/StratOptionsWidget.h` returns `c69e519`, and this test file carried no stamp of
+    any kind at that commit. So the correction landed at the cited file and did not propagate to
+    the site citing it, and a reader who trusted the citation instead of following it got the
+    pre-correction answer. **So the CITATION is stamped in the file, not only the claim.** The
+    entry below told this lane to describe a condition rather than a status; this pass adds the
+    other half -- when a `DO NOT PIN` block cites another file's prose as its authority, that
+    citation is itself a present-tense claim about that file's current text and goes stale on the
+    same schedule. Neither compiles, no clause asserts either, and `strat_banner_sweep.py` has no
+    shape for either, so nothing between the two files will ever raise it.
+  - **THE RE-RUN WAS OWED FOR THE MECHANISM THE ENTRY BELOW RECORDS**: a `.cpp` carrying
+    `IMPLEMENT_*_AUTOMATION_TEST` moves `newest_test_mtime` and stales the report even when only
+    comments moved. Built (`Result: Succeeded`, `Compile [x64] StratOptionsModelClauses.cpp`) and
+    re-ran the full headless suite; zero failed, zero notRun, zero succeededWithWarnings, and no
+    previously-green clause moved.
+
 - **2026-09-05 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- one comment block in
   `Source/StratPlay/Tests/StratOptionsPresenterClauses.cpp`, plus this file -- on `master` in the
   main tree `E:/MultiAgent/Stratocracy`, base commit `c5d2c65`, tree already carrying four other

@@ -16,6 +16,229 @@
 ## NEXT
 
 - **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `c69e519`, UNCOMMITTED) -- A LANE-WIDE SWEEP FOR
+  STALE DEBT PROSE FOUND SEVEN SITES, AND THE ONE WORTH READING IS THAT THE REMEDY THIS LANE
+  ADOPTED LAST PASS CATCHES THREE OF THE FIVE KNOWN SHAPES AND NOT FIVE.** Comment and record
+  only: **no executable byte moved**. No exception clause applies and none is cited. The live
+  suite figure and the phase verdict are `global.md`'s and are not restated here; **no suite was
+  re-run, and the branch of that rule which applies was derived, not accepted (last bullet).**
+  - **THE SITE THIS PASS WAS DISPATCHED FOR, RE-DERIVED RATHER THAN TAKEN ON REPORT.**
+    `Source/StratPlay/StratShellGameMode.h`'s `OptionsWidgetClass` declaration said *"THE SAME
+    ASSET IS NAMED BY `AStratGameMode::OptionsWidgetClass` AND NOTHING ASSERTS THE TWO AGREE ...
+    DISCHARGED BY a clause reading **both** Blueprint CDOs."* Both halves fail.
+    `Stratocracy.StratPlay.GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass`, in
+    `Source/StratPlay/Tests/StratShippedOptionsWidgetClassParity.cpp`, asserts exactly that
+    agreement, and it reads **THREE** CDOs -- `BP_StratShellGameMode`, `BP_StratGameMode` and
+    `BP_StratGameMode_AiVsAi`, a third world with a presenter of its own -- plus a per-asset
+    non-null, because three unset GameModes agree perfectly.
+  - **AND THE PARAGRAPH'S ARGUMENT SURVIVES INTACT, WHICH IS THE PART A BRACKET COULD EASILY HAVE
+    DESTROYED.** *"A match map pointed at an older options WBP would be a second,
+    differently-behaved volume screen reachable only mid-match, which nobody will file as a
+    bug"* is **still true and is now the clause's own justification**, so it is marked STILL TRUE
+    rather than swept up with the false sentence beside it. A discharge retires the debt, not the
+    reasoning that made the debt worth naming.
+  - **IT WAS TRUE WHEN WRITTEN AND AGED INTO FALSITY ACROSS EXACTLY ONE COMMIT -- THE OPPOSITE
+    FINDING TO LAST PASS'S, AND THE DISTINCTION HAS NOW PAID TWICE.**
+    `git log --reverse -S "NOTHING ASSERTS THE" -- Source/StratPlay/StratShellGameMode.h` returns
+    `374398a` and nothing earlier; `git log --reverse -- Source/StratPlay/Tests/StratShippedOptionsWidgetClassParity.cpp`
+    returns `8477a43`, the very next commit. `--reverse` is used because the question is ORIGIN,
+    per this project's recorded rule that the plain form answers *most recent*. So no check at the
+    keyboard would have caught this one: unlike `StratShellSubsystem.h`'s "still owed is the WBP",
+    which was false the day it was typed and one `--diff-filter=A` away from being known, this
+    sentence was accurate for the length of one commit. **Authoring defects are fixed by checking;
+    aging defects are only fixed by naming an instrument a later reader can run.**
+  - **THE SWEEP, ITS METHOD, AND ITS DENOMINATOR, so a null result would have been a
+    measurement.** Subject: **71 non-`Tests/` `.h`/`.cpp` files** in `Source/StratPlay` and
+    `Source/StratUI`, enumerated by `find` and counted. Instrument: one case-insensitive
+    `grep -n -E` over that file list for the debt shapes -- `DISCHARGED BY`, `NOTHING
+    ASSERTS|PINS|CHECKS`, `NOTHING IN C++`, `does not exist yet`, `is still owed`, `not yet`,
+    `no clause`, `to be written`, `not this file's to write`, `test lane's` -- returning **86
+    candidate lines**. Every candidate was then read at its site and its discharge condition
+    checked against the tree, because the recorded defect *"a proposed identifier greps like a
+    defined one"* means a hit count settles nothing. **7 true positives, 79 confirmed negatives
+    or already-stamped.**
+  - **THE SEVEN, each with the instrument that settled it.** (1) `StratShellGameMode.h`
+    `OptionsWidgetClass`, above. (2) `StratShellGameMode.h` `SoundBank` -- *"DISCHARGED BY a
+    clause reading both Blueprint CDOs"*; the clause is
+    `GATE-AUDIO.EveryShippedGameModeNamesTheSameSoundBank` and it too reads THREE. (3)
+    `StratShellGameMode.h` `SaveSlotName` -- discharged by
+    `GATE-TITLEMENU.BothShippedGameModeBlueprintsNameOneSaveSlot`, and **"both" is CORRECT here
+    and only here**: that clause reads two, which is why the bare quantifier is so hard to sweep
+    -- the same word is right on one property and wrong on the two beside it. (4)
+    `StratMatchSubsystem.h` `SoundBank` -- *"so TWO Blueprints hold an answer"*, now three; this
+    one understated the DRIFT SURFACE as well as the clause. (5) `StratCommandBarWidget.h`
+    `OptionsButton` -- *"`WBP_CommandBar` ... has no such button in its tree"*, false since the
+    asset pass. (6) `StratShellMenuWidget.h` `OptionsButton` -- *"`WBP_TitleMenu` has no such
+    button today"*; **"today" is a qualifier that does not save the sentence, because nothing
+    dates the day it names**. (7) `StratOptionsWidget.cpp::HandleBackClicked` -- *"DISCHARGED BY
+    the owner emitting it on `OnOptionsDismissed`"*; `UStratOptionsPresenter::HandleOptionsDismissed`
+    emits the cue at entry and cites this site by name.
+  - **AN EIGHTH WAS FOUND AND IS THE SHARPEST OF THEM, so it is separated rather than counted in
+    the list above.** `Source/StratUI/StratScoreboardHUD.h` says *"THAT DEBT IS NOW HALF PAID,
+    and the half that is paid is the seam rather than the move"* -- and eleven lines later sets
+    its own test: *"the debt above is discharged the day the subsystem lands."* The subsystem
+    landed. `UStratMatchSubsystem::HandBridgeToScoreboard` calls `HUD->AdoptBridge(*Live, ...)`
+    on the shipped path. **So this is an AMENDMENT that went stale against a criterion written
+    into the same block** -- the second time this lane has found that shape, and the first time
+    the falsifying instrument was already sitting in the paragraph.
+  - **TWO SITES ARE STAMPED ON A WEAKER INSTRUMENT THAN THE REST AND SAY SO IN THEIR OWN TEXT.**
+    (5) and (6) rest on `content.md`'s recorded words -- *"`WBP_CommandBar` given `OptionsButton`
+    in its `Bar`"*, *"`WBP_TitleMenu` REPARENTED ... and given `OptionsButton` + `OptionsLabel`"*
+    -- and **that is a record read, not a measurement**: `.uasset` is LFS and
+    `StratCommandBarOptionsBindClauses.cpp` lists *"THAT `WBP_CommandBar` CARRIES AN
+    `OptionsButton`"* among the things it explicitly does NOT pin. **So the `BindWidget` remedy
+    both sites offer is DELIBERATELY NOT TAKEN**: a hard bind that reds an entire widget on
+    removal should rest on a clause, not on testimony. Both now name the clause that would earn
+    it, and it is the test lane's.
+  - **THREE CONFIRMED NEGATIVES, recorded so that "not fixed" is distinguishable from "not
+    looked at".** `StratShellGameMode.h`'s `TitleMusic` *"NOTHING IN C++ CHECKS THAT PAIRING"* --
+    still true; `StratTitleMusicLifecycle.cpp` lists the music-Sound-Class pairing among what it
+    does NOT pin, and `StratShippedSoundBankParity.cpp`'s class clause is the **SFX** class.
+    `StratShellMenuWidget.h`'s *"DISCHARGED BY the title map acquiring a controller class of
+    ours"* -- still owed; `grep -n PlayerControllerClass` over `StratShellGameMode.{h,cpp}`
+    returns **nothing**, so the title map still runs a bare `APlayerController`.
+    `StratShellSubsystem.h` and `StratOptionsWidget.h` were stamped last pass and are unchanged.
+  - **THE JUDGEMENT THIS PASS WAS ASKED FOR, AND IT IS THREE OF FIVE, NOT FIVE.** Last entry
+    reframed the remedy from *"amendments age"* to ***"a discharge condition must name an
+    instrument a reader can run."*** Against the five known shapes it catches: **(a) a stale claim
+    with its correction below it -- YES**, the instrument is in the claim, so a reader who never
+    reaches the correction still gets a runnable check. **(b) an amendment that has itself gone
+    stale -- YES, and this is its strongest case**; the scoreboard block proves it, because the
+    only reason its rot is provable at all is that the amendment DID name a condition. **(c) a
+    citing site whose authority was corrected -- YES**, since a cited instrument is re-runnable
+    where a cited sentence is not. **(d) a bare quantifier -- NO.** *"Both"* is not a claim about
+    an instrument, it is a claim about the instrument's ARITY; naming
+    `AllThreeShippedGameModesNameOneOptionsWidgetClass` beside it would have made the miscount
+    findable but would not have prevented it, and (3) above shows the same word being correct one
+    property away. **(e) false the day it was written -- NO, AND THIS IS THE HONEST LIMIT.** An
+    instrument named in a false sentence is still named in a false sentence; what catches that is
+    RUNNING it before committing, which is a discipline and not a wording rule. **So the remedy is
+    a rot detector, not a truth check** -- it makes staleness findable by a later reader and does
+    nothing about the author's own moment.
+  - **BUILD, WITH THE ACTION LIST AND A CONTROL, because `Result: Succeeded` can be printed by a
+    build that relinked nothing.** `Build.bat StratocracyEditor Win64 Development` ran **57
+    actions**, ending `[55/57] Link [x64] UnrealEditor-StratPlay.lib`, `[56/57] Link [x64]
+    UnrealEditor-StratPlay.dll`, `[57/57] WriteMetadata StratocracyEditor.target`, `Result:
+    Succeeded` in 43.60s. **The control is the immediate re-run**, which printed `Target is up to
+    date` and `run 0 action(s)` -- so the first run's 57 were real work and not a no-op printing
+    the same verdict. **Independently**: `UnrealEditor-StratUI.dll` carries mtime `23:56:32`
+    against a last StratUI source edit of `23:55:56`, and `UnrealEditor-StratPlay.dll` `23:56:59`
+    -- both modules relinked AFTER the edits, which the tail of the action list alone did not
+    show.
+  - **NO SUITE RE-RUN, AND THE BRANCH THAT APPLIES IS THE `.cpp` ONE, VERIFIED AT THE SCRIPT
+    RATHER THAN AT THE GATE REPORTS THAT DESCRIBE IT.** This pass touched a non-`Tests/` `.cpp`
+    (`StratOptionsWidget.cpp`), so the trivial "headers only" branch does NOT apply.
+    `read_macro_census` in `Tools/architect/strat_banner_sweep.py` updates `newest_mtime` **only
+    inside `if s or c:`**, where `s`/`c` count `IMPLEMENT_SIMPLE_AUTOMATION_TEST` and
+    `IMPLEMENT_COMPLEX_AUTOMATION_TEST(?:_CLASS)?`. `grep -c 'IMPLEMENT_.*AUTOMATION_TEST'
+    Source/StratUI/StratOptionsWidget.cpp` returns **0**. So that file cannot enter
+    `newest_test_mtime` and cannot stale the report identity check at `:1143`.
+  - **`python Tools/architect/strat_banner_sweep.py` printed `SWEEP CLEAN -- no self-contradiction
+    found`, exit code `0`** (captured by redirect, `EXIT=$?`), with `report identity:
+    mtime=1788665294` -- which is the check the paragraph above predicted would not fire, and it
+    did not.
+
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `c69e519`, UNCOMMITTED) -- THE AMENDMENT THAT
+  CORRECTED `StratShellSubsystem.h`'s OPTIONS PARAGRAPH HAD ITSELF GONE FALSE, WHICH IS THE
+  SHARPEST PLACE IN THE FILE FOR IT TO HAPPEN.** Comment and record only: **no executable byte
+  moved**, verified below with three controls. No exception clause applies and none is cited --
+  `Source/` is this lane's and `engine.md` is this lane's file. The live suite figure and the
+  phase verdict are `global.md`'s and are not restated here; **no suite was re-run, deliberately,
+  and the reason was derived rather than accepted (last bullet).**
+  - **WHAT WAS FOUND, AND WHY AN AMENDMENT ROTTING IS WORSE THAN A CLAIM ROTTING.**
+    `Source/StratPlay/StratShellSubsystem.h` carries a paragraph saying the `Options` row ships
+    ENABLED with nothing behind it -- *"no `WBP` bound to `UStratOptionsWidget` exists yet ...
+    clicking the row runs `RequestOptionsPanel` and nothing appears"* -- and directly beneath it
+    the amendment written to correct that. The amendment is what went false. So a reader landing
+    at the first paragraph by a citation read a false absence, followed the correction that
+    promised to fix it, and got a second false absence -- and **the mere PRESENCE of an amendment
+    is exactly what stops a later reader from checking the original.** Reported by
+    `strat-integration-reviewer` as its only outstanding finding (VERDICT: BLOCK,
+    `Tools/architect/gate_reports/2026-09-05-regate-stamp-density-round-2.md`). Every element
+    re-derived here rather than accepted on the report's word.
+  - **IT WAS FALSE WHEN WRITTEN, NOT MERELY STALE -- WHICH THE GATE DID NOT CLAIM AND WHICH IS
+    THE FINDING I ADDED.** The block opens *"THE OWNER HALF LANDED 2026-09-05 AND THE ASSET HALF
+    DID NOT"*. `git log --diff-filter=A --oneline -- Content/UI/WBP_Options.uasset` names
+    `d80b28a`; `git log --reverse -S` on that opening sentence names `374398a`, **two commits
+    later**. The asset was in the tree before the sentence denying it was typed, one
+    `--diff-filter=A` away from being checked. **`StratOptionsWidget.h` carries a stamp recording
+    the identical error about the identical asset**, written the same day by this lane -- two
+    production headers reaching the same wrong belief independently is a shape, not a slip.
+  - **"UNTIL THE EDITOR LANE AUTHORS THE WBP" IS WRONG IN BOTH HALVES.** The WBP exists, and the
+    editor lane did not author it: `content.md` records the `coordinator` building
+    `/Game/UI/WBP_Options` under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE because `strat-editor-builder`
+    had no route to the editor. **The amendment made its own discharge conditional on an actor
+    that never acted**, which is the half of that sentence worth not repeating: wait on an
+    OBSERVABLE, not on a LANE.
+  - **"BOTH GameMode BLUEPRINTS" IS THREE, AND THE WORD IS THE TRANSFERABLE HALF.** Measured on
+    the assets: `grep -a -c "WBP_Options"` returns **2** on each of
+    `Content/StratPlay/BP_StratGameMode.uasset`, `BP_StratGameMode_AiVsAi.uasset` and
+    `BP_StratShellGameMode.uasset`. **`-c` counts LINES and these are binary, so 2 is a line count
+    and not an occurrence count** -- said in the header too, so a reader comparing it against an
+    `-o` figure does not conclude an instrument is broken. **CONTROL, and it is not optional:**
+    `command -v strings` prints nothing on this box, so a `strings`-based check would have
+    returned a zero indistinguishable from "not found". The same grep returns **0** on
+    `BP_TopDownGameMode`, `BP_StrategyGameMode` and `BP_TwinStickGameMode`, while
+    `grep -a -c "GameMode"` returns **9, 6 and 7** on those same three files -- the instrument is
+    shown able to speak before its zeros are read as measurements. The fact does not rest on the
+    comment either way: it is pinned by
+    `Stratocracy.StratPlay.GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass`
+    (`Source/StratPlay/Tests/StratShippedOptionsWidgetClassParity.cpp:117`), whose body reads each
+    CDO through the REFLECTED `OptionsWidgetClass` property.
+  - **"BOTH" WAS A BARE QUANTIFIER AND NOTHING MECHANICAL WAS EVER GOING TO CATCH IT.**
+    `strat_banner_sweep.py` collects claims BY SHAPE and is blind to bare integers, nouns and
+    quantifiers. A count written as a word rots on exactly the same schedule as a numeral and
+    does not look like one, so it passed every gate this project owns until a human counted the
+    assets. That is the reusable lesson from this pass; the rest is one file's history.
+  - **WHAT I REFUSED TO STAMP, BECAUSE OVER-STAMPING IS THE MIRROR FINDING.** The sentence *"IT
+    REMAINS TRUE OF ANY MAP WHOSE GameMode BLUEPRINT HAS NO `OptionsWidgetClass` SET"* is **kept
+    unbracketed as a conditional**; only its appositive *"and that is every map"* is marked false.
+    The set it quantifies over is now empty, which is a different thing from the sentence being
+    wrong. Measured: two maps ship. `Lvl_Title` overrides to `BP_StratShellGameMode`
+    (`grep -a -c` **2**, against **3** for the bare token `GameMode`), and `Lvl_FerrumCrossing`
+    carries no override at all (`GameMode` **0**, against `World` **4** and `Level` **5** as the
+    control proving the file is readable), so it takes `DefaultEngine.ini`'s
+    `GlobalDefaultGameMode=/Game/StratPlay/BP_StratGameMode`. The first paragraph's
+    `bOptionsSurfaceAvailable` argument is likewise **untouched and still correct** -- a fact
+    nothing can set ships FALSE and makes every clause over the enabled path vacuous -- and it is
+    the reason the row ships enabled at all.
+  - **WHETHER AN AMENDMENT CAN BE WRITTEN SO IT AGES SAFELY -- my judgement, one sentence, since
+    this is the second amendment on this subject to rot.** An anchor fixes the CLAIM
+    (`StratOptionsWidget.h`'s *"as of this file's first commit ..."* is still true today where a
+    bare *"not ... yet"* would already be false, which `strat-test-author` established this pass),
+    but **no anchor can save a DISCHARGE**, whose whole job is to be checked later; the only thing
+    that has actually held on this subject is a discharge condition naming an instrument a reader
+    can RUN -- a clause name, a grep with its control -- because meeting that is observable from
+    outside the prose instead of depending on the author coming back.
+  - **BUILD, AND IT GENUINELY RELINKED.**
+    `Build.bat StratocracyEditor Win64 Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex`
+    -> `Result: Succeeded`, `EXIT=0`, 19.85s, **19 actions** including
+    `[3/19] Compile [x64] StratShellSubsystem.cpp` and `[18/19] Link [x64] UnrealEditor-StratPlay.dll`.
+    This lane already records that `Result: Succeeded` can be reported for a build that **relinked
+    nothing**, so the action list is quoted rather than the verdict alone. No editor was open
+    (`tasklist` shows no `UnrealEditor` process), so the DLL write-lock failure mode is excluded
+    by measurement and not by assumption.
+  - **COMMENT-ONLY, WITH THREE CONTROLS.** `^\s*//` and blank lines stripped from
+    `git show HEAD:Source/StratPlay/StratShellSubsystem.h` and from the worktree copy,
+    CR-normalised, remainders diffed: **607 code lines each, IDENTICAL.** CONTROL A (a comment
+    line turned into code): DIFFERS. CONTROL B (a real code line commented out): DIFFERS. CONTROL
+    C (worktree against itself): IDENTICAL. The instrument said DIFFERS twice before its IDENTICAL
+    was read as a measurement. Line endings unchanged and uniform: **871 CRLF, 0 bare LF.**
+  - **NO SUITE RE-RUN, AND THE REASON WAS DERIVED RATHER THAN TAKEN ON TRUST.** A `.h` cannot move
+    `strat_banner_sweep.py`'s `newest_test_mtime`, so it cannot stale the report citation in
+    `global.md` -- which is not this lane's file to move. Verified at the source:
+    `read_macro_census` walks `Source/` and executes `if not name.endswith(".cpp"): continue`
+    **before** it tests for `IMPLEMENT_*_AUTOMATION_TEST`, so no header can ever contribute to
+    that timestamp regardless of what it contains.
+  - **HANDOFF, NOT FIXED HERE.** `Source/StratPlay/StratShellGameMode.h:242` carries the same
+    defect shape in the same file family -- *"THE SAME ASSET IS NAMED BY
+    `AStratGameMode::OptionsWidgetClass` AND NOTHING ASSERTS THE TWO AGREE ... DISCHARGED BY a
+    clause reading both Blueprint CDOs and asserting the two class pointers equal"*. That clause
+    now exists, reads **three** CDOs rather than two, and asserts exactly that agreement. It was
+    outside this pass's permitted file set, so it is reported rather than stamped.
+
+- **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `c5d2c65`, UNCOMMITTED) -- A SENTENCE IN
   `Source/StratUI/StratOptionsWidget.h` SAID THE OPTIONS WBP WAS STILL OWED, AND IT WAS FALSE ON
   THE DAY IT WAS COMMITTED RATHER THAN HAVING GONE STALE.** Comment and record only: **no

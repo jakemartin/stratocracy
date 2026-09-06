@@ -144,7 +144,9 @@ protected:
 	 *
 	 * `BindWidgetOptional` AND NOT `BindWidget`, for `UStratCommandBarWidget::OptionsButton`'s
 	 * stated reason and one more of its own. The shared reason: `BindWidget` is enforced by the
-	 * Widget Blueprint compiler, and `WBP_TitleMenu` has no such button today, so a hard bind
+	 * Widget Blueprint compiler, and `WBP_TitleMenu` has no such button today [FALSE SINCE THE
+	 * 2026-09-05 ASSET PASS; SEE THE STAMP BELOW. "today" is a qualifier that does not save it,
+	 * because nothing dates the day it refers to], so a hard bind
 	 * would red the entire title menu the moment this class is used as its parent. The extra
 	 * reason is that the reparent and the button are TWO editor steps in an order this class
 	 * does not control -- an asset cannot be reparented onto a class whose hard bind it does not
@@ -154,7 +156,21 @@ protected:
 	 * `UStratOptionsWidget.h`'s stated aesthetic and is called out for the same reason it is
 	 * called out on the command bar: a reader applying that rule would read the optionality as a
 	 * claim that this control is decorative, and it is the only control this class has.
-	 * DISCHARGED BY the asset acquiring the button, after which this may become `BindWidget`.
+	 * DISCHARGED BY the asset acquiring the button, after which this may become `BindWidget`
+	 * [CONDITION MET; THE REMEDY IS DELIBERATELY NOT TAKEN].
+	 *
+	 * WHAT IS TRUE NOW, STAMPED 2026-09-05 BY `strat-gameplay-engineer` OVER BASE `c69e519`,
+	 * WITH THE INSTRUMENT AND ITS WEAKNESS BOTH NAMED. `Tools/architect/state/content.md`
+	 * records the pass in its own words: *"`WBP_TitleMenu` REPARENTED to
+	 * `/Script/StratPlay.StratShellMenuWidget` and given `OptionsButton` + `OptionsLabel`, with
+	 * `Btn_0..Btn_3` and their graph bindings intact."* So both editor steps this paragraph
+	 * says are un-orderable from C++ have in fact happened, in the order it predicted.
+	 * THAT IS A RECORD READ AND NOT A MEASUREMENT -- `.uasset` is LFS, and no clause in this
+	 * tree asserts the button's presence on the shipped asset.
+	 *   THE HARD BIND IS NOT TAKEN, for `UStratCommandBarWidget::OptionsButton`'s stamped
+	 * reason, which applies with more force here: a `BindWidget` that reds the whole title menu
+	 * should rest on a clause, not on a record sentence. DISCHARGED BY a clause reading the
+	 * shipped `WBP_TitleMenu` CDO's `OptionsButton`. That clause is the test lane's.
 	 *
 	 * `protected` FOR `UStratOptionsWidget::MasterSlider`'S REASON: so a test double can plant
 	 * one. `BindWidget*` is resolved by reflection at Blueprint compile time and is indifferent

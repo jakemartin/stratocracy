@@ -253,7 +253,9 @@ protected:
 	 *
 	 * `BindWidgetOptional` AND NOT `BindWidget`, AND THE CHOICE IS ABOUT THE SHIPPED ASSET
 	 * RATHER THAN ABOUT THIS CONTROL'S IMPORTANCE. `WBP_CommandBar` already derives from this
-	 * class and has no such button in its tree; `BindWidget` is enforced by the Widget
+	 * class and has no such button in its tree [FALSE SINCE THE 2026-09-05 ASSET PASS; SEE THE
+	 * STAMP BELOW. The REASONING it supports survives unchanged -- the two changes were still
+	 * in two lanes and still could not be atomic, which is why this shipped optional]; `BindWidget` is enforced by the Widget
 	 * Blueprint compiler, so a hard bind would turn the entire command bar -- BUILD, END TURN
 	 * and all -- into a compile error the moment this class lands, and would stay one until an
 	 * asset pass caught up. The two changes are in two different lanes and cannot be atomic.
@@ -264,7 +266,25 @@ protected:
 	 * one and is optional anyway. Said here rather than left to be inferred, because a reader
 	 * applying that rule to this member would read the optionality as a claim that the button
 	 * is decorative. DISCHARGED BY `WBP_CommandBar` acquiring the button: at that point this
-	 * may become `BindWidget` in a pass that touches nothing else.
+	 * may become `BindWidget` in a pass that touches nothing else [CONDITION MET; THE REMEDY IS
+	 * DELIBERATELY NOT TAKEN, SEE BELOW].
+	 *
+	 * WHAT IS TRUE NOW, STAMPED 2026-09-05 BY `strat-gameplay-engineer` OVER BASE `c69e519`,
+	 * AND THE INSTRUMENT IS NAMED BECAUSE IT IS A WEAKER ONE THAN THIS FILE'S OTHER STAMPS USE.
+	 * `Tools/architect/state/content.md` records the asset pass in its own words --
+	 * *"`WBP_CommandBar` given `OptionsButton` in its `Bar`"* -- and a later entry records that
+	 * button being reparented out of the centre-anchored `Bar`. THAT IS A RECORD READ, NOT A
+	 * MEASUREMENT: `.uasset` is LFS and no clause in this tree pins the button's presence.
+	 * `Source/StratPlay/Tests/StratCommandBarOptionsBindClauses.cpp` says so in terms, listing
+	 * *"THAT `WBP_CommandBar` CARRIES AN `OptionsButton`"* among the things it does NOT pin. So
+	 * the condition is met on the content lane's testimony and on nothing stronger.
+	 *   THE REMEDY IS NOT TAKEN AND THE REASON IS NOT INERTIA. Turning this into `BindWidget`
+	 * makes the whole command bar a Widget Blueprint compile error if that button is ever
+	 * removed or renamed, and the fact authorising it is a record sentence rather than a
+	 * clause. A hard bind resting on testimony is the wrong trade. DISCHARGED INSTEAD BY a
+	 * clause reading the shipped `WBP_CommandBar` CDO's `OptionsButton`, on
+	 * `StratShippedOptionsWidgetClassParity.cpp`'s precedent -- after which the hard bind is
+	 * a safe pass that touches nothing else. That clause is the test lane's.
 	 *
 	 * `protected` FOR `UStratOptionsWidget::MasterSlider`'S STATED REASON: so a test double can
 	 * plant one. `BindWidget*` is indifferent to access, being resolved by reflection at

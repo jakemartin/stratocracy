@@ -164,9 +164,30 @@
   while `WBP_Options`'s is NOT (the control that makes the check discriminate); all four
   `Btn_0..Btn_3` survived the reparent; every bound name resolves in all three widgets; all three
   GameModes name `WBP_Options_C`; and zero Blueprint errors across all three compiles.
-  **NOTHING HAS BEEN SEEN.** A commandlet has no pixels. This entry does not claim either button
-  is visible, hittable or sensibly placed, nor that the sliders move anything a player can hear --
-  and the in-match panel takes no input mode, which no clause can observe either.
+  **NOTHING HAS BEEN SEEN.** [FALSE SINCE 2026-09-05, BRACKETED ON THE SENTENCE ITSELF.
+  THE FIRST DRAFT OF THIS BRACKET JUSTIFIED ITSELF BY SAYING A READER "WOULD REACH NEITHER"
+  OF THE TWO STAMPS BELOW, AND THAT WAS FALSE: both are below this line and both are met by
+  reading downward. The real reason is weaker and sufficient -- a reader who arrives at THIS
+  SENTENCE by a citation may stop at the sentence, so a false present tense is marked where
+  it is read rather than only where it is corrected. A gate caught the bad reason.
+  A human has since seen and operated the screen and signed off on its layout. What stays
+  true is the reason given -- a commandlet has no pixels -- which is a statement about THIS
+  PASS's route and not about the tree.] A commandlet has no pixels. This entry does not claim
+  either button
+  is visible, hittable or sensibly placed
+  [FALSE SINCE 2026-09-05: a human has seen both buttons and operated them],
+  nor that the sliders move anything a player can hear
+  [STILL TRUE AND DELIBERATELY NOT BRACKETED AS FALSE. An earlier draft of the bracket above
+  said "seen, hit, and HEARD, each by a human" and the HEARD was an OVERCLAIM this file had
+  no report for: `global.md` says of that report, in terms, that it does NOT say "anything
+  was heard", and the separate listening pass covered the seven cues and the title music and
+  NOT the sliders. Nobody has reported hearing a gain change when a slider moved. A gate
+  caught it. Recorded rather than silently corrected, because a pass whose whole purpose was
+  record honesty introduced an overclaim into the correction itself.]
+  -- and the in-match panel takes no input mode, which no clause can observe either. [THAT
+  LAST CLAUSE IS STILL TRUE AND IS NOT BRACKETED AS FALSE: no input mode is taken, and that
+  is now a RECORDED DECISION rather than an omission -- `StratOptionsPresenter.h` carries the
+  discharge and `engine.md` the entry.]
   [STAMPED 2026-09-05: "NO CLAUSE COVERS ANY OF IT" stood here and is now FALSE -- thirteen
   clauses were written the same day under `GATE-TITLEMENU` and `GATE-AUDIO-SETTINGS`, and the
   figures are `global.md`'s. The unseen half above is unchanged and still owed.
@@ -231,9 +252,19 @@
   the same limit for its own asset and builds no tree either. So this pass produced a widget with
   the right parent and an empty canvas. THE THREE SLIDERS AND THE BACK CONTROL ARE OWED TO A
   HUMAN IN THE EDITOR, or to `strat-editor-builder` on a session where `execute_script` is
-  served. Until then the `Options` route opens a blank panel, which is worse for a player than no
-  route at all, and the engineer's standing debt about the row being enabled with nothing behind
-  it is NOT discharged by this entry.
+  served. [FALSE SINCE 2026-09-05, AND BRACKETED HERE RATHER THAN LEFT TO THE STAMP ABOVE: a
+  reader who arrives at THIS sentence by a citation never sees that stamp. The sliders and the
+  back control were built later the same day and are in the shipped asset, and it was neither
+  of the two routes this sentence names -- the `coordinator` built them under the
+  editor-driver clause, which is a third route this entry did not model.]
+  Until then the `Options` route opens a blank panel, which is worse for a player than no
+  route at all [FALSE SINCE 2026-09-05: the route opens a populated panel and a human has
+  operated it],
+  and the engineer's standing debt about the row being enabled with nothing behind
+  it is NOT discharged by this entry. [THAT LAST CLAUSE IS STILL TRUE AND IS DELIBERATELY NOT
+  BRACKETED AS FALSE: it is a claim about what THIS ENTRY discharged, which no later event can
+  change. Whether the debt has since been discharged ELSEWHERE is `engine.md`'s to say, and
+  this file does not say it.]
   VERIFIED IN A COLD PROCESS THAT WROTE NOTHING, twice over. `BP_StratShellGameMode` names both
   `MS_Strat_TitleTheme` and `DA_StratSoundBank`; the bank's `base_mix`, `master_sound_class`,
   `sfx_sound_class` and `music_sound_class` are all set; `MS_Strat_TitleTheme` loads as a

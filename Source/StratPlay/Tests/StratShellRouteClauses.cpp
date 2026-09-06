@@ -1852,6 +1852,47 @@ bool FStratRestorableRefusalEmptyIffRestorableTest::RunTest(const FString& /*Par
 // WHAT IT DOES **NOT** PIN, and the debt is real: a Blueprint that OVERRIDES either property
 // re-opens exactly the drift this pins in C++. That discharges on a clause reading both
 // Blueprint CDOs, and those assets do not exist yet.
+//
+// **[STAMPED 2026-09-06]** THE LAST SENTENCE ABOVE WAS TRUE FOR FOUR HOURS AND HAS BEEN FALSE
+// FOR A WEEK, AND THE DEBT IS NOW **PARTLY** DISCHARGED -- partly, not fully, which is the part
+// worth reading. The heading and the first sentence are untouched and still correct: this clause
+// reads `GetDefault<AStratShellGameMode>()`, which is the C++ CDO, and no assertion in it can see
+// a Blueprint override. Only the last sentence is stamped.
+//
+// WHAT WENT FALSE, MEASURED RATHER THAN INFERRED.
+//   - BOTH ASSETS EXIST AND ARE TRACKED, at `Content/StratPlay/BP_StratGameMode.uasset` and
+//     `Content/StratPlay/BP_StratShellGameMode.uasset`. `git log --reverse --diff-filter=A` over
+//     each returns `d310aa1` and `e4a21b0`. THE NEGATIVE CONTROL IS NOT OPTIONAL HERE AND IT IS
+//     THE REASON THE PATH IS SPELLED OUT: the directory is `Content/StratPlay/`, NOT
+//     `Content/Blueprints/`, and `git ls-files --error-unmatch` against the wrong directory
+//     returns exactly what a genuinely missing asset returns. The same command was run against
+//     `Content/StratPlay/BP_ThisDoesNotExist.uasset` to show the instrument able to say ABSENT
+//     before its ABSENT was read as an absence.
+//   - THE CLAUSE EXISTS. `Stratocracy.StratPlay.GATE-TITLEMENU.BothShippedGameModeBlueprintsNameOneSaveSlot`,
+//     in `Source/StratPlay/Tests/StratShellBlueprintSlotParity.cpp`, resolves both
+//     Blueprint-generated classes, reads `SaveSlotName` off both CDOs and asserts them equal
+//     case-sensitively. That file's own header names THIS clause as the C++ half it completes.
+//
+// WHAT IS STILL OWED, WHICH IS WHY THIS IS `PARTLY` AND NOT `FULLY`. The sentence above says
+// *"a Blueprint that OVERRIDES either property"*, and the parity clause covers ONE of the two
+// readings of `either`:
+//   - ONE asset overridden and not the other -- the two CDOs disagree, the parity clause reddens.
+//     COVERED.
+//   - BOTH assets overridden to the SAME new string -- the two CDOs agree, the parity clause stays
+//     green, and the derivation THIS clause pins has stopped deciding what ships. NOT COVERED, and
+//     deliberately so: `StratShellBlueprintSlotParity.cpp` states in its own "does not pin" list
+//     that it does not pin either value against `FStratMatchConfig`'s C++ default, because
+//     reddening on a slot renamed correctly on both assets is a change it must permit. Neither
+//     clause is wrong; the residue is real and belongs to neither.
+//   - `BP_StratGameMode_AiVsAi` is a third asset of the first class and is read by NEITHER clause.
+//     The parity file names that exclusion itself.
+//
+// AND THE FORM OF THE ERROR IS THE GENERAL LESSON, NOT THE FACT. *"...do not exist yet"* asserts
+// an absence NOW and adds only an expectation that it will change; nothing in the sentence names
+// the moment it was true of, so it rots silently and reads as current forever. The anchored form
+// -- *"as of this file's first commit (`a6ebbe2`, 2026-08-30) neither asset existed"* -- states
+// the same fact and stays true. The bare form here went false at `e4a21b0`, four hours and four
+// minutes after `a6ebbe2` committed it.
 // ---------------------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratShellDefaultSlotDerivedTest,

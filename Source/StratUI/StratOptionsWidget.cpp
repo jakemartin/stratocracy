@@ -295,6 +295,13 @@ void UStratOptionsWidget::HandleBackClicked()
 	// `StratSoundClick` takes a `UObject*` world context and reaches `UStratSoundDirector`,
 	// which is a `StratPlay` world subsystem this module cannot name. The six existing cue
 	// sites are all controller-side for that reason; a seventh here would need a route this
-	// arrow does not permit. DISCHARGED BY the owner emitting it on `OnOptionsDismissed`.
+	// arrow does not permit. DISCHARGED BY the owner emitting it on `OnOptionsDismissed`
+	// [CONDITION MET 2026-09-05 -- stamped by `strat-gameplay-engineer` over base `c69e519`].
+	// `UStratOptionsPresenter::HandleOptionsDismissed` in `StratPlay` resolves
+	// `UStratSoundDirector` off the world and emits the cue AT ENTRY, before any check, and
+	// that function's own comment cites this site by name. The reasoning above is unchanged and
+	// is why the join is shaped this way; only the "not yet" is gone. Measured by reading the
+	// binding at `StratOptionsPresenter.cpp`'s `AddDynamic` on `OnOptionsDismissed` and the
+	// handler it names -- not by running the suite, which this pass did not.
 	OnOptionsDismissed.Broadcast();
 }

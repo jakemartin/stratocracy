@@ -997,6 +997,37 @@ bool FStratSaveOverPreservesARecordedCompletionTest::RunTest(const FString& /*Pa
 // `BP_StratGameMode`'s `MatchConfig` has no such checkbox yet, so the packaged game's guided
 // opening re-arms every match. That clause is owed and recorded in
 // `Tools/architect/state/tests.md`; it belongs after the Content/ default lands.
+//
+// **[STAMPED 2026-09-06]** THE HEADING IS TRUE AND EVERYTHING AFTER THE DASH IS FALSE, AND ONE OF
+// THE FALSE SENTENCES IS A CLAIM ABOUT WHAT THE PACKAGED GAME DOES -- which is worse than a stale
+// debt note, because a reader who trusted it would go looking for a §2.11.6 bug that was fixed on
+// 2026-08-21. Only the sentences after the dash are stamped.
+//
+//   - STILL TRUE, AND IT IS WHY THE BULLET EXISTS: no clause in THIS file reads a Blueprint. Every
+//     one assembles its own `FStratMatchConfig` in code and sets the opt-in by hand, so every one
+//     would stay green in a shipping build where nothing ever asks.
+//   - FALSE: *"It does not, today"* and *"the packaged game's guided opening re-arms every
+//     match"*. `Source/StratPlay/Tests/StratShippedGameModeOptIn.cpp` asserts
+//     `Cdo->MatchConfig.bRecordCompletionOnMatchEnd` is TRUE off `BP_StratGameMode_C`'s class
+//     default object, and the suite is green, so the shipped asset DOES opt in and the packaged
+//     game does NOT re-arm.
+//   - FALSE: *"That clause is owed"*. It is written and passing --
+//     `Stratocracy.StratPlay.T-UI-03.TheShippedGameModeOptsIn`, added at `7d8185f`, 2026-08-21.
+//     `Tools/architect/state/tests.md` is still the right file to read and no longer says what is
+//     summarised here: it carries an entry opening **"THE OWED CLAUSE IS WRITTEN"** above the
+//     older entry recording the debt. A CITATION IS A CLAIM ABOUT ANOTHER FILE'S CURRENT TEXT AND
+//     AGES EXACTLY AS ANY OTHER CLAIM DOES -- the correction landed at the cited authority and did
+//     not announce itself here, which is the same shape `StratUI/Tests/StratOptionsModelClauses.cpp`
+//     stamped in itself on 2026-09-05.
+//   - AND THE FORM IS THE LESSON. *"has no such checkbox yet"* asserts an absence NOW; nothing in
+//     it names the moment it was true of, so it rots and still reads as current. The anchored form
+//     -- *"as of `f7b934a`, where this file first said so, the asset carried no override"* -- says
+//     the same thing and survives.
+//
+// AND THE COUNTERPART FILE KNEW. `StratShippedGameModeOptIn.cpp` opens by naming THIS file and
+// explaining why the clause is not in it, and cross-cites
+// `Stratocracy.StratPlay.T-SAVE-06.TheOptInDefaultsOffInCpp`, which lives here. The citation ran
+// one way for a fortnight; this stamp is the return leg.
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratHookIsSilentWithoutTheOptInTest,
@@ -1168,6 +1199,14 @@ bool FStratHookIsSilentWithoutTheOptInTest::RunTest(const FString& /*Parameters*
 // WHAT IT DOES NOT PIN: what the SHIPPED `BP_StratGameMode` sets. A Blueprint default is not a
 // C++ default and this clause cannot see one. See the owed clause in
 // `Tools/architect/state/tests.md`.
+//
+// **[STAMPED 2026-09-06]** THE HEADING AND ITS REASON ARE UNTOUCHED AND ARE THE WHOLE POINT OF
+// THE BULLET: this clause reads `FStratMatchConfig`'s C++ member initialiser and genuinely cannot
+// see a Blueprint default. WHAT WENT STALE IS THE POINTER, NOT THE CLAIM. The clause is no longer
+// owed -- it is `Stratocracy.StratPlay.T-UI-03.TheShippedGameModeOptsIn` in
+// `Source/StratPlay/Tests/StratShippedGameModeOptIn.cpp`, added at `7d8185f`, 2026-08-21, and that
+// file's clause names THIS one in its own premise as the C++ half it depends on. Read it directly;
+// `Tools/architect/state/tests.md` now records it as written rather than as owed.
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratOptInDefaultsOffInCppTest,

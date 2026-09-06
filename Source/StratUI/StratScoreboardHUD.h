@@ -36,7 +36,10 @@
 // reads through `GetBridge()` and does not care who allocated it.
 //
 // THAT DEBT IS NOW HALF PAID, and the half that is paid is the seam rather than the
-// move. `AdoptBridge` lets a foreign owner -- phase 3's `UStratMatchSubsystem`, per
+// move [BOTH HALVES ARE PAID AS OF PHASE 3; SEE THE STAMP BELOW THIS BLOCK. This
+// sentence is the AMENDMENT to the debt above it, and it went stale in turn -- the
+// shape this project has now found nine times, and the second time it was found in an
+// amendment rather than in an original]. `AdoptBridge` lets a foreign owner -- phase 3's `UStratMatchSubsystem`, per
 // `Tools/architect/state.md` -- hand this HUD a bridge it did not create, and the
 // ownership question is answered by WHICH MEMBER IS SET rather than by a flag anyone
 // has to maintain:
@@ -61,6 +64,21 @@
 // and hands it to the builder. Adoption is a second path beside the first, so the debt
 // above is discharged the day the subsystem lands rather than the day this HUD stops
 // compiling.
+//
+// WHAT IS TRUE NOW, STAMPED 2026-09-05 BY `strat-gameplay-engineer` OVER BASE `c69e519`,
+// AGAINST THIS BLOCK'S OWN CRITERION AND NOT A NEW ONE. The sentence directly above sets
+// the test -- "discharged the day the subsystem lands" -- and the subsystem landed:
+// `UStratMatchSubsystem::HandBridgeToScoreboard` in
+// `Source/StratPlay/StratMatchSubsystem.cpp` calls `HUD->AdoptBridge(*Live, ...)` on the
+// shipped path, `StartMatch` calls that function, and the `TPimplPtr` on that subsystem is
+// the only free for a bridge a running game owns. So "HALF PAID" is stale by the file's own
+// measure and the move is done, not just the seam.
+//   WHAT DID NOT CHANGE, so the stamp is not read for more than it says: the OWNED path is
+// still here and still must be, exactly as the paragraph above requires -- a map naming this
+// HUD and nothing else still seeds and frees its own bridge, and the fixtures in
+// `Source/StratUI/Tests/` still hand in a bare `FStratBridge`. `Bridge` did not become a raw
+// observing pointer; it became TWO members, which is a different and better answer than the
+// one the original debt predicted, and the paragraph naming them is correct as written.
 //
 // WHY THIS HEADER MUST NEVER INCLUDE StratBridge.h. It declares a UCLASS, so UHT
 // parses it. `StratBridge.h` includes the vendored `strat` headers (Data.h, Ui.h, ...)

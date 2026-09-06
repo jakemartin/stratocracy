@@ -559,6 +559,17 @@ struct FStratUnitView
 	// block: they are declared here so that phase 3's selection machine has somewhere to
 	// put them that is not an actor, because state in an actor makes T-INT-05 false and
 	// nothing reports it.
+	//
+	// THAT MACHINE IS NO LONGER PHASE 3'S FUTURE, AND THIS BLOCK IS A DESIGN STATEMENT
+	// RATHER THAN A DEBT. Stamped 2026-09-06 because `StratViewModel.cpp` pointed here for
+	// "the debt and its discharge condition" and there is neither to find, which sent a
+	// reader hunting; that pointer is retracted at the site. `FStratSelectionMachine` and
+	// `FStratGuidedOpening` both exist and both write these two fields on the decoration
+	// seam, through `AStratPlayerController::DecorateForPresentation`. NOTHING ABOVE
+	// CHANGES AND NOTHING IS DISCHARGED: the arrangement described -- built false here,
+	// overlaid there -- is the shipped one and is permanent, so the sentence stating why
+	// these fields live on the model instead of in an actor is as load-bearing as the day
+	// it was written.
 
 	/**
 	 * §2.11.1's DONE bit. OWNER: the selection machine, which is a state machine and not

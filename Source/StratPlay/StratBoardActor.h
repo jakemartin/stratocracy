@@ -557,13 +557,27 @@ protected:
 	TObjectPtr<UMaterialInterface> ObjectiveMaterial;
 
 	/**
-	 * §2.11.5's BUILD pulse. UNSET IS THE STATE THIS SHIPS IN AS OF 2026-09-01, AND THAT IS
-	 * STATED HERE RATHER THAN LEFT TO BE DISCOVERED. No material instance for the pulse
-	 * exists in `Content/` yet; `BP_StratBoard` carries no default here, and it must not be
-	 * given one from C++ -- the instance and its assignment are the CONTENT lane's, which is
-	 * why this is `EditDefaultsOnly`, has NO initializer, and names no `/Game/` path.
-	 * `ObjectiveMaterial` directly above is the model, and it read exactly this way until
-	 * `MI_Overlay_Objective` landed on 2026-08-24.
+	 * §2.11.5's BUILD pulse. **[CORRECTED 2026-09-06. THIS BLOCK OPENED "UNSET IS THE STATE
+	 * THIS SHIPS IN AS OF 2026-09-01, AND THAT IS STATED HERE RATHER THAN LEFT TO BE
+	 * DISCOVERED. No material instance for the pulse exists in `Content/` yet; `BP_StratBoard`
+	 * carries no default here" -- AND BOTH HALVES OF THAT ARE NOW FALSE.** The instance exists
+	 * and is assigned: `MI_Overlay_BuildPulse` was authored by the
+	 * content lane and set on `BP_StratBoard`'s class default, "which was `None` before",
+	 * verified there by read-back through a different route than the write and recorded in
+	 * `Tools/architect/state/content.md`. RE-DERIVED HERE FROM THE SHIPPED BYTES rather than
+	 * taken on that record's word: a byte census of `Content/StratPlay/BP_StratBoard.uasset`
+	 * returns `BuildPulseMaterial` once and `MI_Overlay_BuildPulse` twice. THE 1/2 PAIR IS ONLY
+	 * EVIDENCE BECAUSE A KNOWN-ASSIGNED SIBLING PRINTS THE SAME SHAPE: `ObjectiveMaterial` 1
+	 * and `MI_Overlay_Objective` 2, on the property directly above whose own block has read
+	 * ASSIGNED since 2026-08-24. A fabricated property name returns 0, and the package is a
+	 * real one -- first bytes `c1 83 2a 9e`, the Unreal magic, not a git-lfs pointer line. The
+	 * `BeginPlay` arm in `StratBoardActor.cpp` carried the same false claim and is corrected
+	 * with it.]** THE PART OF THE RETRACTED PARAGRAPH THAT WAS ABOUT THIS FILE IS UNTOUCHED BY
+	 * ANY OF THAT, AND IS WHY THIS BLOCK IS CORRECTED RATHER THAN DELETED: the instance and
+	 * its assignment are the CONTENT lane's, this class must not be given one from C++, and
+	 * that is why this is `EditDefaultsOnly`, has NO initializer, and names no `/Game/` path.
+	 * A material now existing is not a licence to name its path here. `ObjectiveMaterial`
+	 * directly above remains the model, and both blocks now record the same arc.
 	 *
 	 * UNSET IS LEGITIMATE AND THE FAILURE IT PRODUCES IS VISIBLE RATHER THAN SILENT: the
 	 * pulse draws in `OverlayMesh`'s own material, so a lit factory looks like a reach
@@ -572,14 +586,33 @@ protected:
 	 * missing `OverlayMesh` is -- a missing MESH draws nothing at all and has to announce
 	 * itself.
 	 *
-	 * NO ANIMATION IS DRIVEN FROM C++ AND NONE MAY BE ADDED HERE ON AN ASSUMPTION. Measured
-	 * 2026-09-01 against the live editor's reflection: `MI_Overlay_Objective`, the only
-	 * member of this material family today, is a `MaterialInstanceConstant` with one vector
-	 * parameter, ZERO scalar parameters and ZERO static switches. So there is no parameter
-	 * named anywhere in the tree for a pulse to drive, and code that created a dynamic
-	 * instance to set one would be naming a parameter that does not exist -- a silent no-op
-	 * that reads as a broken pulse. HOW THE PULSE PULSES IS THE CONTENT LANE'S DECISION, in
-	 * the material itself; this class turns instances on and off and nothing more.
+	 * NO ANIMATION IS DRIVEN FROM C++ AND NONE MAY BE ADDED HERE ON AN ASSUMPTION. **[THE RULE
+	 * STANDS AND ITS 2026-09-01 PREMISE DOES NOT, CORRECTED 2026-09-06. The premise read
+	 * "`MI_Overlay_Objective`, the only member of this material family today, is a
+	 * `MaterialInstanceConstant` with one vector parameter, ZERO scalar parameters and ZERO
+	 * static switches. So there is no parameter named anywhere in the tree for a pulse to
+	 * drive" -- and the family has since grown a member that has exactly such parameters.**
+	 * `MI_Overlay_BuildPulse` is parented to `M_OverlayPulse`, a
+	 * duplicate of the shared `M_Translucent` master whose Opacity input the content lane
+	 * rewired through a `Time`-driven sine, with three scalar parameters carrying the tuning.
+	 * MEASURED FROM THE BYTES, NOT RELAYED: a census of `M_OverlayPulse.uasset` returns
+	 * `PulseSpeed`, `PulseMin`, `PulseMax`, `MaterialExpressionTime` and
+	 * `MaterialExpressionSine` once each; the CONTROL is the untouched
+	 * `Content/AdvancedTurnBasedTileToolkit/Core/GridUI/M_Translucent.uasset`, which returns 0
+	 * for all five while both files return 7 for `Color`, so the counter was shown able to
+	 * speak on both before its zeros were read.
+	 *
+	 * SO THE RULE IS NOW SATISFIED BY CONSTRUCTION RATHER THAN BY ABSENCE, WHICH IS THE
+	 * STRONGER FORM AND IS THE REASON TO KEEP IT. The old argument was "do not animate from
+	 * C++ because there is no parameter to animate"; that argument has expired. The one that
+	 * replaces it is that the pulse ALREADY PULSES, in the material, off `Time` -- so C++
+	 * driving a dynamic instance would be a second animator fighting the first, and retuning
+	 * would need a rebuild instead of a material edit. HOW THE PULSE PULSES IS THE CONTENT
+	 * LANE'S DECISION, in the material itself; this class turns instances on and off and
+	 * nothing more. WHAT IS NOT SETTLED FROM A CHECKOUT, said rather than implied: whether
+	 * that graph COMPILES and what it looks like on screen. A byte census reads names, not
+	 * pixels, and `content.md` records `get_statistics` returning zeros for a known-good
+	 * control -- a human at the keyboard remains the only instrument for the visual claim.]**
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Board")
 	TObjectPtr<UMaterialInterface> BuildPulseMaterial;

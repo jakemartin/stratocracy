@@ -15,6 +15,289 @@
 
 ## NEXT
 
+- **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `1bd28c3`, UNCOMMITTED) -- THE LAST THREE SITES
+  ON MY OWN 2026-09-03 CHECKLIST ARE REPAIRED AND THE CHECKLIST IS CLOSED, AND THE FINDING WORTH
+  READING IS THAT THE CHECKLIST WAS THE WARRANT FOR THE PREVIOUS PASS AND STILL DID NOT GET
+  FINISHED BY IT.** Comment and record only; no executable byte moved. No exception clause
+  applies and none is cited. The live suite figure and the phase verdict are `global.md`'s and
+  are not restated here.
+  - **WHAT THE PRIOR PASS DID AND WHY STOPPING THERE WAS THE DEFECT.** The 2026-09-03 refusal in
+    this file names FIVE stale sites in one sentence and says in bold which to look at first.
+    The previous pass CITED THAT SENTENCE as its licence, repaired two of the five
+    (`FlagMarkerMesh`, `UnactedPipMesh`), and left three -- including the one the sentence marks
+    as first. **A CHECKLIST THAT IS CITED AND THEN PARTLY EXECUTED IS WORSE THAN ONE THAT IS
+    IGNORED**, because the citation is what tells the next reader the list was worked. The
+    generalisable rule, and it is not "read more carefully": **when a record sentence is quoted
+    as a warrant, every item in that sentence is in scope, or the ones left out are named as
+    left out.** Raised as F1 (BLOCK) and as the first non-gating observation of
+    `Tools/architect/gate_reports/2026-09-06-twelfth-stale-claim-regate.md`.
+  - **THE THREE REPAIRS, AND THE SHAPE IS THE ONE THAT PASSED TWICE:** retract in place, quote
+    the withdrawn words, state what is true with the instrument and its controls inline, and
+    keep the half that is still true rather than deleting the block.
+    - **`Source/StratPlay/StratUnitActor.h`'s Sec 2.11.2 markers'-art bullet, in that file's own
+      header block.** It read that `FlagMarker` and `UnactedPip` "ship with no mesh and no
+      material" and that this "is a content gap". **It was falsified by prose the previous pass
+      added SIX HUNDRED LINES BELOW IT IN THE SAME FILE**, which is the cost that makes this more
+      than an ordinary stale sentence: the file contradicted itself and the false half came
+      first, at line 151, where a reader opening the file starts.
+    - **`Source/StratPlay/StratBoardActor.h`'s `BuildPulseMaterial` block.** It read "UNSET IS
+      THE STATE THIS SHIPS IN AS OF 2026-09-01 ... No material instance for the pulse exists in
+      `Content/` yet; `BP_StratBoard` carries no default here." **Both halves false.**
+    - **The `BuildPulseMaterial` arm inside `AStratBoardActor::BeginPlay` in
+      `Source/StratPlay/StratBoardActor.cpp`.** It read "this branch is not taken on any board in
+      the tree today". It is taken on the shipped board.
+  - **THE EVIDENCE WAS APPLIED AND NOT MANUFACTURED, WHICH IS THE RULE THIS PASS WAS DISPATCHED
+    UNDER, AND IT WAS RE-DERIVED RATHER THAN RELAYED.** The by-value source is the content lane's
+    editor reading in `Tools/architect/state/content.md` -- `MI_Overlay_BuildPulse` authored and
+    "Assigned to `BuildPulseMaterial` on `BP_StratBoard`'s class default, which was `None`
+    before", verified there by read-back through a different route than the write. **I did not
+    take that on report.** A byte census over the shipped packages, run this pass:
+    `BP_StratBoard.uasset` returns `BuildPulseMaterial` 1 and `MI_Overlay_BuildPulse` 2;
+    `BP_StratUnit.uasset` returns `FlagMarkerMesh` 1, `FlagMarkerMaterial` 1, `UnactedPipMesh` 1,
+    `UnactedPipMaterial` 1, `MI_Marker_Flag` 2 and `MI_Marker_Pip` 2. **THREE CONTROLS, BECAUSE A
+    COUNT WITHOUT THEM IS NOISE:** the POSITIVE control on each file is a property assigned since
+    2026-08-24 and already recorded as such in its own block -- `ObjectiveMaterial` 1 /
+    `MI_Overlay_Objective` 2 on the board, `GuidedMarkerMesh` 1 on the unit -- so the subject
+    prints the same shape as a known-assigned sibling; the KNOWN-UNSET control `FlagMarkerOffset`
+    returns 0; a fabricated property name returns 0 on both. Both packages are real, first bytes
+    `c1 83 2a 9e`, not git-lfs pointer lines.
+  - **WHAT SURVIVED THE REPAIR, NAMED BECAUSE PRESERVING IT WAS HALF THE JOB.** Every one of the
+    three blocks also carries the reason C++ must not name a `/Game/` path -- `EditDefaultsOnly`,
+    no initializer, the assignment is the content lane's. **THAT IS A PROJECT RULE AND IS WHOLLY
+    UNTOUCHED BY THE MATERIAL NOW EXISTING**, and the corrected blocks say so in terms, because
+    the easiest wrong reading of "the asset landed" is that C++ may now reference it. The
+    unset-behaviour sentences are kept too, rescoped from a description of the shipped Blueprint
+    to a description of any OTHER Blueprint of these classes -- which is what `ObjectiveMaterial`
+    already did when its own material landed, and is why that block was the model.
+  - **ONE CLAIM BEYOND THE THREE SITES WAS FALSIFIED IN PASSING, AND IT IS THE MOST INTERESTING
+    RESULT HERE: THE RULE SURVIVED ITS OWN PREMISE.** `BuildPulseMaterial`'s block forbade driving
+    the pulse from C++ on the ground that "`MI_Overlay_Objective`, the only member of this
+    material family today ... ZERO scalar parameters", so "there is no parameter named anywhere in
+    the tree for a pulse to drive". **The family has since grown a member that has exactly such
+    parameters.** `MI_Overlay_BuildPulse` is parented to `M_OverlayPulse`, not to `M_Translucent`;
+    a byte census of `M_OverlayPulse.uasset` returns `PulseSpeed`, `PulseMin`, `PulseMax`,
+    `MaterialExpressionTime` and `MaterialExpressionSine` once each, against a CONTROL of the
+    untouched `Content/AdvancedTurnBasedTileToolkit/Core/GridUI/M_Translucent.uasset` returning 0
+    for all five, while both files return 7 for `Color` so the counter is shown able to speak on
+    each. **THE PROHIBITION IS NOT RELAXED; ITS ARGUMENT IS REPLACED BY A STRONGER ONE.** It used
+    to rest on an absence (nothing to animate); it now rests on a presence -- the pulse already
+    pulses in the material off `Time`, so C++ driving a dynamic instance would be a second
+    animator fighting the first. **AND THE LIMIT IS STATED RATHER THAN LEFT TO BE DISCOVERED:** a
+    byte census reads names, not pixels. Whether that graph compiles and what it looks like on
+    screen is NOT settled by anything in this entry, and `content.md` records `get_statistics`
+    returning zeros for a known-good control, so a human at the keyboard remains the only
+    instrument for the visual claim.
+  - **THE CHECKLIST ITSELF IS CLOSED, IN PLACE, IN BOTH COPIES.** The 2026-09-03 enumeration now
+    carries a bracket recording all five as repaired, kept rather than deleted because it is the
+    sentence two passes cited as a warrant. **A SECOND COPY OF THE SAME LIST EXISTED IN THE
+    FOLLOWING BULLET** -- "the handoff is unchanged at six sites and every one of them still needs
+    an editor" -- and closing one copy while leaving the other reading open is the rotted-
+    amendment shape this record has already paid for, so it is stamped too. **FIVE OF THE SIX ARE
+    SETTLED AND `AiSides` ON `BP_StratGameMode` IS NOT**, on that bullet's own unchanged reasoning
+    -- it reads PRESENT, which proves serialisation and never the value. **So the content-lane
+    handoff is ONE site, not six.** That reduction is the whole of what this pass changes about
+    what another lane is owed.
+  - **LINE ENDINGS, MEASURED ON BOTH SIDES BECAUSE THE OBVIOUS INSTRUMENT LIES HERE.** A `grep -c`
+    for a carriage return returns 0 on a CRLF file on this box. A Python `endswith(chr(13))`
+    census, with a control on a synthetic buffer of two CRLF lines and one bare LF that correctly
+    reports **bare LF 1**, gives BEFORE: `StratUnitActor.h` 1303 / `StratBoardActor.h` 721 /
+    `StratBoardActor.cpp` 584, all CRLF, 0 bare LF, 0 lone CR; AFTER: 1321 / 754 / 594, all CRLF,
+    0 bare LF, 0 lone CR. Uniform on both sides.
+  - **THE BUILD, AND A CONTROL ON IT. TWO BUILDS RAN AND BOTH FIGURES ARE GIVEN, because a
+    later edit landed after the first and reporting only one count would have been stale by the
+    time the pass ended.** `Build.bat StratocracyEditor Win64 Development` ran **34 actions**,
+    linked `UnrealEditor-StratPlay.lib` and `UnrealEditor-StratPlay.dll`, and printed
+    `Result: Succeeded`; after the final comment edit to `StratBoardActor.h` it ran again at **32
+    actions**, `Result: Succeeded`. The byte-identical re-run after that printed `Target is up to
+    date`, `run 0 action(s)`, `Result: Succeeded` -- so the action counts are attributable to this
+    pass's edits and not to a stale tree, and the tree as it stands is fully built. **THE EDITOR-CLOSED PRECONDITION WAS MEASURED WITH AN
+    INSTRUMENT AND NOT ASSERTED AS A LABEL:** `Get-Process UnrealEditor` returned nothing, and
+    the CONTROL is that the same cmdlet asked for the current process id returned `powershell`,
+    so the query was shown able to see a running process before its silence was read. The link
+    succeeding is the corroborating instrument, since on this tree it cannot succeed with the
+    editor open.
+  - **THE SUITE BRANCH, DERIVED AT THE SCRIPT, AND THE EASY VERSION OF THIS ARGUMENT DOES NOT
+    APPLY THIS TIME.** `Tools/architect/strat_suite_report_gate.py`'s `census()` iterates
+    `rglob("*.cpp")`, so a header is invisible to it -- and **`StratBoardActor.cpp` IS a `.cpp`
+    and IS in the diff**, which means "no `.cpp` was touched" is unavailable as a warrant and
+    would have been false if written. The branch holds for a different reason, measured: the
+    gate's own two regexes, `SIMPLE_MACRO` and `COMPLEX_MACRO`, imported from that file rather
+    than retyped, return `simple 0 / complex 0` on the `HEAD` blob AND on the worktree copy of
+    every file in the diff, so no clause name is added, removed or renamed. **POSITIVE CONTROL:**
+    the same regexes over `Source/StratPlay/Tests/StratAiPlaybackClauses.cpp` return **10** clause
+    names, the first being `Stratocracy.StratPlay.T-TURN-09.PlaybackDispositionsAgreeOnState`, so
+    they were shown able to find macros before their zeros were believed. And the compiled code
+    is unchanged: a literal-aware stripper that REFUSES to emit zero lines reports
+    `StratBoardActor.cpp` 311 lines, `StratBoardActor.h` 102, `StratUnitActor.h` 95, identical
+    hashes on both sides. **THREE MUTATION CONTROLS ON A DISPOSABLE COPY**, because IDENTICAL is
+    also what a broken stripper returns: an added statement DETECTED; a line-comment token inside
+    a string literal with real code after it DETECTED, with the code behind the literal surviving
+    into the stripped output; a comment-only edit correctly invisible. **No suite was re-run and
+    the existing exported report stays valid for this tree.**
+  - **THE TWO `StratViewModel` FILES ARE BYTE-IDENTICAL TO THE TREE THE GATE CLEARED, AND THIS
+    TIME THAT IS A MEASUREMENT RATHER THAN AN INFERENCE.** The re-gate observed that it could only
+    infer this because no per-file hash had been recorded, and it then recorded two. Both
+    reproduce here unchanged: `Source/StratUI/StratViewModel.cpp`
+    `9833f6c2c01b215e724d43ce60df1d2e2969cf5caabc1582530ab477880463c2` and
+    `Source/StratUI/StratViewModel.h`
+    `be8923fe2d8b7dc05f5a46ea8d919a9292ba6facfcce25c58c1601264ef81b3c`, taken before and after
+    this pass's edits. **THAT IS THE OBSERVATION ITSELF WORKING**: a gate report that records a
+    hash converts the next round's inference into a check, and the practice is worth keeping.
+  - **ONE THING THIS PASS LOOKED FOR AND DID NOT FIND, RECORDED SO IT IS NOT RE-DERIVED.**
+    `content.md` at its `MI_Overlay_BuildPulse` authoring entry says the instance was parented to
+    `M_Translucent`, and the bytes say `M_OverlayPulse`. **THAT IS NOT A DEFECT IN THAT RECORD:**
+    a later entry in the same file records the reparent explicitly, so the two entries are in
+    chronological order and the earlier one is history rather than a stale claim. Named here only
+    because reading the first entry alone would make the byte census look like a contradiction.
+
+- **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `1bd28c3`, UNCOMMITTED) -- THE TWELFTH STALE-CLAIM
+  SITE WAS AN EXISTENCE DENIAL WRITTEN WITH A NEGATIVE SUBJECT AND A POSITIVE VERB, AND THAT FORM
+  IS WHY FOUR SWEEPS WALKED PAST IT.** Comment and record only: **no executable byte moved**, and
+  that is measured rather than asserted -- every added and every removed line in the diff is a
+  comment line, checked in both directions. No exception clause applies and none is cited. The
+  live suite figure and the phase verdict are `global.md`'s and are not restated here; **no suite
+  was re-run, and the branch of that rule which applies was measured at the gate script rather
+  than accepted (last bullet).**
+  - **THE FINDING, RE-DERIVED RATHER THAN TAKEN ON REPORT.** `Source/StratUI/StratViewModel.cpp`'s
+    presentation-block comment said `bDone` and `bLockedThisTurn` are left false because "their
+    owners are Sec 2.11.1's selection machine and the guidance layer, and **neither exists in this
+    engine yet**". Only that last clause is false. `FStratSelectionMachine::DecorateViewModel`
+    assigns **both** fields -- `U.bDone` from `DoneUnits`, `U.bLockedThisTurn` from `LockedUnits`
+    -- and it is on a **live route, not an uncalled verb**:
+    `AStratPlayerController::DecorateForPresentation` calls it and then
+    `FStratGuidedOpening::DecorateViewModel`, on the decoration seam every refresh runs through.
+    Checking the route and not merely the mechanism is this lane's own standing correction and it
+    was applied here.
+  - **IT WAS TRUE WHEN WRITTEN AND AGED INTO FALSITY, which is a different defect from a
+    misstatement and is worth separating.** Ordered by **ancestry, not by date**, because two of
+    the three commits share a day and dates cannot order those: `git merge-base --is-ancestor`
+    puts the comment's commit `f918e30` before `ed27d5a` (`FStratSelectionMachine`, same day,
+    about three and a half hours later) and before `1d6f758` (`FStratGuidedOpening`), with a
+    linear `git rev-list --count` walk agreeing (29, 31, 77). So the sentence was accurate for two
+    commits and has been false since. Provenance came from `git log --oneline --reverse -S`, with
+    a **control on a symbol that does not exist returning blank**, so the hits are a measurement
+    and not a coincidence of the instrument.
+  - **THE POINTER IN THE SAME BLOCK WAS STALE TOO, IN THE SHAPE-3 WAY -- a citation whose
+    authority changed underneath it.** The last sentence read "The debt and its discharge
+    condition are in the header." The header block it names now states an **owner and a design**
+    and **no discharge condition at all**: it says this builder leaves both false because
+    `strat::buildUiSnapshot` does not produce them, and each field names its owner ("OWNER: the
+    selection machine", "OWNER: the guidance layer"). That arrangement is permanent, so a pointer
+    promising a debt sent a reader hunting for something not there. Both sentences are retracted
+    as `RETRACTED>` blocks quoting the old words, on this file's own precedent, and the header is
+    stamped to say it is a design statement rather than a debt.
+  - **THE DESIGN IS UNCHANGED AND THE BUILDER WAS NOT TOUCHED.** `StratBuildViewModel` leaving
+    both fields false is still correct -- they are filled by an overlay on the decoration seam
+    afterwards -- so the correction is to the *claim about the world*, not to the code the claim
+    sits beside. Every other sentence in the block, including the Wait / RMB-in-MOVED reasoning
+    for why the DONE bit cannot be derived from `hasMoved` / `hasActed`, is unchanged and still
+    load-bearing.
+  - **WHY THE SWEEPS MISSED IT, and the instruction this lane now carries.** Every catalogued
+    instance of the shape used a **negative verb** -- "does not exist", "no ... yet", "is still
+    owed" -- and this one used a **negative subject with a positive verb**: *neither **exists**
+    ... yet*. No phrase list carried that form, so the misses were a property of the method and
+    not of the tree. **Sweep for the negative-subject form by name.**
+  - **THE SWEEP I RAN, WITH ITS DENOMINATOR, SO A NULL IS A MEASUREMENT.** `grep -n -i -E` over
+    the negative-subject alternation (`neither exists|is|has|does`, `none of them exist`,
+    `nor does`, `no such ... exists`, and the `yet` variants) across **71 files** -- every
+    non-`Tests/` `.cpp` and `.h` under `Source/StratPlay` (47) and `Source/StratUI` (24). A
+    **positive control ran first** and returned the known instance, so the instrument was shown
+    able to speak before its silence was read as anything. **78 hits.** The overwhelming majority
+    are the copular "neither is X" and assert no existence claim at all; six asserted
+    non-existence and were each opened and read.
+  - **[RETRACTED 2026-09-06, SAME DAY, ON THE GATE OF THIS VERY ENTRY -- THE HEADING AND HALF
+    THE BULLET. THE HEADING READ "ONE FURTHER TRUE FINDING, AND IT IS NOT THE STALE-CLAIM
+    SHAPE", AND THE BULLET CLOSED "`MI_Marker_Flag` and `MI_Marker_Pip` do exist while no flag
+    or pip **mesh** does, so the content lane may be reusing the one mesh under three
+    materials -- which that file cannot see and now says it does not assume."** A heading that
+    asserts its own finding is true is exactly the shape this lane keeps catching elsewhere,
+    and this one was carrying a false clause, so both are withdrawn rather than reworded.
+    **THE HALF THAT SURVIVES IS THE REFERENT CALL, and it survives intact:** "such mesh" in
+    `Source/StratPlay/StratUnitActor.h` does mean the flag marker's and the pip's and not
+    `SM_GuidedMarker`; the ordering evidence is unchanged -- `fe462e9` (the asset) is an
+    ancestor of `38961f1` (the sentence), five days apart by `git merge-base --is-ancestor`,
+    and the same file already asserted that `BP_StratUnit`'s default carries it, so the author
+    knew it existed and cannot have been denying it. **THE HALF THAT WAS FALSE, and the verdict
+    that did not follow from the right referent, are the two bullets below.**]
+  - **THE PASS PLANTED A NEW FALSE CLAIM ABOUT THE WORLD INSIDE A CLAUSE LABELLED `measured`,
+    WHICH IS THE EXACT DEFECT CLASS IT WAS DISPATCHED TO REMOVE.** The parenthesis it added to
+    `StratUnitActor.h` said "`FlagMarkerMesh` and `UnactedPipMesh` are the unset ones; measured
+    2026-09-06, the only mesh under `Content/StratArt/Meshes/` bearing on any marker is
+    `SM_GuidedMarker`". **Both properties are SET.** The measurement that was actually run
+    covered the MESHES DIRECTORY and licensed nothing about a Blueprint default; the word
+    "measured" then carried it into a sentence about the default. **And this file had already
+    REFUSED that very claim** -- the 2026-09-03 re-check above rules the five "unset is the
+    state this ships in" sites "NEITHER false NOR correct" and names `StratUnitActor.h`'s
+    `FlagMarkerMesh` and `UnactedPipMesh` blocks as the open sites. This pass converted a
+    refused claim into a flat assertion at a THIRD site in the same file.
+  - **WHAT IS TRUE, WITH THE INSTRUMENT AND ITS TWO CONTROLS.** `Tools/architect/state/content.md`
+    records both defaults read out of a LIVE EDITOR BY VALUE -- `FlagMarkerMesh =
+    /Engine/BasicShapes/Cone`, `UnactedPipMesh = /Engine/BasicShapes/Sphere`, with
+    `FlagMarkerMaterial = MI_Marker_Flag` and `UnactedPipMaterial = MI_Marker_Pip`.
+    Independently, `grep -aoF` over `Content/StratPlay/BP_StratUnit.uasset` returns **1** for
+    each of those four names, **0** for `FlagMarkerOffset` -- which that record separately says
+    is NOT overridden -- and **0** for a fabricated property name. **The instrument
+    discriminates in both directions on that one asset**, which is what turns the 1s from noise
+    into evidence, and it is what the 2026-09-03 refusal lacked: presence alone proved nothing,
+    and the by-value read is the thing that settles the direction presence cannot.
+  - **THE STOPPING POINT WAS WRONG EVEN WHERE THE REFERENT CALL WAS RIGHT.** "No such mesh
+    exists yet" is stale under its own correct reading: no flag or pip mesh is OWED, because
+    both slots point at engine primitives -- no new precedent, since `FallbackMesh` on the same
+    Blueprint already reads `/Engine/BasicShapes/Cylinder`. Disambiguating a referent and then
+    keeping the verdict that referent supported is a shape worth naming: **the reading changed
+    and the conclusion was not re-derived under it.**
+  - **THE CONTENT-LANE HANDOFF THIS PASS FILED IS WITHDRAWN IN FULL, AND NOTHING REPLACES IT.**
+    It asked the content lane whether one mesh was being reused under three materials and
+    whether the 100 uu arithmetic held. `content.md` answers **both**: the two slots are engine
+    primitives rather than a reuse of `SM_GuidedMarker`, and `SM_GuidedMarker`'s
+    `ExtendedBounds` measures `BoxExtent = (50, 50, 50)` against both primitives' same 100 uu --
+    "The assumption holds." That was one `Read` of another lane's record, not a handoff. **The
+    standing instruction: before writing about a Blueprint default, read `content.md`** -- it is
+    where by-value CDO reads live, and this lane may read it while never writing it.
+  - **THE LESSON AS A SHAPE, NOT AS THIS SLIP.** A pass hunting unmeasured claims is not immune
+    to making one, and labelling one `measured` is worse than leaving it bare, because
+    "measured" is a claim about the AUTHOR'S PROCESS and a reader cannot check a process. **It
+    therefore obliges naming the instrument INLINE** -- which the planted sentence did not, and
+    which is why it read as settled to everyone but its author. The project's Blueprint-default
+    rule is the same point from the other end: ABSENCE DECIDES, PRESENCE PROVES NOTHING, and "I
+    cannot see it from here" licenses no claim in either direction.
+  - **THE THREE SITES ARE REPAIRED IN PLACE AND THE TWO BEYOND THE DISPATCH ARE NAMED AS SUCH.**
+    The `FlagMarkerOffset` block carries the retraction quoting both withdrawn sentences plus
+    the instrument and its controls. The `FlagMarkerMesh` and `UnactedPipMesh` blocks -- the two
+    the 2026-09-03 refusal named as open -- are stamped with the same by-value reading, because
+    the evidence that discharged the retraction discharges them in the same breath and leaving a
+    claim I had just measured false would be the day's defect repeated. Their claims about THIS
+    FILE are untouched and still true: the C++ declares no initializer, and the unset-behaviour
+    sentences now describe an unconfigured Blueprint rather than the shipped one.
+  - **FOUR OTHER EXISTENCE-CLAIMING HITS WERE READ AND CLEARED, named so the null is checkable.**
+    `StratGuidedOpening.h`'s "Neither exists today" is about two **hypothetical rules changes**,
+    not engine objects, and its stated premise still holds -- `strat::captureTick` short-circuits
+    on `o.owner == side`, confirmed in the vendored `Economy.good.cpp`. `StratHoverState.h`'s
+    "neither is here" is about **fields on this struct**, and `FStratHoverView` still carries
+    exactly two, neither a forecast nor an info-panel field. `StratPlayerController.cpp`'s "There
+    is no such world in this milestone" is a correctly written debt that names its own discharge
+    condition and is still true -- one controller, two seats. `StratShellSubsystem.h`'s was
+    already retracted and stamped when volume acquired a surface, and is the model shape this
+    entry followed.
+  - **BUILD, WITH THE CONTROL THAT MAKES THE VERDICT MEAN SOMETHING.** `Build.bat
+    StratocracyEditor Win64 Development` ran **96 actions** -- real compiles including
+    `StratViewModel.cpp`, `StratUnitActor.cpp`, `StratPlayerController.cpp` and
+    `StratMatchSubsystem.cpp`, then `Link UnrealEditor-StratPlay.lib` and `.dll` -- and reported
+    `Result: Succeeded`. The **byte-identical re-run** immediately after printed `Target is up to
+    date` and `run 0 action(s)`, which is what separates a build that did work from a `Succeeded`
+    printed over a no-op. The editor was confirmed closed first.
+  - **WHICH SUITE BRANCH APPLIES, MEASURED AT THE SCRIPT AND NOT ACCEPTED FROM THE RULE.**
+    `strat_suite_report_gate.py`'s `census()` is what a comment edit could disturb: it scans only
+    `*.cpp` and collects clause names by macro. Of the three files touched, exactly one is a
+    `.cpp` and it is not a test file. Running that gate's **own** `SIMPLE_MACRO` and
+    `COMPLEX_MACRO` regexes over `StratViewModel.cpp` at `HEAD` and in the worktree returns the
+    empty list and zero on **both sides, identical** -- with a **positive control** over a real
+    test file returning two clause names, so the regexes were shown able to find macros before
+    their silence was believed. **The no-re-run branch applies**, and the existing report stays
+    valid for this tree.
+
 - **2026-09-05, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `c69e519`, UNCOMMITTED) -- A LANE-WIDE SWEEP FOR
   STALE DEBT PROSE FOUND SEVEN SITES, AND THE ONE WORTH READING IS THAT THE REMEDY THIS LANE
@@ -1612,6 +1895,19 @@
     to look at first**: it does not merely describe a C++ default, it makes an affirmative
     claim ABOUT the Blueprint, and that is the kind of sentence a name-table hit was supposed
     to be able to check.
+    **[THE CHECKLIST ABOVE IS CLOSED AS OF 2026-09-06 AND ALL FIVE SITES ARE REPAIRED. THE
+    ENUMERATION IS KEPT RATHER THAN DELETED, because it is the sentence two later passes cited
+    as their warrant and a reader arriving by that citation must land on its disposition and
+    not on a list that still reads open.** Two were repaired on 2026-09-06 in an earlier pass
+    (`FlagMarkerMesh`, `UnactedPipMesh`); the remaining three -- the Sec 2.11.2 markers'-art
+    bullet, `StratBoardActor.h`'s `BuildPulseMaterial` block, and that property's arm inside
+    `AStratBoardActor::BeginPlay` -- are repaired by the entry at the top of this file.
+    **THE REFUSAL THIS BRACKET CLOSES WAS CORRECT WHEN WRITTEN AND WAS LIFTED BY EVIDENCE, NOT
+    BY A CHANGE OF MIND:** it refused because a name-table PRESENCE proves serialisation and
+    never a value, and that is still true -- what arrived is an editor reading BY VALUE from
+    the content lane, which is exactly the instrument the refusal said the sites needed.
+    **NOTHING IS LEFT ON THIS LIST. A LATER SWEEP THAT FINDS ONE OF THESE FIVE STILL STALE HAS
+    FOUND A REGRESSION, NOT AN OPEN ITEM.**]**
   - **WHAT THE CONTENT LANE IS OWED DID NOT NARROW, AND THAT IS THE RESULT RATHER THAN AN
     OMISSION. RE-CHECKED 2026-09-03 ON THE THIRD RE-GATE'S F7.** The re-gate asked whether the
     decisive-ABSENCE direction lets any of the six handed-off asset sites be answered from a
@@ -1621,7 +1917,16 @@
     `FlagMarkerMesh` 1, `UnactedPipMesh` 1, and the Sec 2.11.2 markers'-art bullet's
     `FlagMarkerMaterial` 1 and `UnactedPipMaterial` 1 on `BP_StratUnit`; `BuildPulseMaterial` 1 on
     `BP_StratBoard`, covering both its header block and its `BeginPlay` arm. **So the handoff is
-    unchanged at six sites and every one of them still needs an editor.** What the sharpened rule
+    unchanged at six sites and every one of them still needs an editor.** **[STALE AS OF
+    2026-09-06 AND STAMPED HERE BECAUSE THIS BULLET RESTATES THE LIST THE BRACKET BELOW CLOSES;
+    leaving one of the two copies reading open is the rotted-amendment shape this record has
+    already paid for. FIVE OF THE SIX ARE SETTLED -- the four marker properties on
+    `BP_StratUnit` and `BuildPulseMaterial` on `BP_StratBoard`, all by the content lane's
+    by-value editor readings, re-derived from the shipped bytes at each repair site with a
+    positive control, a known-unset control and a fabricated-name control. **`AiSides` ON
+    `BP_StratGameMode` IS THE ONE THAT REMAINS AND IT STILL NEEDS AN EDITOR**, on this bullet's
+    own unchanged reasoning: it reads PRESENT, which proves serialisation and never the value.
+    So the handoff is one site, not six.]** What the sharpened rule
     settled instead is four sites that were never on that list -- `MoveTweenEaseFraction`,
     `GuidedMarkerZOffset`, `FlagMarkerOffset` and `UnactedPipOffset`, recorded above. A reader who
     expected this list to shrink should read this bullet as the answer, not as a missing one.

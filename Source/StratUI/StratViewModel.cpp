@@ -411,11 +411,46 @@ bool StratBuildViewModel(
 
 		// `bDone` and `bLockedThisTurn` are DELIBERATELY LEFT AT FALSE. They are the
 		// presentation block's (`strat::UiPresentationUnit`), their owners are §2.11.1's selection
-		// machine and the guidance layer, and neither exists in this engine yet. Setting
+		// machine and the guidance layer.
+		//
+		//     RETRACTED>  "and neither exists in this engine yet."
+		//
+		// BOTH OWNERS EXIST AND BOTH WRITE THESE TWO FIELDS TODAY, and the retraction is the
+		// only change here -- every other sentence in this block is unchanged and still
+		// load-bearing, including the decision this function makes. AMENDED 2026-09-06.
+		//
+		// THE SENTENCE WAS TRUE WHEN WRITTEN AND AGED INTO FALSITY; it was not a
+		// misstatement. Ordered by ancestry rather than by date, because the first two
+		// commits share a day and dates cannot order those: this block landed at `f918e30`,
+		// which `git merge-base --is-ancestor` places before `ed27d5a` (`FStratSelectionMachine`,
+		// same day, about three and a half hours later) and before `1d6f758`
+		// (`FStratGuidedOpening`). A linear `git rev-list --count` walk agrees: 29, 31, 77. So the
+		// claim was accurate for two commits and has been false since.
+		//
+		// WHERE THEY ARE WRITTEN, AND IT IS A LIVE ROUTE RATHER THAN AN UNCALLED VERB:
+		// `FStratSelectionMachine::DecorateViewModel` assigns both -- `U.bDone` from
+		// `DoneUnits` and `U.bLockedThisTurn` from `LockedUnits` -- and
+		// `AStratPlayerController::DecorateForPresentation` calls it, then
+		// `FStratGuidedOpening::DecorateViewModel`, on the decoration seam that every
+		// refresh runs through.
+		//
+		// NONE OF WHICH MOVES THIS FUNCTION'S BEHAVIOUR, which is the point. The fields are
+		// filled by an overlay on that seam AFTERWARDS, so leaving them false here is still
+		// correct and is not a debt waiting on an owner. Setting
 		// them from `hasMoved` / `hasActed` here would be inventing the DONE bit -- which
 		// Ui.h states is derivable from neither flag nor from any pair of them -- and it
 		// would be wrong in exactly the two cases (Wait, RMB-in-MOVED) that the bit was
-		// separated out for. The debt and its discharge condition are in the header.
+		// separated out for.
+		//
+		//     RETRACTED>  "The debt and its discharge condition are in the header."
+		//
+		// THE HEADER STATES AN OWNER AND A DESIGN, NOT A DEBT, and states no discharge
+		// condition at all -- read it and check. `FStratUnitView::bDone` and
+		// `::bLockedThisTurn` each name their owner ("OWNER: the selection machine",
+		// "OWNER: the guidance layer") and the group comment above them says this builder
+		// leaves both false because `strat::buildUiSnapshot` does not produce them. That is
+		// the arrangement, permanently, so a pointer promising a debt sends a reader looking
+		// for something that is not there. It may once have been a debt; it is not one now.
 
 		Built.Units.Add(UnitView);
 	}

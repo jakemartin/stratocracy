@@ -102,12 +102,22 @@ void AStratBoardActor::BeginPlay()
 		{
 			ObjectiveOverlay->SetMaterial(0, ObjectiveMaterial);
 		}
-		// UNSET IS SILENT HERE TOO, ON THE RING'S REASONING AND WITH ONE DIFFERENCE WORTH
-		// KNOWING: unset is the state this SHIPS in as of 2026-09-01, because no pulse
-		// material exists in `Content/` yet. So this branch is not taken on any board in the
-		// tree today and the pulse draws in `OverlayMesh`'s material -- a pulse that looks
-		// like a reach highlight, which is wrong on screen rather than absent from it. The
-		// property's own block carries the argument and the content-lane handoff.
+		// UNSET IS SILENT HERE TOO, ON THE RING'S REASONING. **[CORRECTED 2026-09-06. THIS
+		// COMMENT WENT ON "WITH ONE DIFFERENCE WORTH KNOWING: unset is the state this SHIPS in
+		// as of 2026-09-01, because no pulse material exists in `Content/` yet. So this branch
+		// is not taken on any board in the tree today and the pulse draws in `OverlayMesh`'s
+		// material" -- AND THAT DIFFERENCE IS GONE: THE PULSE MATERIAL EXISTS, IT IS ASSIGNED,
+		// AND THIS BRANCH IS TAKEN ON THE SHIPPED BOARD.** `MI_Overlay_BuildPulse` is set on
+		// `BP_StratBoard`'s class default; a byte census of `Content/StratPlay/BP_StratBoard.uasset`
+		// returns `BuildPulseMaterial` 1 and `MI_Overlay_BuildPulse` 2, the same shape the
+		// long-assigned `ObjectiveMaterial` / `MI_Overlay_Objective` prints as the positive
+		// control, against 0 for a fabricated name. The property's own block in the header
+		// carries that reading in full. THE COMMENT IS CORRECTED AND NOT DELETED BECAUSE THE
+		// BRANCH ITSELF IS UNCHANGED AND STILL EARNS ITS SILENCE: unset stays legitimate for
+		// any OTHER Blueprint of this class, and the failure it produces there is a pulse that
+		// looks like a reach highlight -- wrong on screen rather than absent from it, which is
+		// the ring's own trade and the reason neither is logged while a missing `OverlayMesh`
+		// is. What was a content-lane handoff here is discharged.]**
 		if (BuildPulseMaterial != nullptr)
 		{
 			BuildPulseOverlay->SetMaterial(0, BuildPulseMaterial);

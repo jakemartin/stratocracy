@@ -148,13 +148,31 @@
 //   this file inventing a content rule the GDD did not state -- the thing the whole "the
 //   engine asks, it never decides" posture exists to stop. It stays a cached field with no
 //   reader in this class.
-// - The §2.11.2 MARKERS' ART. `FlagMarker` and `UnactedPip` ship with no mesh and no
-//   material, exactly as `GuidedMarkerMesh` shipped before 2026-08-24: `EditDefaultsOnly`,
-//   no initializer, and no `/Game/` path in this file. Until the content lane assigns them
-//   the components exist, are positioned, and are toggled correctly on every refresh, and
-//   they draw nothing. That is a content gap and not a match failure, and `BeginPlay` says
-//   so once per actor for each -- because an unconfigured marker and a unit that simply is
-//   not marked are indistinguishable on screen and have entirely different fixes.
+// - The §2.11.2 MARKERS' ART. **[CORRECTED 2026-09-06. THIS BULLET OPENED "`FlagMarker`
+//   and `UnactedPip` ship with no mesh and no material, exactly as `GuidedMarkerMesh`
+//   shipped before 2026-08-24 ... Until the content lane assigns them the components exist,
+//   are positioned, and are toggled correctly on every refresh, and they draw nothing. That
+//   is a content gap and not a match failure" -- AND ALL FOUR OF THOSE PROPERTIES ARE NOW
+//   ASSIGNED, SO THERE IS NO GAP AND THE `GuidedMarkerMesh` ANALOGY IS INVERTED RATHER THAN
+//   APT.** `BP_StratUnit`'s class default carries `FlagMarkerMesh = /Engine/BasicShapes/Cone`,
+//   `FlagMarkerMaterial = MI_Marker_Flag`, `UnactedPipMesh = /Engine/BasicShapes/Sphere` and
+//   `UnactedPipMaterial = MI_Marker_Pip` -- read out of a live editor BY VALUE and recorded
+//   in `Tools/architect/state/content.md`, and RE-DERIVED HERE FROM THE SHIPPED BYTES rather
+//   than taken on that record's word. A byte census of `Content/StratPlay/BP_StratUnit.uasset`
+//   returns each of those four property names once, and `MI_Marker_Flag` and `MI_Marker_Pip`
+//   twice each. THE INSTRUMENT DISCRIMINATES IN BOTH DIRECTIONS ON THIS ONE FILE, which is
+//   what makes those counts evidence: the POSITIVE control is `GuidedMarkerMesh`, assigned
+//   since 2026-08-24, returning the same 1; the KNOWN-UNSET control `FlagMarkerOffset`
+//   returns 0, and a fabricated property name returns 0. And the package is a real one --
+//   its first bytes are the Unreal magic `c1 83 2a 9e`, not a git-lfs pointer line. The
+//   `FlagMarkerMesh` and `UnactedPipMesh` blocks below carry the same reading.]**
+//   THE HALF OF THE RETRACTED SENTENCE THAT WAS ABOUT THIS FILE STANDS UNCHANGED, and is
+//   why this bullet is corrected rather than deleted: `EditDefaultsOnly`, no initializer,
+//   and no `/Game/` path here -- a project rule that the markers now having art does not
+//   touch. `BeginPlay` still says so once per actor for each, because an unconfigured marker
+//   and a unit that simply is not marked are indistinguishable on screen and have entirely
+//   different fixes; that log is now a guard for ANOTHER Blueprint of this class rather than
+//   a description of the shipped one.
 // - Health bars, damage numbers, hit flashes. All presentation over an event stream that
 //   does not exist yet, and none of it is named by an acceptance ID in this milestone.
 // - Any `/Game/` path. Every mesh and material is an EditDefaultsOnly property.
@@ -749,8 +767,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
 	TObjectPtr<UStaticMeshComponent> FlagMarker;
 
-	/** The flag marker's mesh -- §2.11.2's `H`. UNSET IS THE STATE THIS SHIPS IN and the
-	 *  content lane fills it, exactly as `GuidedMarkerMesh` was unset until 2026-08-24; this
+	/** The flag marker's mesh -- §2.11.2's `H`. **[CORRECTED 2026-09-06. THIS OPENED "UNSET
+	 *  IS THE STATE THIS SHIPS IN and the content lane fills it, exactly as `GuidedMarkerMesh`
+	 *  was unset until 2026-08-24" -- AND THE CONTENT LANE HAS SINCE FILLED IT.**
+	 *  `BP_StratUnit`'s default reads `/Engine/BasicShapes/Cone`, read out of a live editor BY
+	 *  VALUE and recorded in `Tools/architect/state/content.md`; the `FlagMarkerOffset` block
+	 *  below carries that reading with both of its controls named. The half of the old sentence
+	 *  that was about THIS FILE is unchanged and still true -- the C++ declares no initializer
+	 *  -- so the unset-behaviour sentences below stand as the description of an unconfigured
+	 *  Blueprint rather than of the shipped one.]** This
 	 *  file must not name a `/Game/` path, which is why it is `EditDefaultsOnly` with no
 	 *  initializer. Unset means the marker never draws, and `IsFlagMarkerVisible` STILL
 	 *  ANSWERS TRUE for the flag unit -- see that function. `BeginPlay` logs the gap once per
@@ -815,8 +840,10 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
 	TObjectPtr<UStaticMeshComponent> UnactedPip;
 
-	/** The pip's mesh. Unset is the shipping state and the content lane fills it; see
-	 *  `FlagMarkerMesh`, which states the same terms and the same accessor caveat. */
+	/** The pip's mesh. **[CORRECTED 2026-09-06. THIS READ "Unset is the shipping state and the
+	 *  content lane fills it"; IT HAS BEEN FILLED --** `BP_StratUnit`'s default reads
+	 *  `/Engine/BasicShapes/Sphere`, by the same by-value reading cited on `FlagMarkerMesh`.]**
+	 *  See `FlagMarkerMesh`, which states the same terms and the same accessor caveat. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
 	TObjectPtr<UStaticMesh> UnactedPipMesh;
 
@@ -853,7 +880,45 @@ protected:
 	 *
 	 * **THE Z IS DERIVED AND THE Y SEPARATION IS DERIVED; THE MARKERS' OWN SIZES ARE NOT
 	 * KNOWN TO THIS FILE AND THE ARITHMETIC ASSUMES THEY MATCH `SM_GuidedMarker`'S 100 uu.**
-	 * No such mesh exists yet. That is why these are defaults and not constants, and it is
+	 * **RETRACTED 2026-09-06, SAME DAY AND TWICE OVER: THE SENTENCE THAT STOOD HERE AND THE
+	 * PARENTHESIS ADDED HOURS EARLIER TO SAVE IT ARE BOTH WITHDRAWN.** The sentence read
+	 * "No such mesh exists yet." A correction pass earlier the same day appended a
+	 * parenthesis disambiguating its referent, ending "`FlagMarkerMesh` and `UnactedPipMesh`
+	 * are the unset ones; measured 2026-09-06, the only mesh under `Content/StratArt/Meshes/`
+	 * bearing on any marker is `SM_GuidedMarker` ... so the content lane may well be reusing
+	 * the one mesh under three materials -- which this file cannot see and does not assume."
+	 * **The referent call was right and the verdict was wrong.** Both properties ARE set, no
+	 * mesh is owed, and the reuse speculation is withdrawn with it -- the content lane used
+	 * engine primitives, not `SM_GuidedMarker` under three materials.
+	 *
+	 * WHAT IS TRUE NOW, WITH THE INSTRUMENT AND ITS TWO CONTROLS NAMED INLINE RATHER THAN
+	 * SUMMARISED AS "measured". `Tools/architect/state/content.md` records both defaults read
+	 * out of a LIVE EDITOR BY VALUE: `FlagMarkerMesh = /Engine/BasicShapes/Cone`,
+	 * `UnactedPipMesh = /Engine/BasicShapes/Sphere`, alongside `FlagMarkerMaterial =
+	 * MI_Marker_Flag` and `UnactedPipMaterial = MI_Marker_Pip`; engine primitives are no new
+	 * precedent in this class, since `FallbackMesh` on the same Blueprint already reads
+	 * `/Engine/BasicShapes/Cylinder`. Independently, `grep -aoF` over
+	 * `Content/StratPlay/BP_StratUnit.uasset` returns 1 for each of those four names --
+	 * against 0 for `FlagMarkerOffset`, which that record separately says is NOT overridden,
+	 * and 0 for a fabricated property name. **The instrument discriminates in both directions
+	 * on that very asset**, which is what makes the 1s evidence rather than noise.
+	 *
+	 * AND THE 100 uu ASSUMPTION STATED IN THE PARAGRAPH ABOVE IS CLOSED, NOT OPEN.
+	 * `content.md` measured `SM_GuidedMarker`'s `ExtendedBounds` at `BoxExtent = (50, 50, 50)`
+	 * and both engine primitives at the same 100 uu -- "The assumption holds." The sizes
+	 * remain unknown to THIS FILE, which reads no asset, and that is why these stay defaults;
+	 * they are not unknown to the project, so the human eye below is the gate on PLACEMENT and
+	 * not on scale.
+	 *
+	 * THE LESSON IS THE SHAPE AND NOT THIS SLIP. **A pass whose whole job was removing
+	 * unmeasured claims planted one, inside a clause labelled `measured`.** "Measured" is a
+	 * claim about the AUTHOR'S PROCESS, and a reader cannot check a process -- so the word
+	 * obliges naming the instrument inline, which that sentence did not, and an unmeasured
+	 * claim wearing it is worse than the same claim bare. The project's standing rule for
+	 * Blueprint defaults is ABSENCE DECIDES, PRESENCE PROVES NOTHING: a by-value read licenses
+	 * a statement about what a default IS; "this file cannot see it" licenses nothing. The
+	 * content lane's record is where by-value CDO reads live, and it answered both questions
+	 * this block had open in a single `Read`. That is why these are defaults and not constants, and it is
 	 * why the honest gate on the final placement is a human eye, exactly as it was for the
 	 * guided marker -- NO TEST PINS EITHER VECTOR. The Y derivation also assumes the board
 	 * actor is unrotated in yaw, which is true of every path that spawns one today and is not

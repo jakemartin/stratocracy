@@ -50,6 +50,74 @@
 
 ## NEXT
 
+- **THE OPTIONS PANEL IS CENTRED OVER A SCRIM AND THE COMMAND BAR'S OPTIONS BUTTON MIRRORS END
+  TURN -- AND THE THING WORTH READING IS THAT `configure_widget` RETURNED `ok=true` WHILE
+  SILENTLY DROPPING EVERY SLOT PROPERTY ASKED FOR IN THE FLAT FORM.** 2026-09-05 (local),
+  `E:/MultiAgent/Stratocracy` on `master` over base `8477a43`, uncommitted at time of writing.
+  `git worktree list` prints EIGHT entries -- this main tree plus seven others, none of them
+  this work's: `slot-1` and `slot-2` sit on `feat/w8-path-preview` and
+  `feat/w8-transient-receipts`, and five are harness scratch trees under `.claude/worktrees/`.
+  This pass was done in the main tree with no merge behind it. **ACTING: the `coordinator`, under `CLAUDE.md`'s
+  EDITOR-DRIVER CLAUSE. WRITING: the `coordinator`, under THIS FILE'S FALLBACK CONDITION.** Two
+  authorities, cited separately.
+  **THE ABSENCE, MEASURED WITH A CONTROL.** One `ToolSearch` against the NeoStack server returned
+  `unreal_status` and `list_unreal_projects` served, and no `execute_script`; the separate
+  `unreal-editor-direct` server was reported `ConnectionRefused` at session start. The same
+  lookup that could not find the one tool did find the other two, which is the control.
+  **THE ROUTE, AND THE STATE OF THE EDITOR, WHICH ARE DIFFERENT QUESTIONS.** Route: **raw HTTP
+  JSON-RPC to a LIVE editor's own MCP endpoint at `127.0.0.1:9316/mcp`**, whose `tools/list`
+  returned `execute_script` -- the tool the lane agent's connector could not see. The editor was
+  ALIVE the whole time (`UnrealEditor.exe` PID 29204, project `E:/MultiAgent/Stratocracy`, its
+  `lastHeartbeatAt` in `runtimes.json` advancing while read twice), and `unreal_status` still
+  answered *"neostack-connect is not connected to an Unreal editor."* That is the connector
+  latched stale, not an unreachable editor, and it is exactly the state the route ruling says not
+  to measure: the clause turns on the LANE AGENT'S tool surface, which is what was measured above.
+  Port note for a later reader: `runtimes.json` carries six fossil entries on `9315`, one of them
+  the CI runner's live editor; `9316` is this repo's.
+  WHAT CHANGED, both assets under `/Game/UI/`.
+  `WBP_Options`: `Stack` was in a `Root` canvas slot anchored `(0,0)`-`(0,0)` with alignment
+  `(0,0)` and offsets `Right=100, Bottom=30` -- pinned to the top-left corner in a 100x30 box,
+  which is why the screen was not centred. It is now `Root` -> `OptionsFrame` (SizeBox,
+  `bOverride_WidthOverride=True`, `WidthOverride=560`) -> `OptionsPanel` (Border,
+  `BrushColor=(0.03,0.04,0.06,0.94)`, `Padding=(32,28,32,28)`) -> `Stack`, with `OptionsFrame`'s
+  canvas slot anchored `(0.5,0.5)`-`(0.5,0.5)`, alignment `(0.5,0.5)`, `bAutoSize=True`,
+  `ZOrder=1`. A new `Backdrop` (Image) is the FIRST child of `Root`, anchored `(0,0)`-`(1,1)`
+  with zero offsets and `ColorAndOpacity=(0,0,0,0.72)`: the dark ground the user asked for, and
+  being `Visible` it also swallows clicks aimed at the level behind. No `BindWidget` name moved;
+  all seven are where they were, one level deeper.
+  `WBP_CommandBar`: `OptionsButton` REPARENTED out of the centre-anchored `Bar` HorizontalBox
+  onto `Root`, with a canvas slot that is the arithmetic mirror of `EndTurnButton`'s -- anchors
+  `(0,1)`-`(0,1)`, alignment `(0,0.5)`, `Left=+334.128418`, `Top=-121.469391`, against End Turn's
+  `(1,1)`-`(1,1)`, `(1,0.5)`, `Left=-334.128418` and the SAME `Top`. `BuildButton` stays in `Bar`.
+  **THE API FACT, AND IT IS THE ONE TO CARRY FORWARD.** `bp:configure_widget(name, opts)` takes
+  WIDGET properties as flat keys and SLOT properties ONLY under a nested `{slot = {...}}` table.
+  A flat `LayoutData`, a `Slot.bAutoSize` and a `slot.bAutoSize` were each refused with
+  *"property ... not found or not editable on widget"* -- and the FIRST of those calls still
+  returned `{ok=true, changes=1}`, because one unrelated widget property in the same table had
+  applied. **A truthful `ok=true` therefore says nothing about the property you cared about.**
+  Every value quoted in this entry was confirmed by reading it back with `get_widget` after the
+  write, never from a setter's return, which is the same rule the connector's `set()` already
+  taught this record.
+  Both blueprints were VALIDATED, COMPILED, THEN SAVED, in that order, per the ordering rule the
+  entry below this one paid for.
+  **WHAT THIS ROUTE COULD NOT SETTLE, AND WHO SETTLED IT.** The route produced no pixels. That
+  the panel LOOKS centred, that the scrim reads as dark enough against a match in progress, and
+  that the moved button sits where a player expects are all human observations, and NONE of them
+  were made by this pass. The panel's `OptionsPanelZOrder` is `100` and the highest HUD z-order is
+  `MatchResultZOrder = 30`, so the scrim is ABOVE the command bar by construction -- that is
+  arithmetic on two shipped defaults, not a sighting.
+  **THEN A HUMAN LOOKED, AND THE REPORT IS RECORDED IN THE WORDS IT WAS GIVEN.** On 2026-09-05,
+  after these bytes were saved, the user said all changes to the option menu are good and
+  considered done. That is the whole of what was reported. It is a verdict on the THREE CHANGES
+  THAT WERE ASKED FOR -- the panel centred, the button justified left mirroring End Turn, and the
+  dark ground behind the panel -- and it is not a report that any particular number is right, that
+  the scrim's alpha was compared against an alternative, or that anything was measured. A human at
+  the keyboard remains the only instrument for any visual claim on this tree, and this is that
+  instrument speaking; the sentence above about what the route cannot do is unchanged and still
+  true of the route.
+  The suite was re-run over these bytes from the exported report, not the log, and no clause
+  changed state; the live figure and the phase verdict are `global.md`'s and are not restated here.
+
 - **THE OPTIONS SCREEN AND ITS TWO BUTTONS EXIST; THE HEADLESS ROUTE IS BOUNDED BY THREE
   PROTECTED PROPERTIES AND ONE ORDERING RULE.** 2026-09-05 (local), `E:/MultiAgent/Stratocracy`
   on `master` over base `c13eb81`, no worktree and no merge, uncommitted at time of writing.

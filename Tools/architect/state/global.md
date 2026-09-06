@@ -30,7 +30,7 @@ and checked the additions sum to it. NO FIGURE IS RESTATED IN THIS SENTENCE, DEL
 earlier form of it carried three, and they went stale while the count sentence above them was
 being corrected in the same edit -- and the sweep could not see it, because it collects
 `N/N`-shaped claims and every figure here was a bare integer.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.05-23.18.02`.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-00.22.38`.
 A COMMENT-ONLY EDIT TO A TEST-DEFINING `.cpp` OWES A SUITE RE-RUN, AND THIS MILESTONE PAID IT
 TWICE -- stated as a rule rather than as the history of which report superseded which, because
 that history has rotted twice already in this file. `strat_banner_sweep.py`'s REPORT IDENTITY
@@ -183,6 +183,17 @@ gains an options row; `WBP_CommandBar` gains one beside Build and End Turn; and
 `OptionsWidgetClass` is set on all three shipped GameModes, each `<UNSET>` before. A
 `UStratOptionsPresenter` world subsystem shows and hides the panel by reconciling against
 `IsOptionsPanelOpen`.
+A HUMAN HAS NOW SEEN AND OPERATED THE SCREEN, AND THE REPORT IS RECORDED IN THE WORDS IT WAS
+GIVEN. On 2026-09-05 the user said the options menu button works, the sliders work, and the
+menu exits. That is the whole of what was reported: it does NOT say the panel was centred (it
+was not -- see `content.md`'s entry on the top-left canvas slot), that the gains persist across
+a restart, or that anything was heard. The layout pass that followed -- centring the panel over
+a dark scrim and mirroring the command bar's options button against End Turn -- is
+`content.md`'s. THAT PASS HAS SINCE BEEN SEEN TOO: later the same day, after the assets were
+saved, the user said all changes to the option menu are good and considered done. So the
+layout is confirmed by the same instrument and to the same depth as the first report -- a
+human saying it works -- and to no greater depth. Neither report measured anything, and the
+route that made those assets still produced no pixels of its own.
 THREE PROTECTED UPROPERTIES BOUND THE HEADLESS ROUTE, and naming them is more useful than the
 workaround. `UWidgetTree::RootWidget`, `UWidget::bIsVariable` and
 `UWidgetBlueprint::WidgetVariableNameToGuidMap` all answer "protected and cannot be read" to

@@ -14,6 +14,208 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-06 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- two new files,
+  `Source/StratPlay/Tests/StratDamageFlashClauses.cpp` and
+  `Source/StratUI/Tests/StratDamagedUnitsClauses.cpp`, plus the existing
+  `Source/StratPlay/Tests/StratRouteTweenUnitDouble.h/.cpp`,
+  `Source/StratUI/Tests/StratSoundCueClauses.cpp` and this record file -- on `master`
+  in the main tree `E:/MultiAgent/Stratocracy`, base commit `7e83295`, and this pass is
+  UNCOMMITTED).** No exception clause is cited and none applies: every file touched is a
+  `Tests/` file or this lane's own record. The engineer's damage-flash C++ was uncommitted in
+  the working tree over the same base and was read there, not from a brief. Cite this pass by
+  its exported `reportCreatedOn 2026.09.06-18.17.58`; the pass/fail figure lives in
+  `Tools/architect/state/global.md` and nowhere else.
+  **THIS ENTRY WAS EXTENDED IN A SECOND ROUND OVER THE SAME BASE COMMIT, after the reviewer
+  returned `VERDICT: PASS` with zero findings and the user raised two items anyway** -- an
+  overclaiming clause NAME, and a latent out-of-bounds write that nothing pinned. It is the
+  same pass and is recorded as one entry rather than two. The earlier report
+  `reportCreatedOn 2026.09.06-17.47.11` was this pass's first run and is superseded by the one
+  cited above; a reader chasing the older figure is chasing a tree that no longer exists.
+  - **TEN CLAUSES, COUNTED BY MACRO AND NOT BY NAME** -- `grep -c
+    IMPLEMENT_SIMPLE_AUTOMATION_TEST` returns 6 in `StratDamageFlashClauses.cpp` and 3 in
+    `StratDamagedUnitsClauses.cpp`, plus the single clause the second round added to
+    `StratSoundCueClauses.cpp`, which takes that file from 10 to 11. A single-line grep on a
+    clause NAME returns zero, because the macro's name argument is on its own line.
+  - **THE ACCEPTANCE ID FOR THE `StratUI` HALF IS `T-INT-05`, WHICH IS A DEPARTURE FROM THE
+    DISPATCHING BRIEF AND IS THE ONE DECISION IN THIS PASS WORTH READING.** The brief said to
+    put those clauses beside the existing cue clauses and match their ID, and to check that
+    rather than take it on trust. The check said no. `StratDecideDamagedUnits` lives in
+    `Source/StratUI/StratSoundCues.cpp`, whose every other clause rides `GATE-AUDIO` -- but the
+    2026-09-05 ruling in `global.md` records that `GATE-AUDIO` *"scopes itself to 'audio
+    presentation reacting to the view model' -- cue selection and playback -- and was pinned to
+    three named files precisely so it would not be read as a grant over the wider audio
+    domain."* This function decides nothing audible; it names the units a BOARD-SIDE VISUAL is
+    applied to, and shares a file only because it is a second reader of the same mark. Riding
+    `GATE-AUDIO` would be a visual feature falsely clearing an audio gate. `T-INT-05` is used
+    instead because it is EXISTING and already spans both modules -- `StratViewModelParity.cpp`
+    carries three `Stratocracy.StratUI.T-INT-05.*` clauses over projections of
+    `FStratViewModel`, which is exactly what this function is a pure function of -- and because
+    `AStratUnitActor`'s own header block was widened under `T-INT-05` for `DamageFlashElapsed`
+    on the same day. **NO ACCEPTANCE ID WAS MINTED AND NONE IS CLAIMED**; minting is
+    `strat-data-steward`'s. The clauses are in a NEW file rather than appended to
+    `StratSoundCueClauses.cpp`, because that file's banner declares its own ID in its first
+    paragraph and appending a differently-named clause would make that declaration false.
+  - **WHAT EACH CLAUSE PINS, AND THE MUTANT IT KILLS.**
+    - `Stratocracy.StratPlay.T-INT-05.DamageFlashArmingSetsTheClockTickAndOverlay` -- arming
+      sets the clock strictly positive, enables the actor tick, and writes the fixture's
+      material into `Body`'s OVERLAY channel. Kills an arming that never enables tick (the clock
+      never advances, so the unit never shakes AND never retires -- red forever, green build)
+      and one that never calls `SetOverlayMaterial`.
+      **RENAMED IN THE SECOND ROUND FROM `DamageFlashArmsAShakeAndAnOverlay`, AND THE REASON IS
+      WORTH MORE THAN THE RENAME.** The old name said the clause armed a SHAKE. It does not and
+      cannot: `TickDamageFlash` is the only writer of a non-zero `Shake` transform and never
+      runs headless, so the clause's actual line about `Shake` asserts it has NOT moved. A name
+      is read without its header -- it appears in the exported suite report, in `global.md`'s
+      census and in a reviewer's grep, none of which carry the file banner that scopes it
+      honestly -- so an overclaiming name is a defect on its own terms even while every
+      assertion under it is sound. The reviewer's `VERDICT: PASS` did not see it; the user did.
+    - `.DamageFlashRetiresToExactlyZero` -- over EVERY live unit actor: clock exactly `0.0f`,
+      overlay `nullptr`, `Shake` at `IsZero()` with no tolerance, tick off. Kills a retirement
+      that leaves the unit red forever, and reaches the `SetRelativeLocation`-instead-of-`_Direct`
+      residue -- see the caveat below, which is real.
+    - `.ADamageFlashDoesNotDisturbTheMoveTween` -- waypoint count and `Body`'s relative location
+      identical (`==`, no tolerance) across BOTH `PlayDamageFlash()` and `CancelDamageFlash()`.
+      Kills the rejected summed-offset design in which the shake is written into `Body`.
+    - `.RetiringOneClockLeavesTheOtherTicking` -- both clocks armed, retire one, the tick stays
+      on; and the mirror through `CancelRouteSlide()`. Kills either `Finish*` writing
+      `SetActorTickEnabled(false)` directly instead of asking `UpdateTickEnabled()` -- the
+      frozen-halfway-between-two-hexes defect. **No other clause can see this**, and
+      `.DamageFlashRetiresToExactlyZero` would be GREENER for that mutant rather than redder.
+    - `.NoDamageFlashAtTheShippedDefault` -- a raw `AStratUnitActor` plus an accessor subclass
+      that writes nothing: `PlayDamageFlash()` arms nothing, ticks nothing, writes no overlay.
+      Kills an arming path ignoring the `<= 0` guard, which would start ticking unit actors in
+      every existing fixture in this directory.
+    - `.ATourGatedRefreshFlashesNothing` -- gate up, a refresh carrying an HP fall flashes zero
+      units; the identical operation with the gate DOWN flashes, and runs first as the control.
+      Kills the damage loop placed outside `if (!bTourExistenceHeld)` -- double-flashing at
+      hand-over and again per step.
+    - `Stratocracy.StratUI.T-INT-05.DamagedUnitsReportEveryFallenUnitAndNotOne` -- three units
+      damaged, three ids reported, AND the audio decider measured at exactly one `UnitAttacked`
+      over the SAME two models. Kills the "just reuse the `Cues` array" simplification, which
+      goes red at 1 vs 3; the contrast is measured off both deciders rather than asserted about.
+    - `.AnUnseededMarkReportsNoDamage` -- and the out-array is handed in NON-EMPTY, so the
+      documented `Reset()` on the unseeded path is observable rather than assumed.
+    - `.ARisingHpIsNotDamage` -- one ordered pair of readings drives the fall and the rise;
+      plus the fresh-spawn arm (present in the model, absent from the mark), which is a
+      different line of the decider. Its name UNDER-states it slightly and was left alone in the
+      second-round name check: under-claiming misleads nobody about what ran.
+    - `Stratocracy.StratUI.GATE-AUDIO.MatchEndedIsTheLastSoundCue` -- ADDED IN THE SECOND ROUND,
+      and it is the only clause in this pass that pins a MEMORY defect rather than a behaviour.
+      See its own sub-entry below.
+  - **THE SECOND ROUND'S NEW CLAUSE, AND WHY IT PINS A RELATIONSHIP AND NOT A NUMBER.**
+    `StratDecideSoundCues` sizes its one-per-kind gate as
+    `bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded) + 1]` and its `Emit` lambda
+    then indexes that array with `static_cast<int32>(Cue)`, unchecked. That is correct only
+    while `MatchEnded` holds the largest value any enumerator has. **Append one cue after
+    `MatchEnded` and the first emission of it writes one past the end of a stack array** -- in a
+    green build, with every other clause in that file still green. Nothing pinned it, and the
+    engineer's own prose correction in this pass now leans on it being true.
+    - **THE CLAUSE ASSERTS THE EXACT SAFETY CONDITION OF THAT INDEXING AND NOTHING WIDER:** every
+      declared enumerator's value lies in `[0, (int32)MatchEnded]`, walked off the reflected
+      `UEnum`. **It deliberately does not pin a count.** A clause asserting `NumEnums()` equals
+      some figure would go RED for the CORRECT edit -- a cue legitimately inserted mid-list,
+      where the array grows with it -- and would say nothing about the dangerous one, since the
+      counts move identically. It also catches the half the clause's NAME understates: an
+      enumerator given an explicit out-of-range or negative value indexes outside the array
+      without being written after `MatchEnded` in source order, and a check over VALUES sees
+      that too.
+    - **THE ID IS `GATE-AUDIO` AND THE FILE IS `StratSoundCueClauses.cpp`, WHICH IS THE SAME
+      CHECK THAT WENT THE OTHER WAY EARLIER IN THIS PASS.** The 2026-09-04 ruling in `global.md`
+      scopes `GATE-AUDIO` to *"audio presentation reacting to the view model"*, names the
+      decider's own logic (`StratUI`'s `StratSoundCues.h/.cpp`) as the first of its three
+      facets, and authorizes it *"for exactly three named files"*, of which
+      `Source/StratUI/Tests/StratSoundCueClauses.cpp` is one. This clause's subject IS that
+      decider's own gate, so both halves of the authorization are satisfied without widening
+      anything. `StratDecideDamagedUnits` was refused the same ID above because it decides
+      nothing audible; the subject decides the ID, and here the subject is different.
+      **The clause is written INTO that authorized file rather than a new one on purpose:** a
+      fourth file would need an authorization this lane cannot mint. Its banner was extended in
+      the same edit to name the one clause in it that reads no view model, so the banner stays
+      true of its own contents. **NO ACCEPTANCE ID WAS MINTED AND NONE IS CLAIMED.**
+    - **THE MUTANT IT KILLS, AND THIS ONE WAS MEASURED RATHER THAN REASONED.** The mutant is an
+      enumerator whose value exceeds the array bound. It cannot be created without editing
+      `StratSoundCues.h`, which is production code and out of lane, so the equivalent state was
+      produced IN LANE by mutating the clause's own comparison to `Value > Bound - 3`,
+      rebuilding, and running the clause alone. **It failed, and the failure message named the
+      offending enumerators by name and value:** *"Outside that range: UnitDestroyed=4,
+      FactoryBuiltUnit=5, MatchEnded=6"*. So the walk, the reporting and the final assertion all
+      genuinely fire on an out-of-range value; they are not vacuously green. The mutation was
+      reverted, rebuilt, and the full suite re-run before this entry was written. **What that
+      does NOT prove is a real appended enumerator, which no in-lane instrument can produce.**
+    - **THE STRONGER FORM IS NOT A CLAUSE AND THIS LANE CANNOT WRITE IT. OPEN, ROUTED TO
+      `strat-gameplay-engineer`.** A `Count` sentinel on `EStratSoundCue` with a `static_assert`
+      sizing `bEmitted` from it would make the dangerous append a COMPILE ERROR at the site,
+      with no suite run required and no way to skip it. This clause runs after the fact, in a
+      suite somebody has to remember to run, and reports the defect rather than preventing it.
+      It is recorded as the best available from `Tests/` and not as an equal. **No sentinel was
+      added to the enum by this lane and none should be read as proposed-and-rejected.**
+  - **THE OTHER EIGHT NAMES WERE CHECKED AGAINST THEIR OWN BODIES IN THE SECOND ROUND AND NONE
+    NEEDED CHANGING.** The standard applied was the one the rename establishes: does a reader
+    who sees ONLY the name form a false belief about what ran? `RetiringOneClockLeavesTheOtherTicking`
+    and `DamagedUnitsReportEveryFallenUnitAndNotOne` are exact.
+    `DamageFlashRetiresToExactlyZero`, `ADamageFlashDoesNotDisturbTheMoveTween`,
+    `NoDamageFlashAtTheShippedDefault`, `ATourGatedRefreshFlashesNothing` and
+    `AnUnseededMarkReportsNoDamage` each name strictly less than their body asserts.
+    `ARisingHpIsNotDamage` is the loosest fit and is still an UNDER-claim -- it also pins the
+    fall direction and the fresh-spawn arm. **`DamageFlashArmsAShakeAndAnOverlay` was the only
+    name in the set that claimed MORE than its body, which is the direction that matters.**
+  - **THE FALSIFIABILITY EVIDENCE, AND WHAT IT DOES AND DOES NOT COVER.** No production code was
+    mutated -- that is outside this lane and the dispatching task forbade it -- so no mutant
+    named above was run against its own clause. What WAS run is an in-lane mutation of the
+    fixture: `AStratRouteTweenUnitDouble`'s `DamageFlashSeconds` set back to the shipped `0.0f`,
+    rebuilt, and the `Stratocracy.StratPlay.T-INT-05` filter re-run. **Five of the six StratPlay
+    clauses reddened** -- the clause now called `DamageFlashArmingSetsTheClockTickAndOverlay`,
+    `DamageFlashRetiresToExactlyZero`, `ADamageFlashDoesNotDisturbTheMoveTween`,
+    `RetiringOneClockLeavesTheOtherTicking` and `ATourGatedRefreshFlashesNothing` -- and
+    `NoDamageFlashAtTheShippedDefault` correctly stayed green, since it runs against the other
+    double. That measures that none of the five passes VACUOUSLY at the shipped default; it does
+    NOT measure that any of them kills the specific mutant its own block names. **The two are
+    different claims and the difference is stated here rather than left to be inferred.** The
+    fixture was reverted, rebuilt, and the full suite re-run before this entry was written.
+  - **WHERE THIS LANE ASSERTS RATHER THAN MEASURES, WHICH IS THE THING THIS FILE EXISTS FOR.**
+    `DamageFlashRetiresToExactlyZero` asserts `Shake` is at exact relative zero AFTER a cancel,
+    but **cannot establish that it was displaced BEFORE it** -- `TickDamageFlash` is the only
+    writer of a non-zero `Shake` transform and `AStratUnitActor::Tick` never runs headless. The
+    tween's equivalent clause CAN assert a real displacement first; this one cannot. What it
+    still measures is the same SHAPE the 2026-09-02 residue was measured on -- `CancelRouteSlide`
+    writing a zero the component already held, where the world round trip still ran and still
+    left ~1e-14 uu on one unit and not another. So the `SetRelativeLocation` mutant is REACHABLE
+    here and is not reachable with certainty on any given board, which is why the clause runs
+    over every live actor rather than one. The overlay and clock halves carry no such caveat.
+  - **WHAT THIS SET DOES NOT PIN, NAMED SO A GREEN SUITE IS NOT READ AS "THE DAMAGE ALERT
+    WORKS".** Nothing here observes the shake's MOTION -- not amplitude, frequency, the X/Y
+    ratio, the linear decay, the continuity of the derivative at a re-arm, nor one sampled
+    position -- because `Tick` never runs; `DamageShakeAmplitude` and `DamageShakeFrequency` are
+    unobservable in this project by construction. Nothing observes COLOUR: `BodyOverlayMaterial()`
+    reports which OBJECT is assigned, the suite runs `-nullrhi`, and no clause can say the
+    material compiles as an overlay pass or that anything red reached a screen. **A human at the
+    keyboard is the only instrument for both**, exactly as for `GuidedMarkerZOffset`. Nothing
+    pins the wall-clock duration. Nothing pins the tour-step `Current.TargetId` flash in
+    `AdvanceAiPlaybackOneStep`, whose own comment records that it is defender-only and misses
+    counter-damage to the attacker. And nothing pins the ORDER of the decide and the re-mark
+    inside `UStratMatchSubsystem::ApplyView` -- swapping those two lines kills the feature
+    silently, and that is a call-site property no clause in either module reaches today.
+  - **AN ADVANCE SEAM WAS NOT PROPOSED AND WAS NOT ADDED.** `StratMatchReconcile.cpp`'s own
+    banner records that one was asked about for the move tween and REFUSED; that refusal is
+    inherited here verbatim. Every clause above is about ARMING or RETIREMENT, both synchronous,
+    reached through `PlayDamageFlash()` and `CancelDamageFlash()` -- the latter being
+    `FinishDamageFlash` made public, so a clause and the running game exercise the same lines.
+  - **TWO PREMISES IN THE DISPATCHING BRIEF WERE CHECKED AGAINST THE TREE AND HELD; A THIRD DID
+    NOT.** The brief's two flagged engineer departures are real and are in the code as
+    described: `PlayDamageFlash` seeds `KINDA_SMALL_NUMBER`, so no clause asserts
+    `GetDamageFlashElapsed() == 0.0f` after arming; and `TickDamageFlash` returns early on an
+    already-zero clock. What did NOT hold is the brief's `GATE-AUDIO`-adjacent ID instruction,
+    above. Separately, `NewObject<UMaterial>(GetTransientPackage())` does not compile in UE 5.8
+    -- measured `C2672`, `UPackage*` is no longer accepted where a `UObject*` outer is wanted --
+    and the no-argument form is used instead; the note is inline at the call site.
+  - **THE FIXTURE CHANGE THAT REACHES OTHER FILES, STATED BECAUSE IT IS NOT OBVIOUS FROM THE
+    DIFF.** `AStratRouteTweenUnitDouble` now carries a positive `DamageFlashSeconds`, and that
+    double is also the unit actor class in `StratMatchReconcile.cpp` and
+    `StratAiPlaybackClauses.cpp`. In those files an AI hand-over now ARMS real flashes, which
+    enables the actor tick. Nothing there asserts tick state and nothing there ticks a world, so
+    `Body` is untouched -- verified by the full-suite run above, not reasoned about only. A
+    future clause in either file that asserts a unit actor's tick flag must know this.
+
 - **2026-09-06 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- two comment blocks in
   `Source/StratPlay/Tests/StratShellRouteClauses.cpp` and
   `Source/StratPlay/Tests/StratMatchCompletionRecording.cpp`, plus this file -- on `master` in the

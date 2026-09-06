@@ -1094,7 +1094,22 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// which is also the shipped state. `StratTransientReceiptCallSite.cpp` records the
 	// identical hazard for the receipts and is why the order is stated rather than assumed.
 	TArray<FStratSoundEmission> Cues;
+	TArray<int32> Damaged;
 	StratDecideSoundCues(SoundMark, Model, Cues);
+
+	// AND THE BOARD-SIDE DAMAGE ALERT, DECIDED FROM THE SAME MARK ON THE SAME REFRESH AND
+	// BETWEEN THE SAME TWO LINES. The hazard stated three sentences up applies to this call
+	// VERBATIM: it must read the PREVIOUS mark, so it sits ABOVE the re-mark, and swapping it
+	// past that line compares the model against itself and no unit ever flashes again --
+	// silently, because a unit that does not flash is indistinguishable from a unit that was not
+	// hit, which is also what most refreshes look like.
+	//
+	// A SECOND READER OF ONE MARK AND NOT A SECOND MARK, which is the whole reason this is one
+	// line here rather than a reset site, a seeding rule and a re-mark of its own. See
+	// `StratDecideDamagedUnits`, which argues it: sharing the mark makes the flash and the
+	// `UnitAttacked` cue structurally unable to disagree about which units were hit.
+	StratDecideDamagedUnits(SoundMark, Model, Damaged);
+
 	SoundMark = StratSoundMarkFromView(Model);
 
 	// AND THE GATE, WHICH IS THE LOAD-BEARING MEASUREMENT OF THIS WHOLE DESIGN.
@@ -1130,6 +1145,33 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 		{
 			Director->NoteApplyViewObserved();
 			Director->EmitCues(Cues);
+		}
+
+		// THE DAMAGE FLASH, INSIDE THE SAME GATE AND DELIBERATELY OUTSIDE THE DIRECTOR'S `if`.
+		//
+		// OUTSIDE, BECAUSE A PROJECT WITH NO SOUND BANK MUST STILL FLASH. `FindSoundDirector`
+		// answers null when there is no world or no director, and both are ordinary states --
+		// tying a board-side visual to whether audio is configured would make the alert vanish
+		// in exactly the setup a developer with no assets is running.
+		//
+		// INSIDE THE GATE, BECAUSE `bTourExistenceHeld` IS REUSED RATHER THAN RE-DERIVED, on
+		// this block's own recorded reasoning about that flag. The diff above spans the WHOLE
+		// hand-over while a tour is about to show it step by step, so an ungated flash would
+		// fire every damaged unit at hand-over and then again per step. The flag is raised only
+		// under `WillAiPlaybackRun()`, so "gate up, no tour" is unconstructable and this
+		// inherits that property instead of restating conditions that could drift from it.
+		//
+		// EVERY ID, NOT THE FIRST. `StratDecideDamagedUnits` deliberately does not carry audio's
+		// one-per-kind collapse; its declaration says why. A missing actor is skipped without
+		// complaint -- a dead unit is absent from `Model.Units` and its actor is already
+		// destroyed, so it is never in `Damaged` in the first place, and any other null is the
+		// ordinary "not spawned yet" that `FindUnitActor` answers for.
+		for (const int32 DamagedId : Damaged)
+		{
+			if (AStratUnitActor* const Actor = FindUnitActor(DamagedId))
+			{
+				Actor->PlayDamageFlash();
+			}
 		}
 	}
 
@@ -2301,6 +2343,46 @@ bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
 		default:
 			// `EndTurn`, and anything a later §4.10 adds. Silent by decision -- see above.
 			break;
+		}
+	}
+
+	// ---- The board-side DAMAGE FLASH for this step -------------------------
+	// THE OTHER HALF OF `ApplyView`'S TOUR GATE, EXACTLY AS THE CUES ABOVE ARE. When a tour
+	// runs, `ApplyView`'s whole-hand-over damage diff is suppressed, so this is the only thing
+	// that flashes anything.
+	//
+	// OUTSIDE `FindSoundDirector()`'S `if`, deliberately and for the same reason the flash at
+	// the `ApplyView` site sits outside it: a project with no sound bank must still flash. This
+	// is a visual and it must not depend on whether audio is configured.
+	//
+	// **`Current.TargetId` -- THE DEFENDER -- AND EMPHATICALLY NOT `Current.UnitId`, WHICH IS
+	// THE ATTACKER.** The cue above and this line are about DIFFERENT UNITS on purpose, and the
+	// distinction is not a nicety: the cue is about THE ACT ("an attack happened"), which the
+	// acting unit names, and this is about THE SUBJECT ("this unit was hurt"), which only the
+	// target names. `FStratAiPlaybackStep::TargetId` documents itself as "the defender for
+	// Attack". Passing `UnitId` here would flash the wrong unit on every AI attack in the game,
+	// with a green build and a correct-sounding cue playing over it.
+	//
+	// GUARDED ON `>= 0` BECAUSE `TargetId` IS `-1` ON EVERY OTHER KIND, and this arm is reached
+	// only for `Attack` -- so the guard is belt-and-braces against a step recorded without one
+	// rather than the load-bearing check. `FindUnitActor` answers null for an id with no actor,
+	// which is the ordinary case for a defender that the attack killed.
+	//
+	// **THIS PATH MISSES COUNTER-DAMAGE TO THE ATTACKER, AND THAT IS RECORDED RATHER THAN
+	// PAPERED OVER.** `StratBridge.cpp` records that the counter arm can take HP off the
+	// ATTACKER -- it can even erase it, "the counter arm erases it when `atkHp - counter <= 0`"
+	// -- and NO FIELD OF `FStratAiPlaybackStep` REPORTS THAT. The whole-hand-over diff at
+	// `ApplyView` catches it, because it reads HP rather than a record of commands; but that
+	// diff is gated off precisely while a tour runs. SO THE FLASH IS **COMPLETE** ON THE
+	// NO-TOUR PATH AND **DEFENDER-ONLY** ON THE TOUR PATH. Closing it needs a per-step HP
+	// observation across the bridge -- `FStratBridge::RepairsAtTurnOpen` /
+	// `FStratRepairApplication` is the standing precedent for that shape -- and is not in this
+	// round.
+	if (Current.Kind == EStratAiCommandKind::Attack && Current.TargetId >= 0)
+	{
+		if (AStratUnitActor* const Defender = FindUnitActor(Current.TargetId))
+		{
+			Defender->PlayDamageFlash();
 		}
 	}
 

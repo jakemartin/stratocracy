@@ -51,6 +51,15 @@
 // NO `strat::` FREE FUNCTION IS CALLED ANYWHERE BELOW. Seeding goes through `FStratBridge`,
 // which is what this module is permitted; a `strat::` call here is `LNK2019`, measured 8x.
 //
+// ONE CLAUSE BELOW IS NOT ABOUT WHICH CUE FIRES, AND IT IS NAMED HERE SO THIS BANNER STAYS
+// TRUE OF ITS OWN CONTENTS. `MatchEndedIsTheLastSoundCue` reads no view model at all. It is
+// about the SHAPE `StratDecideSoundCues`'S ONE-PER-KIND GATE DEPENDS ON -- the fixed array
+// `bEmitted`, whose bound is written as `(int32)EStratSoundCue::MatchEnded + 1` and which
+// `Emit` then indexes with `(int32)Cue`. That is still the decider's own logic, which is the
+// first of the three facets `GATE-AUDIO`'s authorizing ruling names, and this is one of the
+// three files that ruling authorizes; it is written HERE rather than in a new file for exactly
+// that reason, since a fourth file would need an authorization this lane cannot mint.
+//
 // WHAT THESE CLAUSES DO NOT PIN, NAMED SO IT IS NOT READ AS COVERED. They say nothing about
 // whether a cue was AUDIBLE -- the suite runs `-nullrhi` with no audio device and no clause in
 // this project will ever assert a wave played. They say nothing about WHICH asset a cue maps
@@ -63,6 +72,8 @@
 #include "Containers/UnrealString.h"
 #include "Engine/DataTable.h"
 #include "Misc/Paths.h"
+#include "UObject/Class.h"
+#include "UObject/ReflectedTypeAccessors.h"
 #include "UObject/UObjectGlobals.h"
 
 #include "StratSoundCues.h"
@@ -1045,6 +1056,188 @@ bool FStratSoundRemarkedModelIsQuietTest::RunTest(const FString& /*Parameters*/)
 			     "shipped game takes on every mouse move: %s"),
 			*Describe(Out)),
 		Out.Num(), 0);
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// GATE-AUDIO -- NO ENUMERATOR OF `EStratSoundCue` SITS OUTSIDE THE ONE-PER-KIND GATE'S ARRAY.
+//
+// THE DEFECT THIS EXISTS AGAINST IS A MEMORY WRITE AND NOT A STALE COMMENT.
+// `StratDecideSoundCues` opens its one-per-kind gate as
+//
+//     bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded) + 1] = {};
+//
+// and its `Emit` lambda then indexes that array with `static_cast<int32>(Cue)` -- unchecked,
+// because the bound is meant to cover the enum by construction. It covers the enum only while
+// `MatchEnded` holds the LARGEST value any enumerator has. APPEND ONE CUE AFTER `MatchEnded`
+// AND THE FIRST TIME THE DECIDER EMITS IT, THE WRITE LANDS ONE PAST THE END OF THAT STACK
+// ARRAY. Nothing else in this tree observes that: the build is green, every other clause in
+// this file is green, and the corruption is silent and stack-local.
+//
+// THIS CLAUSE PINS A RELATIONSHIP AND DELIBERATELY NOT A COUNT, WHICH IS THE WHOLE OF ITS
+// DESIGN. A clause asserting `NumEnums()` equals some number would go RED for the CORRECT edit
+// -- somebody adding a legitimate cue in the middle, where the array grows with it and nothing
+// is unsafe -- and would say nothing about the dangerous one, since the counts move
+// identically. So the assertion is the exact safety condition of the indexing above and nothing
+// more: EVERY declared enumerator's value lies within `[0, (int32)MatchEnded]`. Insert
+// `Retreated` between `UnitMoved` and `UnitAttacked` and this clause stays green, correctly.
+// Append it after `MatchEnded` and this clause is the only thing in the project that goes red.
+//
+// IT ALSO COVERS THE OTHER HALF OF THE SAME HAZARD, which "MatchEnded is last" understates: an
+// enumerator given an EXPLICIT value -- `Ambient = 64` anywhere in the list, or a negative one
+// -- indexes outside the array without ever being written after `MatchEnded` in source order.
+// The bound check is over VALUES and therefore catches that too. The clause is named for the
+// shape a reader will look for and asserts the shape the code actually needs.
+//
+// WHERE THE EXPECTATION COMES FROM. There is no number written in this clause. The bound is
+// read from the module's own `EStratSoundCue::MatchEnded`, the enumerators are read from the
+// module's own reflected `UEnum`, and the comparison is between the two.
+//
+// THE THREE CONTROLS, because a reflection walk that visits nothing passes every bound check
+// ever written.
+//   (1) THE INSTRUMENT SPEAKS. `StaticEnum<EStratSoundCue>()` resolves, and the enumerator this
+//       clause takes its bound FROM is found in it by value and reports the name `MatchEnded`.
+//       A reflection lookup that silently returned an empty enum fails here.
+//   (2) THE WALK VISITED THE ENUM. The number of entries the walk actually bound-checked is
+//       asserted against `NumEnums()` minus the entries it excluded, and asserted to be greater
+//       than one, so a skip rule that filtered everything out cannot pass. UHT appends one
+//       `<EnumName>_MAX` sentinel whose value is deliberately one past the last real
+//       enumerator; it is EXCLUDED, and the fact that exactly one entry was excluded is itself
+//       asserted rather than assumed -- if a future UHT stops emitting it, this control reddens
+//       and names what it saw instead of the clause quietly mis-scoping itself.
+//   (3) THE PREDICATE DISCRIMINATES. The same comparison the loop uses is exercised on a
+//       synthetic value one past the bound and asserted to FAIL it. Without this, a predicate
+//       accidentally written to accept everything would be green over the very append this
+//       clause exists for, and no arrangement of real enumerators could tell.
+//
+// WHAT THIS CLAUSE IS NOT, STATED PLAINLY BECAUSE IT IS THE WEAKER OF TWO AVAILABLE FORMS.
+// The strongest form of this pin is not a clause at all: a `static_assert` in `StratSoundCues.h`
+// against a `Count` sentinel would make the dangerous append a COMPILE ERROR, at the site, with
+// no suite run required, and would be impossible to skip. That is production code and this lane
+// does not write it. This runtime clause is the best thing available from `Tests/`: it runs
+// after the fact, in a suite somebody has to remember to run, and it reports the defect rather
+// than preventing it. Recorded as a gap, not offered as an equal.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratSoundCueMatchEndedIsLastTest,
+	"Stratocracy.StratUI.GATE-AUDIO.MatchEndedIsTheLastSoundCue",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratSoundCueMatchEndedIsLastTest::RunTest(const FString& /*Parameters*/)
+{
+	const UEnum* const CueEnum = StaticEnum<EStratSoundCue>();
+	if (!TestNotNull(TEXT("CONTROL 1a: EStratSoundCue is reflected and StaticEnum resolves it"),
+			CueEnum))
+	{
+		return false;
+	}
+
+	// THE BOUND, READ FROM THE MODULE. This is the identical expression `StratSoundCues.cpp`
+	// sizes `bEmitted` with, minus the `+ 1` -- so it is the largest index the array can hold.
+	const int64 Bound = static_cast<int64>(EStratSoundCue::MatchEnded);
+
+	// CONTROL 1b. The bound names a real enumerator, and it is the one this clause is about.
+	// A `MatchEnded` that had been renamed or removed would surface here rather than as a
+	// vacuous comparison below.
+	const int32 BoundIndex = CueEnum->GetIndexByValue(Bound);
+	if (!TestTrue(*FString::Printf(
+				TEXT("CONTROL 1b: the value this clause takes as its bound (%lld) is a declared "
+				     "enumerator of EStratSoundCue"), Bound),
+			BoundIndex != INDEX_NONE))
+	{
+		return false;
+	}
+	if (!TestEqual(TEXT("CONTROL 1c: and that enumerator is MatchEnded -- the one whose value "
+	                    "StratSoundCues.cpp sizes bEmitted from"),
+			CueEnum->GetNameStringByIndex(BoundIndex), FString(TEXT("MatchEnded"))))
+	{
+		return false;
+	}
+
+	// ---- the walk -------------------------------------------------------------------
+	const int32 EntryCount = CueEnum->NumEnums();
+
+	int32   Checked  = 0;
+	int32   Excluded = 0;
+	FString Offenders;
+	FString ExcludedNames;
+
+	for (int32 Index = 0; Index < EntryCount; ++Index)
+	{
+		const FString Name = CueEnum->GetNameStringByIndex(Index);
+
+		// UHT'S OWN SENTINEL, AND ONLY IT. Matched case-sensitively on purpose: FString's
+		// comparisons ignore case by default in this engine, and a real enumerator ending
+		// `_max` must not be waved through by the rule that skips `_MAX`.
+		if (Name.EndsWith(TEXT("_MAX"), ESearchCase::CaseSensitive))
+		{
+			++Excluded;
+			ExcludedNames += (ExcludedNames.IsEmpty() ? TEXT("") : TEXT(", "));
+			ExcludedNames += Name;
+			continue;
+		}
+
+		++Checked;
+
+		const int64 Value = CueEnum->GetValueByIndex(Index);
+		if (Value < 0 || Value > Bound)
+		{
+			Offenders += (Offenders.IsEmpty() ? TEXT("") : TEXT(", "));
+			Offenders += FString::Printf(TEXT("%s=%lld"), *Name, Value);
+		}
+	}
+
+	// CONTROL 2. The walk saw the enum, and it excluded exactly the one sentinel.
+	TestEqual(*FString::Printf(
+			TEXT("CONTROL 2a: exactly one entry was excluded as UHT's generated sentinel "
+			     "(excluded: '%s'). If this is 0, UHT stopped emitting it and the bound check "
+			     "below silently changed scope; if it is more than 1, the skip rule is eating "
+			     "real enumerators"),
+			*ExcludedNames),
+		Excluded, 1);
+
+	if (!TestEqual(TEXT("CONTROL 2b: every entry that was not the sentinel was bound-checked"),
+			Checked, EntryCount - Excluded))
+	{
+		return false;
+	}
+	if (!TestTrue(*FString::Printf(
+				TEXT("CONTROL 2c: the walk bound-checked more than one enumerator (%d), so a "
+				     "green result below is not the answer an empty walk would give"),
+				Checked),
+			Checked > 1))
+	{
+		return false;
+	}
+
+	// CONTROL 3. The predicate the loop applied can actually fail. Exercised on a synthetic
+	// value one past the bound -- the exact value an appended cue would take.
+	{
+		const int64 OnePastTheBound = Bound + 1;
+		if (!TestTrue(*FString::Printf(
+					TEXT("CONTROL 3: the bound predicate REJECTS %lld, the value an enumerator "
+					     "appended after MatchEnded would carry and the first index outside "
+					     "bEmitted. Without this the check below could be vacuously true"),
+					OnePastTheBound),
+				!(OnePastTheBound >= 0 && OnePastTheBound <= Bound)))
+		{
+			return false;
+		}
+	}
+
+	// ---- the claim ------------------------------------------------------------------
+	TestTrue(*FString::Printf(
+			TEXT("GATE-AUDIO: every declared EStratSoundCue enumerator has a value within "
+			     "[0, %lld] -- the range StratDecideSoundCues' one-per-kind array bEmitted "
+			     "covers, since it is sized (int32)MatchEnded + 1 and Emit indexes it with "
+			     "(int32)Cue unchecked. Outside that range: %s. A cue APPENDED AFTER MatchEnded "
+			     "makes Emit write one past the end of a stack array, silently, in a green "
+			     "build. Adding a cue is fine -- add it BEFORE MatchEnded, or have the engineer "
+			     "size the array off a Count sentinel, which is the stronger fix this clause "
+			     "cannot make from Tests/"),
+			Bound, Offenders.IsEmpty() ? TEXT("none") : *Offenders),
+		Offenders.IsEmpty());
 
 	return true;
 }

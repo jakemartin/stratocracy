@@ -55,6 +55,37 @@
 // route and no goal. Between two applies this actor cannot say where it was going -- only where
 // its own picture still is relative to where it now stands.
 //
+// [WIDENED 2026-09-06 BY THE DAMAGE FLASH, WRITTEN FLAT BECAUSE THE PARAGRAPH ABOVE NAMES THREE
+// FIELDS AND A SENTENCE LISTING THREE FIELDS READS AS EXHAUSTIVE.] It said, and still says of
+// those three:
+// RETRACTED> "`TweenOffsets`, `TweenArcLengths` and `TweenElapsed` are state no model holds."
+// THERE IS A FOURTH SANCTIONED MEMBER AND IT IS `DamageFlashElapsed`. It is bounded by exactly
+// the same three properties the tween clocks are bounded by, plus the one this file added when
+// it grew a second clock, and each is argued rather than asserted:
+//   - ITS TERMINAL VALUE IS EXACTLY ZERO AND IS WRITTEN, NOT APPROACHED. `FinishDamageFlash`
+//     writes `0.0f`, writes `nullptr` into `Body`'s OVERLAY material, and puts `Shake` at
+//     `FVector::ZeroVector` through `SetRelativeLocation_Direct` plus `UpdateComponentToWorld`
+//     -- the same pair `FinishTween` uses, for the same measured ~1e-14 round-trip residue,
+//     restated at that function rather than cross-referenced. There is ONE retirement path, and
+//     `TickDamageFlash` reaches it on every exit TAKEN WITH A FLASH RUNNING -- completion, a
+//     null `Shake`, and a `DamageFlashSeconds` written to zero mid-flash. Its fourth exit is the
+//     one taken when the clock is already zero, which retires nothing because there is nothing
+//     to retire and must not write `Shake` on every frame of an unrelated move tween.
+//   - A CLOCK DRIVES IT THERE, NOT A LATER MODEL. `PlayDamageFlash` starts it and `Tick` ends
+//     it. No `ApplyUnitView` can extend, shorten, restart or observe it; the flash is armed by
+//     `UStratMatchSubsystem` alone and never from the idempotent total refresh.
+//   - NOTHING READS IT TO DECIDE ANYTHING. Its readers are `TickDamageFlash`, which advances
+//     it, `UpdateTickEnabled`, which asks only whether it is nonzero and can only EXTEND a tick
+//     the move tween already wanted, and the two accessors, which exist on
+//     `GetTweenWaypointCount`'s stated permission.
+//   - IT IS NOT A BIT. It cannot make one unit draw a marker another does not, and it cannot
+//     survive its own clock. `bDone`, `bLockedThisTurn` and `bIsGuidedMarked` remain the
+//     model's alone.
+// AND `Shake` HOLDS NO SECOND OPINION ABOUT WHERE THE UNIT IS. It is a child of `Body`, which
+// is a child of `UnitRoot`; the actor transform is still written in exactly one place, so
+// `T-INT-05.ApplyViewSpawnsMovesAndDestroys` needs no edit, exactly as it needed none when
+// `Body` stopped being the root.
+//
 // MESHES ARE KEYED BY `DefId` AND NOT BY `DefIndex`, even though DT_Units' row order IS
 // pinned (`GATE-BRIDGE-DEFS`, phase 0). `StratViewModel.h` gives the reason on the field
 // itself: the gate exists to catch a DATA divergence, "not to license `.uasset` arrays
@@ -173,8 +204,30 @@
 //   and a unit that simply is not marked are indistinguishable on screen and have entirely
 //   different fixes; that log is now a guard for ANOTHER Blueprint of this class rather than
 //   a description of the shipped one.
-// - Health bars, damage numbers, hit flashes. All presentation over an event stream that
-//   does not exist yet, and none of it is named by an acceptance ID in this milestone.
+// - [CORRECTED 2026-09-06 BY THE DAMAGE FLASH. WRITTEN FLAT, IN THIS FILE'S `RETRACTED>`
+//   CONVENTION, BECAUSE ONE OF THE THREE THINGS THIS BULLET RULED OUT IS NOW BUILT AND A
+//   READER WHO GREPS "hit flashes" MUST LAND ON THE CORRECTION.] It said:
+//   RETRACTED> "Health bars, damage numbers, hit flashes. All presentation over an event
+//   RETRACTED>  stream that does not exist yet, and none of it is named by an acceptance ID in
+//   RETRACTED>  this milestone."
+//   A HIT FLASH IS BUILT -- `PlayDamageFlash` below -- AND THE HONEST DESCRIPTION IS THAT THE
+//   EVENT STREAM STILL DOES NOT EXIST. What was built is a STATE DIFF: `StratDecideDamagedUnits`
+//   compares one applied model's HP against the previous one's and names the units whose HP
+//   FELL. Nothing here is told that an attack happened, by whom, or in what order. The flash
+//   LABELS NO CAUSE AND NAMES NO ATTACKER, and it is applied identically to a unit damaged in
+//   §2.6 combat and to one whose HP is lower for any other reason at all -- the same posture
+//   `MoveTweenSeconds` takes about a position difference, and it is what keeps this class out
+//   of the event-inference that §4.9 part 2's list would be needed to license.
+//   HEALTH BARS AND DAMAGE NUMBERS STAY OUT, AND THE REASON IS NOW SHARPER THAN "no event
+//   stream": THE DAMAGE AMOUNT IS NOT AVAILABLE IN THE PLAY LAYER. A diff over two view models
+//   can say THAT HP fell without deriving a magnitude; saying BY HOW MUCH is a subtraction, and
+//   `StratSoundCues.cpp`'s standing "computes no magnitude about game state" claim is
+//   exactly what forbids the layer that would have to do it. (This line quoted that claim as
+//   "there is not one arithmetic operation in it" until 2026-09-06; that wording was false of
+//   the file it named -- see its opening block, which carries the retraction and the one
+//   compile-time exemption. What the claim FORBIDS is unchanged, so the sentence around it
+//   still holds and no code here moved.) A number on screen wants
+//   `FStratRepairApplication`'s shape from the bridge, which is not in this round.
 // - Any `/Game/` path. Every mesh and material is an EditDefaultsOnly property.
 #pragma once
 
@@ -305,6 +358,15 @@ public:
 	 * IT ALSO CLEARS ANY TWEEN IN FLIGHT, so calling it mid-slide is a hard cut rather than a
 	 * slide that continues from a stale start. That is what "no animation" has to mean to be
 	 * usable as a repair.
+	 *
+	 * IT DELIBERATELY DOES **NOT** CANCEL A DAMAGE FLASH, ADDED 2026-09-06, AND THE OMISSION IS
+	 * STATED HERE SO IT IS NOT READ AS ONE. This function documents itself as clearing a TWEEN,
+	 * which is a claim about WHERE THE PICTURE IS, and a hard position cut is exactly the repair
+	 * for a stale position. A damage window is not a position: it is a fixed-length statement
+	 * that this unit's HP fell, and nothing about being teleported makes that statement stale.
+	 * `CancelDamageFlash` is the verb for the other thing, and it is separate for that reason.
+	 * The two clocks are independent all the way down -- see `UpdateTickEnabled`, which is the
+	 * only thing that arbitrates between them.
 	 *
 	 * @param WorldLocation the same value `ApplyUnitView` would be handed for this unit --
 	 *                      `AStratBoardActor::WorldLocationOfHex(View.Hex)`, never a value
@@ -438,6 +500,64 @@ public:
 	 *                         is forbidden here on `PlayRouteSlide`'s recorded measurement.**
 	 */
 	void ParkPictureAt(const FVector& ParkWorldPoint, const FVector& AnchorWorldPoint);
+
+	/**
+	 * Flashes this unit's body and shakes its picture in X and Y for `DamageFlashSeconds`.
+	 *
+	 * WHAT GAP THIS CLOSES. Combat gave the player almost no signal on the board: the
+	 * `UnitAttacked` cue and an HP number somewhere off the unit itself. The header block's
+	 * corrected "hit flashes" bullet states what this is and -- more importantly -- what it is
+	 * NOT: a STATE DIFF, not an event. This function is handed no attacker, no amount and no
+	 * cause, and could not label one if it wanted to.
+	 *
+	 * IT IS CALLED ONLY BY `UStratMatchSubsystem` AND IS NEVER REACHED FROM `ApplyUnitView`,
+	 * WHICH IS NON-NEGOTIABLE AND IS THE REASON IT IS A SEPARATE VERB. That function is
+	 * IDEMPOTENT AND TOTAL by its own declaration and runs on every hover refresh --
+	 * `AStratPlayerController::Tick` reaches it whenever the mouse crosses a hex boundary -- so
+	 * anything armed inside it would fire on mouse movement. The same structural reason
+	 * `PlayRouteSlide` is a second entry point rather than a fifth parameter on the first one.
+	 *
+	 * RESTARTING MID-FLASH RESTARTS THE CLOCK AND DOES NOT STACK AMPLITUDE. There is one clock
+	 * and one amplitude expression; a second call writes the clock back to a fresh tick and the
+	 * shake is continuous across the seam, because `TickDamageFlash`'s sin/cos pair has a
+	 * continuous derivative at zero phase -- the identical property `MoveTweenEaseFraction`
+	 * argues for the trapezoid, from a different curve.
+	 *
+	 * A NO-OP AT `DamageFlashSeconds <= 0`, WHICH IS THE SHIPPED C++ DEFAULT. Nothing is armed,
+	 * no tick is enabled, no material is touched and `Shake` is not written -- so the tree is
+	 * behaviourally identical to one in which this function does not exist, which is what keeps
+	 * every existing fixture on the path it was written against. The switch-not-a-setting
+	 * posture `MoveTweenSeconds` argues at length; see `DamageFlashSeconds`, which restates it.
+	 */
+	void PlayDamageFlash();
+
+	/**
+	 * Retires any flash: overlay cleared, `Shake` at exact relative zero, clock zeroed, tick off
+	 * unless the move tween still wants it.
+	 *
+	 * IT IS `FinishDamageFlash` MADE PUBLIC, AND THAT IS DELIBERATE RATHER THAN A CONVENIENCE.
+	 * `AStratUnitActor::Tick` NEVER RUNS HEADLESS and a test-only advance seam has already been
+	 * refused in this project, so a clause has no way to let a flash expire -- which would make
+	 * the exactly-zero retirement claim above unassertable. Exposing the ONE retirement path is
+	 * the same permission `CancelRouteSlide` already takes for the tween's, for the same reason
+	 * and with the same consequence: there is one answer to "how does it get back to zero", so a
+	 * clause and the running game exercise the same four lines.
+	 *
+	 * A NO-OP WHEN NOTHING IS RUNNING, deliberately, so a caller may be unconditional.
+	 */
+	void CancelDamageFlash();
+
+	/** Whether a damage flash is in flight -- `DamageFlashElapsed > 0`. FOR THE CLAUSE, on
+	 *  `GetTweenWaypointCount`'s stated permission, and it reports a CLOCK and not pixels: it
+	 *  cannot say whether `DamageFlashMaterial` was ever assigned and cannot say that anything
+	 *  red reached the screen. That limit is `IsGuidedMarkerVisible`'s measured one, inherited
+	 *  rather than re-learned. */
+	bool IsDamageFlashActive() const { return DamageFlashElapsed > 0.0f; }
+
+	/** Seconds since the current flash was armed, or 0 when none is. FOR THE CLAUSE, on the
+	 *  same permission, and it reports the real member rather than a cache of it -- so a clause
+	 *  that arms a flash and reads this is reading the thing `TickDamageFlash` advances. */
+	float GetDamageFlashElapsed() const { return DamageFlashElapsed; }
 
 	/**
 	 * Which unit this actor stands for. `FStratUnitView::UnitId`, and the key
@@ -596,6 +716,39 @@ protected:
 	 */
 	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
 	TObjectPtr<UStaticMeshComponent> Body;
+
+	/**
+	 * The damage shake's own transform. Empty, drawn by nothing, X and Y only, Z NEVER WRITTEN.
+	 *
+	 * WHY IT IS A SECOND COMPONENT AND NOT A SECOND TERM SUMMED INTO `Body`. Summing two offsets
+	 * into `Body`'s relative location was considered and REJECTED, and the reason is the one
+	 * property this file has spent the most prose defending: `FinishTween` writes
+	 * `TweenRestOffset` VERBATIM through `SetRelativeLocation_Direct`, and "exactly zero at
+	 * rest" is what two clauses assert against the measured ~1e-14 round-trip residue. With a
+	 * sum, that write could no longer be verbatim -- it would have to preserve whatever the
+	 * shake's term happened to be, so the exactly-zero property would depend on BOTH clocks
+	 * having retired, and a flash retiring first or last would give different bits. With a
+	 * separate component, `ApplyUnitView`, `PlayRouteSlide`, `ParkPictureAt`, `CancelRouteSlide`,
+	 * `TickMoveTween`'s lerp and `FinishTween`'s write are UNTOUCHED, and every existing tween
+	 * clause keeps reporting the same numbers for the same reason it always did.
+	 *
+	 * THE THREE MARKERS RE-PARENT ONTO IT, WHICH IS THE POINT OF PUTTING IT HERE RATHER THAN
+	 * UNDER `Body`'S MESH. `GuidedMarker`, `FlagMarker` and `UnactedPip` attached to `Body`
+	 * rather than to `UnitRoot` so they would ride the move tween's visual offset instead of
+	 * sitting at the destination; the identical argument one level down says they must ride the
+	 * shake too, or a shaken unit's three markers hang motionless beside it. They still ride the
+	 * move tween, because `Shake` is a child of `Body` and inherits it.
+	 *
+	 * IT IS EMPTY ON PURPOSE, on `UnitRoot`'s own reasoning: a transform that is not a visual is
+	 * a transform that can move while the thing above it does not. No mesh, no collision,
+	 * nothing drawn, and nothing to reintroduce a blocker in front of the cursor.
+	 *
+	 * ITS RELATIVE LOCATION IS EXACTLY ZERO AT REST AND ON EVERY PATH AT THE SHIPPED
+	 * `DamageFlashSeconds <= 0`. Nothing writes it but `TickDamageFlash` and
+	 * `FinishDamageFlash`, and the second writes zero verbatim.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Stratocracy|Unit")
+	TObjectPtr<USceneComponent> Shake;
 
 	/**
 	 * §2.11.6-B's turn-1a marker: the thing that makes "Select the marked Infantry" readable.
@@ -1061,6 +1214,104 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
 	float MoveTweenEaseFraction = 0.25f;
 
+	/**
+	 * How long a damage flash lasts. **ZERO IS OFF, AND IT IS A SWITCH RATHER THAN A SETTING.**
+	 *
+	 * THE POSTURE IS `MoveTweenSeconds`' AND `AiPlaybackStepSeconds`', RESTATED LOCALLY RATHER
+	 * THAN CITED, because a reader tuning the flash lands here. Two reasons, both of which apply
+	 * verbatim. First, a non-zero C++ default is a SECOND place the duration is stated, and the
+	 * designer-facing one on `BP_StratUnit` is then the one nobody can find when the two
+	 * disagree. Second -- the load-bearing half -- a non-zero default would change the path
+	 * every existing automation fixture runs down, which is exactly the change this number
+	 * exists to avoid making.
+	 *
+	 * AT `<= 0` NOTHING ARMS. `PlayDamageFlash` returns having written nothing, no tick is
+	 * enabled, `Body`'s overlay material is never touched and `Shake` keeps the exact zero the
+	 * constructor gave it -- so the tree is behaviourally identical to one without this feature.
+	 * `<= 0` and not `== 0` on `ApplyUnitView`'s reasoning: a negative duration is a
+	 * mis-authored Blueprint default and "no flash" is the safe reading.
+	 *
+	 * IT IS ALSO RE-READ EVERY TICK, WHICH IS THE HAZARD `Tick` ALREADY HANDLES FOR THE TWEEN. A
+	 * Blueprint can write this to zero while a flash is in flight; `TickDamageFlash` retires
+	 * rather than suspending, so the only wrong answer -- a unit left red and displaced with no
+	 * clock to bring it home -- is unreachable.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	float DamageFlashSeconds = 0.0f;
+
+	/**
+	 * How far the picture is displaced at the START of a flash, in unreal units, in X and Y.
+	 * Decays linearly to zero over the flash.
+	 *
+	 * ZERO BY DEFAULT FOR `DamageFlashSeconds`' SECOND REASON AND NOT ITS FIRST: this is not the
+	 * switch -- the duration is -- but a shipped non-zero amplitude would still be a magnitude
+	 * stated in C++ that a Blueprint would then restate. It is tuned at the keyboard against the
+	 * recorded `BodyZOffset` and the shipped meshes, neither of which this file can see.
+	 *
+	 * NO Z, AND THE ABSENCE IS THE SPECIFICATION. The user asked for a shake in X and Y.
+	 * `FlagMarkerOffset`'s block derives that the camera's screen-up is `0.866*x + 0.5*z`, so a Z
+	 * term would move a unit up and down the screen and read as a hop rather than as a rattle;
+	 * it would also change the depth sort against the unit on the hex behind. `TickDamageFlash`
+	 * writes a literal `0.0` into Z and there is no property that could make it otherwise.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	float DamageShakeAmplitude = 0.0f;
+
+	/**
+	 * How fast the shake oscillates, in Hz.
+	 *
+	 * NON-ZERO BY DEFAULT AND THAT IS NOT AN INCONSISTENCY WITH THE TWO ABOVE. It is not a
+	 * switch and it cannot arm anything: at `DamageShakeAmplitude = 0` this number multiplies a
+	 * displacement of zero, and at `DamageFlashSeconds <= 0` it is never read at all. A zero
+	 * default here would instead be a REAL configuration -- a shake frozen at one phase for its
+	 * whole duration -- which is a worse thing to ship than a rate nothing uses.
+	 *
+	 * 18 IS FAST ENOUGH TO READ AS A RATTLE RATHER THAN A WOBBLE AT THE ~0.2 s DURATION THE USER
+	 * ASKED FOR, WHICH IS AN EYE JUDGEMENT AND IS DECLARED AS ONE. Nothing headless pins it and
+	 * nothing can: `Tick` never runs in a fixture, so frequency, amplitude, decay shape and
+	 * smoothness are all unobservable to the suite. A human at the keyboard is the only
+	 * instrument, exactly as it is for `GuidedMarkerZOffset`.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	float DamageShakeFrequency = 18.0f;
+
+	/**
+	 * The material written into `Body`'s OVERLAY channel for the duration of a flash. Unset
+	 * means the shake happens and nothing turns red.
+	 *
+	 * THE OVERLAY CHANNEL AND NOT A SLOT-0 SWAP, WHICH IS THE WHOLE REASON `ApplyUnitView`
+	 * NEEDED NO EDIT. That function writes `Body->SetMaterial(0, SideMaterials[View.Side])` on
+	 * every refresh, and a refresh happens whenever the mouse crosses a hex boundary -- so a
+	 * slot-0 swap would be cancelled by a hover, mid-flash, at random. `SetOverlayMaterial` is a
+	 * DIFFERENT channel (`UMeshComponent::SetOverlayMaterial` / `GetOverlayMaterial`, both
+	 * `ENGINE_API` in UE 5.8), so the two writers cannot collide and `ApplyUnitView` keeps its
+	 * idempotent-and-total block unamended.
+	 *
+	 * THERE IS NOTHING TO RESTORE *TO*, WHICH IS THE OTHER HALF OF THE SAME CHOICE. Retirement
+	 * writes `nullptr`, a constant -- so no previous-material member exists on this actor, and
+	 * the "terminal value is exactly zero, written not approached" argument extends to the
+	 * material verbatim instead of needing a second one.
+	 *
+	 * A `UMaterialInstanceDynamic` WITH A COLOUR PARAMETER IS THE EVENTUAL RIGHT ANSWER AND IS
+	 * DEFERRED, NOT REJECTED. It would need a material asset declaring that parameter -- content
+	 * lane work -- plus an actor-held object member that is neither a clock nor a bit, which is
+	 * a widening of the header block's exception that no gap today justifies. DISCHARGED WHEN a
+	 * flash needs to vary in colour or intensity.
+	 *
+	 * UNSET IS THE STATE THIS SHIPS IN AND IT IS A CONTENT GAP, NOT A MATCH FAILURE -- the same
+	 * posture the three markers shipped under. `EditDefaultsOnly`, no initializer, and no
+	 * `/Game/` path in this file; the assignment is `BP_StratUnit`'s and the content lane's.
+	 * `BeginPlay` says so once per actor, for `ConfigureMarker`'s recorded reason: an
+	 * unconfigured flash material and a unit that was simply never hit are indistinguishable on
+	 * screen and have entirely different fixes, and the LOG is the only place the project can
+	 * tell them apart -- no accessor can, `IsDamageFlashActive` least of all.
+	 *
+	 * WHOEVER AUTHORS IT MUST CONFIRM IT COMPILES AS AN OVERLAY PASS. Overlay materials carry
+	 * shading-model constraints this file cannot check and no headless instrument can report.
+	 */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
+	TObjectPtr<UMaterialInterface> DamageFlashMaterial;
+
 	/** Applies ALL THREE markers' Blueprint-default meshes, materials and offsets -- the
 	 *  §2.11.6-B guided marker, §2.11.2's flag `H` and §2.11.2's unacted pip. Overridden for
 	 *  the reason `AStratBoardActor::BeginPlay` gives: a constructor reading a Blueprint
@@ -1069,16 +1320,26 @@ protected:
 	virtual void BeginPlay() override;
 
 	/**
-	 * Walks `Body`'s visual offset along `TweenOffsets` to zero and then switches itself off.
+	 * Runs the two clocks: the move tween's, then the damage flash's.
 	 *
-	 * THE ONLY TICKING THING IN THIS CLASS, AND IT IS OFF UNLESS A TWEEN IS IN FLIGHT.
-	 * `bStartWithTickEnabled` is false and `ApplyUnitView` enables ticking only when it has
-	 * actually armed a polyline; this function disables it again the moment the
-	 * offset reaches zero. So the steady state is the old one -- no tick -- and the actor is
-	 * never polling for a change the model would have told it about.
+	 * [WIDENED 2026-09-06 BY THE DAMAGE FLASH. WRITTEN FLAT BECAUSE THE HEADING SENTENCE CLAIMED
+	 * A SINGULAR SUBJECT AND A READER GREPS THAT.] It said:
+	 * RETRACTED> "Walks `Body`'s visual offset along `TweenOffsets` to zero and then switches
+	 * RETRACTED>  itself off. THE ONLY TICKING THING IN THIS CLASS, AND IT IS OFF UNLESS A TWEEN
+	 * RETRACTED>  IS IN FLIGHT."
+	 * THERE ARE TWO TICKING THINGS AND THIS FUNCTION IS NOW TWO CALLS AND NOTHING ELSE --
+	 * `TickMoveTween(DeltaSeconds)` then `TickDamageFlash(DeltaSeconds)`. The extraction is
+	 * VERBATIM: the tween's body moved into its own function unedited, because it carries three
+	 * early `return`s and a measured trapezoid, and any one of those returns left in place here
+	 * would have SKIPPED THE FLASH ENTIRELY on the frames it fires.
 	 *
-	 * IT WRITES A RELATIVE LOCATION ON `Body` AND NEVER TOUCHES THE ACTOR TRANSFORM. That is
-	 * the invariant the whole feature rests on; see `UnitRoot`.
+	 * WHAT STANDS UNCHANGED: the steady state is still no tick at all. `bStartWithTickEnabled`
+	 * is false, and the actor is never polling for a change the model would have told it about.
+	 * The one arbiter of the tick flag is `UpdateTickEnabled`, whose block records the concrete
+	 * failure a second one would cause.
+	 *
+	 * IT WRITES A RELATIVE LOCATION ON `Body` AND ON `Shake` AND NEVER TOUCHES THE ACTOR
+	 * TRANSFORM. That is the invariant the whole feature rests on; see `UnitRoot`.
 	 */
 	virtual void Tick(float DeltaSeconds) override;
 
@@ -1104,8 +1365,11 @@ private:
 	 * @param Mesh        the `EditDefaultsOnly` mesh. Null logs and leaves the component
 	 *                    meshless, which draws nothing.
 	 * @param Material    optional override; null leaves the mesh's own.
-	 * @param Offset      relative to `Body`. See `FlagMarkerOffset` on how the defaults were
-	 *                    derived and on what is not pinned.
+	 * @param Offset      relative to `Shake`, which is a child of `Body` and sits at exact
+	 *                    relative zero at rest -- so the SHIPPED PLACEMENT IS UNCHANGED BY THE
+	 *                    2026-09-06 re-parent, to the bit, and `FlagMarkerOffset`'s derivation
+	 *                    (which is stated in BODY space) is untouched. See that property on how
+	 *                    the defaults were derived and on what is not pinned.
 	 * @param MarkerName  names the marker in the log. A literal at each call site rather than
 	 *                    `Marker->GetName()`, so the message says which GDD surface is
 	 *                    unconfigured rather than which subobject.
@@ -1159,6 +1423,87 @@ private:
 	 * the clause rather than merely intended.
 	 */
 	void FinishTween();
+
+	/**
+	 * `Tick`'s move-tween half, MOVED VERBATIM out of it on 2026-09-06 and not tidied.
+	 *
+	 * IT EXISTS SO THE TWEEN'S THREE EARLY `return`s CANNOT SKIP THE FLASH. Every one of them is
+	 * a legitimate retirement -- a null `Body`, a `MoveTweenSeconds` written to zero mid-slide, a
+	 * degenerate polyline, a completed alpha -- and every one of them used to return out of
+	 * `Tick` itself. A second feature added below them would have run on some frames and not
+	 * others, silently, with a green build. The body is byte-for-byte what it was: same guards,
+	 * same trapezoid, same arc-length scan, same lerp.
+	 */
+	void TickMoveTween(float DeltaSeconds);
+
+	/**
+	 * `Tick`'s damage-flash half: advance the clock, displace `Shake` in X and Y, retire at the
+	 * end.
+	 *
+	 * THE AMPLITUDE DECAYS LINEARLY AND THE PHASE IS A SIN/COS PAIR, WHICH GIVES CIRCULAR X/Y
+	 * JITTER WITH A CONTINUOUS DERIVATIVE. That last property is the same one
+	 * `MoveTweenEaseFraction` argues for the trapezoid and it matters for the same reason: a
+	 * flash can be restarted mid-flight by a second hit, and a profile that jumped at re-arming
+	 * would read as a pop. It also means the displacement CONVERGES to the exact zero that
+	 * retirement then writes, so the write is a confirmation rather than a correction.
+	 *
+	 * IT RETIRES RATHER THAN SUSPENDING, ON `TickMoveTween`'S OWN REASONING. A null `Shake` and a
+	 * `DamageFlashSeconds` written to zero mid-flash both reach `FinishDamageFlash`, because the
+	 * only wrong answer is a unit left red and displaced with no clock to bring it home.
+	 *
+	 * Z IS NEVER WRITTEN. See `DamageShakeAmplitude`, which states why that is the specification
+	 * and not an economy.
+	 */
+	void TickDamageFlash(float DeltaSeconds);
+
+	/**
+	 * Retires the damage flash: clock zero, overlay `nullptr`, `Shake` at exactly relative zero,
+	 * tick re-arbitrated.
+	 *
+	 * THE ONE RETIREMENT PATH, ON `FinishTween`'S PRECEDENT AND FOR ITS REASON. `TickDamageFlash`
+	 * reaches it three ways -- completion, a null `Shake`, a duration written to zero mid-flash
+	 * -- and `CancelDamageFlash` is the public fourth. A missed clear on any one of them leaves
+	 * a unit red and displaced with nothing to bring it back, which is invisible in a build and
+	 * obvious on a screen.
+	 *
+	 * "EXACTLY ZERO" IS LITERAL AND IT COSTS THE SAME LINE IT COSTS `FinishTween`, AND THE REASON
+	 * IS RESTATED HERE RATHER THAN CROSS-REFERENCED BECAUSE A READER ARRIVING AT THIS FUNCTION
+	 * MUST NOT HAVE TO FIND THAT ONE. `USceneComponent::SetRelativeLocation` moves in WORLD space
+	 * and converts back through the parent's inverse, so it stores a ROUND TRIP of the value it
+	 * was handed -- measured 2026-09-02 with a probe in `CancelRouteSlide`: the same call asking
+	 * for `FVector::ZeroVector` stored an exact zero for one unit and `Y=-0.000` for another,
+	 * differing only in where their actors stood. The residue was ~1e-14 uu, invisible on a
+	 * screen and NOT invisible to `IsZero()`. `SetRelativeLocation_Direct` plus
+	 * `UpdateComponentToWorld` computes the world transform FROM the relative one, so the stored
+	 * value is the value asked for. Safe on `Shake` for a reason specific to it: it carries no
+	 * mesh and no collision at all, so there is no sweep, no overlap and no physics state the
+	 * move path would have been responsible for.
+	 *
+	 * IT ENDS BY ASKING `UpdateTickEnabled` AND NEVER BY WRITING THE TICK FLAG ITSELF. See that
+	 * function; this is the half of the pair that would otherwise freeze a unit mid-slide.
+	 */
+	void FinishDamageFlash();
+
+	/**
+	 * The ONE arbiter of `SetActorTickEnabled`: on while either clock wants it, off otherwise.
+	 *
+	 * IT EXISTS BECAUSE `SetActorTickEnabled` IS A SINGLE BOOLEAN AND TWO FEATURES NOW WANT IT,
+	 * AND THE FAILURE IT PREVENTS IS CONCRETE RATHER THAN THEORETICAL: a damage flash retiring
+	 * while a move tween is in flight would disable the tick and **freeze a unit halfway between
+	 * two hexes, forever, with a green build and no log**. The mirror is equally real -- a tween
+	 * retiring mid-flash would leave a unit permanently red and displaced.
+	 *
+	 * IT IS THE ONLY CALLER OF `SetActorTickEnabled(false)` IN THIS CLASS, AND THAT IS THE
+	 * INVARIANT RATHER THAN A DESCRIPTION. `FinishTween`'s trailing disable became a call to this
+	 * function on 2026-09-06 and that was the ONLY edit that function received. A third feature
+	 * that writes the flag directly reintroduces the defect on both of its exits at once.
+	 *
+	 * THE ARMING SIDE IS DELIBERATELY NOT ROUTED THROUGH IT. `PlayRouteSlide` and `ApplyUnitView`
+	 * still call `SetActorTickEnabled(true)` at the point they arm, because turning a tick ON
+	 * that another clock also wants is idempotent and cannot strand anything; only the OFF
+	 * direction can, and only the OFF direction needs an arbiter.
+	 */
+	void UpdateTickEnabled();
 
 	/**
 	 * How long the tween currently armed lasts, in seconds. Meaningless with fewer than two
@@ -1318,4 +1663,27 @@ private:
 	 * a hover harmless; the clear is conditioned on it.
 	 */
 	FVector TweenRestOffset = FVector::ZeroVector;
+
+	/**
+	 * Seconds since the current damage flash was armed. Zero means none is in flight, and zero
+	 * is the ONLY value that means it.
+	 *
+	 * THE FOURTH SANCTIONED MEMBER, AND THE HEADER BLOCK'S "IT HOLDS NO *BIT*" PARAGRAPH NAMES
+	 * IT RATHER THAN LEAVING IT TO BE DISCOVERED -- a sentence listing three fields reads as
+	 * exhaustive, which is why that block was widened flat rather than edited in place. All four
+	 * of the bounds it is held under are argued there: the terminal value is exactly zero and is
+	 * WRITTEN not approached, a clock drives it there rather than a later model, nothing reads
+	 * it to decide anything, and it is not a BIT.
+	 *
+	 * IT DOUBLES AS THE "IS A FLASH RUNNING" ANSWER RATHER THAN CARRYING A `bDamageFlashActive`
+	 * BESIDE IT, AND THAT IS A DECISION. A second field would be a second answer to one
+	 * question, and the two would disagree the first time a retirement path cleared one and not
+	 * the other -- the shape `GetTweenWaypointCount` already refuses by reporting the live array
+	 * instead of a cached count. `IsDamageFlashActive` is `> 0.0f` and nothing else.
+	 *
+	 * IT IS NOT A `UPROPERTY`, on `TweenElapsed`'s reasoning: a float owns no object, needs no
+	 * garbage collection, and leaving it unreflected keeps it off any future reflected walk that
+	 * a clause about actor-held presentation state might grow.
+	 */
+	float DamageFlashElapsed = 0.0f;
 };

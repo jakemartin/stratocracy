@@ -16,6 +16,272 @@
 ## NEXT
 
 - **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `7e83295`, UNCOMMITTED) -- THE DAMAGE ALERT
+  LANDS AS TWO INDEPENDENT CLOCKS ON ONE TICK FLAG, AND THE THING WORTH READING IS THAT THE
+  DEFECT THIS DESIGN EXISTS AGAINST IS ONE NO CLAUSE IN THIS TREE COULD HAVE SEEN.** No
+  exception clause applies and none is cited. The live suite figure and the phase verdict are
+  `global.md`'s and are not restated here.
+  - **WHAT SHIPPED.** `AStratUnitActor` grows a `Shake` scene component under `Body`, four
+    `EditDefaultsOnly` properties (`DamageFlashSeconds`, `DamageShakeAmplitude`,
+    `DamageShakeFrequency`, `DamageFlashMaterial`), four public verbs (`PlayDamageFlash`,
+    `CancelDamageFlash`, `IsDamageFlashActive`, `GetDamageFlashElapsed`), three private helpers
+    (`TickMoveTween`, `TickDamageFlash`, `FinishDamageFlash`) and the arbiter
+    `UpdateTickEnabled`. `StratUI` grows `StratDecideDamagedUnits`. `UStratMatchSubsystem` grows
+    two trigger sites. `Source/StratRules/`, `Data/` and every `Tests/` directory are untouched.
+  - **THE LOAD-BEARING MEASUREMENT, TAKEN BEFORE A SINGLE NEW CLAUSE EXISTS, WHICH IS WHAT MAKES
+    IT A MEASUREMENT AND NOT AN ASSERTION.** At the shipped `DamageFlashSeconds = 0.0f` nothing
+    arms, no tick is enabled, no material is touched and `Shake` keeps its exact zero, so the
+    tree must be behaviourally identical to `7e83295`. Built green (`Result: Succeeded`, 55
+    actions, 42.02 s) and the full headless suite re-run, read from the EXPORTED REPORT rather
+    than the log: `failed` 0, `notRun` 0, `succeededWithWarnings` 0, and the `succeeded` figure
+    unmoved from the base commit's. A forced recompile of all three touched translation units
+    emitted **zero warnings** -- a case-insensitive grep for `warn` and `error` over the full
+    build output returned only the `Result:` line.
+  - **THE DEFECT THE ARBITER EXISTS AGAINST, AND WHY IT IS THE INTERESTING PART.**
+    `SetActorTickEnabled` is a SINGLE BOOLEAN and this class now has TWO clocks. Before this
+    pass `FinishTween` ended with `SetActorTickEnabled(false)`, which was correct while one
+    feature owned the flag. With two, a damage flash retiring during a move tween would have
+    disabled the tick and **frozen a unit halfway between two hexes, forever, with a green build
+    and no log** -- and the mirror, a tween retiring mid-flash, would have left a unit
+    permanently red and displaced. `UpdateTickEnabled` asks both clocks and is now the ONLY
+    caller of `SetActorTickEnabled(false)` in the class; changing that one line was the ONLY
+    edit `FinishTween` received. **NOTHING ALREADY IN THIS TREE COULD HAVE CAUGHT IT:**
+    `AStratUnitActor::Tick` never runs headless, so no existing tween clause exercises a
+    retirement racing another clock, and the symptom is a frozen picture rather than a wrong
+    number.
+  - **THE COMPONENT SPLIT IS THE OTHER STRUCTURAL CALL, AND THE REJECTED ALTERNATIVE IS NAMED.**
+    Summing the shake into `Body`'s relative location was considered and refused: `FinishTween`
+    writes `TweenRestOffset` VERBATIM through `SetRelativeLocation_Direct`, and the
+    exactly-zero-at-rest property -- which two clauses assert against the ~1e-14 round-trip
+    residue measured on 2026-09-02 -- would then have depended on BOTH clocks having retired,
+    giving different bits depending on retirement order. With `Shake` as a separate child,
+    `ApplyUnitView`, `PlayRouteSlide`, `ParkPictureAt`, `CancelRouteSlide`, the lerp and
+    `FinishTween` are untouched and every existing tween clause keeps reporting the same
+    numbers. The three markers re-parent from `Body` to `Shake` so they ride the shake; they
+    still ride the move tween, transitively, and their shipped offsets are unchanged to the bit
+    because `Shake` sits at exact relative zero at rest.
+  - **THE FLASH IS AN OVERLAY WRITE AND NOT A SLOT-0 SWAP, WHICH IS WHY `ApplyUnitView` NEEDED
+    NO EDIT.** That function writes slot 0 on every refresh and a refresh fires whenever the
+    mouse crosses a hex boundary, so a slot-0 swap would be cancelled by a hover, mid-flash, at
+    random. `UMeshComponent::SetOverlayMaterial` and `GetOverlayMaterial` were verified
+    `ENGINE_API` in the installed UE 5.8 headers BEFORE the design relied on them, not after.
+    Retirement writes `nullptr`, a constant, so there is no previous-material member on the
+    actor and the "terminal value is written, not approached" argument extends to the material
+    verbatim.
+  - **`StratDecideDamagedUnits` IS A SECOND READER OF THE EXISTING `FStratSoundMark` AND ADDS NO
+    SECOND MARK.** That is the whole design: it inherits the seeding rule, both reset sites and
+    the decide-then-re-mark ordering for free, and is structurally incapable of disagreeing with
+    the `UnitAttacked` cue about which units were hit. It deliberately does NOT reuse the `Cues`
+    array -- the `Emit` lambda's `bool bEmitted[7]` collapses to one emission per cue KIND,
+    which is right for audio and would mean **two of three damaged units silently do not
+    flash**. The file's standing claim SURVIVES and its banner now says so explicitly: the
+    predicate is `Unit.Hp < Before.Hp` and the output is an id. No delta is computed anywhere --
+    which is also why damage NUMBERS remain out of reach from the play layer, a sharper reason
+    than the "no event stream" the retracted bullet gave. **That claim's WORDING was false the
+    whole time and is retracted in the same pass; the bullet below is the correction.**
+  - **THE FILE-WIDE CLAIM IN `StratSoundCues.cpp` WAS FALSE ON ITS OWN ENUMERATION'S TERMS, AND
+    THE PART WORTH READING IS THAT THIS PASS MADE IT WORSE BEFORE FIXING IT.** The reviewer's
+    gate on this pass returned PASS with zero findings and raised this as its most serious
+    non-gating observation. The file opened with *"THERE IS NOT ONE ARITHMETIC OPERATION IN IT.
+    No subtraction, no sum, no ratio, no distance"* -- and twelve lines into its first function
+    sizes the one-per-kind gate with `bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded)
+    + 1]`. A sum, named explicitly by the claim's own list, present since the gate was written.
+    What this pass added was not the defect but a STRONGER form of it: the new
+    `StratDecideDamagedUnits` block asserted the claim *"IS RE-CHECKED HERE RATHER THAN ASSUMED"*
+    while performing a check scoped to the function it was about. **An assertion of verification
+    that misses what it covers is worse than the bare claim it strengthens**, because a later
+    reader stops looking. Two further sites carried the same claim in other forms --
+    `StratSoundCues.h`'s `StratDecideDamagedUnits` block quoting it verbatim,
+    `StratSoundCues.cpp`'s clamp rule as *"THE ONE ARITHMETIC-FREE RULE IN THIS FILE"* -- plus
+    the `StratClampVolume` banner paragraph, which claimed its own function-local re-check as if
+    it were file-wide, and `StratUnitActor.h`'s cross-file citation of the old words. Found by
+    grepping the claim's own wording rather than by trusting the report's list, which named
+    three of the six. **[CORRECTED 2026-09-06 AT THE SENTENCE BEFORE THIS STAMP: there were
+    SEVEN sites, not six, and the method named here is why the seventh was missed. See the
+    "A SEVENTH SITE" bullet below, which carries the count, the method's limit and the site.]**
+  - **THE REPLACEMENT IS NARROWED TO WHAT THE CLAIM WAS ACTUALLY DEFENDING, NOT TO WHATEVER
+    SURVIVES AN OPERATOR COUNT.** It now reads *"THIS FILE COMPUTES NO MAGNITUDE ABOUT GAME
+    STATE"* -- no HP delta, no distance, no count, no ratio, no scale -- because that is the
+    property that keeps a cue asking WHETHER and never BY HOW MUCH, and an HP delta is the second
+    subtraction `StratTransientReceipts.cpp`'s own claim forbids. The `+ 1` is stated as an
+    EXEMPTION IN THOSE TERMS and at the claim itself: a compile-time array bound over an enum's
+    last member, both operands compiler-folded, reaching no caller and no screen, and therefore
+    incapable of being wrong about game state at all. **It is deliberately not a general
+    licence** -- the exemption covers an index bound over constants and nothing else, and an
+    operator with a runtime operand out of the view model stays forbidden. Precedent taken
+    rather than invented: `StratTransientReceipts.cpp` already exempts *"a copy, a comparison,
+    or an index bound"*, which is the claim this one borrowed its shape from in the first place.
+  - **THE `RE-CHECKED` SENTENCE WAS RETRACTED RATHER THAN MADE TRUE, AND BOTH HALVES OF THAT
+    WERE DONE.** The full-file check WAS performed -- it is what found the `+ 1` -- but its
+    result now lives once, in the opening block, next to the claim it qualifies. The
+    function-local paragraph no longer claims to be the instrument, because a per-function
+    re-check assertion is exactly the shape that failed here. Each correction announces itself
+    FROM the false sentence: every site carries a `RETRACTED>` block or an inline stamp at the
+    words that were wrong, never below them. **[CORRECTED 2026-09-06 AT THE WORD "every" IN THE
+    SENTENCE BEFORE THIS STAMP: it was a COMPLETENESS CLAIM over a census that was not complete,
+    and it was false when written -- `StratSoundDirector.cpp:117-120` carried the claim
+    uncorrected. The shape rule it states is true of each site that WAS corrected, and is now
+    true of the seventh as well; what was false is "every". See the bullet below.]**
+  - **NOT ONE EXECUTABLE BYTE MOVED.** `bEmitted`'s bound is correct C++ and was not touched;
+    the defect was prose and only prose changed. `git diff` on this correction is comments in
+    `Source/StratUI/StratSoundCues.cpp`, `Source/StratUI/StratSoundCues.h` and
+    `Source/StratPlay/StratUnitActor.h`. **No suite re-run is owed and the reason is measured,
+    not assumed**: `strat_banner_sweep.py`'s REPORT IDENTITY check populates `newest_test_mtime`
+    only from `.cpp` files whose body matches `IMPLEMENT_SIMPLE_AUTOMATION_TEST` or
+    `IMPLEMENT_COMPLEX_AUTOMATION_TEST(?:_CLASS)?` (`read_macro_census`), and both edited `.cpp`
+    files return zero for that grep while the pass's two new clause files return non-zero on the
+    same instrument. The `.h` edits cannot reach it at all -- the walk skips every file not
+    ending `.cpp`. **[STAMPED 2026-09-06: this bullet's file LIST is now short by one. The
+    second correction round added a fourth prose-only file,
+    `Source/StratPlay/StratSoundDirector.cpp`. The BYTE claim is unchanged and was re-measured
+    for that file too -- see the bullet immediately below.]**
+  - **A SEVENTH SITE SURVIVED THE SWEEP, AND THE REUSABLE PART IS WHY: A WORDING-GREP CANNOT SEE
+    A PARAPHRASE.** `strat-integration-reviewer`'s RE-GATE on this pass
+    (`Tools/architect/gate_reports/2026-09-06-unit-damage-alert-regate.md`, `VERDICT: BLOCK`,
+    finding 1) reported `Source/StratPlay/StratSoundDirector.cpp:117-120` still citing the
+    retracted claim -- *"`StratSoundCues.cpp` states that it performs no arithmetic at all"* --
+    in the same cross-file-citation shape as `StratUnitActor.h`, which the first round DID
+    correct. **The first round's census was collected by grepping the RETRACTED CLAIM'S OWN
+    WORDING (`not one arithmetic`, `ARITHMETIC-FREE`), and this site shares not one token with
+    either.** It also spans a comment line break -- *"performs no"* ends one line and
+    *"arithmetic at all"* begins the next -- so even a paraphrase-shaped single-line grep
+    returns nothing on it; measured, it does. **So the census was bounded by how it was
+    collected, and any claim of completeness over it was a claim about the instrument rather
+    than about the tree.**
+  - **THE METHOD THAT FOUND IT, STATED SO THE NEXT ONE OF THESE IS CHEAPER: GREP THE SUBJECT,
+    NOT THE CLAIM.** A cross-file citation is *about a named file*, so the durable token is the
+    FILE NAME. The sweep run this round walks `Source/` and `Tools/architect/state/`, flattens
+    comment continuations so a wrapped sentence is one string, finds every occurrence of
+    `StratSoundCues` outside `StratSoundCues.*` itself, and reads a +/-260-character window
+    around each for any of `no|not one|zero|never|free of|without` within 90 characters of
+    `arithmetic|magnitude|subtraction|math|operation`. **Result: NO EIGHTH SITE.** The windows
+    it returned in a lane-writable file are the seventh (now corrected), `StratUnitActor.h`
+    (corrected in round one) and this record's own two stamped entries; the rest are
+    `Tools/architect/gate_reports/*`, which are dated evidence and stand unedited, and
+    `global.md`, which is not this lane's file. A third pass over `decider`-worded indirect
+    references returned three hits, all in `Tests/` and all about unrelated receipt deciders.
+    **Two independent methods, one new site between them: treat neither as exhaustive.**
+  - **THE CORRECTION AT THE SEVENTH SITE, AND WHAT IT DELIBERATELY LEFT ALONE.** The citation
+    now reads *"states that it COMPUTES NO MAGNITUDE ABOUT GAME STATE"* with an inline
+    `CORRECTED 2026-09-06 AT THE WORDS ABOVE` block naming the old paraphrase, the retraction it
+    paraphrased and where the exemption lives. The surrounding sentence -- *"THE ONE SUBTRACTION
+    IN THIS FILE, AND IT IS OVER A WALL CLOCK"* -- **is TRUE and was not touched**, measured
+    rather than assumed: over the comment-stripped file, `-` appears on exactly one line,
+    `(Now - *LastAt) < MinGap`. The file DOES carry two `+` operators, at
+    `ApplyVolumes`' `Record.ChannelsApplied = ApplyChannel(..) + ApplyChannel(..) +
+    ApplyChannel(..)`, and that is now named in the comment itself so the next reader counting
+    operators does not read a true sentence as broken -- the identical failure the neighbouring
+    file's retracted claim actually suffered. A count of overridden channels is not a
+    subtraction and not a magnitude about the board.
+  - **PROSE ONLY, RE-MEASURED FOR THE SECOND ROUND WITH A CONTROL.** A state-machine comment
+    stripper (line and block comments removed, string and char literals respected, blank lines
+    collapsed) was run over `git show HEAD:Source/StratPlay/StratSoundDirector.cpp` and the
+    working-tree file: **the diff is EMPTY**. The instrument was proven able to speak on the
+    same run -- a mutant rewriting `++ApplyViewObservationCount;` as
+    `ApplyViewObservationCount += 1;` produced `27c27` against the same baseline. **NO SUITE
+    RE-RUN IS OWED, and it is measured on this file rather than inherited from the bullet
+    above**: `read_macro_census` returns zero for both automation-test macros on
+    `StratSoundDirector.cpp`, while the same instrument returns 11 on
+    `Source/StratUI/Tests/StratSoundCueClauses.cpp`, which is the file actually carrying
+    `newest_test_mtime`. This file's mtime is NEWER than that carrier's and is invisible to the
+    check anyway, because `read_macro_census` only records an mtime inside `if s or c:`. This
+    record states no suite figure; `global.md` is the only file that may.
+  - **THE BUILD WAS ATTEMPTED AND COULD NOT RUN. THE EDITOR IS OPEN.**
+    `Build.bat StratocracyEditor Win64 Development` returned
+    *"Unable to build while Live Coding is active. Exit the editor and game, or press
+    Ctrl+Alt+F11 if iterating on code in the editor or game"*, `Result: Failed
+    (OtherCompilationError)`, after 2.13 seconds. Confirmed rather than inferred: one
+    `UnrealEditor` process, PID 52432, started 14:35:28. **This round is therefore NOT
+    build-verified**, and that is stated plainly rather than argued away by the fact that the
+    stripped diff is empty. The condition that discharges it is a build run with the editor
+    closed. **[DISCHARGED 2026-09-06 AT THE WORDS "NOT build-verified" ABOVE: the condition named
+    in the last sentence was met later the same day, and the round IS now build-verified. This
+    bullet is stamped rather than deleted, because the debt was really taken and the round really
+    was unverified over the interval it names. The run, WHO RAN IT, and exactly what it covers are
+    in the bullets immediately below.]**
+  - **THE DEBT ABOVE IS DISCHARGED, AND THE HALF THAT MUST NOT BE BLURRED IS THAT THIS LANE DID
+    NOT RUN THE BUILD.** The `coordinator` (ACTING) confirmed the editor gone -- `Get-Process
+    UnrealEditor` returning nothing -- and ran the build; `strat-gameplay-engineer` (WRITING)
+    compiled nothing, launched nothing, and is recording a result it was handed rather than one it
+    took. Command, as run by the `coordinator`: `"C:/Program Files/Epic
+    Games/UE_5.8/Engine/Build/BatchFiles/Build.bat" StratocracyEditor Win64 Development
+    -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject" -waitmutex`. Verbatim tail: `[1/4]
+    Compile [x64] StratSoundDirector.cpp`, `[2/4] Link [x64] UnrealEditor-StratPlay.lib`, `[3/4]
+    Link [x64] UnrealEditor-StratPlay.dll`, `[4/4] WriteMetadata StratocracyEditor.target
+    [NoUba]`, `Result: Succeeded`, total execution time 8.37 s. Zero warnings over the full
+    output, reported by the `coordinator` and not measured in this lane.
+  - **THAT THE RUN COVERS THIS ROUND WAS CHECKED RATHER THAN ASSUMED, BECAUSE A ONE-TU BUILD IS
+    ALSO THE SHAPE A PARTIAL WOULD TAKE.** The single recompiled translation unit is
+    `StratSoundDirector.cpp`, and that is the ONLY file under `Source/` this round touched --
+    measured on mtimes rather than recalled: it stands at 14:35:01, eighteen minutes newer than
+    the whole round-one prose cluster (`StratSoundCues.cpp` 14:02:15, `StratSoundCues.h` 14:02:25,
+    `StratUnitActor.h` 14:02:38) and newer than every other modified file in the tree. So there is
+    no second edited source file for the run to have missed. **The `[1/4]` count is itself the
+    evidence about the rest of the tree** rather than a worry about it: had round one's two header
+    edits been unconsumed by any earlier build, their dependents would have appeared in the same
+    action graph, and that graph would not have been four actions long.
+  - **AND THE SUCCESS LINE IS THE EVIDENCE ABOUT THE MOMENT; A LATER `Get-Process` IS NOT.** The
+    editor's absence was measured before the run and is worth having, but a process check taken at
+    any other instant cannot exonerate the interval a build ran in. What settles it is the run's
+    own `Result: Succeeded` with four actions EXECUTED: this record already carries the measurement
+    that the Live Coding mutex aborts AHEAD of the action graph, so a build that compiled and
+    linked is a build that was not blocked. Worth one line the other way, too -- PID 52432 started
+    14:35:28, **twenty-seven seconds AFTER** the 14:35:01 edit. The round was not written against
+    an already-open editor; the editor opened onto it.
+  - **WHAT THE DISCHARGE MOVES, AND WHAT IT LEAVES EXACTLY WHERE IT WAS.** It converts "prose
+    only, unverified" into "prose only, compiles". It does not touch the PROSE-ONLY claim, which
+    was already measured with a positive control -- the empty stripped diff, and the mutant that
+    produced `27c27` on the same instrument -- and which a green build could not have established
+    anyway, since a changed executable byte compiles just as happily. It reaches nothing visual,
+    nothing in `Content/`, and not debt (3) below, which stays open on its own separate condition.
+    No suite figure is stated here; `global.md` is the only file that may carry one.
+  - **THE HANDOFF THIS ROUND FILED WAS NEVER WRITTEN INTO THIS FILE, AND SAYING SO IS THE POINT
+    RATHER THAN AN OMISSION.** The round was asked to check whether its own handoff sentence about
+    `global.md`'s banner had gone stale while the debt stood, and to stamp it if so. There is no
+    such sentence here to stamp: a grep of this entry for `global.md` returns four occurrences,
+    all of the shape *"the live suite figure and the phase verdict are `global.md`'s and are not
+    restated here"* -- a statement of the ownership RULE, as true now as when written -- and not
+    one of them a count, a clause tally, or any present-tense claim about that file's contents.
+    The handoff was delivered in the round's REPORT, which lives in the session transcript and in
+    no checkout, so it is **unstampable by construction** and not merely unfound. This is recorded
+    because from a checkout "there was nothing to correct" and "nobody looked" are the same bytes
+    unless the search is named. A read-only check of `global.md` finds the retracted figure absent
+    -- zero occurrences -- and that figure is deliberately not reproduced here, because this file
+    may not carry one and `global.md`'s own history is where it stays re-runnable.
+  - **THE HONEST LIMIT, RECORDED RATHER THAN PAPERED OVER: THE FLASH IS COMPLETE ON THE NO-TOUR
+    PATH AND DEFENDER-ONLY ON THE TOUR PATH.** `AdvanceAiPlaybackOneStep` flashes
+    `Current.TargetId` -- the DEFENDER; `Current.UnitId` is the ATTACKER and flashing it would
+    have hit the wrong unit on every AI attack in the game. But `StratBridge.cpp` records that a
+    counterattack can take HP off the attacker, and **no field of `FStratAiPlaybackStep` reports
+    that**. The whole-hand-over diff at `ApplyView` catches it and is gated off precisely while
+    a tour runs. Closing it needs a per-step HP observation across the bridge;
+    `FStratBridge::RepairsAtTurnOpen` and `FStratRepairApplication` are the standing precedent
+    for the shape. Not in this round.
+  - **THE HEADER'S "IT HOLDS NO *BIT*" PARAGRAPH IS WIDENED FLAT TO NAME `DamageFlashElapsed`**,
+    on all of the tween clocks' own bounds, because a sentence listing three fields reads as
+    exhaustive. **The "Health bars, damage numbers, hit flashes" bullet is retracted flat** and
+    replaced honestly: the event stream still does not exist; what was built is a STATE DIFF (HP
+    fell between two applied models). The flash labels no cause and names no attacker.
+  - **DEBTS TAKEN ON, EACH WITH ITS DISCHARGE CONDITION STATED IN THE HEADER AND NOT ONLY HERE.**
+    (1) `DamageFlashMaterial` ships unset and `BP_StratUnit` carries no tuned values, so the
+    feature is INVISIBLE IN PIE until the content lane lands `M_UnitDamageFlash` and the three
+    numbers -- a content gap and not a match failure, the posture the markers shipped under.
+    **Whoever authors that material must confirm it compiles as an OVERLAY pass**; overlay
+    materials carry shading-model constraints no headless instrument in this tree can report.
+    (2) A `UMaterialInstanceDynamic` with a colour parameter is the eventual right answer and is
+    deferred, not rejected; discharged when a flash needs to vary in colour or intensity.
+    (3) The marker re-parent changes `BP_StratUnit`'s component hierarchy. **The build emitted no
+    warning, and that is NOT evidence about Blueprint reinstancing** -- the editor was never
+    opened in this pass, so whether the three markers still sit at their recorded offsets after
+    the re-parent is UNMEASURED and belongs to the content lane's next editor session.
+  - **WHAT NO CLAUSE CAN SEE, so that a green suite is not read as covering it.** `Tick` never
+    runs headless, so the shake's motion, frequency, amplitude curve and smoothness are all
+    unobservable, as is anything about redness or pixels. `IsDamageFlashActive` reports a CLOCK
+    and cannot say the material was ever assigned -- `IsGuidedMarkerVisible`'s measured limit,
+    inherited rather than re-learned. A human at the keyboard is the only instrument for every
+    visual claim in this entry.
+
+- **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `92d78c1`, UNCOMMITTED) -- THE GATE STOPPED THE
   CORRECTION PASS ON A MISCOUNTED POSITIVE CONTROL, AND THE THING WORTH READING IS THAT THE
   CONTROL WAS THE PART THAT WENT WRONG, INSIDE THE VERY CORRECTION WHOSE ENTIRE WARRANT IS THAT
@@ -1453,8 +1719,16 @@
     `StratPlay -> StratUI` and never back, so the rule had to sit at or below `StratUI` or have
     two authors. It landed in `StratSoundCues.h` specifically because `StratSoundBank.h` ALREADY
     INCLUDES IT, so the clamp crosses the boundary at the cost of zero new includes. That file's
-    standing *"not one arithmetic operation"* claim was RE-CHECKED rather than assumed: `IsNaN`
-    and `Clamp` are comparisons and a select. **NaN maps to 0 and not to 1**, argued: `FMath::Clamp`
+    standing **[RETRACTED 2026-09-06 -- see the stamp that follows this sentence]**
+    *"not one arithmetic operation"* claim was RE-CHECKED **[function-locally only]** rather than
+    assumed: `IsNaN`
+    and `Clamp` are comparisons and a select. **[STAMPED 2026-09-06: the claim quoted in the
+    previous sentence was FALSE when this entry was written -- `StratSoundCues.cpp` sizes a
+    `bool[]` with a `+ 1` over an enum's last member. The re-check this entry describes was real
+    and is still true of `StratClampVolume`, but it was function-local and could not have found
+    that. The claim is retracted and replaced at the file, and the correction is recorded in the
+    2026-09-06 damage-alert entry at the top of this file. Nothing about the placement argument
+    or the NaN ruling below is affected.]** **NaN maps to 0 and not to 1**, argued: `FMath::Clamp`
     passes a NaN through unchanged (both comparisons are false), and silence is a failure a player
     can diagnose while unity is one they cannot. Infinities are deliberately NOT special-cased --
     `IsFinite` would have caught both in one line and mapped `+INF` to silence.

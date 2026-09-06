@@ -11,6 +11,145 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-06 (A DAMAGED UNIT NOW FLASHES RED AND SHAKES, AND THE THING WORTH READING IS
+THAT THE PLAN PUT ONE OF THE TWO TRIGGERS INSIDE `if (UStratSoundDirector* const Director =
+FindSoundDirector())` WITHOUT NOTICING -- so on the AI-playback tour a VISUAL alert would have
+been silently disabled by a MISSING SOUND BANK, which is the shipped state until a bank is set.
+The plan had spotted the identical hazard at the OTHER trigger and said in terms "deliberately
+outside `FindSoundDirector()`'s `if` -- a project with no sound bank must still flash"; it then
+specified the tour trigger by naming the `case Attack:` arm, which is nested one level deeper
+INSIDE that same `if`. Knowing the hazard and naming a location did not compose. The engineer
+found it against the tree and moved the call out; no clause in this tree could have, because
+nothing here can observe a tour step and an absent bank at once.
+THE SUITE IS **445/445**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings. This seat read the entry count and the state of every entry directly out
+of the exported report with `utf-8-sig` rather than accepting either lane's figure, and checked
+that the additions sum to it: the count moved 435 -> 445, all ten added and nothing removed or
+changed state. `strat_banner_sweep.py`'s independent macro census, which counts
+`IMPLEMENT_*_AUTOMATION_TEST` macros in the tree rather than reading the report at all, agrees
+at 445 -- two instruments, one figure. The run behind that figure is identified below.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-20.00.49`.
+THE LOAD-BEARING MEASUREMENT WAS TAKEN BEFORE ANY CLAUSE EXISTED. `DamageFlashSeconds` ships
+`0.0f` -- a switch, not a setting -- so at the shipped default nothing arms, no tick is enabled
+and no material is touched. The engineer built the C++ and ran the FULL SUITE WITH NO NEW CLAUSE
+IN IT, and the figure it returned [STAMPED 2026-09-06: a MID-PASS reading, superseded within the
+same pass by the live figure at the head of this banner, which is stated THERE AND ONLY THERE --
+an earlier form of this stamp restated it and went stale within the hour, which is the same
+defect one level down from the one it was written to fix; it is quoted because the whole
+argument rests on it]
+stood at 435/435, unmoved from base `7e83295`. That is the bit-identical-at-default claim
+MEASURED rather than asserted, and it is the reason a reader can trust that the clauses
+added afterwards are the only thing that moved the figure.
+WHAT THE PASS BUILT. `AStratUnitActor` gained a `Shake` `USceneComponent` under `Body` (the three
+markers re-parented onto it), four `EditDefaultsOnly` properties, and four public verbs --
+`PlayDamageFlash`, `CancelDamageFlash`, `IsDamageFlashActive`, `GetDamageFlashElapsed`. The red is
+`Body`'s OVERLAY channel, not slot 0, chosen because `ApplyUnitView` rewrites slot 0 on every
+refresh and a hover crossing a hex boundary mid-flash would have cancelled a slot swap; the
+overlay is a different channel, so `ApplyUnitView` is UNEDITED. `StratDecideDamagedUnits` in
+`StratUI` is a SECOND READER of the existing `FStratSoundMark` -- no second mark -- so it inherits
+that mark's seeding rule, both reset sites and the decide-then-re-mark ordering, and cannot
+disagree with `UnitAttacked` about which units were hit. It reports EVERY damaged unit, which the
+audio decider deliberately does not: `Emit`'s `bEmitted[7]` collapses to one per cue kind.
+THE MOST CONSEQUENTIAL CALL WAS `UpdateTickEnabled()`. Two clocks now want one tick flag, and
+without a single arbiter a flash retiring during a move tween would disable the tick and freeze a
+unit halfway between two hexes PERMANENTLY, with a green build and no log. It is now the sole
+caller of `SetActorTickEnabled(false)` in the class. One clause exists solely to see that, and no
+other clause can.
+THE ROUTE WAS A USER CHOICE AND IS RECORDED AS ONE. Both routes were offered with their costs
+named -- dispatch is slower and rests on a brief this seat cannot check against the conversation.
+THE USER CHOSE DISPATCH. The brief was wrong in three places, each caught by a lane against the
+tree: it called `ApplyUnitView`'s slot-0 write "unconditional" when it is guarded on
+`SideMaterials.IsValidIndex`; it mislocated the tour trigger as described above; and it told the
+test author to match the neighbouring cue clauses' acceptance ID, which the lane checked and
+refused. Obligation (1) is unfalsifiable from a checkout, as `CLAUDE.md` declares: this banner
+SAYS both routes were offered and no instrument here can confirm it.
+NO EXCEPTION CLAUSE WAS INVOKED AND NONE WAS NEEDED. `strat-gameplay-engineer` wrote all
+`Source/` outside `Tests/` and its own `engine.md`; `strat-test-author` wrote both `Tests/` files,
+the extended double and its own `tests.md`. This seat wrote no code and no clause, and this entry
+is not a transcription of anything.
+NO ACCEPTANCE ID WAS MINTED, AND THAT WAS A LANE'S REFUSAL RATHER THAN THIS SEAT'S RESTRAINT.
+`GATE-AUDIO`'s authorizing text scopes it to "audio presentation reacting to the view model" and
+pins it to three named files precisely so it would not read as a grant over a wider domain.
+`StratDecideDamagedUnits` decides nothing audible, so the three `StratUI` clauses ride the
+existing `T-INT-05` -- which already spans both modules -- in a NEW file, because appending to
+`StratSoundCueClauses.cpp` would have falsified that file's own banner.
+THIS ENTRY STATES NO GATE VERDICT, AND THE ABSENCE IS DELIBERATE. A verdict describes A TREE AND
+NOT A PHASE, and this pass was gated REPEATEDLY over a tree that kept moving -- each round's
+findings were worked, which moved the tree, which invalidated the verdict that had just been
+written here. NO ROUND COUNT IS STATED, AND THAT IS THE SAME RULE ONE LEVEL DOWN: a count of the
+gates on this pass is a count of a STILL-GROWING SET taken from inside the thing being counted,
+false at the next gate, which is the shape this file already rules out twice. The rounds
+are enumerable by anyone who wants them, at the pattern named below. An earlier form of this paragraph opened `THE GATE RETURNED VERDICT: PASS WITH ZERO
+FINDINGS`, and a later gate then returned `BLOCK` with a finding AGAINST THIS VERY SENTENCE, in
+the only file `CLAUDE.md` permits to state a phase verdict. It is DELETED rather than corrected to
+the newer verdict, because correcting it would have reproduced the identical defect one round
+later; the same shape was a blocking finding on the 2026-09-04 pass and is recorded in this file.
+THE VERDICTS LIVE WHERE THEY CANNOT ROT: `Tools/architect/gate_reports/2026-09-06-unit-damage-alert*.md`
+-- the PATTERN and not the bare directory, which holds this project's every gate -- one persisted
+file per round, none overwriting another, each carrying its own tree's evidence inline. AND THIS
+ENTRY OWES A VERDICT AT COMMIT: stating none is honest only while the gate set is still growing;
+once it stops, an entry with no verdict UNDER-claims, and the last round's is the one to state.
+THE LAST ROUND RETURNED `VERDICT: PASS` WITH ZERO FINDINGS, over the tree at the pattern above,
+and THAT IS THIS PASS'S VERDICT. It is stated here because the gate set stopped growing: the code
+was clean from the FIRST round and every finding after it was against RECORD PROSE, twice against
+this very paragraph, which is the loop the deletion above exists to end. If the tree moves again
+before it is committed, this sentence is stale and the pattern above is the authority.
+WHAT THE GATES CHANGED IS DURABLE AND IS RECORDED HERE; WHAT THEY CONCLUDED IS NOT. The three
+hazards this pass was most at risk from -- a direct `SetActorTickEnabled(false)` in a `Finish*`,
+an edited `ApplyUnitView`, and the tour flash nested inside `FindSoundDirector()`'s `if` -- were
+measured clear on every round. Acted on: (a) `StratSoundCues.cpp`'s standing "THERE IS NOT ONE
+ARITHMETIC OPERATION IN IT" claim was LITERALLY FALSE at `bEmitted`'s `+ 1`, and this pass had
+re-underwritten it with a paragraph asserting a re-check that had not caught it. It now reads
+"THIS FILE COMPUTES NO MAGNITUDE ABOUT GAME STATE", with the array bound exempted as a
+compile-time constant on `StratTransientReceipts.cpp`'s own precedent, rather than narrowed to a
+list of survivors of an operator census. NO SITE COUNT IS STATED HERE: the census was collected
+first by a wording grep and then by a subject grep, the second found a site the first could not
+see because it PARAPHRASED the claim across a comment line break, and `engine.md` carries both the
+running count and -- the transferable half -- the statement that a wording grep cannot see a
+paraphrase, so the census is bounded by its collection method rather than exhaustive. A third
+method by a third reader returned no further site. (b) One OVERCLAIMING clause name was corrected:
+`DamageFlashArmsAShakeAndAnOverlay` asserted the shake had NOT moved. (c) `CancelDamageFlash` is
+public with no production caller, unlike its cited precedent `CancelRouteSlide`; recorded rather
+than changed.
+ONE BUILD DEBT WAS TAKEN AND DISCHARGED, AND IT IS RECORDED BECAUSE THE LANE'S REFUSAL WAS RIGHT.
+A prose round could not build -- the editor was open, `Unable to build while Live Coding is
+active` -- and `strat-gameplay-engineer` REPORTED AND STOPPED rather than working around it,
+offering the comment-stripped diff as evidence about the BYTES while stating plainly that it is
+not evidence about the COMPILER. The editor later closed, the `coordinator` ran the build
+(`Result: Succeeded`, one translation unit, zero warnings), and the engineer stamped its own debt
+bullet as discharged with the acting attributed to this seat and the writing to itself.
+AND THE PROSE CORRECTION EXPOSED A REAL LATENT DEFECT, WHICH IS THE BEST THING THAT CAME OUT OF
+THIS PASS AND WAS NOT PART OF IT. `bEmitted`'s bound is `MatchEnded + 1`, so it is correct ONLY
+while `MatchEnded` is the last enumerator; a cue appended after it makes `Emit` write OUT OF
+BOUNDS. Nothing pinned that. `Stratocracy.StratUI.GATE-AUDIO.MatchEndedIsTheLastSoundCue` now
+does, and it pins the RELATIONSHIP rather than the magnitude -- it writes no number at all, walks
+the reflected `UEnum`, and so stays green when a cue is inserted BEFORE `MatchEnded` (correct, the
+array grows with it) and reddens only on the dangerous append. It was verified to redden by an
+IN-LANE mutation of the clause's own comparison, which named the offending enumerators; a real
+appended-enumerator mutant is unreachable without editing production and is recorded as not done.
+A `static_assert` against a `Count` sentinel is the STRICTLY STRONGER form -- a compile error at
+the site, no suite run required -- and is NOT WRITTEN. It is production code, the test lane
+correctly refused to write it, and it is open.
+CARRIED DEBT, CONTENT, OPEN AND THE LARGEST. `DamageFlashMaterial` ships UNSET and `BP_StratUnit`
+carries no tuned values, so THE FEATURE IS INVISIBLE IN PIE AND NO HUMAN HAS SEEN IT. Everything
+green above is arming and retirement; not one clause in this tree pins amplitude, frequency, the
+X/Y ratio, decay shape, smoothness or redness, because `AStratUnitActor::Tick` never runs headless
+and a test-only advance seam was asked about and REFUSED on 2026-09-02. DISCHARGED WHEN a human
+at the keyboard reports seeing a damaged unit flash and shake. Whoever authors `M_UnitDamageFlash`
+must confirm it compiles as an OVERLAY pass -- overlay materials carry shading-model constraints
+and no headless instrument here can report them.
+CARRIED DEBT, INSTRUMENT, OPEN. (a) The tour path flashes the DEFENDER ONLY; a counterattack takes
+HP off the ATTACKER (`StratBridge.cpp:575`) and no `FStratAiPlaybackStep` field reports it, so
+that half is missed while a tour runs. The whole-hand-over diff catches it on the no-tour path,
+which is every headless fixture. (b) `DamageFlashRetiresToExactlyZero` asserts exact zero AFTER a
+cancel but cannot establish `Shake` was displaced BEFORE it, because `TickDamageFlash` is its only
+non-zero writer. (c) Swapping the decide and the re-mark inside `ApplyView` kills the feature
+SILENTLY and no clause in either module reaches it. The lane declined to add a seam for (b) or (c)
+rather than adding one out of lane, which is the right call and leaves both open.
+THE MARKER RE-PARENT IS UNMEASURED AGAINST THE BLUEPRINT. The build produced no warning, and that
+is NOT evidence about reinstancing -- the editor was never opened in this pass. Whether the three
+markers still sit at their recorded offsets on `BP_StratUnit` needs an editor session.)_
+
 _Last run 2026-09-06 (THE GAME HAS A VOICE, AND THE THING WORTH READING IS THAT THE ONE MUTANT
 THAT SURVIVED DID NOT REVEAL A WEAK MUTANT BUT A CONTROL SATISFIED THROUGH THE WRONG CHANNEL --
 `AdvanceAiPlaybackOneStep` emits from TWO call sites and only one is behind the slide gate, so a
@@ -25,9 +164,15 @@ lanes, no executable byte moved -- and `strat_banner_sweep.py`'s BANNER DATE FRE
 compares this date against the newest entry date in the other record files, which is now
 2026-09-06 in `tests.md`. So the date tracks the record's last write and the headline tracks
 the last behavioural change; they are different questions and this banner answers both.
-The suite is **435/435**, every entry Success, zero failed, zero notRun, zero
+[STAMPED 2026-09-06 BY THE DAMAGE-ALERT PASS ABOVE: this read **435/435** and was true of the
+tree the audio milestone closed on. THE LIVE FIGURE IS 445/445 AND IS STATED ONCE, IN THE BANNER
+ABOVE THIS ONE. Ten clauses were added and nothing was removed or changed state.]
+The suite was **435/435**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings.
-THE COUNT MOVED 389 -> 435 ACROSS THIS MILESTONE, all of it added and none removed. The
+THE COUNT MOVED 389 -> 435 ACROSS THIS MILESTONE, all of it added and none removed. [STAMPED
+2026-09-06: that arithmetic is this milestone's own and it does not track later runs -- the
+damage-alert pass above carried it on to 445, by addition, for a reason that has nothing to do
+with audio.] The
 per-phase breakdown that stood here is DELETED rather than maintained: it carried seven figures,
 each of which had to be corrected as a later phase falsified it, and the clause files it named
 are in the tree for anyone who wants the split.
@@ -37,7 +182,10 @@ and checked the additions sum to it. NO FIGURE IS RESTATED IN THIS SENTENCE, DEL
 earlier form of it carried three, and they went stale while the count sentence above them was
 being corrected in the same edit -- and the sweep could not see it, because it collects
 `N/N`-shaped claims and every figure here was a bare integer.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-04.29.34`.
+[STAMPED 2026-09-06 BY THE DAMAGE-ALERT PASS: that run's report was `reportCreatedOn
+2026.09.06-04.29.34` and the export path is one file, so it has been overwritten and no reader
+can open it. THE LIVE FIGURE'S REPORT IS NAMED IN THE BANNER ABOVE THIS ONE.]
+That figure's report was `reportCreatedOn 2026.09.06-04.29.34`.
 A COMMENT-ONLY EDIT TO A TEST-DEFINING `.cpp` OWES A SUITE RE-RUN, AND THIS MILESTONE PAID IT
 TWICE -- stated as a rule rather than as the history of which report superseded which, because
 that history has rotted twice already in this file. `strat_banner_sweep.py`'s REPORT IDENTITY

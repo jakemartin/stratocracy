@@ -115,9 +115,35 @@ void UStratSoundDirector::EmitCue(const EStratSoundCue Cue,
 		else if (MinGap > 0.0f && LastAt != nullptr && (Now - *LastAt) < MinGap)
 		{
 			// THE ONE SUBTRACTION IN THIS FILE, AND IT IS OVER A WALL CLOCK RATHER THAN OVER
-			// ANYTHING THE RULES MODULE OWNS. `StratSoundCues.cpp` states that it performs no
-			// arithmetic at all; this is the other side of that boundary, where seconds are the
-			// only quantity and no rules answer is being re-derived.
+			// ANYTHING THE RULES MODULE OWNS. `StratSoundCues.cpp` states that it COMPUTES NO
+			// MAGNITUDE ABOUT GAME STATE; this is the other side of that boundary, where seconds
+			// are the only quantity and no rules answer is being re-derived.
+			//
+			//   CORRECTED 2026-09-06 AT THE WORDS ABOVE. This sentence cited that file as
+			//   stating "that it performs no arithmetic at all" until this date. That was a
+			//   PARAPHRASE of the neighbouring file's older wording -- "THERE IS NOT ONE
+			//   ARITHMETIC OPERATION IN IT" -- which was false of the file it described: see
+			//   `StratSoundCues.cpp`'s opening block, which carries the retraction and the one
+			//   bounded exemption (a compile-time array bound over an enum's last member). The
+			//   boundary argument around it is UNAFFECTED and no code moved: what the
+			//   neighbouring file forbids is every magnitude about the board, which is the whole
+			//   of what this comment leans on, and `Now - *LastAt` is over `GetTimeSeconds` and
+			//   is not one.
+			//
+			//   AND WHY THIS SITE OUTLIVED THE CORRECTION THAT REACHED THE OTHERS, recorded
+			//   because it is the reusable part: the sweep that found the rest grepped the
+			//   RETRACTED CLAIM'S OWN WORDING, and this site paraphrased the claim instead of
+			//   quoting it, sharing not one token with it. A wording-shaped grep cannot see a
+			//   paraphrase. What found it is a grep for the SUBJECT -- `StratSoundCues` in any
+			//   file that is not itself -- read site by site.
+			//
+			//   THE SENTENCE THIS CORRECTION LEAVES STANDING IS NARROWER THAN IT LOOKS, said
+			//   here so nobody repeats the neighbouring file's mistake in this one. It claims
+			//   the one SUBTRACTION, not the one arithmetic operation: `ApplyVolumes` sums three
+			//   0-or-1 lambda returns into `Record.ChannelsApplied` with two `+`s. Those are a
+			//   count of channels overridden, not a quantity about the board, and they leave the
+			//   subtraction claim exactly true. Measured over the comment-stripped file:
+			//   `-` appears on one line, this one.
 			Record.Disposition = EStratSoundDisposition::SuppressedByCooldown;
 		}
 		else

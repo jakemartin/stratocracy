@@ -306,6 +306,64 @@ STRATUI_API void StratDecideSoundCues(const FStratSoundMark& Mark,
                                       TArray<FStratSoundEmission>& Out);
 
 /**
+ * Fills `OutUnitIds` with EVERY unit whose HP is strictly lower in `Model` than it was at
+ * `Mark`. The board-side damage alert's world-free half.
+ *
+ * IT IS A SECOND READER OF THE EXISTING MARK AND ADDS NO SECOND MARK, WHICH IS THE WHOLE
+ * DESIGN. A damage diff carrying a private mark of its own would have to re-derive the seeding
+ * rule, would have to be reset at both of the two places `FStratSoundMark` names, and would have
+ * to be re-marked in the same order at the same call site -- and the first time any of those
+ * three drifted, the flash and the `UnitAttacked` cue would disagree about which units were hit,
+ * silently. Reading the mark the audio decider already maintains, this function INHERITS all
+ * three and is structurally incapable of that disagreement: same mark, same predicate, same
+ * refresh.
+ *
+ * IT REPORTS EVERY DAMAGED UNIT AND THAT IS WHY IT IS NOT `StratDecideSoundCues` WITH A FILTER.
+ * That function collapses to AT MOST ONE EMISSION PER CUE KIND -- the header block argues at
+ * length why ten overlapping copies of one hit sound is a click rather than information -- so a
+ * hand-over damaging three units yields one `UnitAttacked`. For AUDIO that is the specification.
+ * For a FLASH it would mean two of three damaged units silently do not flash, with a green
+ * build, which is the anti-cacophony rule applied to a surface it was never argued for. The two
+ * therefore share a predicate and not an output.
+ *
+ * AN UNSEEDED MARK REPORTS NOTHING, on `FStratSoundMark`'s own first-observation rule and not on
+ * a weaker restatement of it. The first model a match applies has no predecessor, so no unit's
+ * HP can be lower than it was.
+ *
+ * THE OUTPUT IS AN ID AND THERE IS NO SUBTRACTION ANYWHERE, WHICH IS SAID EXPLICITLY SO A LATER
+ * READER DOES NOT THINK THE FILE'S STANDING CLAIM WAS QUIETLY DROPPED. `StratSoundCues.cpp`
+ * opens by claiming IT COMPUTES NO MAGNITUDE ABOUT GAME STATE, and this function is written to
+ * keep that true: it compares `Hp < Hp` and appends an id. (This sentence quoted that claim in
+ * its earlier wording, "THERE IS NOT ONE ARITHMETIC OPERATION IN IT", until 2026-09-06. That
+ * wording was false -- the `.cpp` sizes a `bool[]` with a `+ 1` over an enum's last member -- and
+ * the retraction, together with the one exemption that survives it, is stated in that file's own
+ * opening block. Nothing about THIS function changed, and no executable byte moved.) An HP DELTA
+ * -- which is what a damage
+ * NUMBER on screen would need -- is exactly the second subtraction
+ * `StratTransientReceipts.cpp`'s own claim already forbids, and it is not here and is not owed.
+ * A caller wanting an amount wants `FStratBridge::RepairsAtTurnOpen`'s shape, from the bridge.
+ *
+ * IT NAMES NO ATTACKER AND LABELS NO CAUSE, inheriting `EStratSoundCue::UnitAttacked`'s stated
+ * limit rather than re-learning it: the attacker lives in `FStratCombatOutcome`, which
+ * `StratBridge.h` says the bridge does not retain. A unit whose HP fell for any other reason is
+ * reported identically, and whatever draws this must not claim otherwise.
+ *
+ * A KILLED UNIT IS NEVER REPORTED, AND THAT IS CORRECT RATHER THAN A GAP. A unit that died is
+ * absent from `Model.Units` entirely -- `ApplyView`'s destroy loop is the authority for that
+ * array being every LIVING unit -- so it has no HP to be lower and its actor has already been
+ * destroyed. There is nothing left to flash.
+ *
+ * OVERWRITES `OutUnitIds` ENTIRELY, INCLUDING EMPTYING IT, on `StratDecideSoundCues`' discipline:
+ * the output describes THIS refresh and never accumulates.
+ *
+ * IT ASKS THE RULES MODULE NOTHING. No `FStratBridge` in the signature or the includes; this is
+ * a statement about two projections.
+ */
+STRATUI_API void StratDecideDamagedUnits(const FStratSoundMark& Mark,
+                                         const FStratViewModel& Model,
+                                         TArray<int32>& OutUnitIds);
+
+/**
  * The one authority for what a legal volume is: `[0, 1]`, and NaN reads as silence.
  *
  * WHY A VOLUME RULE LIVES IN THE CUE-VOCABULARY HEADER AND NOT BESIDE EITHER OF ITS TWO

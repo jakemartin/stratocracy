@@ -57,23 +57,39 @@ AStratUnitActor::AStratUnitActor()
 	Body->SetCanEverAffectNavigation(false);
 	Body->SetGenerateOverlapEvents(false);
 
-	// §2.11.6-B's turn-1a marker. Attached to `Body` and NOT to `UnitRoot`, so it follows the
+	// THE DAMAGE SHAKE'S OWN TRANSFORM, ADDED 2026-09-06, AND IT IS A SECOND COMPONENT RATHER
+	// THAN A SECOND TERM SUMMED INTO `Body` FOR ONE RECORDED REASON: `FinishTween` writes
+	// `TweenRestOffset` VERBATIM, and "exactly zero at rest" -- which two clauses assert against
+	// a measured ~1e-14 round-trip residue -- would otherwise depend on BOTH clocks having
+	// retired. See the declaration, which states the rejected alternative in full. Empty, no
+	// mesh, no collision, nothing drawn.
+	Shake = CreateDefaultSubobject<USceneComponent>(TEXT("Shake"));
+	Shake->SetupAttachment(Body);
+
+	// §2.11.6-B's turn-1a marker. Attached BELOW `Body` and NOT to `UnitRoot`, so it follows the
 	// unit with no second placement path -- the same reason `ApplyUnitView` takes the world
 	// location rather than computing one.
 	//
 	// THAT CHOICE STOPPED BEING FREE ON 2026-09-02 AND IS NOW LOAD-BEARING, so it is stated
 	// here rather than left as the shape it happens to have. `Body` is no longer the root: it
-	// carries the move tween's decaying visual offset. A marker on `Body` therefore follows
+	// carries the move tween's decaying visual offset. A marker under `Body` therefore follows
 	// THE VISUAL, arriving with the unit; a marker on `UnitRoot` would follow THE DESTINATION
-	// and would sit at the far hex while its unit was still sliding towards it. All three
-	// markers stay on `Body` for that reason, and moving any of them up to the root is a
-	// visible defect with a green build.
+	// and would sit at the far hex while its unit was still sliding towards it. Moving any of
+	// the three up to the root is a visible defect with a green build.
+	//
+	// [AMENDED 2026-09-06 BY THE DAMAGE SHAKE. WRITTEN FLAT BECAUSE THE SENTENCE BELOW NAMED A
+	// PARENT AND A READER LOOKING FOR THE HIERARCHY GREPS IT.] It said:
+	// RETRACTED> "All three markers stay on `Body` for that reason."
+	// ALL THREE MARKERS NOW ATTACH TO `Shake`, WHICH IS A CHILD OF `Body`, SO THE REASON ABOVE
+	// IS SATISFIED TRANSITIVELY AND UNWEAKENED -- they still ride the move tween's offset,
+	// because `Shake` rides it. What the re-parent buys is the identical argument one level
+	// down: a shaken unit whose three markers hung motionless beside it would look broken.
 	//
 	// HIDDEN BY DEFAULT, which is the safe direction: a unit that is never observed is a unit
 	// with no marker, where a marker defaulting to visible would put one on all ten units for
 	// the whole of any path that spawns an actor without applying a view.
 	GuidedMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GuidedMarker"));
-	GuidedMarker->SetupAttachment(Body);
+	GuidedMarker->SetupAttachment(Shake);
 	GuidedMarker->SetVisibility(false);
 
 	// THE COMPONENT THE CONSTRUCTOR COMMENT ABOVE ANTICIPATED. "Clearing the actor-level
@@ -87,9 +103,9 @@ AStratUnitActor::AStratUnitActor()
 	GuidedMarker->SetCastShadow(false);
 
 	// §2.11.2's TWO on-map markers, added 2026-08-29. Constructed exactly like `GuidedMarker`
-	// above -- attached to `Body` so they follow the unit with no second placement path AND so
-	// they ride the move tween's visual offset rather than the destination, which is the
-	// paragraph above -- and HIDDEN BY DEFAULT for that component's stated reason: a unit
+	// above -- attached to `Shake`, under `Body`, so they follow the unit with no second
+	// placement path AND so they ride both the move tween's visual offset and the damage shake
+	// rather than the destination, which is the paragraph above -- and HIDDEN BY DEFAULT for that component's stated reason: a unit
 	// that is never observed is a unit with no marker, where defaulting to visible would put
 	// an `H` on all ten units for the whole of any path that spawns an actor without applying
 	// a view.
@@ -100,7 +116,7 @@ AStratUnitActor::AStratUnitActor()
 	// component added to this actor from quietly reintroducing a blocker". These are two more
 	// such components and they get the settings explicitly.
 	FlagMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FlagMarker"));
-	FlagMarker->SetupAttachment(Body);
+	FlagMarker->SetupAttachment(Shake);
 	FlagMarker->SetVisibility(false);
 	FlagMarker->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	FlagMarker->SetCollisionProfileName(TEXT("NoCollision"));
@@ -109,7 +125,7 @@ AStratUnitActor::AStratUnitActor()
 	FlagMarker->SetCastShadow(false);
 
 	UnactedPip = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("UnactedPip"));
-	UnactedPip->SetupAttachment(Body);
+	UnactedPip->SetupAttachment(Shake);
 	UnactedPip->SetVisibility(false);
 	UnactedPip->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	UnactedPip->SetCollisionProfileName(TEXT("NoCollision"));
@@ -187,6 +203,27 @@ void AStratUnitActor::BeginPlay()
 
 	ConfigureMarker(UnactedPip, UnactedPipMesh, UnactedPipMaterial, UnactedPipOffset,
 		TEXT("unacted pip"));
+
+	// THE DAMAGE FLASH'S MATERIAL, REPORTED ON THE MARKERS' OWN TERMS AND FOR THEIR RECORDED
+	// REASON. An unconfigured flash material and a unit that was simply never hit are
+	// indistinguishable on screen -- `IsDamageFlashActive` reports a CLOCK, so it answers true
+	// for a flashing unit with no material assigned and draws nothing -- and this LOG is the
+	// only place the project can tell the two apart. Exactly the discriminator
+	// `ConfigureMarker`'s block records for the three markers.
+	//
+	// GATED ON `DamageFlashSeconds > 0` SO THE SHIPPED DEFAULT IS SILENT. At the C++ default
+	// nothing arms, so an unset material is not a gap: there is no flash it could have coloured.
+	// Logging there would put a line on every unit actor in every fixture reporting the absence
+	// of a feature that is switched off, which is noise that trains a reader to skip the log.
+	//
+	// AT Log AND NOT Warning, for the markers' reason: a content-lane configuration gap is not a
+	// failure of the match, and the shake still happens.
+	if (DamageFlashSeconds > 0.0f && DamageFlashMaterial == nullptr)
+	{
+		UE_LOG(LogStratPlay, Log,
+			TEXT("Unit actor '%s' has a damage flash armed but no DamageFlashMaterial set; it will shake without turning red."),
+			*GetName());
+	}
 }
 
 namespace
@@ -798,6 +835,19 @@ void AStratUnitActor::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	// TWO CLOCKS, TWO CALLS, AND NOTHING ELSE IN THIS FUNCTION. The tween's body was moved into
+	// `TickMoveTween` VERBATIM rather than left here with the flash appended below it, and the
+	// reason is that it carries THREE EARLY `return`s -- a null `Body`, a `MoveTweenSeconds`
+	// written to zero mid-slide, a degenerate polyline -- plus a fourth on completion. Any one
+	// of them would have skipped the flash on the frames it fired, silently, with a green build.
+	// Neither call knows about the other; the only thing they share is the tick flag, and
+	// `UpdateTickEnabled` is the one place that is arbitrated.
+	TickMoveTween(DeltaSeconds);
+	TickDamageFlash(DeltaSeconds);
+}
+
+void AStratUnitActor::TickMoveTween(float DeltaSeconds)
+{
 	// A NULL BODY OR A NON-POSITIVE DURATION ENDS THE TWEEN RATHER THAN SUSPENDING IT. The
 	// second case is reachable: a Blueprint can write `MoveTweenSeconds` to zero while a slide
 	// is in flight, and the only wrong answer is to leave `Body` displaced forever with no
@@ -940,7 +990,181 @@ void AStratUnitActor::FinishTween()
 	// AND THE TICK GOES BACK OFF, which is what keeps the class's stated posture -- reconcile
 	// when the model changed, never poll -- true of the steady state and not merely of the
 	// design intent.
-	SetActorTickEnabled(false);
+	//
+	// [AMENDED 2026-09-06 BY THE DAMAGE FLASH, AND IT IS THE ONLY EDIT THIS FUNCTION RECEIVED.]
+	// It read `SetActorTickEnabled(false)`. That was correct while one feature wanted the tick
+	// flag and became a DEFECT the moment two did: a tween retiring while a flash was in flight
+	// would have frozen the flash red and displaced, and the mirror -- a flash retiring
+	// mid-slide -- would have frozen a unit halfway between two hexes forever, with a green
+	// build and no log. `UpdateTickEnabled` asks both clocks; see its block, which records that
+	// it is now the ONLY caller of `SetActorTickEnabled(false)` in this class.
+	UpdateTickEnabled();
+}
+
+void AStratUnitActor::PlayDamageFlash()
+{
+	// THE SHIPPED DEFAULT ARMS NOTHING AND WRITES NOTHING, WHICH IS WHAT MAKES THE TREE
+	// BEHAVIOURALLY IDENTICAL TO ONE WITHOUT THIS FEATURE. `DamageFlashSeconds <= 0` is the C++
+	// default and the configuration every automation fixture runs at, so every call from
+	// `UStratMatchSubsystem` returns here having touched no clock, no tick flag, no material and
+	// no transform -- `PlayRouteSlide`'s own "nothing is written on any refusal path" property,
+	// held for the same reason. `<= 0` and not `== 0`: a negative duration is a mis-authored
+	// Blueprint default and "no flash" is the safe reading.
+	//
+	// A NULL `Shake` REFUSES TOO, because a Blueprint can fail to construct a component and a
+	// match should not end because one did -- `ConfigureMarker`'s stated tolerance. Refused here
+	// rather than guarded per-write so there is one answer to "was a flash armed".
+	if (Shake == nullptr || DamageFlashSeconds <= 0.0f)
+	{
+		return;
+	}
+
+	// THE CLOCK IS RESTARTED AND THE AMPLITUDE DOES NOT STACK. A second hit inside the window
+	// writes this back to a fresh tick; there is one clock and one amplitude expression, so
+	// there is nothing that could accumulate. `KINDA_SMALL_NUMBER` rather than a literal zero
+	// because `IsDamageFlashActive` is `> 0.0f` and a flash armed at exactly zero would report
+	// itself inactive for one frame -- a state that is true of nothing and would make the
+	// accessor lie about the instant the feature is most likely to be observed.
+	DamageFlashElapsed = KINDA_SMALL_NUMBER;
+
+	// THE OVERLAY CHANNEL AND NOT SLOT 0, WHICH IS WHY `ApplyUnitView` NEEDED NO EDIT AND NO
+	// `IsDamageFlashActive()` GUARD. That function writes `SetMaterial(0, ...)` on every refresh
+	// and a refresh happens whenever the mouse crosses a hex boundary, so a slot-0 swap would be
+	// cancelled by a hover at random. A NULL MATERIAL IS TOLERATED and writes nothing: the shake
+	// still happens and `BeginPlay` has already said so once. See `DamageFlashMaterial`.
+	if (Body != nullptr && DamageFlashMaterial != nullptr)
+	{
+		Body->SetOverlayMaterial(DamageFlashMaterial);
+	}
+
+	// ARMED THROUGH THE DIRECT SETTER RATHER THAN THE ARBITER, on `UpdateTickEnabled`'s own
+	// recorded split: turning a tick ON that another clock also wants is idempotent and cannot
+	// strand anything, and only the OFF direction can. `PlayRouteSlide` and `ApplyUnitView` arm
+	// it the same way.
+	SetActorTickEnabled(true);
+}
+
+void AStratUnitActor::CancelDamageFlash()
+{
+	// IT *IS* THE RETIREMENT PATH, MADE PUBLIC, AND NOT A SECOND COPY OF IT. See the
+	// declaration: `Tick` never runs headless and a test-only advance seam has already been
+	// refused in this project, so this is how a clause reaches exact-zero retirement -- the same
+	// permission `CancelRouteSlide` takes for the tween, with the same consequence that a clause
+	// and the running game exercise the same lines.
+	FinishDamageFlash();
+}
+
+void AStratUnitActor::TickDamageFlash(float DeltaSeconds)
+{
+	// NOTHING RUNNING IS THE COMMON CASE AND COSTS ONE COMPARISON. The actor may be ticking for
+	// the move tween alone, in which case this function must do nothing at all -- and in
+	// particular must NOT retire, because `FinishDamageFlash` writes `Shake` and would then be
+	// writing a transform on every frame of every slide for no reason.
+	if (DamageFlashElapsed <= 0.0f)
+	{
+		return;
+	}
+
+	// A NULL `Shake` OR A NON-POSITIVE DURATION RETIRES RATHER THAN SUSPENDING, WHICH IS
+	// `TickMoveTween`'S OWN RULE AND ITS REASON VERBATIM. The second case is reachable: a
+	// Blueprint can write `DamageFlashSeconds` to zero while a flash is in flight, and the only
+	// wrong answer is to leave the unit red and displaced with no clock to bring it home. There
+	// is no division by zero on any path out of here.
+	if (Shake == nullptr || DamageFlashSeconds <= 0.0f)
+	{
+		FinishDamageFlash();
+		return;
+	}
+
+	DamageFlashElapsed += DeltaSeconds;
+
+	const double Alpha = FMath::Clamp(
+		static_cast<double>(DamageFlashElapsed) / static_cast<double>(DamageFlashSeconds), 0.0, 1.0);
+
+	if (Alpha >= 1.0)
+	{
+		FinishDamageFlash();
+		return;
+	}
+
+	// AMPLITUDE DECAYS LINEARLY TO ZERO, so the displacement CONVERGES to the exact zero that
+	// retirement then writes -- the write is a confirmation rather than a correction, which is
+	// what keeps `FinishDamageFlash`'s "written, not approached" claim from being a repair of
+	// this line's arithmetic.
+	const double Amplitude = static_cast<double>(DamageShakeAmplitude) * (1.0 - Alpha);
+
+	// A SIN/COS PAIR RATHER THAN TWO INDEPENDENT OSCILLATORS OR A NOISE FUNCTION. It gives
+	// circular X/Y jitter with a CONTINUOUS DERIVATIVE, which is the property
+	// `MoveTweenEaseFraction` argues for the trapezoid and matters here for the same reason: a
+	// flash can be restarted mid-flight by a second hit, and at phase zero this profile leaves
+	// the picture at `(A, 0)` moving smoothly rather than jumping. A noise function would also
+	// be a source of numbers no clause could predict.
+	const double Phase = 2.0 * UE_DOUBLE_PI * static_cast<double>(DamageShakeFrequency)
+		* static_cast<double>(DamageFlashElapsed);
+
+	// Z IS A LITERAL ZERO AND NO PROPERTY CAN MAKE IT OTHERWISE. See `DamageShakeAmplitude`: the
+	// user asked for X and Y, and `FlagMarkerOffset` derives that the camera's screen-up is
+	// `0.866*x + 0.5*z`, so a Z term would read as a hop and would change the depth sort against
+	// the unit on the hex behind.
+	Shake->SetRelativeLocation(FVector(Amplitude * FMath::Sin(Phase),
+	                                   Amplitude * FMath::Cos(Phase),
+	                                   0.0));
+}
+
+void AStratUnitActor::FinishDamageFlash()
+{
+	// THE CLOCK FIRST AND UNCONDITIONALLY, so no guard below can leave a flash whose effects
+	// were cleared and whose clock still reports it running. `StratSoundMarkFromView`'s ordering
+	// discipline, applied to a retirement instead of a seed.
+	DamageFlashElapsed = 0.0f;
+
+	// `nullptr` IS A CONSTANT AND THERE IS NOTHING TO RESTORE *TO*, WHICH IS HALF THE REASON THE
+	// OVERLAY CHANNEL WAS CHOSEN. A slot-0 swap would have needed a previous-material member on
+	// this actor -- an object the header block's exception paragraph would have had to be
+	// widened for -- and would have had to survive an `ApplyUnitView` that rewrites slot 0. See
+	// `DamageFlashMaterial`.
+	if (Body != nullptr)
+	{
+		Body->SetOverlayMaterial(nullptr);
+	}
+
+	if (Shake != nullptr)
+	{
+		// EXACTLY ZERO, WRITTEN RATHER THAN APPROACHED, THROUGH THE SAME TWO CALLS `FinishTween`
+		// USES AND FOR THE SAME MEASURED REASON -- RESTATED HERE RATHER THAN CROSS-REFERENCED,
+		// because a reader arriving at this function must not have to find that one to learn why
+		// the obvious write is wrong. **MEASURED 2026-09-02, an engine behaviour and not a
+		// rounding opinion:** `USceneComponent::SetRelativeLocation` is a WORLD-SPACE move under
+		// the hood -- it converts the requested relative location to a world location, calls
+		// `MoveComponent`, and converts the result BACK through the parent's inverse -- so what
+		// it stores is a ROUND TRIP. With a probe in `CancelRouteSlide`, asking for
+		// `FVector::ZeroVector` stored an exact zero for unit 4 and `Y=-0.000` for unit 13 in the
+		// same call on the same line, differing only in the board coordinates of the parent. The
+		// residue is ~1e-14 uu, invisible on a screen and NOT invisible to `IsZero()`.
+		// `SetRelativeLocation_Direct` stores the field verbatim and `UpdateComponentToWorld`
+		// recomputes the WORLD transform FROM it -- the correct direction, no inverse, no round
+		// trip. Safe on this component for a reason specific to it: `Shake` carries no mesh and
+		// no collision at all, so there is no sweep, no overlap and no physics state the move
+		// path would have been responsible for.
+		Shake->SetRelativeLocation_Direct(FVector::ZeroVector);
+		Shake->UpdateComponentToWorld();
+	}
+
+	// AND THE TICK IS RE-ARBITRATED RATHER THAN SWITCHED OFF. A flash retiring while a move
+	// tween is in flight must NOT disable the tick -- that is the frozen-halfway-between-two-
+	// hexes defect `UpdateTickEnabled`'s block records, and it is the whole reason that function
+	// exists.
+	UpdateTickEnabled();
+}
+
+void AStratUnitActor::UpdateTickEnabled()
+{
+	// ONE EXPRESSION, ASKED OF BOTH CLOCKS, AND IT IS THE ONLY `SetActorTickEnabled(false)` IN
+	// THIS CLASS. `TweenOffsets` is the live array `TickMoveTween` walks and
+	// `DamageFlashElapsed` is the live clock `TickDamageFlash` advances -- neither is a cached
+	// count that could drift from the thing it describes, which is `GetTweenWaypointCount`'s
+	// stated discipline applied to a decision instead of to an accessor.
+	SetActorTickEnabled(TweenOffsets.Num() > 0 || DamageFlashElapsed > 0.0f);
 }
 
 bool AStratUnitActor::IsGuidedMarkerVisible() const

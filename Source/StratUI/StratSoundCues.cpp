@@ -1,24 +1,68 @@
 // THE STANDING CLAIM ABOUT THIS FILE, on `StratTransientReceipts.cpp`'s precedent and in the
-// same spirit: THERE IS NOT ONE ARITHMETIC OPERATION IN IT. No subtraction, no sum, no ratio,
-// no distance. Every decision below is an EQUALITY or an ORDER comparison between two readings
-// of the same field -- `Hex != Hex`, `Hp < Hp`, `(Turn, SideToMove) != (Turn, SideToMove)` --
-// and an id set membership. That is deliberate and it is what keeps this file out of
-// T-UI-03's way: a hex DISTANCE would be movement arithmetic standing in for a rules answer,
-// which is the substitution T-UI-02 exists to catch, and an HP DELTA would be the second
+// same spirit: THIS FILE COMPUTES NO MAGNITUDE ABOUT GAME STATE. Not an HP delta, not a
+// distance, not a count, not a ratio, not a scale -- nothing that could be a number about the
+// board is derived here. Every decision below is an EQUALITY or an ORDER comparison between two
+// readings of the same field -- `Hex != Hex`, `Hp < Hp`, `(Turn, SideToMove) != (Turn,
+// SideToMove)` -- and an id set membership. That is deliberate and it is what keeps this file
+// out of T-UI-03's way: a hex DISTANCE would be movement arithmetic standing in for a rules
+// answer, which is the substitution T-UI-02 exists to catch, and an HP DELTA would be the second
 // subtraction `StratTransientReceipts.cpp`'s own claim already forbids. Neither is here, and
 // neither is needed: a cue asks WHETHER something changed and never BY HOW MUCH.
+//
+// THE ONE `+` IN THIS FILE IS NAMED HERE RATHER THAN LEFT FOR A READER COUNTING OPERATORS TO
+// FIND AND READ AS A BROKEN CLAIM. `StratDecideSoundCues` sizes its one-per-kind gate with
+// `bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded) + 1]`. That is a COMPILE-TIME
+// ARRAY BOUND derived from the last member of an enum: both operands are constants the compiler
+// folds, neither is a quantity about the board, and the result reaches no caller and no screen
+// -- it sizes a `bool[]` and nothing else. It cannot be WRONG ABOUT GAME STATE, which is the
+// only thing the claim above defends; it can be wrong only about the enum, and rule 5's own
+// note below says how that is caught. This is exactly `StratTransientReceipts.cpp`'s "a copy, a
+// comparison, or an index bound" exemption, applied to the sibling claim that borrowed its
+// shape. It is an EXEMPTION AND NOT A LOOPHOLE: it licenses an index bound over compile-time
+// constants, and nothing else. An operator with a runtime operand read out of the view model is
+// still forbidden, and is what to check for if this file ever grows.
+//
+//   RETRACTED> "THERE IS NOT ONE ARITHMETIC OPERATION IN IT. No subtraction, no sum, no ratio,
+//   RETRACTED>  no distance."
+//   THAT WORDING WAS FALSE FROM THE DAY THE `bool[]` GATE WAS WRITTEN, and false on its own
+//   enumeration's terms rather than on a technicality: it named SUMS explicitly, and the `+ 1`
+//   sits twelve lines into the first function. It was then carried through the 2026-09-06
+//   damage-alert pass, whose `StratDecideDamagedUnits` block below said the claim had been
+//   RE-CHECKED -- a stronger false statement than the original, because it asserted an act of
+//   verification that had not caught what it covered. `strat-integration-reviewer` reported it
+//   as a non-gating observation on that pass; corrected here, in the same pass, over base
+//   commit `7e83295`.
+//   NOT ONE EXECUTABLE BYTE MOVED FOR THIS. `bEmitted`'s bound is correct and was not touched;
+//   the defect was in the prose, and only the prose was changed.
+//   AND THE REPLACEMENT IS NARROWER IN WORDING WITHOUT BEING WEAKER IN FORCE. It still forbids
+//   every delta, distance, count, ratio and scale -- which is the whole of what the old
+//   sentence was defending -- and it now says WHY those are the forbidden things, so the next
+//   reader who counts operators does not have to re-open this to find out.
 //
 // AND THE ONE-PER-KIND COLLAPSE IS A `bool[7]`, NOT A SORT, A DEDUPE OR A SET. The emissions
 // land in a documented order and the first of each kind wins; nothing is compared to anything
 // after it. That makes the header's rule 5 readable off ten lines of code rather than derived
 // from a container's semantics.
 //
-// THE CLAIM SURVIVED `StratClampVolume` JOINING THIS FILE, AND IT IS RE-CHECKED HERE RATHER THAN
-// ASSUMED TO STILL HOLD. That function is a volume rule rather than a cue rule -- its declaration
-// records why one authority for it has to sit below both `StratUI` and `StratPlay`, and why this
-// header, already included by `StratSoundBank.h`, is where it costs nothing. What matters for the
-// sentence above is that it contains NO ARITHMETIC EITHER: `FMath::IsNaN` and `FMath::Clamp` are
-// comparisons and a select, with no operand ever added to, subtracted from or scaled by another.
+// AND IT SURVIVED `StratDecideDamagedUnits` JOINING IT ON 2026-09-06, WHICH IS THE ONE MOST
+// LIKELY TO HAVE BROKEN IT AND SO IS NAMED HERE RATHER THAN LEFT TO A READER'S DIFF. That
+// function answers "which units were hurt" for the board-side damage flash, and the obvious
+// implementation of "hurt" is a DELTA -- `Before.Hp - Unit.Hp` -- which would be the second
+// subtraction `StratTransientReceipts.cpp`'s own claim forbids and would put an HP amount one
+// cast away from a drawing layer. It is not there: the predicate is `Unit.Hp < Before.Hp`,
+// character for character the one `StratDecideSoundCues` already makes, and what is appended is
+// an ID. A flash asks WHETHER and never BY HOW MUCH.
+//
+// THE CLAIM SURVIVED `StratClampVolume` JOINING THIS FILE. That function is a volume rule rather
+// than a cue rule -- its declaration records why one authority for it has to sit below both
+// `StratUI` and `StratPlay`, and why this header, already included by `StratSoundBank.h`, is where
+// it costs nothing. What matters for the sentence above is that it DERIVES NO MAGNITUDE EITHER:
+// `FMath::IsNaN` and `FMath::Clamp` are comparisons and a select, with no operand ever added to,
+// subtracted from or scaled by another. (This paragraph read "AND IT IS RE-CHECKED HERE RATHER
+// THAN ASSUMED TO STILL HOLD" until 2026-09-06. The check it described was real but was scoped to
+// the function it was about, so it could not have found -- and did not find -- the `+ 1` the
+// retraction above names. The re-check that DID cover the whole file is the one recorded in that
+// retraction, and this sentence no longer claims to be it.)
 // THE PERCENT CONVERSION -- the one place a volume IS multiplied -- IS DELIBERATELY NOT HERE; it
 // is in `StratOptionsWidget.cpp`, which owns the display side and says so in its own standing
 // claim. Two files, two claims, one arithmetic expression between them.
@@ -170,6 +214,83 @@ void StratDecideSoundCues(const FStratSoundMark& Mark,
 	}
 }
 
+void StratDecideDamagedUnits(const FStratSoundMark& Mark,
+                             const FStratViewModel& Model,
+                             TArray<int32>& OutUnitIds)
+{
+	// EMPTIED FIRST AND ON EVERY PATH, INCLUDING THE UNSEEDED ONE, on `StratDecideSoundCues`'
+	// discipline: the output describes THIS refresh and a caller handed the same array twice
+	// must not find the first call's answer still in it.
+	OutUnitIds.Reset();
+
+	// THE FILE'S STANDING CLAIM SURVIVES THIS FUNCTION. This function DERIVES NO MAGNITUDE ABOUT
+	// GAME STATE: the only comparison below is `Hp < Hp`, an ORDER comparison between two
+	// readings of the same field, and what is appended is an ID. No delta is computed, no count
+	// is kept, nothing is scaled. That is deliberate -- an HP delta is the subtraction
+	// `StratTransientReceipts.cpp`'s own claim forbids, and a flash asks WHETHER a unit was hurt
+	// and never BY HOW MUCH.
+	//
+	//   RETRACTED> "IT IS RE-CHECKED HERE RATHER THAN ASSUMED. There is still NOT ONE ARITHMETIC
+	//   RETRACTED>  OPERATION IN THIS FILE"
+	//   THAT SENTENCE CLAIMED A FILE-WIDE RE-CHECK AND PERFORMED A FUNCTION-LOCAL ONE, which is
+	//   why it is retracted rather than repaired in place: what it asserted was not that the
+	//   file was arithmetic-free but that someone had LOOKED, and the `+ 1` sizing `bEmitted`
+	//   twelve lines into `StratDecideSoundCues` had been in the file the whole time. An
+	//   assertion of verification that misses what it covers is worse than the bare claim it
+	//   was strengthening. The file-wide check was actually performed on 2026-09-06 over base
+	//   commit `7e83295`, it FOUND that `+ 1`, and its result is the exemption stated in the
+	//   file's opening block -- which is now the one place this file's claim and its single
+	//   exception are written down, so no function-local paragraph has to re-derive them.
+	//
+	// RULE 1, `StratDecideSoundCues`' OWN, INHERITED RATHER THAN RESTATED AS A NEW RULE. An
+	// unseeded mark has no predecessor, so no HP can be lower than it was. See `FStratSoundMark`.
+	if (!Mark.bSeeded)
+	{
+		return;
+	}
+
+	// THE JOIN IS BY ID AND NOT BY POSITION, for the reason `StratDecideSoundCues` states forty
+	// lines up: `FStratViewModel::Units` is rebuilt every refresh and one death shifts every
+	// entry after it, so index i in the mark and index i in the model are routinely different
+	// units. This is the identity `ApplyView` reconciles ACTORS on, which is exactly what makes
+	// the id this function returns usable as a `FindUnitActor` key.
+	TMap<int32, const FStratUnitSoundMark*> Marked;
+	Marked.Reserve(Mark.Units.Num());
+	for (const FStratUnitSoundMark& Entry : Mark.Units)
+	{
+		Marked.Add(Entry.UnitId, &Entry);
+	}
+
+	// ONE PASS OVER THE MODEL, IN MODEL ORDER, AND EVERY QUALIFYING UNIT IS REPORTED. There is
+	// no one-per-kind gate here and the omission is the specification -- see the declaration: a
+	// hand-over damaging three units must flash three units, where audio deliberately sounds
+	// one.
+	for (const FStratUnitView& Unit : Model.Units)
+	{
+		const FStratUnitSoundMark* const* const Found = Marked.Find(Unit.UnitId);
+		if (Found == nullptr || *Found == nullptr)
+		{
+			// AN ID IN THE MODEL AND NOT IN THE MARK IS A UNIT THAT WAS JUST BUILT. It has no
+			// previous HP, so it cannot have lost any, and a freshly delivered unit flashing red
+			// would be the same wrong-sound-at-the-right-moment failure `FStratSoundMark`'s
+			// seeding rule exists against.
+			continue;
+		}
+
+		const FStratUnitSoundMark& Before = **Found;
+
+		// STRICTLY LOWER, AND `<` RATHER THAN `!=` IS THE WHOLE PREDICATE. HP falls under Sec 2.6
+		// combat, RISES under Sec 2.7 repair, and arrives fresh at `hpMax` on a Sec 2.7 spawn, so
+		// only the FALL has exactly one cause. This is character-for-character the comparison
+		// `StratDecideSoundCues` makes for `UnitAttacked`, which is what makes the flash and the
+		// cue structurally unable to disagree about which units were hit.
+		if (Unit.Hp < Before.Hp)
+		{
+			OutUnitIds.Add(Unit.UnitId);
+		}
+	}
+}
+
 float StratClampVolume(const float Volume)
 {
 	// NaN FIRST, BECAUSE THE CLAMP CANNOT SEE IT. `FMath::Clamp` is two comparisons, and every
@@ -188,7 +309,11 @@ float StratClampVolume(const float Volume)
 	// Comparisons against an infinity are well defined, so the clamp below answers `+INF -> 1`
 	// and `-INF -> 0` correctly on its own. Only the NaN needed a hand.
 
-	// THE ONE ARITHMETIC-FREE RULE IN THIS FILE, AND IT IS DELIBERATELY NOT A SCALE. There is
+	// THIS RULE IS A RANGE CLAMP AND IS DELIBERATELY NOT A SCALE. (It read "THE ONE
+	// ARITHMETIC-FREE RULE IN THIS FILE" until 2026-09-06, which was a third form of the
+	// file-wide claim the opening block retracts, and the worse one for reading as if the other
+	// rules in the file were not: they are, on the same terms, and the opening block is where
+	// that is now said once.) There is
 	// no percentage here, no decibel conversion and no curve: `[0, 1]` is the range
 	// `UGameplayStatics::SetSoundMixClassOverride` documents for a class override's volume, and
 	// anything that reshaped it would be a mix decision taken in a clamp.

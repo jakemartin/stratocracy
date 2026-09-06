@@ -16,6 +16,225 @@
 ## NEXT
 
 - **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `92d78c1`, UNCOMMITTED) -- THE GATE STOPPED THE
+  CORRECTION PASS ON A MISCOUNTED POSITIVE CONTROL, AND THE THING WORTH READING IS THAT THE
+  CONTROL WAS THE PART THAT WENT WRONG, INSIDE THE VERY CORRECTION WHOSE ENTIRE WARRANT IS THAT
+  IT MEASURES RATHER THAN ASSERTS.** Comment only; no executable byte moved. No exception clause
+  applies and none is cited. The live suite figure and the phase verdict are `global.md`'s and
+  are not restated here.
+  - **THE RULE THIS COST, stated before the narrative because it outlives it: A CONTROL'S
+    FIGURES ARE MEASURED PER SUBJECT, NEVER GENERALISED ACROSS A SET THAT MERELY SHARES A
+    PROPERTY.** A positive control is a claim like any other -- it says *this instrument returns
+    N on a known-positive case*. Measuring ONE subject and then writing "N on each of A, B, C
+    and D" because all four share a property is the same act as the stale claims this pass was
+    retracting, committed inside the retraction. **AND STATING THE RULE IN THIS DOCUMENT DID NOT
+    PROPAGATE IT THROUGH THIS DOCUMENT:** the fifteenth gate found the same generalisation **134
+    lines below this bullet**, in this entry's own shape-6 section, written in the same sitting
+    by the same author -- the rule was obeyed where it was being *stated* and not where it was
+    being *used*, so both sites are repaired outright below rather than stamped.
+  - **THE BLOCKED CLAIM, AND IT REPRODUCES.** `StratGuidedOpening.h` said
+    `/Script/StratUI.StratGuidanceWidget` "returns 0 on it, against 4 on each of
+    `WBP_DirectiveStrip`, `WBP_Scoreboard`, `WBP_Options` and `WBP_CommandBar` as positive
+    controls". Re-measured on the package bytes, that token returns **4 on `WBP_DirectiveStrip`
+    and 0 on the other three**. What is true is that each asset carries ITS OWN parent token 4
+    times -- `StratScoreboardWidget` on `WBP_Scoreboard`, `StratOptionsWidget` on
+    `WBP_Options`, `StratCommandBarWidget` on `WBP_CommandBar`. The property the four actually
+    share is "derives from a C++ parent in this module", which is silent about which token any
+    one of them carries.
+  - **THE CONCLUSION SURVIVED, AND THAT IS THE WORSE HALF RATHER THAN THE BETTER ONE.**
+    `WBP_PreMatchBriefing` carries **0** `/Script/Strat*` tokens of any kind and **4**
+    `/Script/UMG.UserWidget`, so it really is a plain `UserWidget` and the narrowing to "there is
+    no C++ SURFACE" was right. Because the conclusion was independently reachable, the wrong
+    control changed nothing downstream and was therefore invisible FROM the conclusion -- which
+    is exactly why only an instrument reading the control itself could catch it.
+  - **THE SIBLING WAS RESTATED TOO, AND THE GATE HAD PASSED IT.** `StratGuidanceWidget.h` said
+    `WBP_DirectiveStrip` carries the guidance token 4 times, "the SAME figure as
+    `WBP_Scoreboard`, `WBP_Options` and `WBP_CommandBar`". `strat-integration-reviewer` judged
+    that one correct, and on the intended reading it is. **It is restated anyway, and NOT
+    because the gate was wrong about the facts.** The sentence names ONE token, so the only
+    figure in scope for "the same figure" is that token's -- which is 0 on all three. Worse, the
+    clause immediately following, "against 0 on `WBP_PreMatchBriefing`", keeps the named token
+    unchanged. The elided subject therefore switches mid-sentence and invisibly: substitute each
+    asset's own token for the positive controls, keep the named one for the negative control.
+    Nothing in the words tells a reader which was meant. **An ambiguous measurement is not a
+    measurement**, so it gets the same treatment as an outright wrong one.
+  - **WHAT WAS MEASURED, WITH CONTROLS.** A fabricated `/Script/StratUI.StratFabricatedWidget`
+    returns 0 on all five assets, so the counter is not answering 4 to everything; all five are
+    real package bytes rather than LFS pointers. `PreMatchBriefing` appears in `Source/`
+    **twice**, and both hits are this pass's own comment lines -- so the original wording
+    "nothing in `Source/` names it" was self-falsifying by a hair, and now reads "except this
+    correction block and its sibling". The reviewer flagged that as worth a word if the block
+    were ever revised; it was revised, so it got the word. Of the 1940 packages under
+    `Content/`, **0** reference `WBP_PreMatchBriefing`, against **3** for `WBP_Options`
+    (`BP_StratGameMode`, `BP_StratGameMode_AiVsAi`, `BP_StratShellGameMode`) as the speaking
+    control, and 0 for a fabricated asset name.
+  - **LINE ENDINGS, PER FILE, BY BYTE.** Unchanged across the edit and deliberately not
+    normalised: `StratGuidedOpening.h` went 555 -> 579 lines with **CRLF on every line both
+    before and after**; `StratGuidanceWidget.h` 169 -> 191, the same. `StratCameraPawn.h` is
+    untouched and **byte-identical by sha256** -- `003b74eed95d6e0f` before and after -- 193
+    lines, **zero CRLF**. Counted with a Python `endswith(chr(13))` census and deliberately NOT
+    with `grep`: the gate measured a `grep -c` carriage-return pattern returning **2 on a known
+    pure-LF two-line file** on this box, so grep is unusable for this in either direction.
+  - **BUILD, AND THE SUITE BRANCH.** `Build.bat StratocracyEditor Win64 Development` ran **31
+    actions** and reported `Result: Succeeded`; an immediate identical re-run reported `Target is
+    up to date` and **0 action(s)**, so the 31 were real work and the green is not a no-op
+    reporting itself green. **No suite re-run is owed.** The diff contains **0** `.cpp` files,
+    and `IMPLEMENT_SIMPLE_AUTOMATION_TEST` returns 0 on both touched headers against a control
+    of 7 on `Source/StratUI/Tests/StratScoreboardHUDSeam.cpp`, so that counter speaks too.
+    Comment-only was PROVED rather than asserted: a comment stripper that refuses to emit zero
+    lines returned code-line sets identical to `HEAD` for all three headers -- 50, 16 and 37
+    lines respectively -- and the same comparator detected a planted code change, so it is not
+    a comparator that answers "identical" to everything.
+- **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `92d78c1`, UNCOMMITTED) -- THE FOURTEENTH STALE
+  CLAIM IS REPAIRED AND THE SWEEP THAT FOUND IT FOUND TWO MORE, AND THE FINDING WORTH READING IS
+  THAT MY FIRST READING FILTER WAS SCOPED DIFFERENTLY FROM MY OWN CANDIDATE DETECTOR AND WOULD
+  HAVE MISSED BOTH.** Comment only; no executable byte moved. No exception clause applies and
+  none is cited. The live suite figure and the phase verdict are `global.md`'s and are not
+  restated here.
+  - **THE ASSIGNED SITE: `StratCameraPawn.h`'s `ArmPitch`, SHAPE 6 -- A TRUE CONCLUSION ON AN
+    EXPIRED PREMISE.** It read *"A property rather than a constant because which one reads better
+    depends on tile meshes that do not exist yet."* The conclusion is right and untouched;
+    `ArmPitch` remains `EditDefaultsOnly` and `= -60.0f` is byte-identical. Only the reason is
+    retracted, in a `RETRACTED>` block quoting the old words, on this file's own precedent.
+  - **RE-DERIVED RATHER THAN ACCEPTED, BECAUSE THE PASS BEFORE LAST PLANTED A FALSE CLAIM UNDER
+    THE WORD "MEASURED" ON THIS FILE SET.** Eight `SM_HexTile_*` meshes exist under
+    `Content/StratArt/Meshes/` -- Bridge, Factory, Fallback, Mountains, Plains, Town, Water,
+    Woods -- each ~22 KB of real bytes and not a `version https://` LFS pointer, which is checked
+    because `git show` on an LFS path returns the pointer and reads as a present file either way.
+    A byte census of `BP_StratBoard.uasset` returns each of the eight names TWICE (16 total),
+    `SM_Hex` 18, `HexMesh` 0, a fabricated `SM_HexTile_Bogus` 0, and `SM_GuidedMarker` 0.
+    **THE 16-VERSUS-18 GAP IS EXPLAINED IN THE HEADER RATHER THAN LEFT FOR A READER TO TRIP ON:**
+    `SM_Hex` is a prefix of `SM_HexOverlay` too, which the same census returns 2 times, and
+    16 + 2 = 18. The `SM_GuidedMarker` zero is what shows the census is selective and not a
+    blanket match on `SM_`.
+  - **PROVENANCE: TRUE WHEN WRITTEN, EXPIRED SIX AND A HALF HOURS LATER.** The sentence arrived in
+    `bc4ff79` (2026-08-12 16:31); the meshes in `d310aa1` (2026-08-12 23:00). Same calendar date,
+    so `--date=short` cannot order them: `git merge-base --is-ancestor bc4ff79 d310aa1` succeeds
+    and **the reverse direction fails with exit 1**, which is the control that makes the first
+    result mean something; `git rev-list --count` is 2 one way and 0 the other. `-S --reverse`
+    over the file returns `bc4ff79` and nothing else, so there is no first-versus-most-recent to
+    get wrong. No earlier path for a hex-tile mesh exists anywhere in history.
+  - **WHAT THE REASON IS NOW, AND IT IS THE UNDER-CLAIMING ANSWER ON PURPOSE. The original reason
+    was SATISFIED, NOT REPLACED**, and the header says exactly that rather than inventing a
+    successor. The property stays `EditDefaultsOnly` for the block comment above it and for no
+    special reason of its own -- it is a look and not a gameplay value, like the three arm lengths
+    beside it, **none of which carries a `because` at all**. And the ordinary justification is so
+    far unexercised: `ArmPitch` appears **0** times in `BP_StratCamera.uasset` while
+    `DefaultArmLength`, `MinArmLength` and `MaxArmLength` each appear once and a fabricated name
+    appears 0 -- and on this project's own rule for reading Blueprint defaults **absence decides
+    and presence proves nothing**, so the Blueprint does not override the pitch and the shipped
+    value is the initializer.
+  - **WHAT NO INSTRUMENT HERE CAN SETTLE, WRITTEN INTO THE HEADER AND NOT ONLY INTO THIS RECORD.**
+    Whether -60 actually READS well against the meshes now that they exist is a human at the
+    keyboard. The meshes existing is measured; the view being readable is not measurable by any
+    clause, census or headless capture in this tree. The first sentence of that block is therefore
+    an unverified claim about a picture, and is left standing because it was never the part that
+    expired.
+
+#### The shape-6 sweep, and the instrument defect that nearly hid two of its three findings, 2026-09-06
+
+- **METHOD, DENOMINATOR AND PLANT.** Shape 6 is a true conclusion whose stated reason asserts a
+  TIME-VARYING fact about the tree, so a candidate needs a reason connective (`because`, `since`,
+  `so that`, `rather than a constant`, `the reason`, `which is why`) **and** a temporal or
+  existential hedge, **within a three-line window** -- prose here wraps, and while the assigned
+  target happens to carry both on one line, the two other findings do not. Denominator **71**
+  non-`Tests/` `.h`/`.cpp` files under `Source/StratPlay/` and `Source/StratUI/`; **120** distinct
+  candidate windows, every one read.
+- **THE PLANT PASSED, AND THE FIRST INSTRUMENT IT PASSED WAS THE WRONG ONE, WHICH IS THE ENTRY'S
+  REAL CONTENT.** Two instances were planted into real files and written to read like ordinary
+  house prose rather than like a fixture: one with connective and hedge on the SAME line
+  (`StratUI/StratInfoPanelWidget.cpp`), one WRAPPED with the hedge two lines below the connective
+  (`StratPlay/StratHoverState.h`). **My first reading filter was LINE-scoped while the candidate
+  detector was WINDOW-scoped, and the wrapped plant did not come back through it.** A line-scoped
+  read over a window-scoped candidate set silently drops every instance whose reason wraps, which
+  is most of the prose in this tree; had I read that output and reported a null, the null would
+  have been a dead instrument reporting green. The filter was re-scoped to the window and **both
+  plants then returned**, along with the two already-known instances. Count moved 120 to 123 with
+  the plants and back to 120 after; both files were restored **byte-identical by sha256** and
+  `git status` was clean, so the plant left nothing behind.
+- **TWO FURTHER LIVE INSTANCES, BOTH REPAIRED IN THE SAME PASS.**
+  - `StratGuidedOpening.h`'s NO SECTION 2.11.6-A PRE-MATCH BRIEFING bullet refused three strings
+    *"because declaring content for a surface that does not exist"*. **A surface does exist:**
+    `Content/UI/WBP_PreMatchBriefing.uasset` is tracked, is real bytes, and returns `Callout` 18
+    times -- consistent with the three anchored callouts the bullet describes. Same-day expiry
+    again: the sentence is `1d6f758` at 09:35, the asset `c1a8436` at 18:08. **The correction is
+    deliberately NARROWER than "the premise is false", because the narrower claim is what carries
+    the bullet:** the asset derives from plain `UserWidget`
+    (`/Script/StratUI.StratGuidanceWidget` returns **0** on it; that same token returns **4** on
+    `WBP_DirectiveStrip` and **0** on `WBP_Scoreboard`, `WBP_Options` and `WBP_CommandBar`, each
+    of which carries **4** of ITS OWN parent token instead -- `StratScoreboardWidget`,
+    `StratOptionsWidget`, `StratCommandBarWidget` respectively -- and the fabricated token
+    recorded at the head of this entry returns **0** on all five, so the counter answers neither
+    4 nor 0 to everything), nothing in `Source/` names it, and a scan of all **1940** packages
+    under `Content/` finds **0** referencing it against **3** for `WBP_Options` as the control.
+    The asset exists and is reachable from nothing; there is still no declared C++ type for three
+    strings to bind to, so the bullet stands with a discharge condition attached. **That
+    parenthetical read "0 on it against 4 on each of" all four assets in this entry's first
+    draft** -- the same generalised control the two headers were being corrected for, restated
+    here as this record's own present-tense measurement. It is rewritten per subject rather than
+    stamped, because these bytes are an uncommitted insertion in this same diff and have never
+    shipped; the stamp-not-strike convention protects committed entries, and this is not one.
+  - `StratGuidanceWidget.h` called its `Guidance` naming constraint *"load-bearing for a REPARENT
+    that has not happened yet"*. **It has happened.** `WBP_DirectiveStrip.uasset` carries
+    `/Script/StratUI.StratGuidanceWidget` **4** times, against **0** for that same token on
+    `WBP_Scoreboard`, `WBP_Options` and `WBP_CommandBar` -- those three are independently known
+    to be C++-parented, but each carries 4 of its own parent token and none of this one, so they
+    are controls for the counter and not a second reading of this figure -- and **0** on
+    `WBP_PreMatchBriefing` (a plain `UserWidget`) and 0 on a fabricated token. Reparent
+    `229fe76` (2026-08-24 18:05), sentence `8d51fb7` (2026-08-21 20:08) -- this one is orderable
+    by calendar date and needs no ancestry argument. **This clause read "the same figure as the
+    three independently-known C++-parented controls above" in this entry's first draft**, which
+    asserts 4 for a token that measures 0 on all three of them; rewritten per subject rather than
+    stamped, for the same reason as the site above. **The paragraph is stamped and kept whole
+    because the constraint is no
+    longer a forecast but a LIVE invariant:** the thirty-three bindings now resolve THROUGH the
+    inherited property, so renaming or retyping it today would orphan them for real. The one
+    genuinely spent part is the NOTE FOR WHOEVER PERFORMS THAT REPARENT, and it is marked as the
+    record of a step already taken rather than deleted.
+- **CLEARANCES, NAMED SO THE NULL IS CHECKABLE.** Candidates that look like shape 6 and are not:
+  `StratBoardActor.cpp:107` (pulse material) and `StratUnitActor.h:772` (flag marker) were
+  **corrected by my own previous pass on 2026-09-06** and carry their stamps;
+  `StratShellSubsystem.h:115-142` and `StratOptionsWidget.h:42` carry full stamp chains already,
+  the latter including a sentence stamped **false on the day it was committed** rather than merely
+  stale; `StratViewModel.h:157` is explicitly headed *"THE PRESENTATION BLOCK'S DEBT IS DISCHARGED
+  -- read the paragraph below as the reason the fields are shaped this way, not as an open item"*,
+  which is the maintenance already done; `StratMatchSubsystem.cpp:2040` and
+  `StratUnitActor.cpp:700` say *"reasons nobody has written yet"* and *"a re-arm nobody has
+  written yet"*, which are arguments FOR a guard against future callers and cannot expire by a
+  caller appearing -- and `ArmNextPlaybackStep` still has exactly one non-`Tests/` call site;
+  `StratShellSubsystem.cpp:148`'s *"there is no fact this subsystem can see that would say whether
+  an options SURFACE exists"* remains true of the subsystem even though the surface now exists.
+- **THE RESIDUAL RISK, STATED BECAUSE A DENOMINATOR IS NOT A GUARANTEE.** The instrument finds a
+  reason whose premise is a temporal or existential hedge. **A shape-6 instance whose expired
+  premise is a flat present-tense assertion about the tree, of the form "X is the only caller",
+  carries neither and is invisible to it.** That is a different sweep and it is not run here.
+
+#### Build and suite branch for the 2026-09-06 shape-6 pass
+
+- **Build green.** `Build.bat StratocracyEditor Win64 Development` from its full engine path --
+  it is not on `PATH` -- **35 actions, `Result: Succeeded`**, then an immediate re-run over
+  identical bytes reporting **`Target is up to date` / `0 action(s)`** as the control. The editor
+  was confirmed closed first by `tasklist`, with `explorer.exe` as the control showing the same
+  instrument can see a running process.
+- **NO SUITE RE-RUN IS OWED, AND THE DERIVATION IS AT THE GATE'S OWN REGEX RATHER THAN BY
+  ASSERTION.** The diff is three files and **all three are `.h`; zero `.cpp`**. Running
+  `strat_suite_report_gate.py`'s own `SIMPLE_MACRO` pattern over both HEAD and worktree of each
+  returns **0 = 0** on every one, with a real `Tests/` file as the control returning **9**, so
+  the regex can speak. No clause name is added, removed or renamed, and a comment-strip diff
+  proves the non-comment line sets are IDENTICAL on all three files (37, 50 and 16 lines). The
+  rebuild happened anyway -- headers force dependent `.cpp` recompiles -- so the "a clause name
+  is compiled, rebuild before the suite" hazard is discharged rather than merely absent.
+- **LINE ENDINGS, CENSUSED BOTH SIDES WITH PYTHON `endswith(chr(13))` BECAUSE A `grep -c` FOR A CR
+  RETURNS 0 ON A CRLF FILE ON THIS BOX.** Before: `StratCameraPawn.h` 0/147 CR-terminated (**LF**),
+  `StratGuidedOpening.h` 536/536 (**CRLF**), `StratGuidanceWidget.h` 152/152 (**CRLF**). After:
+  0/193, 555/555, 169/169 -- each file's own convention preserved. **The `grep` control was run
+  rather than cited:** it returns **0** on `StratGuidedOpening.h`, which Python measures as 536 of
+  536 CR-terminated in the same breath. `StratCameraPawn.h` is LF in the worktree and git warns it
+  will become CRLF on the next touch; that is the pre-existing `autocrlf` condition and this pass
+  did not change it either way.
+
+- **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `1bd28c3`, UNCOMMITTED) -- THE LAST THREE SITES
   ON MY OWN 2026-09-03 CHECKLIST ARE REPAIRED AND THE CHECKLIST IS CLOSED, AND THE FINDING WORTH
   READING IS THAT THE CHECKLIST WAS THE WARRANT FOR THE PREVIOUS PASS AND STILL DID NOT GET

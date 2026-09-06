@@ -140,8 +140,54 @@ protected:
 	float MaxArmLength = 3000.0f;
 
 	/** Downward pitch, in degrees. Negative looks down; -60 is a readable three-quarter
-	 *  view of a hex board and -90 is straight down. A property rather than a constant
-	 *  because which one reads better depends on tile meshes that do not exist yet. */
+	 *  view of a hex board and -90 is straight down. A property rather than a constant.
+	 *
+	 *  THE CONCLUSION STANDS AND ONLY ITS STATED REASON HAS DIED, so the reason is retracted
+	 *  in place rather than quietly rewritten -- a reader who remembers it is owed the
+	 *  withdrawal and not a silently different paragraph. It read:
+	 *  RETRACTED> "because which one reads better depends on tile meshes that do not exist
+	 *  RETRACTED>  yet."
+	 *
+	 *  TRUE WHEN WRITTEN, EXPIRED TWO COMMITS LATER. The sentence arrived in `bc4ff79`
+	 *  (2026-08-12 16:31); the eight `SM_HexTile_*` meshes arrived in `d310aa1` (2026-08-12
+	 *  23:00). Both carry the same calendar date, so `--date=short` cannot order them and
+	 *  ancestry does: `git merge-base --is-ancestor bc4ff79 d310aa1` succeeds, the reverse
+	 *  direction fails (exit 1), and `git rev-list --count bc4ff79..d310aa1` is 2 against 0
+	 *  the other way. `--reverse` on the `-S` search returns `bc4ff79` and nothing else, so
+	 *  there is no first-versus-most-recent left to get wrong.
+	 *
+	 *  WHAT IS TRUE NOW, MEASURED RATHER THAN ASSERTED. `Content/StratArt/Meshes/` holds
+	 *  eight `SM_HexTile_*` meshes -- Bridge, Factory, Fallback, Mountains, Plains, Town,
+	 *  Water, Woods -- and none is an LFS pointer (each is ~22 KB of real bytes, not a
+	 *  `version https://` stub, which matters because `git show` on an LFS path returns the
+	 *  pointer and would have read as a present file either way). A byte census of
+	 *  `Content/StratPlay/BP_StratBoard.uasset` returns each of the eight names TWICE, 16 in
+	 *  total, against 0 for `HexMesh` and 0 for a fabricated `SM_HexTile_Bogus`. THE 16 AND
+	 *  THE 18 A READER WILL ALSO SEE ARE NOT A DISCREPANCY: `SM_Hex` returns 18 because it is
+	 *  a prefix of `SM_HexOverlay` as well, which the same census returns 2 times, and
+	 *  16 + 2 = 18. `SM_GuidedMarker` returns 0, so the census is selective and not a blanket
+	 *  match on `SM_`.
+	 *
+	 *  SO THE ORIGINAL REASON WAS SATISFIED, NOT REPLACED, AND THIS SAYS SO PLAINLY RATHER
+	 *  THAN INVENTING A SUCCESSOR IT CANNOT MEASURE. The dependency the retracted sentence
+	 *  named is discharged. The property stays `EditDefaultsOnly` for the block comment
+	 *  above's ordinary reason and for no special one of its own -- it is a look and not a
+	 *  gameplay value, exactly like the three arm lengths beside it, none of which carries a
+	 *  `because` at all. That is the whole of the current justification.
+	 *
+	 *  AND THE ORDINARY REASON IS SO FAR UNEXERCISED, which is worth a reader's knowing
+	 *  before treating it as load-bearing. `ArmPitch` appears 0 times in
+	 *  `Content/StratPlay/BP_StratCamera.uasset` while `DefaultArmLength`, `MinArmLength` and
+	 *  `MaxArmLength` each appear once and a fabricated name appears 0. On this project's own
+	 *  rule for reading Blueprint defaults ABSENCE decides and presence proves nothing: the
+	 *  Blueprint does not override the pitch, so the shipped value is this initializer.
+	 *
+	 *  WHAT NO INSTRUMENT IN THIS TREE CAN SETTLE. Whether -60 actually READS well against
+	 *  the tile meshes now that they exist is a human at the keyboard. The meshes existing is
+	 *  measurable and is measured above; the view being readable is neither, and nothing
+	 *  here -- no clause, no census, no headless capture -- substitutes for someone looking
+	 *  at it. The first sentence of this block is therefore an unverified claim about a
+	 *  picture, and is left standing because it was never the part that expired. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Camera")
 	float ArmPitch = -60.0f;
 };

@@ -27,6 +27,45 @@
 //
 // WHY THE PROPERTY IS CALLED `Guidance` AND IS OF EXACTLY `FStratGuidanceView`. This is
 // load-bearing for a REPARENT that has not happened yet. `WBP_DirectiveStrip` already
+// [CORRECTED 2026-09-06. THE SECOND SENTENCE'S TENSE IS DEAD AND EVERYTHING IT SUPPORTS
+// IS ALIVE, so it is stamped rather than struck -- THE REPARENT HAS HAPPENED. Measured
+// on the package bytes, PER ASSET: `WBP_DirectiveStrip.uasset` carries
+// `/Script/StratUI.StratGuidanceWidget` 4 times. The controls are three sibling assets
+// counted against THEIR OWN parent tokens, each of which also returns 4 --
+// `WBP_Scoreboard` for `StratScoreboardWidget`, `WBP_Options` for `StratOptionsWidget`,
+// `WBP_CommandBar` for `StratCommandBarWidget` -- which establishes that 4 is the count
+// a reparent onto a C++ parent in this module leaves behind. Each of those three
+// returns 0 for the GUIDANCE token, as does `WBP_PreMatchBriefing`, which carries 0
+// `/Script/Strat*` tokens of any kind and 4 `/Script/UMG.UserWidget` and so is a plain
+// `UserWidget`; a fabricated token returns 0 on all five.
+// [FIGURES RESTATED 2026-09-06, same day and same pass that wrote them, alongside the
+// sibling control `strat-integration-reviewer` blocked in `StratGuidedOpening.h`. This
+// sentence read "4 times, the SAME figure as `WBP_Scoreboard`, `WBP_Options` and
+// `WBP_CommandBar`". THE GATE JUDGED IT CORRECT AND IT IS NOT BEING RESTATED BECAUSE
+// THE GATE WAS WRONG ABOUT THE FACTS -- each of those three does return 4, so the
+// intended reading is true. It is restated because the words do not carry that reading:
+// the sentence names ONE token, and the only figure in scope for "the same figure" is
+// that token's, which is 0 on all three. Worse, the clause immediately following --
+// "against 0 on `WBP_PreMatchBriefing`" -- keeps the named token unchanged. So the
+// elided subject switched mid-sentence and invisibly: substitute each asset's own token
+// for the positive controls, keep the named one for the negative control. A reader has
+// nothing in the text to tell them which was meant, and an ambiguous measurement is not
+// a measurement. THE RULE, and it is the transferable part: A CONTROL'S FIGURES ARE
+// MEASURED PER SUBJECT, NEVER GENERALISED ACROSS A SET THAT MERELY SHARES A PROPERTY.
+// The shared property here was "derives from a C++ parent in this module", true of all
+// four assets and silent about which token any one of them carries -- and it is exactly
+// the appositive this sentence used to stand in for the elided token.]
+// The reparent landed in `229fe76`
+// (2026-08-24 18:05); the retracted tense was written in `8d51fb7` (2026-08-21 20:08),
+// so this one is orderable by calendar date and needs no ancestry argument.
+// WHY THE PARAGRAPH IS KEPT WHOLE ANYWAY, WHICH IS THE POINT OF STAMPING RATHER THAN
+// DELETING: the naming constraint it derives is not historical. The C++ property must
+// STILL be called `Guidance` and be of exactly `FStratGuidanceView`, because the
+// thirty-three bindings it describes are now RESOLVED THROUGH the inherited property --
+// renaming or retyping it today would orphan them for real rather than hypothetically.
+// The paragraph has moved from a forecast to a live invariant, and the NOTE FOR WHOEVER
+// PERFORMS THAT REPARENT below is the one part that is now spent: it describes a step
+// already taken. Read it as the record of how the bindings came to be live.]
 // carries a Blueprint member named `Guidance` of type `FStratGuidanceView` -- measured on
 // the asset bytes: `/Script/StratUI` once and `StratGuidanceView` thirty-three times --
 // and drives four properties off pure functions that break it. Matching the inherited

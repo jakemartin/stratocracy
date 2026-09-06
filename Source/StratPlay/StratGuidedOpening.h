@@ -155,6 +155,49 @@
 //   by rules 1–2 and nothing in B depends on A having run. Its three strings are not
 //   declared here because declaring content for a surface that does not exist is how a
 //   string drifts from the GDD unnoticed.
+//   [CORRECTED 2026-09-06 -- THE BULLET STANDS AND ITS REASON'S PREMISE HAS EXPIRED,
+//   the same shape as `StratCameraPawn.h`'s `ArmPitch` and found by the same sweep.
+//   A SURFACE DOES EXIST: `Content/UI/WBP_PreMatchBriefing.uasset` is tracked, is real
+//   bytes rather than an LFS pointer, and a byte census returns `Callout` 18 times --
+//   consistent with the three anchored callouts this bullet describes. It landed in
+//   `c1a8436` at 2026-08-21 18:08; the sentence above arrived in `1d6f758` at 09:35
+//   THE SAME DAY, so `--date=short` cannot order the two and the timestamps and
+//   ancestry do. True when written, false by that evening.
+//   WHAT THE PREMISE SHOULD HAVE SAID, AND WHAT IS STILL TRUE, IS NARROWER THAN ITS
+//   WORDING -- and the narrower claim is the one that carries the bullet, which is why
+//   the bullet is not withdrawn. There is no C++ SURFACE, and the figures below are
+//   MEASURED PER ASSET rather than generalised across the set -- see the rule at the
+//   end of this block. `WBP_PreMatchBriefing.uasset` carries 0 `/Script/Strat*` tokens
+//   of ANY kind and 4 `/Script/UMG.UserWidget`, so it derives from plain `UserWidget`.
+//   The positive controls are four sibling assets each counted against ITS OWN parent
+//   token, and each returns 4: `WBP_DirectiveStrip` for `StratGuidanceWidget`,
+//   `WBP_Scoreboard` for `StratScoreboardWidget`, `WBP_Options` for
+//   `StratOptionsWidget`, `WBP_CommandBar` for `StratCommandBarWidget`. A fabricated
+//   token returns 0 on all five, so the counter is not answering 4 to everything.
+//   Nothing in `Source/` names the asset EXCEPT this correction block and its sibling
+//   in `StratGuidanceWidget.h` -- 2 hits before this rewrite, both comment lines
+//   written by this same pass -- and a scan of all 1940 packages under `Content/`
+//   finds 0 that reference it, against 3 for `WBP_Options` as the positive control
+//   (`BP_StratGameMode`, `BP_StratGameMode_AiVsAi`, `BP_StratShellGameMode`). So the
+//   asset exists and is reachable from nothing, and there is still no declared type
+//   for three strings to be bound to. DISCHARGED WHEN a C++ briefing surface exists
+//   with an owner that shows it; at that point the three strings are declared wherever
+//   that surface's model lives, and still not here.
+//   [CONTROL RESTATED 2026-09-06, same day and same pass, after
+//   `strat-integration-reviewer` blocked it. The line above read "returns 0 on it,
+//   against 4 on each of `WBP_DirectiveStrip`, `WBP_Scoreboard`, `WBP_Options` and
+//   `WBP_CommandBar` as positive controls". It named ONE token and attributed its
+//   figure to FOUR assets; that token returns 4 on `WBP_DirectiveStrip` and 0 on the
+//   other three. The CONCLUSION was unaffected and independently reachable, which is
+//   why the bullet and its narrowing both stand -- and that is the WORSE half, not the
+//   better one, because it means the error was invisible from the conclusion.
+//   THE RULE THIS COST, and it is the transferable part: A CONTROL'S FIGURES ARE
+//   MEASURED PER SUBJECT, NEVER GENERALISED ACROSS A SET THAT MERELY SHARES A
+//   PROPERTY. The property shared here was "derives from a C++ parent in this module",
+//   true of all four assets and silent about which token any one of them carries.
+//   Measuring one and writing "4 on each" is the same act as the stale claims this
+//   block exists to retract -- and it happened inside a correction block whose ENTIRE
+//   WARRANT is that it measures rather than asserts.]
 // - NO §2.11.6 ONE-SHOT TIPS. `UStratSaveGame::FiredOneShotTipIds` is where they will
 //   persist and wave B1 declared it for that reason, but the tips are teacher 3 and fire on
 //   concept relevance across the whole match — a different clock from this four-turn

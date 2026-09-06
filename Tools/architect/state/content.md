@@ -50,6 +50,95 @@
 
 ## NEXT
 
+- **THE DAMAGE FLASH HAS A MATERIAL AND `BP_StratUnit` CARRIES ITS FOUR DEFAULTS -- AND THE THING
+  WORTH READING IS THAT THE COMMANDLET PRINTED NOTHING AND CALLED IT SUCCESS.** 2026-09-06
+  (local), `E:/MultiAgent/Stratocracy` on `master` over base `4a01418`, uncommitted at time of
+  writing. `git worktree list` prints EIGHT entries -- this main tree plus seven others, none of
+  them this work's. This pass was done in the main tree with no merge behind it.
+  **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE. WRITING: the
+  `coordinator`, under THIS FILE'S FALLBACK CONDITION.** Two authorities, one for each half, as
+  this file's header requires; neither covers the other.
+
+  **THE CONDITION, MEASURED WITH ITS CONTROL, AND MEASURED AT THE LANE AGENT'S TOOL SURFACE
+  RATHER THAN AT THE EDITOR.** A tool lookup for `execute_script` returns
+  `mcp__NeoStack_Connect__list_unreal_projects` and `mcp__NeoStack_Connect__unreal_status` AND NO
+  `execute_script` UNDER EITHER SERVER NAME -- so the null is a measurement and not a broken
+  query, because the same lookup served two other tools from the same server. `unreal-editor-direct`
+  additionally failed to connect at session start (`ConnectionRefused`), and
+  `unreal_status` answers *"neostack-connect is not connected to an Unreal editor. Reason: No
+  active NeoStackAI editors were found in ... runtimes.json."* `strat-editor-builder` holds the
+  NeoStack tools and no Bash, so with no `execute_script` it has no route to the editor and
+  cannot act at all.
+
+  **THE ROUTE: A HEADLESS `UnrealEditor-Cmd.exe -run=pythonscript` COMMANDLET, WITH NO EDITOR
+  RUNNING AT ALL.** Recorded because the route decides what can be observed afterwards. The
+  scripts and their outputs are committed at `Tools/architect/evidence/11-damage-flash-assets/`
+  so a checkout can re-run them rather than take this entry's word.
+
+  **`print()` FROM A `pythonscript` COMMANDLET NEVER REACHES THE LOG, AND THE RUN STILL REPORTS
+  SUCCESS.** The first probe emitted eleven `print()` lines and the log carried NONE of them
+  while stating `LogPythonScriptCommandlet: Display: Python script executed successfully` and
+  `LogInit: Display: Success - 0 error(s), 0 warning(s)`, with process exit 0. This is the
+  already-recorded "`unreal.log` never reaches the log" one step wider: **stdout does not either.**
+  THE REPORT CHANNEL MUST BE A FILE THE SCRIPT WRITES ITSELF, and every measurement in this entry
+  came back that way. The same run shape then hid a REAL failure: the second script created the
+  asset, threw building its graph, saved nothing, and the process still exited 0 under the same
+  success line -- caught only because the script's own `try/except` wrote the traceback to its
+  file. **What is measured here is a CAUGHT exception; whether an UNCAUGHT one would also exit 0
+  was NOT measured and is not claimed.**
+
+  **`expression_collection` IS NOT A PYTHON-EXPOSED PROPERTY IN UE 5.8.** Measured:
+  `Material: Failed to find property 'expression_collection' for attribute
+  'expression_collection' on 'Material'`. A material's expressions cannot be enumerated that way;
+  `MaterialEditingLibrary.delete_all_material_expressions` is the verb that works, and
+  `get_num_material_expressions` plus `get_scalar_parameter_names` /
+  `get_vector_parameter_names` are what a readback has to lean on instead.
+
+  **THE ASSET.** `/Game/StratArt/Materials/M_UnitDamageFlash`, beside the project's own
+  `M_OverlayPulse` master rather than under the vendored toolkit. Surface domain, **BLEND
+  TRANSLUCENT, SHADING MODEL UNLIT**, not two-sided. Four expressions: `FlashColor`
+  (VectorParameter, `1.0, 0.045, 0.045, 1.0`) multiplied by `FlashIntensity`
+  (ScalarParameter, `3.0`) into Emissive, and `FlashOpacity` (ScalarParameter, `0.85`) into
+  Opacity. Parameterised so a later Material Instance can retune it without touching C++.
+  **READ BACK FROM A FRESHLY LOADED COPY, because a setter's return is not evidence** -- and with
+  a control on the same run: `M_OverlayPulse` reads 11 expressions and `MSM_DEFAULT_LIT` against
+  this asset's 4 and `MSM_UNLIT`, so the readback distinguishes assets rather than echoing the
+  write.
+
+  **THE BLUEPRINT DEFAULTS, ON `BP_StratUnit`'s CDO.** `DamageFlashSeconds = 0.2`,
+  `DamageShakeAmplitude = 8.0`, `DamageShakeFrequency = 20.0`,
+  `DamageFlashMaterial = M_UnitDamageFlash`. **PROTECTED, `EditDefaultsOnly` UPROPERTYs ARE
+  REACHABLE FROM PYTHON ON A BLUEPRINT CDO** -- which is worth stating because this project has
+  a standing finding that three protected UMG UPROPERTYs answer *"protected and cannot be read"*,
+  and a reader could take that for a general rule. It is not one; those three are specific.
+  TWO CONTROLS PIN BOTH HALVES OF THE READ: `BodyZOffset` reads `50.0` and `MoveTweenSeconds`
+  reads `0.2` where the C++ initialisers are `0.0` and `0.0`, so the values come from the
+  BLUEPRINT'S CDO and not the C++ one, and a protected property is being read successfully.
+  **THE WRITE WAS VERIFIED FROM A SEPARATE PROCESS**, not from the in-process read and not from
+  `save_asset` returning true. **AND WHAT WAS CHECKED ALONGSIDE IS EXACTLY THREE PROPERTIES, NOT
+  "NOTHING WAS CLOBBERED".** `BodyZOffset`, `MoveTweenSeconds` and `MoveTweenEaseFraction` were
+  re-read unchanged in that same cold run; every OTHER property on this CDO -- `MeshByDefId`,
+  `FallbackMesh`, `SideMaterials`, the three marker meshes, materials and offsets -- was NOT
+  read, before or after, and this pass can say nothing about them. An earlier form of this
+  sentence said "nothing was clobbered", which is a claim about the whole CDO drawn from two
+  samples; a gate reported it twice before it was repaired here.
+
+  **THE SOURCE-CONTROL AUTO-ADD STAGED THE NEW ASSET, AND THIS TIME IT STAGED THE SAVED BYTES.**
+  `M_UnitDamageFlash.uasset` appeared already staged. The standing hazard is that the auto-add
+  stages an asset AS CREATED rather than as saved, so it was measured rather than assumed: the
+  staged LFS pointer's `oid sha256:eef5c98d...` and `size 7207` equal the working file's own
+  `sha256sum` and byte size exactly. The MODIFIED `BP_StratUnit.uasset` was NOT auto-staged,
+  which is consistent -- the hazard is about creation.
+
+  **WHAT NO INSTRUMENT HERE CAN SAY, AND IT IS THE WHOLE VISUAL CLAIM.** A commandlet cannot
+  prove a material COMPILES and cannot prove it has PIXELS; `-nullrhi` compiles no shaders, and
+  this project has already measured `get_statistics` returning zeros for a known-good asset and
+  translation errors logging nothing. **NOBODY HAS SEEN THIS FLASH.** Whether the overlay pass
+  renders at all, whether unlit translucent reads as a flash rather than as a flat red decal,
+  whether `0.2 s` and `8` uu are right, and whether the three markers still sit at their offsets
+  after the `Body` -> `Shake` re-parent are ALL open and ALL need a human at the keyboard. The
+  values are `EditDefaultsOnly` precisely so that human can retune them without a rebuild.
+
 - **THE OPTIONS PANEL IS CENTRED OVER A SCRIM AND THE COMMAND BAR'S OPTIONS BUTTON MIRRORS END
   TURN -- AND THE THING WORTH READING IS THAT `configure_widget` RETURNED `ok=true` WHILE
   SILENTLY DROPPING EVERY SLOT PROPERTY ASKED FOR IN THE FLAT FORM.** 2026-09-05 (local),

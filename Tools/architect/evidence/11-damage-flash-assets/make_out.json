@@ -1,0 +1,25 @@
+{
+  "created": "created",
+  "readback": {
+    "exists": true,
+    "class": "Material",
+    "blend_mode": "<BlendMode.BLEND_TRANSLUCENT: 2>",
+    "shading_model": "<MaterialShadingModel.MSM_UNLIT: 0>",
+    "material_domain": "<MaterialDomain.MD_SURFACE: 0>",
+    "num_expressions": 4,
+    "scalar_params": [
+      "FlashIntensity",
+      "FlashOpacity"
+    ],
+    "vector_params": [
+      "FlashColor"
+    ]
+  },
+  "controls": {
+    "existed_before": false,
+    "save_asset_returned": true,
+    "M_OverlayPulse_num_expressions": 11,
+    "M_OverlayPulse_shading_model": "<MaterialShadingModel.MSM_DEFAULT_LIT: 1>"
+  },
+  "error": null
+}

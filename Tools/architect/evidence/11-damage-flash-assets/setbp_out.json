@@ -1,0 +1,17 @@
+{
+  "before": {
+    "DamageFlashSeconds": "0.0",
+    "DamageShakeAmplitude": "0.0",
+    "DamageShakeFrequency": "18.0",
+    "DamageFlashMaterial": "None"
+  },
+  "after_write_in_process": {
+    "DamageFlashSeconds": "0.20000000298023224",
+    "DamageShakeAmplitude": "8.0",
+    "DamageShakeFrequency": "20.0",
+    "DamageFlashMaterial": "<Object '/Game/StratArt/Materials/M_UnitDamageFlash.M_UnitDamageFlash' (0x000001F006CBE000) Class 'Material'>"
+  },
+  "saved": true,
+  "error": null,
+  "material_loaded": "/Game/StratArt/Materials/M_UnitDamageFlash.M_UnitDamageFlash"
+}

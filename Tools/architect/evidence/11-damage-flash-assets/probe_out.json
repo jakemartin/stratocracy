@@ -1,0 +1,29 @@
+{
+  "ran": true,
+  "assets": {
+    "/Game/StratArt/Materials/M_OverlayPulse": {
+      "exists": true,
+      "class": "Material",
+      "blend_mode": "<BlendMode.BLEND_TRANSLUCENT: 2>",
+      "shading_model": "<MaterialShadingModel.MSM_DEFAULT_LIT: 1>",
+      "two_sided": "False",
+      "material_domain": "<MaterialDomain.MD_SURFACE: 0>",
+      "num_expressions": 11
+    },
+    "/Game/StratArt/Materials/MI_Side_0": {
+      "exists": true,
+      "class": "MaterialInstanceConstant",
+      "parent": "/Game/AdvancedTurnBasedTileToolkit/Tiles/M_Mono.M_Mono"
+    },
+    "/Game/StratArt/Materials/MI_Overlay_Target": {
+      "exists": true,
+      "class": "MaterialInstanceConstant",
+      "parent": "/Game/AdvancedTurnBasedTileToolkit/Core/GridUI/M_Translucent.M_Translucent"
+    }
+  },
+  "controls": {
+    "absent_path": false,
+    "present_path": true
+  },
+  "error": null
+}

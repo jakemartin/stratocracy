@@ -27,8 +27,12 @@ of the exported report with `utf-8-sig` rather than accepting either lane's figu
 that the additions sum to it: the count moved 435 -> 445, all ten added and nothing removed or
 changed state. `strat_banner_sweep.py`'s independent macro census, which counts
 `IMPLEMENT_*_AUTOMATION_TEST` macros in the tree rather than reading the report at all, agrees
-at 445 -- two instruments, one figure. The run behind that figure is identified below.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-20.00.49`.
+at 445 -- two instruments, one figure.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-20.22.36`.
+AND THE STAMP TOKEN IS DELIBERATELY NOT WRITTEN ANYWHERE NEAR THIS LINE. The reason is recorded
+under WHAT THE GATES CHANGED, below, well clear of this citation: naming that token in prose is
+itself enough to disarm the guard on this line, which is a defect this pass committed twice --
+once by accident and once in the sentence written to warn about it.
 THE LOAD-BEARING MEASUREMENT WAS TAKEN BEFORE ANY CLAUSE EXISTED. `DamageFlashSeconds` ships
 `0.0f` -- a switch, not a setting -- so at the shipped default nothing arms, no tick is enabled
 and no material is touched. The engineer built the C++ and ran the FULL SUITE WITH NO NEW CLAUSE
@@ -111,6 +115,29 @@ method by a third reader returned no further site. (b) One OVERCLAIMING clause n
 `DamageFlashArmsAShakeAndAnOverlay` asserted the shake had NOT moved. (c) `CancelDamageFlash` is
 public with no production caller, unlike its cited precedent `CancelRouteSlide`; recorded rather
 than changed.
+A GUARD ON THIS FILE WENT QUIET AND THE PATCH FOR IT WENT QUIET THE SAME WAY, WHICH IS THE MOST
+TRANSFERABLE THING IN THIS PASS. `strat_banner_sweep.py`'s REPORT PROVENANCE check exempts a
+citation that sits near a bracketed stamp marker -- the square-bracketed word this record uses to
+mark a sentence as history, which is NOT SPELLED OUT ANYWHERE IN THIS PARAGRAPH and must not be,
+for the reason this paragraph exists. The live `reportCreatedOn` citation was moved onto its own
+line earlier in this pass, to fix a DIFFERENT staleness, and landed directly above such a marker.
+It then cited a superseded run while the sweep returned CLEAN. That much was measured: the
+identical wrong value, moved two lines clear, is caught at once.
+THEN THE WARNING PARAGRAPH WRITTEN TO RECORD THAT HAZARD SPELLED THE TOKEN OUT, AND RE-ARMED IT.
+The metasyntactic form -- the marker word followed by an ellipsis in brackets -- counts to the
+script exactly as a real stamp does, so the citation was unguarded again, and the sweep again
+returned CLEAN over a planted wrong value. A `strat-integration-reviewer` gate found it; this
+seat had already declared the position fixed. The mutant is the instrument in both directions:
+plant a wrong stamp, and a guarded citation FAILS the sweep while an unguarded one passes.
+WHAT IS FIXED HERE AND WHAT IS NOT. Fixed: this file no longer names the token near the citation,
+and the mutant now fails as it should. NOT FIXED: `strat_banner_sweep.py` still exempts by
+ADJACENCY rather than by whether the marker actually governs the citing sentence, so the next
+citation written next to a genuine stamp is silently unguarded. The script is
+`strat-data-steward`'s, not this seat's. The gate's own analysis is in
+`Tools/architect/gate_reports/2026-09-06-unit-damage-alert-assets-gate.md`: excluding the
+ellipsis form makes the mutant fail while leaving the live tree clean (5 of 174 markers touched;
+a date-requiring narrowing would disarm 28 real ones), but that treats THIS symptom and not the
+adjacency defect, which needs part (b)'s design applied to part (a).
 ONE BUILD DEBT WAS TAKEN AND DISCHARGED, AND IT IS RECORDED BECAUSE THE LANE'S REFUSAL WAS RIGHT.
 A prose round could not build -- the editor was open, `Unable to build while Live Coding is
 active` -- and `strat-gameplay-engineer` REPORTED AND STOPPED rather than working around it,

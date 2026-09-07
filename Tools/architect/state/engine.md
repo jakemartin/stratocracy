@@ -103,10 +103,21 @@
     SURVIVES AN OPERATOR COUNT.** It now reads *"THIS FILE COMPUTES NO MAGNITUDE ABOUT GAME
     STATE"* -- no HP delta, no distance, no count, no ratio, no scale -- because that is the
     property that keeps a cue asking WHETHER and never BY HOW MUCH, and an HP delta is the second
-    subtraction `StratTransientReceipts.cpp`'s own claim forbids. The `+ 1` is stated as an
+    subtraction `StratTransientReceipts.cpp`'s own claim forbids. The `+ 1` **[was, AS OF THIS
+    ENTRY'S PASS ONLY]** stated as an
     EXEMPTION IN THOSE TERMS and at the claim itself: a compile-time array bound over an enum's
     last member, both operands compiler-folded, reaching no caller and no screen, and therefore
-    incapable of being wrong about game state at all. **It is deliberately not a general
+    incapable of being wrong about game state at all. **[STAMPED 2026-09-06, LATER THE SAME DAY,
+    over base commit `f7da9ca`, AT THE WORDS "is stated as an EXEMPTION" IN THE SENTENCE ABOVE,
+    WHICH WERE PRESENT TENSE ABOUT A FILE THAT HAD SINCE CHANGED: the `+ 1` no longer exists.
+    The same day's `Count`-sentinel pass replaced the bound with
+    `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]`, so the exemption the file now
+    carries is the `- 1` inside `UE_ARRAY_COUNT`. Everything else in this bullet is unaffected:
+    the replacement claim, the "not a general licence" limit and the `StratTransientReceipts.cpp`
+    precedent are all stated in terms of the CATEGORY (an index bound over compile-time
+    constants), which is why the operator could move underneath them without any of them moving.
+    This was the FOURTH site of one stale description, found by the sweep recorded in this
+    file's last entry.]** **It is deliberately not a general
     licence** -- the exemption covers an index bound over constants and nothing else, and an
     operator with a runtime operand out of the view model stays forbidden. Precedent taken
     rather than invented: `StratTransientReceipts.cpp` already exempts *"a copy, a comparison,
@@ -1723,8 +1734,15 @@
     *"not one arithmetic operation"* claim was RE-CHECKED **[function-locally only]** rather than
     assumed: `IsNaN`
     and `Clamp` are comparisons and a select. **[STAMPED 2026-09-06: the claim quoted in the
-    previous sentence was FALSE when this entry was written -- `StratSoundCues.cpp` sizes a
-    `bool[]` with a `+ 1` over an enum's last member. The re-check this entry describes was real
+    previous sentence was FALSE when this entry was written -- `StratSoundCues.cpp` **sized** a
+    `bool[]` with a `+ 1` over `MatchEnded`, the enum's last member AT THAT TIME. **[RE-STAMPED
+    2026-09-06, LATER THE SAME DAY, over base commit `f7da9ca`, AT THE VERB IN THE SENTENCE
+    ABOVE, WHICH READ "sizes": the tense was wrong by the time anyone could read it. That `+ 1`
+    was removed the same day by the `Count`-sentinel pass and the bound is now
+    `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]`. The stamp's POINT is untouched --
+    the claim it retracts really was false when this entry was written, for exactly the reason
+    given -- and only the tense moved. This was the FIFTH site of one stale description; the
+    sweep and its method are in this file's last entry.]** The re-check this entry describes was real
     and is still true of `StratClampVolume`, but it was function-local and could not have found
     that. The claim is retracted and replaced at the file, and the correction is recorded in the
     2026-09-06 damage-alert entry at the top of this file. Nothing about the placement argument
@@ -8944,3 +8962,298 @@ does not restate either.
   falsifiability does not rest on the unreliable mechanism even though its stated reason for the
   control does. The prose is wrong about *why* it works; the clause works. Those are two separate
   findings and collapsing them would cost the second one.
+
+## `EStratSoundCue` grows a `Count` sentinel, and the guard that was supposed to catch this was measured blind
+
+- **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `f7da9ca`, UNCOMMITTED).** No exception clause
+  applies and none is cited. The live suite figure and the phase verdict are `global.md`'s and
+  are not restated here; what this entry records is that **this pass reddens clauses**, and the
+  named clauses are listed below so the count is reconstructible from `global.md` alone.
+
+- **THE DEFECT.** `StratDecideSoundCues` sized its one-per-kind gate
+  `bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded) + 1]` and indexed it with
+  `static_cast<int32>(Cue)` unchecked. Correct only while `MatchEnded` was the last enumerator;
+  an eighth cue appended after it was an out-of-bounds **write** at `bEmitted[Slot] = true`.
+  Latent, not live — no shipped cue exceeded the bound.
+
+- **WHAT SHIPPED.** `EStratSoundCue` grows `Count UMETA(Hidden)`; the array is sized from it; two
+  `static_assert`s sit under the enum; `Emit` grows a `check` on the index. `Source/StratRules/`,
+  `Data/`, `Content/` and every `Tests/` directory are untouched.
+
+- **THE ASSERT WAS DESIGNED AGAINST THE FAILURE A SENTINEL INVITES, NOT AGAINST A TAUTOLOGY.**
+  `Count` is a correct bound only if no enumerator's value reaches it, and that can fail three
+  ways. Zero-basing is pinned (`ButtonClick == 0`). The **explicit-value** hazard is pinned by
+  `MatchEnded + 1 == Count` — write `Count = 7` by hand, insert a cue above it, and the array is
+  one slot short while every enumerator still reads plausibly; that case now cannot reach a run.
+
+- **AND THE THIRD WAY IS NOT PINNABLE, WHICH IS MEASURED RATHER THAN ASSERTED.** A cue declared
+  **after** `Count` changes no other enumerator's value, so no comparison over the enumerators
+  that exist can see it — an assert cannot name a symbol whose name it does not know. Both arms
+  were built and run against `Build.bat StratocracyEditor Win64 Development`:
+  - A cue between `MatchEnded` and `Count` → `StratSoundCues.h(169,3): error C2338: static_assert
+    failed: 'Count must be the value immediately after MatchEnded, the last cue. …'`, in every TU
+    that includes the header.
+  - A cue **after** `Count` → **`Result: Succeeded`, zero diagnostics.** The hole is real and is
+    stated in the header as a hole. It is closed at runtime by the `check` and by nothing else,
+    and no clause can exercise that `check` without editing the enum — so it will read as dead
+    code to any coverage tool. That is correct and is written down as correct.
+
+- **A SECOND GUARD WAS MEASURED BLIND IN PASSING, AND IT IS THE FINDING WORTH READING.**
+  `StratSoundBank.cpp`'s `SoundFor` carried, since the AUDIO milestone, *"The missing default is
+  what makes a future eighth enumerator a compiler diagnostic here rather than a silent null at
+  runtime."* **False on this toolchain.** Adding an eighth enumerator recompiled that file — step
+  40 of 55 in the build's own log — and MSVC emitted **nothing**. C4062 and C4061 are level-4 and
+  off by default, and nothing in any `.Build.cs`, either `.Target.cs`, `Config/` or the user's
+  `BuildConfiguration.xml` promotes them (checked; the only warning any `Build.cs` here touches
+  is `ShadowVariableWarningLevel`). This was not a comment that went stale — **it asserted a
+  mechanism that never existed**, and a reader adding a cue was entitled to have the build stop
+  them. Retracted at the false sentence; the switch is unchanged, because the missing `default:`
+  is still right for a different reason (it keeps "unhandled" and "configured null" distinct).
+  `/we4062` would make the old sentence true and is a module-wide build-configuration change;
+  **recorded as a debt below rather than smuggled into a pass about one array bound.**
+
+- **THE FILE'S STANDING CLAIM MOVED, AND IT MOVED BECAUSE THE FIX FALSIFIED THIS MORNING'S
+  CORRECTION.** `StratSoundCues.cpp`'s exemption paragraph — written earlier today, over base
+  `7e83295`, across seven sites — named *"THE ONE `+` IN THIS FILE"* and quoted the `+ 1` sizing
+  `bEmitted`. Removing the defect removed the operator the exemption had just been written to
+  cover, so a reader grepping for `+ 1` on that sentence's strength now finds nothing. Retracted
+  at the false sentence in this file's own convention. The exemption now covers the **`- 1`
+  inside `UE_ARRAY_COUNT`** in the new `check`, on identical grounds: a `sizeof` and a literal the
+  compiler folds, a difference compared and discarded, never a quantity about the board. The claim
+  itself — **this file computes no magnitude about game state** — is unchanged and unweakened.
+  - **[CORRECTED 2026-09-06 AT THE WORDS "the `- 1` inside `UE_ARRAY_COUNT`" ABOVE. THAT SENTENCE
+    READ "the **division** inside `UE_ARRAY_COUNT` ... two `sizeof`s the compiler folds, a
+    quotient compared and discarded" AND EVERY CLAUSE OF IT WAS FALSE.** `UE_ARRAY_COUNT` is
+    `(sizeof(UEArrayCountHelper(array)) - 1)` — measured at UE 5.8
+    `Engine/Source/Runtime/Core/Public/Templates/UnrealTemplate.h:222`. **One `sizeof` and a
+    SUBTRACTION**, on both compiler branches; the `sizeof(t) / sizeof(t[0])` a reader will find in
+    that header is inside the `__clang__` helper's **return type**, a type-level bound on a branch
+    this MSVC-only box does not take, and is not what the macro expands to on either. **The irony
+    is the finding and not an aside: this paragraph exists because the previous exemption named an
+    operator that had stopped being there, and its replacement misnamed the operator on the day it
+    was written.** Worse, the operator it actually is — a subtraction — is the one category this
+    lineage treats as most dangerous, `StratTransientReceipts.cpp`'s sibling claim being precisely
+    about forbidding a second subtraction; a reader trusting the false sentence would have hunted
+    a division, found none, and read past the `- 1`.
+    **THE STANDING CLAIM WAS RE-CHECKED AGAINST THE CORRECT OPERATOR RATHER THAN ASSUMED TO
+    SURVIVE, AND IT DOES.** `StratTransientReceipts.cpp`'s exemption is stated in terms of the
+    CATEGORY — "a copy, a comparison, or an index bound" — and not of an operator, so **no
+    rewording was needed to admit a subtraction**: a `sizeof` minus a literal is an index bound
+    over compile-time constants exactly as a quotient of two `sizeof`s would have been, has no
+    runtime operand, and names no board quantity. The forbidden subtraction and the exempt one
+    differ in their OPERANDS, not their operator, and the file now says so by name so a reader
+    grepping `-` does not conclude the opposite. Reported as Finding 1 of
+    `Tools/architect/gate_reports/2026-09-06-sound-cue-count-sentinel-gate.md`; both premises
+    re-measured against the engine headers here rather than taken from that report. **A second
+    site of the same false description, in the retraction block below the paragraph, was corrected
+    in the same edit and is named in the file rather than fixed silently.** No executable byte
+    moved for the correction — proved by comment-stripped diff, below.]
+  - **The same morning block also called the bound "correct", and that half is worth more than
+    the half about the `+`.** It was correct for the enum as it stood and one appended enumerator
+    away from an out-of-bounds write, and the pass that looked straight at that expression to
+    count its operators did not see it. **A correction pass that inspects an expression for one
+    property is not evidence about its other properties**, and that sentence is now in the file.
+
+- **THE SHIPPED DATAASSET IS NOT TOUCHED, CHECKED RATHER THAN ASSUMED.** `UStratSoundBank` carries
+  **seven named `TObjectPtr` slots**, not an enum-indexed array — its own header records why a
+  `TMap` was rejected — so a new enumerator changes no property, no layout and no serialized byte
+  of `DA_StratSoundBank`. The two enum-keyed containers in the audio path
+  (`UStratSoundBank::MinSecondsBetween`, `UStratSoundDirector::LastPlayedAtSeconds`) are `TMap`s,
+  where an absent key is already a defined state. `Count` is appended **after** `MatchEnded`, so
+  no existing enumerator's value shifts, and UE serializes enum properties by name regardless.
+
+- **`UMETA(Hidden)` IS NOT COSMETIC HERE AND THAT IS THE HANDOFF.** It keeps a non-cue out of
+  Blueprint dropdowns on a `BlueprintType` enum, which is the small half. The load-bearing half:
+  `Hidden` is a **machine-readable mark**, so a reflection walk can say
+  `UEnum::HasMetaData(TEXT("Hidden"), Index)` and tell a sentinel from a cue without a hard-coded
+  name list. `StratShippedSoundBankParity.cpp`'s `AllCues()` explicitly declined that mechanism —
+  *"`UEnum::HasMetaData` is not used because a sentinel carries no metadata to test"* — which was
+  true of UHT's generated `_MAX` and is **now false of this enum**. The condition that comment
+  named as its reason has been met the other way.
+  - **[RETRACTED 2026-09-06, SAME DAY, ON THE GATE OF THIS ENTRY. THE PARAGRAPH ABOVE IS WRONG
+    ABOUT WHICH HALF IS LOAD-BEARING, AND THE HANDOFF IT FILED WAS DECLINED BY BOTH OF ITS ONLY
+    TWO CALLERS ON GROUNDS THIS ENTRY DID NOT WEIGH.** The cosmetic half is the load-bearing one.
+    `UMETA(Hidden)` earns its place by keeping `Count` out of the key dropdown of
+    `UStratSoundBank::MinSecondsBetween` — a `TMap<EStratSoundCue, float>` on a data asset a human
+    edits — and **that is the whole of what it is for**. It is NOT a sentinel discriminator, on
+    three grounds `strat-test-author` measured and I re-verified: (1) `Hidden` means "keep out of
+    Blueprint dropdowns" and **not** "is a sentinel", so a future REAL cue hidden for that
+    cosmetic reason would vanish from both walks **silently, in a green run** — the exact
+    under-coverage those walks exist against, and a failure mode a value bound cannot produce;
+    (2) it removes no `_MAX` name rule anyway, `_MAX` being absent from the generated enumerator
+    table and carrying no metadata pair at all, so a metadata route would still need a name rule
+    beside it; (3) **it does not compile in a target CI builds** — `UEnum::HasMetaData` sits
+    inside `#if WITH_METADATA`, verified by me at UE 5.8
+    `Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h:3224` in the block opening at 3215
+    and closing at 3255, and this tree already measured
+    `error C2039: 'HasMetaData': is not a member of 'UEnum'` in a Win64 Development **Game**
+    build. **My "condition met the other way" was true about the metadata and wrong about what the
+    metadata means**, which is the specific error worth carrying forward: I checked that the mark
+    now EXISTS and did not check that the mark means what I was about to use it for.
+    The shipped filter both callers use is a **value bound `[0, Count)`** — one rule, drops `Count`
+    and `_MAX` together, needs no build guard, needs no edit when a second sentinel or a rename
+    arrives. The header now recommends that and records why the metadata route was rejected, so
+    the next reader does not re-propose it and pay for the measurement a third time.
+    **The `UMETA(Hidden)` itself is NOT removed and must not be** — ground (1) is an argument
+    against reading it as a discriminator, not against its real job. Reported as Finding 4 of
+    `Tools/architect/gate_reports/2026-09-06-sound-cue-count-sentinel-gate.md`.]
+  - **[AND A SECOND HALF OF THAT FINDING, ABOUT A DEBT BELOW THIS ENTRY RATHER THAN A HANDOFF.**
+    The header's hole-(3) paragraph said the after-`Count` case "is closed at runtime by the
+    `check` and by nothing else" and that "no clause can exercise it without editing the enum".
+    **That understated the coverage by half and pointed the reader at the weaker of two nets.**
+    `Stratocracy.StratUI.GATE-AUDIO.NoSoundCueIsDeclaredAfterTheCountSentinel` walks the reflected
+    `UEnum` and asserts every declared enumerator's value lies in `[0, Count)` — which IS the
+    residue, since an enumerator declared after `Count` is one the compiler will not name but
+    reflection will. It sees the case on any suite run, **with the enum unedited and whether the
+    cue ever fires or not**, and its CONTROL 4 runs the same decision over a synthetic mutant every
+    run. The `check`'s remaining value is POSITION — one instruction before the write — and the
+    header now says that instead. **The corresponding debt below is narrowed in the same edit
+    rather than left reading as open on the old, wider terms.**]
+
+### Debts taken on
+
+- **`/we4062` is not added to `StratPlay`.** Discharged when someone decides whether promoting
+  unhandled-enumerator warnings to errors is wanted **module-wide**; until then `SoundFor`'s
+  completeness rests on `EveryCueInTheShippedBankHasASound` and on nothing in the compiler.
+- **The `check` in `Emit` is unexercisable by any clause** without editing `EStratSoundCue`, and
+  is compiled out of Shipping. Discharged if this project ever grows a fixture that can compile a
+  mutant enum; there is no such instrument today and none is proposed.
+  - **[NARROWED 2026-09-06 AT THE WORDS "The `check` in `Emit`" ABOVE — THE DEBT IS TRUE OF THAT
+    LINE AND WAS WRITTEN AS THOUGH IT WERE TRUE OF THE HOLE.** It is not. The after-`Count` case
+    is covered by `Stratocracy.StratUI.GATE-AUDIO.NoSoundCueIsDeclaredAfterTheCountSentinel` with
+    the enum unedited, on every suite run. What remains unexercisable is the `check` STATEMENT,
+    and what it uniquely buys is position rather than detection. A debt stated one level too wide
+    reads as a gap in the coverage when the gap is only in one instrument's reachability.]
+
+### Build, sweep and suite branch for the 2026-09-06 gate-correction pass
+
+- **PROSE ONLY, AND PROVED SO RATHER THAN ASSERTED.** `Source/StratUI/StratSoundCues.cpp` and
+  `Source/StratUI/StratSoundCues.h` were run through a C++ comment stripper (tracking string,
+  char and raw-string literals and backslash-continuations inside `//`) and diffed against
+  `git show HEAD:<path>`. The stripped delta is **exactly five constructs** — `Count UMETA(Hidden)`,
+  the two `static_assert`s, `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]` and the
+  `check` line — **every one of which the gate quoted verbatim from the tree it gated, i.e. from
+  before this correction pass**. So this pass contributed zero to it.
+- **THE STRIPPER WAS MUTANT-CONTROLLED BECAUSE ITS FIRST RUN WAS A BLIND GREEN, AND THAT IS THE
+  PART WORTH READING.** The first version of the script was written through a shell heredoc that
+  ate its backslashes; it died on a `SyntaxError`, wrote **two empty files**, and `diff` duly
+  reported *"(identical)"* — a guard printing green while producing no output at all. The script
+  now **refuses** on empty output, and three arms were run: an executable mutant (`Hp <` → `Hp <=`)
+  was **seen** at both sites; a comment-only mutant whose text contained code-shaped tokens
+  (`int x = 1; if (a < b) {}` inside a `//`) was **not seen**; and `TEXT("http://x")` survived
+  intact. An instrument that cannot fail on a real change is not evidence about an absent one.
+- **BUILD: `Build.bat StratocracyEditor Win64 Development` → `Result: Succeeded`**, 55 actions,
+  no editor running (checked before invoking, so the Live Coding refusal was excluded rather than
+  assumed absent).
+- **THE SUITE WAS OWED, AND WHY IT WAS OWED CHANGED IN THIS SAME PASS.** `strat_banner_sweep.py`'s
+  `read_macro_census` now tracks mtimes across all `Source/**/*.{cpp,h}` and not only files
+  carrying a test macro, so a **production comment edit invalidates a stale report**. Measured
+  directly rather than carried over from an earlier finding: after these two edits the sweep
+  reported `[**REPORT IDENTITY**] ... predates a production source file modified 2026-09-06
+  19:03:53`, and the control is that **re-running the suite discharged that finding entirely** —
+  it is absent from the next run, which is what shows the failure was caused by this edit and not
+  by something else. The suite was re-run headless under `-nullrhi` and read from the **exported**
+  `Saved/AutomationReport/index.json` rather than the log, which undercounts. The figure and the
+  `reportCreatedOn` are `global.md`'s to state and are deliberately not restated here.
+- **AN EXIT CODE READ THROUGH A PIPE LIED, IN THE ORDINARY WAY, AND IS RECORDED SO THE NEXT
+  READER DOES NOT TRUST ONE.** `sweep | tail; echo $?` printed `0` while the sweep was **failing**
+  — `$?` was `tail`'s. Unpiped, the same run exits `1`. Every sweep verdict in this entry is from
+  an unpiped run.
+
+### The re-gate round of the same pass, 2026-09-06 (`strat-gameplay-engineer`, ACTING and WRITING; IN LANE, on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit `f7da9ca`, UNCOMMITTED)
+
+No exception clause applies and none is cited. Prose only, in `Source/` and in this file.
+`Source/StratRules/`, `Data/`, `Content/` and every `Tests/` directory are untouched.
+
+- **THE FINDING, AND THE REASON IT IS WORTH MORE THAN THE THREE LINES IT COST.**
+  `strat-integration-reviewer`'s re-gate
+  (`Tools/architect/gate_reports/2026-09-06-sound-cue-count-sentinel-regate.md`) reported a THIRD
+  site of the description this pass had already corrected twice: `StratSoundCues.h`'s
+  `StratDecideDamagedUnits` block said, in the PRESENT TENSE, that *"the `.cpp` sizes a `bool[]`
+  with a `+ 1` over an enum's last member"*. That operator had been removed hours earlier by this
+  pass's own `Count` sentinel. **The two earlier corrections were found by a sweep of the `.cpp`,
+  and the sweep was bounded by the FILE it searched rather than by the CLAIM it searched for.**
+  That is the transferable fact and not the number two: a census over one file cannot report a
+  count for a description, only for a file, and the header had carried the sentence the whole
+  time. It is the same shape as this pass's earlier paraphrase-vs-wording finding, one level up —
+  there the grep was bounded by the claim's exact TOKENS, here by its FILE, and both printed a
+  clean null over a live site.
+- **THE SITE WAS RE-TENSED AND NOT DELETED, WHICH IS THE ONLY CALL IN THIS ROUND THAT HAD TWO
+  DEFENSIBLE ANSWERS.** The sentence is doing real historical work — it explains WHY an earlier
+  quotation was retracted, and the `+ 1` genuinely was the reason at the time — so deleting it
+  would have removed a true explanation to fix a false tense. The stamp now says the wording was
+  false *of the file as it stood that morning*, names the current sizing
+  (`bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]`), and says the surviving exemption
+  is the `- 1` inside `UE_ARRAY_COUNT` and **not** the `+ 1` the sentence names. The alternative
+  considered and rejected was pointing the sentence at the new operator with no historical note;
+  what killed it is that the same file already lost the reason for a retraction that way once.
+- **THE SWEEP FOR A FOURTH SITE FOUND TWO MORE, AND THE METHOD IS RECORDED SO A NULL IS
+  DISTINGUISHABLE FROM AN UNATTEMPTED SEARCH.** Three passes, all `rg` (plain `grep` on this box
+  drops CR-terminated lines and aborts on some flag combinations): (a) a WORDING sweep of
+  `Source/` and `Tools/architect/` for `MatchEnded + 1`, `MatchEnded) + 1`, "last member",
+  "last enumerator", "one past", `bool[7]`; (b) a SUBJECT sweep — every file naming
+  `StratSoundCues`, `StratDecideSoundCues`, `bEmitted` or "one-per-kind", 18 files, read site by
+  site, which is the method the `StratSoundDirector.cpp` paraphrase taught this pass; (c) a
+  CLAIM-CATEGORY sweep of those files for "arithmetic", "magnitude", "exemption", "array bound",
+  "sized". Every hit was classified as historical-and-correctly-tensed or stale. **Two were
+  stale, both in lane:**
+  - `Source/StratPlay/StratSoundDirector.cpp` — its own correction block described the surviving
+    exemption as *"a compile-time array bound over an enum's last member"*, which named the
+    `+ 1`. **Widened to the CATEGORY — "a compile-time array bound over constants" — rather than
+    re-pointed at the `- 1`**, deliberately: pointing a cross-file citation at one named operator
+    is what made this exact line stale twice in a single day, and the category is what the
+    exemption was always stated in.
+  - This file, twice: the damage-alert entry's *"The `+ 1` is stated as an EXEMPTION"* and the
+    `StratClampVolume` entry's stamp reading *"`StratSoundCues.cpp` **sizes** a `bool[]` with a
+    `+ 1`"*. Both re-stamped at the false words. Counting the header, that is **five sites of one
+    description across three files and two directories**, of which a same-file sweep could reach
+    two.
+- **WHAT WAS FOUND, MEASURED, AND DELIBERATELY LEFT ALONE.** `StratSoundCues.cpp`'s opening block
+  says *"THE ONE-PER-KIND COLLAPSE IS A `bool[7]`"*. That is **true today** — `Count` is 7 — so it
+  is not a sixth site and was not edited; a correction pass that rewrites true prose is adding
+  diff for the reader to check. It is recorded as a debt below instead, because it is a hardcoded
+  7 in the one file whose whole pass was about deleting a hardcoded bound.
+- **PROSE ONLY, PROVED BY COMMENT-STRIPPED DIFF AGAINST `HEAD` WITH FIVE CONTROL ARMS, BECAUSE THE
+  PRIOR ROUND'S INSTRUMENT PRINTED A BLIND GREEN.** The stripper was rebuilt — written to disk by
+  path and never through a shell heredoc, which is the measured cause of that blind green on this
+  box, twice in one day, by two different agents. It **refuses on empty output (exit 2)** rather
+  than letting a null compare as identical. Arms: (1) a comments-only file → `REFUSE`, exit 2;
+  (2) the real header → 71 code lines, the instrument speaks; (3) a comment-only mutant carrying
+  code-shaped tokens (`// int x = 1; if (a < b) { bool bEmitted[9]; }`) → **invisible**, correct;
+  (4) an executable mutant (`Count)]` → `Count) + 9]`) → **seen**, the one arm that would have
+  caught the blind green; (5) `"http://x"` survives a string literal intact. Against
+  `git show HEAD:<path>` the stripped delta over the three touched C++ files is **exactly the
+  five constructs the prior gate quoted from the pre-correction tree** — `Count UMETA(Hidden)`,
+  the two `static_assert`s, the `bEmitted` bound and the `check` — and
+  `Source/StratPlay/StratSoundDirector.cpp` comes back with **zero executable delta versus the
+  base commit**, which is the strongest of the three results and the one that needs no reference
+  to a prior report. This round contributed nothing to any of it.
+- **BUILD: `Build.bat StratocracyEditor Win64 Development` → `Result: Succeeded`**, 55 actions,
+  33.61 s. No editor process was running, and that absence was measured with a control — the same
+  `Get-Process` lookup returned a live process for a name that does exist — so the Live Coding
+  refusal was excluded rather than assumed absent.
+- **THE SUITE WAS OWED AND WAS RUN, AND THE OWING WAS MEASURED RATHER THAN INHERITED.** Before
+  the re-run the sweep reported `[**REPORT IDENTITY**] ... predates a production source file
+  modified 2026-09-06 19:31:08` — so a header-comment edit does invalidate a stale report under
+  `read_macro_census`'s new all-`Source` mtime walk, confirmed on THIS round's bytes and not
+  carried over from the earlier bullet. **The control is that re-running the suite discharged
+  that finding entirely**: `REPORT IDENTITY` occurs zero times in the next sweep run, which is
+  what shows the finding was caused by these edits and not by something else. Read from the
+  EXPORTED `Saved/AutomationReport/index.json` and not the log, which undercounts by one. The
+  figure and the `reportCreatedOn` are `global.md`'s to state and are deliberately not restated
+  here. Every sweep verdict above is from an UNPIPED run (`$?` through a pipe is `tail`'s).
+- **ONE HANDOFF THE SUITE RE-RUN CREATED, NAMED HERE BECAUSE IT IS NOT MINE TO FIX.** The re-run
+  moved `reportCreatedOn`, so `global.md`'s citation of the previous one is now stale and the
+  sweep says so by name (`[**REPORT PROVENANCE**] global.md:26`). The count did not move. That
+  file's writer is the `coordinator` and the steward; I did not touch it.
+
+### Debts taken on in the re-gate round
+
+- **`StratSoundCues.cpp`'s opening block still says `bool[7]` in prose.** True today and false the
+  moment an eighth cue is declared — the exact staleness the `Count` sentinel removed from the
+  CODE and did not remove from the COMMENT beside it. Not edited in this round because a
+  correction pass that rewrites currently-true prose costs a reader a diff hunk to verify for
+  nothing. **Discharged** by the next pass that touches that block for any other reason, which
+  should replace the literal with the sizing expression; or immediately, if a reviewer judges a
+  latent-stale literal worth a hunk of its own.

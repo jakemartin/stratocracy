@@ -11,6 +11,87 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-06 (`EStratSoundCue` HAS A `Count` SENTINEL AND THE OUT-OF-BOUNDS WRITE IS A
+COMPILE ERROR, AND THE THING WORTH READING IS THAT THE INSTRUCTION THIS SEAT GAVE WAS NOT
+ACHIEVABLE AND THE LANE SAID SO RATHER THAN FAKING IT. The brief asked that "appending an
+enumerator after `MatchEnded` becomes a compile error". That is reachable only through a
+hard-coded `Count == 7`, which would fire on the SAFE append -- the array now grows for it -- and
+would STILL MISS the dangerous one. `strat-gameplay-engineer` refused the literal instruction,
+pinned what `Count`'s correctness actually depends on instead (zero-basing, and
+`MatchEnded + 1 == Count`, which catches the explicit-value hazard), and wrote the case no C++17
+construct can see into the header as a MEASURED HOLE rather than papering it.
+THE SUITE IS **445/445**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, read from the exported report with `utf-8-sig`. The macro census agrees at
+445 and the clause count did not move: one clause was RENAMED and three REPAIRED, none added.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-23.39.35`.
+BOTH MUTANT ARMS WERE RUN, WHICH IS WHY THE HOLE IS NAMED RATHER THAN ASSUMED CLOSED. A cue
+inserted BETWEEN `MatchEnded` and `Count` is now `error C2338` at the line that causes it, quoted
+verbatim in `engine.md`. A cue declared AFTER `Count` builds with `Result: Succeeded` and ZERO
+diagnostics, and still writes out of bounds. That second arm is the whole reason a runtime clause
+survives this change: `NoSoundCueIsDeclaredAfterTheCountSentinel` pins exactly the shape the
+`static_assert`s cannot see, and says so in its own banner.
+THE FIX RED-LIT FOUR CLAUSES AND THIS SEAT PREDICTED ONE. The engineer predicted three; it was
+four. All four were reflected-enum walks skipping only `_MAX` BY NAME, so a new enumerator fell
+straight through -- and the fourth, `EveryShippedCueSoundCarriesTheSfxClass`, was reached through
+a shared `AllCues()` helper neither prediction had traced. A count of the blast radius from this
+seat is worth what the last three were.
+AND THE LANE REFUSED THE REPAIR THE ENGINEER PROPOSED, ON THREE MEASURED GROUNDS. The proposal
+was to exclude a sentinel by `UEnum::HasMetaData(TEXT("Hidden"))`; `Count` does carry that
+metadata, so the premise was right. `strat-test-author` rejected the conclusion: `Hidden` means
+"keep out of Blueprint dropdowns" and NOT "is a sentinel", so a future REAL cue hidden for that
+cosmetic reason would vanish from both walks silently -- the exact under-coverage those files
+exist against; it would not remove the `_MAX` name rule anyway, since `_MAX` is absent from the
+generated enumerator table and carries no metadata; and `UEnum::HasMetaData` sits under
+`#if WITH_METADATA`, with a Game-target build already recorded in this tree emitting
+`error C2039: 'HasMetaData': is not a member of 'UEnum'`. The filter shipped is a VALUE BOUND,
+`[0, Count)` -- no name list, drops `Count` and `_MAX` together, needs no build guard, and a
+second sentinel needs no test edit.
+THE DECISIVE MUTANT IS PRODUCTION AND THE TEST LANE DID NOT RUN IT, WHICH IS THE HONEST HALF.
+Declaring a cue after `Count` means editing `StratSoundCues.h`, outside that lane. Instead the
+walk's decision was extracted as a free function over `(name, value)` pairs and a control feeds it
+a synthetic healthy enum and a synthetic mutant ON EVERY SUITE RUN, permanently. Three other
+mutants were built, run and reverted; a fourth shaping CRASHED THE PROCESS
+(`Assertion failed: Names.IsValidIndex(Index)`) and wrote no report at all, which is recorded
+because a mutant that kills the process is not a mutant the clause killed.
+AND A GUARD ON THIS RECORD WAS MEASURED STRUCTURALLY BLIND TO THIS ENTIRE PASS.
+`strat_banner_sweep.py`'s REPORT IDENTITY check populates `newest_test_mtime` ONLY from files
+carrying an `IMPLEMENT_*_AUTOMATION_TEST` macro, so a PRODUCTION-ONLY edit does not move it.
+Measured with a three-arm control on a scratch directory: the instrument speaks (11 macros found
+in a directory it had never seen), touching a production file does NOT move the reading, touching
+a test file DOES. **Had the engineer not chosen to run the suite, the sweep would have compared
+against the previous report and returned CLEAN over a tree with four red clauses.** The count arm
+is correct -- no clause was added -- and it is the WHICH-RUN arm that cannot see a change of this
+shape. This is the SECOND adjacency-or-scope defect found in this instrument in one day.
+[CORRECTED 2026-09-06 AT THE WORDS ABOVE: this sentence ended "both are `strat-data-steward`'s and
+both are OPEN". That was true when written and was falsified LATER IN THIS SAME PASS by the lane
+it named -- the classic shape this record keeps meeting, a status claim about work that was still
+moving while the sentence describing it sat still. BOTH ARE NOW CLOSED, in this tree.]
+AND THE STEWARD CLOSED THEM BOTH, WHICH IS THE SECOND HALF OF THIS PASS. The adjacency defect is
+fixed by scoping a marker to the SENTENCE it governs -- `sentence_scope()` replacing a fixed
+character window in both REPORT PROVENANCE parts -- plus a lookahead that stops the metasyntactic
+quotation of the marker from counting as one, applied to THREE marker sets, one of which
+(SUITE COUNT AGREEMENT's) shared the same risk and had not been reported. The freshness defect is
+fixed by tracking mtimes across all of `Source/**/*.{cpp,h}` rather than only files carrying a
+test macro. Both were mutant-tested in both directions and the fixtures were extended rather than
+only the regexes; a gate re-derived every arm independently, including the one that matters most
+-- a GENUINE dated stamp one sentence away still exempts, so the tightening did not disarm real
+stamps. THE FRESHNESS FIX IS DELIBERATELY FAIL-SAFE AND WILL FIRE ON COMMENT-ONLY PASSES, of which
+this project has many. That cost was weighed rather than missed: a gate ruled the shipped
+behaviour RIGHT and not to be refined, and ruled that if it ever is, the shape is a CONTENT HASH
+and not a comment strip -- a follow-up, not a defect.
+A THIRD GUARD WAS RETRACTED IN PASSING. `StratSoundBank.cpp` claimed a `default:`-less switch is
+a compiler diagnostic; measured false, and it had printed green while blind since the AUDIO
+milestone. The switch itself is unchanged and still right for a different reason. `/we4062` was
+NOT added module-wide -- that needs a ruling nobody has made, and until then `SoundFor`'s
+completeness rests on a clause rather than on the compiler.
+LANES: `strat-gameplay-engineer` wrote `Source/` outside `Tests/` and `engine.md`;
+`strat-test-author` wrote both `Tests/` files and `tests.md`; `strat-data-steward` wrote
+`strat_banner_sweep.py` and `data.md`; the `coordinator` wrote `global.md` only. (An earlier form
+of this line omitted the steward entirely while the entry above described its work at length --
+a gate reported it, and it is named here rather than silently inserted because an omitted actor
+in a LANES line reads as a claim that nobody else acted.) No exception clause was invoked and
+none was needed.)
+
 _Last run 2026-09-06 (A DAMAGED UNIT NOW FLASHES RED AND SHAKES, AND THE THING WORTH READING IS
 THAT THE PLAN PUT ONE OF THE TWO TRIGGERS INSIDE `if (UStratSoundDirector* const Director =
 FindSoundDirector())` WITHOUT NOTICING -- so on the AI-playback tour a VISUAL alert would have
@@ -21,18 +102,18 @@ specified the tour trigger by naming the `case Attack:` arm, which is nested one
 INSIDE that same `if`. Knowing the hazard and naming a location did not compose. The engineer
 found it against the tree and moved the call out; no clause in this tree could have, because
 nothing here can observe a tour step and an absent bank at once.
-THE SUITE IS **445/445**, every entry Success, zero failed, zero notRun, zero
+[STAMPED 2026-09-06 BY THE SENTINEL PASS ABOVE: true of the tree this entry describes. THE LIVE
+FIGURE IS AT THE HEAD OF THIS FILE.]
+THE SUITE WAS **445/445**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings. This seat read the entry count and the state of every entry directly out
 of the exported report with `utf-8-sig` rather than accepting either lane's figure, and checked
 that the additions sum to it: the count moved 435 -> 445, all ten added and nothing removed or
 changed state. `strat_banner_sweep.py`'s independent macro census, which counts
 `IMPLEMENT_*_AUTOMATION_TEST` macros in the tree rather than reading the report at all, agrees
 at 445 -- two instruments, one figure.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-20.22.36`.
-AND THE STAMP TOKEN IS DELIBERATELY NOT WRITTEN ANYWHERE NEAR THIS LINE. The reason is recorded
-under WHAT THE GATES CHANGED, below, well clear of this citation: naming that token in prose is
-itself enough to disarm the guard on this line, which is a defect this pass committed twice --
-once by accident and once in the sentence written to warn about it.
+[STAMPED 2026-09-06 BY THE SENTINEL PASS: that run's report was `reportCreatedOn
+2026.09.06-20.22.36` and the export path is one file, so it has been overwritten and no reader can
+open it. THE LIVE RUN IS IDENTIFIED AT THE HEAD OF THIS FILE.]
 THE LOAD-BEARING MEASUREMENT WAS TAKEN BEFORE ANY CLAUSE EXISTED. `DamageFlashSeconds` ships
 `0.0f` -- a switch, not a setting -- so at the shipped default nothing arms, no tick is enabled
 and no material is touched. The engineer built the C++ and ran the FULL SUITE WITH NO NEW CLAUSE
@@ -146,10 +227,15 @@ not evidence about the COMPILER. The editor later closed, the `coordinator` ran 
 (`Result: Succeeded`, one translation unit, zero warnings), and the engineer stamped its own debt
 bullet as discharged with the acting attributed to this seat and the writing to itself.
 AND THE PROSE CORRECTION EXPOSED A REAL LATENT DEFECT, WHICH IS THE BEST THING THAT CAME OUT OF
-THIS PASS AND WAS NOT PART OF IT. `bEmitted`'s bound is `MatchEnded + 1`, so it is correct ONLY
-while `MatchEnded` is the last enumerator; a cue appended after it makes `Emit` write OUT OF
-BOUNDS. Nothing pinned that. `Stratocracy.StratUI.GATE-AUDIO.MatchEndedIsTheLastSoundCue` now
-does, and it pins the RELATIONSHIP rather than the magnitude -- it writes no number at all, walks
+THIS PASS AND WAS NOT PART OF IT. `bEmitted`'s bound WAS `MatchEnded + 1` -- past tense as of the
+sentinel pass above, which removed it; this paragraph describes the tree AS IT STOOD when the
+defect was found -- so it was correct ONLY
+while `MatchEnded` was the last enumerator; a cue appended after it makes `Emit` write OUT OF
+BOUNDS. Nothing pinned that. A clause then pinned it -- RENAMED on 2026-09-06 to
+`Stratocracy.StratUI.GATE-AUDIO.NoSoundCueIsDeclaredAfterTheCountSentinel` by the sentinel pass
+above, which also removed the `+ 1` this sentence describes; the old name appears in no report
+after `2026.09.06-21.55.05` and this sentence is kept for the reasoning, not as a live citation --
+and it pins the RELATIONSHIP rather than the magnitude -- it writes no number at all, walks
 the reflected `UEnum`, and so stays green when a cue is inserted BEFORE `MatchEnded` (correct, the
 array grows with it) and reddens only on the dangerous append. It was verified to redden by an
 IN-LANE mutation of the clause's own comparison, which named the offending enumerators; a real

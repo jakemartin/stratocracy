@@ -214,8 +214,30 @@ TRACKED_ITEMS: tuple[TrackedItem, ...] = (
 
 # A paragraph carrying any of these is treated as STAMPED -- an older claim that
 # the document has already marked as historical. See the docstring's warning.
+#
+# THE `\[STAMPED` ENTRY WAS TIGHTENED 2026-09-06, HERE TOO, NOT ONLY IN THE TWO REPORT-
+# PROVENANCE-SPECIFIC MARKER SETS BELOW. Finding 1 (`2026-09-06-unit-damage-alert-assets-gate.md`)
+# measured that a paragraph quoting the marker's own shape as PROSE -- `[STAMPED ...]`, the
+# literal ellipsis form a maintainer writes when NAMING the marker rather than USING it -- counts
+# to `is_stamped` exactly as a real one does. This function is `is_stamped`'s DEFAULT marker set,
+# read by check 1 (SUITE COUNT AGREEMENT) and by `check_item_states`, so the same false-exemption
+# risk exists there: a paragraph explaining this very defect near a live suite figure or item
+# verdict could exempt it. `\[STAMPED(?!\s*\.\.\.\s*\])` closes that everywhere `is_stamped`'s
+# default applies rather than only in the two report-provenance call sites Finding 1 happened to
+# be measured against. MEASURED SAFE, NOT ASSUMED, BUT REPRODUCE RATHER THAN TRUST A CARDINALITY
+# HERE -- the set this classification runs over (`[STAMPED` occurrences across the live
+# `Tools/architect/state/*.md`) grows with every edit to those files, so a count written into this
+# comment is stale before the next commit and was, in fact, found stale and mutually contradictory
+# with two other counts of the same set (2026-09-06 re-gate, `strat-data-steward` correction in
+# `Tools/architect/state/data.md`). What is durable and does not move: every occurrence of the
+# ellipsis form (a literal `...` inside the brackets, `[STAMPED ...]`) found anywhere in that file
+# set is confirmed by direct inspection to be this steward's own prose quoting the marker's shape
+# while describing this exact fix, never a real stamp anyone relied on, and the full sweep against
+# the live tree stays `SWEEP CLEAN` after this change. Reproduce the classification yourself rather
+# than trust a number: `grep -noE '\[STAMPED[^]]*\]' Tools/architect/state/*.md | grep '\.\.\.'`
+# lists every ellipsis-form hit in the checkout in hand, with its own file and line on every row.
 _PARAGRAPH_STAMP_MARKERS: tuple[str, ...] = (
-    r"\[STAMPED",
+    r"\[STAMPED(?!\s*\.\.\.\s*\])",
     r"\[BANNER CORRECTED",
     r"\*\*CORRECTED",
     r"\*\*CORRECTION",
@@ -241,13 +263,53 @@ _PARAGRAPH_STAMP_MARKERS: tuple[str, ...] = (
 # FAR inside `_STAMP_WINDOW` (220), not a near miss, so the bare-citation marker reached it with
 # more than a hundred characters to spare. This set drops that marker: only an explicit
 # supersession annotation stamps a tree/branch claim, never a bare date citation sitting nearby.
+#
+# THE `\[STAMPED` ENTRY BELOW WAS TIGHTENED 2026-09-06, AND THIS IS THE SECOND HALF OF FINDING 1
+# (`2026-09-06-unit-damage-alert-assets-gate.md`), NOT A SEPARATE DEFECT. A paragraph WARNING
+# about the adjacency gap must be free to write the marker's own shape as PROSE -- "the marker
+# word plus an ellipsis in brackets" -- without that literal quotation counting as a genuine
+# stamp. Measured live: `global.md`'s own warning paragraph, written to document exactly this
+# hazard, spelled `[STAMPED ...]` out and thereby re-armed the exemption it was reporting.
+# `\[STAMPED(?!\s*\.\.\.\s*\])` refuses only that one shape -- a literal ellipsis then a closing
+# bracket, the metasyntactic quoting form -- and nothing else: every OTHER `[STAMPED` occurrence
+# in the record is followed by an actual date or word, never a bare `...`, so this costs no real
+# marker. DO NOT STATE A CARDINALITY HERE -- the total and non-ellipsis counts of this set were
+# measured at two different moments of the same growing record and disagreed with each other and
+# with a third census in a `strat-integration-reviewer` gate report (2026-09-06 re-gate), which is
+# the reason this comment no longer carries either number. Reproduce the classification instead:
+# `grep -noE '\[STAMPED[^]]*\]' Tools/architect/state/*.md | grep -v '\.\.\.'` lists every
+# non-ellipsis hit in the checkout in hand, and each one, read by eye, is a real dated or worded
+# marker rather than a bare `...`.
 _PROVENANCE_TREE_STAMP_MARKERS: tuple[str, ...] = (
-    r"\[STAMPED",
+    r"\[STAMPED(?!\s*\.\.\.\s*\])",
     r"\[BANNER CORRECTED",
     r"\*\*CORRECTED",
     r"\*\*CORRECTION",
     r"CORRECTED,",
     r"CORRECTION,",
+)
+
+# PART (a)'S OWN GENUINE-MARKER SET, SEPARATE FROM `_PARAGRAPH_STAMP_MARKERS` FOR THE SAME
+# REASON `_PROVENANCE_TREE_STAMP_MARKERS` IS SEPARATE FROM IT -- `_PARAGRAPH_STAMP_MARKERS`
+# stays untouched (see its own comment: widening or narrowing it changes check 1's SUITE COUNT
+# AGREEMENT behaviour, a different check with a different false-negative/false-positive trade).
+# This is `_PARAGRAPH_STAMP_MARKERS` with the identical `\[STAMPED` tightening applied, because
+# part (a) reads the SAME literal marker shape near a `reportCreatedOn` citation and is
+# vulnerable to the SAME metasyntactic-quote defect Finding 1 measured -- the live entry that
+# triggered Finding 1 was, in fact, part (a)'s own subject (a `reportCreatedOn` citation), not
+# part (b)'s. Unlike `_PROVENANCE_TREE_STAMP_MARKERS`, this keeps the bare
+# `reportCreatedOn \d{4}\.\d{2}\.\d{2}` marker, because for THIS subject a nearby report
+# citation legitimately is the record's own idiom for quoting an old pass (see
+# `_PARAGRAPH_STAMP_MARKERS`'s own comment) -- that half of the reasoning is unchanged; only the
+# `[STAMPED` shape needed narrowing.
+_PROVENANCE_CITATION_STAMP_MARKERS: tuple[str, ...] = (
+    r"\[STAMPED(?!\s*\.\.\.\s*\])",
+    r"\[BANNER CORRECTED",
+    r"\*\*CORRECTED",
+    r"\*\*CORRECTION",
+    r"CORRECTED,",
+    r"CORRECTION,",
+    r"reportCreatedOn\s+\d{4}\.\d{2}\.\d{2}",
 )
 
 # TENSE BINDS TO WHAT IT PRECEDES, and this replaced a generic "was **N/N**" marker that
@@ -534,6 +596,11 @@ class SweepResult:
     report_created_on: "datetime.datetime | None" = None
     report_created_on_raw: str | None = None
     newest_test_mtime: float | None = None
+    # THE 2026-09-06 ADDITION: newest mtime across EVERY `.cpp`/`.h` under `Source/`, test or
+    # production -- see `read_macro_census`'s docstring for the production-only blind spot this
+    # closes. `check_report_identity` compares the report against whichever of this and
+    # `newest_test_mtime` is newer.
+    newest_source_mtime: float | None = None
     # THE REPORT'S OWN SUCCEEDED COUNT, READ EVEN WHEN THE REPORT IS RED. Added 2026-09-01
     # alongside the `_collect_suite_claims` fix that lets an honest non-green figure (`346/347`)
     # become a live claim at all -- see `read_report_count` and `check_suite_counts` for why a
@@ -611,6 +678,48 @@ def quoting_window(para: str, at: int) -> str:
     for mm in _SENTENCE_BREAK_RE.finditer(window):
         cut = mm.end()
     return window[cut:]
+
+
+def sentence_scope(para: str, start: int, end: int, radius: int = 1) -> tuple[int, int]:
+    """The span covering the sentence(s) containing `[start:end)`, plus `radius` WHOLE
+    sentences either side -- scoped to SENTENCE STRUCTURE, never to a fixed character count.
+
+    THIS REPLACES A FIXED-CHARACTER WINDOW FOR REPORT PROVENANCE'S OWN STAMP CHECK, AND THE
+    REASON IS A MEASURED DEFECT, NOT A STYLE PREFERENCE. `2026-09-06-unit-damage-alert-assets-
+    gate.md` (Finding 1) proved a fixed 400-character reach around a citation exempts a genuine
+    `[STAMPED ...]` marker that belongs to a DIFFERENT, unrelated correction sitting a few
+    sentences later in the same blank-line-free banner paragraph -- the marker GOVERNS its own
+    sentence's claim, not everything within reach of it. A raw character count cannot tell "the
+    marker two sentences away, about something else" from "the marker one sentence away, in the
+    lead-in-then-restate shape this record's own corrections use" (`_GOOD_PROVENANCE`: a
+    `**[STAMPED ...]**` sentence immediately followed by the sentence it covers) -- both can sit
+    at similar distances in a document whose sentences run to several hundred characters each.
+    Sentence structure can: the second is one sentence away, the first is not.
+
+    Uses `_SENTENCE_BREAK_RE`, the same recognizer `quoting_window` already relies on, so a
+    version number (`2.11.6-B`) or a filename dot is not misread as a sentence end here either.
+    `radius=1` -- the citation's own sentence plus one either side -- is the shape every GOOD
+    provenance fixture in this file actually uses (a stamp sentence immediately before the
+    sentence it marks, never further); a genuine stamp two or more sentences away has not been
+    observed in this record and is not exempted by design, matching the "the marker governs the
+    sentence it sits beside" reading Finding 1 asked for.
+    """
+    bounds = [0] + [m.end() for m in _SENTENCE_BREAK_RE.finditer(para)] + [len(para)]
+
+    def sentence_index(pos: int) -> int:
+        idx = 0
+        for i in range(len(bounds) - 1):
+            if bounds[i] <= pos:
+                idx = i
+            else:
+                break
+        return idx
+
+    si = sentence_index(start)
+    ei = sentence_index(max(start, end - 1))
+    lo = max(0, si - radius)
+    hi = min(len(bounds) - 2, ei + radius)
+    return bounds[lo], bounds[hi + 1]
 
 
 def section_of(text: str, line_no: int) -> str:
@@ -714,23 +823,71 @@ def read_report_count(path: str = REPORT_JSON) -> tuple[int | None, int | None, 
     return total, succeeded, f"automation report: {total} entries, all Success ({data.get('reportCreatedOn')})"
 
 
-def read_macro_census(source_dir: str = SOURCE_DIR) -> tuple[int | None, str, float | None]:
+def read_macro_census(
+    source_dir: str = SOURCE_DIR,
+) -> tuple[int | None, str, float | None, float | None]:
     """Count clauses BY MACRO, never by acceptance-ID name -- an ID grep once undercounted 8 as 5.
 
-    Also returns the NEWEST mtime among files that actually define a test macro -- this is the
-    "which run" instrument: a report older than this timestamp describes a tree the test source
-    has since moved past, independent of whether its count happens to still match.
+    Returns `(simple_count, note, newest_test_mtime, newest_source_mtime)`.
+
+    `newest_test_mtime` is the NEWEST mtime among files that actually define a test macro -- the
+    original "which run" instrument: a report older than this timestamp describes a tree the
+    test source has since moved past, independent of whether its count happens to still match.
+
+    `newest_source_mtime` IS THE 2026-09-06 ADDITION, AND CLOSES A MEASURED BLIND SPOT RATHER
+    THAN WIDENING THE CENSUS FOR ITS OWN SAKE. `newest_test_mtime` only ever advances when a
+    `.cpp` file CARRYING AN `IMPLEMENT_*_AUTOMATION_TEST` MACRO changes -- so a change to
+    PRODUCTION code, however large, moves nothing this function returns, and a suite that goes
+    red purely from a production edit compares clean against a report that predates it. Measured
+    with a three-arm control on a scratch directory (see `global.md`'s 2026-09-06 entry and this
+    steward's own re-run in `check_identity_self_test`): (A) the instrument speaks at all -- 11
+    macros found in a directory it had never seen; (B) touching a PRODUCTION file the clauses
+    read does NOT move `newest_test_mtime`; (C) touching a TEST file does. Had a lane not chosen
+    to run the suite by hand after a production-only change, `check_report_identity` would have
+    trusted a report describing a tree with four red clauses.
+
+    `newest_source_mtime` tracks every `.cpp` AND `.h` under `source_dir`, test-defining or not,
+    because C++ compiles both and a header-only edit can move behaviour just as a `.cpp` edit
+    can. `check_report_identity` compares the report's mtime against WHICHEVER of the two
+    instruments is newer, so a production edit no longer has a free pass -- and the test-macro
+    instrument is kept alongside it, unreplaced, because it still answers a question the
+    all-source one cannot: WHICH test file changed, which `newest_source_mtime` alone cannot say
+    once it is the production edit that is newest.
+
+    THIS IS DELIBERATELY NOT NARROWED TO "ONLY THE FILES A GIVEN TEST ACTUALLY INCLUDES" -- that
+    would need a real dependency graph (`#include` resolution across the whole module tree) this
+    script does not have and should not grow just for a freshness check, and a narrower net that
+    quietly misses a header two `#include`s away is the same shape of blind spot this fix exists
+    to close, one level down. The cost of the wider net is stated rather than hidden: ANY
+    `Source/` edit -- including a comment-only one -- now makes a stale report a finding until
+    the suite is re-run, which is a strictly more cautious reading than before, never a looser
+    one, and it is the same reading this check ALREADY gave a comment-only edit to a TEST file
+    (measured: `check_identity_self_test`'s existing "report written BEFORE a later source edit"
+    case never distinguished a behavioural change from a comment one either). This does not
+    reach beyond `Source/` -- `Content/`, `Config/`, `Data/` and `Tools/` are not part of what
+    the compiled suite executes and are not scanned here.
     """
     if not os.path.isdir(source_dir):
-        return None, f"no Source/ at {source_dir} -- macro census skipped", None
+        return None, f"no Source/ at {source_dir} -- macro census skipped", None, None
     simple = 0
     complex_ = 0
     newest_mtime: float | None = None
+    newest_source_mtime: float | None = None
     for root, _dirs, files in os.walk(source_dir):
         for name in files:
-            if not name.endswith(".cpp"):
+            is_cpp = name.endswith(".cpp")
+            is_header = name.endswith(".h")
+            if not (is_cpp or is_header):
                 continue
             path = os.path.join(root, name)
+            try:
+                mtime = os.path.getmtime(path)
+            except OSError:                                   # pragma: no cover
+                continue
+            if newest_source_mtime is None or mtime > newest_source_mtime:
+                newest_source_mtime = mtime
+            if not is_cpp:
+                continue
             try:
                 with io.open(path, encoding="utf-8", errors="replace") as fh:
                     body = fh.read()
@@ -739,19 +896,15 @@ def read_macro_census(source_dir: str = SOURCE_DIR) -> tuple[int | None, str, fl
             s = len(re.findall(r"IMPLEMENT_SIMPLE_AUTOMATION_TEST", body))
             c = len(re.findall(r"IMPLEMENT_COMPLEX_AUTOMATION_TEST(?:_CLASS)?", body))
             if s or c:
-                try:
-                    mtime = os.path.getmtime(path)
-                    if newest_mtime is None or mtime > newest_mtime:
-                        newest_mtime = mtime
-                except OSError:                               # pragma: no cover
-                    pass
+                if newest_mtime is None or mtime > newest_mtime:
+                    newest_mtime = mtime
             simple += s
             complex_ += c
     note = f"macro census: IMPLEMENT_SIMPLE_AUTOMATION_TEST={simple}, COMPLEX/_CLASS={complex_}"
     if complex_:
         note += " -- COMPLEX macros exist, so the SIMPLE sum alone is not the suite size"
-        return None, note, newest_mtime
-    return simple, note, newest_mtime
+        return None, note, newest_mtime, newest_source_mtime
+    return simple, note, newest_mtime, newest_source_mtime
 
 
 _REPORT_CREATED_ON_RE = re.compile(r"^(\d{4})\.(\d{2})\.(\d{2})-(\d{2})\.(\d{2})\.(\d{2})$")
@@ -1107,11 +1260,24 @@ def check_report_identity(result: SweepResult) -> None:
     is trusted as ground truth (`result.report_count is not None`), this requires:
 
       (a) a readable `reportCreatedOn` -- proof the sweep can even NAME which run it read, and
-      (b) the report's own mtime not predating any test-defining `.cpp` file on disk.
+      (b) the report's own mtime not predating any `.cpp`/`.h` file under `Source/`, whether or
+          not it defines a test macro.
 
     Either gap is a hard FAIL, never a warning: an unidentifiable run is not verified evidence,
     whatever the numbers say. Both are measured off the filesystem by this script, not read from
     the report's own claims about itself -- a report cannot vouch for its own freshness.
+
+    **(b) WIDENED 2026-09-06 TO COVER PRODUCTION FILES, NOT ONLY TEST-DEFINING ONES.** Until this
+    fix, (b) compared the report's mtime against `newest_test_mtime` alone, which
+    `read_macro_census` populates ONLY from `.cpp` files carrying an
+    `IMPLEMENT_*_AUTOMATION_TEST` macro -- so a change to PRODUCTION code, which can redden a
+    clause without touching a single test file, moved nothing this check compares against, and a
+    stale report sailed through. Measured with a three-arm control on a scratch directory (see
+    `read_macro_census`'s own docstring for the instrument and `check_identity_self_test` for the
+    fixture): touching a production file left `newest_test_mtime` unmoved while the report on
+    disk described a tree four clauses behind it. This now compares against WHICHEVER of
+    `newest_test_mtime` and `newest_source_mtime` (every `.cpp`/`.h` under `Source/`) is newer,
+    so a production-only edit can no longer hide behind the absence of a test-file edit.
     """
     if result.report_count is None:
         return  # the report was never trusted as ground truth; nothing to pin
@@ -1132,23 +1298,33 @@ def check_report_identity(result: SweepResult) -> None:
             f"measured, so the report is refused rather than assumed current",
         ))
         return
-    if result.newest_test_mtime is None:
+    if result.newest_test_mtime is None and result.newest_source_mtime is None:
         result.findings.append(Finding(
             "REPORT IDENTITY",
-            f"no test-defining .cpp file was found under {SOURCE_DIR} to compare the report's "
-            f"write time against -- staleness cannot be measured, so the report is refused "
-            f"rather than assumed current",
+            f"no test-defining or production .cpp/.h file was found under {SOURCE_DIR} to "
+            f"compare the report's write time against -- staleness cannot be measured, so the "
+            f"report is refused rather than assumed current",
         ))
         return
-    if result.newest_test_mtime > result.report_mtime:
+    candidates = [t for t in (result.newest_test_mtime, result.newest_source_mtime)
+                  if t is not None]
+    newest = max(candidates)
+    if newest > result.report_mtime:
+        # WHICH ARM TRIGGERED IS STATED, NOT JUST THE COMBINED FIGURE -- a reader deciding
+        # whether to re-run the suite benefits from knowing whether a TEST file moved (the
+        # original instrument) or a PRODUCTION-ONLY file did (the 2026-09-06 addition), because
+        # the two carry different confidence about whether behaviour actually changed.
+        test_is_newer = (result.newest_test_mtime is not None
+                          and result.newest_test_mtime == newest)
+        arm = "a test-defining source file" if test_is_newer else "a production source file"
         report_str = datetime.datetime.fromtimestamp(result.report_mtime).strftime("%Y-%m-%d %H:%M:%S")
-        source_str = datetime.datetime.fromtimestamp(result.newest_test_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        source_str = datetime.datetime.fromtimestamp(newest).strftime("%Y-%m-%d %H:%M:%S")
         result.findings.append(Finding(
             "REPORT IDENTITY",
             f"{REPORT_JSON} (reportCreatedOn {result.report_created_on_raw}, written {report_str}) "
-            f"predates a test-defining source file modified {source_str} -- this report is "
-            f"evidence about a PAST tree, not the current one, whatever its count happens to "
-            f"say. Re-run the suite before trusting it as ground truth for a live claim.",
+            f"predates {arm} modified {source_str} -- this report is evidence about a PAST tree, "
+            f"not the current one, whatever its count happens to say. Re-run the suite before "
+            f"trusting it as ground truth for a live claim.",
         ))
 
 
@@ -1388,22 +1564,24 @@ def check_report_provenance(docs: list[tuple[str, str]], result: SweepResult) ->
                         continue          # a dated pass's own report, not the live declaration
                     if _QUOTED_FIGURE_RE.search(quoting_window(para, m.start())):
                         continue
-                    # PART (a)'S OWN WINDOW, NOT THE WHOLE PARAGRAPH -- see this function's
-                    # docstring for the 2026-08-26 inertness this replaces. `_PROVENANCE_CITATION_
-                    # WINDOW` (400) is sized from two measurements, not guessed: `78ea508`'s own
-                    # fix needs >=234 (its two citations sit 234 characters apart start-to-start,
-                    # and a 220-character reach missed the marker's own leading text by 14), and
-                    # the live 2026-08-26 banner's own `[STAMPED ...]`-bracketed re-quote of
-                    # `reportCreatedOn 2026.08.26-03.40.42` sits 371 characters from that bracket,
-                    # start-to-start -- so 220 (this file's general `_STAMP_WINDOW`) covers
-                    # neither and 400 covers both with margin. The self-match problem `_mask_span`
-                    # exists for is unchanged by windowing: the slice is taken first and the
-                    # citation's own span is masked WITHIN it, so a lone citation can never
-                    # exempt itself by matching its own `reportCreatedOn` text.
-                    ws = max(0, m.start() - _PROVENANCE_CITATION_WINDOW)
-                    we = min(len(para), m.end() + _PROVENANCE_CITATION_WINDOW)
+                    # PART (a)'S OWN SCOPE, NEITHER THE WHOLE PARAGRAPH NOR A FIXED CHARACTER
+                    # WINDOW -- see this function's docstring for the 2026-08-26 inertness a
+                    # whole-paragraph scope caused, and `sentence_scope`'s own docstring for the
+                    # 2026-09-06 defect a FIXED WINDOW (the `_PROVENANCE_CITATION_WINDOW = 400`
+                    # this replaced) went on to cause: it exempted a citation merely for standing
+                    # near a marker that GOVERNED A DIFFERENT, UNRELATED SENTENCE
+                    # (`2026-09-06-unit-damage-alert-assets-gate.md`, Finding 1, measured at 172
+                    # characters -- comfortably inside 400, and several sentences away). Scoping
+                    # to the citation's own sentence plus one either side keeps both real
+                    # measurements this window was originally sized from (`78ea508`'s fix and the
+                    # 2026-08-26 banner's re-quote, both a SENTENCE OR TWO from their own citation
+                    # in this record's long-sentence style) while refusing a marker that belongs
+                    # to a different sentence's claim. `_mask_span`'s self-match protection is
+                    # unchanged: the slice is taken first and the citation's own span is masked
+                    # within it, so a lone citation can never exempt itself.
+                    ws, we = sentence_scope(para, m.start(), m.end(), radius=1)
                     window = _mask_span(para[ws:we], m.start() - ws, m.end() - ws)
-                    if is_stamped(window):
+                    if is_stamped(window, markers=_PROVENANCE_CITATION_STAMP_MARKERS):
                         continue
                     result.findings.append(Finding(
                         "REPORT PROVENANCE",
@@ -1436,11 +1614,17 @@ def check_report_provenance(docs: list[tuple[str, str]], result: SweepResult) ->
                         continue          # a dated pass's own note, not the live declaration
                     if _QUOTED_FIGURE_RE.search(quoting_window(para, m.start())):
                         continue
-                    window = para[max(0, m.start() - _STAMP_WINDOW):m.end() + _STAMP_WINDOW]
                     # PART (b)'S OWN MARKER SET, NOT THE GENERAL ONE -- see
                     # `_PROVENANCE_TREE_STAMP_MARKERS`'s own comment for the 2026-08-26 hole
                     # this closes: a nearby `reportCreatedOn` citation is not a supersession of
-                    # a tree/branch claim, only an explicit stamp is.
+                    # a tree/branch claim, only an explicit stamp is. AND SENTENCE-SCOPED, NOT A
+                    # FIXED `_STAMP_WINDOW` -- the same 2026-09-06 adjacency defect Finding 1
+                    # measured against part (a) is the same MECHANISM here (a fixed character
+                    # window cannot tell a marker governing THIS sentence from one governing a
+                    # neighbouring one), so it gets the same fix. See `sentence_scope`'s
+                    # docstring.
+                    ws, we = sentence_scope(para, m.start(), m.end(), radius=1)
+                    window = _mask_span(para[ws:we], m.start() - ws, m.end() - ws)
                     if is_stamped(window, markers=_PROVENANCE_TREE_STAMP_MARKERS):
                         continue
                     cited_path, cited_branch = m.group(1), m.group(2).strip()
@@ -1499,7 +1683,8 @@ def run_sweep(paths: "str | list[str] | None" = None, *, check_tree: bool = True
     if check_tree:
         result.report_count, result.report_succeeded, note = read_report_count(report_path)
         result.notes.append(note)
-        result.macro_count, note, result.newest_test_mtime = read_macro_census(source_dir)
+        (result.macro_count, note, result.newest_test_mtime,
+         result.newest_source_mtime) = read_macro_census(source_dir)
         result.notes.append(note)
         result.report_mtime, result.report_created_on, result.report_created_on_raw, note = \
             read_report_timestamps(report_path)
@@ -1658,6 +1843,21 @@ _Last run 2026-08-19 (suite is now **108/108**.)_
   **107/107** (`succeeded 107 / failed 0`, `reportCreatedOn 2026.08.14-21.47.35`).
 """
 
+# THE 2026-09-06 METASYNTACTIC-MARKER GAP, ISOLATED AGAINST CHECK 1 (SUITE COUNT AGREEMENT), NOT
+# ONLY AGAINST REPORT PROVENANCE. `_PARAGRAPH_STAMP_MARKERS` is `is_stamped`'s DEFAULT set, read
+# here too -- a WRONG live suite figure sitting near a paragraph that merely QUOTES the marker's
+# shape as prose (`[STAMPED ...]`, no date) must still be caught, not laundered by the literal
+# quotation. Before the 2026-09-06 tightening this PASSED wrongly; after it, it must FAIL.
+_BAD_SUITE_METASYNTACTIC = """# Architect state
+
+_Last run 2026-08-19 (suite is now **108/108**.)_
+
+## NEXT
+
+- **A note about the marker's own shape.** Suite **107/107**. Writing the literal `[STAMPED ...]`
+  in prose, to describe the marker, must not itself count as a real stamp.
+"""
+
 # REPORT PROVENANCE, part (a). BOTH PARTS ARE SCOPED TO THE CURRENT BANNER SEGMENT, NOT TO
 # `## NEXT` -- a real `## NEXT` bullet is a dated per-pass narrative entry allowed to cite ITS
 # OWN contemporary report, and only the banner asserts what backs today's figure -- so the
@@ -1803,6 +2003,66 @@ notRun.)_
 
 An earlier segment of this banner cited `reportCreatedOn 2026.08.26-00.28.42` before the suite
 was re-run mid-pass; that citation is now history and no live claim rests on it.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# THE 2026-09-06 ADJACENCY DEFECT ITSELF (FINDING 1's FIRST SYMPTOM), PINNED AS A FIXTURE:
+# `2026-09-06-unit-damage-alert-assets-gate.md`. A wrong citation, in its own sentence, followed
+# by an intervening sentence of plain narrative, followed by a GENUINE `[STAMPED ...]` marker
+# that governs an entirely UNRELATED correction -- all under 250 characters end to end, well
+# inside the old 400-character window, but two sentences away from the citation. Must FAIL: the
+# marker governs the pairing-corpus sentence it sits beside, not this one.
+_BAD_PROVENANCE_WRONG_SENTENCE = """# global
+
+_Last run 2026-09-06 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-20.00.49`. AND ITS POSITION IS
+LOAD-BEARING, SO SAY SO PLAINLY HERE. AN UNRELATED EARLIER CORRECTION SITS A FEW SENTENCES
+BELOW, ABOUT A DIFFERENT CLAUSE ENTIRELY. **[STAMPED 2026-09-06 -- a correction about the
+pairing corpus, kept here for history and touching nothing about which report backs today's
+figure.]**
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# THE 2026-09-06 METASYNTACTIC-MARKER DEFECT ITSELF (FINDING 1's SECOND SYMPTOM), PINNED AS A
+# FIXTURE. A wrong citation, and -- IN THE SAME SENTENCE, so no sentence-scoping can save it --
+# a paragraph warning about the adjacency hazard SPELLS THE MARKER OUT as a literal quotation,
+# `[STAMPED ...]`. This is the real live defect this record measured: the warning paragraph
+# written to document Finding 1's first symptom re-armed the exemption by quoting the marker's
+# own shape. Must FAIL: only the marker-tightening half of the fix (not sentence-scoping) closes
+# this one, and this fixture isolates it.
+_BAD_PROVENANCE_METASYNTACTIC = """# global
+
+_Last run 2026-09-06 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-20.00.49`. A PARAGRAPH WARNING ABOUT
+THIS EXACT HAZARD MUST BE FREE TO NAME THE MARKER WORD ITSELF WITHOUT RE-ARMING IT: WRITING THE
+LITERAL `[STAMPED ...]` HERE, AS PROSE, MUST NOT COUNT AS A REAL STAMP.
+
+## NEXT
+
+- **Nothing else here.**
+"""
+
+# THE CLEAN COUNTERPART TO BOTH: a genuine `[STAMPED ...]` marker, WITH A REAL DATE (not the bare
+# ellipsis form), one sentence away from the citation it governs -- exactly `_GOOD_PROVENANCE`'s
+# shape, condensed, to isolate that the fix does not merely refuse every `[STAMPED` near a
+# citation. Must PASS.
+_GOOD_PROVENANCE_ADJACENT_SENTENCE = """# global
+
+_Last run 2026-09-06 (suite is now **224/224**, every entry Success, zero failed and zero
+notRun.)_
+
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.08.26-00.28.42`. **[STAMPED 2026-09-06 --
+superseded by the run above; kept for history.]**
 
 ## NEXT
 
@@ -2299,6 +2559,16 @@ def _write_fixture_source(path: str, count: int, mtime: float) -> None:
     os.utime(path, (mtime, mtime))
 
 
+def _write_fixture_prod_source(path: str, mtime: float) -> None:
+    """A PRODUCTION `.cpp`, carrying no test macro at all -- the 2026-09-06 fixture shape.
+    `read_macro_census` must move `newest_source_mtime` for this file while leaving
+    `newest_test_mtime` untouched, which is the whole of the fix under test."""
+    with io.open(path, "w", encoding="utf-8") as fh:
+        fh.write("// production code -- no IMPLEMENT_*_AUTOMATION_TEST macro anywhere here\n"
+                  "void DoSomeGameplayWork() { /* ... */ }\n")
+    os.utime(path, (mtime, mtime))
+
+
 def check_identity_self_test() -> tuple[bool, list[str]]:
     """REPORT IDENTITY fixtures. Built on a doctored SCRATCH report/source pair, never on the
     real `Saved/` or `Source/` -- those are outside this steward's lane -- so `--report-json` /
@@ -2312,7 +2582,7 @@ def check_identity_self_test() -> tuple[bool, list[str]]:
     base = time.time() - 100000   # comfortably in the past, clear of "now" jitter
 
     def run_case(name: str, report_kwargs: "dict | None", source_kwargs: "dict | None",
-                 claim_count: int, want_pass: bool) -> None:
+                 claim_count: int, want_pass: bool, prod_mtime: "float | None" = None) -> None:
         nonlocal ok
         with tempfile.TemporaryDirectory() as d:
             report_path = os.path.join(d, "index.json")
@@ -2324,6 +2594,12 @@ def check_identity_self_test() -> tuple[bool, list[str]]:
                 _write_fixture_report(report_path, claim_count, **report_kwargs)
             if source_kwargs is not None:
                 _write_fixture_source(os.path.join(source_dir, "T.cpp"), claim_count, **source_kwargs)
+            # `prod_mtime`: a PRODUCTION-ONLY file, carrying no test macro, written at the given
+            # mtime -- the 2026-09-06 fixture arm. Present in a case, this is the ONLY thing that
+            # can move `newest_source_mtime`; `T.cpp` above (if present) is the only thing that
+            # can move `newest_test_mtime`, so the two arms are independently controllable here.
+            if prod_mtime is not None:
+                _write_fixture_prod_source(os.path.join(source_dir, "Prod.cpp"), prod_mtime)
             gpath = os.path.join(state_dir, "global.md")
             with io.open(gpath, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(f"# global\n\n_Last run 2026-08-21 "
@@ -2351,6 +2627,20 @@ def check_identity_self_test() -> tuple[bool, list[str]]:
     run_case("no test-defining source found FAILS -- staleness cannot be measured at all",
               dict(created_on="2026.08.21-15.00.00", mtime=base + 200),
               None, 5, False)
+    # 2026-09-06, the production-only blind spot (see `read_macro_census`'s docstring). A test
+    # file OLDER than the report (so `newest_test_mtime` alone would say "current") and a
+    # PRODUCTION file NEWER than the report, with no test file touched at all: before this fix
+    # this PASSED, comparing the report only against `newest_test_mtime`; it must FAIL now.
+    run_case("report older than a NEWER production-only edit FAILS, even though no test file "
+             "moved at all -- the real 2026-09-06 shape",
+              dict(created_on="2026.09.06-20.00.00", mtime=base + 100),
+              dict(mtime=base + 50), 5, False, prod_mtime=base + 200)
+    # The companion PASS: the same shape, but the production file is OLDER than the report, so
+    # the report genuinely does postdate everything on disk. Must still PASS -- the fix must not
+    # make every report with a production file present a permanent finding.
+    run_case("report newer than a production-only file (and a test file) both PASSES",
+              dict(created_on="2026.09.06-20.00.00", mtime=base + 300),
+              dict(mtime=base + 50), 5, True, prod_mtime=base + 100)
     return ok, lines
 
 
@@ -2414,6 +2704,21 @@ def check_provenance_self_test() -> tuple[bool, list[str]]:
               _BAD_PROVENANCE_BARE_STAMP, False)
     run_case("the same BARE stamp shape, agreeing with the report this sweep opened, PASSES",
               _GOOD_PROVENANCE_BARE_STAMP, True)
+    # 2026-09-06, the adjacency fix (Finding 1, symptom 1): a genuine stamp governing a
+    # DIFFERENT, unrelated sentence two sentences away -- well inside the old 400-character
+    # window -- must no longer exempt this citation.
+    run_case("a wrong citation followed, two sentences later, by a genuine stamp about an "
+             "UNRELATED correction still FAILS", _BAD_PROVENANCE_WRONG_SENTENCE, False)
+    # 2026-09-06, the metasyntactic-marker fix (Finding 1, symptom 2): a paragraph WARNING about
+    # the adjacency hazard spells the marker out as prose, in the SAME sentence as the citation
+    # -- sentence-scoping alone cannot save this one; only the tightened marker can.
+    run_case("a wrong citation beside a METASYNTACTIC quotation of the marker itself "
+             "(`[STAMPED ...]` as prose, not as a stamp) still FAILS",
+              _BAD_PROVENANCE_METASYNTACTIC, False)
+    # The clean counterpart to both: a genuine, dated `[STAMPED ...]` marker one sentence away
+    # from the citation it governs must still PASS -- the fix must not over-refuse.
+    run_case("a genuine, dated stamp one sentence away from the citation it governs PASSES",
+              _GOOD_PROVENANCE_ADJACENT_SENTENCE, True)
     return ok, lines
 
 
@@ -2530,6 +2835,8 @@ def check_self_test() -> tuple[bool, str]:
         ("a corrected banner carrying was-107 AND a WRONG live figure still FAILS",
          _BANNER_MIXED, False),
         ("present-tense figure stamped by its own reportCreatedOn PASSES", _STAMPED_PRESENT, True),
+        ("a wrong live figure beside a METASYNTACTIC quotation of `[STAMPED ...]` (prose, not "
+         "a stamp) still FAILS", _BAD_SUITE_METASYNTACTIC, False),
         ("banner narrative 104 -> 108 with NEXT at 108 PASSES", _BANNER_NARRATIVE, True),
         ("banner narrative whose LAST figure is stale still FAILS", _BANNER_NARRATIVE_STALE, False),
         ("an UNBOLDED live figure is still seen, and still FAILS when wrong", _UNBOLDED, False),
@@ -2652,27 +2959,78 @@ def check_self_test() -> tuple[bool, str]:
     # not only against the sweep's verdict on `_BAD_PROVENANCE_LONG_PARAGRAPH` above, the same
     # way the wrap fix is pinned directly against its regex just above this block. The pre-fix
     # scope was `is_stamped(_mask_span(para, m.start(), m.end()))` over the WHOLE paragraph; the
-    # shipped scope masks the same span but restricts `is_stamped` to
-    # `_PROVENANCE_CITATION_WINDOW` characters either side. Run both directly against the same
-    # fixture paragraph and the same citation match, without reconstructing a second build: the
-    # pre-fix call must return True (laundered by the two unrelated markers merely being
-    # SOMEWHERE in the paragraph) and the shipped call must return False (neither marker is
-    # within reach of the citation). This is the direct proof that closing measurement (1) did
-    # not merely add a coincidental finding elsewhere -- it is the specific mechanism, isolated.
+    # SHIPPED scope is `sentence_scope` (2026-09-06's fix, replacing the intermediate
+    # `_PROVENANCE_CITATION_WINDOW = 400` fixed-character scope this pin used to test against --
+    # kept below as its own comparison point, since that intermediate scope is a real point in
+    # this check's history and not merely a discarded draft). Run all three directly against the
+    # same fixture paragraph and the same citation match, without reconstructing a second build:
+    # the pre-fix (whole-paragraph) call must return True (laundered by the two unrelated
+    # markers merely being SOMEWHERE in the paragraph) and the shipped (sentence-scoped) call
+    # must return False (neither marker sits in the citation's own sentence or one either side).
+    # This is the direct proof that closing measurement (1) did not merely add a coincidental
+    # finding elsewhere -- it is the specific mechanism, isolated.
     _long_para = next(p for _s, p in paragraphs_with_lines(_BAD_PROVENANCE_LONG_PARAGRAPH)
                       if "reportCreatedOn" in p)
     _long_m = next(_CITED_REPORT_STAMP_RE.finditer(_long_para))
     _pre_fix_stamped = is_stamped(_mask_span(_long_para, _long_m.start(), _long_m.end()))
-    _ws = max(0, _long_m.start() - _PROVENANCE_CITATION_WINDOW)
-    _we = min(len(_long_para), _long_m.end() + _PROVENANCE_CITATION_WINDOW)
+    _sws, _swe = sentence_scope(_long_para, _long_m.start(), _long_m.end(), radius=1)
     _post_fix_stamped = is_stamped(
-        _mask_span(_long_para[_ws:_we], _long_m.start() - _ws, _long_m.end() - _ws))
+        _mask_span(_long_para[_sws:_swe], _long_m.start() - _sws, _long_m.end() - _sws),
+        markers=_PROVENANCE_CITATION_STAMP_MARKERS)
     good = _pre_fix_stamped and not _post_fix_stamped
     ok = ok and good
     lines.append(f"    [{'OK' if good else '**WRONG**'}] the pre-fix whole-paragraph "
                  f"`is_stamped` call launders the buried citation (True) while the shipped "
-                 f"windowed call does not (False), on the identical paragraph and match -- the "
-                 f"regression that pins the 2026-08-26 inertness fix itself")
+                 f"sentence-scoped call does not (False), on the identical paragraph and match "
+                 f"-- the regression that pins the 2026-08-26 inertness fix itself")
+
+    # THE 2026-09-06 ADJACENCY FIX ITSELF, PINNED DIRECTLY -- Finding 1
+    # (`2026-09-06-unit-damage-alert-assets-gate.md`): a fixed-character window (the
+    # `_PROVENANCE_CITATION_WINDOW = 400` this replaced) exempted a citation for standing near a
+    # GENUINE `[STAMPED ...]` marker that governs a DIFFERENT sentence's claim, several sentences
+    # away but well inside 400 characters. `_BAD_PROVENANCE_WRONG_SENTENCE` is that exact shape:
+    # a wrong citation, then two intervening sentences, then a genuine stamp about an unrelated
+    # correction, all under 250 characters end to end. The pre-fix (fixed-window) call must
+    # return True (laundered purely by character proximity) and the shipped (sentence-scoped)
+    # call must return False (the marker is outside the citation's own sentence plus one either
+    # side).
+    _wrong_para = next(p for _s, p in paragraphs_with_lines(_BAD_PROVENANCE_WRONG_SENTENCE)
+                        if "reportCreatedOn" in p)
+    _wrong_m = next(_CITED_REPORT_STAMP_RE.finditer(_wrong_para))
+    _pre_fix_ws = max(0, _wrong_m.start() - _PROVENANCE_CITATION_WINDOW)
+    _pre_fix_we = min(len(_wrong_para), _wrong_m.end() + _PROVENANCE_CITATION_WINDOW)
+    _pre_fix_window_stamped = is_stamped(_mask_span(
+        _wrong_para[_pre_fix_ws:_pre_fix_we], _wrong_m.start() - _pre_fix_ws,
+        _wrong_m.end() - _pre_fix_ws))
+    _wsws, _wswe = sentence_scope(_wrong_para, _wrong_m.start(), _wrong_m.end(), radius=1)
+    _post_fix_sentence_stamped = is_stamped(
+        _mask_span(_wrong_para[_wsws:_wswe], _wrong_m.start() - _wsws, _wrong_m.end() - _wsws),
+        markers=_PROVENANCE_CITATION_STAMP_MARKERS)
+    good = _pre_fix_window_stamped and not _post_fix_sentence_stamped
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] a genuine stamp governing a DIFFERENT, "
+                 f"unrelated sentence -- within the old 400-character window but outside the "
+                 f"citation's own sentence plus one either side -- is laundered by the pre-fix "
+                 f"window (True) and refused by the shipped sentence scope (False) -- the "
+                 f"regression that pins the 2026-09-06 adjacency fix itself")
+
+    # THE METASYNTACTIC-MARKER FIX ITSELF, PINNED DIRECTLY -- Finding 1's SECOND symptom: a
+    # paragraph WARNING about the adjacency gap spelled the marker out as prose (`[STAMPED ...]`,
+    # the literal ellipsis form) IN THE SAME SENTENCE as the citation it was documenting, which
+    # re-armed the exemption even under a correctly sentence-scoped read. The pre-tightening
+    # marker set (bare `\[STAMPED`, reconstructed here rather than re-imported, since the
+    # module-level name now IS the tightened version) must match that literal quotation; the
+    # shipped `_PROVENANCE_CITATION_STAMP_MARKERS` must not.
+    _pre_tighten_stamped_re = re.compile(r"\[STAMPED")
+    _metasyntactic_text = "writing the literal `[STAMPED ...]` here, as prose, must not count"
+    _pre_tighten_matches = _pre_tighten_stamped_re.search(_metasyntactic_text) is not None
+    _shipped_matches = any(re.search(p, _metasyntactic_text) for p in _PROVENANCE_CITATION_STAMP_MARKERS)
+    good = _pre_tighten_matches and not _shipped_matches
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] the pre-tightening `\\[STAMPED` marker "
+                 f"matches a metasyntactic quotation of itself (True) while the shipped "
+                 f"`_PROVENANCE_CITATION_STAMP_MARKERS` does not (False), on the identical text "
+                 f"-- the regression that pins the 2026-09-06 metasyntactic-marker fix itself")
 
     # THE BARE-STAMP WIDENING OF `_CITED_REPORT_STAMP_RE` ITSELF, PINNED DIRECTLY -- not only
     # against `_BAD_PROVENANCE_BARE_STAMP`'s verdict in `check_provenance_self_test`. Two
@@ -2783,6 +3141,28 @@ def check_self_test() -> tuple[bool, str]:
     ok = ok and identity_ok
     lines.append("    -- REPORT IDENTITY (pins the artifact to a point in time) --")
     lines.extend(identity_lines)
+
+    # THE PRODUCTION-BLIND-SPOT FIX ITSELF, PINNED DIRECTLY AGAINST `read_macro_census` -- not
+    # only through a full sweep's verdict in `check_identity_self_test`. Two properties, on a
+    # scratch directory holding ONE test-defining file and ONE production-only file at distinct
+    # mtimes: (1) `newest_test_mtime` tracks only the test file, unmoved by the production one --
+    # the pre-fix behaviour, still correct and still relied on to say WHICH file moved; (2)
+    # `newest_source_mtime` is the newer of the two, i.e. it DOES see the production file --
+    # this is the property that did not exist before this fix. A regression that reintroduces
+    # `.cpp`-carrying-a-macro-only scanning is caught here even if every fixture in
+    # `check_identity_self_test` happened to pass for some other reason.
+    with tempfile.TemporaryDirectory() as _d:
+        _write_fixture_source(os.path.join(_d, "T.cpp"), 3, mtime=1_700_000_000.0)
+        _write_fixture_prod_source(os.path.join(_d, "Prod.cpp"), 1_700_000_500.0)
+        _count, _note, _test_mtime, _source_mtime = read_macro_census(_d)
+        good = (_test_mtime == 1_700_000_000.0 and _source_mtime == 1_700_000_500.0
+                and _count == 3)
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] `read_macro_census` keeps "
+                 f"`newest_test_mtime` pinned to the test file alone ({_test_mtime}) while "
+                 f"`newest_source_mtime` also sees the production-only file ({_source_mtime}), "
+                 f"on a directory holding exactly one of each -- the regression that pins the "
+                 f"2026-09-06 production-blind-spot fix itself")
 
     provenance_ok, provenance_lines = check_provenance_self_test()
     ok = ok and provenance_ok

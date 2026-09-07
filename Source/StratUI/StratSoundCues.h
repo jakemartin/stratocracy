@@ -111,8 +111,126 @@ enum class EStratSoundCue : uint8
 
 	/** The match reached a result. Emitted by `ConcludeMatchIfEnded` inside its own latch and
 	 *  never by the decider. */
-	MatchEnded UMETA(DisplayName = "Match ended")
+	MatchEnded UMETA(DisplayName = "Match ended"),
+
+	/**
+	 * NOT A CUE. The number of cues, and the size of any array indexed by this enum.
+	 *
+	 * EVERY REAL CUE MUST BE DECLARED ABOVE THIS LINE. That is the whole contract, and it is
+	 * stated as an imperative because no compiler can check it -- see the asserts below.
+	 *
+	 * WHY IT EXISTS. `StratDecideSoundCues` keeps a one-per-kind gate as a `bool[]` indexed by
+	 * `static_cast<int32>(Cue)`. That array was sized `MatchEnded + 1`, which is correct only
+	 * while `MatchEnded` is the last enumerator; an eighth cue appended after it would have
+	 * been an out-of-bounds WRITE, silent, with no compiler diagnostic. Sizing from `Count`
+	 * makes the array grow with the enum instead.
+	 *
+	 * `UMETA(Hidden)` AND NOT A BARE NAME, AND ITS PURPOSE IS THE COSMETIC ONE. It keeps a
+	 * non-cue out of Blueprint dropdowns on a `BlueprintType` enum. That is load-bearing where
+	 * it is load-bearing at all -- without it a designer would see `Count` in the key dropdown
+	 * of `UStratSoundBank::MinSecondsBetween`, which is a `TMap<EStratSoundCue, float>` on a
+	 * data asset a human edits -- and it is the whole of what the marker is for here.
+	 *
+	 * HOW A REFLECTION WALK SHOULD EXCLUDE THIS SENTINEL: BY VALUE, `[0, Count)`, AND NOT BY
+	 * THIS MARKER. That is what both walks in the tree actually do --
+	 * `StratShippedSoundBankParity.cpp`'s `AllCues()` and `StratSoundCueClauses.cpp`'s walk --
+	 * and a real cue IS a value in `[0, Count)`, which is the same fact `StratDecideSoundCues`
+	 * sizes `bEmitted` with. One rule drops `Count` and UHT's generated `_MAX` together and
+	 * needs no build guard.
+	 *
+	 *   RETRACTED> "`Hidden` is a MACHINE-READABLE MARK: a reflection walk can ask
+	 *   RETRACTED>  `UEnum::HasMetaData(TEXT("Hidden"), Index)` and tell a sentinel from a cue
+	 *   RETRACTED>  without a hard-coded name list ... callers that want "every real cue"
+	 *   RETRACTED>  should prefer that."
+	 *   THAT RECOMMENDATION WAS REFUSED BY BOTH OF ITS ONLY TWO CALLERS, IN THE SAME PASS THAT
+	 *   WROTE IT, ON THREE GROUNDS THEY MEASURED -- so it is retracted here rather than left to
+	 *   cost a third author the same measurement. The grounds, in their words and in order of
+	 *   weight:
+	 *     (1) `Hidden` DOES NOT MEAN "SENTINEL". It means "keep out of Blueprint dropdowns". A
+	 *         future REAL cue hidden for that cosmetic reason would vanish from both walks
+	 *         SILENTLY -- under-coverage with a green run, which is the precise failure those
+	 *         walks exist against and which a value bound cannot produce.
+	 *     (2) IT WOULD NOT REMOVE THE `_MAX` NAME RULE ANYWAY, so it buys nothing structurally.
+	 *         `_MAX` is not in the generated enumerator table and carries no metadata pair at
+	 *         all; the generated `StratSoundCues.gen.cpp` carries `{ "Count.Hidden", "" }` and
+	 *         nothing for `_MAX`. A metadata route would have had to keep a name rule beside it.
+	 *     (3) IT DOES NOT COMPILE IN A TARGET CI BUILDS. `UEnum::HasMetaData` is declared inside
+	 *         `#if WITH_METADATA` -- verified in UE 5.8 at
+	 *         `Engine/Source/Runtime/CoreUObject/Public/UObject/Class.h:3224`, in the block
+	 *         opening at 3215 and closing at 3255 -- and this tree measured
+	 *         `error C2039: 'HasMetaData': is not a member of 'UEnum'` in a Win64 Development
+	 *         **Game** build on 2026-08-31. The value bound needs no `#if WITH_EDITOR` guard.
+	 *   THE MARKER ITSELF IS NOT RETRACTED AND MUST NOT BE REMOVED: ground (1) is an argument
+	 *   against reading it as a sentinel discriminator, not against its real job above.
+	 *   Corrected 2026-09-06 over base commit `f7da9ca`, reported as Finding 4; ground (3)
+	 *   re-measured against the engine header here rather than taken from the report.
+	 */
+	Count UMETA(Hidden)
 };
+
+/**
+ * WHAT `Count` GUARANTEES, PINNED AT COMPILE TIME -- AND, BELOW, WHAT IT CANNOT.
+ *
+ * A `Count` sentinel is not self-justifying. It is a correct array bound only while every
+ * enumerator's value is less than it, and there are exactly three ways that can stop being
+ * true. Two of them are visible to a `static_assert` and are pinned here. The third is not
+ * visible to any construct in this language, and is named rather than left to be discovered.
+ */
+
+/**
+ * (1) THE ENUM IS ZERO-BASED, so `Count` is the NUMBER of cues and not merely one past the
+ * largest, and slots `0 .. Count-1` are all real. This is what licenses reading the array's
+ * length as a cue count anywhere it is convenient to.
+ */
+static_assert(static_cast<int32>(EStratSoundCue::ButtonClick) == 0,
+	"EStratSoundCue must be zero-based: ButtonClick is the first cue and must have value 0. "
+	"If you gave an enumerator an explicit value, Count is no longer the number of cues.");
+
+/**
+ * (2) `Count` SITS IMMEDIATELY AFTER THE LAST CUE. This is the assert that earns its place: it
+ * is the one that fires on an EXPLICIT VALUE, which is the failure mode a sentinel invites and
+ * does not prevent. Write `Count = 7` by hand, then insert a cue anywhere above it, and the
+ * array is one slot too small while every enumerator still looks reasonable at a glance --
+ * that case reddens here, at compile time, and cannot reach a run. It also fires when a cue is
+ * inserted BETWEEN `MatchEnded` and `Count`, which is harmless to the array but means the
+ * paragraph above has stopped describing the file, and a reader should be sent here to see so.
+ */
+static_assert(static_cast<int32>(EStratSoundCue::MatchEnded) + 1
+		== static_cast<int32>(EStratSoundCue::Count),
+	"Count must be the value immediately after MatchEnded, the last cue. Either an enumerator "
+	"was given an explicit value, or something was declared between MatchEnded and Count. "
+	"Declare new cues ABOVE MatchEnded, or move MatchEnded's doc comment to the new last cue.");
+
+/**
+ * (3) AND THE ONE NEITHER ASSERT CAN SEE, SAID PLAINLY BECAUSE A GUARD WHOSE HOLE IS UNSTATED
+ * READS AS TOTAL. A cue declared AFTER `Count` gets a value greater than `Count`, changes no
+ * other enumerator's value, and is therefore invisible to every comparison that can be written
+ * over the enumerators that exist -- an assert cannot name a symbol whose name it does not
+ * know. There is no C++17 construct that closes this; it is not that a better assert was not
+ * found, it is that the language does not enumerate an enum.
+ *
+ * IT IS CLOSED AT RUNTIME INSTEAD, AND BY TWO INSTRUMENTS RATHER THAN ONE.
+ *   FIRST, a `check` on the index in `StratDecideSoundCues`' `Emit`. That one is strictly
+ * weaker -- it needs a run, it needs the offending cue to actually FIRE, and a `check` is
+ * compiled out of Shipping -- and what it buys is position: it lands one instruction before the
+ * out-of-bounds write rather than after it. No automation clause can exercise THAT LINE without
+ * editing this enum, so it will read as dead code to a coverage tool; that is correct and it is
+ * the point.
+ *   SECOND, AND IT IS THE STRONGER OF THE TWO,
+ * `Stratocracy.StratUI.GATE-AUDIO.NoSoundCueIsDeclaredAfterTheCountSentinel`. It walks the
+ * reflected `UEnum` for this type and asserts every declared enumerator's value lies in
+ * `[0, Count)` -- which is exactly the residue, since an enumerator declared after `Count` is
+ * one the compiler will not name but reflection WILL. It sees the defect on any suite run,
+ * WITHOUT this enum being edited and whether the offending cue ever fires or not, and its
+ * CONTROL 4 runs the same decision over a synthetic mutant every run so the detector itself
+ * cannot go quietly blind.
+ *
+ *   (This paragraph named only the `check` and said "No automation clause can exercise it
+ *   without editing this enum" of the WHOLE hole, until 2026-09-06 over base commit `f7da9ca`.
+ *   That understated this hole's coverage by half and pointed the reader at the weaker net;
+ *   the clause above already existed and already saw the case. The sentence survives, narrowed
+ *   to the `check` line it is true of. Reported as the second half of Finding 4.)
+ */
 
 /**
  * One unit's audible state at the mark: WHO IT WAS, WHERE IT WAS AND HOW HURT IT WAS.
@@ -335,11 +453,26 @@ STRATUI_API void StratDecideSoundCues(const FStratSoundMark& Mark,
  * opens by claiming IT COMPUTES NO MAGNITUDE ABOUT GAME STATE, and this function is written to
  * keep that true: it compares `Hp < Hp` and appends an id. (This sentence quoted that claim in
  * its earlier wording, "THERE IS NOT ONE ARITHMETIC OPERATION IN IT", until 2026-09-06. That
- * wording was false -- the `.cpp` sizes a `bool[]` with a `+ 1` over an enum's last member -- and
- * the retraction, together with the one exemption that survives it, is stated in that file's own
- * opening block. Nothing about THIS function changed, and no executable byte moved.) An HP DELTA
- * -- which is what a damage
- * NUMBER on screen would need -- is exactly the second subtraction
+ * wording was false OF THE FILE AS IT STOOD THAT MORNING -- the `.cpp` SIZED its one-per-kind
+ * `bool[]` with a `+ 1` over `MatchEnded`, which was the enum's last member at the time.
+ *   CORRECTED 2026-09-06 AT THE WORDS BEFORE THIS STAMP, over base commit `f7da9ca`: THAT
+ * `+ 1` NO LONGER EXISTS ANYWHERE IN THE `.cpp`, and the sentence above stood in the PRESENT
+ * TENSE describing a tree that had already changed. The same day's later pass -- the `Count`
+ * sentinel, whose reasoning is in `Count`'s own block above -- replaced the bound with
+ * `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]`, a cast and no operator at all.
+ * A reader who grepped the `.cpp` for `+ 1` on the strength of the un-stamped sentence would
+ * find nothing and would reasonably conclude this block had gone stale unnoticed. The
+ * retraction, and the ONE exemption that survives it -- which is now the `- 1` inside
+ * `UE_ARRAY_COUNT` and is NOT the `+ 1` this sentence names -- are stated in that file's own
+ * opening block, which is the authority for both.
+ *   THIS WAS THE THIRD SITE OF ONE FALSE DESCRIPTION AND THE FIRST OUTSIDE THE `.cpp`, which is
+ * the part worth carrying forward rather than the correction itself. The sweep that found and
+ * fixed the other two grepped the `.cpp`; it was bounded by the FILE it searched, not by the
+ * claim it searched for, and this site sat in the header the whole time. The transferable fact
+ * is the boundary, not the count.
+ * Nothing about THIS function changed, and no executable byte moved for either correction.)
+ * An HP DELTA -- which is what a damage NUMBER on screen would need -- is exactly the second
+ * subtraction
  * `StratTransientReceipts.cpp`'s own claim already forbids, and it is not here and is not owed.
  * A caller wanting an amount wants `FStratBridge::RepairsAtTurnOpen`'s shape, from the bridge.
  *

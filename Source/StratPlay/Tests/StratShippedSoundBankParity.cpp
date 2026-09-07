@@ -190,9 +190,34 @@ namespace StratShippedSoundBankParity
 	 *
 	 * A hand-written list of seven would be this file deciding what the cue set is, and would
 	 * quietly stop covering an eighth cue on the day one is added -- the exact shape of the gap
-	 * this whole file exists to close, reintroduced one level down. `UHT` appends a hidden
-	 * `_MAX` sentinel to every `UENUM`; it is skipped by name, and `UEnum::HasMetaData` is not
-	 * used because a sentinel carries no metadata to test.
+	 * this whole file exists to close, reintroduced one level down.
+	 *
+	 * THE FILTER IS A VALUE BOUND AND NOT A NAME LIST, CORRECTED 2026-09-06 OVER BASE COMMIT
+	 * `f7da9ca`. `EStratSoundCue` gained a `Count UMETA(Hidden)` sentinel that afternoon and
+	 * this walk, which skipped only `_MAX` by name, handed `Count` to three clauses as though
+	 * it were a cue; all three reddened on a bank that has no slot for it and never will. The
+	 * walk now keeps exactly the values `[0, Count)` -- which is what a real cue IS, per
+	 * `StratSoundCues.h`'s own contract and per the bound `StratDecideSoundCues` sizes
+	 * `bEmitted` with -- and that one rule drops `Count` AND UHT's generated `_MAX` (whose
+	 * value is one past the largest declared enumerator, 8 against `Count` at 7) without
+	 * naming either. A second sentinel added tomorrow needs no edit here.
+	 *
+	 *   RETRACTED> "`UHT` appends a hidden `_MAX` sentinel to every `UENUM`; it is skipped by
+	 *   RETRACTED>  name, and `UEnum::HasMetaData` is not used because a sentinel carries no
+	 *   RETRACTED>  metadata to test."
+	 *   HALF TRUE WHEN WRITTEN AND HALF FALSE NOW. The `_MAX` half stands: the generated
+	 *   `StratSoundCues.gen.cpp` carries no metadata pair for `_MAX` at all, because `_MAX` is
+	 *   not in the generated enumerator table -- the engine appends it at `UEnum::SetEnums`
+	 *   time. The GENERAL half was falsified by the `Count` sentinel, which carries
+	 *   `{ "Count.Hidden", "" }` in that same generated file. So `HasMetaData(TEXT("Hidden"))`
+	 *   WOULD now discriminate here, and it was proposed for this repair. It is still not used,
+	 *   for three reasons the sibling clause in `Source/StratUI/Tests/StratSoundCueClauses.cpp`
+	 *   states in full: `Hidden` means "keep out of Blueprint dropdowns" and NOT "is a
+	 *   sentinel", so a real cue hidden for that cosmetic reason would vanish from this walk
+	 *   silently; it would not remove the `_MAX` rule anyway; and `UEnum::HasMetaData` is
+	 *   declared under `#if WITH_METADATA`, measured in this tree on 2026-08-31 as
+	 *   `error C2039: 'HasMetaData': is not a member of 'UEnum'` in a Win64 Development Game
+	 *   build, which CI builds. The value bound needs no `#if WITH_EDITOR` guard.
 	 *
 	 * Returns empty when the enum is unreflected, and every caller treats that as red rather
 	 * than as "no cues to check" -- an empty loop passes every assertion inside it.
@@ -207,17 +232,59 @@ namespace StratShippedSoundBankParity
 			return Out;
 		}
 
+		const int64 Bound = static_cast<int64>(EStratSoundCue::Count);
+
 		for (int32 Index = 0; Index < Reflected->NumEnums(); ++Index)
 		{
-			const FString Name = Reflected->GetNameStringByIndex(Index);
-			if (Name.EndsWith(TEXT("_MAX"), ESearchCase::CaseSensitive))
+			const int64 Value = Reflected->GetValueByIndex(Index);
+			if (Value < 0 || Value >= Bound)
 			{
 				continue;
 			}
-			Out.Add(static_cast<EStratSoundCue>(Reflected->GetValueByIndex(Index)));
+			Out.Add(static_cast<EStratSoundCue>(Value));
 		}
 
 		return Out;
+	}
+
+	/**
+	 * THE CONTROL EVERY CALLER OF `AllCues()` RUNS BEFORE TRUSTING IT. Returns false with the
+	 * test already failed.
+	 *
+	 * `Cues.Num() > 1` was the whole of this control until 2026-09-06, and it is not enough:
+	 * it cannot see a filter that drops ONE real cue, which is exactly what the `Hidden`
+	 * metadata rule rejected above would have risked. So the count is compared against
+	 * `EStratSoundCue::Count` -- THE MODULE'S OWN STATEMENT of how many cues there are, read
+	 * and not written here. A walk that lost a cue, gained the sentinel back, or returned
+	 * nothing at all reddens, and says which.
+	 *
+	 * The `> 1` half is KEPT rather than replaced: if `Count` were ever wrong in the small
+	 * direction the equality alone would agree with it, and this half refuses a one-cue or
+	 * zero-cue world outright.
+	 */
+	bool CueSetControlOrFail(FAutomationTestBase& Test, const TArray<EStratSoundCue>& Cues)
+	{
+		if (!Test.TestEqual(
+				*FString::Printf(
+					TEXT("GATE-AUDIO CONTROL: the reflected walk yielded exactly "
+					     "EStratSoundCue::Count (%d) cues (read: %d). The loops below assert "
+					     "once per cue, so a walk that quietly lost one would check less than "
+					     "it reports and a walk that gained the Count sentinel back would "
+					     "demand a bank slot that cannot exist. The expected figure is read "
+					     "from the module, not written here."),
+					static_cast<int32>(EStratSoundCue::Count), Cues.Num()),
+				Cues.Num(), static_cast<int32>(EStratSoundCue::Count)))
+		{
+			return false;
+		}
+
+		return Test.TestTrue(
+			*FString::Printf(
+				TEXT("GATE-AUDIO CONTROL: and that is more than one cue (read: %d), so an EMPTY "
+				     "or single-entry list cannot pass the loops below while checking nothing "
+				     "-- a bank with every slot cleared would otherwise read as clean."),
+				Cues.Num()),
+			Cues.Num() > 1);
 	}
 
 	/**
@@ -803,9 +870,11 @@ bool FStratShippedGameModesAuthorTheirSoundBankTest::RunTest(const FString& /*Pa
 // THE BANK IS READ OFF THE SHIPPED GAMEMODE'S CDO AND NEVER LOADED BY PATH. So this clause is
 // about THE BANK THE GAME USES, not about an asset that merely shares its name.
 //
-// THE CONTROLS. The cue list must be non-empty -- an empty loop passes every assertion inside it
-// and would report a bank with no sounds at all as clean. And the enum's own count is asserted
-// to exceed one, so a reflected enum that had collapsed to a single sentinel is visible.
+// THE CONTROLS, ALL THREE IN `CueSetControlOrFail`. The cue list must be non-empty -- an empty
+// loop passes every assertion inside it and would report a bank with no sounds at all as clean.
+// It is asserted to exceed one, so a reflected enum that had collapsed to a single sentinel is
+// visible. And since 2026-09-06 it is asserted EQUAL to `EStratSoundCue::Count`, the module's
+// own figure, which is the only one of the three that can see the walk quietly LOSING a cue.
 //
 // WHY IT IS NOT REDUNDANT WITH `EveryCueInTheShippedBankReachesTheEngine` BELOW, which would also
 // go red on a null slot. This one runs with no world, no subsystem and no engine call, so it
@@ -834,14 +903,7 @@ bool FStratEveryCueInTheShippedBankHasASoundTest::RunTest(const FString& /*Param
 
 	const TArray<EStratSoundCue> Cues = AllCues();
 
-	if (!TestTrue(
-			*FString::Printf(
-				TEXT("GATE-AUDIO CONTROL: StaticEnum<EStratSoundCue>() reports at least one cue "
-				     "(read: %d). The loop below asserts once per cue, so an EMPTY list would "
-				     "pass this clause while checking nothing -- a bank with every slot cleared "
-				     "would read as clean. This is the assertion that stops that."),
-				Cues.Num()),
-			Cues.Num() > 1))
+	if (!CueSetControlOrFail(*this, Cues))
 	{
 		return false;
 	}
@@ -957,12 +1019,7 @@ bool FStratEveryShippedCueSoundCarriesTheSfxClassTest::RunTest(const FString& /*
 	}
 
 	const TArray<EStratSoundCue> Cues = AllCues();
-	if (!TestTrue(
-			*FString::Printf(
-				TEXT("GATE-AUDIO CONTROL: StaticEnum<EStratSoundCue>() reports more than one cue "
-				     "(read: %d), so the loop below is not vacuous"),
-				Cues.Num()),
-			Cues.Num() > 1))
+	if (!CueSetControlOrFail(*this, Cues))
 	{
 		return false;
 	}
@@ -1109,12 +1166,7 @@ bool FStratEveryCueInTheShippedBankReachesTheEngineTest::RunTest(const FString& 
 	}
 
 	const TArray<EStratSoundCue> Cues = AllCues();
-	if (!TestTrue(
-			*FString::Printf(
-				TEXT("GATE-AUDIO CONTROL: StaticEnum<EStratSoundCue>() reports more than one cue "
-				     "(read: %d), so the emissions below are not vacuous"),
-				Cues.Num()),
-			Cues.Num() > 1))
+	if (!CueSetControlOrFail(*this, Cues))
 	{
 		return false;
 	}

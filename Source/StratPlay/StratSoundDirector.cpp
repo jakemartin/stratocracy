@@ -124,7 +124,18 @@ void UStratSoundDirector::EmitCue(const EStratSoundCue Cue,
 			//   PARAPHRASE of the neighbouring file's older wording -- "THERE IS NOT ONE
 			//   ARITHMETIC OPERATION IN IT" -- which was false of the file it described: see
 			//   `StratSoundCues.cpp`'s opening block, which carries the retraction and the one
-			//   bounded exemption (a compile-time array bound over an enum's last member). The
+			//   bounded exemption -- a compile-time array bound over constants. **[RE-STAMPED
+			//   2026-09-06, LATER THE SAME DAY, over base commit `f7da9ca`, AT THE PARENTHETICAL
+			//   THAT USED TO SIT HERE: it read "a compile-time array bound over an enum's last
+			//   member", which named the `+ 1` over `MatchEnded`. That operator was removed by
+			//   the same day's `Count`-sentinel pass -- the bound is now
+			//   `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]` -- so the exemption
+			//   that survives over there is the `- 1` inside `UE_ARRAY_COUNT`, not a bound over
+			//   an enumerator. The category is unchanged (an index bound over compile-time
+			//   constants) and nothing this comment leans on moves with it; only the operator
+			//   named did. The parenthetical is therefore widened to the CATEGORY rather than
+			//   re-pointed at a second specific operator, since pointing at one is what made
+			//   this line stale twice in a day.]** The
 			//   boundary argument around it is UNAFFECTED and no code moved: what the
 			//   neighbouring file forbids is every magnitude about the board, which is the whole
 			//   of what this comment leans on, and `Now - *LastAt` is over `GetTimeSeconds` and

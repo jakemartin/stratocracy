@@ -14,6 +14,112 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-06 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- two `Tests/` files,
+  `Source/StratUI/Tests/StratSoundCueClauses.cpp` and
+  `Source/StratPlay/Tests/StratShippedSoundBankParity.cpp`, plus this record file, on `master`
+  in the main tree `E:/MultiAgent/Stratocracy`, base commit `f7da9ca`, and this pass is
+  UNCOMMITTED).** No exception clause is cited and none applies. **NO PRODUCTION FILE WAS
+  TOUCHED, INCLUDING TEMPORARILY** -- see the mutation note below, which is where that
+  constraint actually bit. The engineer's `Count`-sentinel C++ was uncommitted in the working
+  tree over the same base and was read there, not from the brief. Cite this pass by its
+  exported `reportCreatedOn 2026.09.06-22.20.49`; the pass/fail figure lives in
+  `Tools/architect/state/global.md` and nowhere else.
+  - **NO CLAUSE WAS ADDED OR REMOVED. `grep -c IMPLEMENT_SIMPLE_AUTOMATION_TEST` is unchanged in
+    both files** (11 in `StratSoundCueClauses.cpp`, 5 in `StratShippedSoundBankParity.cpp`).
+    One clause was RENAMED and four were repaired. A reader expecting the entry array to have
+    moved should not read its stability as "nothing happened".
+  - **WHAT WENT RED AND WHY IT WAS NOT THE ENGINEER'S BUG.** `EStratSoundCue` gained a
+    `Count UMETA(Hidden)` sentinel. Four clauses walk that reflected enum and skipped only
+    UHT's `_MAX` **by name**, so all four handed `Count` on to code that has no answer for it:
+    three `StratPlay` clauses demanded a sound-bank slot for a non-cue, and the `StratUI` bound
+    check reported `Count=7` as outside `[0, 6]`. **All four were correct to go red.** The
+    sentinel is right and the array bound it fixes was a real latent out-of-bounds write; what
+    was wrong was four test-side filters that had encoded "a sentinel is called `_MAX`".
+  - **THE DISCRIMINATOR IS A VALUE BOUND READ FROM THE MODULE, AND `HasMetaData("Hidden")` WAS
+    PROPOSED FOR THIS AND REJECTED.** The walks now keep exactly the values `[0, Count)` --
+    which is what a real cue IS, per the header's own contract and per the bound
+    `StratDecideSoundCues` sizes `bEmitted` with. That one rule drops `Count` AND `_MAX`
+    (value 8, one past the largest declared enumerator) **without naming either**, so a second
+    sentinel added tomorrow needs no test edit. The metadata route would have worked --
+    the generated `StratSoundCues.gen.cpp` does carry `{ "Count.Hidden", "" }`, so the old
+    comment saying *"a sentinel carries no metadata to test"* is now false of this enum and
+    the engineer was right that its stated condition had flipped. It was still refused, for
+    three reasons in order of weight, all three recorded at the call sites:
+    - **`Hidden` MEANS "KEEP OUT OF BLUEPRINT DROPDOWNS", NOT "IS A SENTINEL".** A future REAL
+      cue marked `Hidden` for that cosmetic reason would vanish from both walks silently. Silent
+      under-coverage is the exact failure shape both files exist against, so the discriminator
+      would have carried the defect it was hired to prevent.
+    - **IT WOULD NOT HAVE REMOVED THE `_MAX` NAME RULE ANYWAY.** `_MAX` is absent from the
+      generated enumerator table entirely -- the engine appends it at `UEnum::SetEnums` time --
+      so it carries no metadata and needs a name test regardless.
+      `Source/StratUI/Tests/StratMatchResultModelClauses.cpp` already pairs `HasMetaData` with
+      an explicit `_MAX` name test, which is the same finding reached earlier by someone else.
+    - **IT IS EDITOR-ONLY AND COSTS A WHOLE-FILE GUARD.** `UEnum::HasMetaData` sits under
+      `#if WITH_METADATA`; that same file records a Win64 Development **Game** build on
+      2026-08-31 emitting `error C2039: 'HasMetaData': is not a member of 'UEnum'` twice, fixed
+      with a whole-file `#if WITH_EDITOR` guard whose own banner names the spreading cost. CI
+      builds that target. The value bound needs no guard.
+  - **WHAT THE RENAMED CLAUSE STILL PINS, WHICH IS THE QUESTION THE BRIEF ASKED AND THE ANSWER
+    IS NOT "NOTHING".** `Stratocracy.StratUI.GATE-AUDIO.MatchEndedIsTheLastSoundCue` is now
+    `Stratocracy.StratUI.GATE-AUDIO.NoSoundCueIsDeclaredAfterTheCountSentinel`. The two new
+    `static_assert`s in `StratSoundCues.h` took over most of its old subject -- the explicit
+    value and the between-insertion, both now COMPILE errors, which is strictly better than a
+    clause. **The residue is one case and it is not small: a cue declared AFTER `Count` takes a
+    value greater than `Count`, changes no other enumerator's value, and is invisible to every
+    `static_assert` that can be written, because C++17 does not enumerate an enum.** Two
+    instruments see it: the `check` the engineer added in `Emit`, which needs the cue to
+    actually FIRE and is compiled out of Shipping, and this clause, which sees it on any suite
+    run whether the cue fires or not. So the clause is not kept for appearances.
+  - **THE RENAME'S COST, STATED RATHER THAN LEFT TO BE FOUND.** The old full name appears in
+    `Tools/architect/state/global.md` and in two `Tools/architect/gate_reports/` files. The
+    gate reports are history and stay as they are; **`global.md` is live and now names a clause
+    that no report will ever contain again** -- that is the coordinator's file to fix, and it is
+    flagged here because this lane caused it.
+  - **THE CONTROL THAT COULD NOT SEE A LOST CUE, WIDENED.** `StratShippedSoundBankParity.cpp`'s
+    three clauses guarded `AllCues()` with `Cues.Num() > 1`, which cannot see a filter that
+    drops ONE real cue -- precisely the risk the `Hidden` route carried. All three now call one
+    `CueSetControlOrFail`, which asserts the walk yielded **exactly `EStratSoundCue::Count`**
+    cues, a figure read from the module and not written in the test, and keeps the `> 1` half
+    as a second, independent refusal of an empty or collapsed enum. The `StratUI` clause got
+    the same treatment as CONTROL 2d: the walk must bound-check exactly `Count` entries, which
+    is a SECOND detector of the same mutant, and its exclusion control moved from "exactly one
+    excluded" to **"exactly two, named in the message"**, so a future third exclusion reddens
+    instead of quietly narrowing scope.
+  - **THE PART OF THIS PASS WORTH READING: THE MUTATION EVIDENCE, AND THE ONE MUTANT THIS LANE
+    IS NOT PERMITTED TO RUN.** A green suite proves nothing here -- a clause that stopped asking
+    anything is green too, and that is this repair's whole failure mode. **The decisive mutant
+    is "declare a cue after `Count` in `EStratSoundCue`", and that edits `StratSoundCues.h`,
+    which is production and not this lane's even for an edit that would be reverted.** So the
+    walk's decision was extracted into a free function over a list of `(name, value)` pairs,
+    `CollectCueBoundOffenders`, and the mutation was applied TO ITS INPUT rather than to the
+    tree. Three mutants were built, compiled and run, each reverted, each killed by the
+    assertion it was aimed at:
+    - **the after-`Count` enum itself**, injected into the real walk's entry list: killed by
+      CONTROL 2d *and* by the claim, two independent assertions in the same run;
+    - **the softened predicate** (`Value >= Bound` deleted, so nothing is ever an offender):
+      killed by CONTROL 4d, which is the control that exists for exactly this and which the
+      real enum can never exercise on its own;
+    - **`AllCues()` dropping one real cue**: killed by the new equality in
+      `CueSetControlOrFail` in all three `StratPlay` clauses **while the old `Num() > 1` half
+      still passed at 6 of 7** -- which is the measurement that says the widened control is
+      load-bearing rather than decorative.
+    CONTROL 4 is now a permanent fixture of the clause, not a one-off probe: it runs the real
+    walk over a synthetic healthy enum and over a synthetic mutant every suite run, so a future
+    softening reddens in the same run without anyone remembering to mutate anything.
+  - **AN ATTEMPTED MUTANT CRASHED THE RUN AND ERASED ITS OWN EVIDENCE, WHICH IS WORTH ONE
+    SENTENCE.** The first shaping of the after-`Count` mutant bumped the loop's `EntryCount`
+    past `NumEnums()`, and `GetNameStringByIndex` fired
+    `Assertion failed: Names.IsValidIndex(Index)` inside the engine; **the report was never
+    written and `index.json` did not exist**, so the failure presented as a missing file rather
+    than as a red clause. A mutant that kills the process is not a mutant that was killed by the
+    clause. The mutation was reshaped to leave the reflection read alone.
+  - **WHAT THIS PASS DOES NOT PIN.** Nothing here observes the `check` in `Emit` -- no clause in
+    this tree can, since reaching it requires an enum this suite cannot construct, and it is
+    compiled out of Shipping besides. Nothing here observes the compile-time asserts either; a
+    `static_assert` is green by the build succeeding and no clause reports on it. And nothing
+    here says the Game target still compiles: that is CI's step and was the reason the metadata
+    route was refused, not something this pass measured.
+
 - **2026-09-06 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- two new files,
   `Source/StratPlay/Tests/StratDamageFlashClauses.cpp` and
   `Source/StratUI/Tests/StratDamagedUnitsClauses.cpp`, plus the existing
@@ -101,24 +207,64 @@
       second-round name check: under-claiming misleads nobody about what ran.
     - `Stratocracy.StratUI.GATE-AUDIO.MatchEndedIsTheLastSoundCue` -- ADDED IN THE SECOND ROUND,
       and it is the only clause in this pass that pins a MEMORY defect rather than a behaviour.
-      See its own sub-entry below.
+      See its own sub-entry below. **[STAMPED 2026-09-06, later the same day, over base commit
+      `f7da9ca`: THIS FULL TEST NAME NO LONGER EXISTS. The clause was renamed to
+      `Stratocracy.StratUI.GATE-AUDIO.NoSoundCueIsDeclaredAfterTheCountSentinel` when the
+      engineer's `Count` sentinel landed. It is the same clause, at the same file and ID; a
+      search for the old name against any report from that afternoon on returns nothing. See
+      the `f7da9ca` entry at the top of this file.]**
   - **THE SECOND ROUND'S NEW CLAUSE, AND WHY IT PINS A RELATIONSHIP AND NOT A NUMBER.**
-    `StratDecideSoundCues` sizes its one-per-kind gate as
+    **[STAMPED 2026-09-06, later the same day, over base commit `f7da9ca`, AND READ THIS BEFORE
+    THE PARAGRAPH BELOW: THE SIZING SENTENCE THAT OPENS IT IS RETRACTED AS A STATEMENT OF THE
+    TREE.** The gate is now `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]`, sized
+    from the `Count UMETA(Hidden)` sentinel the engineer added in this pass
+    (`Source/StratUI/StratSoundCues.cpp`, the declaration of `bEmitted`); the `+ 1` and the
+    named-cue bound are both gone. The paragraph is kept, unedited below, as the description of
+    the code the clause was WRITTEN against and as the reason the clause exists — the append
+    hazard it describes was real, and fixing it is what moved the bound. **What it is no longer
+    is a description of `StratDecideSoundCues` as it stands.** Handed off by
+    `strat-gameplay-engineer` during the `Count` sentinel re-gate; this file was outside that
+    agent's sweep, which is why the correction arrives here separately.**]**
+    `RETRACTED>` `StratDecideSoundCues` sizes its one-per-kind gate as
     `bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded) + 1]` and its `Emit` lambda
     then indexes that array with `static_cast<int32>(Cue)`, unchecked. That is correct only
     while `MatchEnded` holds the largest value any enumerator has. **Append one cue after
     `MatchEnded` and the first emission of it writes one past the end of a stack array** -- in a
     green build, with every other clause in that file still green. Nothing pinned it, and the
     engineer's own prose correction in this pass now leans on it being true.
+    `<RETRACTED` (The `Emit` lambda's indexing is also no longer unchecked: it carries a
+    `check(Slot >= 0 && Slot < UE_ARRAY_COUNT(bEmitted))`.)
     - **THE CLAUSE ASSERTS THE EXACT SAFETY CONDITION OF THAT INDEXING AND NOTHING WIDER:** every
       declared enumerator's value lies in `[0, (int32)MatchEnded]`, walked off the reflected
-      `UEnum`. **It deliberately does not pin a count.** A clause asserting `NumEnums()` equals
+      `UEnum`. **[STAMPED 2026-09-06, later the same day, over base commit `f7da9ca`: the bound
+      is now `[0, (int32)Count)` and the sentence above describes a clause body that no longer
+      exists. ~~The paragraph it sits in — the `MatchEnded + 1` array, the append hazard, the
+      argument for pinning a relationship rather than a count — is all still correct about WHY
+      the clause exists; only the bound expression and the clause's name moved.~~ The sub-bullet
+      below about explicit values is a different matter and is stamped separately.]**
+      **[CORRECTED 2026-09-06, still later the same day, same base `f7da9ca`: THE STRUCK
+      SENTENCE ABOVE IS WRONG AND WAS WRONG WHEN WRITTEN.** More than the bound expression and
+      the name moved: **the `MatchEnded + 1` array itself moved**, in the same pass, to
+      `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]`. So this stamp read as an
+      affirmation that its parent paragraph was still true of the tree, sitting BELOW the one
+      sentence in that paragraph that had just stopped being true — the exact shape this
+      project's "a correction must announce itself from the false sentence" rule exists
+      against, committed by a correction. The parent now carries its own retraction at its head.
+      What survives of the struck sentence is only its narrow point: the append hazard and the
+      relationship-not-a-count argument remain correct about WHY the clause exists.**]**
+      **It deliberately does not pin a count.** A clause asserting `NumEnums()` equals
       some figure would go RED for the CORRECT edit -- a cue legitimately inserted mid-list,
       where the array grows with it -- and would say nothing about the dangerous one, since the
       counts move identically. It also catches the half the clause's NAME understates: an
       enumerator given an explicit out-of-range or negative value indexes outside the array
       without being written after `MatchEnded` in source order, and a check over VALUES sees
-      that too.
+      that too. **[STAMPED 2026-09-06, later the same day, over base commit `f7da9ca`: THIS HALF
+      IS NO LONGER THIS CLAUSE'S. `StratSoundCues.h`'s second `static_assert` pins
+      `MatchEnded + 1 == Count` and catches an explicit value at COMPILE time, which is
+      strictly better, and the clause's bound moved to `Count` so an `Ambient = 64` in the
+      middle now grows the array rather than escaping it. What the clause still pins, and the
+      only thing no `static_assert` can see, is a cue declared AFTER `Count`. A reader who
+      takes this sub-bullet as a live statement of coverage would over-credit the clause.]**
     - **THE ID IS `GATE-AUDIO` AND THE FILE IS `StratSoundCueClauses.cpp`, WHICH IS THE SAME
       CHECK THAT WENT THE OTHER WAY EARLIER IN THIS PASS.** The 2026-09-04 ruling in `global.md`
       scopes `GATE-AUDIO` to *"audio presentation reacting to the view model"*, names the
@@ -142,8 +288,18 @@
       genuinely fire on an out-of-range value; they are not vacuously green. The mutation was
       reverted, rebuilt, and the full suite re-run before this entry was written. **What that
       does NOT prove is a real appended enumerator, which no in-lane instrument can produce.**
-    - **THE STRONGER FORM IS NOT A CLAUSE AND THIS LANE CANNOT WRITE IT. OPEN, ROUTED TO
-      `strat-gameplay-engineer`.** A `Count` sentinel on `EStratSoundCue` with a `static_assert`
+    - **THE STRONGER FORM IS NOT A CLAUSE AND THIS LANE CANNOT WRITE IT. ~~OPEN, ROUTED TO~~
+      `strat-gameplay-engineer`.** **[STAMPED 2026-09-06, later the same day, over base commit
+      `f7da9ca`: NO LONGER OPEN — `strat-gameplay-engineer` LANDED IT, and the prediction below
+      is half wrong and should not be read as vindicated.** The sentinel and two `static_assert`s
+      are in `StratSoundCues.h` and the array is sized from `Count`. But the asserts pin
+      zero-basing and `MatchEnded + 1 == Count`; **a cue declared AFTER `Count` is still not a
+      compile error**, because C++17 cannot enumerate an enum — see the sub-bullet above and the
+      header's own "what it cannot" block. So the stronger form did NOT subsume the clause; it
+      took the explicit-value and between-insertion halves and left the after-`Count` residue,
+      which is why the clause was renamed rather than deleted. The closing sentence below stays
+      true of the pass it describes: this lane added no sentinel.**]**
+      A `Count` sentinel on `EStratSoundCue` with a `static_assert`
       sizing `bEmitted` from it would make the dangerous append a COMPILE ERROR at the site,
       with no suite run required and no way to skip it. This clause runs after the fact, in a
       suite somebody has to remember to run, and reports the defect rather than preventing it.

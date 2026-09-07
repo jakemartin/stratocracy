@@ -9,31 +9,101 @@
 // subtraction `StratTransientReceipts.cpp`'s own claim already forbids. Neither is here, and
 // neither is needed: a cue asks WHETHER something changed and never BY HOW MUCH.
 //
-// THE ONE `+` IN THIS FILE IS NAMED HERE RATHER THAN LEFT FOR A READER COUNTING OPERATORS TO
-// FIND AND READ AS A BROKEN CLAIM. `StratDecideSoundCues` sizes its one-per-kind gate with
-// `bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded) + 1]`. That is a COMPILE-TIME
-// ARRAY BOUND derived from the last member of an enum: both operands are constants the compiler
-// folds, neither is a quantity about the board, and the result reaches no caller and no screen
-// -- it sizes a `bool[]` and nothing else. It cannot be WRONG ABOUT GAME STATE, which is the
-// only thing the claim above defends; it can be wrong only about the enum, and rule 5's own
-// note below says how that is caught. This is exactly `StratTransientReceipts.cpp`'s "a copy, a
-// comparison, or an index bound" exemption, applied to the sibling claim that borrowed its
-// shape. It is an EXEMPTION AND NOT A LOOPHOLE: it licenses an index bound over compile-time
-// constants, and nothing else. An operator with a runtime operand read out of the view model is
-// still forbidden, and is what to check for if this file ever grows.
+// THE ONE ARITHMETIC OPERATOR IN THIS FILE IS NAMED HERE RATHER THAN LEFT FOR A READER COUNTING
+// OPERATORS TO FIND AND READ AS A BROKEN CLAIM. It is a SUBTRACTION -- the `- 1` inside
+// `UE_ARRAY_COUNT`, in `StratDecideSoundCues`' `Emit` -- and it bounds-checks the one-per-kind
+// gate's index. Measured in the engine this project builds against, UE 5.8,
+// `Engine/Source/Runtime/Core/Public/Templates/UnrealTemplate.h:222:
+//
+//     #define UE_ARRAY_COUNT( array ) (sizeof(UEArrayCountHelper(array)) - 1)
+//
+// ONE `sizeof` AND A SUBTRACTION, on both compiler branches. Its left operand is a `sizeof` over
+// the unevaluated helper's return type and its right operand is the literal `1`; the helper is
+// never defined and never called, so nothing about it reaches a run. Neither operand is a
+// quantity about the board, and the difference reaches no caller and no screen: it is compared
+// against an enum cast and then discarded. It cannot be WRONG ABOUT GAME STATE, which is the
+// only thing the claim above defends; it can be wrong only about the enum, and the sentinel's own
+// block in `StratSoundCues.h` says how that is caught.
+//   THE EXEMPTION WAS RE-CHECKED AGAINST THE OPERATOR'S CORRECT NAME AND STILL COVERS IT, WHICH
+// IS SAID EXPLICITLY BECAUSE THE PREVIOUS SENTENCE ASSUMED RATHER THAN CHECKED. This is exactly
+// `StratTransientReceipts.cpp`'s "a copy, a comparison, or an index bound" exemption, applied to
+// the sibling claim that borrowed its shape -- and that exemption is stated in terms of the
+// CATEGORY (an index bound) and not of an operator, so it needed no rewording to admit a
+// subtraction: a `sizeof` minus a literal is an index bound over compile-time constants exactly
+// as a quotient of two `sizeof`s would have been, and is folded before any run. It is an
+// EXEMPTION AND NOT A LOOPHOLE: it licenses an index bound over compile-time constants, and
+// nothing else. An operator with a runtime operand read out of the view model is still
+// forbidden, and is what to check for if this file ever grows.
+//   AND THE SUBTRACTION IS NOT A LOOPHOLE IN THE SIBLING CLAIM EITHER, WHICH IS THE ONE READING
+// THIS PARAGRAPH HAS TO FORECLOSE BY NAME. `StratTransientReceipts.cpp` forbids A SECOND
+// SUBTRACTION, and the thing it forbids is an HP DELTA -- a subtraction of two runtime readings
+// of a board quantity. This one has no runtime operand at all and names no board quantity. The
+// forbidden subtraction and the exempt one are different in the operands, not in the operator,
+// and a reader who grepped `-` and stopped at the character would conclude the opposite.
+//
+//   RETRACTED> "It is the DIVISION inside `UE_ARRAY_COUNT` ... the macro expands to
+//   RETRACTED>  `sizeof(x) / sizeof(x[0])` ... Both operands are `sizeof`s the compiler folds ...
+//   RETRACTED>  and the quotient reaches no caller and no screen"
+//   THAT SENTENCE WAS FALSE ON THE DAY IT WAS WRITTEN, IN THE PASS WHOSE WHOLE PURPOSE WAS
+//   RETRACTING A FALSIFIED OPERATOR DESCRIPTION, AND THAT IS WHY IT IS RETRACTED IN FULL RATHER
+//   THAN EDITED DOWN TO A TYPO. It was wrong four ways in five lines: the operator is not a
+//   division, the expansion quoted is not the expansion, there is one `sizeof` operand and not
+//   two, and there is no quotient. `sizeof(x) / sizeof(x[0])` is the old C idiom and is what
+//   `UE_ARRAY_COUNT` is popularly believed to be; it is not what UE 5.8 defines. A division
+//   DOES appear in that header -- inside the `__clang__` helper's RETURN TYPE,
+//   `char(&)[sizeof(t) / sizeof(t[0]) + 1]` -- and that is a type-level bound on a branch this
+//   MSVC-only box does not take, not an expression the macro expands to on either compiler. The
+//   `+ 1` a reader will also find there is the same kind of thing: a type-level bound, paired
+//   with the macro's `- 1` so the two cancel.
+//   THE OPERATOR IT ACTUALLY IS, IS THE ONE THIS LINEAGE TREATS AS MOST DANGEROUS, and that is
+//   the reason this correction is worth more than its five lines. `StratTransientReceipts.cpp`'s
+//   sibling claim is specifically about forbidding a SECOND SUBTRACTION, and the wording this
+//   block replaced -- retracted below -- enumerated "No subtraction" first. A reader who trusted
+//   the false sentence would have gone looking for a division, found none, and read straight
+//   past the `- 1`. A block written so that a reader counting operators is not misled, which
+//   misdescribes the operator, misleads exactly the reader it was written for.
+//   NOT ONE EXECUTABLE BYTE MOVED FOR THIS CORRECTION. The `check` and the macro are untouched;
+//   only the prose describing them changed. Corrected 2026-09-06 over base commit `f7da9ca`,
+//   reported by `strat-integration-reviewer` as Finding 1 on the pass that wrote it, and both
+//   premises re-measured here against the engine headers rather than taken from that report.
+//
+//   RETRACTED> "THE ONE `+` IN THIS FILE ... `StratDecideSoundCues` sizes its one-per-kind gate
+//   RETRACTED>  with `bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded) + 1]`."
+//   THAT SENTENCE WAS TRUE WHEN WRITTEN THIS MORNING AND WAS FALSIFIED THIS AFTERNOON BY THE
+//   FIX BELOW IT, which is the whole reason it is retracted here rather than quietly edited: the
+//   `+ 1` it names was the DEFECT, and removing the defect removed the operator the exemption
+//   had just been written to cover. A reader grepping this file for `+ 1` on the strength of
+//   that sentence now finds nothing and would reasonably conclude the block had gone stale
+//   unnoticed. The gate is now sized `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]`
+//   -- a cast and no operator at all -- and the arithmetic that remains is the `UE_ARRAY_COUNT`
+//   SUBTRACTION named above, which the same exemption covers on the same grounds and which did
+//   not exist when the retracted sentence was written. Corrected 2026-09-06 over base commit
+//   `f7da9ca`, in the pass that made it false. (This sentence read "the `UE_ARRAY_COUNT`
+//   division" for the length of that pass, and was corrected later the same day with the
+//   paragraph above it, whose retraction block carries the measurement. It is named here rather
+//   than fixed silently because it was the SECOND site of one false description, and a reader
+//   who found only the first would have no reason to think there had been another.)
 //
 //   RETRACTED> "THERE IS NOT ONE ARITHMETIC OPERATION IN IT. No subtraction, no sum, no ratio,
 //   RETRACTED>  no distance."
 //   THAT WORDING WAS FALSE FROM THE DAY THE `bool[]` GATE WAS WRITTEN, and false on its own
 //   enumeration's terms rather than on a technicality: it named SUMS explicitly, and the `+ 1`
-//   sits twelve lines into the first function. It was then carried through the 2026-09-06
+//   sat twelve lines into the first function until the same day's later pass replaced it -- see
+//   the retraction above; every past-tense sentence in this block is about the file AS IT WAS
+//   THAT MORNING and none of it should be read as describing the code below today. It was then
+//   carried through the 2026-09-06
 //   damage-alert pass, whose `StratDecideDamagedUnits` block below said the claim had been
 //   RE-CHECKED -- a stronger false statement than the original, because it asserted an act of
 //   verification that had not caught what it covered. `strat-integration-reviewer` reported it
 //   as a non-gating observation on that pass; corrected here, in the same pass, over base
 //   commit `7e83295`.
-//   NOT ONE EXECUTABLE BYTE MOVED FOR THIS. `bEmitted`'s bound is correct and was not touched;
-//   the defect was in the prose, and only the prose was changed.
+//   NOT ONE EXECUTABLE BYTE MOVED FOR THAT CORRECTION. `bEmitted`'s bound was not touched by
+//   it; the defect that morning was in the prose, and only the prose was changed. THAT SENTENCE
+//   ALSO CALLED THE BOUND "CORRECT", AND THAT IS THE HALF WORTH RE-READING RATHER THAN THE HALF
+//   ABOUT BYTES: it was correct for the enum as it stood and was one appended enumerator away
+//   from an out-of-bounds write, which the morning pass looked straight at while counting the
+//   `+` and did not see. The bound is now sized from `EStratSoundCue::Count`. A correction pass
+//   that inspects an expression for one property is not evidence about its other properties.
 //   AND THE REPLACEMENT IS NARROWER IN WORDING WITHOUT BEING WEAKER IN FORCE. It still forbids
 //   every delta, distance, count, ratio and scale -- which is the whole of what the old
 //   sentence was defending -- and it now says WHY those are the forbidden things, so the next
@@ -118,7 +188,15 @@ void StratDecideSoundCues(const FStratSoundMark& Mark,
 	// THE ONE-PER-KIND GATE, AS A FIXED ARRAY INDEXED BY THE ENUM. `ButtonClick` and
 	// `MatchEnded` have entries and are never set, which is cheaper than an arm that would
 	// have to explain itself; the header block states why neither is decided here.
-	bool bEmitted[static_cast<int32>(EStratSoundCue::MatchEnded) + 1] = {};
+	//
+	// SIZED FROM `EStratSoundCue::Count` AND NEVER FROM A NAMED CUE. It read
+	// `MatchEnded + 1` until 2026-09-06, which was correct only while `MatchEnded` was the last
+	// enumerator -- an eighth cue appended after it would have been an out-of-bounds WRITE at
+	// `bEmitted[Slot] = true` below, silent, with no diagnostic from any compiler or clause in
+	// this tree. The sentinel and the two `static_assert`s that pin it live in
+	// `StratSoundCues.h` next to the enum, which is where the edit that would break this gets
+	// made and therefore where the error has to appear.
+	bool bEmitted[static_cast<int32>(EStratSoundCue::Count)] = {};
 
 	const auto Emit = [&Out, &bEmitted](const EStratSoundCue Cue,
 	                                    const int32 Side,
@@ -126,6 +204,14 @@ void StratDecideSoundCues(const FStratSoundMark& Mark,
 	                                    const int32 Turn)
 	{
 		const int32 Slot = static_cast<int32>(Cue);
+
+		// THE RESIDUE THE ASSERTS CANNOT SEE, CAUGHT HERE INSTEAD. A cue declared AFTER `Count`
+		// changes no other enumerator's value and so is invisible to every compile-time
+		// comparison that can be written -- the enum's own header states why, at length, rather
+		// than leaving this line looking like belt-and-braces. This is the one instrument that
+		// would notice, and it notices one instruction before the corruption rather than after.
+		check(Slot >= 0 && Slot < UE_ARRAY_COUNT(bEmitted));
+
 		if (bEmitted[Slot])
 		{
 			return;

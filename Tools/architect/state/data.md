@@ -15,6 +15,169 @@
 
 ## NEXT
 
+- **DONE, 2026-09-06 -- Two measured defects fixed in `Tools/architect/strat_banner_sweep.py`,
+  base commit `f7da9ca`, branch `master`, tree dirty on top of it (the uncommitted, gated-clean
+  `EStratSoundCue` `Count`-sentinel pass; nothing under `Source/` or `Tests/` touched by this
+  entry).**
+  **DEFECT 1 -- REPORT PROVENANCE exempted by ADJACENCY, not by whether a marker GOVERNS the
+  citing sentence.** Reported live, twice, on 2026-09-06 (`global.md`'s own entry and
+  `Tools/architect/gate_reports/2026-09-06-unit-damage-alert-assets-gate.md`, Finding 1): a
+  fixed 400-character window around a `reportCreatedOn` citation (part (a)) exempted it for
+  standing near a GENUINE `[STAMPED ...]` marker that governed a DIFFERENT, unrelated
+  correction two sentences away (measured at 172 characters, comfortably inside 400); separately,
+  a paragraph WARNING about that exact hazard SPELLED THE MARKER OUT as prose
+  (`` `[STAMPED ...]` ``, the metasyntactic ellipsis form) and that literal quotation counted as
+  a real stamp, re-arming the exemption it was documenting.
+  **FIX: two independent changes, verified separately.** (1) `sentence_scope()` (new function)
+  replaces the fixed-character window in BOTH part (a) and part (b) with a scope bounded by
+  `_SENTENCE_BREAK_RE` sentence structure -- the citation's own sentence plus one whole sentence
+  either side -- so a marker several sentences away in a long, blank-line-free banner paragraph
+  no longer exempts a claim it has nothing to do with, while the record's own idiom (a
+  `**[STAMPED ...]**` sentence immediately followed by the historical restatement it covers,
+  `_GOOD_PROVENANCE`'s shape) is still recognised. (2) `\[STAMPED` is tightened to
+  `\[STAMPED(?!\s*\.\.\.\s*\])` in ALL THREE marker sets that carry it --
+  `_PARAGRAPH_STAMP_MARKERS` (the shared default, read by check 1 SUITE COUNT AGREEMENT and by
+  `check_item_states`, not only by REPORT PROVENANCE), the new `_PROVENANCE_CITATION_STAMP_MARKERS`
+  (part a), and `_PROVENANCE_TREE_STAMP_MARKERS` (part b, already separate before this pass) --
+  refusing only the literal ellipsis-quoting form, never a real dated or worded marker.
+  **BOTH DIRECTIONS RUN, ON BOTH HALVES OF THE FIX.** Sentence-scope alone: a fixture with a
+  genuine stamp two sentences away (`_BAD_PROVENANCE_WRONG_SENTENCE`) is laundered by the old
+  fixed window (`is_stamped` True) and refused by the shipped sentence scope (False) -- asserted
+  directly against both calls on the identical text, not only through the sweep's verdict.
+  Marker-tightening alone: a fixture with the metasyntactic quotation IN THE SAME SENTENCE as
+  the citation (`_BAD_PROVENANCE_METASYNTACTIC`) -- which sentence-scoping alone cannot see,
+  since it is not a different-sentence problem -- is matched by the pre-tightening `\[STAMPED`
+  and refused by the shipped marker set, same direct-assertion style. A clean counterpart
+  (`_GOOD_PROVENANCE_ADJACENT_SENTENCE`, a genuine dated stamp one sentence from the citation it
+  governs) still PASSES, proving neither half over-refuses. **This DID extend past the two
+  report-provenance call sites Finding 1 was measured against**: `_PARAGRAPH_STAMP_MARKERS` is
+  `is_stamped`'s DEFAULT set, so the identical metasyntactic-quote gap existed in check 1 (SUITE
+  COUNT AGREEMENT) too -- a wrong live suite figure sitting beside a paragraph merely NAMING the
+  marker's shape as prose would have been laundered the same way. Isolated with its own fixture,
+  `_BAD_SUITE_METASYNTACTIC` (a wrong `107/107` beside a bare prose quotation of
+  `` `[STAMPED ...]` ``): FAILS under the shipped tightened set, and is confirmed by direct
+  inspection to have PASSED under the pre-tightening literal (the same regex differential style
+  used throughout this file's self-test).
+  **[CORRECTED 2026-09-06, SAME PASS -- the paragraph below stated a cardinality of a growing
+  set from inside the file that set is counted across, and disagreed with two other censuses
+  taken minutes apart elsewhere in this record (a `strat-integration-reviewer` gate,
+  `Tools/architect/gate_reports/2026-09-06-sound-cue-count-sentinel-gate.md`, measured 186
+  total / 8 ellipsis-form against this same six-file set and found three mutually contradictory
+  counts already on record). Kept below rather than deleted, on this record's standing practice;
+  the durable content survives the correction and is restated here rather than as a fourth
+  number:** the growing quantity is `[STAMPED` occurrences across
+  `Tools/architect/state/*.md`, and this very paragraph is itself one of the things any later tally
+  of it counts, so a raw total stated in prose is stale before the paragraph finishes and this
+  file is not the place to carry one. **What is durable and does not move**: exactly one file of
+  the six carries the ellipsis form `[STAMPED ...]` -- the literal, metasyntactic prose quotation
+  of the marker's own shape, used only while describing this defect and never a real stamp anyone
+  relied on -- and that file is this one, `data.md`. The other five (`global.md`, `content.md`,
+  `engine.md`, `tests.md`, `decisions.md`) carry zero occurrences of the ellipsis form; every
+  `[STAMPED` in those five is a real, dated or worded marker. **Reproduce rather than trust a
+  cardinality**: `grep -oE '\[STAMPED\s*\.\.\.\s*\]' Tools/architect/state/*.md` against the
+  checkout in hand names its own file on every hit, which is the fact this entry needs and the
+  one a stale number cannot substitute for.
+  ~~Of 178 `[STAMPED` occurrences across `Tools/architect/state/*.md` (up from the gate's 174, the
+  record having grown since), exactly 4 match the ellipsis form -- all four in this file
+  (`data.md`), all four this steward's own prose quoting the marker's shape while describing this
+  defect, confirmed by direct inspection of each, none a real marker anyone relied on. Zero in
+  `global.md`, `content.md`, `engine.md`, `tests.md` or `decisions.md`.~~ **[the classification
+  (data.md-only, ellipsis-form, non-stamping) was correct; only the two cardinalities, 178 and 4,
+  were the growing-set defect -- both are struck rather than replaced with a fourth number that
+  would itself be stale by the next edit to this file, per the fix above.]** A differential of the OLD-vs-NEW
+  algorithm (fixed window + old marker set vs. sentence scope + tightened set) run against every
+  `reportCreatedOn` citation part (a) actually reaches on the live tree today -- the current
+  banner segment of `global.md`, which is the only place either check reads -- found exactly ONE
+  citation in scope (the live figure at `global.md:26`) and ZERO classification changes: it was,
+  and remains, correctly read as unstamped (it is the live figure, not a historical quote).
+  **`global.md:26`'s live citation, mutant-tested in both directions.** Plant the wrong stamp
+  (`reportCreatedOn 2026.09.06-20.00.49` in place of the true
+  `reportCreatedOn 2026.09.06-22.20.49`) at line 26, leave everything else byte-identical: exit 1,
+  one `REPORT PROVENANCE` finding, both against `global.md` alone and against the full six-file
+  set. The unmutated live tree: exit 0, `SWEEP CLEAN`.
+  **THIS IS A HEURISTIC TIGHTENING, NOT A PROOF, AND IS STATED AS SUCH.** `radius=1` (one whole
+  sentence either side of the citation) matches every GOOD provenance fixture this file has ever
+  carried and every real citation currently in scope, but it is a design choice calibrated
+  against observed shapes, not a structural guarantee -- a future entry that separates a genuine
+  stamp from the citation it governs by two or more sentences would need `radius` revisited, and
+  the code comment on `sentence_scope()` says so.
+  **DEFECT 2 -- REPORT IDENTITY blind to a production-only pass.** `read_macro_census` populated
+  `newest_test_mtime` only from `.cpp` files carrying an `IMPLEMENT_*_AUTOMATION_TEST` macro, so
+  editing PRODUCTION code -- which can redden clauses without touching a single test file, as
+  `engine.md`'s `EStratSoundCue` pass measured today with a three-arm control on a scratch
+  directory (instrument speaks: 11 macros found in an unseen directory; touching production does
+  NOT move the reading; touching a test file DOES) -- left the freshness check comparing against
+  a stale report. The COUNT arm was never wrong (no clause was added, and the census matched);
+  it is the WHICH-RUN arm that could not see this shape of change.
+  **FIX: `read_macro_census` now also returns `newest_source_mtime`**, the newest mtime across
+  EVERY `.cpp` AND `.h` under `Source/`, test-defining or not -- because C++ compiles both, and a
+  header-only edit can move behaviour exactly as a `.cpp` edit can. `check_report_identity`
+  compares the report's mtime against WHICHEVER of `newest_test_mtime` and `newest_source_mtime`
+  is newer, naming which arm fired in the finding text. **Considered and rejected: narrowing to
+  "only files a given test actually `#include`s".** That needs a real dependency graph this
+  script does not have, and a narrower net that quietly misses a header two `#include`s away is
+  the same shape of blind spot one level down -- not attempted. **The false-positive cost is
+  named rather than hidden**: any `Source/` edit, including a comment-only one, now makes a stale
+  report a finding until the suite is re-run -- a strictly MORE cautious reading than before,
+  never a looser one, and the identical reading this check already gave a comment-only edit to a
+  TEST file (never distinguished from a behavioural one either). It does not reach `Content/`,
+  `Config/`, `Data/` or `Tools/`, none of which the compiled suite executes.
+  **BOTH DIRECTIONS RUN.** `check_identity_self_test` gained two cases on a scratch
+  report/source/production triple: a report older than a newer PRODUCTION-only file (no test
+  file touched at all) now FAILS -- the exact 2026-09-06 shape, which passed before this fix --
+  and the companion where the production file is OLDER than the report still PASSES, proving the
+  fix does not make every report with a production file present a permanent finding. A direct
+  regression pin in `check_self_test` asserts `read_macro_census` itself on a two-file scratch
+  directory: `newest_test_mtime` stays pinned to the test file alone while `newest_source_mtime`
+  independently sees the production-only file, isolating the property from the sweep's verdict on
+  any one fixture.
+  **NO SUITE COUNT STATED HERE, PER THIS FILE'S OWN RULE** -- only `global.md` may. The live tree
+  swept clean throughout this pass; `global.md`'s own figure and citation are unmoved by this
+  entry.
+  **SELF-TEST: full `--self-test` run, all fixtures OK, before and after every edit in this
+  entry** (re-run repeatedly during development, not once at the end): the shipped module now
+  carries ALL FIXTURES CORRECT, and the live `python Tools/architect/strat_banner_sweep.py`
+  (all six files) returns `SWEEP CLEAN`, exit 0.
+
+- **DONE, 2026-09-06, SAME RE-GATE -- two more stale censuses of the SAME growing `[STAMPED`
+  set, this time in `strat_banner_sweep.py`'s own comments, not in this file.** The re-gate
+  report (`Tools/architect/gate_reports/2026-09-06-sound-cue-count-sentinel-regate.md`) quoted
+  three mutually contradictory censuses of `[STAMPED` occurrences across
+  `Tools/architect/state/*.md`: this file's own (fixed above, same day, earlier entry), and two
+  inside `strat_banner_sweep.py` -- a comment above `_PARAGRAPH_STAMP_MARKERS` claiming "4, all
+  in `data.md`" and a comment above `_PROVENANCE_TREE_STAMP_MARKERS` claiming "169 non-ellipsis
+  (of 174 total)". `174 - 169 = 5`, not `4`: the two script comments disagreed with each other,
+  not only with this file, because both were counting the same set that keeps growing every time
+  any of the six record files is edited -- including by the very entry doing the counting.
+  **FIX, COMMENT-ONLY, NO EXECUTABLE LINE CHANGED:** both comments had their cardinalities
+  removed rather than replaced with a fourth or fifth number. What survives in each is the
+  classification rule (the ellipsis form `[STAMPED ...]` is always this steward's own prose
+  quoting the marker's shape, never a real stamp anyone relied on) and a reproducible command a
+  reader can run against the checkout in hand instead of trusting a printed figure:
+  `grep -noE '\[STAMPED[^]]*\]' Tools/architect/state/*.md | grep '\.\.\.'` for the ellipsis
+  hits, and the same pipeline with `grep -v` for the non-ellipsis ones. Neither command's output
+  is quoted in the comment, on the same reasoning this file's own correction above already gives:
+  a number written down is stale before the edit finishes.
+  **SWEPT FOR OTHERS.** Searched `strat_banner_sweep.py` for any other comment stating a
+  cardinality of a set that grows with record edits: `grep -noE '^#.*[0-9]{2,4}.*$'
+  Tools/architect/strat_banner_sweep.py`, then read every hit naming "occurrence", "census",
+  "total", "record", "marker", "carr(y/ies)", "exactly" or "files?" by eye. All other numeric
+  comments name either a fixed algorithm constant (`_STAMP_WINDOW = 220`, `_PROVENANCE_CITATION_WINDOW
+  = 400`, a ~95-column wrap width) or a self-test fixture's own hard-coded before/after suite
+  digits (the ones already exercised by `--self-test` and listed in its own output above), which
+  are synthetic test data rather than a live census of the record -- none is a second instance of
+  this defect. This is a positive search result (found and fixed two), not a null, so it is
+  reported as what it is rather than implied by silence.
+  **VERIFIED COMMENT-ONLY:** both edits changed only lines beginning `#`; the tuples
+  `_PARAGRAPH_STAMP_MARKERS`, `_PROVENANCE_TREE_STAMP_MARKERS` and
+  `_PROVENANCE_CITATION_STAMP_MARKERS` and every regex inside them are byte-identical to before
+  this entry. `--self-test` re-run after the edit: `SELF-TEST: ALL FIXTURES CORRECT`, identical
+  to the pre-edit run. `python Tools/architect/strat_banner_sweep.py` (default target, all six
+  files, run unpiped): `SWEEP CLEAN -- no self-contradiction found`, exit reflects the sweep
+  itself, not a pipe.
+  **NO SUITE COUNT STATED HERE, PER THIS FILE'S OWN RULE.** The live figure is `global.md`'s
+  alone.
+
 - **DONE, 2026-09-05 -- Phase C' of the audio milestone: `Config/DefaultEngine.ini` now names
   `[/Script/Engine.AudioSettings]`, and `DefaultSoundClassName` was considered and declined.**
   Working tree: `E:/MultiAgent/Stratocracy`, branch `master`, base commit `089c79c`. Phases

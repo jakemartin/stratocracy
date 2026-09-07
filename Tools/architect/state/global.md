@@ -28,10 +28,43 @@ AND THE DEFECT WAS PINNED RATHER THAN MERELY FIXED, WHICH IS THE HALF THAT MAKES
 reset back below the call reddens EXACTLY THAT ONE CLAUSE (*"Read 1 cue(s)"* against a required
 zero) and nothing else in either ID. Four mutants were run in total and all four production files
 were restored byte-identically, sha256-verified.
-THE SUITE IS **468/468**, every entry Success, zero failed, zero notRun, zero
+THE SUITE IS **477/477**, every entry Success, zero failed, zero notRun, ONE
 succeededWithWarnings, read from the exported report with `utf-8-sig`. The macro census agrees at
-468, and the arithmetic closes: 456 + 12 added = 468; one clause was RENAMED, which moves no
-count. THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.07-15.59.11`.
+477, and the arithmetic closes: 468 + 9 added = 477. THE LIVE FIGURE'S REPORT IS
+`reportCreatedOn 2026.09.07-23.39.55`. The one warning is a headless `no tile mesh for terrain
+Bridge, Factory, Mountains, Plains, Town, Water, Woods` notice raised inside the live-board
+fixture of `GATE-TITLEMENU.TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness`; it is a
+content-configuration notice from a `-nullrhi` world, not a diagnostic about anything under test.
+  THE SENTENCE THIS REPLACED WAS TRUE WHEN WRITTEN AND IS STAMPED RATHER THAN DELETED, because
+this file is the ONE home of the count and a reader arriving by citation must be able to see that
+the figure moved and by what.
+  [STAMPED 2026-09-07 BY THE OPTIONS-EXIT PASS] "THE SUITE IS **468/468**, every entry
+  [STAMPED 2026-09-07] Success, zero failed, zero notRun, zero succeededWithWarnings. The macro
+  [STAMPED 2026-09-07] census agrees at 468, and the arithmetic closes: 456 + 12 added = 468; one
+  [STAMPED 2026-09-07] clause was RENAMED, which moves no count. THE LIVE FIGURE'S REPORT IS
+  [STAMPED 2026-09-07] `reportCreatedOn 2026.09.07-15.59.11`."
+Both the count and the report identity moved, and BOTH had to move together: this project records
+that citing a superseded report beside a live figure is itself a stale claim about which run backs
+the number, and `strat_banner_sweep.py` reported exactly that pair against lines 31 and 34 before
+this edit.
+  THE NINE ADDED CLAUSES ARE THE OPTIONS SCREEN'S EXIT CONTROL AND ITS CAPTIONS: seven from the
+exit pass and one parity clause under `GATE-TITLEMENU`, plus
+`GATE-AUDIO-SETTINGS.ShippedOptionsWidgetCarriesItsUnboundCaptions`.
+  [STAMPED 2026-09-07 BY THE CAPTION PASS] "THE EIGHT ADDED CLAUSES ARE THE OPTIONS SCREEN'S
+  [STAMPED 2026-09-07] EXIT CONTROL, all under `GATE-TITLEMENU`: seven from the exit pass and one
+  [STAMPED 2026-09-07] parity clause reading the shipped `WBP_Options` widget tree."
+That ninth clause exists because a caption was DELETED FROM THE ASSET AND SHIPPED GREEN THROUGH
+EVERY INSTRUMENT IN THIS TREE, and was found by a human playing the game. `content.md` carries the
+mechanism and the standing instruction; what belongs here is the reach of the miss: the suite did
+not move, the shipped-asset parity clause passed because its positive control was the surviving
+PARENT of the deleted widget, the authoring lane's byte scan passed because it searched only the
+names it was ADDING, and the widget total agreed with expectation because one addition and one
+deletion cancel. Every instrument was scoped to the change being made; none asked what had gone.
+  **THE MUTANT BATTERY FOR ALL NINE IS UNMEASURED.** A green suite does not discharge that and no
+sentence in this file should be read as claiming it does; `tests.md` carries the same statement at
+the site. The ninth clause's own mutant is the weakest-placed of the nine: proving it reddens
+means deleting a caption from `Content/`, which the lane that wrote the clause neither owns nor
+can run the suite against.
 THREE THINGS ARE UNPINNABLE AND ARE NAMED RATHER THAN LEFT AS SILENCES. (1) `Side` vs
 `ViewingSide`: the cue carries `Match.SideToMove` and the camera reads `AppliedModel.ViewingSide`,
 but the hand-back only fires when the side to move IS the human seat, so on every reachable
@@ -61,7 +94,9 @@ before the sound-class assignment and final save. Force-unstaged; the index is e
 the POINTER'S oid to the file's sha256 is the comparison that works on an LFS path;
 `git hash-object` answers a different question and must not be used for it.
 AND NO INSTRUMENT IN THIS TREE CAN HEAR THE SOUND OR SEE THE CAMERA. A commandlet has no audio
-device, and no headless fixture composites a viewport. 468/468 says the cue is emitted once with
+device, and no headless fixture composites a viewport. 468/468 [STAMPED 2026-09-07 BY THE
+OPTIONS-EXIT PASS: this read 468/468 and was true of the tree the hand-back milestone closed on.
+THE LIVE FIGURE IS 477/477 AND IS STATED ONCE, IN THE BANNER] says the cue is emitted once with
 the right payload and that the pawn's XY lands on the centroid the module computes; A HUMAN AT THE
 KEYBOARD IS STILL THE ONLY INSTRUMENT that can say the round change is audible, that it is
 tellable from `TurnEnded` sounding beside it on the shipped configuration, or that the recentre

@@ -129,4 +129,49 @@ public:
 	UTextBlock* MasterText() const { return MasterValueText; }
 	UTextBlock* SfxText()    const { return SfxValueText; }
 	UTextBlock* MusicText()  const { return MusicValueText; }
+
+	// ---- THE EXIT ROW, ADDED 2026-09-07 -------------------------------------------------
+	//
+	// A SECOND PLANT AND NOT AN EXTENSION OF `PlantBoundWidgets`, WHICH IS A CHOICE AND NOT AN
+	// ACCIDENT. That function's contract is stated in its own comment and in
+	// `StratOptionsWidgetBindingClauses.cpp`'s fixture as SEVEN members, and its companion
+	// `AreBoundWidgetsPlanted` reports "one or more of the seven" by name. Widening it to nine
+	// would rewrite the premise of three clauses that are not about the exit row at all, for
+	// nothing they need. The exit clauses call both.
+	//
+	// BOTH MEMBERS ARE `BindWidgetOptional` ON THE BASE AND THEREFORE NULL ON A NATIVE
+	// SUBCLASS, which means that WITHOUT this plant `SyncExitWidgetsToModel` runs its whole
+	// body and writes to nothing -- so a clause on the enabled bit would be VACUOUS rather
+	// than red. Same hazard `StratOptionsPanelDoubles.h` records for the shell menu's row.
+
+	/** Fills `ReturnToTitleButton` and `ReturnToTitleReasonText`. Call BEFORE
+	 *  `RunNativeConstruct`, which is what binds the button's `OnClicked`. */
+	void PlantExitRow()
+	{
+		ReturnToTitleButton     = NewObject<UButton>(this);
+		ReturnToTitleReasonText = NewObject<UTextBlock>(this);
+	}
+
+	/** True only when both exit plants took. A clause that finds this false reports a FIXTURE
+	 *  failure and never a clause result. */
+	bool IsExitRowPlanted() const
+	{
+		return ReturnToTitleButton != nullptr && ReturnToTitleReasonText != nullptr;
+	}
+
+	/** Bind with `OnReturnToTitleRequested.AddDynamic(Double, &UStratOptionsWidgetDouble::
+	 *  HandleReturnToTitleRequested)`. A `UFUNCTION` on a `UObject` for `HandleCommitted`'s
+	 *  stated reason: a dynamic multicast can bind nothing lighter, and a broadcast has no
+	 *  observable other than its receiving end. */
+	UFUNCTION()
+	void HandleReturnToTitleRequested()
+	{
+		++ReturnToTitleRequestCount;
+	}
+
+	/** How many times the widget has broadcast `OnReturnToTitleRequested` to this observer. */
+	int32 ReturnToTitleRequestCount = 0;
+
+	UButton*    Exit()           const { return ReturnToTitleButton; }
+	UTextBlock* ExitReasonText() const { return ReturnToTitleReasonText; }
 };

@@ -15,7 +15,11 @@
 // and the second direction is where a widget usually starts computing:
 //   - THE SETTERS CLAMP AND REBUILD, AND THE MODEL IS WHAT THE SCREEN DRAWS. A slider that drew
 //     its own thumb position from its own local state would be a number on screen that is not a
-//     model field, which is `T-UI-03`'s clause with the arrow reversed. Every setter's last act
+//     model field --
+//     RETRACTED> "which is `T-UI-03`'s clause with the arrow reversed"
+//     -- which is the RULE `T-UI-03` STATES with the arrow reversed. The ID itself is refused
+//     for this surface; see this header's `AMENDED 2026-09-07 (SECOND PASS)` block. Every
+//     setter's last act
 //     is to replace `Model` and fire `OnAudioOptionsRefreshed`, so the WBP redraws from the model
 //     it was just handed -- exactly as the read-only widgets do.
 //   - THE PERCENT STRINGS ARE FIELDS AND NOT `Volume * 100` NODES. That multiplication is
@@ -158,6 +162,142 @@
 // "100%" and the screen would look broken in a way no clause could see. Overriding the asset's
 // `MinValue`/`MaxValue` in `NativeConstruct` costs an author the ability to choose a range this
 // class could not honour anyway.
+//
+// ===========================================================================================
+// AMENDED 2026-09-07 -- A SECOND WAY OFF THIS SCREEN, AND IT IS A DIFFERENT KIND OF EXIT FROM
+// THE BACK BUTTON RATHER THAN A SECOND COPY OF IT.
+//
+// WHAT GAP THIS CLOSES. The user asked for "a quit button in the options screen during
+// gameplay". The title menu's Quit row already exists and closes the process; this screen had
+// only `BackButton`, which puts the player back exactly where they were. So a player inside a
+// match had no control anywhere on screen that leaves the match. The user then RULED which
+// exit this is: **return to the title, not quit to desktop** -- the title menu's own Quit row
+// closes the process from there. That ruling is recorded here because this file's control is
+// where a later reader would otherwise wonder why the "quit button" does not quit.
+//
+// IT IS A DELEGATE AND NOT A CALL, ON `OnOptionsDismissed`'S EXACT PRECEDENT AND FOR THE SAME
+// STRUCTURAL REASON. The brief that produced this control named `EStratShellRoute::ReturnToTitle`
+// and `UStratShellSubsystem::ExecuteRoute`. **This module cannot name either.** Both live in
+// `StratPlay`, the arrow runs `StratPlay -> StratUI` and never back, and the paragraph above
+// headed "NOTHING HERE CLOSES THE PANEL" already records the identical refusal about
+// `CloseOptionsPanel()`. `OnReturnToTitleRequested` is the outward-facing half instead: a
+// dynamic multicast a `StratPlay`-side owner binds, costing no `#include` in either direction.
+// This class does not know what a "title" is beyond a word on a button.
+//
+// THE HARD PART IS NOT THE EXIT, IT IS THAT THE EXIT IS SOMETIMES ILLEGAL, AND THE SCREEN IS
+// REACHABLE FROM BOTH SIDES OF THAT. `UStratOptionsPresenter` is a `UWorldSubsystem` and exists
+// in the TITLE world as well as the match world, and `UStratShellMenuWidget::HandleOptionsClicked`
+// takes `EStratShellRoute::Options` from the title menu -- so this screen is opened on a map
+// where `IsRoutePermitted(ReturnToTitle, ...)` refuses with "No match in progress." A control
+// that a player can click and that then silently does nothing is the defect this whole options
+// route was written to avoid: `UStratShellSubsystem`'s own header calls an armed-but-dead row
+// "one step worse than a greyed row".
+//
+// SO THE AVAILABILITY IS PUSHED IN, ON THE MODEL PRECEDENT THIS FILE ALREADY USES FOR GAINS.
+// `FStratOptionsExitModel` carries a bit and a sentence; `PushExitOptions` stores it and
+// `SyncExitWidgetsToModel` sets `bIsEnabled` on the button and the sentence on an optional
+// label. The bit is NOT computed here and could not be -- `IsRoutePermitted` is the single
+// authority, it is a `StratPlay` static, and `BuildMenuModel` already reads it the same way for
+// the title menu's five rows. **A disabled `UButton` does not broadcast `OnClicked`**, so
+// "cannot be clicked when it would refuse" is a property of the control rather than a check
+// this class performs. THE CONSEQUENCE, SAID RATHER THAN DISCOVERED: an owner that never pushes
+// leaves the control disabled forever, which is why the default is `false` and why the
+// presenter pushes on the same path that seeds the gains.
+//
+// A SEPARATE STRUCT AND NOT THREE MORE FIELDS ON `FStratAudioOptionsModel`, AND THIS IS THE ONE
+// DECISION HERE THAT A REVIEWER SHOULD CHECK RATHER THAN ACCEPT. That struct is REBUILT FROM
+// THREE FLOATS by `StratBuildAudioOptionsModel` on every setter -- `SetMasterVolume` assigns
+// `Model = StratBuildAudioOptionsModel(...)` -- so any field added to it that the builder does
+// not take as an argument would be SILENTLY RESET TO ITS DEFAULT BY EVERY SLIDER DRAG. The exit
+// row would have gone grey the first time a player touched the volume, and nothing in this file
+// would have looked wrong. Two structs have no such coupling.
+//
+// NOT IN THIS ROUND: A CONFIRMATION PROMPT. Leaving a match discards unsaved progress and a
+// "are you sure" step is the obvious guard, but it is a second screen with its own two controls
+// and its own permission question, and Sec 2.11.5 budgets one settings screen. Said here so
+// that its absence reads as a decision rather than an oversight.
+//
+// ===========================================================================================
+// AMENDED 2026-09-07 (SECOND PASS) -- THE NAME `T-UI-03` IS RETRACTED FROM THIS FILE'S PROSE,
+// IN ALL FIVE PLACES IT APPEARS. THE RULE IT NAMED IS UNCHANGED AND STILL BINDS EVERY LINE
+// BELOW; WHAT WAS WRONG WAS THE ATTRIBUTION, AND THE FIVE SITES CARRY THEIR OWN `RETRACTED>`
+// MARKERS SO THAT A READER ARRIVING AT ONE OF THEM BY CITATION MEETS THE CORRECTION THERE
+// RATHER THAN HERE.
+//
+// WHAT THE ID ACTUALLY OWNS, quoted rather than paraphrased. `T-UI-03`'s defining sentence, as
+// `Tools/architect/state/global.md`'s third acceptance-ID ruling of 2026-09-05 quotes it, is
+// *"no widget-side arithmetic; every number a widget draws equals exactly one
+// `strat::UiSnapshot` field."* Both halves are load-bearing and only the FIRST half is what this
+// file was invoking. The second half is a quantifier over `strat::UiSnapshot`, and NOTHING ON
+// THIS SCREEN HAS ONE BEHIND IT: a player's audio gain is a saved preference, and the exit
+// row's sentence is written by `UStratShellSubsystem::IsRoutePermitted` one module over. A
+// surface with no snapshot field gives that ID, in the ruling's words, *"no snapshot-fidelity
+// fact ... to own"*.
+//
+// THE RULING REFUSED THE ID FOR THIS EXACT CLASS BY NAME, WHICH IS WHY THIS IS A CORRECTION AND
+// NOT A PREFERENCE. It turned `T-UI-03` down for `UStratCommandBarWidget::OptionsButton` on the
+// ground that a control which *"draws no value and reads no snapshot field"* has no such fact,
+// and it names *"`UStratOptionsWidget`'s bound sub-widgets"* among the six subjects it covers.
+// Its deciding sentence transfers directly: *"Sitting on the SAME command bar as clauses that do
+// ride `T-UI-03` does not pull `OptionsButton` onto that ID; the test is the subject sentence,
+// not the file."* Sitting in the same MODULE as the scoreboard is the same non-argument.
+//
+// SO WHAT THE FIVE SITES SHOULD HAVE SAID, and it is one substitution everywhere: the discipline
+// is *the rule `T-UI-03` states*, applied here by analogy to a surface that does not ride that
+// ID. This file names no acceptance ID for its own surface, and must not -- picking one is the
+// steward's ruling and the test lane's clause names, never a header comment's.
+//
+// WHERE THE CLAUSES ACTUALLY LANDED, attributed and not vouched for. `strat-test-author`
+// declined `T-UI-03` for this surface and wrote the exit row's clauses under `GATE-TITLEMENU`
+// instead, on that same ruling; its reasoning is in `Source/StratUI/Tests/StratOptionsExitClauses.cpp`'s
+// own header, which is the authority for it. **As of this comment those clauses are uncompiled
+// and unrun** -- the editor holds the DLLs -- so this paragraph records where they were filed
+// and claims nothing about their result. No count of them appears here or anywhere outside
+// `global.md`.
+//
+// TWO OF THE FIVE SITES WERE WRITTEN BY THE EXIT-ROW PASS AND THREE PREDATE IT, WHICH MATTERS
+// BECAUSE IT SAYS THE SLIP IS OLDER THAN THE DEFECT REPORTED.
+//
+//   RETRACTED> "Measured: `git diff -U0` over this file and its `.cpp` against `46321a6`
+//   RETRACTED>  returns exactly two added lines containing the token"
+//
+// THAT INSTRUMENT MEASURED A THING THIS BLOCK MOVES, AND NO VALUE OF IT IS WRITTEN HERE AS A
+// STANDING FACT. `strat-integration-reviewer` re-ran the quoted command -- `git diff -U0 46321a6
+// -- <this file> <its .cpp> | grep '^+' | grep` for the token -- on 2026-09-07 and got 16, not
+// two, because every one of the five sites was REWRITTEN by this correction (five `RETRACTED>`
+// quotations plus five replacement sentences) and the block adds six more mentions on its own.
+// Then the repair of THAT finding -- this paragraph and the two below -- took the same command to
+// 19 the same day, and rewriting THIS VERY SENTENCE dropped one mention and left it at 18. That
+// last figure is quotable at all only because the edit stating it changes digits and prose and
+// adds no further occurrence of the token, so it cannot move itself; re-measured after that edit,
+// the command still prints 18. The finding was the reviewer's and it is right, and the 16-19-18
+// sequence is its proof: a diff-of-the-working-tree instrument counts every correction along with
+// its subject, and there is no fixed point to quote.
+//
+// THE INSTRUMENT IS THEREFORE SCOPED TO THE BASE, WHICH NOTHING WRITTEN IN THIS TREE CAN MOVE.
+// Re-run 2026-09-07: `git show 46321a6:Source/StratUI/StratOptionsWidget.h | grep -c 'T-UI-03'`
+// prints `2`, and the same command on `...StratOptionsWidget.cpp` prints `1`. Three occurrences
+// at the base, five sites in the tree, so two of the five are new. The base's three, by
+// `git show 46321a6:<file> | grep -n 'T-UI-03'`, are the header's line 18 ("arrow reversed") and
+// line 390 (`MasterValueText`), and the `.cpp`'s line 238 (`SyncBoundWidgetsToModel`) -- all three
+// on the GAIN surface. The two the exit-row pass added are therefore
+// `FStratOptionsExitModel::ReturnToTitleReason` here and `SyncExitWidgetsToModel` in the `.cpp`.
+// CONTROL: `git show 46321a6:Source/StratUI/StratOptionsWidget.h | grep -c 'T-UI-99'` prints `0`,
+// so the grep is able to return zero and a `2` is a reading rather than a fixed point.
+//
+// The other three (the header's "arrow reversed" line, `MasterValueText`, and
+// `SyncBoundWidgetsToModel`) are on the GAIN surface and were already in the tree. They are
+// corrected in the same pass rather than left, because a correction that fixed two occurrences
+// of a refused name while leaving three identical ones in the same two files would rebuild the
+// exact trap it was written to close -- and the same ruling refuses the ID for the gain surface
+// too, citing the argument `strat-test-author` had already made about the options MODEL.
+//
+// THE REPORT THAT PRODUCED THIS BLOCK WAS RIGHT IN SUBSTANCE AND WRONG IN ONE DETAIL, RECORDED
+// SO THAT THE NEXT READER DOES NOT RE-DERIVE IT. It said the header names the ID *"twice"* on
+// the exit surface. The header names it three times in total and only ONE of those is the exit
+// row; the second "on this surface" occurrence is `MasterValueText`, a volume readout the exit
+// pass never touched. The finding survives the correction -- that site is false for the same
+// reason -- but the count and the subject were not the same question.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -209,6 +349,62 @@ struct FStratAudioOptionsModel
 };
 
 /**
+ * Whether the player may leave the match from this screen, and why not when they may not.
+ *
+ * A SECOND STRUCT AND NOT THREE MORE FIELDS ON `FStratAudioOptionsModel` -- see the file header.
+ * The short version, because it is the one thing here that can silently go wrong:
+ * `StratBuildAudioOptionsModel` REBUILDS that struct from three floats on every setter, so a bit
+ * parked there would be cleared by every slider drag.
+ *
+ * THE BIT AND THE SENTENCE ARE ONE PUSH AND NEVER TWO, on `FStratShellOption`'s exact pairing of
+ * `bEnabled` with `DisabledReason`: they are two halves of one answer from one call to one
+ * decider, and pushing them separately would let a screen show "enabled" beside the reason it is
+ * not.
+ *
+ * IT DOES NOT NAME A ROUTE, AND CANNOT. `EStratShellRoute` is a `StratPlay` type. What this
+ * struct says is "the exit control is live"; what that control MEANS is the owner's to decide.
+ */
+USTRUCT(BlueprintType)
+struct FStratOptionsExitModel
+{
+	GENERATED_BODY()
+
+	/**
+	 * True when the owner has said the exit is legal right now.
+	 *
+	 * DEFAULT `false`, WHICH IS THE RESTRICTIVE DIRECTION AND IS CHOSEN DELIBERATELY. An owner
+	 * that never pushes leaves a dead control on the screen; an owner that never pushes with the
+	 * opposite default leaves a LIVE control that broadcasts into nothing. This project has a
+	 * named defect for the second shape ("a reflected verb with no caller reads as built") and
+	 * none for the first, because a greyed control is visibly not offering anything.
+	 *
+	 * IT IS ALSO NOT AN "UNSET" SIGNAL AND MUST NOT BE READ AS ONE. `false` here means exactly
+	 * "not available", whether that is because a title-map presenter pushed a refusal or because
+	 * nobody pushed at all. If a clause ever needs to tell those apart, the instrument is the
+	 * owner's own counter and not this field.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Options")
+	bool bReturnToTitleEnabled = false;
+
+	/**
+	 * Why the exit is greyed, in the player's words. Empty exactly when `bReturnToTitleEnabled`.
+	 *
+	 * IT IS THE SENTENCE `UStratShellSubsystem::IsRoutePermitted` PRODUCED AND IS NEVER COMPOSED
+	 * HERE -- the same one a greyed title-menu row shows, because it is the same call.
+	 *
+	 * RETRACTED> "`T-UI-03`'s clause on this surface: one field, one drawn string, no expression
+	 * RETRACTED>  between them."
+	 *
+	 * The discipline holds and the NAME does not: one field, one drawn string, no expression
+	 * between them, which is the RULE `T-UI-03` states applied by analogy. This surface does not
+	 * ride that ID -- there is no `strat::UiSnapshot` behind a route permission, so the ID has no
+	 * fidelity fact here to own. See this file's `AMENDED 2026-09-07 (SECOND PASS)` block.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Options")
+	FText ReturnToTitleReason;
+};
+
+/**
  * The model for three gains. THE ONLY PLACE a volume becomes a string in this project.
  *
  * A FREE FUNCTION AND NOT A METHOD ON THE WIDGET, on `StratBuildScoreboardModel`'s stated reason:
@@ -255,6 +451,23 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStratAudioOptionsCommitted,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStratOptionsDismissed);
 
 /**
+ * Fired when the player asked to leave the match and go back to the title. Carries nothing.
+ *
+ * A SECOND DELEGATE AND NOT A PAYLOAD ON `FStratOptionsDismissed`, WHICH WAS THE OTHER SHAPE.
+ * "Close this screen" and "leave the match" are different requests with different consequences
+ * -- the first is free and the second discards a match -- and a bool on one event would mean
+ * every existing binder had to start distinguishing them, silently, with the default doing the
+ * more destructive thing on any binder that did not. Two events have no such degree of freedom,
+ * which is `FStratAudioOptionsCommitted`'s stated argument against three per-channel events run
+ * the other way.
+ *
+ * NO PAYLOAD, on `FStratOptionsDismissed`'s reason: "leave" is not a value. The one thing this
+ * event means is that a `StratPlay`-side owner should take `EStratShellRoute::ReturnToTitle` --
+ * see the file header on why this class cannot name that.
+ */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStratOptionsReturnToTitleRequested);
+
+/**
  * Sec 2.11.5's volume screen.
  *
  * Holds a built model, pushes it at Blueprint, and reports every accepted change. It reads no
@@ -294,6 +507,28 @@ public:
 	void PushAudioOptions(const FStratAudioOptionsModel& InModel);
 
 	/**
+	 * Replaces `ExitModel` wholesale, redraws the exit control, and fires `OnExitOptionsRefreshed`.
+	 *
+	 * IT IS PURELY A SEED AND HAS NO COMMITTING TWIN, WHICH IS THE ASYMMETRY WITH THE GAIN SIDE.
+	 * `PushAudioOptions` is one of two ways `Model` changes; this is the ONLY way `ExitModel`
+	 * changes. There is no `SetReturnToTitleEnabled` and there must not be one -- a screen that
+	 * could enable its own exit would be deciding a permission that `IsRoutePermitted` is the
+	 * single authority for, one module over.
+	 *
+	 * NOT A `UFUNCTION`, on `PushAudioOptions`'s stated reasoning: every argument is reflectable,
+	 * so nothing forces this to be plain C++; it is plain C++ so that Blueprint has no route to
+	 * enable an exit that no decider permitted.
+	 *
+	 * IT COPIES RATHER THAN REBUILDING, AND THE DIFFERENCE FROM `PushAudioOptions` IS PRINCIPLED.
+	 * That function rebuilds because it can: `StratBuildAudioOptionsModel` is a total function
+	 * this module owns, so it can re-derive the strings from the floats and refuse to trust the
+	 * caller's pairing. There is no such function here and there could not be -- the bit comes
+	 * from a decider this module cannot call -- so this class has nothing to check the pair
+	 * against and says so rather than pretending to validate.
+	 */
+	void PushExitOptions(const FStratOptionsExitModel& InModel);
+
+	/**
 	 * Set the master gain. Clamps, replaces `Model`, then fires BOTH events.
 	 *
 	 * `BlueprintCallable` BECAUSE A SLIDER IS THE CALLER, which is the one reason any writer in
@@ -323,6 +558,15 @@ public:
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Options")
 	FStratAudioOptionsModel Model;
 
+	/** The last pushed exit availability. `PushExitOptions` is the only writer.
+	 *
+	 *  READ-ONLY TO BLUEPRINT FOR `Model`'S REASON, WITH MORE AT STAKE: a writable bit here would
+	 *  let a graph light up an exit that `IsRoutePermitted` had refused, which is exactly the
+	 *  "enabled button wired to an impermissible route" content defect `ExecuteRoute`'s own
+	 *  permission re-check exists to survive. */
+	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Options")
+	FStratOptionsExitModel ExitModel;
+
 	/**
 	 * Fired after `Model` is replaced, by a seed OR by a setter. Redraw here.
 	 *
@@ -332,6 +576,19 @@ public:
 	 */
 	UFUNCTION(BlueprintImplementableEvent, Category = "Stratocracy|Options")
 	void OnAudioOptionsRefreshed(const FStratAudioOptionsModel& InModel);
+
+	/**
+	 * Fired after `ExitModel` is replaced. Redraw the exit row here.
+	 *
+	 * A SECOND EVENT AND NOT AN EXTRA ARGUMENT ON `OnAudioOptionsRefreshed`, because the two fire
+	 * at different rates for different reasons: the gain model is replaced on every drag and the
+	 * exit model is replaced once, when the panel is shown. Folding them would make a graph
+	 * redraw a permission it has been handed unchanged sixty times a second, and -- worse -- would
+	 * change an existing event's signature, silently un-wiring whatever `WBP_Options` already
+	 * binds to it.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, Category = "Stratocracy|Options")
+	void OnExitOptionsRefreshed(const FStratOptionsExitModel& InModel);
 
 	/**
 	 * Fired after a SETTER, and never after `PushAudioOptions`. Bind this to persist and apply.
@@ -355,6 +612,27 @@ public:
 	 */
 	UPROPERTY(BlueprintAssignable, Category = "Stratocracy|Options")
 	FStratOptionsDismissed OnOptionsDismissed;
+
+	/**
+	 * Fired when `ReturnToTitleButton` was clicked. The owner leaves the match; this class does
+	 * not, and structurally cannot.
+	 *
+	 * IT DOES NOT CLOSE THE PANEL EITHER, AND THE OWNER MUST. Leaving the panel's flag open
+	 * across a level travel is the state `UStratShellSubsystem` records as surviving the map --
+	 * so an owner that travels without closing it puts an options screen over the title menu the
+	 * player just arrived at. That is the owner's job for `OnOptionsDismissed`'s stated reason
+	 * (whoever put the widget up is the only thing that knows what else is on screen) and the
+	 * obligation is repeated here because the failure mode is different and worse.
+	 *
+	 * BROADCAST UNCONDITIONALLY BY `HandleReturnToTitleClicked`, WITH NO RE-CHECK OF
+	 * `ExitModel.bReturnToTitleEnabled`. A disabled `UButton` does not broadcast `OnClicked` at
+	 * all, so the guard would be dead code on the shipped path; and if it were ever reachable --
+	 * a graph calling the handler directly -- refusing here would hide the content defect from
+	 * `ExecuteRoute`, which re-asks the permission itself and logs the refusal by name. A second
+	 * silent refusal one module upstream would make that log never happen.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "Stratocracy|Options")
+	FStratOptionsReturnToTitleRequested OnReturnToTitleRequested;
 
 protected:
 	// ---- THE BOUND SUB-WIDGETS. Names are the asset's contract; see the file header. ----
@@ -386,9 +664,15 @@ protected:
 	 * The percentage label beside `MasterSlider`. `BindWidgetOptional` -- see the file header
 	 * for why the readouts are optional and the controls are not.
 	 *
-	 * ITS TEXT IS ASSIGNED FROM `Model.MasterVolumeText` AND IS NEVER COMPOSED HERE. That is
-	 * `T-UI-03`'s clause on this surface: one field, one drawn number, no expression between
-	 * them.
+	 * ITS TEXT IS ASSIGNED FROM `Model.MasterVolumeText` AND IS NEVER COMPOSED HERE.
+	 *
+	 * RETRACTED> "That is `T-UI-03`'s clause on this surface: one field, one drawn number, no
+	 * RETRACTED>  expression between them."
+	 *
+	 * That is the RULE `T-UI-03` states -- one field, one drawn number, no expression between
+	 * them -- applied by analogy. The ID is refused for this surface, and this member is one of
+	 * the *"`UStratOptionsWidget`'s bound sub-widgets"* the 2026-09-05 ruling names among the
+	 * subjects it covers. See this file's `AMENDED 2026-09-07 (SECOND PASS)` block.
 	 */
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> MasterValueText;
@@ -399,7 +683,108 @@ protected:
 	UPROPERTY(meta = (BindWidgetOptional))
 	TObjectPtr<UTextBlock> MusicValueText;
 
-	/** Binds the four controls. Safe on a native subclass with no widget tree: every bound
+	/**
+	 * Leaves the match and goes back to the title. §2.11.5's exit, added 2026-09-07.
+	 *
+	 * `BindWidgetOptional` AND NOT `BindWidget`, WHICH IS AN EXCEPTION TO THE RULE THIS VERY FILE
+	 * STATES, AND IT IS CALLED OUT RATHER THAN LEFT TO BE INFERRED. The file header's line is
+	 * "a widget that PRODUCES a value is `BindWidget`; a widget that only DISPLAYS one is
+	 * `BindWidgetOptional`", and this member produces one -- it is the second of only two controls
+	 * on this screen that can originate a player's intent. It is optional anyway, for
+	 * `UStratCommandBarWidget::OptionsButton`'s and `UStratShellMenuWidget::OptionsButton`'s
+	 * measured reason: `BindWidget` is enforced by the WIDGET BLUEPRINT COMPILER, `WBP_Options`
+	 * already derives from this class and has no such button in its tree [FALSE SINCE THE
+	 * 2026-09-07 ASSET PASS; SEE THE STAMP BELOW. The REASONING it supports survives unchanged --
+	 * the two changes were still in two lanes and still could not be atomic, which is why this
+	 * shipped optional], so a hard bind would
+	 * turn the ENTIRE volume screen -- three sliders, back button and all -- into a compile error
+	 * the moment this header lands, and would stay one until the editor lane caught up. **The two
+	 * changes are in two different lanes and cannot be atomic.** That is a fact about this
+	 * project's authoring route and not a preference.
+	 *
+	 * A READER APPLYING THE RULE TO THIS MEMBER WOULD READ THE OPTIONALITY AS A CLAIM THAT THE
+	 * CONTROL IS DECORATIVE. It is not; it is the only way out of a match this screen has.
+	 * DISCHARGED BY a clause that reads the shipped `WBP_Options` CDO's `ReturnToTitleButton`
+	 * [THAT WORDING IS VACUOUS AND WAS RE-WORDED ON 2026-09-07; THE STAMP BELOW GIVES THE MEASURED
+	 * REASON AND THE CONDITION THAT REPLACED IT],
+	 * after which this may become `BindWidget` in a pass that touches nothing else. The clause is
+	 * the test lane's; note that both of the two prior members that reached this same condition
+	 * DECLINED the hard bind once the asset landed, on the stated ground that a `BindWidget` which
+	 * reds a whole screen should rest on a clause rather than on a record sentence.
+	 *
+	 * THAT CONDITION IS MET, AND ITS SECOND HALF WAS WORDED SO THAT NO CLAUSE COULD EVER SATISFY IT
+	 * LITERALLY. Both facts are recorded, because the wording is why the first one took two gate
+	 * rounds to be seen. The condition names two things: an asset carrying the button, and a clause
+	 * reading the shipped `WBP_Options` CDO.
+	 *
+	 * [FALSE SINCE THE 2026-09-07 TEST-LANE PASS; CORRECTED BY THE STAMP BELOW] "The CLAUSE half is
+	 * NOT: no clause in this tree reads that CDO, so the fact authorising a hard bind is still
+	 * testimony plus a byte scan." AND, IN THE SAME BREATH AND EQUALLY FALSE: "the discharge
+	 * condition above stands unchanged and unmet."
+	 *
+	 * THAT IS THE SECOND CORRECTION ON THIS MEMBER IN TWO GATE ROUNDS AND BOTH HAD ONE SHAPE, SO
+	 * THE SHAPE IS WRITTEN DOWN HERE RATHER THAN CORRECTED A THIRD TIME. Each was a present-tense
+	 * claim about what ANOTHER LANE had not yet built, made in a header this lane owns, in a tree
+	 * where that lane was working. The first said the ASSET had no such button; the editor lane
+	 * landed it in the same tree. The second -- written as the fix for the first -- said no CLAUSE
+	 * read it; the test lane landed that in the same tree. THE RULE FOR WHOEVER EDITS THIS MEMBER
+	 * NEXT: do not state the status of another lane's artifact in the present tense. Say what was
+	 * true at a named commit or in a named run, and stop there.
+	 *
+	 * WHAT IS TRUE NOW, STAMPED 2026-09-07 BY `strat-gameplay-engineer` OVER BASE `46321a6`, EACH
+	 * HALF ANCHORED TO AN IDENTITY RATHER THAN TO THE PRESENT TENSE.
+	 *   THE ASSET HALF. `Content/UI/WBP_Options.uasset` acquired the control in the editor lane's
+	 * 2026-09-07 pass. `Tools/architect/state/content.md` records that pass in the editor lane's
+	 * own words, and the record was CHECKED against the bytes rather than taken on testimony:
+	 * `grep -a -c ReturnToTitleButton Content/UI/WBP_Options.uasset` returns a hit on the
+	 * working-tree file, whose `sha256` is `7e32ef67836b2d9241ecd70e760905d32e16def2ec7df9e2accdc4a346098adb`
+	 * -- the same oid `content.md` cites, so the record and the bytes are known to be about one
+	 * file. Positive control `MasterSlider` hits; negative control `NoSuchWidgetXYZ` returns `0`,
+	 * so the scan can say no.
+	 *   WHAT THE SCAN DOES NOT ESTABLISH, said here so it is not read as more than it is: a name
+	 * present in a `.uasset`'s bytes is a NAME, not a `UButton` at a known place in a compiled
+	 * widget tree, and it cannot distinguish a live control from a stale entry.
+	 *   THE CLAUSE HALF, AND WHY ITS WORDING WAS VACUOUS ALL ALONG.
+	 * `Stratocracy.StratUI.GATE-TITLEMENU.ShippedOptionsWidgetCarriesReturnToTitleButton` reported
+	 * green in the run whose `reportCreatedOn` is `2026.09.07-21.25.09`. It does read the shipped
+	 * class's default object -- and its assertion ON THAT READ is `TestNull`, deliberately, as a
+	 * CONTROL: a `BindWidget*` member is assigned in `UUserWidget::Initialize` on a CONSTRUCTED
+	 * INSTANCE and is null on a class default object BY CONSTRUCTION. So "a clause that reads the
+	 * shipped CDO's `ReturnToTitleButton`" could never have authorised anything -- the read it asks
+	 * for returns null on a correct asset and on a broken one alike, which is the definition of an
+	 * instrument that cannot say no. THE CONDITION IS THEREFORE RE-WORDED TO WHAT IT MEANT: a
+	 * clause that finds a child of this member's name in the SHIPPED WIDGET TREE and asserts its
+	 * CLASS. That is exactly what the clause named above asserts, and it closes precisely the gap
+	 * the byte scan leaves open -- grep cannot tell a name from a `UButton`, and a re-typed control
+	 * binds to nothing while the screen still compiles.
+	 *   SO THE HARD BIND IS AUTHORISED AND IS STILL NOT TAKEN IN THIS PASS. Promoting this to
+	 * `BindWidget` is an EXECUTABLE change -- it moves enforcement into the Widget Blueprint
+	 * compiler, where a regression in the asset reds the entire volume screen rather than one
+	 * clause. This pass is comment-only and was not built from this seat, so it is not the pass to
+	 * make that move; it is a separate decision on its own evidence, and both prior members that
+	 * reached this condition -- `UStratCommandBarWidget::OptionsButton` and
+	 * `UStratShellMenuWidget::OptionsButton` -- are `BindWidgetOptional` in this tree still.
+	 *
+	 * `protected` FOR `MasterSlider`'S REASON: so a test double can plant one. `BindWidget*` is
+	 * resolved by reflection at Blueprint compile time and is indifferent to access.
+	 */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UButton> ReturnToTitleButton;
+
+	/**
+	 * Why the exit is greyed, when it is. `BindWidgetOptional` on the ORDINARY reading this time:
+	 * it only displays a value.
+	 *
+	 * ITS TEXT IS `ExitModel.ReturnToTitleReason` AND IS NEVER COMPOSED HERE, and it is NOT the
+	 * only sanctioned route to that sentence -- `OnExitOptionsRefreshed` hands the whole model to
+	 * the graph, so an asset may draw the reason under any name, inside the button, or not at all.
+	 * A screen without it is still correct: the control is still DISABLED, which is the property
+	 * the requirement actually names. This label only explains it.
+	 */
+	UPROPERTY(meta = (BindWidgetOptional))
+	TObjectPtr<UTextBlock> ReturnToTitleReasonText;
+
+	/** Binds the five controls. Safe on a native subclass with no widget tree: every bound
 	 *  pointer is null there and every bind is guarded. */
 	virtual void NativeConstruct() override;
 
@@ -476,4 +861,22 @@ private:
 	/** Broadcasts `OnOptionsDismissed`. Closes nothing itself -- see that delegate. */
 	UFUNCTION()
 	void HandleBackClicked();
+
+	/** Broadcasts `OnReturnToTitleRequested`. Leaves nothing itself -- see that delegate. */
+	UFUNCTION()
+	void HandleReturnToTitleClicked();
+
+	/**
+	 * Pushes `ExitModel` at the exit control. The ONLY writer of that button's enabled state.
+	 *
+	 * A SECOND SYNC AND NOT AN EXTENSION OF `SyncBoundWidgetsToModel`, AND THE REASON IS THAT
+	 * FUNCTION'S RE-ENTRANCY GUARD RATHER THAN TIDINESS. `bSyncingBoundWidgets` exists because
+	 * `USlider::SetValue` re-broadcasts `OnValueChanged` -- measured, see that declaration -- so
+	 * the gain sync is a function that can be RE-ENTERED and returns early when it is. Folding the
+	 * exit row into it would make the exit control's enabled state a casualty of a guard that has
+	 * nothing to do with it: a sync that returned early to break a slider loop would silently skip
+	 * the permission redraw. `UButton::SetIsEnabled` broadcasts nothing, so this function needs no
+	 * guard and must not inherit one.
+	 */
+	void SyncExitWidgetsToModel();
 };

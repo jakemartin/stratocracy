@@ -135,6 +135,32 @@
 // `AddDynamic` requires an exact signature match, so it does not compile. Three float
 // parameters: three chances to pass the channels in the wrong order, which is the defect
 // `FStratAudioOptionsModel` was made a single value to prevent.
+//
+// ============================================================================================
+// AMENDED 2026-09-07 -- THIS CLASS NOW ROUTES A SECOND EXIT, AND IT IS THE ONE THAT CAN BE
+// ILLEGAL.
+//
+// The user asked for a way out of a match from this screen and RULED that it returns to the
+// TITLE rather than quitting to desktop; the title menu's existing Quit row closes the process
+// from there. `UStratOptionsWidget::OnReturnToTitleRequested` is the widget half --
+// `StratOptionsWidget.h` records why it could not be a call -- and
+// `HandleReturnToTitleRequested` below is this half.
+//
+// THE THING THAT MAKES IT MORE THAN A THIRD `AddDynamic` IS THAT THIS PRESENTER LIVES IN BOTH
+// WORLDS. That is the header's own opening argument for being a `UWorldSubsystem` at all, and
+// it has a consequence nobody needed until now: THE SAME SCREEN IS REACHABLE FROM THE TITLE
+// MENU, where `IsRoutePermitted` refuses `ReturnToTitle` with "No match in progress." The exit
+// control therefore cannot simply exist -- its availability is a fact this class must ASK FOR
+// and PUSH, which is `SeedExitAvailability`, and its whole argument is at that declaration.
+//
+// TWO SHAPES WERE REJECTED, both of which would have worked and neither of which is checkable.
+// - CONFIGURING THE CONTROL PER MAP, from a GameMode property beside `OptionsWidgetClass`. Then
+//   "may I leave" would be answered by an asset default in three places instead of by
+//   `IsRoutePermitted` in one, and the three could disagree with the title menu's own greyed
+//   row about the identical question.
+// - AUTHORING A SECOND OPTIONS WBP for the match map. Same objection with an extra asset, and
+//   `GATE-TITLEMENU.AllThreeShippedGameModesNameOneOptionsWidgetClass` exists precisely to pin
+//   that all three shipped GameModes name ONE options widget class.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -226,6 +252,24 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Options")
 	int32 GetVolumeCommitsForwardedCount() const { return VolumeCommitsForwardedCount; }
 
+	/**
+	 * How many times this presenter has successfully taken `EStratShellRoute::ReturnToTitle` on
+	 * the panel's behalf.
+	 *
+	 * IT COUNTS THE SUCCESSFUL `ExecuteRoute` AND NOT THE WIDGET'S BROADCAST, on
+	 * `GetVolumeCommitsForwardedCount`'s exact reasoning: the widget's own broadcast is already
+	 * observable from the widget, and the thing no other instrument can see is whether this class
+	 * DID anything with it. A binding that was never made reads zero here.
+	 *
+	 * IT IS THE ONLY INSTRUMENT A HEADLESS CLAUSE HAS ON THE REFUSED PATH, WHICH IS THE PATH THAT
+	 * MATTERS MOST HERE. `ExecuteRoute(ReturnToTitle)` on a permitted route calls
+	 * `OpenLevelBySoftObjectPtr`, which no `-nullrhi` clause survives; on a REFUSED route it
+	 * returns false before travelling, and a clause can then assert this stays 0 while
+	 * `LastFailureReason` names the refusal. Never reset.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Options")
+	int32 GetReturnToTitleRoutesTakenCount() const { return ReturnToTitleRoutesTakenCount; }
+
 	/** Why there is no panel, or why the last attempt to show one failed. Empty on success. */
 	UPROPERTY(BlueprintReadOnly, Transient, Category = "Stratocracy|Options")
 	FString LastFailureReason;
@@ -265,6 +309,10 @@ private:
 	UPROPERTY(Transient)
 	int32 VolumeCommitsForwardedCount = 0;
 
+	/** See `GetReturnToTitleRoutesTakenCount`. */
+	UPROPERTY(Transient)
+	int32 ReturnToTitleRoutesTakenCount = 0;
+
 	/** The shell, or null on a world with no game instance. */
 	UStratShellSubsystem* FindShell() const;
 
@@ -285,6 +333,35 @@ private:
 	 */
 	void SeedPanel();
 
+	/**
+	 * Asks `UStratShellSubsystem::IsRoutePermitted` whether the player may leave right now, and
+	 * pushes the answer at the panel's exit control.
+	 *
+	 * THIS IS THE FUNCTION THAT SATISFIES THE REQUIREMENT "A PLAYER MUST NOT BE ABLE TO CLICK AN
+	 * ENABLED CONTROL THAT SILENTLY REFUSES", AND THE REQUIREMENT IS REAL RATHER THAN THEORETICAL.
+	 * This presenter is a `UWorldSubsystem` and exists on the TITLE map as well as in a match --
+	 * `UStratShellMenuWidget::HandleOptionsClicked` opens this same screen from the title menu --
+	 * and `IsRoutePermitted` refuses `ReturnToTitle` there with "No match in progress." Without
+	 * this call the exit would be a live button on the title screen that logs a warning and does
+	 * nothing.
+	 *
+	 * THROUGH `IsRoutePermitted` AND NOT THROUGH A CONDITION WRITTEN HERE, which is the single
+	 * load-bearing line of it. That function is the one authority for every route's preconditions;
+	 * `BuildMenuModel` greys the title menu's five rows by calling it and `ExecuteRoute` re-asks it
+	 * before travelling. A `bMatchIsLive` test written in this file would be a FOURTH statement of
+	 * the same rule, and the one most likely to drift, because it is the one furthest from the
+	 * enum. The greyed control and the refused route say the same sentence because they ARE the
+	 * same sentence.
+	 *
+	 * IT PUSHES AT SHOW TIME AND NOT EVERY FRAME, AND THE STALENESS THAT BUYS IS NAMED. The facts
+	 * it reads could in principle change while the panel is up -- `bMatchIsLive` comes from
+	 * `UStratMatchSubsystem` -- but the panel is opened and closed by the same flag that gates the
+	 * whole screen, and nothing in this project ends a match underneath an open options panel. A
+	 * ticked refresh would be a per-frame `GatherFacts` for a bit that cannot move, which is the
+	 * cost `GetMenuModel`'s own block refuses on the menu side.
+	 */
+	void SeedExitAvailability();
+
 	/** Bound to `UStratShellSubsystem::OnOptionsPanelStateChanged`. Reconciles; ignores the
 	 *  argument, deliberately -- see the file header on reconciling rather than reacting. */
 	UFUNCTION()
@@ -298,4 +375,23 @@ private:
 	 *  back through the delegate and takes the panel down -- one route, not two. */
 	UFUNCTION()
 	void HandleOptionsDismissed();
+
+	/**
+	 * Bound to `UStratOptionsWidget::OnReturnToTitleRequested`. Takes
+	 * `EStratShellRoute::ReturnToTitle` through the shell, then closes the panel's flag.
+	 *
+	 * THIS IS THE CALL THE WIDGET COULD NOT MAKE. `StratOptionsWidget.h` records the refusal:
+	 * `EStratShellRoute` and `ExecuteRoute` are `StratPlay` types, the arrow runs
+	 * `StratPlay -> StratUI` and never back, so the widget broadcasts and this class routes --
+	 * the same join `OnAudioOptionsCommitted` and `OnOptionsDismissed` already use.
+	 *
+	 * IT EMITS NO SOUND CUE, UNLIKE `HandleOptionsDismissed` DIRECTLY ABOVE IT, AND THE
+	 * DIFFERENCE IS WORTH STATING BECAUSE THE TWO HANDLERS OTHERWISE LOOK LIKE A PAIR.
+	 * `CloseOptionsPanel` is silent, so that handler has to supply the click the widget could
+	 * not. `ExecuteRoute` emits `EStratSoundCue::ButtonClick` AT ENTRY, before its permission
+	 * check and regardless of its return -- so a cue here would be the second click for one
+	 * press.
+	 */
+	UFUNCTION()
+	void HandleReturnToTitleRequested();
 };

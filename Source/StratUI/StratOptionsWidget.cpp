@@ -84,6 +84,23 @@ void UStratOptionsWidget::PushAudioOptions(const FStratAudioOptionsModel& InMode
 	OnAudioOptionsRefreshed(Model);
 }
 
+void UStratOptionsWidget::PushExitOptions(const FStratOptionsExitModel& InModel)
+{
+	// A STRAIGHT COPY, AND THE ASYMMETRY WITH `PushAudioOptions` ABOVE IS DELIBERATE. That
+	// function rebuilds from the caller's floats because `StratBuildAudioOptionsModel` exists in
+	// this module and can re-derive the pairing; there is no equivalent here, because the bit
+	// comes from `IsRoutePermitted` one module over. This class has nothing to check the pair
+	// against and does not pretend to. See the declaration.
+	ExitModel = InModel;
+
+	SyncExitWidgetsToModel();
+
+	// NO COMMIT TWIN TO SUPPRESS. `ExitModel` has exactly one writer and pushing it is never a
+	// player's choice, so unlike the gain path there is no second delegate whose absence here
+	// needs defending.
+	OnExitOptionsRefreshed(ExitModel);
+}
+
 void UStratOptionsWidget::SetMasterVolume(const float InVolume)
 {
 	// THE OTHER TWO ARE CARRIED THROUGH UNCHANGED, FROM THE MODEL AND NOT FROM ANY CACHE. The
@@ -166,6 +183,19 @@ void UStratOptionsWidget::NativeConstruct()
 		BackButton->OnClicked.AddDynamic(this, &UStratOptionsWidget::HandleBackClicked);
 	}
 
+	if (ReturnToTitleButton != nullptr)
+	{
+		ReturnToTitleButton->OnClicked.AddDynamic(
+			this, &UStratOptionsWidget::HandleReturnToTitleClicked);
+	}
+
+	// THE EXIT ROW IS DRAWN BEFORE ANY OWNER HAS PUSHED, WHICH MEANS DISABLED. That is the whole
+	// reason `bReturnToTitleEnabled` defaults false: a `UButton` authored in a WBP is enabled,
+	// so without this line a screen constructed and never pushed would offer a live exit that
+	// broadcasts into whatever happens to be bound. Drawing the default here makes the shipped
+	// state of an unpushed screen "greyed" rather than "armed and unexplained".
+	SyncExitWidgetsToModel();
+
 	// THE SCREEN IS DRAWN FROM WHATEVER `Model` ALREADY HOLDS, AND THAT IS UNITY UNLESS AN OWNER
 	// SEEDED FIRST. `CreateWidget` returns before `NativeConstruct` runs only if the widget is
 	// not yet added to the viewport, so an owner that seeds after `AddToViewport` still reaches
@@ -202,6 +232,12 @@ void UStratOptionsWidget::NativeDestruct()
 		BackButton->OnClicked.RemoveDynamic(this, &UStratOptionsWidget::HandleBackClicked);
 	}
 
+	if (ReturnToTitleButton != nullptr)
+	{
+		ReturnToTitleButton->OnClicked.RemoveDynamic(
+			this, &UStratOptionsWidget::HandleReturnToTitleClicked);
+	}
+
 	Super::NativeDestruct();
 }
 
@@ -235,9 +271,14 @@ void UStratOptionsWidget::SyncBoundWidgetsToModel()
 		MusicSlider->SetValue(Model.MusicVolume);
 	}
 
-	// ONE FIELD, ONE DRAWN NUMBER. `T-UI-03`'s clause: these are assignments of an `FText` the
-	// model already holds, never `FText::AsNumber` and never a format string. The only percent
-	// arithmetic in this module is in `StratBuildAudioOptionsModel` above.
+	// ONE FIELD, ONE DRAWN NUMBER.
+	// RETRACTED> "`T-UI-03`'s clause: these are assignments of an `FText` the model already
+	// RETRACTED>  holds"
+	// That is the RULE `T-UI-03` states, applied by analogy; the ID is refused for this surface
+	// and is not claimed here -- see `StratOptionsWidget.h`'s `AMENDED 2026-09-07 (SECOND PASS)`
+	// block. These are assignments of an `FText` the model already holds, never
+	// `FText::AsNumber` and never a format string. The only percent arithmetic in this module is
+	// in `StratBuildAudioOptionsModel` above.
 	if (MasterValueText != nullptr)
 	{
 		MasterValueText->SetText(Model.MasterVolumeText);
@@ -251,6 +292,35 @@ void UStratOptionsWidget::SyncBoundWidgetsToModel()
 	if (MusicValueText != nullptr)
 	{
 		MusicValueText->SetText(Model.MusicVolumeText);
+	}
+}
+
+void UStratOptionsWidget::SyncExitWidgetsToModel()
+{
+	// NO RE-ENTRANCY GUARD, AND ITS ABSENCE IS ARGUED IN THE DECLARATION RATHER THAN ASSUMED.
+	// `SyncBoundWidgetsToModel` needs one because `USlider::SetValue` re-broadcasts
+	// `OnValueChanged`; neither call below broadcasts anything, so a guard here would only be
+	// able to make the permission redraw SKIPPABLE.
+	if (ReturnToTitleButton != nullptr)
+	{
+		// THE ENABLED BIT IS THE WHOLE REQUIREMENT. A disabled `UButton` does not broadcast
+		// `OnClicked`, so this one line is what makes "the player cannot click a control that
+		// would silently refuse" a property of the widget rather than a check somebody has to
+		// remember to write. It is set from the pushed model and from nothing else -- this class
+		// cannot ask `IsRoutePermitted`, and must not guess at it.
+		ReturnToTitleButton->SetIsEnabled(ExitModel.bReturnToTitleEnabled);
+	}
+
+	// ONE FIELD, ONE DRAWN STRING.
+	// RETRACTED> "`T-UI-03`'s clause: an assignment of an `FText` the model already holds"
+	// That is the RULE `T-UI-03` states, applied by analogy, and the ID is refused for THIS
+	// surface in particular: the sentence below is written by `IsRoutePermitted` one module over
+	// and no `strat::UiSnapshot` stands behind it. See `StratOptionsWidget.h`'s
+	// `AMENDED 2026-09-07 (SECOND PASS)` block. It is an assignment of an `FText` the model
+	// already holds, never a format string and never a Select node between "" and a reason.
+	if (ReturnToTitleReasonText != nullptr)
+	{
+		ReturnToTitleReasonText->SetText(ExitModel.ReturnToTitleReason);
 	}
 }
 
@@ -304,4 +374,21 @@ void UStratOptionsWidget::HandleBackClicked()
 	// binding at `StratOptionsPresenter.cpp`'s `AddDynamic` on `OnOptionsDismissed` and the
 	// handler it names -- not by running the suite, which this pass did not.
 	OnOptionsDismissed.Broadcast();
+}
+
+void UStratOptionsWidget::HandleReturnToTitleClicked()
+{
+	// NO CLICK CUE HERE, AND FOR A SECOND REASON ON TOP OF `HandleBackClicked`'S. That handler
+	// records the structural one -- `StratSoundClick` reaches `UStratSoundDirector`, a
+	// `StratPlay` world subsystem this module cannot name. The extra one is that the owner's
+	// route ALREADY SOUNDS: `UStratShellSubsystem::ExecuteRoute` emits
+	// `EStratSoundCue::ButtonClick` at entry, before its permission check and regardless of its
+	// return, and that function's own block argues the placement. A cue forwarded from the
+	// presenter as well would be two clicks for one press.
+	//
+	// NO RE-CHECK OF `ExitModel.bReturnToTitleEnabled` -- see the delegate's declaration. The
+	// short version: a disabled button does not broadcast `OnClicked`, so the guard is dead on
+	// the shipped path, and on any path where it is not dead it would swallow a content defect
+	// that `ExecuteRoute` is built to log by name.
+	OnReturnToTitleRequested.Broadcast();
 }

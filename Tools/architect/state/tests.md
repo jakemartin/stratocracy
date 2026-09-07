@@ -14,6 +14,412 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-07 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- ONE new file under
+  `Source/StratUI/Tests/` and this record file, on `master` in the main tree
+  `E:/MultiAgent/Stratocracy`, base commit `46321a6`, and this pass is UNCOMMITTED).** No
+  exception clause is cited and none applies. No production file, no `Content/` asset and no
+  `Data/` file was edited or mutated. **Nothing was built and no suite was run in this pass, by
+  instruction** -- the `coordinator` runs one rebuild and one suite over the whole tree, then a
+  reviewer gate. **THE CLAUSE PINS AN ASSET FACT THAT NO MODULE-SIDE VALUE BACKS, AND THIS ENTRY
+  IS MOSTLY ABOUT WHAT THAT COSTS.**
+  - **THE CLAUSE.** `Stratocracy.StratUI.GATE-AUDIO-SETTINGS.ShippedOptionsWidgetCarriesItsUnboundCaptions`,
+    in `Source/StratUI/Tests/StratShippedOptionsCaptionPresence.cpp`. It loads
+    `/Game/UI/WBP_Options.WBP_Options_C`, takes the widget-tree archetype through
+    `FindWidgetTreeOwningClass()` exactly as `StratShippedOptionsExitControlParity.cpp`
+    established, and asserts that four children are present, are `UTextBlock`s, and carry
+    non-empty authored text: `BackLabel`, `LabelMaster`, `LabelSfx`, `LabelMusic`.
+  - **WHY IT WAS ASKED FOR: a caption was deleted from the asset and SHIPPED, and the user found
+    it by playing the game.** The mechanism is the editor lane's and is recorded in `content.md`;
+    what belongs HERE is the part about instruments. **`git show 46321a6:` carries no occurrence
+    of any of those four names anywhere under `Source/`** -- no `BindWidget`, no clause, no
+    fixture -- so no count could move, and none did.
+    `ShippedOptionsWidgetCarriesReturnToTitleButton` passed TRUTHFULLY, because its positive
+    control is `BackButton` and the BUTTON survived; only its child died. **STANDING LESSON, now
+    built into the new clause's choice of control: A CONTROL ON A PARENT PROVES NOTHING ABOUT THAT
+    PARENT'S CHILDREN.** The new clause's positive control is `MasterSlider` and deliberately not
+    `BackButton`, and its declaration says why at the site.
+  - **WHERE THE EXPECTATIONS COME FROM, STATED PLAINLY BECAUSE IT IS A WEAKENING OF THIS LANE'S
+    STANDING RULE.** The four names are **LITERALS**. Nothing in `Source/` declares them, so there
+    is no module-side value to read and no second authority to compare against. They are the
+    clause's SUBJECT, never the expectation side of a comparison, and a wrong one is RED -- the
+    lookup returns null naming the key -- rather than silently green. **THE CONSEQUENCE, WHICH THE
+    FILE STATES AND DOES NOT DRESS UP: a RENAME in the asset is indistinguishable from a DELETION
+    here, and the failure message cannot tell them apart.** The type expectation
+    (`UTextBlock::StaticClass()`) is a literal for the same reason. `MasterValueText`'s declared
+    `PropertyClass` would have supplied a reflection-read `UTextBlock` and would have LOOKED
+    module-side; it was refused, because that member is a readout and not a caption, so borrowing
+    it would let a change to an unrelated member silently move what this clause asserts.
+    **Reading a value off the wrong subject satisfies the rule's letter and inverts its purpose.**
+    The one genuinely module-side value in the file is the positive control's name and class, both
+    taken from `UStratOptionsWidget::MasterSlider`'s reflection data.
+  - **THE CAPTION WORDS ARE NOT ASSERTED, AND THE DECIDING REASON IS AN INSTRUMENT PROPERTY RATHER
+    THAN A PREFERENCE.** `TestEqual` on `FString` is CASE-INSENSITIVE in this engine, so
+    `TestEqual(..., TEXT("BACK"))` is green on a caption reading `back` -- it would APPEAR to pin
+    the string while being blind to the likeliest way caption text actually regresses, and an
+    assertion that cannot see the defect it is named for is worse than none, because it retires
+    the question. Two further reasons: the displayed string is culture-dependent by design, and
+    the two authoring routes on this screen differ on exactly that axis (`content.md` records the
+    four captions as `INVTEXT(...)`, culture-invariant, against `ReturnToTitleLabel`'s
+    `NSLOCTEXT("", "<hash>", ...)`, which is not); and four expected strings would be a second set
+    of literals with no more authority than the first. **What is asserted instead is
+    NON-EMPTINESS**, whose single authority is the defect itself -- a caption authored empty is
+    indistinguishable on screen from a caption that was deleted. **SO THIS CLAUSE DOES NOT PIN THE
+    WORDS. A caption reading `MSATER` is green.**
+  - **THREE CONTROLS, ALL IN THE SAME RUN AND AGAINST THE SAME ARCHETYPE**, because an absence
+    measured without them is not distinguishable from an instrument that cannot speak. Positive on
+    the lookup: `MasterSlider`, a hard `BindWidget` the asset cannot compile without. Negative on
+    the lookup: `ZzzNoSuchCaptionOnTheOptionsScreen`, asserted ABSENT through the same
+    `FindWidget` call the subject uses. **Negative on the TEXT READER, which is a SEPARATE
+    INSTRUMENT and needed its own:** `ReturnToTitleReasonText` is authored empty on purpose, so it
+    is the one widget that proves `GetText()` can return empty at all -- without it, "every
+    caption has text" could be an artefact of a reader that never returns nothing. That control is
+    non-fatal, and if it cannot be found as a `UTextBlock` the run emits an `AddWarning` naming
+    what is thereby unproved; **an unavailable control is a fact about how much the run is worth
+    and must not be silent.** The file records what to do if it reds: move the control or retire
+    it with a reason, **never weaken the subject assertions to accommodate it**.
+  - **THE READER IS CORRECT FOR AN ARCHETYPE, MEASURED FROM ENGINE SOURCE RATHER THAN
+    REMEMBERED.** `UTextBlock::GetText()` returns `MyTextBlock->GetText()` only
+    `if (MyTextBlock.IsValid())` and otherwise returns the authored `Text` property; an archetype
+    has no Slate widget, so the call reads the authored value. Recorded because the same shape --
+    a `U*` wrapper over an `S*` with a same-named method -- is what produced this file's
+    `bSyncingBoundWidgets` correction.
+  - **THE MUTANT IS UNRUN AND THE DEBT IS OWED HERE, NOT IMPLIED AWAY.** The honest mutant is
+    deleting a caption from `Content/UI/WBP_Options.uasset` -- the editor lane's asset, which this
+    lane does not touch and did not mutate -- and this lane also ran no suite in this pass. **No
+    mutant has been run against this clause.** The file's mutant list is written in the indicative
+    because that is how a prediction reads, and it says so in terms. What CAN be said without
+    leaving the lane, and it is strictly weaker: the LOOKUP instrument's discrimination is
+    exercised on every run by the negative control above, so "the instrument answers every name"
+    is ruled out by measurement each time. **That proves `FindWidget` can say no. It does not
+    prove this clause would notice THIS asset losing THAT caption**, and the two must not be
+    conflated.
+  - **WHAT IT DOES NOT PIN, so a later reader does not over-credit it:** the caption words;
+    parentage (`BackLabel` being a child of `BackButton` is not asserted -- a caption's parent can
+    legitimately move in a re-layout, and a caption under the wrong parent is visible to a human,
+    whereas ABSENCE was not); visibility, position, size or legibility, which no clause in this
+    suite can observe; and **the widget TOTAL, deliberately** -- a total is exactly what cancelled
+    an addition against a deletion in the pass that caused this, and pinning one would carry that
+    defect forward and red on every legitimate addition. The clause names what must be PRESENT and
+    one name that must be ABSENT, which is the both-directions shape `content.md`'s own standing
+    lesson asks for.
+  - **ONE CLAUSE AND NOT FOUR, argued in the file rather than assumed.** Four macros would name
+    the missing caption in the test NAME rather than only in the message, which is a real benefit;
+    it was outweighed by the controls having to be duplicated four times (four places for one copy
+    to rot), by the per-caption assertions being NON-FATAL so a single run already reports every
+    missing caption by name, and by a test count not being a coverage measure.
+    **AND THAT PARAGRAPH THEN BROKE THE CENSUS IT WAS ARGUING ABOUT, which is why its wording is
+    now deliberate.** As first written it quoted the test-declaration macro's own token in prose
+    to say why four of them were refused; `strat_banner_sweep.py`'s macro census collects that
+    token BY SHAPE, comments included, so the file censused as two clauses against one in the
+    automation report and the sweep failed TREE DISAGREES WITH ITSELF -- with the tree correct,
+    the clause green, and only the instrument's arithmetic wrong. Reworded on 2026-09-07 over
+    base `46321a6` to make the same argument without the bare token, argument unchanged, no
+    executable line touched, and a short note left at the site so a later author does not
+    "improve" the token back in. **The census was NOT taught to skip comments** -- that is the
+    steward's instrument and a change to it needs its own gate. **So the constraint stands for
+    every file in this lane: do not spell the declaration macro's token in a comment.** Same
+    family as the banner sweep's stamp marker, where writing about the exemption caused it.
+  - **THE ACCEPTANCE ID IS `GATE-AUDIO-SETTINGS` AND NOTHING IS MINTED.** Three captions label the
+    three volume sliders; the fourth labels the back button, whose behaviour clause
+    `TheOptionsBackButtonDismissesWithoutCommitting` already sits under that ID.
+    `GATE-TITLEMENU` was refused because a caption reaches no `EStratShellRoute` arm, and
+    `T-UI-03` because no `strat::UiSnapshot` field stands behind this surface -- doubly so, since
+    a static caption is not a drawn value at all.
+  - **THE RUN THIS ENTRY WAS WRITTEN AGAINST is the exported report
+    `reportCreatedOn 2026.09.07-23.24.24`, in which this clause's name does not appear, because
+    the file was written after it. Its figures live in `global.md`.**
+
+- **2026-09-07 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- ONE new `Tests/` file,
+  two existing `Tests/` files, and this record file, on `master` in the main tree
+  `E:/MultiAgent/Stratocracy`, base commit `46321a6`, with the editor lane's and the engineer's
+  UNCOMMITTED work on top of it, and this pass is UNCOMMITTED).** No exception clause is cited and
+  none applies. No production file is changed and none was mutated. **Nothing was built and no
+  suite was run in this pass, by instruction** -- the `coordinator` runs one rebuild and one suite
+  over the whole tree once the lanes report, because two lanes each running a suite over a tree
+  the other is editing attributes a count to the wrong bytes. The pass is a response to
+  `strat-integration-reviewer`'s `VERDICT: BLOCK` on the previous entry's tree; **three of its
+  five findings were this lane's and ALL THREE WERE IN PROSE.** No executable line was faulted,
+  and the gate confirmed the discriminating clause does what the previous entry claimed.
+  - **THE THREE FINDINGS WERE VERIFIED AGAINST THE TREE BEFORE ANYTHING WAS EDITED, because a
+    gate report is a claim and not a fact.** All three held. Each false sentence now carries an
+    inline `[FALSE SINCE ...]` marker at the sentence itself plus a stamp carrying the
+    instrument, following the shape already landed at `StratCommandBarWidget.h`'s
+    `BindWidgetOptional` block -- **not a stamp underneath a paragraph**, because a reader
+    arriving by a citation lands on the sentence and a stamp below it corrects nothing. Corrected
+    in place: two sentences in `Source/StratUI/Tests/StratOptionsExitClauses.cpp`, one in
+    `Source/StratPlay/Tests/StratOptionsExitRouteClauses.cpp`, three in this file. **Every
+    corrected sentence STAYS, quoted, with what remains true about it named** -- in each case the
+    bullet's actual subject survived and only a claim about the world outside the file went
+    stale.
+  - **THE INSTRUMENT FOR THE ASSET FACT, AND A BLINDNESS IN THE OBVIOUS ONE.**
+    `grep -a -c ReturnToTitleButton Content/UI/WBP_Options.uasset` returns `1`; positive control
+    `MasterSlider` returns `1`; negative control `ZZZNope` returns `0`; the working file's
+    `sha256` is `7e32ef67836b2d9241ecd70e760905d32e16def2ec7df9e2accdc4a346098adb` at 42696
+    bytes, against the committed LFS pointer's oid
+    `367f21e199a50bd66e671607e95c1c58baddad986afdcc94b6cd5075bc953f44` at 39771 bytes -- so the
+    control arrived in a working-tree change and not in `46321a6`. **`strings -a` IS BLIND TO
+    THESE NAMES ON THIS FILE.** It returns `0` for `ReturnToTitleButton` *and* for the positive
+    control `MasterSlider`, under `-e s`, `-e S`, `-e l` and `-e b` alike. Written down because
+    it is the natural first instrument to reach for and it would have reported a present control
+    as absent; the control is what caught it.
+  - **ONE NEW CLAUSE, COUNTED BY MACRO.** `grep -c IMPLEMENT_SIMPLE_AUTOMATION_TEST` returns `1`
+    on the new `Source/StratUI/Tests/StratShippedOptionsExitControlParity.cpp`. Counted by macro
+    because a single-line grep on a clause NAME has returned zero in this tree before.
+    - `Stratocracy.StratUI.GATE-TITLEMENU.ShippedOptionsWidgetCarriesReturnToTitleButton` -- the
+      shipped `WBP_Options` carries a child named for `UStratOptionsWidget::ReturnToTitleButton`
+      and of the class that member declares. **This is the clause `StratOptionsWidget.h` names as
+      its own discharge condition** for promoting the member from `BindWidgetOptional`, and it
+      closes the half that header records as unmet.
+      **WHERE THE EXPECTATION COMES FROM, and this is the whole reason the clause is worth
+      having:** the NAME searched for in the widget tree is the C++ member's own `FName`, taken
+      from reflection (`FProperty::GetFName()`), and the CLASS required is the member's own
+      `FObjectPropertyBase::PropertyClass` -- neither is a literal retyped in the test. The only
+      literals are the asset path and two property lookup keys, which are SUBJECTS; a wrong key
+      reds with a message saying so rather than passing quietly.
+      **CONTROLS, because a widget-tree lookup that answers nothing and one that answers
+      everything both fake this clause.** Positive: `BackButton`, a `BindWidget` (non-optional)
+      member of the same declared type that `WBP_Options` cannot compile without -- if THAT is
+      not found, the instrument is broken and a "no exit control" report would be false.
+      Negative: a name no widget has, which must return null.
+      **IT DOES NOT READ THE CDO POINTER, THOUGH THE DISCHARGE CONDITION SAYS "CDO".** `BindWidget`
+      members are assigned in `UUserWidget::Initialize` on a constructed instance, so
+      `CDO->ReturnToTitleButton` is null on a perfectly correct asset; a clause asserting it
+      non-null would be red forever and one asserting it null would pass with the control
+      deleted. The object that answers is `UWidgetBlueprintGeneratedClass`'s widget-tree
+      ARCHETYPE, reached through `FindWidgetTreeOwningClass()` so that an inherited layout is not
+      misreported as a missing control. **The CDO pointer being null is MEASURED in the clause
+      rather than asserted from memory**, and reds if it ever stops being null -- at which point
+      the instrument choice wants re-reading.
+      **WHAT IT DOES NOT PIN:** `ReturnToTitleReasonText` (deliberately out of scope -- the clause
+      NAME says `ReturnToTitleButton`, and an over-broad clause under a narrow name misreports
+      what broke); `ReturnToTitleLabel` (in the asset, but no C++ member, so there is no
+      module-side value to compare it against); any pixel, geometry or layout; and that the bind
+      happens at runtime, since `Initialize` needs a world and a player.
+  - **THE PROMOTION TO `BindWidget` WAS NOT TAKEN AND IS NOT THIS LANE'S TO TAKE.**
+    `UStratOptionsWidget::ReturnToTitleButton` and `UStratCommandBarWidget::OptionsButton` are
+    both still `BindWidgetOptional`. Writing the clause spends nothing; the engineer's lane
+    declined the hard bind on its own pass and that decision stands until it revisits it.
+  - **UNVERIFIED, AND THIS IS THE HONEST STATE OF THE NEW CLAUSE.** [**BOTH CLAIMS IN THE NEXT
+    SENTENCE ARE FALSE SINCE LATER THE SAME DAY, AND SO IS RISK (1) BELOW; SEE THE STAMP AT THE
+    FOOT OF THIS BULLET. RISK (2), THE MUTANT DEBT, IS STILL TRUE**] It has NOT been compiled and
+    has NOT been run -- the pass was instructed not to build. Two risks are named rather than
+    left to be discovered. (1) **A COMPILE RISK.** `GetWidgetTreeArchetype()` and
+    `FindWidgetTreeOwningClass()` were checked against the installed engine header
+    `Engine/Source/Runtime/UMG/Public/Blueprint/WidgetBlueprintGeneratedClass.h`, where both are
+    `public` and `WidgetTree` itself is `private`; `FObjectPropertyBase::PropertyClass` and
+    `GetObjectPropertyValue_InContainer(const void*)` were checked in `UnrealType.h` the same
+    way. Header-checked is not compiler-checked. (2) **NO MUTANT MEASURED.** Its mutants are
+    written out in the file and every one is unrun; treat its discrimination as UNPROVEN exactly
+    as the seven clauses below are.
+    - **[STAMPED 2026-09-07, later the same day, by `strat-test-author` over base `46321a6`.
+      THE COMPILE RISK IS DISCHARGED AND THE MUTANT DEBT IS NOT.** The build and the run were
+      performed by the `coordinator` from its own seat and not by this lane: `Build.bat` reported
+      `Result: Succeeded` over 21 actions with zero diagnostics and both DLLs relinked, and the
+      headless suite then ran -- cite that run by its exported `reportCreatedOn
+      2026.09.07-21.25.09`; the figure lives in `global.md` and nowhere else.
+      **`Stratocracy.StratUI.GATE-TITLEMENU.ShippedOptionsWidgetCarriesReturnToTitleButton`
+      appears in that report with `state` `Success`** -- read out of the exported `index.json`
+      by this lane, matching the `fullTestPath` and its `state` field, rather than taken from the
+      coordinator's testimony. So the clause name is compiled and present, which is what
+      *"a clause name is COMPILED"* demands and what a green run under an unrebuilt binary could
+      not have shown. Risk (1) above named exactly this gap -- *"header-checked is not
+      compiler-checked"* -- and a compiler has now checked it.
+      **WHAT THIS STAMP DOES NOT DISCHARGE, SAID PLAINLY BECAUSE CORRECTING ONE OF TWO NAMED
+      RISKS INVITES READING THE OTHER AS CORRECTED TOO: NO MUTANT HAS BEEN RUN AGAINST THIS
+      CLAUSE AS OF `reportCreatedOn 2026.09.07-21.25.09`.** Its four mutants are written out in
+      `Source/StratUI/Tests/StratShippedOptionsExitControlParity.cpp`'s own header block and
+      every one of them is a PREDICTION. A green run says the clause compiles and passes over
+      correct code; it says nothing whatever about whether it would redden over broken code, and
+      those are the two separate things risk (1) and risk (2) were written to keep apart. That
+      file's header block carries the same words at the site, because a block is read without
+      the record above it.
+      **AND WHAT THAT RUN COVERED, STATED AS THE HISTORY IT IS.** The bytes that ran under
+      `reportCreatedOn 2026.09.07-21.25.09` did not include two later edits this lane made to
+      that file over base `46321a6`: the unrun-mutant marker in its header block, and a
+      `TestNotNull` guard on `ExpectedControlClass` mirroring the one the subject class already
+      had. Neither changes a clause's logic; both were written after that run and were not part
+      of it. **]**
+  - **A NOTE ON READING THE EXPORTED REPORT, since this pass read one without running one.**
+    `Saved/AutomationReport/index.json` is UTF-8 **with a BOM**: `json.load` on a plain `open()`
+    fails with *"Expecting value: line 1 column 1"*, which reads like a corrupt file and is not.
+    Open it with `encoding='utf-8-sig'`.
+  - **NO SUITE COUNT IS STATED HERE, BY THE RULE.** The run this entry leans on is cited by its
+    exported `reportCreatedOn 2026.09.07-21.01.50`; the figure lives in `global.md` and nowhere
+    else. That run does NOT include the new clause -- it predates the file --
+    `grep -c ShippedOptionsWidgetCarriesReturnToTitleButton Saved/AutomationReport/index.json`
+    returns `0`, against `2` for each of the seven (that report writes every clause name twice,
+    as `testDisplayName` and as `fullTestPath`), which is the control on that sentence.
+
+- **2026-09-07 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- two new `Tests/`
+  files, one existing `Tests/` header, and this record file, on `master` in the main tree
+  `E:/MultiAgent/Stratocracy`, base commit `46321a6`, with `strat-gameplay-engineer`'s
+  UNCOMMITTED options-exit work on top of it, and this pass is UNCOMMITTED).** No exception
+  clause is cited and none applies. No production file is changed and none was mutated: **the
+  mutant battery for this pass was never run, because the pass is BLOCKED -- see the last
+  bullet.** The subject is the `EStratShellRoute::ReturnToTitle` control the user asked for on
+  the options screen; the user's own ruling was RETURN TO TITLE and not quit-to-desktop.
+  - **THE CLAUSES ARE WRITTEN AND ARE NOT VERIFIED. NOTHING BELOW HAS BEEN COMPILED OR RUN.**
+    A reader must treat every clause named here as UNPROVEN until a pass reports it green with
+    its own mutant measured. The seven names are recorded anyway because the reasoning is the
+    durable half and would otherwise be re-derived.
+  - **SEVEN NEW CLAUSES, COUNTED BY MACRO.** `grep -c IMPLEMENT_SIMPLE_AUTOMATION_TEST` returns
+    4 on the new `Source/StratUI/Tests/StratOptionsExitClauses.cpp` and 3 on the new
+    `Source/StratPlay/Tests/StratOptionsExitRouteClauses.cpp`. Counted by macro because a
+    single-line grep on a clause NAME has returned zero in this tree before.
+    `Source/StratUI/Tests/StratOptionsWidgetDouble.h` gained `PlantExitRow`, `IsExitRowPlanted`,
+    `HandleReturnToTitleRequested` and two accessors; `PlantBoundWidgets` was DELIBERATELY LEFT
+    AT SEVEN MEMBERS rather than widened to nine, because its own comment and
+    `StratOptionsWidgetBindingClauses.cpp`'s fixture message both state "seven" and widening it
+    would rewrite the premise of three clauses that are not about the exit row.
+  - **`T-UI-03` WAS REFUSED FOR THIS SURFACE, AGAINST THE ENGINEER'S PROPOSAL, AND THE REFUSAL
+    WAS ALREADY IN WRITING.** The lane's brief proposed `Stratocracy.StratUI.T-UI-03.*` for the
+    three widget-side clauses. `global.md`'s third acceptance-ID ruling of 2026-09-05 already
+    turned `T-UI-03` down for `UStratCommandBarWidget::OptionsButton` on the ground that a
+    control which *"draws no value and reads no snapshot field"* gives that ID *"no
+    snapshot-fidelity fact ... to own"*, and adds *"the test is the subject sentence, not the
+    file."* There is no `strat::UiSnapshot` behind a route permission -- the sentence the exit
+    row draws is written by `UStratShellSubsystem::IsRoutePermitted`, one module over. All seven
+    clauses therefore ride **`GATE-TITLEMENU`**, on the same ruling's placement of
+    `OptionsButton`, and `Stratocracy.StratUI.GATE-TITLEMENU.TheCommandBarOptionsButtonBroadcastsExactlyOncePerClick`
+    is the landed precedent for a `StratUI` clause under that name. **No acceptance ID is minted
+    and none is claimed.**
+  - **A FINDING IN THE SHIPPED HEADER, REPORTED AND NOT REPAIRED (it is the engineer's lane)**
+    [**FALSE SINCE THE ENGINEER'S 2026-09-07 SECOND PASS -- IT WAS REPAIRED; AND THE COUNT BELOW
+    IS WRONG. SEE THE STAMP AT THE END OF THIS BULLET**]**.**
+    `Source/StratUI/StratOptionsWidget.h` calls the exit reason label *"`T-UI-03`'s clause on
+    this surface"*, twice, and `StratOptionsWidget.cpp`'s `SyncExitWidgetsToModel` repeats it.
+    That is the same category slip the 2026-09-05 ruling refused, in prose rather than in a
+    clause name, and it will read to a future author as authority for a name this pass declined.
+    - **[STAMPED 2026-09-07, later the same day, by `strat-test-author` over base `46321a6`. TWO
+      THINGS ARE WRONG ABOVE AND THEY ARE DIFFERENT KINDS OF WRONG.** *(1) "NOT REPAIRED" WENT
+      STALE.* `strat-gameplay-engineer` accepted the finding and amended the header in the same
+      working tree; every surviving occurrence of the phrase now sits inside a `RETRACTED>`
+      quote, under an `AMENDED 2026-09-07 (SECOND PASS)` block. *(2) "TWICE" WAS NEVER RIGHT
+      ABOUT WHAT THIS BULLET SAYS IT COUNTS.* Re-run in the tree this stamp was written in:
+      `grep -c "clause on this surface" Source/StratUI/StratOptionsWidget.h` returns `2`, and
+      `grep -n` shows both hits opening `RETRACTED>`. One is on `ReturnToTitleReason`, the exit
+      row's label; **the other is on `MasterValueText`, a volume readout this pass never touched
+      and which is not "the exit reason label" at all** -- its own hit reads *"one field, one
+      drawn NUMBER"*, which is how a reader tells them apart without a line number. So the
+      header names the phrase twice and names the SUBJECT of this bullet once. The distinction
+      matters because the bullet was offered as a finding about the exit row, and half its
+      evidence was about a different member. **The count is scoped to a re-runnable command and
+      to a named tree state deliberately** -- an unscoped count in a file that is itself being
+      edited moves under its own correction. **This stamp does not restate the header's total
+      `T-UI-03` count, which is a moving figure in a file this lane does not own.]**
+  - **WHAT EACH CLAUSE PINS, AND WHERE ITS EXPECTATION COMES FROM.**
+    - `Stratocracy.StratUI.GATE-TITLEMENU.TheOptionsExitControlDrawsExactlyItsPushedModel` --
+      the enabled bit and the reason string track a pushed `FStratOptionsExitModel` in BOTH
+      directions (refused, permitted, refused again, so the control is not a latch). Expectation:
+      `UStratOptionsWidget::ExitModel`'s own fields, read back off the widget after the shipped
+      sync ran. The pushed literals are INPUTS; no assertion states what one becomes.
+    - `...GATE-TITLEMENU.AVolumeDragDoesNotClearTheExitAvailability` -- **the clause the
+      two-struct design exists for.** `StratBuildAudioOptionsModel` rebuilds
+      `FStratAudioOptionsModel` from three floats on every setter, so an exit field parked there
+      would be reset by every slider drag and the row would grey the first time a player touched
+      the volume. Expectation: a copy of `ExitModel` taken BEFORE the drag. It carries a CONTROL
+      that the three drags each produced a commit, without which a "nothing changed" assertion
+      is satisfied by three broadcasts that reached nothing.
+    - `...GATE-TITLEMENU.AnUnpushedOptionsScreenHasADisabledExit` -- the
+      `SyncExitWidgetsToModel()` call at the end of `NativeConstruct`, which is what makes the
+      shipped state of an unseeded screen "greyed" rather than "armed". It carries a CONTROL
+      that a freshly allocated `UButton` is ENABLED, so the assertion is about the construct
+      body and not about UMG's default.
+    - `...GATE-TITLEMENU.TheOptionsExitButtonBroadcastsTheRequestAndDismissesNothing` -- one
+      request per click, no dismiss, no commit, and the `NativeDestruct` unbind. CONTROL: Back
+      still dismisses and does not ask to leave, so the two are two wires.
+    - `Stratocracy.StratPlay.GATE-TITLEMENU.TheOptionsExitIsDisabledWithNoMatchLive` -- the
+      title-screen case. Expectation: `IsRoutePermitted(ReturnToTitle, Shell->GatherFacts(), ...)`,
+      asked by the clause over the same facts. No sentence in that file is compared against a
+      literal.
+    - `...GATE-TITLEMENU.TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness` -- **the
+      clause the routing decision exists for.** Three states: (S1) no match, no title level;
+      (S2) LIVE MATCH, no title level; (S3) live match, title level set. A presenter that had
+      written `ExitModel.bReturnToTitleEnabled = Facts.bMatchIsLive` -- which the code's own
+      comment names as the shortcut it refused -- is GREEN on S1 and S3 and RED on S2. A clause
+      that varied only `bMatchIsLive` would have pinned nothing the design chose.
+    - `...GATE-TITLEMENU.ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp` -- the count
+      stays 0, `IsPanelLive()` stays true, and `LastFailureReason` equals the oracle's
+      `.ToString()`. It drives the WIDGET'S delegate, so the bind made in `ShowPanel` is part of
+      the subject: an unbound panel leaves the reason EMPTY.
+  - **WHAT THESE CLAUSES DO NOT PIN.**
+    - **THAT THE SHIPPED `WBP_Options` HAS AN EXIT CONTROL. IT DOES NOT, TODAY** [**FALSE SINCE
+      THE 2026-09-07 ASSET PASS; SEE THE STAMP BELOW. The bullet's SUBJECT -- that no clause
+      listed above is evidence about any asset -- is untouched and still true**]**.** That asset
+      pass is still owed by the editor lane [**FALSE; IT LANDED**], and it is the discharge condition
+      `StratOptionsWidget.h` names for turning `ReturnToTitleButton` from `BindWidgetOptional`
+      into `BindWidget`. No clause here may be read as evidence about the shipped asset.
+      - **[STAMPED 2026-09-07, later the same day, by `strat-test-author` over base `46321a6`.**
+        `Content/UI/WBP_Options.uasset` acquired the control in the editor lane's pass, in the
+        same working tree. Instrument, quoted rather than summarised:
+        `grep -a -c ReturnToTitleButton Content/UI/WBP_Options.uasset` returns `1`; positive
+        control `MasterSlider` returns `1`; negative control `ZZZNope` returns `0`; working-tree
+        `sha256` `7e32ef67836b2d9241ecd70e760905d32e16def2ec7df9e2accdc4a346098adb` at 42696
+        bytes against the committed LFS oid
+        `367f21e199a50bd66e671607e95c1c58baddad986afdcc94b6cd5075bc953f44` at 39771 bytes.
+        **`strings -a` is BLIND to these names on this file** -- it returns `0` for the positive
+        control `MasterSlider` too, under every `-e` encoding -- so an absence measured that way
+        would have been an instrument failure reported as an asset fact. `grep -a` can see them.
+        **The discharge condition's OTHER half is now met as well:** the clause it asks for is
+        `Stratocracy.StratUI.GATE-TITLEMENU.ShippedOptionsWidgetCarriesReturnToTitleButton`,
+        written in the correction pass recorded in the entry ABOVE this one. **The promotion to
+        `BindWidget` is NOT taken and is not this lane's to take.]**
+    - **THE PERMITTED ROUTE ACTUALLY TRAVELLING.** A permitted `ExecuteRoute(ReturnToTitle)`
+      ends in `OpenLevelBySoftObjectPtr`, which no `-nullrhi` run survives. S3 is reached through
+      `SeedExitAvailability` ONLY and is never routed; the refused path is the only exit path a
+      headless clause may drive, which the presenter's own header states.
+    - **THE `bEnabled ? FText::GetEmpty() : Refusal` TERNARY IN `SeedExitAvailability`.** It is
+      not reachable as an independent line, because `IsRoutePermitted` clears
+      `OutRefusalReason` at entry, so a bare `Refusal` is green everywhere here. That shape is
+      pinned one class over by
+      `GATE-TITLEMENU.ADisabledReasonIsEmptyExactlyWhenTheRowIsEnabled`.
+    - **A RE-CHECK OF THE BIT INSIDE `HandleReturnToTitleClicked`.** There deliberately is none
+      -- the guard is the disabled `UButton` -- and `OnClicked.Broadcast()` from a clause
+      bypasses the enabled state, so such an assertion would measure the fixture.
+  - **A FIXTURE FACT THAT WOULD HAVE MADE CLAUSE (2) PASS WHILE MEASURING NOTHING, WRITTEN DOWN
+    BECAUSE IT IS INVISIBLE FROM THE CODE.** `UStratShellSubsystem::GatherFacts` asks
+    `GetGameInstance()->GetWorld()` for match liveness, and `UGameInstance::InitializeStandalone`
+    sets that to a **DUMMY world of its own making** -- not the world the fixture creates and
+    hangs the presenter off. In a shipped session there is one world and the distinction does
+    not exist. A fixture that started its match on the obvious world would leave `bMatchIsLive`
+    false, S2 and S3 would collapse onto S1, and the clause would go GREEN having measured one
+    state three times. `StratOptionsExitRouteClauses.cpp` starts its match on
+    `Instance->GetWorld()` for that reason and says so in its own header.
+  - **BLOCKED: THE EDITOR WAS CLOSED AT THE START OF THIS PASS AND WAS OPENED DURING IT.**
+    Measured at entry: `tasklist /FI "IMAGENAME eq UnrealEditor.exe"` returned *"No tasks are
+    running"* against a live `explorer.exe` control. The baseline build (`Target is up to date`)
+    and the baseline suite both ran clean on that condition -- cite it by its exported
+    `reportCreatedOn 2026.09.07-20.32.44`; the figure lives in `global.md` and nowhere else. The
+    build taken AFTER the two new files were written failed with *"Invalidating makefile for
+    StratocracyEditor (source file added)"* then **"Unable to build while Live Coding is
+    active"**, and the same `tasklist` then reported `UnrealEditor.exe` PID 42556, window title
+    *"Stratocracy - Unreal Editor"*. That is the editor-holds-the-DLLs condition
+    `.agents/ue-project-context.md` records, arriving as the Live Coding mutex rather than as
+    the `LNK1104` form. **So no clause here has been compiled, no clause has been run** [**THE
+    FIRST TWO OF THESE THREE CLAIMS ARE FALSE SINCE LATER THE SAME DAY; SEE THE STAMP BELOW.
+    THE THIRD IS STILL TRUE**]**, and no
+    mutant has been measured.** The remedy is the recorded one and it is not this lane's to
+    perform: close the editor, rebuild, re-run. **A clause name is COMPILED, so a suite run
+    taken without that rebuild would report the OLD names green and say nothing about these.**
+    - **[STAMPED 2026-09-07, later the same day, by `strat-test-author` over base `46321a6`.
+      THE BLOCK IS LIFTED AND THE MUTANT DEBT IS NOT.** The recorded remedy was performed by the
+      `coordinator`, from its own seat and not by this lane: the editor was closed, `Build.bat`
+      rebuilt both DLLs and reported `Result: Succeeded` with zero diagnostics, and the headless
+      suite ran clean -- cite that run by its exported `reportCreatedOn 2026.09.07-21.01.50`; the
+      figure lives in `global.md` and nowhere else. **All seven clauses named in this entry appear
+      in that report as `Success`** -- read out of the exported `index.json` by this lane rather
+      than taken from the coordinator's testimony, matching all seven `fullTestPath`s and their
+      `state` fields -- so the clause NAMES are compiled and present and the rebuild
+      warning above was discharged rather than merely satisfied. One `succeededWithWarnings`: a
+      headless *"no tile mesh for terrain ..."* notice inside the live-board fixture, which is a
+      rendering notice and not a clause result.
+      **WHAT THIS STAMP DOES NOT DISCHARGE, SAID PLAINLY BECAUSE CORRECTING TWO CLAIMS IN A
+      THREE-CLAIM SENTENCE INVITES READING THE THIRD AS CORRECTED TOO: NO MUTANT HAS BEEN
+      MEASURED FOR ANY OF THESE SEVEN CLAUSES.** Each one's mutants are written out in its own
+      file's block and every one of them is UNRUN. A green suite says the clauses pass over
+      correct code; it says nothing about whether they would redden over broken code, which is
+      the only question a mutant answers. **Treat the discrimination of all seven as UNPROVEN.**]**
+
 - **2026-09-07 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- ONE new `Tests/`
   file plus three existing ones, and this record file, on `master` in the main tree
   `E:/MultiAgent/Stratocracy`, base commit `6d882a3`, and this pass is UNCOMMITTED).** No

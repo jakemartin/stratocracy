@@ -50,6 +50,214 @@
 
 ## NEXT
 
+- **THIS LANE DELETED `WBP_Options`'s BACK-BUTTON CAPTION AND SHIPPED IT THAT WAY -- AND THE
+  THING WORTH READING IS THAT EVERY INSTRUMENT THAT PASSED WAS SCOPED TO THE CHANGE BEING MADE, SO
+  NOT ONE OF THEM COULD ASK WHETHER ANYTHING HAD GONE.** 2026-09-07 (local),
+  `E:/MultiAgent/Stratocracy` on `master` over base `46321a6`, uncommitted at time of writing.
+  **ACTING AND WRITING: `strat-editor-builder`, IN LANE, UNDER NO CLAUSE** --
+  `mcp__unreal-editor-direct__execute_script` was on this agent's tool surface and answered, so
+  neither the editor-driver clause nor this file's fallback condition was open, and citing either
+  would have been a false claim about why this agent was allowed to act. **The missing caption was
+  found by the user at the keyboard. No instrument in this tree found it**, and the entry below
+  records the deletion as a clean back-out -- two of its sentences are now stamped false in place.
+
+  **THE MECHANISM, AND IT IS THE SECOND HALF OF A LIMIT THIS FILE ALREADY RECORDED.**
+  `duplicate_widget("BackButton", "ReturnToTitleButton")` cloned the subtree WITHOUT RENAMING THE
+  CLONE'S CHILD, so the tree briefly held TWO widgets named `BackLabel`, and `list_widgets`
+  reported the clone's child under the WRONG PARENT. The back-out was `remove_widget` BY NAME --
+  and with two widgets sharing one name a name-addressed removal CANNOT BE AIMED, so it took the
+  ORIGINAL. The pass's own note that a rename "would have been ambiguous about which of the two it
+  hit" is exactly true of the removal it chose instead, and that was not noticed.
+  **STANDING INSTRUCTION: do not run `duplicate_widget` on a subtree with children** -- build the
+  clone with `add_widget` plus `configure_widget`. If a name collision has already happened,
+  identify the survivor BY PARENT before removing anything by name, and note that the parent
+  `list_widgets` reports in that state was MEASURED WRONG.
+
+  **WHY NOTHING CAUGHT IT, WHICH IS THE PART TO CARRY FORWARD.** `BackLabel` appears NOWHERE in
+  `Source/` -- no `BindWidget`, no clause -- so the suite could not move and did not (the run of
+  `reportCreatedOn 2026.09.07-21.40.05`; the figure itself lives in `global.md`). The
+  shipped-asset parity clause passed because its positive control is `BackButton`, and the BUTTON
+  survived; only its child went. The byte scan passed truthfully, because it searched only the
+  three names being ADDED, against invented negative controls. Three `strat-integration-reviewer`
+  reads went by. **Every instrument was scoped to the change being made, and none asked whether
+  anything had gone.** **STANDING LESSON: after a widget-tree edit, assert the tree in BOTH
+  DIRECTIONS** -- what must now be present and what must no longer be -- **and check the total
+  against (prior measured total - removed + added), computed from the PRIOR MEASURED TOTAL** and
+  not from the number the edited tree reports about itself.
+
+  **THE REPAIR AND ITS VERIFICATION.** `BackLabel` restored as a `UTextBlock` child of
+  `BackButton`; `duplicate_widget` NOT used. Its properties were mirrored from
+  `ReturnToTitleLabel` and then diffed against it: they differ in exactly **2 of 41** keys, `Slot`
+  (necessarily a different owning button) and `Text`. Carried across: `Font`
+  (`/Engine/EngineFonts/Roboto.Roboto`, `TypefaceFontName="Bold"`, `Size=24`), `ColorAndOpacity`
+  opaque white, `Justification=Left`, `Visibility=Visible`; slot
+  `HorizontalAlignment=HAlign_Center`, `VerticalAlignment=VAlign_Center`,
+  `Padding=(Left=4,Top=2,Right=4,Bottom=2)`. Everything else sits at class default, and that is
+  ESTABLISHED BY THE 2-OF-41 DIFF rather than assumed. Tree after save: 19 widgets, all sixteen
+  base names present, exactly the three intended new names, no duplicates, and
+  `BackLabel.parent == BackButton`. `validate_widget_tree()` true; the compile reported
+  `UpToDate, 0 errors, 0 warnings`.
+
+  **THE `INVTEXT` FINDING.** `Text="BACK"` passed as a plain Lua string produced an `FText` that
+  reads back as bare `BACK`, matching NEITHER form already on that screen: the three slider
+  captions are `INVTEXT(...)` and `ReturnToTitleLabel` is
+  `NSLOCTEXT("", "<hash>", "RETURN TO TITLE")`. It was re-set as `INVTEXT("BACK")`, matching the
+  majority literal-caption form on its own screen.
+
+  **THE BYTE VERIFICATION, AND ITS SHAPE IS THE POINT.** Twelve probes in ONE `grep` invocation
+  over the saved `.uasset`: ten present -- `BackLabel`, `BACK`, `BackButton`, `MASTER`, `SFX`,
+  `MUSIC`, `RETURN TO TITLE`, `ReturnToTitleLabel`, `ReturnToTitleButton`,
+  `ReturnToTitleReasonText` -- and two negative controls absent, `ZZZ_NOT_IN_THIS_ASSET` and
+  `BackLabelXYZZY`. One invocation, so the instrument's ABILITY TO SPEAK is proved on the same
+  call that reports the absences; an absence measured on a separate call would not have been a
+  control. **`strings -a` is BLIND on this asset; `grep -a` is the working instrument.** The
+  `coordinator` independently reproduced the scan: same ten present, same two absent, file at
+  43152 bytes.
+
+  **OPEN, AND NOT A DECLINED TASK.** `BackLabel` is pinned by NOTHING in `Source/`. That is why
+  the deletion shipped green, and it is reserved for another lane rather than closed here.
+
+  **NOT SETTLED BY THIS PASS.** A design-time preview has no presenter and no pushed model, so
+  **whether the caption reads correctly on screen remains for the user's eyes.** Nothing here
+  claims otherwise.
+
+- **`WBP_Options` HAS THE EXIT CONTROL AND ITS REASON LABEL -- AND THE THING WORTH READING IS
+  THAT EVERY INSTRUMENT THIS PASS REACHED FOR LIED ONCE BEFORE IT TOLD THE TRUTH, INCLUDING THE
+  ONE WRITTEN TO CHECK THE OTHERS.** 2026-09-07 (local), `E:/MultiAgent/Stratocracy` on `master`
+  over base `46321a6`, uncommitted at time of writing. **ACTING AND WRITING:
+  `strat-editor-builder`, IN LANE, UNDER NO CLAUSE.** Said explicitly because the entries below
+  this one open with a clause citation: `mcp__unreal-editor-direct__execute_script` WAS on this
+  agent's tool surface and answered, so neither the editor-driver clause nor this file's fallback
+  condition was open, and citing either would have been a false claim about why this agent was
+  allowed to act.
+
+  **THE LOADED BINARY WAS PROVED TO DECLARE THE MEMBERS BEFORE ANYTHING WAS AUTHORED, AND THE
+  FIRST INSTRUMENT FAILED ITS OWN CONTROL.** A `BindWidgetOptional` naming a member the loaded
+  class does not declare binds to nothing, silently, so an editor running a binary older than the
+  engineer's build is the whole hazard here.
+  `class_properties("/Script/StratUI.StratOptionsWidget")` at its defaults returned 30 entries and
+  NONE of the bound sub-widgets -- and the control is what made that legible rather than alarming:
+  `BackButton` and `MasterSlider`, which have shipped for days, were missing from that same list,
+  so the instrument was filtering to editor-editable properties and could not speak to the
+  question at all. `{editable_only=false, include_inherited=false}` is the form that answers it:
+  12 entries, with `ReturnToTitleButton : Object(Button)` and
+  `ReturnToTitleReasonText : Object(TextBlock)` both `owner=StratOptionsWidget`, alongside
+  `BackButton` and the three sliders as positive controls in the SAME lookup, plus the delegate
+  `OnReturnToTitleRequested`, which exists only in the new header. `Model` and `ExitModel` are
+  absent from that list and that is the filter again, not a finding.
+
+  **WHAT WAS ADDED, AND WHERE IN `Stack`.** Three widgets, taking `WBP_Options` from 16 to 19:
+  `ReturnToTitleButton` (`Button`, `is_variable`) at child index 10, its caption
+  `ReturnToTitleLabel` (`TextBlock`, "RETURN TO TITLE") as its single child, and
+  `ReturnToTitleReasonText` (`TextBlock`) at index 11. **Both new rows sit BELOW `BackButton`,
+  which keeps index 9**, on two grounds. Back is the ordinary, high-frequency, non-destructive
+  exit and keeps its place in the reading order; the consequential control that discards a match
+  is last, which is the ordinary destructive-action-last ordering. They are separated by
+  `slot.Padding = (Top=16.000000)` where every other row on this screen has zero padding -- the
+  one deliberate deviation from the existing rhythm, and it is there so that a misclick on "back"
+  cannot land on "leave the match". The reason label sits BELOW the button it explains because
+  that is this screen's own established shape rather than a new one: every existing row is
+  LABEL / CONTROL / READOUT (`LabelMaster`, `MasterSlider`, `MasterValueText`), so a readout under
+  its control is the convention already in the asset. Styling is not hand-matched but taken from
+  the screen's own live values -- the caption's `Font` was copied from `BackLabel` with only
+  `Size=24` changed to `Size=16`, and read back equal on every other field.
+
+  **THE REASON LABEL IS AUTHORED WITH EMPTY TEXT ON PURPOSE.** `NativeConstruct` calls
+  `SyncExitWidgetsToModel()` unconditionally and that assigns `ExitModel.ReturnToTitleReason`,
+  which defaults empty -- so any placeholder sentence would be a string no view-model field ever
+  produced, which is the thing `T-UI-03` is about. An empty `TextBlock` still reserves its line
+  height, so the panel does not reflow when a refusal sentence appears; that is a consequence of
+  the choice and not a second decision.
+
+  **NO GRAPH, NO BINDINGS, NO VARIABLES ADDED, WHICH IS THE ASSET'S WHOLE CONTRACT.**
+  `StratOptionsWidget.h`'s `AMENDED 2026-09-05` block argues that the asset's remaining job is to
+  contain widgets with the declared names and nothing else, because a graph this project's
+  tooling cannot author is a wiring convention it cannot check. Measured after the change and
+  before the compile: `binding_count=0`, `animation_count=0`, the Blueprint still opens as
+  `1 graphs, 3 nodes, 0 variables, 0 components` exactly as it did before,
+  `validate_widget_tree()` true, and zero duplicate names across all 19 widgets. **THAT COUNT IS FALSE ABOUT THE
+  SAVED ASSET AND IS KEPT SO THE CORRECTION LANDS ON IT: the saved tree held 18, not 19, because
+  `BackLabel` had already been deleted by the backed-out `duplicate_widget` described just below.
+  The duplicate-name check was true; the total it was taken over was not, and nothing compared
+  that total to the expected one. See the CAPTION entry at the top of `## NEXT`.
+  [STAMPED 2026-09-07]** The compile reported
+  `UpToDate, 0 errors, 0 warnings`.
+
+  **FIVE MEASURED LIMITS OF THE NEOSTACK API, ALL FOUND THE HARD WAY.**
+  (1) **`duplicate_widget` DOES NOT RENAME THE CLONED SUBTREE'S CHILDREN.**
+  `bp:duplicate_widget("BackButton", "ReturnToTitleButton")` renamed the button and left its
+  `TextBlock` child called `BackLabel`, producing TWO widgets with that name in a tree where names
+  must be globally unique -- and `list_widgets` then reported the clone's child with the WRONG
+  parent (`parent=BackButton`), so the tree read as though `BackButton` had two children. It was
+  backed out with `remove_widget` rather than built on, and verified back to 16 widgets with
+  `BackButton` keeping its own label. **THAT LAST CLAUSE IS FALSE AND IS KEPT SO THE CORRECTION
+  LANDS ON IT: the name-addressed `remove_widget` took THE ORIGINAL, so `BackButton` kept
+  nothing -- its caption `BackLabel` was deleted here and the asset shipped without it until the
+  user found it at the keyboard. [STAMPED 2026-09-07]** A rename of the collided name would have
+  been ambiguous about which of the two it hit, which is why the removal and not a repair.
+  **AND THAT IS EXACTLY TRUE OF THE REMOVAL CHOSEN INSTEAD, WHICH IS WHAT WAS NOT NOTICED: with
+  two widgets sharing one name, a name-addressed removal cannot be aimed either.
+  [STAMPED 2026-09-07]**
+  (2) **`get_widget().props` RETURNS DISPLAY STRINGS TRUNCATED WITH A LITERAL `...`, AND FEEDING
+  ONE BACK TO `configure_widget` FAILS WHILE `configure_widget` REPORTS `ok=true`.** Copying
+  `BackButton`'s `WidgetStyle` across logged
+  `[WARN] ... failed to parse value "(Normal=(...))..." for type FButtonStyle` and the call still
+  returned `{ok=true, changes=5, warnings=1}`. **The `warnings` count is the field that tells the
+  truth; `ok` does not.** This is the recorded rule about a `set()` return not being evidence,
+  arriving on a new surface. Short property strings DO round-trip -- `Font` was copied this way.
+  (3) **`export_widgets` IS DELTA-SERIALIZED AGAINST THE CLASS DEFAULT, WHICH MAKES IT AN ORACLE.**
+  `BackButton`'s export carries no `WidgetStyle` at all, which is what proved this screen's buttons
+  are STOCK UE 5.8 styling and were never restyled -- so a freshly created `Button` already matches
+  and no copy was needed. Confirmed independently by
+  `BackButton.props.WidgetStyle == ReturnToTitleButton.props.WidgetStyle`.
+  (4) **`read_file` REFUSES `.uasset` BY EXTENSION, RETURNS BASE64 RATHER THAN BYTES, AND CAPS
+  `limit` AT 2000 LINES WHATEVER IS PASSED.** The refusal is silent in the sense that it returns an
+  empty `content` a search then finds nothing in; the control caught it, because `BackButton` and
+  `MasterSlider` read "absent" from those same zero bytes. `copy_file` to a `.bin` in a scratchpad
+  gets past the extension filter, after which `content` is base64 (56928 chars for 42696 bytes) and
+  a full Lua decode exceeds the script instruction limit. The 2000-line cap matters for THIS file:
+  it is over 3000 lines, so a single `read_file` of it is a PARTIAL read that a following
+  `write_file` would silently truncate. Read it in two chunks joined by `"\n"` and assert the total
+  against `file_info().size` before writing anything back.
+  (5) **`write_file` SILENTLY WRITES UTF-16LE WITH A BOM WHENEVER THE CONTENT CONTAINS ANY
+  NON-ASCII BYTE, EVEN WITH `encoding="utf8"` PASSED.** Measured: `"abc"` writes 3 bytes
+  `61 62 63`, but this record file -- whose own header line carries an em dash -- came back
+  `FF FE 23 00 20 00 53 00` at 571506 bytes for 285804 characters. That would have rewritten every
+  line of a git-tracked, LF-enforced UTF-8 file. It was caught only because the write was staged to
+  a scratchpad copy and its size compared against the intended character count first; the return
+  value said `success=true, bytes_written=285804` and was wrong about the bytes. The working route
+  is `encoding="binary"`, which takes BASE64 and writes the decoded bytes exactly, and which
+  supports `append=true` so a large file can be written in aligned chunks (verified end to end on a
+  two-append control before use).
+
+  **THE SAVE WAS CONFIRMED FROM THE PERSISTED BYTES, AND THE CHECKER ITSELF PRODUCED A FALSE
+  POSITIVE AND A FALSE NEGATIVE BEFORE IT WAS SOUND.** Rather than decode 42 KB, the needle is
+  base64-encoded at each of the three byte alignments and the alignment-stable interior searched
+  for. Two bugs, both caught by controls rather than by inspection: stripping only 2 characters
+  from each end of the encoded needle leaves one character still contaminated by the PRECEDING file
+  byte, and that form reported the invented name **`Backdrop9` as FOUND**; and a minimum core
+  length that silently skipped every alignment for short needles made `BackButton` first read
+  ABSENT when it is plainly there. The sound form strips 4 characters at each end, requires a core
+  of 8, and **reports `UNTESTABLE` rather than `ABSENT` when no alignment qualifies** -- which is
+  the whole fix, because the two failures were one failure wearing opposite signs. Its verdicts on
+  the saved file: `ReturnToTitleButton`, `ReturnToTitleLabel` and `ReturnToTitleReasonText` FOUND
+  at cores of 19, 19 and 26 base64 characters; `MasterSlider`, `MusicValueText`, `OptionsPanel`,
+  `LabelMaster` and `StratOptionsWidget` FOUND as positive controls; `NotARealName1234`,
+  `ZzQqNeverWritten` and `Backdrop9XXXXXXX` ABSENT at a matched core of 16, so the discrimination
+  is real at the strength the positive claims rest on. `BackLabel` and `SfxSlider` are both 9
+  characters and both report UNTESTABLE; **no claim is made about them in either direction**, and
+  an earlier "BackLabel is absent" reading from this pass was the instrument and not the file.
+
+  **THERE ARE PIXELS, AND THEY ARE A PREVIEW OF MEMORY RATHER THAN OF DISK.**
+  `screenshot({mode="asset", asset="/Game/UI/WBP_Options"})` renders the panel with RETURN TO
+  TITLE below BACK, identically styled, visibly separated by the 16 px gap, and the reason line
+  reserving empty space beneath it. **WHAT A HUMAN AT THE KEYBOARD STILL HAS TO CONFIRM**, because
+  nothing available to this lane can: that the button actually greys out on the TITLE map where
+  `IsRoutePermitted(ReturnToTitle, ...)` refuses, and that the refusal sentence draws legibly at
+  16 pt in that state. Both require a presenter to push an `FStratOptionsExitModel` in PIE, and the
+  preview draws the design-time tree with no owner and no push. Nothing in this pass observed a
+  click, a broadcast, or a level travel.
+
 - **THE ROUND-CHANGE CUE EXISTS AND THE BANK'S EIGHTH SLOT POINTS AT IT -- AND THE THING WORTH
   READING IS THAT THE CONTROL WAS THE WHOLE VALUE OF THE READBACK.** 2026-09-07 (local),
   `E:/MultiAgent/Stratocracy` on `master` over base `6d882a3`, uncommitted at time of writing.

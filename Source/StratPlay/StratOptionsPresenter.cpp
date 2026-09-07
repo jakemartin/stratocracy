@@ -190,11 +190,20 @@ bool UStratOptionsPresenter::ShowPanel(FString& OutFailureReason)
 		this, &UStratOptionsPresenter::HandleAudioOptionsCommitted);
 	Created->OnOptionsDismissed.AddDynamic(
 		this, &UStratOptionsPresenter::HandleOptionsDismissed);
+	Created->OnReturnToTitleRequested.AddDynamic(
+		this, &UStratOptionsPresenter::HandleReturnToTitleRequested);
 
 	// SEEDED BEFORE IT IS ON SCREEN, so the first frame a player sees already shows the gains
 	// they chose last time rather than the designer's authored thumb positions followed by a
 	// jump. `PushAudioOptions` and not the setters -- see `SeedPanel`.
 	SeedPanel();
+
+	// AND SO IS THE EXIT ROW, FOR A SHARPER VERSION OF THE SAME REASON. A gain seeded late shows
+	// a wrong number for a frame; an availability seeded late shows a LIVE EXIT BUTTON on the
+	// title screen for a frame, and a frame is enough to click. The widget's default is disabled
+	// so the window is closed from both ends -- see `FStratOptionsExitModel::bReturnToTitleEnabled`
+	// -- but the order here is what makes that default a belt rather than the whole answer.
+	SeedExitAvailability();
 
 	Created->AddToViewport(PanelZOrder);
 
@@ -214,6 +223,8 @@ void UStratOptionsPresenter::HidePanel()
 		this, &UStratOptionsPresenter::HandleAudioOptionsCommitted);
 	OptionsWidget->OnOptionsDismissed.RemoveDynamic(
 		this, &UStratOptionsPresenter::HandleOptionsDismissed);
+	OptionsWidget->OnReturnToTitleRequested.RemoveDynamic(
+		this, &UStratOptionsPresenter::HandleReturnToTitleRequested);
 
 	// REMOVED RATHER THAN LEFT TO THE GARBAGE COLLECTOR, on `AStratShellHUD::EndPlay`'s measured
 	// reasoning: a widget added to the viewport is referenced BY the viewport, so dropping the
@@ -254,6 +265,58 @@ void UStratOptionsPresenter::SeedPanel()
 	// and not a duplication this call has to work around.
 	OptionsWidget->PushAudioOptions(StratBuildAudioOptionsModel(
 		Settings->MasterVolume, Settings->SfxVolume, Settings->MusicVolume));
+}
+
+void UStratOptionsPresenter::SeedExitAvailability()
+{
+	if (OptionsWidget == nullptr)
+	{
+		return;
+	}
+
+	// DEFAULT-CONSTRUCTED, WHICH MEANS DISABLED WITH NO REASON, AND EVERY PATH BELOW EITHER
+	// FILLS IT IN OR PUSHES IT AS IT STANDS. There is no early return that leaves the widget
+	// holding a stale answer from a previous world: this function always pushes.
+	FStratOptionsExitModel ExitModel;
+
+	UStratShellSubsystem* const Shell = FindShell();
+	if (Shell == nullptr)
+	{
+		// A STATE NOTHING SHOULD REACH, HANDLED RATHER THAN ASSERTED AWAY, on
+		// `HandleOptionsDismissed`'s stated pattern: this class only shows a panel when the shell
+		// said to. The exit stays DISABLED, which is the safe direction -- an enabled exit with no
+		// shell to route it through is exactly the dead control this whole change exists to
+		// prevent.
+		//
+		// THE REASON TEXT IS LEFT EMPTY DELIBERATELY. Every sentence the player reads on this row
+		// is one `IsRoutePermitted` wrote; inventing a second author here would put "no shell" --
+		// a word for a subsystem they have never heard of -- on screen. The diagnosis goes to
+		// `LastFailureReason` and the log, where a developer reads it.
+		LastFailureReason = TEXT("the options panel has no UStratShellSubsystem to ask about "
+		                         "leaving the match; the exit control is disabled");
+		UE_LOG(LogStratPlay, Warning, TEXT("Options panel: %s"), *LastFailureReason);
+
+		OptionsWidget->PushExitOptions(ExitModel);
+		return;
+	}
+
+	// THE ONE CALL, AND IT IS THE SAME CALL `BuildMenuModel` MAKES FOR THE TITLE MENU'S FIVE
+	// ROWS. `IsRoutePermitted` is the single authority for a route's preconditions -- see its own
+	// declaration, which says `BuildMenuModel` asks it and does not restate it. Writing
+	// `Facts.bMatchIsLive` here instead would compile, would be right today, and would be a fourth
+	// copy of a rule that lives in one place; the `ReturnToTitle` arm also refuses on
+	// `bTitleLevelConfigured`, which a hand-written condition would have dropped.
+	FText Refusal;
+	ExitModel.bReturnToTitleEnabled = UStratShellSubsystem::IsRoutePermitted(
+		EStratShellRoute::ReturnToTitle, Shell->GatherFacts(), Refusal);
+
+	// THE BIT AND THE SENTENCE FROM ONE CALL, PAIRED EXACTLY AS `BuildMenuModel` PAIRS
+	// `bEnabled` WITH `DisabledReason`. Empty on success rather than a stale refusal from the
+	// previous evaluation, which is the only way "empty exactly when enabled" stays true.
+	ExitModel.ReturnToTitleReason =
+		ExitModel.bReturnToTitleEnabled ? FText::GetEmpty() : Refusal;
+
+	OptionsWidget->PushExitOptions(ExitModel);
 }
 
 UStratShellSubsystem* UStratOptionsPresenter::FindShell() const
@@ -344,4 +407,66 @@ void UStratOptionsPresenter::HandleOptionsDismissed()
 	                         "close; it was removed directly");
 	UE_LOG(LogStratPlay, Warning, TEXT("Options panel: %s"), *LastFailureReason);
 	HidePanel();
+}
+
+void UStratOptionsPresenter::HandleReturnToTitleRequested()
+{
+	// NO CLICK CUE HERE, AND THE CONTRAST WITH `HandleOptionsDismissed` DIRECTLY ABOVE IS THE
+	// POINT. That handler emits one because `CloseOptionsPanel` is silent and the widget could
+	// not reach the director. `ExecuteRoute` emits `EStratSoundCue::ButtonClick` AT ENTRY,
+	// before its permission check and regardless of its return -- its own block argues that
+	// placement -- so a cue on this line would be a second click for one press.
+
+	UStratShellSubsystem* const Shell = FindShell();
+	if (Shell == nullptr)
+	{
+		// UNREACHABLE FROM THE SHIPPED PATH TWICE OVER: the panel is only shown when the shell
+		// asked for it, and `SeedExitAvailability` leaves the control DISABLED when there is no
+		// shell, so there is no button to click. Handled anyway rather than asserted away, for
+		// `HandleOptionsDismissed`'s stated reason -- the alternative to a reported failure is a
+		// control that does nothing on a world that lost its game instance.
+		LastFailureReason = TEXT("return to title was requested with no UStratShellSubsystem to "
+		                         "route it");
+		UE_LOG(LogStratPlay, Warning, TEXT("Options panel: %s"), *LastFailureReason);
+		return;
+	}
+
+	// THE ROUTE IS EXECUTED BEFORE THE PANEL'S FLAG IS CLOSED, AND THE ORDER IS THE LOAD-BEARING
+	// CHOICE IN THIS FUNCTION. Closing first would take the screen down and THEN discover a
+	// refusal, leaving the player back in the match with the screen they were reading gone for
+	// nothing. `ExecuteRoute` re-asks `IsRoutePermitted` itself and refuses without travelling,
+	// so asking it first costs nothing and makes the refusal non-destructive.
+	FString FailureReason;
+	if (!Shell->ExecuteRoute(EStratShellRoute::ReturnToTitle, FailureReason))
+	{
+		// NOT COUNTED, on `HandleAudioOptionsCommitted`'s stated rule about its own counter:
+		// `ReturnToTitleRoutesTakenCount` answers "did this class leave the match", and counting
+		// a refusal would make it answer the weaker "was this class asked", which the widget's
+		// own broadcast already answers.
+		//
+		// THE PANEL IS LEFT UP. A refusal means the player is still where they were, and taking
+		// their screen away would be a second consequence of a request that had none.
+		LastFailureReason = FailureReason;
+		UE_LOG(LogStratPlay, Warning, TEXT("Options panel: return to title refused: %s"),
+			*LastFailureReason);
+		return;
+	}
+
+	++ReturnToTitleRoutesTakenCount;
+
+	// THE FLAG IS CLOSED THROUGH THE SHELL, WHICH BRINGS THE PANEL DOWN THROUGH THE ONE ROUTE
+	// THAT EXISTS -- `HandleOptionsDismissed`'s argument, unchanged, and it applies here with an
+	// extra hazard of its own. `bOptionsPanelOpen` OUTLIVES THE MAP: it is a member of a
+	// game-instance subsystem, and its own declaration says so. A travel taken with it left true
+	// would have the DESTINATION world's presenter open an options panel over the title menu the
+	// player just arrived at.
+	//
+	// IT IS REDUNDANT WITH `Deinitialize`, WHICH CLOSES THE FLAG UNCONDITIONALLY, AND IT IS KEPT
+	// ANYWAY FOR A REASON THE REDUNDANCY DOES NOT COVER. `OpenLevelBySoftObjectPtr` DEFERS the
+	// travel -- it returns with this world still standing -- so between this line and
+	// `Deinitialize` there is at least one more frame drawn. Without this call that frame shows
+	// the volume screen over a match the player has already left. The redundancy is also
+	// one-directional and therefore safe: both writers CLOSE and neither opens, so the two can
+	// never fight.
+	Shell->CloseOptionsPanel();
 }

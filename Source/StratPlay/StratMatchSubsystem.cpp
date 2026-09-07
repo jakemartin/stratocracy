@@ -2951,6 +2951,66 @@ bool UStratMatchSubsystem::RecordMatchCompletionOnSave(const FString& SlotName,
 	return true;
 }
 
+bool UStratMatchSubsystem::ClearMatchCompletionOnSave(const FString& SlotName,
+                                                     FString&       OutFailureReason)
+{
+	OutFailureReason.Reset();
+
+	if (SlotName.IsEmpty())
+	{
+		// REFUSED RATHER THAN RESOLVED, exactly as `DoesSlotHoldARestorableMatch` refuses.
+		// This function is static so a caller with no match subsystem can use it, and such a
+		// caller has no `ActiveConfig` to fall back to.
+		OutFailureReason = TEXT("no slot name was given");
+		return false;
+	}
+
+	if (!UGameplayStatics::DoesSaveGameExist(SlotName, 0))
+	{
+		// NOTHING TO CLEAR IS SUCCESS. See the declaration: this is the first-time player's
+		// path through the shipped game and it is not a fault.
+		return true;
+	}
+
+	UStratSaveGame* const Payload =
+		Cast<UStratSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
+
+	if (Payload == nullptr)
+	{
+		// A SLOT THIS BUILD CANNOT CAST, AND WE DO NOT WRITE OVER IT. The declaration argues
+		// the divergence from `RecordMatchCompletionOnSave`, which DOES create a payload
+		// here: that method has a fact to record and this one has only a bit to remove, and
+		// the bit is demonstrably not in a file that is not ours.
+		return true;
+	}
+
+	if (!Payload->bHasCompletedAMatch)
+	{
+		// ALREADY FALSE IS SUCCESS AND WRITES NOTHING, mirroring the writer's "already true
+		// is success" arm for the same reason: there is no second thing to do, and a disk
+		// write per New Match on a slot that never carried the bit buys nothing.
+		return true;
+	}
+
+	// ONE FIELD, AND `SavedDataVersion` IS NOT STAMPED. Everything else on the payload --
+	// `SaveText` above all, which is the §4.10 text of a match the player may still want to
+	// Continue -- goes back exactly as it was read. The declaration states why stamping the
+	// version would be a lie here and is honest in the writer.
+	Payload->bHasCompletedAMatch = false;
+
+	if (!UGameplayStatics::SaveGameToSlot(Payload, SlotName, 0))
+	{
+		OutFailureReason = FString::Printf(
+			TEXT("SaveGameToSlot failed writing slot '%s'"), *SlotName);
+		return false;
+	}
+
+	UE_LOG(LogStratPlay, Log,
+		TEXT("Slot '%s' no longer records a completed match; §2.11.6 guidance runs again."),
+		*SlotName);
+	return true;
+}
+
 void UStratMatchSubsystem::NoteMatchResultIfEnded(const FStratViewModel& Model)
 {
 	if (bMatchResultRecorded || !Model.Match.bHasResult)

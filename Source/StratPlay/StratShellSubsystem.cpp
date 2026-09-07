@@ -77,6 +77,22 @@ FString UStratShellSubsystem::PendingSlotForRoute(const EStratShellRoute Route,
 	return RouteLoadsSaveSlot(Route) ? ConfiguredSlot : FString();
 }
 
+bool UStratShellSubsystem::RouteStartsAFreshMatch(const EStratShellRoute Route)
+{
+	// NAMED, NOT `!RouteLoadsSaveSlot(Route)`. See the declaration: the complement is true
+	// today and stops being true the moment a sixth route neither restores nor starts fresh.
+	return Route == EStratShellRoute::NewMatch;
+}
+
+FString UStratShellSubsystem::CompletionClearSlotForRoute(const EStratShellRoute Route,
+                                                         const FString&         ConfiguredSlot)
+{
+	// EXPRESSED THROUGH `RouteStartsAFreshMatch`, on `PendingSlotForRoute`'s reasoning: one
+	// authority, asked twice, rather than a second comparison against `NewMatch` that would
+	// agree with the first until one of them was edited.
+	return RouteStartsAFreshMatch(Route) ? ConfiguredSlot : FString();
+}
+
 bool UStratShellSubsystem::IsRoutePermitted(const EStratShellRoute  Route,
                                             const FStratShellFacts& Facts,
                                             FText&                  OutRefusalReason)
@@ -353,6 +369,18 @@ FString UStratShellSubsystem::ConsumePendingLoadSlot()
 	return Taken;
 }
 
+void UStratShellSubsystem::ArmPendingForcedGuidance(const bool bInForced)
+{
+	bPendingForcedGuidance = bInForced;
+}
+
+bool UStratShellSubsystem::ConsumePendingForcedGuidance()
+{
+	const bool bTaken = bPendingForcedGuidance;
+	bPendingForcedGuidance = false;
+	return bTaken;
+}
+
 bool UStratShellSubsystem::ExecuteRoute(const EStratShellRoute Route, FString& OutFailureReason)
 {
 	OutFailureReason.Reset();
@@ -452,6 +480,37 @@ bool UStratShellSubsystem::ExecuteRoute(const EStratShellRoute Route, FString& O
 	// empty string for every route that does not restore, so a branch here would have been a
 	// third statement of "which route restores" -- in the one member no clause can read.
 	ArmPendingLoadSlot(PendingSlotForRoute(Route, SaveSlotName));
+
+	// ---- §2.11.6: NEW MATCH PUTS THE PLAYER BACK AT THE BEGINNING ----------------
+	// UNCONDITIONAL, FOR THE REASON THE `ArmPendingLoadSlot` BLOCK ABOVE GIVES ABOUT ITS OWN
+	// VANISHED `if`. `CompletionClearSlotForRoute` returns an empty string for every route
+	// that does not start a fresh match, and `ClearMatchCompletionOnSave` refuses an empty
+	// slot name by name -- so a branch here would have been a second statement of "which route
+	// starts fresh", in the one member no clause can execute past.
+	//
+	// BEFORE THE TRAVEL, NECESSARILY: `OpenLevelBySoftObjectPtr` may not return before this
+	// world is torn down, so anything this route must do has to be done first.
+	//
+	// A FAILED CLEAR LOGS AND TRAVELS ANYWAY, AND THAT IS THE LOAD-BEARING CHOICE HERE. Turning
+	// it into a route refusal would mean a full disk, a read-only save directory or a file held
+	// by another process STRANDS THE PLAYER AT THE TITLE SCREEN -- trading a guided opening they
+	// might not want for the game they definitely do. The arm below still delivers the guided
+	// opening in that case, which is precisely why it is carried separately from the disk write.
+	FString ClearFailure;
+	if (!UStratMatchSubsystem::ClearMatchCompletionOnSave(
+			CompletionClearSlotForRoute(Route, SaveSlotName), ClearFailure))
+	{
+		UE_LOG(LogStratPlay, Warning,
+			TEXT("Shell route %d could not clear the completed-match record: %s. Travelling anyway."),
+			static_cast<int32>(Route), *ClearFailure);
+	}
+
+	// THE SAME FACT, CARRIED ACROSS THE TRAVEL INSTEAD OF WRITTEN TO DISK. See
+	// `ArmPendingForcedGuidance`: the disk write above is the durable half and can fail, this
+	// is the half that cannot, and the guarantee the user asked for is the two together. Also
+	// unconditional, and arming FALSE on every other route is what stops an arm outliving the
+	// route that made it.
+	ArmPendingForcedGuidance(RouteStartsAFreshMatch(Route));
 
 	UE_LOG(LogStratPlay, Log, TEXT("Shell route %d opening %s."),
 		static_cast<int32>(Route), *Destination.ToSoftObjectPath().ToString());

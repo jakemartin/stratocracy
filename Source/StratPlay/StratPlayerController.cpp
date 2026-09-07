@@ -1597,10 +1597,46 @@ void AStratPlayerController::TryArmGuidedOpening()
 		return;
 	}
 
+	// §2.11.6: THE NEW MATCH ROUTE'S FORCED ARM, CONSUMED HERE.
+	// `UStratShellSubsystem::ExecuteRoute(NewMatch)` armed this before travelling, having
+	// also cleared the completion bit off the slot. Both halves exist because the disk write
+	// can fail and that route travels anyway; see `ArmPendingForcedGuidance`.
+	//
+	// CONSUMED BELOW THE SEEDED GUARD, WHICH IS WHY IT IS NOT AT THE TOP OF THIS FUNCTION.
+	// This function runs on EVERY refresh and returns above until the bridge is seeded; a
+	// consume up there would burn the flag on a refresh that armed nothing, and the refresh
+	// that finally arms would read false and suppress. The bug that shape produces is the
+	// exact one this whole change exists to fix, and it would be intermittent.
+	//
+	// A MISSING SHELL SUBSYSTEM READS AS "NOT FORCED", NOT AS A FAILURE. That is the state of
+	// a world entered without going through the title menu -- PIE straight into the match
+	// map, and every headless fixture -- and in that state there is no New Match route to
+	// have promised anything.
+	bool bForced = false;
+	if (const UGameInstance* const Instance = GetGameInstance())
+	{
+		if (UStratShellSubsystem* const Shell = Instance->GetSubsystem<UStratShellSubsystem>())
+		{
+			bForced = Shell->ConsumePendingForcedGuidance();
+		}
+	}
+
 	// §2.11.6: "Any completed match on the save skips all guidance automatically."
 	// An empty slot name means the configured default; a slot that does not exist answers
 	// false, which is correct — a save with no history has no completed match on it.
-	const bool bSuppressed = Match->HasCompletedAMatchOnSave(FString());
+	//
+	// THE FORCED ARM SHORT-CIRCUITS THE SAVE READ RATHER THAN OVERRIDING ITS ANSWER, and the
+	// `&&`'s order is the whole of it: on a forced route the disk is not consulted at all, so
+	// a slot the clear could not write cannot suppress what the route promised.
+	//
+	// WHAT THIS DOES NOT PROMISE. `bSuppressed == false` only means §2.11.6 is not being
+	// skipped for HISTORY. `FStratGuidedOpening::Begin` still returns early when
+	// `FStratBridge::GuidedOpeningHexes` refuses -- a scenario with no `guidedOpening` block
+	// for this seat has no beat 1a to run, which `Ui.h` calls a configuration and not a fault.
+	// "New Match always plays the guided opening" therefore holds for a scenario that authors
+	// one, which the shipped Ferrum Crossing does; it is not a claim about every scenario, and
+	// forcing the arm cannot conjure a beat out of a scenario that names no objective hex.
+	const bool bSuppressed = !bForced && Match->HasCompletedAMatchOnSave(FString());
 
 	// THE GUIDED SEAT IS THE VIEWING SIDE AT ARMING TIME AND IS FIXED FROM THEN ON. §2.11.6
 	// is a first-session onboarding against §2.9's Easy AI, so the human holds one seat for

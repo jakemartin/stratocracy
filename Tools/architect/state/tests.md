@@ -14,6 +14,111 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-06 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- ONE new `Tests/`
+  file, `Source/StratPlay/Tests/StratNewMatchForcedGuidanceClauses.cpp`, plus this record file,
+  on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit `e36e78c`, and this pass
+  is UNCOMMITTED).** No exception clause is cited and none applies. No production file was
+  touched. The engineer's four-part §2.11.6 undo was UNCOMMITTED in the working tree over the
+  same base and was read there, not from the brief -- which mattered: the brief's proposed clause
+  list named `T-SAVE-06` / `T-TURN-09` / `T-GUIDE-01` as guesses, and the tree's own conventions
+  put the shell statics under `GATE-TITLEMENU` and the guided-opening behaviour under `T-UI-03`.
+  Cite this pass by its exported `reportCreatedOn 2026.09.07-02.43.19` -- **that stamp runs a day
+  ahead of the local date in this bullet, which is this project's standing caveat about report
+  timestamps and not a discrepancy**. The pass/fail figure lives in
+  `Tools/architect/state/global.md` and nowhere else.
+  - **ELEVEN CLAUSES ADDED, COUNTED BY MACRO.**
+    `grep -c IMPLEMENT_SIMPLE_AUTOMATION_TEST Source/StratPlay/Tests/StratNewMatchForcedGuidanceClauses.cpp`
+    returns 11, and all eleven names appear in the exported report. Counted this way because a
+    single-line grep on a clause NAME has returned zero in this tree before -- the macro wraps
+    every name onto its own continuation line.
+  - **WHICH CLAUSE PINS WHICH BEHAVIOUR.**
+    - `T-SAVE-06.ClearingCompletionPreservesEverythingButTheBit` -- the 2026-09-06 user decision
+      that New Match clears ONE BIT and never the slot. This is the clause that reddens if
+      `UGameplayStatics::DeleteGameInSlot` is ever substituted for the read-modify-write; the
+      §4.10 text it requires preserved is the text `SaveMatchToSlot` itself produced.
+    - `T-SAVE-06.ClearingAnAbsentSlotSucceedsAndAuthorsNoPayload` -- the load-bearing half is NOT
+      the `true`. It is the assertion AFTER: the slot must still not exist. A clear that
+      default-constructed a payload returns the same `true` and authors a save file for a player
+      who has never saved.
+    - `T-SAVE-06.ClearingAnEmptySlotNameIsRefusedWithItsOwnReason` -- the refusal is the entire
+      mechanism by which Continue, Return to Title, Quit and Options clear nothing, because
+      `ExecuteRoute` calls the clear UNCONDITIONALLY with an empty string on those routes.
+    - `T-SAVE-06.ClearingDoesNotStampTheSavedDataVersion` -- the divergence from
+      `RecordMatchCompletionOnSave` that a later "make the two writers consistent" pass would
+      delete. `kCurrentSavedDataVersion` appears in the CONTROL only; the expectation is the
+      version read back off the payload immediately before the call.
+    - `GATE-TITLEMENU.OnlyTheNewMatchRouteStartsAMatchFromTheScenario` -- membership.
+    - `GATE-TITLEMENU.OnlyTheFreshRouteCarriesASlotToClearTheCompletionOff` -- the pairing, kept
+      separate from membership so that one function deciding wrongly is one red clause, not two.
+    - `GATE-TITLEMENU.TheClearedSlotIsTheConfiguredOneAndNotABakedInName` -- the clause standing
+      between the suite and the player's save file: a fresh arm returning a literal would be
+      indistinguishable from the correct one on the shipped configuration.
+    - `GATE-TITLEMENU.TheForcedGuidanceArmSurvivesOnePeekAndOneConsumeOnly` and
+      `.ArmingFalseClearsAnArmAnEarlierRouteLeftBehind` -- deliberately two clauses. The second
+      is not redundant: `if (bInForced) { bPendingForcedGuidance = true; }` passes the first
+      entirely and leaves a New Match arm standing across a subsequent Continue.
+    - `T-UI-03.TheForcedGuidanceArmIsNotConsumedBeforeTheBridgeIsSeeded` -- the consume sits
+      BELOW the seeded guard.
+    - `T-UI-03.ANewMatchArmForcesGuidancePastACompletedMatchOnTheSave` -- the user's sentence,
+      end to end through the shipped controller.
+  - **A DEBT THE ENGINEER DECLARED OPEN WAS CLOSED, AND THE FIXTURE IT DOUBTED ALREADY EXISTED.**
+    The engineer reported that nothing could pin the consume staying below the seeded guard and
+    that it "does not know whether" a fixture holding an UNSEEDED bridge exists. It does, and no
+    seam was needed: `AStratPlayerController::DecorateForPresentation` is **public** and calls
+    `TryArmGuidedOpening` on every invocation, and `PeekPendingForcedGuidance` is the
+    non-destructive reader that makes the flag observable without disturbing it. The clause
+    refreshes three times unseeded (the arm must survive) and once seeded (it must be gone), so
+    the two halves fail in opposite directions. **The general lesson: "no fixture can reach this"
+    is a claim about the tree, and it was checkable in two greps -- one for the access specifier
+    and one for a non-consuming reader.**
+  - **WHAT IS STILL NOT PINNED, AND IT IS `ExecuteRoute`'S TRAVELLING TAIL -- VERIFIED
+    INDEPENDENTLY, NOT ACCEPTED FROM THE ENGINEER.** Re-running that function's own suggested
+    derivation over this tree: every live `->ExecuteRoute(` call site passes
+    `EStratShellRoute::Options` -- **FOUR of them, and this sentence read "five" until
+    [CORRECTED 2026-09-06]: five is the total across BOTH routes, which is why the next clause of
+    the same sentence called the fifth "the one `ContinueMatch` call" and contradicted the number
+    in front of it. Re-derived at the correction, not carried from the report of it:
+    `StratPlayerController.cpp:571`, `StratShellMenuWidget.cpp:132`,
+    `StratShellOptionsRouteClauses.cpp:261` and `:281` pass `Options`;
+    `StratShellRouteClauses.cpp:1588` passes `ContinueMatch`. Four plus one is five, and the
+    CONCLUSION below is unaffected because it needs every site to stop short of the tail, not a
+    particular count of them.** Those four are in `StratPlayerController.cpp`,
+    `StratShellMenuWidget.cpp` and `StratShellOptionsRouteClauses.cpp`, whose arm returns inside
+    the `!RouteTravels(Route)` block; the one `ContinueMatch` call, in
+    `StratShellRouteClauses.cpp`'s `ARefusedRouteArmsNothing`, stops at the permission arm on a
+    null destination and so never reaches `ResolveDestination`. **So
+    nothing in `Source/` executes the tail**, and the three unconditional calls in it --
+    `ArmPendingLoadSlot`, `ClearMatchCompletionOnSave`, `ArmPendingForcedGuidance` -- plus the
+    decision to TRAVEL ANYWAY on a failed clear are unreachable by any clause. Each of the four
+    pieces they hand off to is pinned on its own; the WIRING is not.
+    - **The change that would close it, named rather than requested:** extracting the tail's
+      pre-travel work into a callable member on `UStratShellSubsystem` -- everything between the
+      destination resolve and `OpenLevelBySoftObjectPtr` -- so a clause could run it and read the
+      three armed/cleared results. That is `Source/StratPlay/StratShellSubsystem.h` / `.cpp` and
+      is not this lane's to make.
+    - **The consequence a reader should carry:** a clause count over §2.11.6's undo does NOT mean
+      the New Match button is wired to it. The four parts are each proven; that `ExecuteRoute`
+      calls them in that order on that route is proven by READING, not by a gate.
+  - **FIXTURE-SLOT HYGIENE, AND A DEFECT FOUND IN ANOTHER `Tests/` FILE.** Every clause here uses
+    its own mixed-case slot deleted on BOTH ends of an RAII scope, and `StratocracyMatch` --
+    the player's slot -- appears nowhere in the file, not even in a comparison. Measured before
+    and after the run, `Saved/SaveGames/StratocracyMatch.sav` is byte-identical at
+    `sha256 c78b5af5f8c8dd890da4f57a0248900eccc6ed0042674b15a9a034f9bdb0cb9e`, and none of the
+    six fixture slots survived teardown. **But `StratOptionsPresenterClauses.cpp` DOES leak
+    one:** it names `kFixtureSlot = "StratOptionsPresenterClauses_Fixture"` and the file contains
+    no `DeleteGameInSlot` at all, so `Saved/SaveGames/StratOptionsPresenterClauses_Fixture.sav`
+    exists on this machine and its bytes MOVED across this suite run. It is not the player's slot
+    and `Saved/` is gitignored, so nothing is destroyed and no commit carries it -- but it is the
+    same class of defect the whole slot-hygiene convention exists against, and a leaked fixture
+    payload is state one clause can hand the next. **Not fixed in this pass, which was scoped to
+    the §2.11.6 undo; recorded here as the next thing this lane should pick up.**
+  - **A CLAUSE-SHAPE CAVEAT, SO IT IS NOT REDISCOVERED.**
+    `ANewMatchArmForcesGuidancePastACompletedMatchOnTheSave` deliberately does NOT declare
+    `"Guided opening suppressed"` as an expected message. `AddExpectedMessagePlain` with
+    `Occurrences 0` means AT LEAST ONE, so declaring it would fail the ARMED half for the correct
+    reason that it suppressed nothing -- and the line is `Log` verbosity, which is not an
+    automation failure in the first place.
+
 - **2026-09-06 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- two `Tests/` files,
   `Source/StratUI/Tests/StratSoundCueClauses.cpp` and
   `Source/StratPlay/Tests/StratShippedSoundBankParity.cpp`, plus this record file, on `master`
@@ -3881,6 +3986,13 @@
 
         grep -rn "ExecuteRoute(" Source/ | grep -v "://" | grep -- "->ExecuteRoute("
 
+  **THE TWO FIGURES IN THE NEXT SENTENCE ARE HISTORY AND NO LONGER DESCRIBE THIS TREE
+  [STAMPED 2026-09-06]: the derivation's own stated void-trigger -- "a second `ExecuteRoute`
+  caller appearing" -- HAS FIRED. Re-run at the stamp, the filtered form returns SIX and the
+  unfiltered TWENTY-ONE. The current derivation, with the call sites enumerated, is the
+  `ExecuteRoute`-travelling-tail entry at the top of this file; read that one, not this. The
+  paragraph STAYS because the method it teaches -- filter the census's own prose out of the
+  census -- is what still transfers.**
   **I ran it in this tree and got ONE line**, the call inside `FStratShellRefusedRouteArmsNothingTest`,
   whose own fixture asserts the route is REFUSED -- so it returns before `ArmPendingLoadSlot`.
   **The unfiltered form returned SIX in the same tree, so the middle filter is doing real work**,

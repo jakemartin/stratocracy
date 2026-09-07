@@ -560,6 +560,45 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
 	static FString PendingSlotForRoute(EStratShellRoute Route, const FString& ConfiguredSlot);
 
+	/**
+	 * True for `NewMatch` alone. The route that starts a match from the scenario rather than
+	 * restoring one, and therefore the route that puts a player back at the beginning.
+	 *
+	 * IT IS THE EXACT COMPLEMENT OF `RouteLoadsSaveSlot` TODAY AND IS STILL ITS OWN FUNCTION,
+	 * because the two answer different questions and only one of them is "not the other". A
+	 * sixth route that neither restores nor starts fresh -- a tutorial, a skirmish setup screen
+	 * -- would be false on both, and a `!RouteLoadsSaveSlot(Route)` written at either of this
+	 * function's two call sites would then have said "start fresh" about it. That is the
+	 * `RouteExitsProcess` failure exactly: a fact inferred by exclusion from a predicate that
+	 * grew a third case, which in that instance would have quit the game when a player asked
+	 * for the volume screen.
+	 *
+	 * TWO CALLERS, ONE AUTHORITY. `CompletionClearSlotForRoute` asks it to decide WHICH SLOT
+	 * to clear the §2.11.6 completion bit off, and `ExecuteRoute` asks it to decide whether to
+	 * arm the forced guided opening. Those are two consequences of one fact about the route,
+	 * and they are written as two calls to one predicate rather than two comparisons against
+	 * `EStratShellRoute::NewMatch` -- which is `PendingSlotForRoute`'s stated reasoning, and
+	 * the two would have agreed right up until one of them was edited.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
+	static bool RouteStartsAFreshMatch(EStratShellRoute Route);
+
+	/**
+	 * WHICH slot a route clears the §2.11.6 completion bit off, given the configured one.
+	 * `NewMatch` gets it; every other route gets an empty string, which
+	 * `UStratMatchSubsystem::ClearMatchCompletionOnSave` refuses by name and so is a no-op.
+	 *
+	 * IT IS SHAPED LIKE `PendingSlotForRoute` ON PURPOSE, INCLUDING THE EMPTY RETURN, and for
+	 * that function's stated reason rather than for symmetry: it lets `ExecuteRoute` call the
+	 * clear UNCONDITIONALLY, so the pairing of route to slot lives in a `static` a clause can
+	 * ask on its own instead of inside an `if` in the one member a headless clause cannot
+	 * execute past. An `ExecuteRoute` that cleared the wrong slot, a literal, or every slot
+	 * would otherwise have left every clause over this class green.
+	 */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
+	static FString CompletionClearSlotForRoute(EStratShellRoute Route,
+	                                           const FString&   ConfiguredSlot);
+
 	// ---- CONFIGURATION, from a GameMode's Blueprint defaults on BeginPlay. ----
 
 	/** Called by `AStratShellGameMode`, which is the only object that knows the match level. */
@@ -636,9 +675,18 @@ public:
 	 * asks permission (`IsRoutePermitted`), asks whether the route travels at all
 	 * (`RouteTravels`) and leaves by the quit arm if it does not, asks for a destination
 	 * (`ResolveDestination`), asks which slot to arm (`PendingSlotForRoute`), arms it
-	 * (`ArmPendingLoadSlot`), and opens the level. EVERY ITEM ON THAT LIST IS A CALL TO
+	 * (`ArmPendingLoadSlot`), asks which slot to clear the §2.11.6 completion bit off
+	 * (`CompletionClearSlotForRoute`) and clears it
+	 * (`UStratMatchSubsystem::ClearMatchCompletionOnSave`), asks whether the route starts a
+	 * fresh match (`RouteStartsAFreshMatch`) and arms the forced guided opening
+	 * (`ArmPendingForcedGuidance`), and opens the level. EVERY ITEM ON THAT LIST IS A CALL TO
 	 * SOMETHING A CLAUSE CAN REACH ON ITS OWN, EXCEPT THE ENGINE CALLS THEMSELVES --
 	 * `QuitGame` and `OpenLevelBySoftObjectPtr`, of which exactly one runs.
+	 *
+	 * THE FOUR §2.11.6 ITEMS WERE ADDED WITH THE CODE AND NOT AFTERWARDS, WHICH IS THE ONLY
+	 * REASON THIS PARAGRAPH IS WORTH ANYTHING. The next paragraph records what happened the one
+	 * time this list acquired a dependent while incomplete; that is a standing instruction to
+	 * whoever adds the next call, not a closed piece of history.
 	 *
 	 * `RouteTravels` WAS MISSING FROM THAT LIST FOR ONE PASS, AND THE OMISSION IS RECORDED
 	 * RATHER THAN QUIETLY REPAIRED, because of what had already been built on top of it. The
@@ -678,26 +726,41 @@ public:
 	 * flake; but nothing rescues a green. So the claim was true and the reason given for it
 	 * could not have established it.
 	 *
-	 * WHAT STANDS IN ITS PLACE IS A DERIVATION ANY CHECKOUT CAN REDO. `ExecuteRoute` has
-	 * exactly one call site in `Source/` -- inside `FStratShellRefusedRouteArmsNothingTest`,
-	 * on a fixture whose own assertion is that the route is REFUSED, so the call returns at
-	 * the permission arm and never reaches the arming line at all. Nothing executes that line;
-	 * therefore restoring the `if` around it cannot change any observable behaviour, and no
-	 * clause can redden. That is stronger than the mutant would have been even had it been
-	 * sound, because it says WHY nothing catches the change rather than reporting that nothing
-	 * did.
+	 * WHAT STANDS IN ITS PLACE IS A DERIVATION ANY CHECKOUT CAN REDO. Its PREMISE has since
+	 * moved and is restated here rather than left standing, because the paragraph itself named
+	 * the trigger -- see the "second caller" sentence below, which fired and was not acted on.
+	 *   RETRACTED>  "`ExecuteRoute` has exactly one call site in `Source/` -- inside
+	 *   RETRACTED>   `FStratShellRefusedRouteArmsNothingTest` ..."
+	 * As of 2026-09-06 it has several: `AStratPlayerController::RequestOptionsScreen`,
+	 * `UStratShellMenuWidget`, and clauses in `StratShellOptionsRouteClauses.cpp`. Re-run
+	 * `grep -rn -- "->ExecuteRoute(" Source/` for the current set.
+	 *
+	 * THE CONCLUSION SURVIVES THE PREMISE MOVING, AND ONLY BECAUSE OF WHICH ROUTE THOSE CALLERS
+	 * TAKE. Every one of them passes `EStratShellRoute::Options`, and `RouteOpensOptions`'
+	 * arm sits inside the `!RouteTravels(Route)` block and RETURNS THERE -- so no caller in
+	 * `Source/` reaches the travelling tail at all, and `FStratShellRefusedRouteArmsNothingTest`
+	 * stops at the permission arm before even that. Nothing in the tree executes the arming
+	 * lines; therefore restoring an `if` around any of them cannot change observable behaviour
+	 * and no clause can redden. That is stronger than the mutant would have been even had it
+	 * been sound, because it says WHY nothing catches the change rather than reporting that
+	 * nothing did.
 	 *
 	 * AND IT IS FALSIFIABLE BY SOMEONE WHO WAS NOT HERE, WHICH THE MUTANT NEVER WAS. A grep
 	 * over the tree is re-runnable by any reader at any commit; a mutant is a tree somebody
 	 * built once and threw away, and a citation to it is a claim about bytes that no longer
-	 * exist. Cite the derivation. It stops being true the moment a second caller appears --
-	 * which is the correct trigger, and is exactly when this paragraph must be rewritten.
+	 * exist. Cite the derivation. IT STOPS BEING TRUE THE MOMENT A CALLER TAKES A TRAVELLING
+	 * ROUTE -- which is the correct trigger, sharpened from "a second caller appears" because
+	 * that one fired on a caller that changed nothing, and a trigger that fires without
+	 * consequence is the kind that gets ignored the next time. This paragraph must be rewritten
+	 * then.
 	 *
 	 * WHAT IS ACTUALLY UNPINNED, THEN, AND NOTHING WIDER: the engine call on the permitted
-	 * arm; the CONDITIONALITY of the arming call, which the unconditional-call comment in the
-	 * body argues for and no clause enforces; and whatever ordering the refusal clause does
-	 * not reach. A stronger sentence than that one needs a clause standing behind it before it
-	 * is written here.
+	 * arm; the CONDITIONALITY of the three unconditional calls in the travelling tail --
+	 * `ArmPendingLoadSlot`, `ClearMatchCompletionOnSave` and `ArmPendingForcedGuidance` -- each
+	 * of which the body argues for and no clause enforces; the DECISION TO TRAVEL ANYWAY when
+	 * the completion clear fails, which no fixture can reach because no fixture reaches the
+	 * tail; and whatever ordering the refusal clause does not reach. A stronger sentence than
+	 * that one needs a clause standing behind it before it is written here.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Shell")
 	bool ExecuteRoute(EStratShellRoute Route, FString& OutFailureReason);
@@ -786,6 +849,55 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Shell")
 	void ArmPendingLoadSlot(const FString& InSlotName);
 
+	/**
+	 * Whether the next world's guided opening should run REGARDLESS of what the save slot
+	 * remembers. Armed by `ExecuteRoute(NewMatch)`; read once, in the destination world, by
+	 * `AStratPlayerController::TryArmGuidedOpening`.
+	 *
+	 * WHY THIS EXISTS WHEN THE SLOT CLEAR ALONE WOULD USUALLY DO. `ExecuteRoute` clears the
+	 * §2.11.6 completion bit before travelling, so on a good day the destination world reads
+	 * false off the disk and guidance runs with no help from this flag. This carries the
+	 * guarantee explicitly for the days that are not good ones: `ClearMatchCompletionOnSave`
+	 * touches a disk that can be full, read-only, or held by something else, and `ExecuteRoute`
+	 * deliberately TRAVELS ANYWAY when it fails rather than stranding the player at the title
+	 * screen. The user asked for "always plays on a new game", and a promise that depends on a
+	 * disk write succeeding is not always.
+	 *
+	 * THREE FUNCTIONS, NOT A PUBLIC MEMBER, ON `ArmPendingLoadSlot`'S REASONING EXACTLY. The
+	 * shipped path is `ExecuteRoute(NewMatch)`, whose second half no headless clause survives,
+	 * so the state change is split into an entry point `ExecuteRoute` CALLS -- the tested line
+	 * and the shipped line are the same line -- plus a consuming read and a non-consuming peek.
+	 *
+	 * IT TAKES THE VALUE RATHER THAN ASSUMING IT, so `ExecuteRoute` can call it with
+	 * `RouteStartsAFreshMatch(Route)` and no `if`. Arming FALSE is meaningful and not a
+	 * no-op: it is what stops a route that does not start a fresh match from inheriting an
+	 * arm some earlier route left behind.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Shell")
+	void ArmPendingForcedGuidance(bool bInForced);
+
+	/**
+	 * Returns the pending forced-guidance flag and clears it.
+	 *
+	 * CONSUMING RATHER THAN READING, for `ConsumePendingLoadSlot`'s reason and with the same
+	 * failure on the other side of it: a player who takes New Match, plays, and later travels
+	 * again would be silently forced through the onboarding a second time by a flag that
+	 * survived its first use. Once is the contract, and it is a function rather than a
+	 * convention so a clause can pin the second call returning false.
+	 *
+	 * ITS CALLER CONSUMES IT AFTER THE SEEDED CHECK AND NOT BEFORE, WHICH IS NOT A DETAIL.
+	 * `TryArmGuidedOpening` runs on EVERY refresh until the bridge is seeded and returns early
+	 * until then; a consume above that guard would burn this flag on a refresh that armed
+	 * nothing, and the arming refresh that followed would read false. See that function.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Shell")
+	bool ConsumePendingForcedGuidance();
+
+	/** Whether a forced guided opening is armed, without consuming it. The non-destructive
+	 *  half, so a clause can establish the state it is about to consume. */
+	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
+	bool PeekPendingForcedGuidance() const { return bPendingForcedGuidance; }
+
 	/** The slot name configured on the title GameMode. Empty until one configures it. */
 	UFUNCTION(BlueprintPure, Category = "Stratocracy|Shell")
 	FString GetSaveSlotName() const { return SaveSlotName; }
@@ -843,6 +955,17 @@ private:
 	/** Written by `ExecuteRoute(ContinueMatch)`, read once by the next world's GameMode. */
 	UPROPERTY(Transient)
 	FString PendingLoadSlot;
+
+	/**
+	 * Written by `ExecuteRoute` on every travelling route -- true only on `NewMatch` -- and
+	 * read once by the destination world's `AStratPlayerController::TryArmGuidedOpening`.
+	 *
+	 * `Transient`, LIKE EVERY OTHER MEMBER HERE. It must not survive a process: a saved "force
+	 * the onboarding" would fire on the first frame of a launch nobody asked it to, which is
+	 * the same lie `bMatchDestinationConfigured`'s block refuses for its own field.
+	 */
+	UPROPERTY(Transient)
+	bool bPendingForcedGuidance = false;
 
 	/**
 	 * See `IsOptionsPanelOpen`. `Transient`, like every member here.

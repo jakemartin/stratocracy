@@ -1719,6 +1719,71 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Guidance")
 	bool RecordMatchCompletionOnSave(const FString& SlotName, FString& OutFailureReason);
 
+	/**
+	 * §2.11.6's UNDO: takes `bHasCompletedAMatch` back off the slot, leaving every other field
+	 * -- `SaveText` above all -- byte-identical. The New Match route calls this so that
+	 * choosing New Match always plays the guided opening.
+	 *
+	 * WHAT GAP THIS CLOSES, MEASURED RATHER THAN ASSERTED. `RecordMatchCompletionOnSave` was
+	 * the only writer of that field and it is ONE-WAY, so on any machine that had finished a
+	 * match once, §2.11.6 was over forever. Measured on this tree at `e36e78c`, one PIE
+	 * session, three log lines 164 ms apart: `Shell route 0 opening
+	 * /Game/StratMaps/Lvl_FerrumCrossing`, then `Match started by BP_StratGameMode_C_0.`, then
+	 * `Guided opening suppressed for side 0: this save has a completed match.` The slot that
+	 * did it serialized exactly one property name, `bHasCompletedAMatch` / `BoolProperty` --
+	 * and a name present in a `.sav` means a NON-DEFAULT value, which is what makes that byte
+	 * reading a measurement instead of a guess. (Control for that instrument:
+	 * `StratocracyAudio.sav`, an all-defaults payload, serializes ZERO property names.)
+	 *
+	 * IT CLEARS ONE BIT AND DOES NOT DELETE THE SLOT. USER DECISION, 2026-09-06, taken over
+	 * the stated alternative of `UGameplayStatics::DeleteGameInSlot`: a player who saved
+	 * mid-match and then starts a new one must still be able to Continue the old one
+	 * afterwards, so `SaveText` survives this call unchanged and `Continue` keeps offering the
+	 * match it offered before. Deleting the slot would have been one line and would have
+	 * silently destroyed that save.
+	 *
+	 * "NO SLOT" AND "ALREADY FALSE" ARE SUCCESS, NOT FAILURE, and the reason is not
+	 * convenience: this is called on the way out of a menu, its whole job is to leave the bit
+	 * off, and in both of those states the bit is already off. Reporting failure would make
+	 * `ExecuteRoute` log a warning on the single most common path through the shipped game --
+	 * a first-time player choosing New Match with no save file at all.
+	 *
+	 * A SLOT THIS BUILD CANNOT CAST IS ALSO SUCCESS, AND HERE IT DIVERGES FROM
+	 * `RecordMatchCompletionOnSave`, DELIBERATELY. That method creates a fresh payload in that
+	 * case, because it has something to record and an unreadable slot holds nothing of ours.
+	 * This one has nothing to record: creating a payload would OVERWRITE a stranger's file to
+	 * clear a bit that file never carried. Refusing to write is the whole content of the
+	 * answer.
+	 *
+	 * IT DOES NOT STAMP `SavedDataVersion`, WHICH IS THE OTHER DIVERGENCE FROM THE WRITER
+	 * ABOVE. That method stamps because it may be authoring a payload from nothing, so the
+	 * shape going to disk is this build's shape and saying so is honest. This method never
+	 * creates one; stamping would take a slot written at another version and make it CLAIM to
+	 * be current, which is exactly the lie `IsPayloadRestorable`'s version arm exists to
+	 * catch. Every field but the one bit is left as read.
+	 *
+	 * NO VERSION GATE, matching `HasCompletedAMatchOnSave` and `RecordMatchCompletionOnSave`
+	 * and not `LoadMatchFromSlot`, and their argument is symmetric: this touches one bool
+	 * about the player's history and never interprets `SaveText`, so a slot from another shape
+	 * of this struct is not a reason to refuse to forget that a match ended.
+	 *
+	 * STATIC, AND IT TAKES THE SLOT NAME EXPLICITLY, on `DoesSlotHoldARestorableMatch`'s
+	 * reasoning and for its exact caller: `UStratShellSubsystem` runs on the TITLE world where
+	 * no `UStratMatchSubsystem` exists at all -- it is a `UWorldSubsystem`. `ResolveSaveSlotName`
+	 * is an instance method because its fallback lives in `ActiveConfig`, which such a caller
+	 * does not have. An empty name is refused rather than resolved.
+	 *
+	 * WHAT IT CANNOT DO, said here rather than left to be discovered: clearing this bit does
+	 * not by itself GUARANTEE the guided opening, because `FStratGuidedOpening::Begin` still
+	 * returns early when `FStratBridge::GuidedOpeningHexes` refuses -- a scenario with no
+	 * `guidedOpening` block for that seat has no beat 1a to run and that is correct. The
+	 * guarantee `UStratShellSubsystem::ArmPendingForcedGuidance` carries is over the
+	 * SUPPRESSION only. For the shipped scenario, whose objective hex is authored, the two
+	 * together do mean New Match always plays it.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Stratocracy|Guidance")
+	static bool ClearMatchCompletionOnSave(const FString& SlotName, FString& OutFailureReason);
+
 	/** The board actor, or null when none was spawned. Phase 4's selection machine drives
 	 *  the reach and target overlays through it, and `ApplyView` drives §2.11.6-B's objective
 	 *  ring through it directly.

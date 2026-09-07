@@ -16,6 +16,111 @@
 ## NEXT
 
 - **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `e36e78c`, UNCOMMITTED) -- NEW MATCH NOW CLEARS
+  THE §2.11.6 COMPLETION BIT AND FORCES THE GUIDED OPENING, AND THE THING WORTH READING IS THAT
+  THE GUARANTEE IS CARRIED TWICE ON PURPOSE BECAUSE ONE OF THE TWO HALVES TOUCHES A DISK.** No
+  exception clause applies and none is cited. The live suite figure and the phase verdict are
+  `global.md`'s and are not restated here.
+  - **THE DEFECT, RE-VERIFIED IN THIS TREE BEFORE ANY CODE WAS WRITTEN.** Four premises arrived
+    in the brief and all four checked out. (1) `Saved/Logs/Stratocracy.log`, one PIE session,
+    three lines 164 ms apart: `Shell route 0 opening /Game/StratMaps/Lvl_FerrumCrossing`, then
+    `Match started by BP_StratGameMode_C_0.`, then `Guided opening suppressed for side 0: this
+    save has a completed match.` (2) `Saved/SaveGames/StratocracyMatch.sav` serializes exactly
+    one property name, `bHasCompletedAMatch` / `BoolProperty`; the CONTROL is
+    `StratocracyAudio.sav`, an all-defaults payload, which serializes ZERO property names, while
+    `StratOptionsPresenterClauses_Fixture.sav` serializes the three volume names it changed --
+    so a name present means a non-default value, i.e. the bool is `true`. (3)
+    `TryArmGuidedOpening` passed `Match->HasCompletedAMatchOnSave(FString())` straight into
+    `bSuppressed` and `FStratGuidedOpening::Begin` returns before `bActive = true` on it. (4)
+    `grep -rn "ClearSave\|DeleteGameInSlot\|ResetGuidance" Source/` returns **only `Tests/`
+    files**, and the only writer of the field outside `Tests/` is
+    `RecordMatchCompletionOnSave`, which writes `true` and nothing else -- so the flag was
+    one-way and §2.11.6 was over forever on any machine that had finished a match once.
+  - **WHAT SHIPPED, FOUR PARTS.** `UStratMatchSubsystem` grows the STATIC
+    `ClearMatchCompletionOnSave(SlotName, OutFailureReason)`. `UStratShellSubsystem` grows two
+    statics -- `RouteStartsAFreshMatch` and `CompletionClearSlotForRoute` -- and the
+    forced-guidance handoff trio `ArmPendingForcedGuidance` / `ConsumePendingForcedGuidance` /
+    `PeekPendingForcedGuidance` over a `Transient bPendingForcedGuidance`, plus two
+    unconditional calls in `ExecuteRoute`'s travelling tail. `AStratPlayerController::
+    TryArmGuidedOpening` consumes the flag and computes `bSuppressed = !bForced &&
+    Match->HasCompletedAMatchOnSave(FString())`. `Source/StratRules/`, `Data/`,
+    `Source/Stratocracy/` and every `Tests/` directory are untouched.
+  - **THE USER'S DECISION THAT NARROWED IT, RECORDED BECAUSE THE OTHER OPTION WAS ONE LINE.**
+    Clear only the completion flag, not the slot -- `SaveText` survives byte-identical so a
+    player who saved mid-match can still Continue. `UGameplayStatics::DeleteGameInSlot` was the
+    alternative offered and was rejected; nothing in this change calls it.
+  - **WHY THE GUARANTEE IS CARRIED TWICE, WHICH IS THE PART WORTH READING.** The slot clear is
+    the durable half and it touches a disk that can be full, read-only or locked.
+    `ExecuteRoute` therefore logs a Warning and **travels anyway** on a failed clear rather than
+    refusing the route, because a failed disk write must not strand the player at the title
+    screen -- and the in-memory `bPendingForcedGuidance` is what still delivers the guided
+    opening in that state. The `&&`'s order in `TryArmGuidedOpening` is load-bearing for the
+    same reason: on a forced route the disk is not consulted at all, so a slot the clear could
+    not write cannot suppress what the route promised.
+  - **ONE PREDICATE, TWO CALLERS, AND IT IS NOT `!RouteLoadsSaveSlot`.** `RouteStartsAFreshMatch`
+    is the single authority for "this route starts a match from the scenario"; the slot-clear
+    helper and the forced-guidance arm each ask it. Writing either as the complement of
+    `RouteLoadsSaveSlot` would be `RouteExitsProcess`'s recorded failure exactly -- a fact
+    inferred by exclusion from a predicate that later grew a third case, which in that instance
+    would have quit the game when a player asked for the volume screen.
+  - **THE CONSUME SITS BELOW THE SEEDED GUARD, AND THAT ORDERING IS THE ONE THING IN THIS CHANGE
+    MOST LIKELY TO BE "TIDIED" WRONG.** `TryArmGuidedOpening` runs on every refresh and returns
+    early until the bridge is seeded. A consume above that guard would burn the flag on a
+    refresh that armed nothing, and the refresh that finally arms would read false and suppress
+    -- reintroducing the exact defect, intermittently.
+  - **THE LIMIT IS IN THE CODE, NOT PAPERED OVER.** Forcing the arm cannot conjure a guided
+    opening for a scenario whose `guidedOpening` block is missing for that seat:
+    `FStratGuidedOpening::Begin` still returns early when `FStratBridge::GuidedOpeningHexes`
+    refuses, which `Ui.h` calls a configuration and not a fault. "Always plays" holds for a
+    scenario that authors one, which the shipped Ferrum Crossing does. Written into both
+    `ClearMatchCompletionOnSave`'s block and the arming site rather than claimed more widely.
+  - **TWO DIVERGENCES FROM `RecordMatchCompletionOnSave`, BOTH DELIBERATE AND BOTH IN ITS
+    HEADER.** A slot this build cannot cast is SUCCESS with no write -- the writer creates a
+    fresh payload there because it has a fact to record, and this one would be overwriting a
+    stranger's file to remove a bit that file never carried. And `SavedDataVersion` is NOT
+    stamped -- the writer stamps because it may author a payload from nothing, and stamping here
+    would make a slot written at another version CLAIM to be current, which is the lie
+    `IsPayloadRestorable`'s version arm exists to catch.
+  - **A STALE DERIVATION IN `ExecuteRoute`'s HEADER WAS CORRECTED RATHER THAN LEFT BESIDE NEW
+    CODE THAT LEANS ON IT.** That block asserted `ExecuteRoute` "has exactly one call site in
+    `Source/`" and named its own trigger for rewriting -- "the moment a second caller appears."
+    The trigger had already fired: `grep -rn -- "->ExecuteRoute(" Source/` returns
+    `AStratPlayerController::RequestOptionsScreen`, `UStratShellMenuWidget` and clauses in
+    `StratShellOptionsRouteClauses.cpp`. The CONCLUSION survives, and only because every one of
+    those callers passes `Options`, whose arm returns inside the `!RouteTravels` block -- so
+    nothing in the tree reaches the travelling tail my two new calls sit in. The trigger is
+    sharpened to "a caller takes a travelling route", because the old one fired on a caller that
+    changed nothing and a trigger that fires without consequence is the kind that gets ignored.
+    The same block's enumeration of the body was extended in the same edit as the code, which is
+    the discipline that block itself records a past failure of.
+  - **BUILD: `Build.bat StratocracyEditor Win64 Development` → `Result: Succeeded`**, 51 actions,
+    39.87 s, `UnrealEditor-StratPlay.dll` relinked. No editor process was running and that
+    absence was measured, not assumed: `tasklist /FI "IMAGENAME eq UnrealEditor.exe"` returned
+    `INFO: No tasks are running which match the specified criteria.`
+  - **NO SUITE RUN IN THIS PASS, STATED SO IT IS NOT MISTAKEN FOR ONE.** The clauses over this
+    behaviour do not exist yet -- they are `strat-test-author`'s and are named in the handoff
+    below. A green build is not a green suite and nothing here claims it is.
+
+### Debts taken on, 2026-09-06 (New Match clears the completion bit)
+
+- **THE TRAVELLING TAIL OF `ExecuteRoute` IS STILL EXECUTED BY NOTHING IN `Source/`,** so the
+  unconditionality of all three of its arming calls -- `ArmPendingLoadSlot`,
+  `ClearMatchCompletionOnSave`, `ArmPendingForcedGuidance` -- and the decision to TRAVEL ANYWAY
+  on a failed clear are argued in the body and enforced by no clause. The statics were extracted
+  precisely so the DECIDING is pinnable without the travel; the CALLING is not, and no fixture
+  can survive `OpenLevelBySoftObjectPtr`. **Discharged** by a clause that can drive a travelling
+  route, or by a seam that splits the tail from the travel the way `RequestOptionsPanel` split
+  the panel from `ExecuteRoute`. Until then this is a measured hole and not an assumed-covered
+  one.
+- **NOTHING PINS THAT THE CONSUME STAYS BELOW THE SEEDED GUARD.** A clause can pin
+  `ConsumePendingForcedGuidance`'s once-only contract, and one is requested below; the
+  PLACEMENT of the call inside `TryArmGuidedOpening` is argued in a comment and is invisible to
+  any assertion I can name. **Discharged** by a clause that drives `TryArmGuidedOpening` across
+  an unseeded refresh and then a seeded one with the flag armed once, and asserts guidance still
+  arms -- which needs a fixture that can hold an unseeded bridge, and I have not confirmed one
+  exists.
+
+- **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `7e83295`, UNCOMMITTED) -- THE DAMAGE ALERT
   LANDS AS TWO INDEPENDENT CLOCKS ON ONE TICK FLAG, AND THE THING WORTH READING IS THAT THE
   DEFECT THIS DESIGN EXISTS AGAINST IS ONE NO CLAUSE IN THIS TREE COULD HAVE SEEN.** No

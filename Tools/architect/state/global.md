@@ -11,6 +11,74 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-06 (NEW MATCH NOW ALWAYS PLAYS THE GUIDED OPENING, AND THE THING WORTH READING
+IS THAT NOTHING WAS BROKEN -- §2.11.6 WAS WORKING EXACTLY AS WRITTEN, SUPPRESSED BY A ONE-WAY
+LATCH WITH NO INVERSE WRITER. The user reported the guided tutorial not playing on a first game.
+`FStratGuidedOpening::Begin` was returning before `bActive = true` because
+`HasCompletedAMatchOnSave` answered true; `RecordMatchCompletionOnSave` had written that bit on
+2026-09-01 and NOTHING IN `Source/` COULD EVER WRITE IT BACK. So the defect was not a wrong
+branch but a MISSING VERB, and the whole suite was structurally blind to it: every clause about
+suppression asks whether the code obeys the bit, and the code obeyed it perfectly. A bug whose
+shape is "no writer exists" is invisible to every test of the readers.
+THE SUITE IS **456/456**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, read from the exported report with `utf-8-sig`. The macro census agrees at
+456, and the arithmetic closes: 445 + 11 added = 456, none removed or changed state.
+THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.07-02.43.19` (UTC; the local date of this
+pass is 2026-09-06, and the two differ because the run crossed 20:00 local).
+THE USER RULED THE SCOPE DOWN, AND THE NARROWER FORM IS THE ONE THAT SHIPPED. The instruction was
+"always clear the save"; New Match and Continue share one configured slot, so a literal wipe would
+have destroyed a saved match with no confirmation. Offered both, the user chose CLEAR ONLY THE
+COMPLETION BIT -- `SaveText` byte-identical, Continue still offered. `ClearMatchCompletionOnSave`
+therefore never calls `DeleteGameInSlot`, and a clause pins the preservation rather than leaving
+it to the reader.
+THE GUARANTEE IS CARRIED TWICE ON PURPOSE, WHICH WAS THE ENGINEER'S MOST CONSEQUENTIAL CALL. The
+disk clear can fail; the in-memory arm cannot. `ExecuteRoute` clears the bit, arms a `Transient`
+forced-guidance flag that survives the level travel, and TRAVELS ANYWAY ON A FAILED CLEAR with a
+warning -- a failed save write must not strand the player at the title screen, and the arm still
+delivers the opening. "Always plays" therefore does not depend on a disk write succeeding.
+AND IT DOES NOT DEPEND ON THE ROUTE HAVING BEEN INFERRED CORRECTLY. `RouteStartsAFreshMatch` is
+one authority asked twice -- by the slot helper and by the arm -- and was deliberately NOT
+derived as `!RouteLoadsSaveSlot`. This file already records what that shape cost once in this
+same function: a fact inferred by exclusion from a predicate that later grew a third case, which
+WOULD HAVE QUIT THE GAME when a player asked for the volume screen.
+THE BRIEF THIS SEAT WROTE CARRIED TWO FALSE LINE CITATIONS AND THE LANE CHECKED THEM. It cited
+`StratPlayerController.cpp ~1607` and `StratGuidedOpening.cpp:91`; the functions are as described
+and those are not their lines in this tree. The engineer corrected the framing and kept the
+conclusion. This is the same failure mode already recorded against briefs from this seat, and it
+is named here rather than left in the subagent transcript, which no checkout contains.
+THE TEST LANE RE-DERIVED THE ENGINEER'S UNREACHABILITY CLAIM INSTEAD OF INHERITING IT, and closed
+one of the two debts the engineer had declared unclosable. `AStratPlayerController::
+DecorateForPresentation` is public and reaches `TryArmGuidedOpening` on every call, and
+`PeekPendingForcedGuidance` is non-destructive -- so the consume-below-the-seeded-guard ordering
+IS pinnable, by two greps and no new seam, and is now pinned. The engineer's report had said it
+did not know whether a fixture could hold an unseeded bridge. It could.
+WHAT REMAINS UNPINNED, STATED BECAUSE IT IS THE ONE THING A READER WOULD ASSUME CLOSED.
+`ExecuteRoute`'S TRAVELLING TAIL IS EXECUTED BY NOTHING IN `Source/` -- the four parts are each
+proven, and that `ExecuteRoute` calls them in that order is proven BY READING AND NOT BY A GATE.
+[CORRECTED 2026-09-06 AT THIS SENTENCE, BEFORE ANY COMMIT. It read "Every live `ExecuteRoute`
+call site in `Source/` passes `Options`, which returns inside the `!RouteTravels` block", and that
+is FALSE. There are FIVE call sites and FOUR pass `Options`; the fifth passes `ContinueMatch`
+(`StratShellRouteClauses.cpp:1588`), and it is refused at the PERMISSION arm on a null
+destination -- so it never reaches `ResolveDestination` and the conclusion survives. THE
+CONCLUSION SURVIVING IS EXACTLY WHAT MADE THE WRONG REASON INVISIBLE: a reader re-running the
+grep meets a counterexample on the sentence carrying this pass's LARGEST DECLARED DEBT, and the
+derivation as written cannot establish what it concludes. `strat-integration-reviewer` found it
+by re-deriving rather than inheriting, which is what it was asked to do.
+`StratShellSubsystem.h`'s own block had the carve-out right the whole time; this file dropped it
+while restating it.]
+Both lanes derived this independently and agreed -- AND BOTH GLOSSED THE SAME `ContinueMatch`
+CALLER, which is why "two lanes agreed" was not worth what this seat spent it on The closing change is named and was not made:
+extract the pre-travel work into a callable member, the way `RequestOptionsPanel` was extracted.
+AND NO INSTRUMENT IN THIS TREE CAN SEE THE THING THE USER ACTUALLY REPORTED. The strip, the ring
+and the marker have no headless gate -- `StratPlay` cannot construct the UMG widget in a test and
+`IsGuidedMarkerVisible` reports a flag, not pixels. 456/456 says the bit is cleared and the arm
+survives the travel; A HUMAN AT THE KEYBOARD IS STILL THE ONLY INSTRUMENT that can say the
+tutorial is on screen. This entry closes no section.
+LANES: `strat-gameplay-engineer` wrote `Source/` outside `Tests/` and `engine.md`;
+`strat-test-author` wrote `Tests/` and `tests.md`; the `coordinator` wrote `global.md` only.
+Dispatch was offered against writing in session and the user chose dispatch, so no exception
+clause was invoked and none was needed. Nothing is committed.)
+
 _Last run 2026-09-06 (`EStratSoundCue` HAS A `Count` SENTINEL AND THE OUT-OF-BOUNDS WRITE IS A
 COMPILE ERROR, AND THE THING WORTH READING IS THAT THE INSTRUCTION THIS SEAT GAVE WAS NOT
 ACHIEVABLE AND THE LANE SAID SO RATHER THAN FAKING IT. The brief asked that "appending an
@@ -20,10 +88,15 @@ would STILL MISS the dangerous one. `strat-gameplay-engineer` refused the litera
 pinned what `Count`'s correctness actually depends on instead (zero-basing, and
 `MatchEnded + 1 == Count`, which catches the explicit-value hazard), and wrote the case no C++17
 construct can see into the header as a MEASURED HOLE rather than papering it.
-THE SUITE IS **445/445**, every entry Success, zero failed, zero notRun, zero
+THE SUITE WAS **445/445**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings, read from the exported report with `utf-8-sig`. The macro census agrees at
 445 and the clause count did not move: one clause was RENAMED and three REPAIRED, none added.
-THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.06-23.39.35`.
+[STAMPED 2026-09-06 BY THE NEW MATCH GUIDANCE PASS ABOVE: true of the tree this entry describes.
+THE LIVE FIGURE IS AT THE HEAD OF THIS FILE.]
+THIS RUN'S REPORT WAS `reportCreatedOn 2026.09.06-23.39.35`.
+[STAMPED 2026-09-06 BY THE NEW MATCH GUIDANCE PASS: the export path is one file, so that report
+has been overwritten and no reader can open it. THE LIVE RUN IS IDENTIFIED AT THE HEAD OF THIS
+FILE.]
 BOTH MUTANT ARMS WERE RUN, WHICH IS WHY THE HOLE IS NAMED RATHER THAN ASSUMED CLOSED. A cue
 inserted BETWEEN `MatchEnded` and `Count` is now `error C2338` at the line that causes it, quoted
 verbatim in `engine.md`. A cue declared AFTER `Count` builds with `Result: Succeeded` and ZERO

@@ -1,4 +1,4 @@
-// The AUDIO milestone's asset carrier: seven cue slots, one concurrency, and a per-cue
+// The AUDIO milestone's asset carrier: eight cue slots, one concurrency, and a per-cue
 // minimum spacing. The only file in this project that names a sound asset type.
 //
 // WHAT GAP THIS CLOSES. `StratSoundCues.h` decides WHAT HAPPENED and
@@ -7,9 +7,9 @@
 // renamed asset must not be a compile-time break. So the mapping lives in a `UDataAsset`
 // authored in the editor, and every consumer takes it as a pointer it was handed.
 //
-// A `UDataAsset` AND NOT SEVEN PROPERTIES ON A GAMEMODE. There are two GameModes that need
+// A `UDataAsset` AND NOT EIGHT PROPERTIES ON A GAMEMODE. There are two GameModes that need
 // this -- `AStratGameMode` for the match map and `AStratShellGameMode` for the title map --
-// and seven slots on each would be fourteen designer properties that must agree, with no
+// and eight slots on each would be sixteen designer properties that must agree, with no
 // instrument that could tell whether they do. One asset pointed at twice is one authored fact.
 // The drift that remains is which ASSET each points at, and that is the debt
 // `AStratShellGameMode::SoundBank` records against `SaveSlotName`'s precedent.
@@ -25,7 +25,7 @@
 // to be rediscovered.
 //
 // EVERY SLOT MAY BE NULL AND A NULL SLOT IS A CONFIGURATION, NEVER A FAULT. A bank with one
-// sound in it is a legitimate authoring state on the way to seven, and this class refuses
+// sound in it is a legitimate authoring state on the way to eight, and this class refuses
 // nothing and logs nothing. What a null costs is one named disposition in the director's
 // record -- `EStratSoundDisposition::NoSoundConfigured` -- so that "silent because unset" and
 // "silent because suppressed" are distinguishable by a clause. That is the entire error
@@ -35,7 +35,7 @@
 //   - NO VOLUME OR PITCH MULTIPLIERS. `USoundBase` carries its own volume, and a second
 //     multiplier here would be a mix control in two places with no rule about which wins. A
 //     sound designer changes the asset.
-//   - NO MUSIC, NO AMBIENCE, NO LOOPS. Seven one-shot cues is the milestone. A looping bed
+//   - NO MUSIC, NO AMBIENCE, NO LOOPS. Eight one-shot cues is the milestone. A looping bed
 //     needs a component whose lifetime someone owns, which is a different design and not a
 //     slot on this asset.
 //   - NO ATTENUATION. Playback is 2D by decision, not by omission; `UStratSoundDirector`'s
@@ -59,16 +59,21 @@ class USoundConcurrency;
 class USoundMix;
 
 /**
- * The seven cues' assets, as one authored object.
+ * The eight cues' assets, as one authored object.
  *
- * SEVEN NAMED PROPERTIES AND NOT A `TMap<EStratSoundCue, USoundBase*>`, WHICH WAS THE OTHER
+ * EIGHT NAMED PROPERTIES AND NOT A `TMap<EStratSoundCue, USoundBase*>`, WHICH WAS THE OTHER
  * SHAPE AND WAS REJECTED. A map is one property in the details panel with an Add button, an
  * enum dropdown per entry, and no way for the editor to tell an author that `TurnEnded` is
  * unfilled -- an unset cue and an absent key look identical, which is this project's measured
- * "a default cannot signal unset" defect in a new costume. Seven named slots make the whole
+ * "a default cannot signal unset" defect in a new costume. Eight named slots make the whole
  * surface visible at once and make an omission a blank field rather than a missing row. The
- * cost is that adding an eighth cue touches this file; that is one line and it is the right
- * place to notice.
+ * cost is that adding a cue touches this file; that is one line and it is the right place to
+ * notice.
+ *
+ * [THE COST WAS PAID ON 2026-09-07 AND THE SENTENCE ABOVE HELD. `PlayerTurnBegan` cost exactly
+ * the one property and the one `SoundFor` arm this block predicted. It read "adding an EIGHTH
+ * cue" until that day, which would have gone stale the moment the eighth landed; it is
+ * generalised rather than renumbered, so the next one does not need this edit again.]
  *
  * `MinSecondsBetween` IS A MAP FOR THE OPPOSITE REASON, and the asymmetry is the point: an
  * ABSENT key there means "no minimum", which is a real and common configuration rather than an
@@ -87,6 +92,14 @@ public:
 	/** `EStratSoundCue::TurnEnded`. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Sound")
 	TObjectPtr<USoundBase> TurnEnded;
+
+	/** `EStratSoundCue::PlayerTurnBegan`. DECLARED IN ENUM ORDER, beside `TurnEnded` and above
+	 *  `UnitMoved`, because the details panel's reading order is this file's declaration order
+	 *  and a slot list that does not match the enum makes an author check twice. ON THE SHIPPED
+	 *  UNPACED CONFIGURATION THIS AND `TurnEnded` BOTH SOUND FOR ONE HAND-BACK; that is
+	 *  intended, and leaving one of the two slots empty is how a designer picks. */
+	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Sound")
+	TObjectPtr<USoundBase> PlayerTurnBegan;
 
 	/** `EStratSoundCue::UnitMoved`. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Sound")
@@ -112,7 +125,7 @@ public:
 	/**
 	 * Passed to every `PlaySound2D` call this bank feeds, or null for none.
 	 *
-	 * ONE CONCURRENCY FOR ALL SEVEN, WHICH IS A DECISION AND NOT A SIMPLIFICATION. The thing
+	 * ONE CONCURRENCY FOR ALL EIGHT, WHICH IS A DECISION AND NOT A SIMPLIFICATION. The thing
 	 * worth limiting is the TOTAL number of overlapping Stratocracy cues -- an AI hand-over
 	 * that fires a move, an attack, a death and a build in the same frame is four voices, and
 	 * per-cue limits would each say "one of me is fine" and together say four. A single shared
@@ -205,7 +218,7 @@ public:
 	 * `UStratAudioSettings::MasterVolume`'s class.
 	 *
 	 * THE THREE CLASSES ARE NAMED PROPERTIES AND NOT A `TMap`, ON THIS FILE'S OWN STANDING
-	 * ARGUMENT about the seven cue slots: a map's absent key and unset value are
+	 * ARGUMENT about the cue slots above: a map's absent key and unset value are
 	 * indistinguishable in a details panel, and "a default cannot signal unset" is a defect this
 	 * project has already shipped once. Three named slots make an omission a blank field.
 	 *
@@ -218,7 +231,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Sound")
 	TObjectPtr<USoundClass> MasterSoundClass;
 
-	/** `UStratAudioSettings::SfxVolume`'s class -- the class the seven cue assets belong to. */
+	/** `UStratAudioSettings::SfxVolume`'s class -- the class the eight cue assets belong to. */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Sound")
 	TObjectPtr<USoundClass> SfxSoundClass;
 

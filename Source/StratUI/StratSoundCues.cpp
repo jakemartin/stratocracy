@@ -109,10 +109,18 @@
 //   sentence was defending -- and it now says WHY those are the forbidden things, so the next
 //   reader who counts operators does not have to re-open this to find out.
 //
-// AND THE ONE-PER-KIND COLLAPSE IS A `bool[7]`, NOT A SORT, A DEDUPE OR A SET. The emissions
-// land in a documented order and the first of each kind wins; nothing is compared to anything
-// after it. That makes the header's rule 5 readable off ten lines of code rather than derived
-// from a container's semantics.
+// AND THE ONE-PER-KIND COLLAPSE IS A `bool[Count]`, NOT A SORT, A DEDUPE OR A SET. The
+// emissions land in a documented order and the first of each kind wins; nothing is compared to
+// anything after it. That makes the header's rule 5 readable off ten lines of code rather than
+// derived from a container's semantics.
+//
+// [THIS SENTENCE READ `bool[7]` UNTIL 2026-09-07 AND WAS TRUE WHEN WRITTEN. It was recorded as
+// a debt in `engine.md` on 2026-09-06 with the discharge condition "the moment an eighth cue is
+// declared", and `EStratSoundCue::PlayerTurnBegan` is that eighth cue -- so the debt fell due
+// in the same pass that made the literal false, and is paid here. The code below has said
+// `bool bEmitted[static_cast<int32>(EStratSoundCue::Count)]` since the `Count` sentinel landed;
+// only this comment carried the number. NAMING THE SIZING EXPRESSION RATHER THAN A NEW NUMBER
+// is what stops the ninth cue needing this edit again.]
 //
 // AND IT SURVIVED `StratDecideDamagedUnits` JOINING IT ON 2026-09-06, WHICH IS THE ONE MOST
 // LIKELY TO HAVE BROKEN IT AND SO IS NAMED HERE RATHER THAN LEFT TO A READER'S DIFF. That

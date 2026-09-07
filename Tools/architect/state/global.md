@@ -11,6 +11,78 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-07 (A ROUND-CHANGE CUE AND A CAMERA RECENTER LAND AT THE AI HAND-BACK, AND THE
+THING WORTH READING IS THAT THE BRIEF THIS SEAT WROTE ENCODED A DEFECT AND THE LANE REFUSED IT --
+FOR THE SECOND CONSECUTIVE PASS, ON THE SAME AXIS. The user asked for a sound when the AI's turn
+ends and the player's begins, and for the camera to recentre over the player's units. The brief
+said to reset the new `bPlayerHandbackPending` latch "beside `SoundMark`". `strat-gameplay-engineer`
+measured that placement instead of taking it: in `Deinitialize` and `TearDownPresentation` the
+`SoundMark` reset sits 42 and 62 lines BELOW each function's `EndAiPlaybackTour()` call -- and
+`EndAiPlaybackTour` is now a caller of the hand-back hook. A tour still running at a world death
+or at a RESEED would have spent the flag on the very next line with EVERY GUARD PASSING, because
+`Bridge` is still seeded and `AppliedModel` is still the outgoing match's on both paths (both are
+cleared further down). That is a cue sounded and a camera moved FOR THE MATCH THE PLAYER JUST
+ASKED TO LEAVE. Both resets are now the line ABOVE each call.
+AND THE DEFECT WAS PINNED RATHER THAN MERELY FIXED, WHICH IS THE HALF THAT MAKES IT STAY FIXED.
+`GATE-HANDBACK.ATeardownMidTourDoesNotSpendTheHandback` was run against its own mutant: moving the
+reset back below the call reddens EXACTLY THAT ONE CLAUSE (*"Read 1 cue(s)"* against a required
+zero) and nothing else in either ID. Four mutants were run in total and all four production files
+were restored byte-identically, sha256-verified.
+THE SUITE IS **468/468**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, read from the exported report with `utf-8-sig`. The macro census agrees at
+468, and the arithmetic closes: 456 + 12 added = 468; one clause was RENAMED, which moves no
+count. THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.07-15.59.11`.
+THREE THINGS ARE UNPINNABLE AND ARE NAMED RATHER THAN LEFT AS SILENCES. (1) `Side` vs
+`ViewingSide`: the cue carries `Match.SideToMove` and the camera reads `AppliedModel.ViewingSide`,
+but the hand-back only fires when the side to move IS the human seat, so on every reachable
+configuration they are equal and a mutant unifying them is green everywhere. Both clauses NAME the
+field they expect, which is all that is available; a spectated or inverted viewing configuration
+would be needed and does not exist in this project. (2) The camera call's placement ABOVE and
+OUTSIDE `if (FindSoundDirector())` -- the `4a01418` shape -- cannot be reached, because
+`UStratSoundDirector::DoesSupportWorldType` gives every Game and PIE world a director, so no
+reachable world has a camera pawn and no director. What stands against it is that restoring the
+defect is a MOVE in a diff rather than one level of indentation, and a comment saying so.
+(3) `FocusPlaybackStep` is still unpinned, though the fixture shape that would reach it now exists.
+The engineer declared (1) and (2) and the test lane RE-DERIVED both rather than inheriting them.
+THREE OF THE TEST LANE'S FOUR CORRECTIONS WERE STRUCTURAL AND NOT COSMETIC. An AI-vs-AI config
+cannot carry ANY of this work -- with every side in `AiSides` the predicate's seat term refuses at
+every moment, so a clause built on the existing `MakeAiVsAiConfig` would be green over a DELETED
+feature, the teardown mutant included; a new one-AI-seat config was needed. "A concluded match
+emits none" is not reachable on the unpaced path at all, because the beat is spent inside
+`RunAiTurnsNow`, which rebuilds and applies the model and erases any plant -- it had to be built
+on the PACED path, which as a bonus now pins the tour deferral too. And the shared
+`DeclareHandoverNoise` helper is wrong for a one-AI-seat fixture: it declares `STRAT-AI refused`,
+which never fires when one AI turn hands back, and `AddExpectedMessagePlain` with `Occurrences 0`
+IS ITSELF AN ASSERTION -- that cost the first run five red clauses.
+THE ASSET WAS AUTO-STAGED WITH THE WRONG BYTES, THE SHAPE THIS RECORD ALREADY HOLDS ONCE. The
+staged LFS pointer named `oid sha256:9e80704e...` at 78153 bytes while the file on disk hashes
+`bd2eb8ca...` at 78434 -- the provider captured `MS_Strat_RoundChange` AS CREATED, 281 bytes
+before the sound-class assignment and final save. Force-unstaged; the index is empty. Comparing
+the POINTER'S oid to the file's sha256 is the comparison that works on an LFS path;
+`git hash-object` answers a different question and must not be used for it.
+AND NO INSTRUMENT IN THIS TREE CAN HEAR THE SOUND OR SEE THE CAMERA. A commandlet has no audio
+device, and no headless fixture composites a viewport. 468/468 says the cue is emitted once with
+the right payload and that the pawn's XY lands on the centroid the module computes; A HUMAN AT THE
+KEYBOARD IS STILL THE ONLY INSTRUMENT that can say the round change is audible, that it is
+tellable from `TurnEnded` sounding beside it on the shipped configuration, or that the recentre
+reads well. That listening-and-looking pass is OWED.
+[CORRECTED 2026-09-07 AT THIS SENTENCE, BEFORE ANY COMMIT. It ended "and it can close the guided
+opening and the damage alert in the same sitting", and that HALF IS NOW FALSE: the user reported
+in session, after this banner was written, that THE GUIDED OPENING AND THE DAMAGE ALERT BOTH
+WORK. Those two debts are DISCHARGED BY THE USER'S OWN OBSERVATION and are stamped at their own
+entries below. What remains owed is this pass's own half ONLY -- the round change and the
+recentre, which the user has said nothing about. The correction is written HERE, at the sentence,
+rather than appended below it, because a reader arriving by a citation lands on the false clause
+and not on a stamp underneath it.]
+This entry closes no section.
+LANES: `strat-data-steward` ruled the acceptance IDs and wrote `global.md`'s ruling entry and
+`decisions.md`; `strat-gameplay-engineer` wrote `Source/` outside `Tests/` and `engine.md`;
+`strat-test-author` wrote `Tests/` and `tests.md`; the `coordinator` wrote this banner, and
+authored the sound asset and `content.md` under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE and that file's
+FALLBACK CONDITION respectively -- two authorities, one per half, with the precondition measured
+at the lane agent's tool surface against a control that returned the NeoStack tools that ARE
+served. Nothing is committed.)
+
 _Last run 2026-09-06 (NEW MATCH NOW ALWAYS PLAYS THE GUIDED OPENING, AND THE THING WORTH READING
 IS THAT NOTHING WAS BROKEN -- §2.11.6 WAS WORKING EXACTLY AS WRITTEN, SUPPRESSED BY A ONE-WAY
 LATCH WITH NO INVERSE WRITER. The user reported the guided tutorial not playing on a first game.
@@ -23,8 +95,12 @@ shape is "no writer exists" is invisible to every test of the readers.
 THE SUITE IS **456/456**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings, read from the exported report with `utf-8-sig`. The macro census agrees at
 456, and the arithmetic closes: 445 + 11 added = 456, none removed or changed state.
+[STAMPED 2026-09-07 BY THE HAND-BACK CUE AND CAMERA RECENTER PASS ABOVE: true of the tree this
+entry describes. THE LIVE FIGURE IS AT THE HEAD OF THIS FILE.]
 THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.07-02.43.19` (UTC; the local date of this
 pass is 2026-09-06, and the two differ because the run crossed 20:00 local).
+[STAMPED 2026-09-07 BY THE PASS ABOVE: the export path is one file, so that report has been
+overwritten and no reader can open it. THE LIVE RUN IS IDENTIFIED AT THE HEAD OF THIS FILE.]
 THE USER RULED THE SCOPE DOWN, AND THE NARROWER FORM IS THE ONE THAT SHIPPED. The instruction was
 "always clear the save"; New Match and Continue share one configured slot, so a literal wipe would
 have destroyed a saved match with no confirmation. Offered both, the user chose CLEAR ONLY THE
@@ -73,7 +149,13 @@ AND NO INSTRUMENT IN THIS TREE CAN SEE THE THING THE USER ACTUALLY REPORTED. The
 and the marker have no headless gate -- `StratPlay` cannot construct the UMG widget in a test and
 `IsGuidedMarkerVisible` reports a flag, not pixels. 456/456 says the bit is cleared and the arm
 survives the travel; A HUMAN AT THE KEYBOARD IS STILL THE ONLY INSTRUMENT that can say the
-tutorial is on screen. This entry closes no section.
+tutorial is on screen.
+[STAMPED 2026-09-07: THAT INSTRUMENT HAS SINCE REPORTED. The user states in session that the
+guided opening WORKS. The sentence above stays true of what this tree can measure -- there is
+still no headless gate for the strip, the ring or the marker, and that gap is unchanged -- but
+the OBSERVATION it was waiting on has been made, so it must no longer be read as a debt that is
+open. The same message discharged the damage alert; see its own entry.]
+This entry closes no section.
 LANES: `strat-gameplay-engineer` wrote `Source/` outside `Tests/` and `engine.md`;
 `strat-test-author` wrote `Tests/` and `tests.md`; the `coordinator` wrote `global.md` only.
 Dispatch was offered against writing in session and the user chose dispatch, so no exception
@@ -4940,6 +5022,123 @@ is unchanged; the only build was a re-verification that the `slot-1` worktree st
 - `FStratBridge::Reachable` — landed at `e0cc53d` with zero tests; its five clauses are now
   covered (`StratBridgeQueryParity.cpp`, T-UI-02, phase 1, 2026-08-12). Debt discharged.
 ## NEXT
+
+- **2026-09-07, STRAT-DATA-STEWARD -- ACCEPTANCE ID RULING FOR THE PLAYER-HANDBACK SOUND CUE AND
+  CAMERA RECENTER, OVER BASE `6d882a3` (CLEAN). RECORD-ONLY; NO SOURCE, NO TEST, NO ASSET AND NO
+  CONFIG FILE WAS TOUCHED; NO SUITE WAS RUN AND NO SUITE FIGURE MOVES -- the live figure is the
+  one this file's banner cites, above. THIS RULES ON A PLAN, NOT ON LANDED CODE: none of
+  `EStratSoundCue::PlayerTurnBegan`, `bPlayerHandbackPending`, `NotePlayerTurnBeganIfDue`,
+  `StratHandsBackToPlayer`, `StratCentroidHexOfSide`, `RecenterCameraOnViewingSide` or
+  `FStratMatchConfig::bRecenterCameraOnPlayerTurn` exists in this tree as of this entry; every
+  verb above is written in the future/conditional voice on purpose. `engine.md` and `tests.md`
+  are a concurrent lane's and are not read as settled by this entry.
+  - **THE AUDIO HALF RIDES `GATE-AUDIO`, AND IT IS A FIT RATHER THAN A STRETCH BECAUSE THE SHAPE
+    IS ALREADY IN THE TREE ONCE.** `GATE-AUDIO`'s own authorizing text (2026-09-04, above) scopes
+    it to *"audio presentation reacting to the view model"* -- cue selection and playback -- and
+    pins it to exactly three named files: `Source/StratUI/Tests/StratSoundCueClauses.cpp`,
+    `Source/StratPlay/Tests/StratSoundDirectorCallSite.cpp` and
+    `Source/StratPlay/Tests/StratShippedSoundBankParity.cpp`. Read narrowly, "reacting to the view
+    model" would seem to exclude a cue emitted DIRECTLY from a latched verb rather than decided by
+    `StratDecideSoundCues` -- but that shape is not new: `MatchEnded` is emitted the identical way,
+    directly from `ConcludeMatchIfEnded`'s latch (`StratMatchSubsystem.cpp:3241`,
+    `Director->EmitCue(EStratSoundCue::MatchEnded, ...)`), never decided, and it already carries a
+    `GATE-AUDIO` clause in one of the three named files --
+    `Stratocracy.StratPlay.GATE-AUDIO.MatchEndedFiresOnceAndFromTheLatch`
+    (`Source/StratPlay/Tests/StratSoundDirectorCallSite.cpp:1311-1393`). `PlayerTurnBegan` is the
+    same shape one call site over: a new enumerator, a matching `USoundBase*` slot on
+    `UStratSoundBank`, emitted directly from a new latch and never decided. It fits inside the
+    existing three-file pin without widening it: the never-decided property and the count-only
+    audit board would land in `StratSoundCueClauses.cpp`, the once-per-handback/never-on-match-end
+    firing property in `StratSoundDirectorCallSite.cpp` beside `MatchEndedFiresOnceAndFromTheLatch`,
+    and the new bank slot's parity in `StratShippedSoundBankParity.cpp`. Clauses take the shape
+    `Stratocracy.<Module>.GATE-AUDIO.<Clause>`, unchanged from the existing convention.
+  - **THE HANDBACK MOMENT AND THE CAMERA DO NOT RIDE ANY EXISTING NAME, GDD OR LOCAL, AND A NEW
+    LOCAL NAME IS MINTED: `GATE-HANDBACK`.** Each candidate is checked against its own defining
+    text rather than its title, per this record's standing method.
+    - **`T-TURN-09` IS REFUSED.** Its own text, Sec 4.7 Stub 4: *"determinism: the same command
+      sequence from the same scenario -> identical result tier and identical state at every
+      step."* Its subject is STATE EQUALITY under command replay. `StratHandsBackToPlayer`, the
+      once-per-handback latch and the camera recenter assert nothing about whether the state is
+      identical across dispositions -- they assert WHEN a presentation side effect fires, which
+      is a different technical fact from whether the state it fires beside is the same state.
+      A clause under this ID would be the same unfalsifiable shape the 2026-08-29 W5 ruling
+      already named for `T-AI-06`: an ID whose own words exclude the subject offered to it.
+    - **`T-AI-01` AND `T-AI-06` ARE REFUSED.** Sec 4.7 Stub 6: `T-AI-01` is *"legality: every AI
+      command passes the same validation as a player command; zero rejected commands across N
+      self-play games"*; `T-AI-06` is *"determinism: same state -> same move; every scoring tie is
+      broken by a stated deterministic rule."* Both are about the AI'S OWN move selection. Neither
+      predicate nor camera recenter asserts anything about which move the AI chose or whether a
+      command was legal; they fire AFTER the AI's commands are already resolved, at the boundary
+      where control passes back. Wrong subject, named because both are the IDs a reader reaches
+      for first from "AI turn."
+    - **`T-INT-05` IS REFUSED TODAY, ON THE IDENTICAL REASONING `GATE-AITURN`'S OWN 2026-08-29
+      ENTRY ALREADY RECORDED FOR THIS SAME QUESTION, RE-CHECKED RATHER THAN ASSUMED STILL TRUE.**
+      `T-INT-05`'s own text: *"presentation statelessness: after any event sequence, rebuilding
+      all widgets/actors from the current view-model alone ... reproduces the same displayed
+      values (nothing lives only in a widget)"* -- its subject is EVERY MEMBER OF THE VIEW MODEL.
+      The plan adds no view-model member: `bPlayerHandbackPending` is `UStratMatchSubsystem`
+      state and `bRecenterCameraOnPlayerTurn` is a `FStratMatchConfig` field, neither is a
+      `FStratViewModel`/`FStratMatchView`/`FStratUnitView` member, measured against the plan as
+      described rather than assumed. `GATE-AITURN`'s own words already state the rule this
+      applies: *"if W5 puts a playback cursor INTO the view model, that member enters this ID's
+      subject by its own words and a clause is then owed under it."* Nothing here does that, so
+      `T-INT-05` stays refused -- but STATED RATHER THAN LEFT SILENT, per the dispatching task's
+      own instruction: if a later phase promotes the handback flag or the camera position into
+      the view model, `T-INT-05` becomes owed for that member at that point, not before.
+    - **`GATE-AITURN` IS REFUSED TO WIDEN, AND THE REFUSAL RESTS ON THE SAME SENTENCE THAT
+      AUTHORIZES IT.** `GATE-AITURN`'s own authorizing text (2026-08-29, above) reads: *"THE
+      PACING HALF CARRIES NO ACCEPTANCE ID AND RIDES `GATE-AITURN`. Sec 2.11.2 settles what kind
+      of wave this is, in its own words: the headless AI resolves instantly; the presentation
+      layer replays its action list at a watchable fixed pace (~0.5 s per action, camera stepping
+      to each) ... this is presentation pacing only, no rules change. Any click or Esc skips to
+      the end state."* Every existing clause under this name --
+      `ReelRecordsEveryAcceptedCommandInOrder`, `StepFocusesAndStopsOnTheLast`,
+      `SkipReturnsTrueOnlyWhilePlaying`, `SkipIsReachableAfterTheMatchConcludes`,
+      `DefaultConfigConsumesNoInput`, `NoWorldLeavesNoStuckTour`, `ReseedMidTourLeavesNoStuckTour`,
+      `ReelDoesNotChangeTheTurn` -- is about the REEL/TOUR MACHINERY: pacing, stepping, and the
+      skip control WHILE A TOUR IS RUNNING. The handback moment is a different technical fact: it
+      is defined by `StratHandsBackToPlayer` to fire whenever control passes back to a human side,
+      WHETHER OR NOT A TOUR RAN AT ALL. **The strain is measured, not asserted**:
+      `AiPlaybackStepSeconds` ships at `0.0f` (`Source/StratPlay/StratMatchSubsystem.h:578`), so on
+      the shipped path and in every headless fixture there is no tour, and the handback still
+      fires. A clause about a moment whose own definition holds when `GATE-AITURN`'s subject (an
+      active tour) does not is outside that subject by the same "own words exclude it" standard
+      this file already used to refuse `T-AI-06` for W5. Stretching `GATE-AITURN` to cover it
+      would be exactly that shape.
+    - **`GATE-HANDBACK` IS MINTED. NEW, LOCAL, NO ACCEPTANCE ID CLAIMED.** No GDD acceptance ID's
+      own defining text (Sec 4.7's Stub table, Sec 4.11's list) has "handback", "control passing
+      to the human side" or a camera recenter in its subject; §2.11.2 describes the AI TOUR, not
+      the moment after it (or after an instant AI turn with no tour) that hands control back. This
+      is the same shape as `GATE-AITURN` and `GATE-AUDIO` themselves -- a specified/planned
+      surface with no owning ID -- and takes a new local name for the same reason
+      `GATE-AUDIO-SETTINGS` was minted new rather than folded into `GATE-AUDIO`: a disjoint file
+      set and a disjoint technical fact from every existing local name's own scope.
+      - **WHAT IS INSIDE ITS SUBJECT:** the predicate `StratHandsBackToPlayer(Model, AiSides)`
+        (`!bHasResult && !AiSides.Contains(SideToMove)`); the latch `bPlayerHandbackPending` and
+        the verb `NotePlayerTurnBeganIfDue()` firing exactly once per handback from both its call
+        sites (`RunAiTurnsNow` and `EndAiPlaybackTour`), and never on a match-ending transition;
+        the pure function `StratCentroidHexOfSide(const FStratViewModel&, int32 Side, FIntPoint&)`
+        in `StratPlay`; `UStratMatchSubsystem::RecenterCameraOnViewingSide()`'s call into
+        `AStratBoardActor::WorldLocationOfHex` and `AStratCameraPawn::FocusWorldLocation`,
+        including that the recenter preserves the viewer's current zoom; and
+        `FStratMatchConfig::bRecenterCameraOnPlayerTurn`'s default (`true`) and its opt-out
+        (recenter suppressed when `false`, with no other behaviour changed).
+      - **WHAT IS OUTSIDE ITS SUBJECT, NAMED SO IT IS NOT READ AS A WIDER GRANT.** The
+        `PlayerTurnBegan` cue itself rides `GATE-AUDIO`, above, not this name -- cue emission and
+        camera recenter are two different technical facts sharing one trigger, the same split
+        `GATE-TITLEMENU` already drew between a route and the music lifecycle riding on it. The
+        AI tour's own pacing, stepping and skip control, while a tour IS running, stay on
+        `GATE-AITURN`, unwidened. Whether the AI's commands were legal or deterministic stays on
+        `T-AI-01`/`T-AI-06`, unwidened.
+      - Clauses under it take the shape `Stratocracy.<Module>.GATE-HANDBACK.<Clause>` -- most
+        likely `Stratocracy.StratPlay.GATE-HANDBACK.<Clause>`, since every symbol named above is
+        `StratPlay`'s, unless a `StratUI` reader of the new state is added later.
+  - **WHAT THIS RULING DOES NOT DO.** It mints one acceptance-ID-free local name, `GATE-HANDBACK`,
+    and confirms one existing name, `GATE-AUDIO`, without widening its three-file pin. It mints no
+    GDD acceptance ID and claims none. It files no upstream mint -- nothing here touches vendored
+    `Data/` or `Source/StratRules/`. It does not touch the banner above. It authorizes no code, no
+    test and no asset; those stay in the lanes `CLAUDE.md` already assigns them to, and the test
+    lane the dispatching task named as blocked may now proceed under the two names above.
 
 - **2026-09-05, STRAT-DATA-STEWARD -- THIRD ACCEPTANCE ID RULING FOR THE AUDIO MILESTONE, OVER BASE
   `374398a` (CLEAN, PUSHED), COVERING SIX SUBJECTS THE SECOND RULING BELOW DID NOT REACH BECAUSE

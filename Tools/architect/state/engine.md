@@ -15,6 +15,174 @@
 
 ## NEXT
 
+- **2026-09-07, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
+  tree `E:/MultiAgent/Stratocracy`, base commit `6d882a3`, UNCOMMITTED) -- THE AI HAND-BACK NOW
+  SOUNDS A CUE AND RECENTRES THE CAMERA, AND THE THING WORTH READING IS THAT THE OBVIOUS PLACE
+  TO RESET THE NEW LATCH WOULD HAVE MADE IT FIRE ON THE MATCH BEING TORN DOWN.** No exception
+  clause applies and none is cited. The live suite figure and the phase verdict are `global.md`'s
+  and are not restated here.
+  - **THE GAP.** `UStratMatchSubsystem` has no event, no flag and no verb for "the player's turn
+    began" -- the only delegate in its header is `FStratViewDecorator` -- and the moment lands in
+    two different places depending on `AiPlaybackStepSeconds`. Positive: a Sec 2.11.2 tour plays
+    and the turn hands back when the tour stops. Zero, WHICH IS THE SHIPPED DEFAULT
+    (`StratMatchSubsystem.h`, `float AiPlaybackStepSeconds = 0.0f;`) and every headless fixture:
+    no tour runs and control simply returns out of `RunAiTurnsNow`. `EndAiPlaybackTour` is not a
+    hook on its own -- three of its six call sites are not hand-backs.
+  - **WHAT SHIPPED, FOUR PARTS.** (1) `STRATPLAY_API bool StratHandsBackToPlayer(const
+    FStratViewModel&, const TArray<int32>&)` beside `StratMatchIsConcluded`, which is the ONLY
+    place the hand-back condition is written down and is drivable with no world. (2)
+    `bPlayerHandbackPending` plus the private `NotePlayerTurnBeganIfDue()`, raised once in
+    `RunAiTurnsNow` immediately above `BeginAiPlayback()` and consumed on every non-deferring
+    path. (3) `EStratSoundCue::PlayerTurnBegan`, declared immediately after `TurnEnded`, with its
+    bank slot and its `SoundFor` arm. (4) `StratCentroidHexOfSide` plus
+    `RecenterCameraOnViewingSide()`, `FindCameraPawn()` and the new
+    `FStratMatchConfig::bRecenterCameraOnPlayerTurn` (default `true`).
+  - **THE ONE PLACEMENT THAT IS NOT A MATTER OF TASTE, AND IT IS A CORRECTION TO THE BRIEF.** The
+    brief said to reset the new flag "at the two match boundaries, beside `SoundMark` and
+    `bMatchConclusionAnnounced`". Measured against the tree, those are THREE sites and not two --
+    `SoundMark` is reset in `Deinitialize` and in `TearDownPresentation`, while
+    `bMatchConclusionAnnounced` is reset in a third function, `StartMatchInternal`, which reaches
+    `TearDownPresentation` anyway. **And beside `SoundMark` would have been WRONG.** Both of
+    those functions call `EndAiPlaybackTour()` on their way down, and `EndAiPlaybackTour` is now
+    a caller of `NotePlayerTurnBeganIfDue`. The `SoundMark` reset sits FORTY-TWO lines below that
+    call in `Deinitialize` and SIXTY-TWO below it in `TearDownPresentation`. So a tour still
+    running at a world death or at a reseed would have spent the flag on the very next line --
+    and **every guard inside the hook would have PASSED**, because on both paths `Bridge` is
+    still seeded and `AppliedModel` is still the outgoing match's (both are cleared further
+    down). The visible failure would have been a `PlayerTurnBegan` cue and a camera move for the
+    match the player just asked to leave. Both resets are therefore the line ABOVE each
+    function's `EndAiPlaybackTour()` call, and each carries its own reason in place.
+  - **THE RE-ENTRANCY QUESTION THE BRIEF ASKED, ANSWERED AGAINST THE CODE.** `RunAiTurnsNow`'s
+    `while (TurnsRun < MaxTurns)` loop can play several AI turns in one call -- but the raise is
+    a single statement AFTER the loop, so it cannot be raised twice; and the function is
+    re-entrancy-guarded by `bAiTurnRunning` under a `TGuardValue` whose scope covers the whole
+    body, so a second `RunAiTurnsNow` cannot interleave. Early consumption is likewise
+    unreachable: `NotePlayerTurnBeganIfDue` is called from exactly two places, and the site-A
+    call is below `BeginAiPlayback()`. **The brief's own reasoning about AI-vs-AI was checked and
+    is right in outcome and wrong in mechanism** -- it said the stale flag is consumed by
+    "`cpp:1715`'s call", meaning `RunAiTurnsNow`'s pre-refill `EndAiPlaybackTour()`. That call
+    normally finds the flag ALREADY DOWN, because the previous hand-over consumed it at site A or
+    at the tour's end. The case where it does arrive up (a paced tour still running when the next
+    AI turn is due) is handled correctly anyway, for the reason the brief gives: `AppliedModel` at
+    that point is the pre-AI-turn model, whose `SideToMove` is the AI, so `StratHandsBackToPlayer`
+    is false and the consumption is silent.
+  - **AND ONE ORDER-OF-OPERATIONS FACT THE BRIEF ASSERTED AND WAS RIGHT ABOUT.** The flag must be
+    raised ABOVE `BeginAiPlayback()`: that function ends in `OnAiPlaybackTimer()`, which shows
+    step one immediately, so a ONE-STEP reel reaches `EndAiPlaybackTour` from INSIDE
+    `BeginAiPlayback` and that inner call must find the flag already up. Verified at the source.
+  - **WHERE THE CUE IS EMITTED FROM, AND THE FOUR REASONS IT IS NOT `StratDecideSoundCues`.**
+    Checked one at a time and all four hold: the decider's declaration commits it to two
+    `FStratViewModel` readings and no other input, and `AiSides` is a configuration; a
+    `(Turn, SideToMove)` diff would also fire on a hot-seat human -> human swap; `ApplyView`'s
+    diff is gated on `bTourExistenceHeld`, so with a tour armed no decider cue fires for a
+    hand-back at all; and a tour ends with no `ApplyView`, so there is no second reading to diff.
+    The precedent followed is `MatchEnded`'s -- emitted from `ConcludeMatchIfEnded`'s own latch.
+  - **THE CAMERA CALL IS ABOVE THE `FindSoundDirector()` LOOKUP AND OUTSIDE IT, AND THE COMMENT
+    SAYS SO IN TERMS.** Commit `4a01418` landed the opposite in this file -- a visual damage alert
+    nested inside `if (FindSoundDirector())`, so a missing sound bank silently disabled a picture.
+    **NO CLAUSE CAN PIN THIS AND THAT IS RECORDED AS A MEASURED GAP RATHER THAN LEFT TO BE
+    DISCOVERED:** `UStratSoundDirector::DoesSupportWorldType` gives every Game and PIE world a
+    director, so there is no reachable world with a camera pawn and no director, and the mutant
+    is invisible to any fixture that can be written today. What the placement buys is that
+    restoring the defect is a MOVE in a diff rather than one level of indentation.
+  - **TWO FIELDS THAT LOOK LIKE ONE AND ARE NOT.** The cue carries `AppliedModel.Match.SideToMove`
+    -- `FStratSoundEmission::Side` documents itself as an index into `FStratViewModel::Sides` and
+    "NEVER a you/enemy answer", verified at the field. The camera uses `AppliedModel.ViewingSide`,
+    because a camera is a statement about whose screen this is. They are equal on the shipped
+    single-player configuration and the two declarations now each say not to unify them.
+  - **`bRecenterCameraOnPlayerTurn` DEFAULTS TRUE WHILE `AiPlaybackStepSeconds` DEFAULTS ZERO, AND
+    THE ASYMMETRY IS ARGUED IN THE FIELD'S OWN BLOCK.** That field ships inert because a positive
+    value ARMS A TIMER and a headless fixture has no ticking world; this one arms nothing and is
+    synchronous in the same stack frame, so a `false` default would only reproduce this project's
+    own measured "a shipped zero default made every clause vacuous" defect where it is not needed.
+    It changes no existing fixture, and that is a claim about the engine: the verb degrades
+    silently on a null board, world, PC or non-`AStratCameraPawn` pawn, and no automation fixture
+    in this tree possesses a camera pawn.
+  - **THE CENTROID IS SOUND BECAUSE THE LAYOUT IS AFFINE, MEASURED AT THE FORMULA AND NOT
+    ASSUMED.** `AStratBoardActor::LocalLocationOfHex` is `x = HexSize * (q + r * 0.5)`,
+    `y = HexSize * (sqrt(3)/2) * r` -- linear in both components -- and `WorldLocationOfHex` is
+    that composed with one `FTransform::TransformPosition`. So mean-then-map equals map-then-mean
+    up to the rounding, which costs at most half a tile and lands the camera on a real hex. It is
+    NOT in `UStratViewModelLibrary`, whose header commits it to T-UI-03's no-widget-side-arithmetic
+    rule and already argues the idle count is its one exception; nothing draws a centroid. It
+    computes no distance, cost, reachability or adjacency, so it is not movement arithmetic
+    standing in for a rules answer.
+  - **`FocusPlaybackStep` WAS REWRITTEN ONTO THE NEW `FindCameraPawn()` ON THE SAME PASS**, so
+    there has never been a moment with two copies of the world -> PC -> pawn -> cast chain in the
+    tree -- which is the triplication `StratBoardActor.h`'s own block records having paid for once
+    with the hex formula. Behaviour is unchanged; the possessed-pawn-over-`TActorIterator`
+    argument moved with the code rather than being deleted.
+  - **BOTH `static_assert`s IN `StratSoundCues.h` ARE BYTE-IDENTICAL UNDER THE NEW PLACEMENT, AND
+    THAT WAS VERIFIED RATHER THAN ASSUMED.** `PlayerTurnBegan` goes after `TurnEnded`, which is
+    ABOVE `MatchEnded`, so `ButtonClick == 0` still holds and `MatchEnded + 1 == Count` still holds
+    with both values one higher. The second assert's own doc already says "Declare new cues ABOVE
+    `MatchEnded`", which this obeys. **`MatchEnded`'s own doc needed NO change** -- it says the cue
+    is emitted by `ConcludeMatchIfEnded` inside its own latch and never by the decider, which is
+    still true -- and that is stated here so a reader does not go looking for an edit that is not
+    in the diff.
+  - **FOURTEEN STALE "SEVEN" CLAIMS WERE FIXED, ELEVEN OF THEM IN FILES THE BRIEF DID NOT NAME.**
+    The brief named `StratSoundCues.h`. `grep -rn "seven\|Seven\|SEVEN"` over the six audio
+    sources found the count also asserted in `StratSoundBank.h` (nine sites, including "A
+    `UDataAsset` AND NOT SEVEN PROPERTIES ON A GAMEMODE ... seven slots on each would be fourteen
+    designer properties", now eight and sixteen) and in `StratSoundDirector.h` (one). Two
+    occurrences of "seven" REMAIN in `StratSoundCues.h` on purpose: both are inside the
+    2026-09-07 correction block and describe the seven that were there first, which is the shape
+    a correction is supposed to have.
+  - **AND ONE PROSE SITE WAS GENERALISED RATHER THAN RENUMBERED.** `StratSoundBank.h` said the
+    cost of a `TMap` shape being refused is "that adding an EIGHTH cue touches this file". That
+    sentence would have gone stale the instant the eighth landed -- which is this pass -- so it now
+    reads "adding a cue", with a bracketed note recording that the predicted cost was paid exactly
+    as predicted: one property and one `SoundFor` arm.
+  - **BUILD: `Build.bat StratocracyEditor Win64 Development` -> `Result: Succeeded`**, 56 actions,
+    39.29 s in the UBA local executor and 42.50 s total, on the first pass. Re-run after touching all three changed headers to force every
+    dependent translation unit to recompile: **`grep -ic warning` over the whole build output
+    returned `0`**, and the following verdict run reported `Result: Succeeded`. No editor process
+    was running (`tasklist /FI "IMAGENAME eq UnrealEditor.exe"` -> "No tasks are running which
+    match the specified criteria"), so the Live Coding write-lock failure was excluded rather than
+    assumed absent.
+  - **NOTHING IN THIS PASS PROMOTES C4062, AND THE `SoundFor` ARM WAS WRITTEN BY HAND FROM THE
+    ENUM FOR THAT REASON.** `StratSoundBank.cpp`'s own retraction block measured on 2026-09-06
+    that MSVC emits NOTHING for a missing switch arm here -- C4062 and C4061 are level-4 and off
+    by default and no `Build.cs` promotes them. This pass is the case that block predicted; the
+    debt is unchanged and `/we4062` was still not taken, because it would promote a warning across
+    every switch in `StratPlay` and does not belong in a pass about one cue.
+  - **THE `bool[7]` DEBT FELL DUE IN THIS PASS AND IS PAID.** The 2026-09-06 entry below recorded
+    `StratSoundCues.cpp`'s opening block still saying `bool[7]` in prose, discharged "by the next
+    pass that touches that block for any other reason ... which should replace the literal with
+    the sizing expression". `PlayerTurnBegan` IS the eighth cue that made it false, so the literal
+    is now `bool[Count]`, matching `bEmitted`'s actual declaration
+    (`bool bEmitted[static_cast<int32>(EStratSoundCue::Count)] = {};`), with a bracketed note
+    naming the debt it discharges. Naming the sizing expression rather than the number 8 is what
+    stops a ninth cue needing the edit again.
+  - **NO `Tests/` FILE WAS TOUCHED, AND THREE THINGS ARE OWED THERE.** They are listed under
+    handoffs below rather than acted on.
+
+### Debts taken on, 2026-09-07
+
+- **`EStratSoundCue::PlayerTurnBegan` ships with an EMPTY bank slot.** No `USoundBase` exists for
+  it and none was authored -- that is `Content/` and is the editor lane's. The cue is emitted,
+  reaches `UStratSoundDirector::EmitCue`, and is recorded with
+  `EStratSoundDisposition::NoSoundConfigured`, which is a configuration and not a fault by
+  `UStratSoundBank`'s own header. **Discharged** when the asset is authored and assigned to
+  `DA_StratSoundBank`'s `PlayerTurnBegan` slot.
+- **`MinSecondsBetween` gained no entry for the new cue, deliberately.** There is no C++
+  initialiser for that map and unset is the shipped default; a default written here would be a
+  mix decision in gameplay C++, which `UStratSoundBank`'s header forbids in terms. **Discharged**
+  only by a sound designer authoring one on the asset, if the hand-back ever proves spammy --
+  which it structurally cannot, since it fires at most once per hand-over.
+- **The camera-above-the-director-lookup placement is unpinnable by any clause that can be written
+  today.** Recorded above with its measurement (`DoesSupportWorldType` gives every Game and PIE
+  world a director). **Discharged** if `FindSoundDirector` ever acquires a reachable null on a
+  world that can also hold a camera pawn -- at which point the mutant becomes visible and a clause
+  should be written for it.
+- **`RecenterCameraOnViewingSide` has no failure channel at all**, by design and mirroring
+  `FocusPlaybackStep`. Five different conditions produce the same silence: the flag off, a side
+  with no units, a null board, a null world/PC, and a possessed pawn of the wrong class. A future
+  reader diagnosing "the camera did not move" has nothing to read. **Discharged** if a diagnostic
+  need arises, by a single `Verbose` line naming which of the five it was -- deliberately not
+  added now, because a log line on a presentation path that runs once per hand-over is noise
+  until somebody wants it.
+
 - **2026-09-06, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `e36e78c`, UNCOMMITTED) -- NEW MATCH NOW CLEARS
   THE §2.11.6 COMPLETION BIT AND FORCES THE GUIDED OPENING, AND THE THING WORTH READING IS THAT

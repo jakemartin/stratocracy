@@ -201,12 +201,82 @@ namespace StratSoundDirectorCallSite
 		return true;
 	}
 
+	/**
+	 * ONE AI SEAT AND ONE HUMAN SEAT, WITH THE AI MOVING FIRST -- the only shape in which a
+	 * hand-back can be observed at all, and added 2026-09-07 with `EStratSoundCue::
+	 * PlayerTurnBegan`.
+	 *
+	 * WHY `MakeAiVsAiConfig` ABOVE CANNOT BE USED FOR THIS. `StratHandsBackToPlayer` is
+	 * `!bHasResult && !AiSides.Contains(SideToMove)`, so with EVERY side in `AiSides` the
+	 * second term refuses on every possible moment and no fixture built on that helper can
+	 * reach the hand-back at all. It is not a matter of degree: the clauses below would be
+	 * green over a deleted feature.
+	 *
+	 * THE SIDES ARE READ OFF THE SCENARIO'S OWN VIEW MODEL, on `MakeAiVsAiConfig`'s pattern and
+	 * for its reason: a hand-written `{1}` would be this file deciding the scenario's roster.
+	 * The LAST side plays AI and moves first, the FIRST side is the human seat and is what the
+	 * screen is drawn for -- so `RunAiTurnsNow` runs exactly one AI turn and then exits its
+	 * loop on `!IsSideAi(SideToMove)`, which is the hand-over.
+	 *
+	 * THE CALLER STILL CHECKS THE HAND-BACK HAPPENED, through `StratHandsBackToPlayer` itself
+	 * rather than by trusting this arrangement. A scenario whose sides were arranged
+	 * differently would produce a green clause that observed nothing, and the module's own
+	 * predicate is the one instrument that cannot drift from the code under test.
+	 */
+	static bool MakeOneAiSideConfig(UStratMatchSubsystem& Match, const float PlaybackStepSeconds,
+	                                FStratMatchConfig& Out, FString& OutError)
+	{
+		if (!MakeConfig(Out, OutError))
+		{
+			return false;
+		}
+
+		FStratMatchConfig Probe = Out;
+		Match.StartMatch(Probe, OutError);
+		if (!Match.IsMatchLive())
+		{
+			return false;
+		}
+
+		FStratViewModel Model;
+		if (!Match.BuildViewModel(Model, OutError))
+		{
+			return false;
+		}
+
+		TArray<int32> Sides;
+		for (const FStratUnitView& Unit : Model.Units)
+		{
+			Sides.AddUnique(Unit.Side);
+		}
+		Sides.Sort();
+		if (Sides.Num() < 2)
+		{
+			OutError = TEXT("the shipped scenario deploys units for fewer than two sides");
+			return false;
+		}
+
+		UDataTable* const Units = LoadTable(TEXT("/Game/StratData/DT_Units.DT_Units"));
+
+		Out.AiSides               = { Sides.Last() };
+		Out.FirstSide             = Sides.Last();
+		Out.ViewingSide           = Sides[0];
+		Out.AiBuildlistUnitIds    = Units != nullptr ? Units->GetRowNames() : TArray<FName>();
+		Out.AiPlaybackStepSeconds = PlaybackStepSeconds;
+		return true;
+	}
+
 	static const TCHAR* CueWord(const EStratSoundCue Cue)
 	{
 		switch (Cue)
 		{
 		case EStratSoundCue::ButtonClick:      return TEXT("ButtonClick");
 		case EStratSoundCue::TurnEnded:        return TEXT("TurnEnded");
+		// ADDED 2026-09-07 WITH THE ENUMERATOR, for the reason its twin in
+		// `Source/StratUI/Tests/StratSoundCueClauses.cpp` states: display only, and a missing
+		// arm compiles silently under MSVC and prints `<unknown>` in the one message a reader
+		// of a red run has.
+		case EStratSoundCue::PlayerTurnBegan:  return TEXT("PlayerTurnBegan");
 		case EStratSoundCue::UnitMoved:        return TEXT("UnitMoved");
 		case EStratSoundCue::UnitAttacked:     return TEXT("UnitAttacked");
 		case EStratSoundCue::UnitDestroyed:    return TEXT("UnitDestroyed");
@@ -1194,12 +1264,25 @@ bool FStratSoundStepVoicesItsOwnEventTest::RunTest(const FString& /*Parameters*/
 				return false;
 			}
 
+			// AN EXPLICIT `UnitDestroyed` ARM AND NOT A `default:`, CORRECTED 2026-09-07.
+			// This switch read `default: ++DeathCues;` from the day it was written, which was
+			// true only because `bDiegetic` above had already narrowed the set to four cues and
+			// three of them were named. `EStratSoundCue::PlayerTurnBegan` landed that day and
+			// the narrowing still holds -- the `bDiegetic` assertion returns before this
+			// switch, so a hand-back cue arriving here reddens the clause rather than being
+			// miscounted -- but the counter would have been WRONG in the window between the two
+			// if that assertion were ever relaxed, reporting a hand-back as a death in the
+			// `AddInfo` line a reader uses to diagnose the failure. Naming the arm makes the
+			// count independent of the guard above it; the `default:` that remains counts
+			// nothing and exists only because MSVC emits no warning for a missing arm (the debt
+			// `StratSoundBank.cpp` records against `/we4062`).
 			switch (Record.Cue)
 			{
 			case EStratSoundCue::UnitMoved:        ++MoveCues;   ++OwnCues; break;
 			case EStratSoundCue::UnitAttacked:     ++AttackCues; ++OwnCues; break;
 			case EStratSoundCue::FactoryBuiltUnit: ++BuildCues;  ++OwnCues; break;
-			default:                               ++DeathCues;             break;
+			case EStratSoundCue::UnitDestroyed:    ++DeathCues;             break;
+			default:                                                        break;
 			}
 		}
 
@@ -1485,6 +1568,369 @@ bool FStratSoundRefusedButtonStillClicksTest::RunTest(const FString& /*Parameter
 		Director->GetEmissions()[0].Side, static_cast<int32>(INDEX_NONE));
 	TestEqual(TEXT("GATE-AUDIO: and no unit"),
 		Director->GetEmissions()[0].UnitId, static_cast<int32>(INDEX_NONE));
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// GATE-AUDIO -- `PlayerTurnBegan` FIRES ONCE PER HAND-BACK, AND CARRIES THE SEAT IT IS ABOUT.
+//
+// THE SHIPPED, UNPACED CONFIGURATION IS THE ONE UNDER TEST AND IT IS NAMED RATHER THAN
+// INHERITED. `AiPlaybackStepSeconds` ships at `0.0f`, so NO TOUR RUNS IN ANY HEADLESS FIXTURE:
+// `RunAiTurnsNow` raises `bPlayerHandbackPending`, `BeginAiPlayback` declines to arm, and the
+// beat is spent inside that same call. The clause asserts the zero interval first, on
+// `StratAiPlaybackClauses.cpp`'s standing practice -- a fixture that had silently acquired a
+// tour would be exercising the OTHER of the two hand-back paths while reading as this one.
+//
+// WHY ONE AI SEAT AND NOT TWO. See `MakeOneAiSideConfig`: with every side in `AiSides` the
+// hand-back predicate's second term refuses at every moment, and this clause would be green
+// over a deleted feature. That is why the control is `StratHandsBackToPlayer` itself, asked of
+// the model the subsystem applied.
+//
+// THE PAYLOAD IS THE HALF A COUNT CANNOT SEE, AND EVERY EXPECTED FIGURE IS READ OFF
+// `GetViewModel()`.
+//   - `Side == Match.SideToMove`. `RecenterCameraOnViewingSide`, which fires on the same line,
+//     deliberately uses `ViewingSide` instead -- the two are EQUAL on this configuration, so a
+//     later tidy-up that unified them would be invisible to any assertion that did not name
+//     which field it wanted. `FStratSoundEmission::Side` documents itself as an index into
+//     `FStratViewModel::Sides` and never a you/enemy answer; this is that.
+//   - `UnitId == INDEX_NONE`. A hand-back is about a seat.
+//   - `Turn == Match.Turn`, the turn that is BEGINNING -- the mirror of `TurnEnded`, which
+//     carries the mark's turn, the one that ended.
+//
+// AND TWO IDLE REFRESHES AFTERWARDS, WHICH IS WHAT MAKES "ONCE" MEAN SOMETHING HERE. A live
+// match refreshes on every mouse move; an emission that had migrated into `ApplyView` -- the
+// shape `StratSoundCues.h` gives four reasons for refusing -- would sound a horn on every
+// hover. The refreshes are applied from `GetViewModel()` itself, so nothing about the match
+// changes across them.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratSoundPlayerTurnBeganOncePerHandbackTest,
+	"Stratocracy.StratPlay.GATE-AUDIO.PlayerTurnBeganFiresOncePerHandback",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratSoundPlayerTurnBeganOncePerHandbackTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratSoundDirectorCallSite;
+
+	// ONLY THE TILE-MESH LINE IS DECLARED, AND `DeclareHandoverNoise` IS DELIBERATELY NOT
+	// USED. That helper also declares `STRAT-AI refused`, which is correct for the
+	// AI-VS-AI fixtures above -- a both-sides-AI stretch runs to a Sec 2.8 result and the
+	// rules module refuses the winning side's own EndTurn. **THIS FIXTURE RUNS ONE AI TURN
+	// AND HANDS BACK, SO THAT LINE NEVER FIRES.** Measured 2026-09-07: with the helper the
+	// clause was RED with "Expected suppressed ('Warning') level log message or higher
+	// matching 'STRAT-AI refused' did not occur" -- because a declaration with
+	// `Occurrences 0` is itself an ASSERTION, which is the point this file's own
+	// `DeclareHandoverNoise` block and `MatchEndedFiresOnceAndFromTheLatch` both record.
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	FTestWorldScope Scope;
+	if (!TestNotNull(TEXT("a transient world was created"), Scope.World))
+	{
+		return false;
+	}
+
+	UStratMatchSubsystem* const Match    = Scope.World->GetSubsystem<UStratMatchSubsystem>();
+	UStratSoundDirector* const  Director = Scope.World->GetSubsystem<UStratSoundDirector>();
+	if (!TestNotNull(TEXT("the world has a match subsystem"), Match) ||
+	    !TestNotNull(TEXT("the world has a sound director"), Director))
+	{
+		return false;
+	}
+
+	FStratMatchConfig Config;
+	FString           Error;
+	if (!TestTrue(TEXT("a one-AI-seat config assembles"),
+			MakeOneAiSideConfig(*Match, FStratMatchConfig().AiPlaybackStepSeconds, Config,
+			                    Error)))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	// THE CONFIGURATION UNDER TEST, NAMED. Taken from `FStratMatchConfig()`'s own default above
+	// rather than written as a literal, so this asserts what the game ships with and not what
+	// this file believes it ships with.
+	if (!TestTrue(*FString::Printf(
+			TEXT("CONTROL: the configuration under test is the SHIPPED, UNPACED one -- "
+			     "AiPlaybackStepSeconds is %.3f, so no tour is armed and the beat is spent "
+			     "inside `RunAiTurnsNow` rather than by a tour's end"),
+			Config.AiPlaybackStepSeconds),
+			Config.AiPlaybackStepSeconds <= 0.0f))
+	{
+		return false;
+	}
+
+	Match->StartMatch(Config, Error);
+	if (!TestTrue(TEXT("the match is live whatever StartMatch returned"), Match->IsMatchLive()))
+	{
+		AddError(Error);
+		return false;
+	}
+
+	Director->ResetEmissions();
+
+	FString    RunReason;
+	const bool bRan = Match->RunAiTurnsNow(RunReason);
+	AddInfo(FString::Printf(TEXT("RunAiTurnsNow returned %s; reason: '%s'; %d step(s) recorded"),
+		bRan ? TEXT("true") : TEXT("false"), *RunReason, Match->GetAiPlaybackStepCount()));
+
+	if (!TestFalse(TEXT("CONTROL: and no tour is running, so this is the unpaced path"),
+			Match->IsAiPlaybackRunning()))
+	{
+		return false;
+	}
+
+	// THE CONTROL THAT MAKES THE COUNT MEAN SOMETHING, AND IT IS THE MODULE'S OWN PREDICATE. If
+	// the hand-over did not actually reach a human seat then a count of one would be measuring
+	// something else entirely, and a count of zero would be correct rather than a defect.
+	const FStratViewModel& Applied = Match->GetViewModel();
+	if (!TestTrue(*FString::Printf(
+			TEXT("CONTROL: the hand-over really did give play back to a human seat -- "
+			     "`StratHandsBackToPlayer` says so of the applied model (turn %d, side to move "
+			     "%d, %d AI seat(s))"),
+			Applied.Match.Turn, Applied.Match.SideToMove, Config.AiSides.Num()),
+			StratHandsBackToPlayer(Applied, Config.AiSides)))
+	{
+		return false;
+	}
+
+	if (!TestEqual(*FString::Printf(
+			TEXT("GATE-AUDIO: an AI hand-over that gives play back to a human seat sounds "
+			     "`PlayerTurnBegan` exactly once: %s"),
+			*Describe(Director->GetEmissions())),
+			CountOfCue(Director->GetEmissions(), EStratSoundCue::PlayerTurnBegan), 1))
+	{
+		return false;
+	}
+
+	const FStratSoundEmissionRecord* Beat = nullptr;
+	for (const FStratSoundEmissionRecord& Record : Director->GetEmissions())
+	{
+		if (Record.Cue == EStratSoundCue::PlayerTurnBegan)
+		{
+			Beat = &Record;
+			break;
+		}
+	}
+	if (!TestNotNull(TEXT("internal: the single hand-back record is retrievable"), Beat))
+	{
+		return false;
+	}
+
+	TestEqual(
+		TEXT("GATE-AUDIO: and it names the side whose turn is BEGINNING -- `Match.SideToMove` "
+		     "off the applied model, NOT `ViewingSide`. The camera call on the same line uses "
+		     "`ViewingSide` for its own separate reason and the two are equal here, so only an "
+		     "assertion that names the field can see them being unified"),
+		Beat->Side, Applied.Match.SideToMove);
+
+	TestEqual(
+		TEXT("GATE-AUDIO: and no unit -- a hand-back is about a seat"),
+		Beat->UnitId, static_cast<int32>(INDEX_NONE));
+
+	TestEqual(
+		TEXT("GATE-AUDIO: and the turn that is BEGINNING, which is the applied model's own "
+		     "turn. `TurnEnded` is the exception that carries the mark's turn; this cue takes "
+		     "the general rule"),
+		Beat->Turn, Applied.Match.Turn);
+
+	// ---- AND IT DOES NOT SOUND AGAIN ON AN IDLE REFRESH ---------------------
+	const FStratViewModel Idle = Applied;
+	Match->ApplyView(Idle);
+	Match->ApplyView(Idle);
+
+	if (!TestTrue(TEXT("CONTROL: the two idle refreshes really reached the audio seam"),
+			Director->GetApplyViewObservationCount() >= 2))
+	{
+		return false;
+	}
+
+	TestEqual(*FString::Printf(
+			TEXT("GATE-AUDIO: and it stays at one across refreshes -- the beat belongs to the "
+			     "hand-back moment and not to `ApplyView`, which a live match runs on every "
+			     "mouse move: %s"),
+			*Describe(Director->GetEmissions())),
+		CountOfCue(Director->GetEmissions(), EStratSoundCue::PlayerTurnBegan), 1);
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// GATE-AUDIO -- A HAND-BACK INTO A CONCLUDED MATCH IS SILENT, AND THE PAIR IS MATCHED.
+//
+// THIS IS THE ARM THAT SEPARATES `PlayerTurnBegan` FROM `TurnEnded`. The rules module leaves
+// `sideToMove` naming a seat after a Sec 2.8 result -- `StratHandsBackToPlayer`'s own body says
+// so and `STRAT-MATCH concluded` logs it -- so WITHOUT the `!bHasResult` term a match that
+// ended on the AI's killing blow would announce the player's turn beginning half a second
+// before the verdict screen appeared, on top of `MatchEnded`.
+//
+// **TWO WORLDS, ONE DIFFERENCE, OPPOSITE EXPECTATIONS.** A silence asserted alone has two
+// causes that look identical -- correctly suppressed, or the seam is dead -- which is this
+// file's standing discipline. So the same fixture is run twice: once with the result planted
+// and once without, and the second must SOUND. A `return;` at the top of
+// `NotePlayerTurnBeganIfDue` passes the first arm and fails the second.
+//
+// THE PACED PATH IS THE ONE THAT CAN CARRY THE PLANT, AND THAT IS A MECHANICAL CONSTRAINT
+// RATHER THAN A CHOICE. `NotePlayerTurnBeganIfDue` reads `AppliedModel`, and on the UNPACED
+// path the beat is spent inside `RunAiTurnsNow` -- which rebuilds the model from the bridge and
+// applies it, erasing any plant made beforehand. With a tour armed the beat is DEFERRED to
+// `EndAiPlaybackTour`, which leaves a window in which `ApplyView` can carry a planted result
+// into `AppliedModel` and `SkipAiPlayback` can then close the tour. The plant is validated
+// through `StratMatchIsConcluded`, the module's own predicate, rather than by reading the bool
+// back -- `MatchEndedFiresOnceAndFromTheLatch`'s practice.
+//
+// IT ALSO PINS THE DEFERRAL ITSELF, AND THAT IS NOT INCIDENTAL. Both arms assert ZERO beats
+// while the tour is still running, before anything is planted. A `NotePlayerTurnBeganIfDue`
+// that consumed the flag instead of deferring on `IsAiPlaybackRunning()` would sound the
+// hand-back while the tour was still panning over the AI's moves, and would be red here twice.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratSoundPlayerTurnBeganSilentOnConcludedTest,
+	"Stratocracy.StratPlay.GATE-AUDIO.PlayerTurnBeganIsSilentWhenTheHandbackMatchHasConcluded",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratSoundPlayerTurnBeganSilentOnConcludedTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratSoundDirectorCallSite;
+
+	// ONLY THE TILE-MESH LINE IS DECLARED, AND `DeclareHandoverNoise` IS DELIBERATELY NOT
+	// USED. That helper also declares `STRAT-AI refused`, which is correct for the
+	// AI-VS-AI fixtures above -- a both-sides-AI stretch runs to a Sec 2.8 result and the
+	// rules module refuses the winning side's own EndTurn. **THIS FIXTURE RUNS ONE AI TURN
+	// AND HANDS BACK, SO THAT LINE NEVER FIRES.** Measured 2026-09-07: with the helper the
+	// clause was RED with "Expected suppressed ('Warning') level log message or higher
+	// matching 'STRAT-AI refused' did not occur" -- because a declaration with
+	// `Occurrences 0` is itself an ASSERTION, which is the point this file's own
+	// `DeclareHandoverNoise` block and `MatchEndedFiresOnceAndFromTheLatch` both record.
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+
+	// TRUE ON THE PLANTED ARM AND FALSE ON THE CONTROL ARM, so that everything else about the
+	// two runs is identical by construction rather than by care.
+	const bool bArms[] = { true, false };
+
+	for (const bool bPlantResult : bArms)
+	{
+		FTestWorldScope Scope;
+		if (!TestNotNull(TEXT("a transient world was created"), Scope.World))
+		{
+			return false;
+		}
+
+		UStratMatchSubsystem* const Match    = Scope.World->GetSubsystem<UStratMatchSubsystem>();
+		UStratSoundDirector* const  Director = Scope.World->GetSubsystem<UStratSoundDirector>();
+		if (!TestNotNull(TEXT("the world has a match subsystem"), Match) ||
+		    !TestNotNull(TEXT("the world has a sound director"), Director))
+		{
+			return false;
+		}
+
+		FStratMatchConfig Config;
+		FString           Error;
+		if (!TestTrue(TEXT("a one-AI-seat, PACED config assembles"),
+				MakeOneAiSideConfig(*Match, kHarnessPlaybackInterval, Config, Error)))
+		{
+			AddError(Error);
+			return false;
+		}
+
+		Match->StartMatch(Config, Error);
+		if (!TestTrue(TEXT("the match is live whatever StartMatch returned"),
+				Match->IsMatchLive()))
+		{
+			AddError(Error);
+			return false;
+		}
+
+		Director->ResetEmissions();
+
+		FString RunReason;
+		Match->RunAiTurnsNow(RunReason);
+
+		if (!TestTrue(TEXT("CONTROL: a tour is running, so the beat is DEFERRED and there is a "
+		                   "window in which a result can be applied"),
+				Match->IsAiPlaybackRunning()))
+		{
+			return false;
+		}
+		if (!TestEqual(*FString::Printf(
+				TEXT("GATE-AUDIO: and nothing has sounded yet -- the beat waits for the tour "
+				     "rather than firing while it is still panning over the AI's moves: %s"),
+				*Describe(Director->GetEmissions())),
+				CountOfCue(Director->GetEmissions(), EStratSoundCue::PlayerTurnBegan), 0))
+		{
+			return false;
+		}
+
+		FStratViewModel Applied = Match->GetViewModel();
+		if (!TestFalse(TEXT("CONTROL: the hand-over's own model is not concluded, measured "
+		                    "through the module's predicate"),
+				StratMatchIsConcluded(Applied)))
+		{
+			return false;
+		}
+		if (!TestTrue(TEXT("CONTROL: and it IS a hand-back to a human seat, so the only term "
+		                   "that can refuse below is the one being planted"),
+				StratHandsBackToPlayer(Applied, Config.AiSides)))
+		{
+			return false;
+		}
+
+		if (bPlantResult)
+		{
+			Applied.Match.bHasResult = true;
+			if (!TestTrue(TEXT("CONTROL: and the planted model IS concluded by that same "
+			                   "predicate"),
+					StratMatchIsConcluded(Applied)))
+			{
+				return false;
+			}
+			if (!TestFalse(TEXT("CONTROL: which is enough on its own to make it not a "
+			                    "hand-back -- `StratHandsBackToPlayer` now refuses, and the "
+			                    "seat term is unchanged"),
+					StratHandsBackToPlayer(Applied, Config.AiSides)))
+			{
+				return false;
+			}
+		}
+
+		Match->ApplyView(Applied);
+
+		// CLOSES THE TOUR, WHICH IS WHAT CALLS `EndAiPlaybackTour` AND THEREFORE THE BEAT.
+		Match->SkipAiPlayback();
+
+		if (!TestFalse(TEXT("CONTROL: the tour really did stop, so the beat's second deferring "
+		                    "return cannot be what produced the count below"),
+				Match->IsAiPlaybackRunning()))
+		{
+			return false;
+		}
+
+		const int32 Beats =
+			CountOfCue(Director->GetEmissions(), EStratSoundCue::PlayerTurnBegan);
+
+		if (bPlantResult)
+		{
+			TestEqual(*FString::Printf(
+					TEXT("GATE-AUDIO: a hand-back into a CONCLUDED match is silent -- "
+					     "`sideToMove` still names a seat after a Sec 2.8 result, so without "
+					     "the `!bHasResult` term the player's turn would be announced on top "
+					     "of the verdict: %s"),
+					*Describe(Director->GetEmissions())),
+				Beats, 0);
+		}
+		else
+		{
+			TestEqual(*FString::Printf(
+					TEXT("GATE-AUDIO CONTROL, THE MATCHED HALF: the identical fixture WITHOUT "
+					     "the planted result sounds it exactly once, at the tour's end. "
+					     "Without this arm the silence above is satisfied by a dead seam: %s"),
+					*Describe(Director->GetEmissions())),
+				Beats, 1);
+		}
+	}
 
 	return true;
 }

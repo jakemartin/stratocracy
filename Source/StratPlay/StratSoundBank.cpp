@@ -37,10 +37,17 @@ USoundBase* UStratSoundBank::SoundFor(const EStratSoundCue Cue) const
 	//   done in this pass: it would promote a warning across every switch in `StratPlay`, which
 	//   is a module-wide build-configuration decision with its own blast radius and does not
 	//   belong in a pass about one array bound. Recorded as a debt, not as an oversight.
+	//
+	//   AND THE MEASUREMENT WAS CASHED IN ON 2026-09-07, WHICH IS WORTH RECORDING BECAUSE IT IS
+	//   THE CASE THE RETRACTION ABOVE PREDICTED. `EStratSoundCue::PlayerTurnBegan` was added
+	//   that day and the arm below was written BY HAND, from the enum, because nothing in this
+	//   toolchain would have said a word had it been forgotten. The debt is unchanged and
+	//   `/we4062` was still not taken, for the reason immediately above.
 	switch (Cue)
 	{
 	case EStratSoundCue::ButtonClick:      return ButtonClick;
 	case EStratSoundCue::TurnEnded:        return TurnEnded;
+	case EStratSoundCue::PlayerTurnBegan:  return PlayerTurnBegan;
 	case EStratSoundCue::UnitMoved:        return UnitMoved;
 	case EStratSoundCue::UnitAttacked:     return UnitAttacked;
 	case EStratSoundCue::UnitDestroyed:    return UnitDestroyed;

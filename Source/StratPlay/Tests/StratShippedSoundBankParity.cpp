@@ -104,6 +104,8 @@
 #include "Engine/World.h"
 #include "Sound/SoundBase.h"
 #include "Sound/SoundClass.h"
+#include "Sound/SoundWave.h"
+#include "UObject/StrongObjectPtr.h"
 #include "UObject/Class.h"
 #include "UObject/UnrealType.h"
 #include "UObject/UObjectGlobals.h"
@@ -1265,6 +1267,176 @@ bool FStratEveryCueInTheShippedBankReachesTheEngineTest::RunTest(const FString& 
 				*DispositionWord(Record.Disposition)),
 			static_cast<int32>(Record.Disposition),
 			static_cast<int32>(EStratSoundDisposition::Played));
+	}
+
+	return true;
+}
+
+// ---------------------------------------------------------------------------
+// GATE-AUDIO -- EVERY CUE REACHES ITS OWN BANK SLOT, AND `SoundFor` IS THE ONLY THING BETWEEN
+// THEM.
+//
+// WHAT THIS PINS THAT THE THREE SHIPPED-BANK CLAUSES ABOVE CANNOT. Those three read
+// `DA_StratSoundBank` and are therefore statements about CONTENT: they go red when an asset is
+// unassigned and green when it is filled in, whatever `UStratSoundBank::SoundFor` does with it.
+// This one holds no asset at all. It builds a bank in memory, gives every slot a DIFFERENT
+// sound, and asks `SoundFor` for each cue in turn -- so it is red for a missing `switch` arm, a
+// duplicated one, or two arms crossed, and it is red the day the enumerator lands rather than
+// the day an artist delivers a wave.
+//
+// AND THAT IS NOT A HYPOTHETICAL MUTANT. `StratSoundBank.cpp`'s own header block records the
+// debt in terms: MSVC emits NOTHING for a `switch` over an enum with a missing arm, `/we4062`
+// was measured and deliberately not taken, and the `PlayerTurnBegan` arm added on 2026-09-07
+// was written BY HAND from the enum with no toolchain check behind it. A forgotten arm falls
+// through to the function's tail and returns null -- which every consumer reads as
+// `EStratSoundDisposition::NoSoundConfigured`, i.e. as "the designer left that slot empty".
+// The defect and the ordinary authoring state are the same observation. This clause is what
+// tells them apart.
+//
+// **THE PAIRING IS READ OFF REFLECTION AND IS NOT WRITTEN HERE, WHICH IS THE WHOLE DESIGN.**
+// A hand-written table of `{ EStratSoundCue::X, &UStratSoundBank::X }` would be a second author
+// of the mapping, and a ninth cue would silently fall out of it -- the exact gap this file
+// exists to close, reintroduced one level down, which is the argument `AllCues()` already makes
+// for itself. Instead the slot for cue `X` is defined as *the `USoundBase*` property whose
+// reflected NAME equals the reflected name of enumerator `X`*, and `UStratSoundBank.h` states
+// that correspondence as a rule ("DECLARED IN ENUM ORDER ... the details panel's reading order
+// is this file's declaration order"). A cue with no such property reddens the control below
+// rather than being skipped.
+//
+// EVERY SLOT GETS A DISTINCT OBJECT, WHICH IS WHAT CATCHES A CROSSED PAIR. One shared sound in
+// every slot would make a `SoundFor` that returned `ButtonClick` for all eight cues perfectly
+// green. The objects are `USoundWave`s in the transient package -- `USoundBase` is abstract and
+// nothing here plays, loads or serialises them; they are identity tokens that happen to satisfy
+// the property's type.
+//
+// IT ROOTS THEM, AND THAT IS NOT DECORATION. A `NewObject` with no reference is collectable, and
+// a GC between the writes and the reads would turn this clause into a null-versus-null
+// comparison that passes. `TStrongObjectPtr` on the bank and on every sound keeps the whole set
+// alive for the clause's lifetime.
+// ---------------------------------------------------------------------------
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(
+	FStratEverySoundBankSlotIsReachableByItsOwnCueTest,
+	"Stratocracy.StratPlay.GATE-AUDIO.EverySoundBankSlotIsReachableByItsOwnCue",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FStratEverySoundBankSlotIsReachableByItsOwnCueTest::RunTest(const FString& /*Parameters*/)
+{
+	using namespace StratShippedSoundBankParity;
+
+	const TArray<EStratSoundCue> Cues = AllCues();
+	if (!CueSetControlOrFail(*this, Cues))
+	{
+		return false;
+	}
+
+	const UEnum* const Reflected = StaticEnum<EStratSoundCue>();
+	if (!TestNotNull(TEXT("CONTROL: `EStratSoundCue` is reflected, so the slot names can be "
+	                      "derived from the enumerator names rather than written here"),
+			Reflected))
+	{
+		return false;
+	}
+
+	const TStrongObjectPtr<UStratSoundBank> Bank(
+		NewObject<UStratSoundBank>(GetTransientPackageAsObject()));
+	if (!TestTrue(TEXT("a bank can be constructed in memory -- this clause reads no asset"),
+			Bank.IsValid()))
+	{
+		return false;
+	}
+
+	// ---- The plant: one distinct sound per cue, addressed by the reflected name ----------
+	TArray<TStrongObjectPtr<USoundWave>> Roots;
+	TMap<EStratSoundCue, USoundBase*>    Planted;
+
+	for (const EStratSoundCue Cue : Cues)
+	{
+		const FString SlotName = Reflected->GetNameStringByValue(static_cast<int64>(Cue));
+
+		FObjectProperty* const Slot =
+			FindFProperty<FObjectProperty>(UStratSoundBank::StaticClass(), FName(*SlotName));
+
+		if (!TestNotNull(*FString::Printf(
+				TEXT("GATE-AUDIO: `UStratSoundBank` carries a slot named after cue '%s'. A cue "
+				     "with no property of its own name cannot be authored in the details panel "
+				     "at all, whatever `SoundFor` says -- and `UStratSoundBank.h` rules that "
+				     "the slots are declared in enum order for exactly this reason"),
+				*SlotName),
+				Slot))
+		{
+			return false;
+		}
+
+		if (!TestTrue(*FString::Printf(
+				TEXT("GATE-AUDIO CONTROL: and slot '%s' holds a `USoundBase`, so the property "
+				     "found by name is the cue's asset slot and not some unrelated object "
+				     "member that happens to share the name"),
+				*SlotName),
+				Slot->PropertyClass != nullptr &&
+				Slot->PropertyClass->IsChildOf(USoundBase::StaticClass())))
+		{
+			return false;
+		}
+
+		USoundWave* const Sound = NewObject<USoundWave>(GetTransientPackageAsObject());
+		if (!TestNotNull(*FString::Printf(TEXT("a distinct sound object for cue '%s'"), *SlotName),
+				Sound))
+		{
+			return false;
+		}
+		Roots.Add(TStrongObjectPtr<USoundWave>(Sound));
+
+		Slot->SetObjectPropertyValue_InContainer(Bank.Get(), Sound);
+		Planted.Add(Cue, Sound);
+	}
+
+	// THE PLANT IS CHECKED BEFORE IT IS USED. Distinctness is the property that makes a crossed
+	// pair visible, and it is measured rather than assumed from `NewObject` returning a fresh
+	// object each call.
+	TSet<const USoundBase*> Distinct;
+	for (const TPair<EStratSoundCue, USoundBase*>& Pair : Planted)
+	{
+		Distinct.Add(Pair.Value);
+	}
+	if (!TestEqual(
+			*FString::Printf(
+				TEXT("CONTROL: the %d planted sounds are all different objects (%d distinct), "
+				     "so a `SoundFor` that returned the same slot for every cue could not pass "
+				     "the loop below"),
+				Planted.Num(), Distinct.Num()),
+			Distinct.Num(), Planted.Num()))
+	{
+		return false;
+	}
+
+	// ---- The claim ----------------------------------------------------------------------
+	for (const EStratSoundCue Cue : Cues)
+	{
+		USoundBase* const* const Expected = Planted.Find(Cue);
+		if (Expected == nullptr)
+		{
+			AddError(FString::Printf(TEXT("internal: no plant recorded for cue '%s'"),
+				*CueWord(Cue)));
+			return false;
+		}
+
+		USoundBase* const Got = Bank->SoundFor(Cue);
+
+		// `TestTrue` OVER A POINTER COMPARISON AND NOT `TestEqual`. `TestEqual` has no
+		// `UObject*` overload, and the ones it does have would select by conversion; the
+		// identity is the whole assertion, so it is written as one.
+		TestTrue(
+			*FString::Printf(
+				TEXT("GATE-AUDIO: `SoundFor(%s)` returns the sound written into the slot of "
+				     "that name (expected '%s', got '%s'). A red here is one of three things "
+				     "and the string says which: '<null>' is a MISSING `switch` arm falling "
+				     "through to the function's tail -- which every consumer reports as "
+				     "`NoSoundConfigured`, indistinguishable from an empty designer slot, which "
+				     "is why this clause exists; a DIFFERENT cue's sound is two arms crossed; "
+				     "and an object that is none of the plants means the bank read something "
+				     "this clause did not write"),
+				*CueWord(Cue), *Describe(*Expected), *Describe(Got)),
+			Got == *Expected);
 	}
 
 	return true;

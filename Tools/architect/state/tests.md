@@ -14,6 +14,186 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-07 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- ONE new `Tests/`
+  file plus three existing ones, and this record file, on `master` in the main tree
+  `E:/MultiAgent/Stratocracy`, base commit `6d882a3`, and this pass is UNCOMMITTED).** No
+  exception clause is cited and none applies. **No production file is changed by this pass** --
+  four were mutated temporarily, and the restoration is verified by sha256 below. The engineer's
+  `PlayerTurnBegan` / hand-back / camera work was UNCOMMITTED in the working tree over the same
+  base and was read there rather than from the brief. The acceptance IDs are the
+  `strat-data-steward`'s 2026-09-07 ruling -- `GATE-AUDIO` for the cue, the newly minted
+  `GATE-HANDBACK` for the moment and the camera -- and NOT the `GATE-AITURN` names the
+  engineer's own report proposed. Cite this pass by its exported
+  `reportCreatedOn 2026.09.07-15.59.11`. The pass/fail figure lives in
+  `Tools/architect/state/global.md` and nowhere else.
+  - **NINE NEW CLAUSES IN `Source/StratPlay/Tests/StratPlayerHandbackClauses.cpp` (new file) AND
+    THREE ADDED TO EXISTING FILES, COUNTED BY MACRO.**
+    `grep -c IMPLEMENT_SIMPLE_AUTOMATION_TEST` returns 9 on the new file, 11 on
+    `Source/StratPlay/Tests/StratSoundDirectorCallSite.cpp` (was 9), 6 on
+    `Source/StratPlay/Tests/StratShippedSoundBankParity.cpp` (was 5) and 11 on
+    `Source/StratUI/Tests/StratSoundCueClauses.cpp` (unchanged -- that file gained no clause, it
+    had one RENAMED and EXTENDED). Counted by macro because a single-line grep on a clause NAME
+    has returned zero in this tree before.
+  - **ONE CLAUSE WAS RENAMED, AND THE RENAME IS THE FINDING RATHER THAN A TIDY-UP.**
+    `Stratocracy.StratUI.GATE-AUDIO.TheDeciderNeverEmitsButtonClickOrMatchEnded` is now
+    `...TheDeciderNeverEmitsButtonClickMatchEndedOrPlayerTurnBegan`. It asserts three absences;
+    a name saying two is the overclaiming-name defect pointed the other way -- it would have
+    UNDER-claimed, and a reader grepping "what pins the hand-back cue's provenance" would have
+    walked past it. **A test name is compiled**, so the rename cost a rebuild before the suite
+    could see it; the old name appears nowhere else in the tree.
+  - **WHICH CLAUSE PINS WHICH BEHAVIOUR.**
+    - `GATE-HANDBACK.HandsBackToPlayerRefusesAConcludedMatch` -- the `!bHasResult` term ALONE.
+      `AiSides` is deliberately EMPTY, which by the function's own contract makes every moment a
+      hand-back, so the seat term cannot be what refused.
+    - `GATE-HANDBACK.HandsBackToPlayerRefusesAnAiSeat` -- the seat term alone, on a live model so
+      the result term is open. Its second assertion (an `AiSides` naming some OTHER seat still
+      hands back) is what catches `Contains` used backwards or a `!AiSides.IsEmpty()` standing
+      in for it.
+    - `GATE-HANDBACK.HandsBackToPlayerAcceptsALiveHumanSeat` -- **the arm without which the two
+      above are both satisfied by `return false;`.** Its `AiSides` is deliberately non-empty, so
+      the seat term is genuinely evaluated rather than given the hot-seat shortcut.
+    - `GATE-HANDBACK.CentroidOfASideWithNoUnitsRefusesAndLeavesTheHexUntouched` -- **the
+      out-parameter, not the return value.** A sentinel that is deliberately NOT `(0,0)` is
+      seeded and asserted to have survived; seeding with the value the mutant writes would make
+      the mutant invisible. `(0,0)` is a real hex -- the board origin -- and a caller cannot tell
+      it from a genuine centroid there.
+    - `GATE-HANDBACK.CentroidAveragesOnlyItsOwnSidesUnits` -- the side filter. The expectation is
+      **the same function over a roster with the other side's units absent**, so no arithmetic is
+      written; the enemy units sit hundreds of tiles away so a dropped filter is loud.
+    - `GATE-HANDBACK.CentroidRoundsAMeanThatLandsOnAHalf` -- the one arithmetic property the
+      clause above CANNOT see, because it compares the function against itself and every
+      arithmetic defect cancels. Units at `(0,0)` and `(1,3)` give a mean of `(0.5, 1.5)` -- two
+      DIFFERENT halves, so a q/r transposition is red too. The expectation is `FMath::RoundToInt`
+      over those means, the engine function the module's own declaration names, so **the clause
+      pins "it rounds" and deliberately does NOT pin which way a tie goes.**
+    - `GATE-HANDBACK.ATeardownMidTourDoesNotSpendTheHandback` -- see the mutant section below.
+    - `GATE-HANDBACK.RecenterLandsOnTheViewingSideCentroidAndKeepsTheZoom` and
+      `...RecenterIsSuppressedByItsOptOutWhichShipsOn` -- see the camera-pawn section below.
+    - `GATE-AUDIO.PlayerTurnBeganFiresOncePerHandback` (`StratSoundDirectorCallSite.cpp`) -- the
+      count and the PAYLOAD: `Side == Match.SideToMove`, `UnitId == INDEX_NONE`,
+      `Turn == Match.Turn`, every figure read off `GetViewModel()`. Two idle `ApplyView` calls
+      afterwards are what make "once" mean something -- an emission migrated into `ApplyView`
+      would sound on every mouse move.
+    - `GATE-AUDIO.PlayerTurnBeganIsSilentWhenTheHandbackMatchHasConcluded` -- a matched pair
+      across two worlds differing only in a planted `bHasResult`, with opposite expectations. It
+      ALSO pins the deferral: both arms assert zero beats while the tour is still running.
+    - `GATE-AUDIO.EverySoundBankSlotIsReachableByItsOwnCue`
+      (`StratShippedSoundBankParity.cpp`) -- see the `SoundFor` section below.
+  - **WHAT THESE CLAUSES DO NOT PIN, STATED SO IT IS NOT INFERRED FROM THE NAMES.**
+    - **`Side` VERSUS `ViewingSide` IS NOT DISTINGUISHED BY ANY CLAUSE IN THIS SET, AND CANNOT
+      BE FROM A FIXTURE.** `NotePlayerTurnBeganIfDue` emits the cue with `Match.SideToMove` and
+      recentres the camera on `AppliedModel.ViewingSide`, and the engineer's own comments argue
+      at length that the two are different questions. **On every configuration a hand-back can
+      occur in they are EQUAL** -- the beat fires only when the side to move is a human seat, and
+      the screen is drawn for that seat -- so a mutant that unified them is green everywhere.
+      Both clauses NAME the field they expect, which is the most a reader can be given; the
+      distinction itself is unobservable. Making it observable needs a spectated or inverted
+      viewing configuration, which does not exist in this project.
+    - **THE CAMERA CALL'S PLACEMENT ABOVE AND OUTSIDE `if (FindSoundDirector())` IS NOT PINNED,
+      AND THE ENGINEER SAID SO FIRST.** A Game or PIE world always has a `UStratSoundDirector`
+      (`DoesSupportWorldType`), so there is no reachable world with a camera pawn and no
+      director. **This lane confirms the gap rather than closing it.** The `4a01418` defect it
+      guards against -- a visual alert nested inside a sound-bank lookup -- is real and shipped
+      once; the protection is that restoring it is a MOVE in a diff, which no clause can see.
+    - `GATE-HANDBACK` does NOT pin anything about which move the AI chose, whether its commands
+      were legal, or the tour's own pacing/stepping/skip while a tour is running. Those are
+      `T-AI-01`/`T-AI-06` and `GATE-AITURN`, unwidened.
+    - The `PlayerTurnBegan` CUE's own properties are `GATE-AUDIO`'s, in the three files that
+      name is pinned to. `StratPlayerHandbackClauses.cpp` USES the cue as an instrument -- it is
+      the latch's only observable -- and asserts nothing about what it carries.
+  - **THE TEARDOWN CLAUSE WAS MEASURED AGAINST ITS MUTANT, AND SO WERE THREE OTHERS. Four
+    temporary mutants, each applied, built, run and reverted; both production files restored
+    BYTE-IDENTICALLY, verified by sha256 (`StratMatchSubsystem.cpp`
+    `8faad2cad131895b03607f41d09f1fbc7c220b8e415bdfd859b09e55d1fe25c4`,
+    `StratMatchSubsystem.h`
+    `9442c441f08aff4c530715d635d19588fa0efc9970d1b0670a0e486a7458d8f6`).** A clause that would
+    pass over the defect it names is worth nothing, and this project's record already carries
+    several that did.
+    - **M1, the one the whole feature turns on:** `bPlayerHandbackPending = false;` moved from
+      ABOVE to BELOW the `EndAiPlaybackTour()` call in BOTH `Deinitialize` and
+      `TearDownPresentation` -- which is where the obvious reading puts it, beside `SoundMark`.
+      **Exactly one clause reddened,** `GATE-HANDBACK.ATeardownMidTourDoesNotSpendTheHandback`,
+      reporting *"Read 1 cue(s)"* against a required zero. Nothing else in `GATE-HANDBACK` or
+      `GATE-AUDIO` moved. **The whole rest of the suite was structurally blind to it**, because
+      every other clause about the latch observes a hand-back that SHOULD fire.
+    - **M2:** `FStratMatchConfig::bRecenterCameraOnPlayerTurn` default flipped to `false`. Two
+      clauses reddened -- the opt-out clause's anti-vacuity guard and the camera clause's
+      precondition. This is the "a shipped zero default makes every clause vacuous" defect
+      class, and it is now guarded by a direct read of `FStratMatchConfig()`.
+    - **M3:** the `Camera->FocusWorldLocation(...)` line deleted from
+      `RecenterCameraOnViewingSide`. Two clauses reddened with the coordinates named
+      (*"Expected 100.000, read 0.000"*, *"Expected 346.410, read 0.000"*), and **no cue clause
+      moved** -- which is the split the design claims: the camera and the cue are two facts on
+      one trigger.
+    - **M4:** the `!Model.Match.bHasResult` term dropped from `StratHandsBackToPlayer`. Two
+      clauses reddened, one pure and one live.
+  - **THE CAMERA-PAWN FIXTURE IS THE FIRST IN THIS PROJECT, AND ALL FOUR LINKS OF THE CHAIN ARE
+    OWED.** `UStratMatchSubsystem::FindCameraPawn` walks world -> first PlayerController ->
+    possessed pawn -> `Cast<AStratCameraPawn>`, and until this pass **no fixture in this tree had
+    the third or fourth link**, which is why `FocusPlaybackStep` -- the older caller of the same
+    chain -- has never been pinned by anything and why the new flag's declaration can truthfully
+    say it changes no existing fixture. It works headlessly: `SpawnActor<AStratPlayerController>`
+    then `SpawnActor<AStratCameraPawn>` then `Controller->Possess(Camera)`, in an
+    `EWorldType::Game` world that has had `InitializeActorsForPlay(FURL())` run -- without which
+    the controller never enters `UWorld::PlayerControllerList` and `GetFirstPlayerController()`
+    returns null. **Every link is asserted, because a missing one produces a SILENT EARLY RETURN
+    and therefore a camera that did not move, which is exactly the mutant the clause exists to
+    catch, arriving disguised as a fixture defect.**
+    - The expected location is `AStratBoardActor::WorldLocationOfHex` (through the public
+      `GetBoard()`) of `StratCentroidHexOfSide`'s answer over `GetViewModel()`. No world
+      coordinate is written anywhere in the file.
+    - **World-space comparisons use a `0.01` tolerance and NOT an equality**, because
+      `FocusWorldLocation` calls `SetActorLocation`, which round-trips a world location through
+      the actor's transform -- this tree's recorded caveat that such a round trip cannot store an
+      exact value. A hundredth of a unit is four orders of magnitude below the hex size, so a
+      camera one hex out is red by an enormous margin. `GetArmLength()` is compared with
+      `TestEqual` because the spring arm is never touched at all.
+    - `FocusPlaybackStep` is STILL not pinned. Nothing in this pass drives it. The fixture shape
+      that would is now in the tree and could be reused.
+  - **`GATE-AUDIO.EverySoundBankSlotIsReachableByItsOwnCue` IS THE CLAUSE THE THREE SHIPPED-BANK
+    CLAUSES STRUCTURALLY CANNOT BE.** Those three read `DA_StratSoundBank` and are therefore
+    statements about CONTENT: red when an asset is unassigned, green when it is filled in,
+    whatever `UStratSoundBank::SoundFor` does with it. This one holds no asset -- it builds a
+    bank in memory, gives every slot a DIFFERENT `USoundWave`, and asks `SoundFor` for each cue.
+    **It is red on the day an enumerator lands rather than the day an artist delivers a wave.**
+    - **The mutant is documented in the production file itself:** MSVC emits NOTHING for a
+      `switch` over an enum with a missing arm, `/we4062` was measured and deliberately not
+      taken, and the `PlayerTurnBegan` arm was written BY HAND from the enum. A forgotten arm
+      falls through and returns null -- which every consumer reports as
+      `EStratSoundDisposition::NoSoundConfigured`, **indistinguishable from a designer leaving
+      the slot empty.** The defect and the ordinary authoring state are the same observation, and
+      this clause is what tells them apart.
+    - The cue -> slot pairing is read off REFLECTION -- the `USoundBase*` property whose name
+      equals the enumerator's name -- and not from a table written in the test, so a ninth cue
+      needs no edit here. `UStratSoundBank.h` states that correspondence as a rule.
+    - `NewObject<T>(GetTransientPackage())` **does not compile in UE 5.8**: `error C2672`,
+      *"cannot convert from 'UPackage *' to 'UObject *'"*. `GetTransientPackageAsObject()` is the
+      form that resolves.
+  - **INSTRUMENT CAVEAT, MEASURED THIS PASS: `DeclareHandoverNoise` IS WRONG FOR A ONE-AI-SEAT
+    FIXTURE, AND IT FAILS LOUDLY RATHER THAN SILENTLY.** That helper (and its copies in
+    `StratAiPlaybackClauses.cpp` and `StratTourExistenceHoldClauses.cpp`) declares BOTH
+    `no tile mesh for terrain` and `STRAT-AI refused`. The second is correct for an AI-VS-AI
+    fixture -- a both-sides-AI stretch runs to a §2.8 result and the rules module then refuses
+    the winning side's own EndTurn -- **but a fixture that runs ONE AI turn and hands back never
+    emits it**, and `AddExpectedMessagePlain` with `Occurrences 0` **is itself an assertion**. All
+    five new live clauses were RED on their first run with
+    *"Expected suppressed ('Warning') level log message or higher matching 'STRAT-AI refused' did
+    not occur"* -- a defect entirely in the fixture, reported in words that read like a defect in
+    the feature. The five now declare the tile-mesh line only. **The helper is unchanged and must
+    stay unchanged: the AI-vs-AI clauses beside it need both.**
+  - **AND `Source/StratPlay/StratMatchSubsystem.h` IS CRLF WHILE ITS `.cpp` IS LF**, measured
+    while applying M2: a byte-exact patch written with `\n` against the header finds nothing and
+    reports as "the line is not there". This tree's standing "line endings vary per file" caveat,
+    hit again on the same pair.
+  - **A NEW `MakeOneAiSideConfig` HELPER EXISTS IN TWO FILES AND IS DUPLICATED DELIBERATELY**, on
+    this directory's standing posture (sharing would put a header inside a `Tests/` directory).
+    It reads the scenario's seats off a PROBE match, makes the LAST side AI and first to move and
+    the FIRST side the human seat drawn for. **An AI-vs-AI config cannot substitute for it and
+    that is structural, not a matter of degree:** with every side in `AiSides` the hand-back
+    predicate's seat term refuses at every possible moment, so any clause built on the older
+    `MakeAiVsAiConfig` would be green over a deleted feature. Every caller still verifies the
+    hand-back through `StratHandsBackToPlayer` itself rather than trusting the arrangement.
+
 - **2026-09-06 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- ONE new `Tests/`
   file, `Source/StratPlay/Tests/StratNewMatchForcedGuidanceClauses.cpp`, plus this record file,
   on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit `e36e78c`, and this pass

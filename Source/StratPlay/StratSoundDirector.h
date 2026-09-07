@@ -85,7 +85,7 @@
 // of the FEATURE. A master mute IS a `USoundMix` -- and the object that applies an override to
 // one has to be an object with a world, a bank and a lifetime, which in this project is this
 // one and nothing else. `UStratSoundBank` now carries the mix and the three sound classes for
-// the reason it carries the seven cue assets (CLAUDE.md #4: no `/Game/` literal), and this
+// the reason it carries the eight cue assets (CLAUDE.md #4: no `/Game/` literal), and this
 // class carries the SAVE for a reason the retracted sentence did not consider: Sec 2.11.5
 // budgets volume as a PLAYER control, and a player control that forgets itself between launches
 // is not one. `UStratAudioSettings` is the payload and `ApplyVolumes` is the applier.

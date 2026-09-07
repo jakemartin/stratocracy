@@ -1,10 +1,20 @@
-// The AUDIO milestone's world-free half: which of the seven cues a refresh should sound,
+// The AUDIO milestone's world-free half: which of the eight cues a refresh should sound,
 // decided from two readings of `FStratViewModel` and from nothing else.
 //
-// WHAT GAP THIS CLOSES. Nothing in this project makes a sound. The seven occasions the
+// WHAT GAP THIS CLOSES. Nothing in this project makes a sound. The eight occasions the
 // milestone names -- a button clicked, a turn ended, a unit moved, a unit attacked, a unit
-// destroyed, a factory finishing a build, a match ending -- are five EDGES and two LATCHED
-// MOMENTS. `FStratViewModel` is a complete statement of steady state and its own header
+// destroyed, a factory finishing a build, a match ending, a player's turn beginning -- are
+// five EDGES, two LATCHED MOMENTS and one HAND-OVER HOOK.
+//
+// [WIDENED 2026-09-07 BY `PlayerTurnBegan`. THE COUNT MOVED FROM SEVEN TO EIGHT AND THE SHAPE
+// GAINED A THIRD KIND, WHICH IS WHY THE HEADING WAS REWRITTEN RATHER THAN HAVING A NUMBER
+// BUMPED. The eighth is neither an edge this file can see nor a latch over this file's model:
+// it is emitted by `UStratMatchSubsystem::NotePlayerTurnBeganIfDue` from a flag raised on the
+// AI hand-over path, which is a fact about a CALL STACK and not about two readings. Every
+// sentence below about edges and latches is unchanged and still describes the seven that were
+// here first.]
+//
+// `FStratViewModel` is a complete statement of steady state and its own header
 // forbids a "changed" flag, an event or a sequence number anywhere in it, so an edge has no
 // home in the model and never will. This file is the same answer `StratTransientReceipts.h`
 // already gave for GDD Sec 2.11.2's receipts, applied to audio: the previous reading lives in
@@ -35,14 +45,31 @@
 // cross-CALL case this cannot see -- six buttons clicked in one second -- and the two are
 // different spam controls; neither substitutes for the other.
 //
-// `ButtonClick` AND `MatchEnded` ARE NEVER EMITTED FROM HERE, and their absence is a
-// statement rather than an omission. A click is not a change in the model -- a refused button
-// changes nothing at all and must still click -- so no diff over two view models can see one,
-// and the six input verbs emit it directly. A match ending IS visible in the model, and it is
-// still not taken here: `UStratMatchSubsystem::ConcludeMatchIfEnded` already owns a
-// once-per-match latch (`bMatchConclusionAnnounced`) and sounds the cue inside it. A second
-// latch in this file would be a second answer to "has this match already ended", and the two
-// would drift the first time either moved.
+// `ButtonClick`, `MatchEnded` AND `PlayerTurnBegan` ARE NEVER EMITTED FROM HERE, and their
+// absence is a statement rather than an omission. A click is not a change in the model -- a
+// refused button changes nothing at all and must still click -- so no diff over two view
+// models can see one, and the six input verbs emit it directly. A match ending IS visible in
+// the model, and it is still not taken here: `UStratMatchSubsystem::ConcludeMatchIfEnded`
+// already owns a once-per-match latch (`bMatchConclusionAnnounced`) and sounds the cue inside
+// it. A second latch in this file would be a second answer to "has this match already ended",
+// and the two would drift the first time either moved.
+//
+// AND THE THIRD, ADDED 2026-09-07, IS REFUSED FOR FOUR SEPARATE REASONS RATHER THAN ONE, so
+// that a later reader who defeats one of them does not conclude the arm belongs here after
+// all. Only the fourth is peculiar to the paced configuration; the first two hold everywhere.
+//   (1) IT WOULD NEED `FStratMatchConfig::AiSides`, and `StratDecideSoundCues`' own
+//       declaration commits it to two `FStratViewModel` readings and NO other input. Which
+//       sides an AI plays is a configuration, not a projection, and it is not in the model --
+//       so the arm could not be written here without widening that contract for one cue.
+//   (2) IT WOULD KEY ON THE SAME (Turn, SideToMove) DIFF `TurnEnded` KEYS ON, so it would
+//       also fire on a hot-seat human -> human hand-over. Two humans passing a keyboard is
+//       not a round change, and the two occasions must stay distinguishable.
+//   (3) `UStratMatchSubsystem::ApplyView` GATES THE WHOLE DECIDER DIFF while a Sec 2.11.2
+//       tour is armed, so in the PACED configuration a decider-borne hand-back cue would be
+//       inaudible -- which is the one configuration a player is most likely to be watching.
+//   (4) A TOUR ENDS WITH NO `ApplyView` AT ALL, so on that same paced path there is no second
+//       reading at the moment of hand-back for any diff to be taken against.
+// The precedent followed instead is `MatchEnded`'s: the owner of the moment emits it.
 //
 // WHAT IS DELIBERATELY NOT IN IT.
 //   - NO VOLUME, NO PITCH, NO DURATION, NO PRIORITY AND NO ASSET. Those are `Content/`
@@ -71,15 +98,17 @@
 struct FStratViewModel;
 
 /**
- * Which of the milestone's seven cues this is.
+ * Which of the milestone's eight cues this is.
  *
  * EVERY ARM NAMES AN OCCASION AND NOT A SOUND. `UnitAttacked` is "a unit's HP fell between two
  * refreshes", not "a rifle fired"; which wave that maps to is a `UStratSoundBank` slot and is
  * content's call. An arm renamed after the asset that currently fills it would make this enum
  * a description of one sound bank rather than of the game.
  *
- * TWO ARMS ARE NEVER DECIDED BY `StratDecideSoundCues` -- see the header block. `ButtonClick`
- * comes from the six input verbs; `MatchEnded` comes from `ConcludeMatchIfEnded`'s latch.
+ * THREE ARMS ARE NEVER DECIDED BY `StratDecideSoundCues` -- see the header block, which gives
+ * each one's own reason. `ButtonClick` comes from the six input verbs; `MatchEnded` comes from
+ * `ConcludeMatchIfEnded`'s latch; `PlayerTurnBegan` comes from
+ * `UStratMatchSubsystem::NotePlayerTurnBeganIfDue`.
  */
 UENUM(BlueprintType)
 enum class EStratSoundCue : uint8
@@ -92,6 +121,18 @@ enum class EStratSoundCue : uint8
 	/** The pair (`FStratMatchView::Turn`, `FStratMatchView::SideToMove`) changed. Carries the
 	 *  turn and side that ENDED, not the ones beginning. */
 	TurnEnded UMETA(DisplayName = "Turn ended"),
+
+	/** Play came back to a human seat at the end of an AI hand-over. AN OCCASION AND NOT A
+	 *  SOUND, on this enum's own rule: it is "it is your go again", which a bank may fill with
+	 *  a horn, a drum, or nothing at all. NOT A SECOND SPELLING OF `TurnEnded` -- that one
+	 *  fires on EVERY (Turn, SideToMove) change including a hot-seat human -> human swap, and
+	 *  on the shipped unpaced configuration BOTH sound for one hand-back. That is intended and
+	 *  is a USER DECISION rather than an oversight: they are different occasions, and a
+	 *  designer who wants only one leaves the other's bank slot empty. There is deliberately no
+	 *  C++ anywhere that suppresses either on account of the other.
+	 *  EMITTED ONLY BY `UStratMatchSubsystem::NotePlayerTurnBeganIfDue`; the condition it
+	 *  answers is written down once, in `StratHandsBackToPlayer`. */
+	PlayerTurnBegan UMETA(DisplayName = "Player turn began"),
 
 	/** A unit present in both readings is on a different hex. */
 	UnitMoved UMETA(DisplayName = "Unit moved"),
@@ -353,19 +394,28 @@ struct FStratSoundEmission
 	 *
 	 * ON `TurnEnded` IT IS THE SIDE WHOSE TURN ENDED -- the mark's `SideToMove`, not the
 	 * model's.
+	 *
+	 * ON `PlayerTurnBegan` IT IS THE SIDE WHOSE TURN BEGINS -- the applied model's
+	 * `SideToMove`, which is the exact mirror of the sentence above. Deliberately NOT
+	 * `FStratViewModel::ViewingSide`, even though on the shipped single-player configuration
+	 * the two are equal: this field is an index into `FStratViewModel::Sides` by the rule two
+	 * paragraphs up, and a spectated or inverted configuration would make the two disagree.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Sound")
 	int32 Side = INDEX_NONE;
 
 	/** The unit this cue is about, or `INDEX_NONE` when it is about the match. Never
 	 *  `INDEX_NONE` on `UnitMoved`, `UnitAttacked`, `UnitDestroyed` or `FactoryBuiltUnit`.
-	 *  Always `INDEX_NONE` on `TurnEnded`. On `ButtonClick` and `MatchEnded` it is whatever the
+	 *  Always `INDEX_NONE` on `TurnEnded` and on `PlayerTurnBegan` -- a hand-back is about a
+	 *  seat and not about a unit. On `ButtonClick` and `MatchEnded` it is whatever the
 	 *  emitting verb passed, which is `INDEX_NONE` at every site that exists today. */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Sound")
 	int32 UnitId = INDEX_NONE;
 
 	/** The turn this cue belongs to. `FStratMatchView::Turn` as read on this refresh, EXCEPT
-	 *  on `TurnEnded`, which carries the MARK's turn -- the one that ended. */
+	 *  on `TurnEnded`, which carries the MARK's turn -- the one that ended. `PlayerTurnBegan`
+	 *  takes the GENERAL rule and needs no exception of its own: it carries the applied model's
+	 *  turn, which is the turn that is beginning. */
 	UPROPERTY(BlueprintReadOnly, Category = "Stratocracy|Sound")
 	int32 Turn = 0;
 };

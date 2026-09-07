@@ -136,6 +136,7 @@
 class FStratBridge;
 
 class AStratBoardActor;
+class AStratCameraPawn;
 class AStratScoreboardHUD;
 class AStratUnitActor;
 class UDataTable;
@@ -577,6 +578,37 @@ struct FStratMatchConfig
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
 	float AiPlaybackStepSeconds = 0.0f;
 
+	// ---- §2.11 camera ------------------------------------------------------
+
+	/**
+	 * Whether play coming back to a human seat re-centres the camera over that seat's units.
+	 *
+	 * WHAT IT IS FOR. After an AI hand-over the player's attention is wherever the tour left
+	 * it -- or, on the shipped unpaced configuration, wherever they parked it several minutes
+	 * ago. `UStratMatchSubsystem::RecenterCameraOnViewingSide` puts it back over their own
+	 * army, once, at the moment the turn becomes theirs.
+	 *
+	 * **IT DEFAULTS TRUE AND `AiPlaybackStepSeconds` DEFAULTS ZERO, AND THE ASYMMETRY IS THE
+	 * WHOLE REASON THIS BLOCK EXISTS.** That field's own block argues at length that it ships
+	 * inert because a positive value ARMS A TIMER and a headless fixture has no ticking world
+	 * to step one in -- so an on-by-default there would change the path every existing test
+	 * runs down. **None of that reasoning reaches this field.** Re-centring arms nothing: it is
+	 * a `SetActorLocation` in the same synchronous stack frame as the hand-back that caused it,
+	 * with no timer, no tick and no clock of any kind. So the argument for inertness is absent
+	 * and the argument AGAINST it is this project's own measured defect -- a shipped zero
+	 * default made every clause about the feature vacuous, because every fixture ran the OFF
+	 * path and nothing on the ON path was ever executed. A `false` default here would make the
+	 * verb unreachable from any clause that did not first remember to flip it.
+	 *
+	 * IT CHANGES NO EXISTING FIXTURE, AND THAT IS A CLAIM ABOUT THE ENGINE AND NOT A HOPE.
+	 * `RecenterCameraOnViewingSide` degrades silently on a null board, a null world, a null
+	 * PlayerController or a possessed pawn that is not an `AStratCameraPawn` -- exactly
+	 * `FocusPlaybackStep`'s shape and for its stated reason. No automation fixture in this tree
+	 * possesses an `AStratCameraPawn`, so every one of them takes a silent early return.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|Camera")
+	bool bRecenterCameraOnPlayerTurn = true;
+
 	// ---- §4.10 save identity ---------------------------------------------
 	// The two header fields `FStratSaveIdentity` says are SUPPLIED and never recomputed --
 	// "a bridge that went and read a manifest to fill these in would be asserting agreement
@@ -717,6 +749,77 @@ struct FStratMatchConfig
  * asked `ResultTier != InProgress` instead would be a second author of the same fact.
  */
 STRATPLAY_API bool StratMatchIsConcluded(const FStratViewModel& Model);
+
+/**
+ * Whether `Model` describes a moment at which play belongs to a human seat.
+ *
+ * `!bHasResult && !AiSides.Contains(SideToMove)`, and it is one expression on purpose: THIS
+ * IS THE ONLY PLACE THE HAND-BACK CONDITION IS WRITTEN DOWN. `UStratMatchSubsystem::
+ * NotePlayerTurnBeganIfDue` is the only caller and does no part of the test itself, so a
+ * clause can drive every arm of the condition with no world, no PIE, no timer and no camera
+ * -- which is the falsifiable half of the whole feature.
+ *
+ * IT TAKES `AiSides` AND NOT AN `FStratMatchConfig`, WHICH IS DELIBERATE AND IS THE SMALLER
+ * SURFACE. `StratHandicappedSide` above takes the whole config because it reads two fields of
+ * it and its answer IS a statement about a configuration. This one asks a question about a
+ * MOMENT, and the only configuration it needs is the list of AI seats. Handing it the config
+ * would let a later arm quietly start reading `ViewingSide` or `Difficulty`, and the hand-back
+ * condition would stop being one expression.
+ *
+ * IT IS NOT `!StratMatchIsConcluded(Model)` PLUS A SEAT TEST WRITTEN AT THE CALL SITE, for
+ * that same reason -- but it DOES call nothing and re-derive nothing: `bHasResult` is read off
+ * the same field `StratMatchIsConcluded` reads, from the same model instance the caller passes
+ * `ConcludeMatchIfEnded`, so the two cannot disagree about whether a match is over.
+ *
+ * AN EMPTY `AiSides` MAKES EVERY MOMENT A HAND-BACK, and that is correct rather than a hole:
+ * an empty list is a hot seat, in which every turn IS a human's. Nothing in the shipped game
+ * reaches this function on that configuration, because the one call site sits on the AI
+ * hand-over path and a hot seat never runs an AI turn.
+ *
+ * NOT RANGE-CHECKED, on `FStratMatchConfig::AiSides`' stated posture. A `SideToMove` naming no
+ * real side is the rules module's business and is not invented into a bound here.
+ */
+STRATPLAY_API bool StratHandsBackToPlayer(const FStratViewModel& Model,
+                                          const TArray<int32>&   AiSides);
+
+/**
+ * The mean of `Side`'s units' hexes, rounded to a hex.
+ *
+ * @return false when `Side` has no unit in `Model`, WITH `OutHex` LEFT UNTOUCHED. A `(0,0)`
+ *         fallback would fling the camera to the board origin on the one configuration a
+ *         caller has no way to distinguish from success, which is why there is no such
+ *         fallback and why the out-parameter is not written on the false path.
+ *
+ * AVERAGING IN AXIAL SPACE IS SOUND BECAUSE THE LAYOUT IS AFFINE IN `(q, r)`, AND THAT IS A
+ * MEASURED PROPERTY OF ONE FUNCTION RATHER THAN AN ASSUMPTION. `AStratBoardActor::
+ * LocalLocationOfHex` is `x = HexSize * (q + r/2)`, `y = HexSize * (sqrt(3)/2) * r` -- linear
+ * in both components -- and `WorldLocationOfHex` is that composed with one
+ * `FTransform::TransformPosition`, which is affine. So the mean-then-map this function
+ * performs and the map-then-mean it does not equal each other exactly, up to the rounding.
+ * The rounding costs at most half a tile and buys landing the camera on a REAL hex, which is
+ * what keeps the conversion inside `WorldLocationOfHex` instead of inventing a second one.
+ *
+ * IT IS NOT MOVEMENT ARITHMETIC AND MUST NOT BECOME ANY. It computes no distance, no cost, no
+ * reachability and no adjacency; it answers "where is this army, roughly", which is a camera
+ * question that the rules module does not have an opinion about. `T-UI-02` exists to catch a
+ * hex-distance filter standing in for a real reachability query, and nothing here is one.
+ *
+ * IT IS HERE AND NOT IN `UStratViewModelLibrary`, WHICH IS THE LOAD-BEARING PLACEMENT. That
+ * class's header commits it to `T-UI-03`'s no-widget-side-arithmetic rule and already spends a
+ * paragraph arguing that its idle count is the single exception. Nothing DRAWS a centroid --
+ * no widget reads this, and no number derived from it reaches a screen -- so putting it there
+ * would cost that rule a second exception for a value the rule was never about.
+ *
+ * `FMath::RoundToInt` AND NOT A CUBE-ROUNDING, and the difference is named rather than left to
+ * be discovered. Proper hex rounding rounds in cube space and repairs the largest residual, so
+ * that the result is the NEAREST hex centre; component-wise rounding of an axial pair can pick
+ * a neighbour instead. For a camera target that is a fraction of a tile and invisible. For
+ * anything that asked "which hex is under this point" it would be wrong, which is why
+ * `AStratBoardActor` refuses to offer an inverse of `WorldLocationOfHex` at all -- see that
+ * header. Do not reach for this function to answer a picking question.
+ */
+STRATPLAY_API bool StratCentroidHexOfSide(const FStratViewModel& Model, int32 Side,
+                                          FIntPoint& OutHex);
 
 /**
  * Which side Sec 2.9's handicap moves for this configuration, or `INDEX_NONE` when it
@@ -2453,6 +2556,93 @@ private:
 	void FocusPlaybackStep(const FStratAiPlaybackStep& Step) const;
 
 	/**
+	 * The `AStratCameraPawn` the first local player is possessing, or null.
+	 *
+	 * EXTRACTED FROM `FocusPlaybackStep` RATHER THAN COPIED INTO THE SECOND CALLER. The chain
+	 * is world -> first PlayerController -> possessed pawn -> cast, and each link is a null
+	 * check; a second copy is exactly the triplication `AStratBoardActor.h` records having
+	 * already paid for once with its hex formula, in its own words. `FocusPlaybackStep` was
+	 * rewritten to call this on the same pass that added `RecenterCameraOnViewingSide`, so
+	 * there has never been a moment with two copies in the tree.
+	 *
+	 * THE POSSESSED PAWN AND NOT A `TActorIterator`. That argument is `FocusPlaybackStep`'s
+	 * and moved here with the code: a level with two camera pawns gives an iterator no way to
+	 * choose, and the one the player looks through is by definition the one they possess.
+	 *
+	 * NULL IS AN ORDINARY ANSWER. Both callers degrade silently on it -- see each of them --
+	 * and no automation fixture in this tree possesses a camera pawn at all.
+	 */
+	AStratCameraPawn* FindCameraPawn() const;
+
+	/**
+	 * Puts the camera over the middle of the VIEWING side's units.
+	 *
+	 * `AppliedModel.ViewingSide` AND NOT `Match.SideToMove`, WHICH IS THE ONE CHOICE IN THIS
+	 * FUNCTION WORTH ARGUING. A camera is a statement about whose screen this is, and
+	 * `GetViewingSideView` says in terms that `ViewingSide` is "which side the screen is drawn
+	 * FOR". The cue that fires beside this one carries `SideToMove`, because
+	 * `FStratSoundEmission::Side` is documented as an index into `FStratViewModel::Sides` and
+	 * never a you/enemy answer -- so the two arguments point at DIFFERENT fields for different
+	 * reasons, and on the shipped single-player configuration they happen to be equal. Do not
+	 * unify them.
+	 *
+	 * IT SNAPS AND DOES NOT INTERPOLATE. `AStratCameraPawn` sets `bCanEverTick = false` and its
+	 * header assigns smoothing to the caller, so an interpolated recentre would need this class
+	 * to own a clock and a curve for one moment a match. `AStratCameraPawn::FocusWorldLocation`
+	 * writes only X and Y -- it reads the actor's current Z back and re-writes it -- so the
+	 * player's zoom (`TargetArmLength`) and pitch survive this call by construction rather than
+	 * by care.
+	 *
+	 * DEGRADES SILENTLY AND DOES NOT REFUSE, MIRRORING `FocusPlaybackStep` EXACTLY. The flag
+	 * off, a side with no units, a null board, a null world and a pawn that is not an
+	 * `AStratCameraPawn` all leave the camera where it is with no failure channel. Every one of
+	 * those is a configuration rather than a fault, and a camera that reported into the match's
+	 * failure channel would put presentation text in front of a player whose game is fine.
+	 *
+	 * THE BOARD OWNS THE CONVERSION. `AStratCameraPawn`'s header refuses a `FocusHex` overload
+	 * -- "a camera holding a pointer to the board is a camera that eventually gets asked what
+	 * is on a hex" -- and `AStratBoardActor::WorldLocationOfHex` is the only axial -> world map
+	 * in the project, so the caller does the conversion. Same split as `FocusPlaybackStep`.
+	 */
+	void RecenterCameraOnViewingSide() const;
+
+	/**
+	 * Sounds `EStratSoundCue::PlayerTurnBegan` and re-centres the camera, once, at the moment
+	 * an AI hand-over gives play back to a human seat.
+	 *
+	 * WHY THERE IS A FLAG AND NOT A HOOK. This class has no event, no delegate and no verb for
+	 * "the player's turn began", and the moment lands in TWO different places depending on one
+	 * configuration value. With `AiPlaybackStepSeconds` positive a Sec 2.11.2 tour plays and
+	 * the turn is handed back when the tour STOPS; at the shipped default of zero no tour runs
+	 * at all and control simply returns out of `RunAiTurnsNow`. `EndAiPlaybackTour` alone is
+	 * not the hook: THREE of its six call sites are not hand-backs, including `RunAiTurnsNow`'s
+	 * own pre-refill stop. `bPlayerHandbackPending` is what tells those apart, and this
+	 * function is the only reader of it.
+	 *
+	 * NOT A DELEGATE, WHICH WAS THE OTHER SHAPE. Two consumers, both in this module, both in
+	 * this function. A multicast would buy a subscriber-lifetime story nobody needs and would
+	 * let a Blueprint hang a MUTATION off a presentation beat -- which is the one thing this
+	 * class's whole design is arranged to prevent.
+	 *
+	 * THE TWO DEFERRING RETURNS ARE FIRST AND ONLY THEY DO NOT CONSUME. A flag that is down
+	 * means this was not a hand-back; a tour still running means the moment has not arrived yet
+	 * and `EndAiPlaybackTour` will call again when it stops. Every path below those consumes,
+	 * including the ones that then decline to do anything -- so a stale flag cannot survive to
+	 * be spent on a later, unrelated moment.
+	 *
+	 * **THE CAMERA CALL SITS ABOVE THE `FindSoundDirector()` LOOKUP AND OUTSIDE IT, AND THAT IS
+	 * A PLACEMENT RATHER THAN A READING ORDER.** Commit `4a01418` landed the exact opposite
+	 * mistake in this file -- a VISUAL damage alert nested inside `if (FindSoundDirector())`,
+	 * so a missing sound bank silently disabled a picture. Above and outside, moving it back
+	 * inside is a MOVE in a diff rather than a change of indentation. **NO CLAUSE PINS THIS AND
+	 * THAT IS A MEASURED GAP, NOT AN OVERSIGHT:** a Game or PIE world always has a
+	 * `UStratSoundDirector` (`UStratSoundDirector::DoesSupportWorldType`), so there is no
+	 * reachable world in which a director is absent AND a camera pawn is present, and the
+	 * mutant is invisible to any fixture that can be written today.
+	 */
+	void NotePlayerTurnBeganIfDue();
+
+	/**
 	 * Hands the seeded bridge to the scoreboard HUD, if there is one.
 	 *
 	 * CALLED ONLY AFTER SEEDING. `AdoptBridge` refuses an unseeded bridge -- see the header
@@ -2950,6 +3140,38 @@ private:
 	 * the same session concludes on its own account rather than inheriting the first's latch.
 	 */
 	bool bMatchConclusionAnnounced = false;
+
+	/**
+	 * Whether an AI hand-over is in flight whose return to a human seat has not yet been
+	 * announced. See `NotePlayerTurnBeganIfDue`.
+	 *
+	 * IT IS NOT A MIRROR OF RULES STATE, which is the distinction that keeps it acceptable in a
+	 * class whose header refuses a `bSeeded` bool. It records a fact about THIS OBJECT'S CALL
+	 * HISTORY -- `RunAiTurnsNow` reached its hand-over point and the beat has not been played
+	 * yet -- and nothing reads it as an answer to any question about the match. Whether play
+	 * actually belongs to a human is asked of the MODEL, by `StratHandsBackToPlayer`, on the
+	 * far side of this flag. Setting it by hand would sound one cue and move one camera and
+	 * would not open or close play by a single command. It is `bAiTurnRunning`'s kind of
+	 * member, not `bSeeded`'s.
+	 *
+	 * RAISED IN EXACTLY ONE PLACE -- `RunAiTurnsNow`, immediately above its `BeginAiPlayback()`
+	 * -- AND CONSUMED ON EVERY NON-DEFERRING PATH THROUGH `NotePlayerTurnBeganIfDue`. Raised
+	 * above rather than below that call because `BeginAiPlayback` shows step one IMMEDIATELY,
+	 * so a one-step reel reaches `EndAiPlaybackTour` from INSIDE it, and that call must find
+	 * the flag already up.
+	 *
+	 * **CLEARED AT THE TOP OF `Deinitialize` AND `TearDownPresentation`, BEFORE EACH ONE'S
+	 * `EndAiPlaybackTour()` CALL, AND "BEFORE" IS THE WHOLE OF IT.** Both functions stop a tour
+	 * on their way down, and `EndAiPlaybackTour` is a caller of `NotePlayerTurnBeganIfDue`. A
+	 * reset placed with `SoundMark` and `ReceiptMark` -- where the two match boundaries are
+	 * otherwise gathered, and where the obvious reading puts it -- sits FORTY LINES BELOW that
+	 * call in `Deinitialize` and sixty below it in `TearDownPresentation`, so a tour still
+	 * running at a reseed would fire a hand-back cue and recentre the camera FOR THE MATCH BEING
+	 * TORN DOWN, against a still-seeded bridge and a not-yet-cleared `AppliedModel`. The two
+	 * resets are therefore at the top of each function and are the one part of this feature
+	 * whose placement is not a matter of taste.
+	 */
+	bool bPlayerHandbackPending = false;
 
 	// THERE IS NO `bSeeded` MIRROR HERE, deliberately. `IsMatchLive()` asks
 	// `Bridge->IsSeeded()` from the .cpp, where the definition is available. A bool beside

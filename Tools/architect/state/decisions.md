@@ -19,6 +19,20 @@
 
 ## NEXT
 
+- **RULED, 2026-09-07 -- the player-handback sound cue rides `GATE-AUDIO`; the handback moment and
+  the camera recenter ride a newly minted `GATE-HANDBACK`.** Over base `6d882a3` (clean),
+  record-only, no suite run. Full reasoning, the quoted authorizing text of every ID considered
+  and refused (`T-TURN-09`, `T-AI-01`, `T-AI-06`, `T-INT-05`, `GATE-AITURN`), and `GATE-HANDBACK`'s
+  own authorizing text are in `global.md`'s entry for the same date; this is the scope call itself,
+  recorded here per this file's own remit. In one line: the audio half is the `MatchEnded` shape
+  again (a cue emitted directly from a latch, never decided), which already lives inside
+  `GATE-AUDIO`'s three-file pin; the handback/camera half fires whether or not an AI tour ran at
+  all (`AiPlaybackStepSeconds` ships `0.0f`), which is outside `GATE-AITURN`'s own subject
+  sentence about tour pacing, so it needed a new name rather than a stretch. `T-INT-05` is refused
+  today and stays open-conditional exactly as `GATE-AITURN`'s own 2026-08-29 entry already framed
+  it: owed only if a later phase promotes the handback flag or the camera position into the view
+  model, which this plan does not.
+
 - **DECLINED, 2026-09-05 -- `UAudioSettings::DefaultSoundClassName` and
   `DefaultSoundConcurrencyName` are NOT set, as part of phase C' of the audio milestone.**
   Full reasoning and the engine-source trace are in `data.md`'s entry for the same date; this is

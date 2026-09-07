@@ -146,6 +146,11 @@ namespace StratSoundCueClauses
 		{
 		case EStratSoundCue::ButtonClick:      return TEXT("ButtonClick");
 		case EStratSoundCue::TurnEnded:        return TEXT("TurnEnded");
+		// ADDED 2026-09-07 WITH THE ENUMERATOR. DISPLAY ONLY -- nothing branches on this
+		// string. A missing arm here compiles silently under MSVC and prints `<unknown>`, so
+		// the cost of forgetting it is a red run whose message does not say which cue; that is
+		// the whole reason it is added in the same pass as the clauses below and not later.
+		case EStratSoundCue::PlayerTurnBegan:  return TEXT("PlayerTurnBegan");
 		case EStratSoundCue::UnitMoved:        return TEXT("UnitMoved");
 		case EStratSoundCue::UnitAttacked:     return TEXT("UnitAttacked");
 		case EStratSoundCue::UnitDestroyed:    return TEXT("UnitDestroyed");
@@ -900,10 +905,10 @@ bool FStratSoundDestroyedCarriesSideTest::RunTest(const FString& /*Parameters*/)
 }
 
 // ---------------------------------------------------------------------------
-// GATE-AUDIO -- THE DECIDER NEVER EMITS `ButtonClick` OR `MatchEnded`.
+// GATE-AUDIO -- THE DECIDER NEVER EMITS `ButtonClick`, `MatchEnded` OR `PlayerTurnBegan`.
 //
-// BOTH ARMS ARE OWNED ELSEWHERE, EACH BY A LATCH, AND THE ABSENCE IS A STATEMENT RATHER THAN AN
-// OMISSION.
+// ALL THREE ARMS ARE OWNED ELSEWHERE, EACH BY A LATCH, AND THE ABSENCE IS A STATEMENT RATHER
+// THAN AN OMISSION.
 //   - A CLICK IS NOT A CHANGE IN THE MODEL. A refused button changes nothing at all and must
 //     still click, so no diff over two view models can ever see one. The six input verbs emit
 //     it directly.
@@ -912,6 +917,22 @@ bool FStratSoundDestroyedCarriesSideTest::RunTest(const FString& /*Parameters*/)
 //     sounds the cue inside it; a `bHasResult` arm in the decider would be a SECOND answer to
 //     "has this match already ended", and a concluded match refreshes many times -- so the
 //     wrong answer is not one extra sound, it is a victory sting on every mouse move.
+//   - A HAND-BACK IS **NOT DECIDABLE FROM TWO VIEW MODELS AT ALL**, and that is the third arm,
+//     added 2026-09-07 with `EStratSoundCue::PlayerTurnBegan`. `StratSoundCues.h` gives four
+//     separate reasons; the one a clause can drive is the first: the condition needs
+//     `FStratMatchConfig::AiSides`, which is a CONFIGURATION and is not a field of
+//     `FStratViewModel`, so the decider's own declared inputs cannot answer it. What a decider
+//     arm COULD see is the `(Turn, SideToMove)` change `TurnEnded` already keys on -- which is
+//     exactly the wrong test, because it fires on a hot-seat human -> human hand-over too. So
+//     the third diff below is a plain non-concluded turn hand-over: the shape a decider arm
+//     would most plausibly be written on, and the one this clause has to be red over.
+//
+// **THE NAME WAS `TheDeciderNeverEmitsButtonClickOrMatchEnded` UNTIL 2026-09-07 AND WAS RENAMED
+// RATHER THAN LEFT, WHICH IS NOT COSMETIC.** A test name is read without its header, and a
+// clause asserting three absences while naming two is this project's recorded overclaiming-name
+// defect pointed the other way -- it would have UNDER-claimed, and a reader auditing "what pins
+// the hand-back cue's provenance" would have grepped past it. The old name appears nowhere else
+// in this tree.
 //
 // THE FIXTURE DRIVES A CONCLUDED MODEL SPECIFICALLY, because a decider with a `bHasResult` arm
 // is invisible to every other clause in this file: none of them ever sets that flag. The flag
@@ -920,7 +941,7 @@ bool FStratSoundDestroyedCarriesSideTest::RunTest(const FString& /*Parameters*/)
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratSoundNeverClickOrMatchEndedTest,
-	"Stratocracy.StratUI.GATE-AUDIO.TheDeciderNeverEmitsButtonClickOrMatchEnded",
+	"Stratocracy.StratUI.GATE-AUDIO.TheDeciderNeverEmitsButtonClickMatchEndedOrPlayerTurnBegan",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FStratSoundNeverClickOrMatchEndedTest::RunTest(const FString& /*Parameters*/)
@@ -957,17 +978,56 @@ bool FStratSoundNeverClickOrMatchEndedTest::RunTest(const FString& /*Parameters*
 	Concluded.Units.RemoveAt(0);
 	Concluded.Units[0].Hex = Model.Units[0].Hex;
 
+	// THE THIRD DIFF, ADDED 2026-09-07: A PLAIN, LIVE TURN HAND-OVER.
+	//
+	// IT IS THE ONE THE `PlayerTurnBegan` ASSERTION NEEDS, AND `Concluded` ABOVE CANNOT STAND IN
+	// FOR IT. A decider arm written for the hand-back would key on the `(Turn, SideToMove)`
+	// change -- the same change `TurnEnded` keys on -- and a hypothetical arm that ALSO refused
+	// on `bHasResult`, which is the shape someone copying `MatchEnded`'s reasoning would write,
+	// would be silent on `Concluded` and loud here. So the mutant this file most has to fear is
+	// invisible to the other two diffs by construction.
+	//
+	// THE NEW SIDE IS TAKEN FROM THE MODEL'S OWN ROSTER and is not written here: `Sides` is
+	// the projected list of seats and the mark carries the opening's `SideToMove`, so
+	// "somebody else's turn" is `the first entry that is not the mark's`, read off the module.
+	FStratViewModel HandedBack = Model;
+	HandedBack.Match.Turn      = Model.Match.Turn + 1;
+	for (int32 Index = 0; Index < HandedBack.Sides.Num(); ++Index)
+	{
+		if (Index != Model.Match.SideToMove)
+		{
+			HandedBack.Match.SideToMove = Index;
+			break;
+		}
+	}
+	if (!TestTrue(TEXT("CONTROL: the hand-over diff really does change the side to move, so a "
+	                   "decider arm keyed on that change would have something to fire on"),
+			HandedBack.Match.SideToMove != Model.Match.SideToMove))
+	{
+		return false;
+	}
+	if (!TestFalse(TEXT("CONTROL: and it is NOT concluded -- otherwise a hand-back arm that "
+	                    "copied `MatchEnded`'s `bHasResult` refusal would be silent here for "
+	                    "the wrong reason and this diff would prove nothing"),
+			HandedBack.Match.bHasResult))
+	{
+		return false;
+	}
+
 	TArray<FStratViewModel> Diffs;
 	Diffs.Add(Model);
 	Diffs.Add(Concluded);
+	Diffs.Add(HandedBack);
 
 	TArray<FStratSoundEmission> Out;
 	for (const FStratViewModel& Diff : Diffs)
 	{
 		StratDecideSoundCues(Mark, Diff, Out);
 
-		AddInfo(FString::Printf(TEXT("a diff carrying bHasResult=%s produced: %s"),
-			Diff.Match.bHasResult ? TEXT("true") : TEXT("false"), *Describe(Out)));
+		AddInfo(FString::Printf(
+			TEXT("a diff carrying bHasResult=%s turn=%d sideToMove=%d produced: %s"),
+			Diff.Match.bHasResult ? TEXT("true") : TEXT("false"), Diff.Match.Turn,
+			Diff.Match.SideToMove, *Describe(Out)));
 
 		TestEqual(*FString::Printf(
 				TEXT("GATE-AUDIO: no diff over two view models can see a CLICK, so the decider "
@@ -981,16 +1041,42 @@ bool FStratSoundNeverClickOrMatchEndedTest::RunTest(const FString& /*Parameters*
 				     "here would sound a victory sting on every refresh of a finished match: %s"),
 				*Describe(Out)),
 			CountOfCue(Out, EStratSoundCue::MatchEnded), 0);
+
+		TestEqual(*FString::Printf(
+				TEXT("GATE-AUDIO: and a hand-back is not decidable from two view models at all "
+				     "-- its condition needs `FStratMatchConfig::AiSides`, which this "
+				     "function's own declaration excludes -- so `PlayerTurnBegan` belongs to "
+				     "`NotePlayerTurnBeganIfDue` and is never a decider arm. A `(Turn, "
+				     "SideToMove)` arm here would also fire on a hot-seat human -> human "
+				     "swap, which is a different occasion: %s"),
+				*Describe(Out)),
+			CountOfCue(Out, EStratSoundCue::PlayerTurnBegan), 0);
 	}
 
-	// THE CONTROL FOR THE WHOLE CLAUSE. The concluded diff must have produced SOMETHING, or the
-	// two assertions above were satisfied by a decider that emitted nothing at all.
+	// THE CONTROL FOR THE WHOLE CLAUSE. The last diff must have produced SOMETHING, or the three
+	// assertions above were satisfied by a decider that emitted nothing at all.
 	if (!TestTrue(*FString::Printf(
-			TEXT("CONTROL: the concluded diff really did move -- it emitted %s -- so the two "
+			TEXT("CONTROL: the last diff really did move -- it emitted %s -- so the three "
 			     "counts above are zero because those arms are absent, not because the decider "
 			     "was quiet"),
 			*Describe(Out)),
 			Out.Num() > 0))
+	{
+		return false;
+	}
+
+	// AND THE SHARPER HALF OF THAT CONTROL, ADDED 2026-09-07 WITH THE THIRD ASSERTION. The final
+	// diff is the live turn hand-over, which is the diff a `PlayerTurnBegan` arm would most
+	// plausibly be written on -- so the zero above only means something if the decider was
+	// AWAKE on it. `TurnEnded` is the arm it does own for that exact change, and asserting it
+	// fired is what separates "the hand-back arm is absent" from "the decider went silent on
+	// turn changes altogether", which the `Out.Num() > 0` above cannot tell apart because a
+	// unit's move would satisfy it.
+	if (!TestEqual(*FString::Printf(
+			TEXT("CONTROL: the live turn hand-over sounded `TurnEnded` exactly once, so the "
+			     "`PlayerTurnBegan` zero was measured on a diff the decider reacted to: %s"),
+			*Describe(Out)),
+		CountOfCue(Out, EStratSoundCue::TurnEnded), 1))
 	{
 		return false;
 	}

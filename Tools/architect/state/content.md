@@ -50,6 +50,67 @@
 
 ## NEXT
 
+- **THE ROUND-CHANGE CUE EXISTS AND THE BANK'S EIGHTH SLOT POINTS AT IT -- AND THE THING WORTH
+  READING IS THAT THE CONTROL WAS THE WHOLE VALUE OF THE READBACK.** 2026-09-07 (local),
+  `E:/MultiAgent/Stratocracy` on `master` over base `6d882a3`, uncommitted at time of writing.
+  `git worktree list` prints EIGHT entries -- this main tree plus seven others, none of them this
+  work's. This pass was done in the main tree with no merge behind it.
+  **ACTING: the `coordinator`, under `CLAUDE.md`'s EDITOR-DRIVER CLAUSE. WRITING: the
+  `coordinator`, under THIS FILE'S FALLBACK CONDITION.** Two authorities, one for each half, as
+  this file's header requires; neither covers the other.
+  **THE PRECONDITION WAS MEASURED AT THE LANE AGENT'S TOOL SURFACE, WITH A CONTROL, AND NOT AT
+  THE EDITOR.** A `select:` lookup for `mcp__NeoStack_Connect__execute_script` and
+  `mcp__unreal-editor-direct__execute_script` returned NO MATCHING TOOLS; the CONTROL is the same
+  lookup for `mcp__NeoStack_Connect__unreal_status` and `list_unreal_projects`, which returned
+  both, with schemas. So the absence is of that one tool and not of the provider, which is what an
+  absent name alone cannot show. `unreal-editor-direct` is additionally reported by the harness as
+  having failed to connect (`ConnectionRefused`) -- recorded as the diagnostic it is, and NOT as
+  the trigger: this clause turns on `strat-editor-builder`'s tool surface, never on the editor's
+  own state.
+  **THE ROUTE WAS A HEADLESS COMMANDLET AND NO EDITOR RAN AT ANY POINT.**
+  `UnrealEditor-Cmd.exe -run=pythonscript` over `Tools/editor/make_round_change_cue.py`, then a
+  SECOND commandlet over `Tools/editor/verify_round_change_cue.py`. `tasklist` matched no
+  `UnrealEditor` process, and `C:/Users/me/AppData/Local/NeoStackAI/runtimes.json` lists six
+  runtimes all claiming `mcpRunning:true` on DEAD PIDs -- fossils, the newest heartbeat
+  `2026-09-07T03:18`. The route ruling of 2026-09-04 covers any route the `coordinator` can reach;
+  it is named here because a commandlet and a live editor differ in what can be observed
+  afterwards.
+  **WHAT WAS BUILT.** `MS_Strat_RoundChange` (`MetaSoundSource`, `/Game/StratAudio`): two Sine
+  voices at 523.25 and 783.99 summed BEFORE one AD envelope, attack 0.015 s, decay 0.600 s,
+  through a Multiply VCA, with `OnPlay -> envelope` and `envelope On Done -> OnFinished`. The
+  interval and the length are a DISCRIMINATION decision and not a taste one: on the shipped
+  no-tour configuration `TurnEnded` and `PlayerTurnBegan` sound within a few lines of each other,
+  so this cue has to be tellable from `MS_Strat_EndTurn` (A4+E5, 0.35 s) and from
+  `MS_Strat_MatchEnd` (C5+E5, 1.40 s) -- it sits between them in length and above both in pitch.
+  `SCL_Strat_SFX` was assigned, and `DA_StratSoundBank.PlayerTurnBegan` now points at it.
+  **THE BEFORE READING IS WHAT MAKES THE AFTER MEAN ANYTHING**, and it was `<UNSET>`.
+  **VERIFIED IN A COLD PROCESS THAT WROTE NOTHING, AND THE CONTROL IS THE PART WORTH KEEPING.**
+  The authoring script's own closing readback runs in the process that did the writing, so it
+  reads MEMORY rather than bytes -- this record already holds the measurement that a `set()`
+  return is not evidence and lied in both directions. The second commandlet loads and prints only.
+  It walks ALL EIGHT SLOTS and not merely the new one, and that is the control rather than
+  thoroughness: `PlayerTurnBegan` was inserted after `TurnEnded`, so `MatchEnded` and `Count` each
+  MOVED UP ONE, and "the other seven survived a value shift" is precisely what this pass could
+  plausibly have broken. All eight read SET, each to its expected source, each carrying
+  `SCL_Strat_SFX`. A report reading only the eighth slot would have looked identical either way.
+  **SOURCE CONTROL AUTO-STAGED THE NEW ASSET AND THE STAGED BYTES WERE NOT THE FILE'S -- MEASURED,
+  NOT ASSUMED, AND THE NUMBERS ARE HERE BECAUSE THE SHAPE RECURS.** `git status` read `AM`. The
+  staged blob is a 130-byte LFS POINTER naming
+  `oid sha256:9e80704eb02f606ef2b4620e735f148ddf26edabd2e4dbc0698594eaa0aa522c size 78153`; the
+  file on disk hashes `bd2eb8ca1ca31b6942e644b72d59d8908f486e4d83c8f797968bf250a0ae9b05` at 78434
+  bytes. **Different oid AND 281 bytes apart** -- the provider captured the asset AS CREATED,
+  before the sound-class assignment and the final save, exactly as it did for all seven cues on
+  2026-09-05. Comparing the pointer's oid to the file's sha256 is the comparison that works here;
+  `git hash-object` answers a different question on an LFS path and must not be used for it. It
+  was force-unstaged with `git rm --cached -f`; the index is now empty, the cue is untracked and
+  the bank is an unstaged modification. **Staging remains the user's call, and it must not be
+  made over the wrong bytes.**
+  **NOT AUDIBLE, AND NOTHING HERE CLAIMS OTHERWISE.** A commandlet has no audio device. Nothing in
+  this pass proves the envelope opens, that the voice is not silent, or that the fifth is pleasant
+  beside the seven cues already shipped -- and the discrimination argument above is a claim about
+  FREQUENCIES AND SECONDS, not about what a listener can tell apart. A human at the keyboard is
+  the only instrument for any of it, and the listening pass is OWED.
+
 - **THE DAMAGE FLASH HAS A MATERIAL AND `BP_StratUnit` CARRIES ITS FOUR DEFAULTS -- AND THE THING
   WORTH READING IS THAT THE COMMANDLET PRINTED NOTHING AND CALLED IT SUCCESS.** 2026-09-06
   (local), `E:/MultiAgent/Stratocracy` on `master` over base `4a01418`, uncommitted at time of
@@ -133,10 +194,22 @@
   **WHAT NO INSTRUMENT HERE CAN SAY, AND IT IS THE WHOLE VISUAL CLAIM.** A commandlet cannot
   prove a material COMPILES and cannot prove it has PIXELS; `-nullrhi` compiles no shaders, and
   this project has already measured `get_statistics` returning zeros for a known-good asset and
-  translation errors logging nothing. **NOBODY HAS SEEN THIS FLASH.** Whether the overlay pass
+  translation errors logging nothing. **NOBODY HAS SEEN THIS FLASH.**
+  [FALSE SINCE 2026-09-07, BRACKETED ON THE SENTENCE ITSELF because a reader arriving at this
+  bolded claim by a citation may stop here. THE USER REPORTED IN SESSION THAT THE DAMAGE ALERTS
+  WORK. That discharges the first two of the four questions below -- the overlay pass DOES render,
+  and it DOES read as an alert rather than as a flat red decal.
+  WHAT IS NOT DISCHARGED, STATED BECAUSE "WORKS" IS A SIGN-OFF AND NOT A TUNING PASS: the user
+  said nothing about whether `0.2 s` and `8` uu are the RIGHT values, and nothing about the three
+  markers' offsets after the `Body` -> `Shake` re-parent. Those stay open as taste and as an
+  unverified detail respectively; they are simply no longer blocked behind "has anyone seen it".
+  WHAT STAYS TRUE IS THE REASON GIVEN -- a commandlet cannot prove a material compiles or has
+  pixels -- which is a statement about THIS PASS's ROUTE and not about the tree.]
+  Whether the overlay pass
   renders at all, whether unlit translucent reads as a flash rather than as a flat red decal,
   whether `0.2 s` and `8` uu are right, and whether the three markers still sit at their offsets
-  after the `Body` -> `Shake` re-parent are ALL open and ALL need a human at the keyboard. The
+  after the `Body` -> `Shake` re-parent are ALL open and ALL need a human at the keyboard
+  [FIRST TWO DISCHARGED 2026-09-07 BY THE USER'S REPORT, per the bracket above]. The
   values are `EditDefaultsOnly` precisely so that human can retune them without a rebuild.
 
 - **THE OPTIONS PANEL IS CENTRED OVER A SCRIM AND THE COMMAND BAR'S OPTIONS BUTTON MIRRORS END

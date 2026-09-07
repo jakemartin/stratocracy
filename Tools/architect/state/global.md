@@ -66,12 +66,35 @@ the right payload and that the pawn's XY lands on the centroid the module comput
 KEYBOARD IS STILL THE ONLY INSTRUMENT that can say the round change is audible, that it is
 tellable from `TurnEnded` sounding beside it on the shipped configuration, or that the recentre
 reads well. That listening-and-looking pass is OWED.
+[FALSE SINCE 2026-09-07, BRACKETED ON THE SENTENCE ITSELF -- THE PASS HAS BEEN DONE. The user
+reports, in their own words: *"I hear the round change tone for player switch and the camera does
+move into the center of the player controlled units."* That instrument has now spoken and this
+half is no longer a debt.
+WHAT IT DISCHARGES, ITEM BY ITEM RATHER THAN AS ONE STRUCK CLAIM. (1) The cue IS AUDIBLE --
+directly reported. (2) It IS TELLABLE from `TurnEnded` sounding beside it on the shipped
+configuration: the user did not merely hear *a* tone, they identified it AS the round change and
+attributed it to the player switch, which is the discrimination this cue was pitched and timed
+for. (3) The camera DOES move and DOES land over the player's units -- also directly reported.
+WHAT IT DOES NOT DISCHARGE, STATED BECAUSE A SIGN-OFF IS NOT A TUNING PASS. Nothing was said about
+MIX BALANCE -- whether the round change sits well in level against the other seven cues -- and
+nothing about whether the recentre READS well as a movement, which is the aesthetic half of the
+claim above and is distinct from "it moves to the right place". Both are taste, both remain open,
+and neither is now blocked behind "has anyone observed this".
+WHAT STAYS TRUE IS THE MEASUREMENT GAP: a commandlet still has no audio device and no headless
+fixture still composites a viewport. A human having looked does not give this tree an instrument.]
 [CORRECTED 2026-09-07 AT THIS SENTENCE, BEFORE ANY COMMIT. It ended "and it can close the guided
 opening and the damage alert in the same sitting", and that HALF IS NOW FALSE: the user reported
 in session, after this banner was written, that THE GUIDED OPENING AND THE DAMAGE ALERT BOTH
 WORK. Those two debts are DISCHARGED BY THE USER'S OWN OBSERVATION and are stamped at their own
 entries below. What remains owed is this pass's own half ONLY -- the round change and the
-recentre, which the user has said nothing about. The correction is written HERE, at the sentence,
+recentre, which the user has said nothing about.
+[AND THAT LAST CLAUSE IS ITSELF FALSE SINCE 2026-09-07, LATER THE SAME DAY. THIS CORRECTION BLOCK
+WENT STALE IN THE ONE SENTENCE IT ADDED, which is the shape this record has been caught by before:
+a correction that names what remains open becomes a NEW claim with its own expiry, and it expired
+within hours. The user has since reported the round change AUDIBLE and the recentre WORKING -- see
+the bracket immediately above, which is the authority. Nothing of this pass's own half is owed as
+an observation any longer.]
+The correction is written HERE, at the sentence,
 rather than appended below it, because a reader arriving by a citation lands on the false clause
 and not on a stamp underneath it.]
 This entry closes no section.

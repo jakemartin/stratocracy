@@ -110,6 +110,20 @@
   beside the seven cues already shipped -- and the discrimination argument above is a claim about
   FREQUENCIES AND SECONDS, not about what a listener can tell apart. A human at the keyboard is
   the only instrument for any of it, and the listening pass is OWED.
+  [THE LISTENING PASS WAS DONE ON 2026-09-07, BRACKETED ON THE CLAIM ITSELF. The user reports:
+  *"I hear the round change tone for player switch and the camera does move into the center of the
+  player controlled units."* THE ENVELOPE OPENS AND THE VOICE IS NOT SILENT -- both discharged.
+  **AND THE ONE THIS ENTRY WAS MOST CAREFUL ABOUT IS ALSO DISCHARGED, WHICH IS WORTH SAYING
+  PLAINLY BECAUSE THE CAUTION ABOVE WAS THE RIGHT CAUTION.** The paragraph warns that the
+  discrimination argument is about FREQUENCIES AND SECONDS and not about what a listener can tell
+  apart. A listener has now told it apart: the user did not report hearing *a* tone, they named it
+  as the round change and attributed it to the player switch, with `TurnEnded` sounding beside it
+  on the shipped configuration. The C5+G5 / 0.600 s choice did the job it was picked for.
+  STILL NOT REPORTED, AND NOT INFERRED FROM "IT WORKS": whether the cue is PLEASANT beside the
+  other seven, and whether its level sits right in the mix. Both are taste, both are content's to
+  retune on the DataAsset without a rebuild, and neither is now blocked on an observation.
+  WHAT STAYS TRUE IS THE ROUTE'S OWN LIMIT -- a commandlet had no audio device, which is a
+  statement about how this asset was BUILT and is unaffected by anyone having since listened.]
 
 - **THE DAMAGE FLASH HAS A MATERIAL AND `BP_StratUnit` CARRIES ITS FOUR DEFAULTS -- AND THE THING
   WORTH READING IS THAT THE COMMANDLET PRINTED NOTHING AND CALLED IT SUCCESS.** 2026-09-06

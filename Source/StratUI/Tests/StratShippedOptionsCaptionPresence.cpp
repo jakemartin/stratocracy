@@ -152,14 +152,49 @@
 // THE OTHER FOUR REMAIN PREDICTIONS AND ARE MARKED AS SUCH. Read them as the discrimination this
 // clause was DESIGNED for, and not as discrimination anyone has observed:
 //
-//   - delete any of the other three captions -- **PREDICTED, UNRUN**: same shape, and the other
-//     captions still report, so a double deletion reads as two messages rather than one.
-//   - blank a caption's `Text` -- **PREDICTED, UNRUN**: RED on the non-emptiness assertion, GREEN
-//     on presence and type. A byte scan for the NAME cannot see this mutant at all, and neither
-//     does the deletion mutant above, which reds on presence and never reaches the text reader.
-//   - re-type a caption to a non-`UTextBlock` -- **PREDICTED, UNRUN**: RED on the type assertion.
-//   - point `kOptionsClassPath` at a class that does not exist -- **PREDICTED, UNRUN**: RED at
-//     step (2).
+// [CORRECTED 2026-09-08, over base commit `f92ce01`, by a SECOND mutant campaign. **THE TWO
+// SENTENCES IMMEDIATELY ABOVE ARE NOW FALSE** -- *"THE OTHER FOUR REMAIN PREDICTIONS AND ARE MARKED
+// AS SUCH"* and *"Read them as the discrimination this clause was DESIGNED for, and not as
+// discrimination anyone has observed"*. **ALL FOUR HAVE NOW BEEN RUN AND ALL FOUR KILLED THIS
+// CLAUSE, EACH ALONE IN THE WHOLE SUITE. NOTHING IN THIS FILE'S MUTANT LIST IS A PREDICTION ANY
+// LONGER.** They are quoted here rather than deleted so a reader who arrived by a citation to them
+// lands on the correction and not on the stale claim. Each line below carries its own measurement
+// at its own site, stated INLINE: the campaign's exported reports are untracked, so a path to one
+// would be unfalsifiable from a checkout. The method was the recorded one -- each mutant planted
+// ALONE, a full rebuild and a full suite run after each, then reverted -- with a control run before
+// the first mutant and after the last revert, both reporting zero non-success, and the shipped
+// asset restored to `sha256`
+// `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, verified in both directions.]
+//
+//   - delete any of the other three captions -- **MEASURED RED, ALONE** (was marked
+//     *"PREDICTED, UNRUN"* until 2026-09-08): `LabelMusic` was DELETED from `/Game/UI/WBP_Options`,
+//     its parent `Stack` surviving. The run produced **EXACTLY ONE error message, naming
+//     `LabelMusic`** -- which is the specific thing this mutant was for, because it is the
+//     observable difference between a clause that reports PER CAPTION and one that bails at the
+//     first missing name. This line's prediction that *"the other captions still report"* is
+//     therefore a measurement now: exactly one message means the other three captions' assertions
+//     ran and passed rather than being skipped. **WHAT IS STILL UNRUN IS THE REST OF THAT LINE:
+//     only ONE caption was deleted, so *"a double deletion reads as two messages rather than one"*
+//     remains a prediction** -- it follows from the loop being non-fatal, but nobody has deleted
+//     two captions at once and counted.
+//   - blank a caption's `Text` -- **MEASURED RED, ALONE** (was *"PREDICTED, UNRUN"* until
+//     2026-09-08): `LabelMaster`'s `Text` was blanked to empty in the asset. **RED on the
+//     NON-EMPTINESS assertion and GREEN on presence and type**, exactly as this line predicted, so
+//     the three assertions in step (6) are separable in practice and not only on paper. **AND THE
+//     BLINDNESS PREDICTED FOR A BYTE SCAN WAS MEASURED TOO:** the asset lane's scan over the mutated
+//     `.uasset` found `MASTER` at **0** occurrences while the NAME `LabelMaster` still occurred
+//     **once** -- so a scan for the widget's name is blind to this mutant, and the deletion mutant
+//     above does not cover it either, because it reds on presence and never reaches the text reader.
+//   - re-type a caption to a non-`UTextBlock` -- **MEASURED RED, ALONE** (was *"PREDICTED, UNRUN"*
+//     until 2026-09-08): `LabelSfx` was re-typed from `UTextBlock` to `UBorder`, keeping the same
+//     NAME, the same parent and the same child index. RED on the TYPE assertion. **The widget count
+//     went 19 -> 19**, which is the point: no total, and no scan for the name, can see this mutant.
+//   - point `kOptionsClassPath` at a class that does not exist -- **MEASURED RED, ALONE** (was
+//     *"PREDICTED, UNRUN"* until 2026-09-08): the literal was pointed at `/Game/UI/WBP_NoSuchAsset`
+//     and the clause failed at step (2), naming the path, rather than reporting four missing
+//     captions. That is the guarantee this file's header claims for its literals -- **a wrong
+//     SUBJECT is red at the lookup, never silently green** -- and it is now measured rather than
+//     argued.
 //
 // **WHAT THE STANDING NEGATIVE CONTROL PROVES, AND WHY IT IS STILL THE WEAKER THING.** The lookup
 // instrument's discrimination IS exercised on every run, by construction rather than by

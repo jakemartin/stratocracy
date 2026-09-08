@@ -11,6 +11,64 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-08 (A SECOND MUTANT CAMPAIGN RAN THE MUTANTS THE FIRST ONE LEFT PREDICTED, AND
+THE CATALOGUE IS NOW ESSENTIALLY EXHAUSTED: of the 28 mutants the four clause files predict, 27
+HAVE BEEN RUN -- 26 killed their target, ONE SURVIVED EXACTLY AS PREDICTED, and ONE CANNOT BE RUN
+AT ALL. Base `f92ce01`. Both controls zero non-success; the shipped asset returned to sha256
+`2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, checked in both directions.
+  THE SURVIVOR IS THE RESULT WORTH READING, BECAUSE A PREDICTED SURVIVAL SAYS MORE ABOUT A
+CLAUSE'S EDGES THAN A KILL DOES. Replacing the ternary `bEnabled ? FText::GetEmpty() : Refusal`
+with a bare `Refusal` moved NOT ONE of 477 clauses -- because `IsRoutePermitted` clears
+`OutRefusalReason` at entry, so under that substitution there is nothing observable to see. The
+clause files predicted precisely that and named the clause that DOES pin the shape. A green there
+is a confirmed prediction and not a hole, and the record says so at each site.
+  ONE MUTANT IS UNRUNNABLE, AND IT IS THE ONE ITS CLAUSE EXISTS FOR. Moving
+`bReturnToTitleEnabled` and `ReturnToTitleReason` onto `FStratAudioOptionsModel` cannot be
+compiled: the clauses name `FStratOptionsExitModel` and read `Widget->ExitModel` in roughly fifteen
+places, so the mutant would have to edit its own oracle. The proxy with the same signature was run
+in the first campaign and killed that clause alone. What would make the real one runnable is AN
+ACCESSOR SEAM the clauses could name instead of the field -- recorded as a candidate in
+`engine.md`, weighed by nobody yet, and NOT implemented.
+  THE THREE ASSET MUTANTS A NAME SCAN CANNOT SEE ARE NOW MEASURED, which is the whole reason the
+two shipped-asset clauses were written. A caption blanked, a caption re-typed, and the exit button
+re-typed each reddened one clause alone while the widget's NAME sat unchanged in the asset's bytes.
+The re-typed button is the sharpest: its Widget Blueprint FAILED TO COMPILE under the mutant --
+`BindWidgetOptional TObjectPtr<UButton>` rejects a `Border` of that name -- and the clause still
+reached its type assertion rather than dying at class load, so the type check turns a Blueprint
+compile complaint no headless suite reads into a named red clause.
+  AND A DEBT THIS RECORD HAS CARRIED SINCE THE FIRST CAMPAIGN IS DISCHARGED BY HALF. Moving
+`CloseOptionsPanel` ahead of `ExecuteRoute` reddened the refusal clause alone, on the assertion
+that the panel is still up -- so the refusal arm of that ordering is measured. `engine.md` refused
+to call the whole bullet measured: its deferred-travel half is untouched by any mutant and stays
+argued, named there rather than closed by proximity.
+  TWO ERRORS FROM THIS SEAT, BOTH CAUGHT BY MEASUREMENT AND BOTH WORTH THE SPACE. Five mutants
+were reported as "not runnable as written" when the truth was that an editor had been reopened
+mid-run and held the module DLLs -- the harness stated an ENVIRONMENT condition as a property of
+the MUTANT, and a one-line string edit sitting among the failures should have been the tell before
+the linker error was. And a suite run inherited a STALE BINARY: reverting the last source mutant
+did not revert the DLL built from it, so the next run reported a red on a clause the asset mutant
+could not touch. It was caught because the red was implausible and its message was the previous
+mutant's signature; it was proved by grepping the DLL for the renamed symbol against a clean
+`Source/`, and by the DLL's mtime PREDATING the reverted source. REVERTING SOURCE DOES NOT REVERT
+THE BINARY -- and, as `tests.md` records, the closing control does not guard that hole, because it
+runs after the rebuild the final revert should already have had.
+THE SUITE IS **477/477**, every entry Success, zero failed, zero notRun, ONE
+succeededWithWarnings, enumerated entry by entry from the exported report with `utf-8-sig`.
+The macro census agrees at 477. THE LIVE FIGURE'S REPORT IS `reportCreatedOn
+2026.09.08-18.37.07`. NOTHING IN THIS CAMPAIGN MOVED THE COUNT: no clause was added, removed
+or renamed, every mutant was reverted, and the only source edits standing are comment-only
+corrections in two test headers.
+  THE GATES OF THIS CAMPAIGN ARE IN THE TREE and a reader wanting them should open them rather
+than read this file's account: they are the `second-mutant-campaign-record` reports under
+`Tools/architect/gate_reports/`, persisted verbatim by `strat-data-steward` with only a scope
+header added. THEY ARE MOSTLY BLOCKS, and that is the useful part: every finding across them
+was PROSE, none was in code or an asset, and several were introduced by the repair written to
+close the one before. The last of them rules that the text had converged and that further
+passes would manufacture findings rather than find them.
+  A NOTE ON WHY THIS FIGURE SITS HERE AT ALL, since it is stated twice in this file's history
+and both times for the same mechanical reason: the sweep reads the live count from the NEWEST
+banner, so a new banner that omits it does not inherit the old one's -- it REPORTS THE COUNT
+AS MISSING. That is the sweep behaving correctly and a banner author forgetting it, twice.)
 _Last run 2026-09-08 (THE MUTANT CAMPAIGN'S RECORD WAS CORRECTED ACROSS THREE LANES. The campaign
 itself is recorded in the 2026-09-07 banner below and is unchanged by this.
   `engine.md` HAD CITED A `reportCreatedOn` AS THE STANDING REPORT AND WAS CORRECT WHEN WRITTEN;
@@ -53,7 +111,15 @@ header added.
 THE SUITE IS **477/477**, every entry Success, zero failed, zero notRun, ONE
 succeededWithWarnings, enumerated entry by entry from the exported report with `utf-8-sig`.
 The macro census agrees at 477. THE LIVE FIGURE'S REPORT IS `reportCreatedOn
-2026.09.08-03.43.53`. NOTHING IN THIS PASS MOVED THE COUNT: no clause was added, removed or
+2026.09.08-18.37.07`.
+  [STAMPED BY THE SECOND MUTANT CAMPAIGN] "THE LIVE FIGURE'S REPORT IS `reportCreatedOn
+  [STAMPED] 2026.09.08-03.43.53`." -- superseded, and superseded for the SAME REASON as the
+  [STAMPED] citation it itself replaced: a second campaign edited test-defining sources, so a
+  [STAMPED] newer report was owed before any live figure could cite one. THE COUNT DID NOT
+  [STAMPED] MOVE -- 477 across both runs, no clause added, removed or renamed -- and only the
+  [STAMPED] report backing it did. A citation of this shape has now rotted twice in two
+  [STAMPED] passes, which is a fact about the shape and not about either author.
+NOTHING IN THIS PASS MOVED THE COUNT: no clause was added, removed or
 renamed, and the two source edits under it are comment-only, verified by a comment-stripped
 diff whose control mutation does register.
   A NOTE ON THE REPORT'S OWN SUMMARY FIELDS, because this seat misread them twice in session

@@ -50,6 +50,119 @@
 
 ## NEXT
 
+- **A SECOND MUTANT CAMPAIGN PUT FOUR MUTANTS THROUGH THE TWO `WBP_Options` CLAUSES, AND THE ONE
+  WORTH READING IS THE RE-TYPE: THE WIDGET BLUEPRINT FAILED TO COMPILE UNDER IT -- A COMPLAINT NO
+  HEADLESS SUITE READS -- AND THE CLAUSE STILL REACHED ITS TYPE ASSERTION AND NAMED IT RED.**
+  2026-09-08 (local; the clock and the UTC automation stamps agree today, so this entry carries no
+  split reading like the one below it), `strat-editor-builder` (ACTING and WRITING), dispatched by
+  the coordinator, over base `f92ce01`. **UNDER NO CLAUSE:** this agent reached the editor itself
+  through `mcp__unreal-editor-direct__execute_script`, so the editor-driver clause was NOT in play
+  and this file's fallback condition was likewise closed -- the coordinator neither drove the editor
+  nor wrote this entry. This is the SEQUEL to the two-mutant campaign immediately below, and
+  together the two campaigns complete the shipped-asset mutant catalogue for `/Game/UI/WBP_Options`:
+  a NAME change, a DELETION, an EMPTIED value, a caption RE-TYPED, the exit control RE-TYPED, and a
+  SECOND deletion aimed at a different caption. **Each mutant was planted ALONE with the previous
+  one undone first, each was followed by a full suite run from the coordinator's seat, and every one
+  has been reverted.** (Suite figures are `global.md`'s and are not restated here; "reddened alone"
+  is the claim this file makes.)
+
+  **MUTANT A1 -- THE CAPTION EMPTIED RATHER THAN REMOVED, AND THIS IS THE MUTANT A BYTE SCAN IS
+  BLIND TO.** `configure_widget` set `LabelMaster`'s `Text` to EMPTY, compiled and saved, against
+  `Stratocracy.StratUI.GATE-AUDIO-SETTINGS.ShippedOptionsWidgetCarriesItsUnboundCaptions`.
+  **RESULT: that clause reddened ALONE, and specifically on its NON-EMPTINESS assertion** -- GREEN
+  on presence and GREEN on type, because the widget is still there and still a `UTextBlock`.
+  **THE SAME PASS PROVED THE BLINDNESS RATHER THAN ASSERTING IT:** a byte scan of the saved
+  `.uasset` found `MASTER` at ZERO occurrences while `LabelMaster` still occurred once. The widget
+  NAME survives this mutation and the CAPTION does not -- so a scan that looks for widget names,
+  which is exactly what the `BackLabel` pass's scan did, reports a clean asset while the string a
+  player would read is gone.
+
+  **MUTANT A2 -- A CAPTION RE-TYPED IN PLACE, AND THERE IS NO RE-TYPE VERB IN THE API.** `LabelSfx`
+  was changed from `UTextBlock` to `UBorder`, keeping the same name, the same parent `Stack` and the
+  same index 3, against the same caption clause. **RESULT: it reddened ALONE, on the TYPE assertion
+  this time. Widget count 19 -> 19**, which is what makes a re-type a different mutant from a
+  deletion: nothing about the tree's shape moves, so no count can see it. **THE API HAS NO RE-TYPE
+  VERB -- established by this pass, not assumed -- so the mutation was done as a remove-then-add at
+  the recorded parent and index. AND THE PART WORTH TEACHING IS WHAT CAME FIRST: that
+  remove-then-add round trip was proved on a THROWAWAY `ZZTempProbe` widget BEFORE it was ever aimed
+  at `LabelSfx`.** A destructive verb whose behaviour you are inferring gets fired at a target you
+  do not need, because the entry below records precisely what happens when it does not:
+  `duplicate_widget` followed by `remove_widget` destroyed the real `BackLabel` and shipped it.
+
+  **MUTANT A3 -- THE EXIT CONTROL RE-TYPED, AND THE BLUEPRINT WOULD NOT COMPILE.**
+  `ReturnToTitleButton` was changed from `UButton` to `UBorder`, same name, same parent, same slot,
+  with `ReturnToTitleLabel` re-created as its child, against
+  `Stratocracy.StratUI.GATE-TITLEMENU.ShippedOptionsWidgetCarriesReturnToTitleButton`. **RESULT:
+  that clause reddened ALONE, on its TYPE assertion. AND THIS IS THE FINDING THE CAMPAIGN EXISTS
+  FOR: the Widget Blueprint FAILED TO COMPILE under this mutant** -- a `BindWidgetOptional
+  TObjectPtr<UButton>` rejects a `Border` answering to that name -- **and the clause STILL REACHED
+  its type assertion rather than dying at class load.** So the type check does something no compile
+  complaint can do by itself: **it converts a Widget Blueprint compile error, which no headless
+  suite reads and which a human has to be looking at the editor to notice, into a NAMED RED CLAUSE
+  in the suite.** That is the entire argument for asserting the TYPE of a bound widget and not
+  merely its presence.
+
+  **MUTANT A4 -- A SECOND CAPTION DELETED, TO ASK A QUESTION THE `BackLabel` DELETION COULD NOT
+  ANSWER.** `LabelMusic` was deleted with its parent `Stack` surviving, against the caption clause.
+  **RESULT: it reddened ALONE with EXACTLY ONE error message, and that message NAMES
+  `LabelMusic`.** That is what this mutant was for: it establishes that the clause reports PER
+  CAPTION, naming the caption that is missing, rather than bailing at the first one it cannot find.
+  **STATED HONESTLY: that a DOUBLE deletion would read as TWO messages is INFERRED and NOT MEASURED.
+  Only one caption was deleted.** A pass that wants that fact as a measurement should delete two.
+
+  **THE RESTORE, STATED INLINE BECAUSE THE MUTANT RUNS AND THEIR REPORTS ARE UNTRACKED AND A
+  CHECKOUT CANNOT RE-RUN THEM.** Every mutant was undone before the next was planted, and the last
+  was undone at the end. `Content/UI/WBP_Options.uasset` is byte-identical to `f92ce01` at sha256
+  `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, verified in BOTH directions --
+  the names and types the mutants ADDED are absent, and the ones they REMOVED or EMPTIED are back --
+  because a check that nets an add against a delete is one of the things that let `BackLabel`
+  through. **NO asset was created or modified by this pass on net.**
+
+  **THREE MORE MEASURED LIMITS, AND ALL THREE HAVE THE SHAPE THIS FILE ALREADY HAS A STORY ABOUT:
+  AN INSTRUMENT THAT ANSWERS "ABSENT" WHILE NOT LOOKING.**
+  **`read_file`'s `offset` AND `limit` ARE SILENTLY IGNORED UNDER `{encoding="binary"}`.** It
+  returns the WHOLE file every time -- measured, not guessed: a sliced call and an unsliced call
+  returned byte-for-byte identical content. A whole-file base64 decode then trips
+  `Script exceeded instruction limit`, exactly as the entry below records. **So a large asset must
+  be scanned in OVERLAPPING SLICES, each slice carrying its OWN positive and negative control** --
+  overlapping, because a needle straddling a slice boundary is invisible to both slices; and
+  per-slice controls, because a control that ran in a DIFFERENT call vouches for nothing about this
+  one. That a decode was real, rather than a decoder quietly producing plausible garbage, was
+  checked two ways: the first four decoded bytes are the UE package magic `0x9E2A83C1`, and the
+  decoded length equals the size `file_info` reports for the file.
+  **SCANNING BASE64 WITHOUT DECODING GIVES FALSE ZEROS FOR SHORT NEEDLES, AND THIS PASS HIT IT.** A
+  needle's base64 image depends on its byte alignment, so it has three encodings and a literal
+  search for any one of them can find nothing while the needle is present. **It was caught because
+  the POSITIVE CONTROLS FAILED, not because the answer looked wrong** -- the answer looked exactly
+  like a clean asset. That is the operative fact worth carrying forward: the control is the only
+  thing that made the false zero visible, and the same scan run without one would have reported a
+  mutation-free asset in perfect good faith.
+  **`configure_widget` WRITING `Text` PRODUCES AN `NSLOCTEXT` WITH A GENERATED KEY, NOT THE AUTHORED
+  `INVTEXT`.** Same visible string, different `FText` form. It did not affect these clauses, which
+  assert NON-EMPTINESS and not identity -- but **a clause comparing `FText` identity, namespace or
+  key WOULD see a difference that is not the mutant**, and would redden for the instrument rather
+  than for the defect. Anyone planting a text mutant with this verb has to know which of the two a
+  failing clause is reporting.
+
+  **AND ONE CORRECTION THIS LANE MADE TO THE BRIEF FROM THE COORDINATOR'S SEAT, recorded because the
+  record is what the NEXT brief gets written from.** The brief asked that `ReturnToTitleReasonText`
+  be "still non-empty" after the mutants. **It ships with EMPTY `Text` BY DESIGN** -- it is
+  populated at runtime, by `StratOptionsWidget.cpp` calling `SetText` with
+  `ExitModel.ReturnToTitleReason` -- so the demand was never true of the PRISTINE asset, and
+  satisfying it would have meant EDITING THE ASSET to match a wrong premise. This lane said so
+  instead. A brief's expectation about a shipped default is a claim like any other, and gets
+  measured against the asset before it is met.
+
+  **ONE LAST TRAP, MET WHILE WRITING THIS ENTRY RATHER THAN DURING THE CAMPAIGN, recorded because
+  the next pass to write this file will meet it too.** Locating the byte offset to splice at with a
+  Lua `string.find` PATTERN of the form `"\n- %*%*THE TWO"` returns the WRONG OFFSET: in a Lua
+  pattern `-` is the LAZY REPETITION OPERATOR, so the literal hyphen a Markdown bullet is made of is
+  read as a quantifier on the newline in front of it. The offset it returned was off by two and
+  looked entirely reasonable. What showed it was a PLAIN find -- `string.find(s, needle, 1, true)`
+  -- disagreeing with it, and a `string.byte` dump of the neighbouring bytes settling which was
+  right. Use the plain form to locate a splice point, and DUMP THE BYTES around the answer instead
+  of trusting it; a splice aimed two bytes wrong corrupts the file it was meant to extend.
+
 - **THE TWO CLAUSES THAT NOW GUARD `WBP_Options` WERE PROVED BY PLANTING THE CAPTION DELETION A
   SECOND TIME -- AND THE THING WORTH READING IS THAT BOTH INSTRUMENTS THIS PASS REACHED FOR TO
   READ THE SAVED ASSET ANSWER "ABSENT" WHILE NOT LOOKING AT ALL, WHICH IS THE EXACT SHAPE THAT LET

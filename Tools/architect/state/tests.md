@@ -14,6 +14,184 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-08, the `coordinator` (ACTING; OUT OF LANE, in session, over base `f92ce01` -- planted
+  and reverted the source and test-file mutants and ran the suite), `strat-editor-builder` (ACTING
+  -- planted the four ASSET mutants), and `strat-test-author` (WRITING -- this record file and the
+  two `Tests/` headers named below, and nothing else).** **A SECOND MUTANT CAMPAIGN: 18 DISTINCT
+  MUTANTS, SEVENTEEN KILLS, ONE DELIBERATE SURVIVOR THAT IS A CONFIRMED PREDICTION, AND ONE MUTANT
+  THAT CANNOT BE COMPILED AT ALL.** This entry exists because the previous campaign's entry and the
+  two shipped-asset `Tests/` headers left seven mutants marked `PREDICTED, UNRUN` and several debt
+  sentences in the indicative; **all of that is now false, and the corrections are marked at the
+  false sentences themselves, further down this file, each stale claim STAYING with what moved named
+  beside it.** **No LIVE `PREDICTED, UNRUN` marker survives in either shipped-asset test file** --
+  the token still greps in both, seven times, and every one of those hits is the false marker QUOTED
+  AS HISTORY at the line it was corrected on (`was *"PREDICTED, UNRUN"* until 2026-09-08`), which is
+  this record's own convention and not a leftover. Said this way because *"the marker is gone"* is
+  the kind of claim a grep would appear to falsify.
+  - **THE METHOD, which is what makes "RED, alone" mean anything.** Each mutant was planted ONE AT A
+    TIME, followed by a FULL REBUILD and a FULL SUITE RUN, then reverted before the next. A clause
+    name is COMPILED, so a run without the rebuild would have reported old names and said nothing.
+    **CONTROLS IN BOTH DIRECTIONS:** an opening control before the first mutant and a closing control
+    after the last revert, both reporting zero non-success, and the shipped asset restored to
+    `sha256` `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667` -- the value the
+    `525ad5c` commit message itself quotes -- verified in both directions. So the tree the closing
+    control ran over is the tree the opening control ran over, and the reds in between are
+    attributable to the mutants. The figures live in `global.md` and nowhere else.
+  - **THE MEASUREMENTS ARE STATED INLINE AND NOTHING IS CITED TO A REPORT PATH.** The campaign's
+    exported reports are UNTRACKED; no checkout has them, so a citation to one is unfalsifiable by
+    the reader it is written for.
+  - **THE UNEXPLAINED RE-RUN IS EXPLAINED, AND IT WAS NOT A FLAKE -- IT WAS A STALE BINARY.**
+    2026-09-08, over base `f92ce01`; the contamination and its diagnosis were the `coordinator`'s
+    (ACTING), this entry is `strat-test-author` (WRITING). The campaign is reported as **21 suite
+    runs**: 18 mutants, an opening control, a closing control, **and one CONTAMINATED RUN SUPERSEDED
+    BY ITS RE-RUN**. The repeated run was `A1`, the blanked `LabelMaster` caption. The last SOURCE
+    mutant, `R9c`, renamed the C++ member `ReturnToTitleButton`; its own run was built from that
+    mutant and killed `N9` at step (1), and **that result stands**. The driver then REVERTED the
+    source **and did not rebuild**, so the loaded `UnrealEditor-StratUI.dll` still held
+    `ReturnToTitleButtonRenamed` while `Source/` was clean, and the first `A1` run executed against
+    that binary reported `N8` RED **and `N9` RED**. The `N8` red was genuine and asset-driven; **the
+    `N9` red was the stale binary.** It was caught because `N9` reddened on a clause the asset mutant
+    had no business touching and the failure message was `N9`'s step (1) -- "the C++ member was
+    renamed or removed" -- which is `R9c`'s signature, not a caption's. **MEASURED, NOT ASSUMED, AND QUOTED HERE RATHER THAN CITED TO A
+    PATH. THREE GREPS ARE INVOLVED, AND EACH NUMBER BELOW NAMES THE ONE
+    THAT PRODUCED IT.** (1) The DLL grepped for the
+    RENAMED token, `grep -a -c ReturnToTitleButtonRenamed Binaries/Win64/UnrealEditor-StratUI.dll`:
+    **11** before the rebuild, **0** after. (2) `Source/` grepped for that same renamed token,
+    `grep -rc ReturnToTitleButtonRenamed Source/`: **0** in all 283 files it
+    printed a count for, after the revert. (3) The DLL grepped for
+    the ORIGINAL name, `grep -a -c ReturnToTitleButton Binaries/Win64/UnrealEditor-StratUI.dll`:
+    **12** after the rebuild. The DLL's mtime also PREDATED the reverted source by about two
+    minutes. **WHICH OF THREE STATES EACH NUMBER IS IN.** Grep (2) is CHECKOUT-RE-RUNNABLE: it
+    reads TRACKED source, so anybody on any machine gets it with no build at all. Grep (1)-POST at
+    **0** and grep (3) at **12** are BUILT-TREE-RE-RUNNABLE BUT READ AN UNTRACKED ARTIFACT -- the
+    compiled StratUI DLL, which git ignores under its `Binaries/*` rule -- so they are obtainable
+    again only from a BUILT tree, never from a bare checkout. Grep (1)-PRE at **11** and the mtime
+    delta are HISTORICAL AND UNREPEATABLE: that binary has since been overwritten. **Grep (1)-PRE
+    at 11 is the grep that carries the diagnosis -- the renamed token alive in the loaded binary
+    while absent from `Source/`.**
+    The identical asset state was then re-run as `A1b` and reported **`N8` RED
+    ALONE, `N9` GREEN**, which is the
+    result recorded for `A1` below and the only one that should be. So no red below rests on a run
+    whose binary did not match its source, and **nothing was re-attributed on the strength of a
+    flake** -- the earlier refusal to do so, while the reason was still unrecorded, was correct, and
+    it is what forced this fact out. This tree HAS measured a 1-in-4 red flake, which is why an
+    unexplained re-run stays an open question until someone produces the mechanism.
+  - **THE LESSON, because it is a property of mutation testing in this engine and will recur:
+    REVERTING SOURCE DOES NOT REVERT THE BINARY.** A mutant campaign MUST rebuild after its FINAL
+    revert, not only between mutants, or the next thing to run inherits the last mutant's compiled
+    state. This lane already records that a clause NAME is compiled and that a stale binary reports
+    OLD names GREEN; this is the same mechanism producing a false **RED**, which is the more dangerous
+    direction, because a red looks like a finding and invites re-attribution while a green looks like
+    nothing. **The closing control does not guard this on its own** -- it runs after a rebuild that
+    the final revert should already have had, so it can come back clean while a run taken between that
+    revert and that rebuild was contaminated.
+  - **THE SOURCE AND TEST-FILE MUTANTS.** `N1`-`N7` denote the seven options-exit clauses of the
+    entry opening *"2026-09-07 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- two new `Tests/`"* and `N8`/`N9` the two shipped-asset clauses, as the first campaign's
+    entry uses them. **Where a clause is NAMED below the name is DERIVED from the mutant's subject
+    against the pairs the first campaign already recorded, not carried in from a brief** -- `R4c`
+    and `R6b` reproduce that campaign's `SetIsEnabled(true)` pair and its struct-default clause
+    respectively, which is what fixes `N4` and `N6`.
+    - `ReturnToTitleReason = FText::FromString(TEXT("Not available."))` -- **RED `N1` AND `N2`.**
+    - the `PushExitOptions(ExitModel)` call at the end of `SeedExitAvailability` DELETED -- **RED
+      `N1` and `N2`.**
+    - `IsRoutePermitted(EStratShellRoute::Options, ...)` in place of `ReturnToTitle` -- **RED `N1`
+      and `N2`.** The clause is asking the oracle about the wrong ROUTE, which is the one substitution
+      a clause that compared two literals could never see.
+    - `Shell->CloseOptionsPanel()` moved AHEAD of the `ExecuteRoute` -- **RED `N3`
+      (`ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp`), alone.**
+    - the `OnReturnToTitleRequested.AddDynamic` in `ShowPanel` DELETED -- **RED `N3` alone.** That is
+      the bind the clause's own entry names as part of its subject: an unbound panel leaves the
+      reason EMPTY, and the clause sees it.
+    - `ReturnToTitleReasonText->SetText(FText::GetEmpty())` -- **RED `N4`
+      (`TheOptionsExitControlDrawsExactlyItsPushedModel`), alone.**
+    - `SetIsEnabled` made ONE-WAY so the control latches enabled -- **RED `N4` and `N6`.**
+    - `bReturnToTitleEnabled = true` as the STRUCT's default -- **RED `N6`
+      (`AnUnpushedOptionsScreenHasADisabledExit`), alone.**
+    - `ReturnToTitleButton->OnClicked` bound to `HandleBackClicked` -- **RED `N7`
+      (`TheOptionsExitButtonBroadcastsTheRequestAndDismissesNothing`), alone.** The two wires really
+      are two wires, measured.
+    - the `RemoveDynamic` in `NativeDestruct` DELETED -- **RED `N7` alone.**
+    - the C++ member `ReturnToTitleButton` RENAMED -- header, widget `.cpp` **and**
+      `Source/StratUI/Tests/StratOptionsWidgetDouble.h`, 16 sites -- **RED `N9` alone, at step (1),
+      naming the member.** **THE METHOD NOTE THAT MAKES THIS MUTANT WORTH ANYTHING, AND IT
+      GENERALISES:** the driver asserted that `kSubjectMember = TEXT("ReturnToTitleButton")` was
+      BYTE-IDENTICAL before and after, so the clause was still hunting the ORIGINAL name. **Renaming
+      the lookup key along with the member would have made the mutant pass trivially and measured
+      nothing** -- a member-rename mutant must leave the test's lookup key alone, or it mutates the
+      experiment instead of the subject.
+    - `kOptionsClassPath` pointed at `/Game/UI/WBP_NoSuchAsset` in the CAPTION clause -- **RED `N8`
+      alone, at step (2)**; and the same in the PARITY clause -- **RED `N9` alone, at step (2).**
+      These two mutate a literal SUBJECT inside a test file rather than production code, which is
+      the only way to exercise the "could not load" path; both files claim that a wrong subject is
+      RED at the lookup and never silently green, and that claim is now measured on both.
+  - **THE ONE SURVIVOR, AND IT IS A CONFIRMED PREDICTION RATHER THAN A HOLE.** The
+    `bEnabled ? FText::GetEmpty() : Refusal` ternary in `SeedExitAvailability` was replaced by a bare
+    `Refusal`. **GREEN -- not one clause moved.** The entry opening *"2026-09-07 (local),
+    `strat-test-author` (ACTING and WRITING; IN LANE -- two new `Tests/`"* already says so in terms, in its own WHAT THESE CLAUSES DO NOT PIN list: that shape *"is not reachable as an
+    independent line, because `IsRoutePermitted` clears `OutRefusalReason` at entry, so a bare
+    `Refusal` is green everywhere here"*, and the shape itself is pinned one class over by
+    `GATE-TITLEMENU.ADisabledReasonIsEmptyExactlyWhenTheRowIsEnabled`. **A survivor that a written
+    prediction named in advance is evidence the prediction was derived and not decorative; a
+    survivor nobody predicted would be a hole. These must not be recorded the same way**, which is
+    why this bullet quotes the prediction rather than merely asserting one existed.
+  - **THE FOUR ASSET MUTANTS, planted by `strat-editor-builder` in `/Game/UI/WBP_Options`.**
+    - `LabelMaster`'s `Text` BLANKED to empty -- **RED `N8` alone, ON THE NON-EMPTINESS ASSERTION,
+      GREEN on presence and type.** So the three assertions in that clause's step (6) are separable
+      in practice and not only on paper. **AND THE BLINDNESS THE FILE'S HEADER PREDICTED WAS MEASURED
+      RATHER THAN ARGUED:** the asset lane's byte scan over the mutated asset found `MASTER` at **0**
+      occurrences while the NAME `LabelMaster` still occurred **once** -- **a scan for the NAME is
+      blind to this mutant**, and so is the deletion mutant of the first campaign, which reds on
+      presence and never reaches the text reader.
+    - `LabelSfx` RE-TYPED from `UTextBlock` to `UBorder`, same name, same parent, same index --
+      **RED `N8` alone, on the TYPE assertion. Widget count 19 -> 19.** Neither a total nor a name
+      scan can see this one, which is why the type assertion is not decoration.
+    - `ReturnToTitleButton` RE-TYPED from `UButton` to `UBorder`, same name, parent and slot, its
+      `ReturnToTitleLabel` child re-created -- **RED `N9` alone, on the TYPE assertion.** **AND ONE
+      THING NOBODY PREDICTED, WHICH IS THE DURABLE HALF: the Widget Blueprint FAILED TO COMPILE under
+      this mutant** -- a `BindWidgetOptional TObjectPtr<UButton>` rejects a `UBorder` of that name --
+      **and the clause STILL REACHED its type assertion rather than dying at class load.** So the
+      type assertion is not made redundant by the Blueprint compiler: **it is what turns a compile
+      complaint no headless suite reads into a named red clause.** Recorded because the natural
+      inference -- "the compiler catches a re-type, so the assertion is belt-and-braces" -- is wrong
+      in exactly the way that matters, and this is the measurement that refutes it.
+    - `LabelMusic` DELETED, its parent `Stack` surviving -- **RED `N8` alone, with EXACTLY ONE error
+      message naming `LabelMusic`.** That is the specific thing this mutant was for: it is the
+      observable difference between a clause that reports PER CAPTION and one that bails at the
+      first missing name, and it is the argument the caption file makes for being ONE clause and not
+      four. Exactly one message means the other three captions' assertions RAN AND PASSED rather
+      than being skipped. **AND WHAT IS STILL UNRUN, because the mutant was a SINGLE deletion:** the
+      caption file's line also predicts that *"a double deletion reads as two messages rather than
+      one"*, and nobody has deleted two captions at once and counted. It follows from the loop being
+      non-fatal; it is not measured, and the line now says so at its own site.
+  - **THREE MUTANTS REDDENED MORE THAN THEIR TARGET, AND THAT IS A FACT ABOUT EACH MUTANT'S REACH
+    RATHER THAN A DEFECT IN ANY CLAUSE.** The three that hit `N1` AND `N2` all rewrite what
+    `SeedExitAvailability` puts in the model at all, and both clauses read that model under different
+    preconditions; the one-way `SetIsEnabled` hit `N4` AND `N6`, which read the same widget bit after
+    a push and after construct -- the same pair the first campaign already recorded and the same
+    reading of it. **The alternative reading -- that a clause is over-broad and should be narrowed --
+    is wrong here**, and the discriminating measurements are the ALONE reds beside them: `R3b`/`R3c`
+    for `N3`, `R6b` for `N6` and `R4b` for `N4` each moved one clause and no other, which is what
+    shows the pairs are not duplicates of each other.
+  - **ONE MUTANT IS UNRUNNABLE AND IS RECORDED AS UNRUNNABLE RATHER THAN AS STILL-PENDING, BECAUSE
+    THOSE ARE DIFFERENT STATES AND A PENDING MARKER WOULD NEVER CLEAR.** `StratOptionsExitClauses.cpp`
+    names as "the one it is for" moving `bReturnToTitleEnabled` and `ReturnToTitleReason` onto
+    `FStratAudioOptionsModel` -- the two-struct design's whole subject. **IT CANNOT BE COMPILED.** The
+    clauses name `FStratOptionsExitModel` and read `Widget->ExitModel.*` in roughly fifteen places,
+    so the mutant requires editing the very clauses whose discrimination it tests, **which destroys
+    the experiment rather than running it**: a mutant that edits its own oracle measures the edit.
+    The cheaper proxy the file already offers -- `ExitModel = FStratOptionsExitModel();` in
+    `SetMasterVolume` -- WAS run in the first campaign and killed `AVolumeDragDoesNotClearTheExitAvailability`
+    alone, so the clause is not unmeasured; it is the FIELD-RELOCATION shape specifically that no
+    mutant in this tree can express. **WHAT WOULD MAKE IT RUNNABLE IS A SEAM, NOT A WEAKER CLAUSE**
+    -- the clauses would have to reach the exit fields through one accessor they could keep naming
+    while the storage moved underneath it. **That is a production change in
+    `strat-gameplay-engineer`'s lane, it is not asked for here, and the clause must not be loosened
+    to make its own mutant expressible.**
+  - **NO CODE UNDER TEST WAS EDITED BY THE WRITING LANE, no clause was added, removed or weakened,
+    and no `Content/` or `Data/` file was touched by it.** Every mutant was planted by the two ACTING
+    agents named at the head of this entry and every one was reverted; the tree over base `f92ce01`
+    is unchanged apart from this file and the two `Tests/` headers named in the corrections below.
+
 - **2026-09-07, the `coordinator` (ACTING; OUT OF LANE, in session, over base `525ad5c` -- planted
   and reverted the seven SOURCE mutants and ran the suite for all nine),
   `strat-editor-builder` (ACTING -- planted and reverted the two ASSET mutants, N8 and N9, in
@@ -81,6 +259,24 @@
     ever reached, so nothing here says a `UButton` silently becoming a `UBorder`, or a caption
     becoming a non-`UTextBlock`, would be caught. Blanking a caption's `Text` is likewise unrun
     and is the one mutant a byte scan for the NAME cannot see either.
+    - **[CORRECTED 2026-09-08, by `strat-test-author`, over base `f92ce01`, by the SECOND mutant
+      campaign. ALL THREE CLAIMS IN THE BULLET ABOVE ARE NOW FALSE.]** *"The two shipped-asset
+      clauses each list further mutants that remain UNRUN"* -- **none remain: all seven remaining
+      list entries across the two files were run in the second campaign and all seven killed their
+      clause, alone.** *"The re-type mutants in particular are NOT covered by the two that were
+      run"* -- **both re-type mutants have now been run themselves:** `LabelSfx` re-typed from
+      `UTextBlock` to `UBorder` reddened `ShippedOptionsWidgetCarriesItsUnboundCaptions` alone on the
+      TYPE assertion with the widget count unchanged at 19 -> 19, and `ReturnToTitleButton` re-typed
+      from `UButton` to `UBorder` reddened `ShippedOptionsWidgetCarriesReturnToTitleButton` alone on
+      ITS type assertion. *"Blanking a caption's `Text` is likewise unrun"* -- **it was run:**
+      `LabelMaster`'s `Text` blanked reddened the caption clause alone on the NON-EMPTINESS
+      assertion and left presence and type GREEN. **The reasoning in the bullet is untouched and was
+      confirmed rather than overturned**: the rename and deletion mutants really do retire before
+      the type assertion, which is why the re-type mutants were owed separately, and the byte-scan
+      blindness it names was measured -- the asset lane's scan over the blanked asset found `MASTER`
+      at 0 occurrences while the NAME `LabelMaster` still occurred once, so a scan for the NAME
+      cannot see that mutant at all. The measurements are stated inline; the campaign's exported
+      reports are untracked.
   - **NO CODE UNDER TEST WAS EDITED BY THE WRITING LANE and no clause was added, removed or
     weakened in this pass.** The nine mutants were planted by the two ACTING agents named at the
     head of this entry and every one was reverted; the tree over base `525ad5c` is unchanged apart
@@ -184,6 +380,23 @@
       **The other four mutants in that file's list are still UNRUN and are now marked
       `PREDICTED, UNRUN` at the site**, including blanking a caption's `Text` -- the deletion
       mutant does not cover it, because it reds on presence and never reaches the text reader.
+      - **[CORRECTED 2026-09-08, by `strat-test-author`, over base `f92ce01`. THE SENTENCE ABOVE
+        IS FALSE: THE OTHER FOUR WERE ALL RUN IN THE SECOND MUTANT CAMPAIGN AND ALL FOUR KILLED
+        THIS CLAUSE, EACH ALONE IN THE WHOLE SUITE. NO **LIVE** `PREDICTED, UNRUN` MARKER SURVIVES
+        IN `StratShippedOptionsCaptionPresence.cpp` -- the token still greps there, four times, each
+        as the false marker QUOTED AS HISTORY on the line it was corrected on.]** (1) `LabelMusic` DELETED, its parent `Stack`
+        surviving -- RED, alone, with **EXACTLY ONE error message, naming `LabelMusic`**, which is
+        the measurement that shows the clause reports PER CAPTION rather than bailing at the first
+        missing name. (2) `LabelMaster`'s `Text` BLANKED -- RED on the non-emptiness assertion,
+        GREEN on presence and type, so the three assertions are separable in practice; and the
+        blindness this sentence names was measured on the mutated asset itself -- `MASTER` scanned
+        at 0 occurrences while the NAME `LabelMaster` still occurred once. (3) `LabelSfx` RE-TYPED
+        to a `UBorder`, same name, parent and index -- RED on the TYPE assertion, widget count
+        19 -> 19. (4) `kOptionsClassPath` pointed at `/Game/UI/WBP_NoSuchAsset` -- RED at step (2),
+        naming the path rather than reporting four missing captions, which is the guarantee the
+        file claims for its literal SUBJECTS. **This sentence's reasoning was right and is now
+        measured**: the deletion mutant does NOT cover the blanking, because it reds on presence
+        and never reaches the text reader. Stated inline; the campaign's reports are untracked.
   - **WHAT IT DOES NOT PIN, so a later reader does not over-credit it:** the caption words;
     parentage (`BackLabel` being a child of `BackButton` is not asserted -- a caption's parent can
     legitimately move in a re-layout, and a caption under the wrong parent is visible to a human,
@@ -307,7 +520,12 @@
     TO THE SEVEN CLAUSES BELOW, EVERY ONE OF WHICH WAS ALSO KILLED BY ITS OWN MUTANT IN THAT RUN.**]
     Its mutants are
     written out in the file and every one is unrun; treat its discrimination as UNPROVEN exactly
-    as the seven clauses below are.
+    as the seven clauses below are. [**AND *"every one is unrun"* IS FALSE TWICE OVER SINCE
+    2026-09-08 AND THE SECOND MUTANT CAMPAIGN OVER BASE `f92ce01`: after the first campaign one of
+    the four had been run, and after the second ALL FOUR HAVE, each killing this clause alone -- the
+    asset RENAME, the asset RE-TYPE to a `UBorder`, the C++ MEMBER rename at 16 sites, and the bad
+    `kOptionsClassPath`. Nothing in that file's list is a prediction any longer. The seven clauses
+    cross-referenced here were likewise all killed by their own mutants.**]
     - **[STAMPED 2026-09-07, later the same day, by `strat-test-author` over base `46321a6`.
       THE COMPILE RISK IS DISCHARGED AND THE MUTANT DEBT IS NOT.** [**THE SECOND HALF OF THAT
       HEADING IS FALSE SINCE THE MUTANT RUN OVER BASE `525ad5c` -- THE MUTANT DEBT IS NOW
@@ -331,7 +549,15 @@
       MUTANT RUN OVER BASE `525ad5c`: one of the four -- the asset RENAME -- is now a MEASUREMENT
       and killed this clause, alone.**] Its four mutants are written out in
       `Source/StratUI/Tests/StratShippedOptionsExitControlParity.cpp`'s own header block and
-      every one of them is a PREDICTION. A green run says the clause compiles and passes over
+      every one of them is a PREDICTION. [**THAT LAST CLAUSE IS FALSE SINCE 2026-09-08 AND THE
+      SECOND MUTANT CAMPAIGN OVER BASE `f92ce01`: NONE OF THE FOUR IS A PREDICTION ANY LONGER.
+      All four were run and each killed this clause ALONE -- the asset rename (first campaign),
+      the asset re-type to a `UBorder`, the C++ member rename across 16 sites with the lookup key
+      `kSubjectMember` asserted BYTE-IDENTICAL either side so the clause was still hunting the
+      original name, and `kOptionsClassPath` pointed at `/Game/UI/WBP_NoSuchAsset`. The
+      distinction the rest of this paragraph draws -- that a green run says nothing about whether
+      a clause reddens over broken code -- is untouched and is exactly what those four runs
+      answered.**] A green run says the clause compiles and passes over
       correct code; it says nothing whatever about whether it would redden over broken code, and
       those are the two separate things risk (1) and risk (2) were written to keep apart. That
       file's header block carries the same words at the site, because a block is read without
@@ -355,6 +581,27 @@
       them. **The other three mutants in that file's list remain UNRUN** and are now marked
       `PREDICTED, UNRUN` at the site; the re-type mutant in particular is NOT covered by the
       rename, which reds on presence and retires before the type assertion is reached.
+      - **[CORRECTED 2026-09-08, by `strat-test-author`, over base `f92ce01`. THE SENTENCE ABOVE
+        IS FALSE: THE OTHER THREE WERE ALL RUN IN THE SECOND MUTANT CAMPAIGN AND ALL THREE KILLED
+        THIS CLAUSE, EACH ALONE. NO **LIVE** `PREDICTED, UNRUN` MARKER SURVIVES IN
+        `StratShippedOptionsExitControlParity.cpp` -- the token still greps there, three times, each
+        as the false marker QUOTED AS HISTORY on the line it was corrected on.]** (1) The asset child RE-TYPED from `UButton`
+        to `UBorder`, same name, parent and slot, its `ReturnToTitleLabel` child re-created -- RED
+        alone on the TYPE assertion. **And the part nobody predicted, which is the durable half:
+        the Widget Blueprint FAILED TO COMPILE under this mutant** -- a `BindWidgetOptional
+        TObjectPtr<UButton>` rejects a `UBorder` of that name -- **and the clause STILL REACHED its
+        type assertion rather than dying at class load**, so the type assertion is what turns a
+        Blueprint compile complaint no headless suite reads into a named red clause. (2) The C++
+        member RENAMED across the header, the widget `.cpp` and
+        `Source/StratUI/Tests/StratOptionsWidgetDouble.h`, 16 sites -- RED alone at step (1),
+        naming the member. **The lookup key `kSubjectMember` was asserted BYTE-IDENTICAL before and
+        after**, so the clause was still hunting the original name; renaming the key with the
+        member would have made the mutant pass trivially and measured nothing, and that is a
+        method note worth carrying to any future member-rename mutant. (3) `kOptionsClassPath`
+        pointed at `/Game/UI/WBP_NoSuchAsset` -- RED alone at step (2). **The sentence's reasoning
+        was right and is now measured**: the rename mutant reds on presence and retires before the
+        type assertion, which is why (1) was owed separately. Stated inline; the reports are
+        untracked.
   - **A NOTE ON READING THE EXPORTED REPORT, since this pass read one without running one.**
     `Saved/AutomationReport/index.json` is UTF-8 **with a BOM**: `json.load` on a plain `open()`
     fails with *"Expecting value: line 1 column 1"*, which reads like a corrupt file and is not.
@@ -546,7 +793,15 @@
       THEIR OWN MUTANT AND THEIR DISCRIMINATION IS NO LONGER UNPROVEN. The paragraph's reasoning
       -- that a green suite says nothing about whether a clause reddens over broken code -- is
       untouched and is exactly why the run was owed.**] Each one's mutants are written out in its own
-      file's block and every one of them is UNRUN. A green suite says the clauses pass over
+      file's block and every one of them is UNRUN. [**FALSE AGAIN SINCE 2026-09-08 AND THE SECOND
+      MUTANT CAMPAIGN OVER BASE `f92ce01`, WHICH RAN ELEVEN FURTHER SOURCE MUTANTS AGAINST THESE
+      SEVEN CLAUSES. Ten of the eleven reddened the clause they were aimed at; the eleventh -- the
+      `bEnabled ? FText::GetEmpty() : Refusal` ternary in `SeedExitAvailability` replaced by a bare
+      `Refusal` -- SURVIVED, AND ITS SURVIVAL IS A CONFIRMED PREDICTION RATHER THAN A HOLE: this
+      entry's own bullet already states that shape *"is not reachable as an independent line,
+      because `IsRoutePermitted` clears `OutRefusalReason` at entry, so a bare `Refusal` is green
+      everywhere here."* Not one clause moved, exactly as that bullet said none would. The
+      per-mutant results are in the 2026-09-08 entry at the head of this file.**] A green suite says the clauses pass over
       correct code; it says nothing about whether they would redden over broken code, which is
       the only question a mutant answers. **Treat the discrimination of all seven as UNPROVEN.**]**
     - **[STAMPED 2026-09-07, by `strat-test-author`, over base `525ad5c`. THE MUTANT DEBT ON ALL

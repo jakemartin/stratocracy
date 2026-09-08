@@ -104,15 +104,29 @@
     `OpenLevelBySoftObjectPtr` DEFERS the travel -- it returns with this world still standing, so
     at least one more frame is drawn, and without this line that frame shows the volume screen over
     a match the player has already left. The redundancy is one-directional (both writers close;
-    neither opens) and so cannot fight. **[PARTLY MEASURED 2026-09-07, over base `525ad5c`, AND THE
-    LIMIT MATTERS MORE THAN THE MEASUREMENT. A mutant moving `++ReturnToTitleRoutesTakenCount`
-    ABOVE the refusal's early return in `HandleReturnToTitleRequested` -- rebuilt and run against
-    the full suite -- reddened `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp` alone, so the
-    order-of-operations argument about the REFUSAL ARM is now a measurement rather than an
-    argument. WHAT NO MUTANT IN THAT CAMPAIGN TOUCHED IS THE ORDERING THIS BULLET'S HEADING
-    ACTUALLY NAMES: nothing swapped `ExecuteRoute` and `CloseOptionsPanel`, so
-    `ExecuteRoute`-first rests on the reasoning above and not on a red run. Stated rather than
-    left to be inferred from a neighbouring measurement. See the mutant-campaign entry at the end
+    neither opens) and so cannot fight. **[MEASURED IN TWO ROUNDS, AND THE SECOND ROUND CLOSED THE
+    HALF THE FIRST ONE HAD TO LEAVE OPEN -- the REFUSAL ARM on 2026-09-07 over base `525ad5c`, and
+    THE ORDERING THIS BULLET'S HEADING ACTUALLY NAMES on 2026-09-08 over base `f92ce01`. Round one:
+    a mutant moving `++ReturnToTitleRoutesTakenCount` ABOVE the refusal's early return in
+    `HandleReturnToTitleRequested` -- rebuilt and run against the full suite -- reddened
+    `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp` alone, so the order-of-operations
+    argument about the REFUSAL ARM became a measurement rather than an argument. **THE SENTENCE
+    THAT STOOD HERE NEXT IS NOW FALSE, AND IS QUOTED RATHER THAN DELETED so that a reader who
+    arrived by a citation to it meets the correction AT it:** *"WHAT NO MUTANT IN THAT CAMPAIGN
+    TOUCHED IS THE ORDERING THIS BULLET'S HEADING ACTUALLY NAMES: nothing swapped `ExecuteRoute`
+    and `CloseOptionsPanel`, so `ExecuteRoute`-first rests on the reasoning above and not on a red
+    run."* It was a true report of the FIRST campaign, whose scope it named, and it is superseded
+    by the SECOND rather than corrected as an error. **WHAT MOVED IT: mutant R3b, which moved
+    `Shell->CloseOptionsPanel()` AHEAD of the `ExecuteRoute` call in
+    `HandleReturnToTitleRequested` -- rebuilt and run against the full suite. RED on
+    `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp` ALONE, and red on that clause's
+    `IsPanelLive` assertion specifically, which is precisely the property the first two sentences
+    of this bullet argue for: a refusal must leave the player's screen up, and closing first takes
+    it down before the refusal is known.** So `ExecuteRoute`-first no longer rests on the reasoning
+    above; it rests on a red run that names the screen. **What is STILL not measured is the
+    DEFERRED-TRAVEL half** -- the sentence about `OpenLevelBySoftObjectPtr` drawing at least one
+    more frame with this world standing -- because R3b enters through the refusal arm, where no
+    route is taken and no travel is deferred at all. See the two mutant-campaign entries at the end
     of this file.]**
   - **NO SECOND SOUND CUE, AND THE ASYMMETRY WITH `HandleOptionsDismissed` BESIDE IT IS
     DELIBERATE.** That handler emits `EStratSoundCue::ButtonClick` because `CloseOptionsPanel` is
@@ -9963,6 +9977,12 @@ only here.
   substitution. It does not prove the clause pins the requirement, and it says nothing about any
   behaviour no mutant expressed — the `ExecuteRoute`-before-`CloseOptionsPanel` ordering, in
   particular, is untouched by all seven and is called out as such in the bullet that argues it.
+  **[SCOPED 2026-09-08. The first half is a claim about THESE SEVEN MUTANTS and is unchanged. The
+  second half was a claim about ANOTHER BULLET'S PRESENT TEXT, and that bullet has since been
+  corrected: mutant R3b of the 2026-09-08 campaign over base `f92ce01` swapped that pair and
+  reddened `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp` alone. The ordering bullet now
+  calls the ordering MEASURED, not untouched. A sentence describing a live document expires when
+  the document moves; that is why this is scoped here rather than left to read as current.]**
 
 **WHERE THE CLAUSE NAMES LIVE**, so the short names below are citable. The three
 `Stratocracy.StratPlay.GATE-TITLEMENU.*` clauses are in
@@ -10028,8 +10048,185 @@ neither was read for anything but its registered clause names.
   mutant was reverted and the trailing control was run over the restored tree; nothing below
   `Source/` differs from base `525ad5c` on account of this work.
 - **STILL OPEN, and named so it is not read as closed by proximity.** No mutant expressed the
-  `ExecuteRoute`-before-`CloseOptionsPanel` ordering; no mutant expressed the
+  `ExecuteRoute`-before-`CloseOptionsPanel` ordering **[NO LONGER OPEN AS OF 2026-09-08, and this
+  is corrected at its own words rather than below them: mutant R3b of the second campaign, over
+  base `f92ce01`, moved `Shell->CloseOptionsPanel()` ahead of the `ExecuteRoute` call and reddened
+  `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp` alone, on its `IsPanelLive` assertion. The
+  sentence remains a TRUE report of THIS campaign's seven mutants and a FALSE report of the
+  record's open debts, which is exactly why it is scoped and not deleted]**; no mutant expressed
+  the
   `SeedExitAvailability`-pushes-at-show-time-only staleness recorded as a debt on 2026-09-07 (it is
   unreachable in this project and a mutant could not have reached it either); and
   `ReturnToTitleButton` remains `BindWidgetOptional` by decision, which no mutant bears on in
   either direction.
+
+## 2026-09-08 -- the SECOND engine-lane mutant campaign, over base `f92ce01`: TWELVE mutants run, ELEVEN killed [COUNT CORRECTED 2026-09-08 over base `f92ce01`; this heading read *"eleven mutants run, ten killed"* and undercounted its own enumeration by one -- the correction note is the first block below], one surviving exactly as predicted, and one that cannot be compiled at all
+
+**2026-09-08, the coordinator (ACTING; OUT OF LANE, in session, over base `f92ce01`) and
+`strat-gameplay-engineer` (WRITING).** This entry is a RECORD CORRECTION and changes no source
+file; nothing compiled differs from base `f92ce01` on account of it. Its subject is the
+engine-side half of a SECOND campaign, run today over the mutants the 2026-09-07 campaign
+predicted and left unrun. The asset-side mutants belong to `content.md` and the clause-side
+bookkeeping to `tests.md`; neither is restated here. **No suite figure and no phase verdict appear
+below; both are `global.md`'s.** The campaign's exported reports are UNTRACKED and are therefore
+not cited: every result below is stated inline, so a checkout can re-run it rather than take a
+path on faith.
+
+**THE COUNT WAS WRONG WHEN THIS SECTION WAS FIRST WRITTEN, AND IS CORRECTED AT ALL THREE SITES THAT
+CARRIED IT -- the heading above and the two closing bullets -- rather than stamped under one.** The
+figure read *"eleven mutants run, ten killed"*. The section has enumerated TWELVE from the day it
+was written: **R3b, R1b, R1c, R2b, R2c, R3c, R4b, R4c, R6b, R7a, R7c, R9c**. Its own arithmetic
+gives ELEVEN kills, not ten -- **seven mutants reddened exactly one clause each** (R3b, R3c, R4b,
+R6b, R7a, R7c, R9c) and **four reddened two** (R1b, R1c and R2b each hit N1 and N2; R4c hit N4 and
+N6), so 7 + 4 = 11 killed, plus R2c surviving = 12 run. **The re-count was done against the
+enumeration in this file rather than against any list handed to this lane**, which matters because
+the figure being corrected came from a list too.
+
+**WHY THE UNDERCOUNT WAS EASY TO MAKE, since a corrected number that does not say what produced it
+invites the same error again.** It is a defect of this section's SHAPE and not of any measurement.
+R3b is presented ALONE, under its own heading, because it is the mutant that discharges this
+record's standing ordering debt; the other eleven are listed under the three headings after it.
+Counting the LISTS gives eleven, and the mutant that was promoted for being the most important is
+exactly the one that falls out of the count. **Any section that promotes one item out of a list and
+then totals the list has this hole**, and the fix is to state the total against the enumeration --
+which is what the ids spelled out above are for. **Twelve is also the production-source figure the
+mutant totals in `tests.md` and `global.md` are built on; neither of those files moved on account of
+this correction, and neither is restated here.**
+
+**WHY IT EXISTS.** The first campaign closed with a bullet naming what it had NOT reached, and the
+largest item on that list was the one ordering this record had argued hardest for and measured
+least: `ExecuteRoute` before `CloseOptionsPanel`. A campaign that stops at the mutants which are
+easy to write leaves the argued-but-unmeasured claims exactly where they were, and this record has
+been burned before by an unmeasured limitation reading as a rule.
+
+### Method and controls -- unchanged from the first campaign, and stated again rather than cited
+
+- **Each mutant planted in place, ALONE, in `E:\MultiAgent\Stratocracy`, with a full `Build.bat`
+  and a full suite run after each, then reverted.** In place rather than in a copied tree, because
+  a copy reuses `Intermediate/Build` and the mutant becomes a silent no-op reporting the old
+  binary's results. A full rebuild between mutants because a clause NAME is compiled and a stale
+  binary reports the old names green.
+- **CONTROLS IN BOTH DIRECTIONS.** An opening control at base `f92ce01` before the first mutant and
+  a closing control after the last revert, **both reporting zero non-success results**, with
+  `Content/UI/WBP_Options.uasset` restored to `sha256`
+  `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667` and verified in both
+  directions. The trailing control is the load-bearing one: mutant runs vouch for mutants, never
+  for what is left behind.
+- **WHERE A MUTANT REDDENED MORE THAN ONE CLAUSE, THAT IS THE MUTANT'S REACH AND NOT A CLAUSE
+  DEFECT.** R1b, R1c and R2b each hit N1 and N2; R4c hit N4 and N6. A substitution that violates
+  two properties at once entitles both clauses to see it -- and tells you less about each than a
+  mutant that reddens exactly one.
+
+### THE RESULT THAT MOVES THIS FILE: R3b, the ordering swap
+
+- **R3b -- `Shell->CloseOptionsPanel()` moved AHEAD of the `ExecuteRoute` call in
+  `HandleReturnToTitleRequested`** -> **RED on
+  `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp`, ALONE in the whole suite**, and red on
+  that clause's `IsPanelLive` assertion specifically.
+- **That assertion is the property the ordering bullet argues, restated as a measurement.** The
+  bullet says a refusal must leave the player's screen up, because closing first takes the screen
+  down and THEN discovers the refusal. Under R3b that is exactly what happens, and exactly one
+  clause says so, at exactly the assertion about the panel. **The `## NEXT` bullet has been
+  corrected AT its own now-false sentence**, and the first campaign's two sentences that reported
+  the ordering as untouched have been scoped at theirs. A reader arriving at any of the three by
+  citation meets the correction there rather than here.
+- **WHAT R3b DOES NOT REACH, named so proximity does not close it.** It enters through the REFUSAL
+  arm, where no route is taken and no travel is deferred. The other half of that bullet -- that
+  `OpenLevelBySoftObjectPtr` DEFERS the travel, so at least one more frame is drawn with this world
+  standing, and without the close that frame shows the volume screen over a match the player has
+  already left -- is **still argued and not measured**. A mutant for it would have to observe a
+  frame after a PERMITTED route, which nothing in this suite does.
+
+### The rest of the `Source/StratPlay/StratOptionsPresenter.cpp` mutants
+
+- **R1b -- `ExitModel.ReturnToTitleReason` replaced by a hard-coded
+  `FText::FromString(TEXT("Not available."))`** -> RED on N1 and N2. Both assert the seeded sentence
+  is the DECIDER's, so both are entitled to a substituted literal; this is reach.
+- **R1c -- the `OptionsWidget->PushExitOptions(ExitModel)` call at the end of
+  `SeedExitAvailability` deleted** -> RED on N1 and N2. The seam is not decorative: with nothing
+  pushed, both clauses that read the pushed model fail.
+- **R2b -- `IsRoutePermitted(EStratShellRoute::Options, ...)` in place of
+  `EStratShellRoute::ReturnToTitle`** -> RED on N1 and N2. **The interesting part is WHY it reddens
+  rather than that it does:** the `Options` arm is always permitted, so the mutant is not a broken
+  call but a call to the WRONG QUESTION that always answers yes. A clause that only ever checked
+  "did you ask the shell" would have stayed green under it.
+- **R2c -- the ternary `bEnabled ? FText::GetEmpty() : Refusal` replaced by a bare `Refusal`** ->
+  **GREEN. IT SURVIVED, AND SURVIVAL WAS THE PREDICTION -- record it as a CONFIRMED PREDICTION and
+  not as a hole.** No clause moved. The cause is in the callee and not in any clause:
+  `IsRoutePermitted` clears `OutRefusalReason` at entry, so on the permitted arm `Refusal` IS
+  empty and the ternary writes the same value either way. **What it means is worth stating
+  plainly: that line is genuinely unpinned by these clauses** -- not that the suite failed to
+  notice a defect, but that under this substitution there is no observable difference to notice.
+  The test lane's own block records the same result and names the clause that DOES pin it; that
+  naming is `tests.md`'s and is not restated here.
+
+### The `Source/StratUI/StratOptionsWidget.cpp` and binding mutants
+
+- **R3c -- the `OnReturnToTitleRequested.AddDynamic` in `ShowPanel` deleted** -> RED on N3 alone.
+  The bind site is load-bearing; the presenter is not reachable by any other route.
+- **R4b -- `ReturnToTitleReasonText->SetText(FText::GetEmpty())`** -> RED on N4 alone. The refusal
+  sentence reaches the player's screen, not merely the model.
+- **R4c -- `SetIsEnabled` made ONE-WAY, so the control latches enabled once and never returns** ->
+  RED on N4 and N6. Reach: a latch is both a wrong draw of the pushed model and a wrong state for
+  an unpushed screen. **This is the most valuable of the widget mutants**, because a one-way write
+  is the defect shape this project has already been bitten by in a different file -- a bit with no
+  inverse writer -- and it is now measured as visible on this surface.
+- **R6b -- `bReturnToTitleEnabled = true` as the STRUCT'S DEFAULT** -> RED on N6 alone. The
+  default-constructed struct is what an unpushed screen draws, and a permissive default is the
+  "a zero default makes clauses vacuous" shape inverted; one clause sees it.
+- **R7a -- `ReturnToTitleButton->OnClicked` bound to `HandleBackClicked`** -> RED on N7 alone. The
+  most realistic copy-paste defect on this surface, caught by the clause asserting the request is
+  broadcast and nothing is dismissed.
+- **R7c -- the `RemoveDynamic` in `NativeDestruct` deleted** -> RED on N7 alone. Teardown symmetry
+  is pinned, not assumed.
+- **R9c -- the C++ member `ReturnToTitleButton` RENAMED across the header, the widget `.cpp` and
+  the test double, sixteen sites** -> RED on N9 alone, **at its property-lookup step**. That is the
+  discriminating detail: the clause fails where it looks the name up, so a rename cannot pass by
+  making everything else consistent with itself. This is the clause that ties the C++ member name
+  to the shipped asset's, and a rename is the only mutant that can express that tie.
+
+### ONE MUTANT IS UNRUNNABLE, AND THAT IS A FACT ABOUT THIS LANE'S DESIGN
+
+- **The mutant that would move `bReturnToTitleEnabled` and `ReturnToTitleReason` onto
+  `FStratAudioOptionsModel` -- the exact defect `AVolumeDragDoesNotClearTheExitAvailability` exists
+  for -- CANNOT BE COMPILED.** The clauses read `Widget->ExitModel.*` and name
+  `FStratOptionsExitModel` in roughly fifteen places, so the mutant would have to edit its own
+  oracle, and a mutant that rewrites the clauses measuring it measures nothing.
+- **What stood in for it, and what that proxy is worth.** The first campaign ran
+  `ExitModel = FStratOptionsExitModel();` inside `SetMasterVolume` and killed that clause alone.
+  The proxy expresses the CONSEQUENCE -- a volume drag clearing the exit availability -- and not
+  the CAUSE, which is the field living on a struct a builder rebuilds from three floats. It is the
+  right proxy available today and it is not the same mutant.
+- **A CANDIDATE, NOT WORK DONE, AND DELIBERATELY NOT IMPLEMENTED IN THIS PASS.** What would make
+  the real mutant runnable is **an accessor seam on `UStratOptionsWidget`** -- a
+  `const FStratOptionsExitModel&` getter, or narrower per-field readers -- that the clauses could
+  name INSTEAD of the struct field, so the struct could be moved underneath them without touching a
+  line of the oracle. That is production code and therefore this lane's to weigh, and it is written
+  down as a candidate rather than adopted because the trade is real and unmeasured: a reader that
+  hides the field's identity also hides the very layout decision the separate-struct bullet argues
+  for, and this project's own "correct but untestable" finding says to extract a seam only while
+  keeping the OLD clause green. **Discharged either by adopting the seam and re-running the real
+  mutant against it, or by recording a measured reason not to.**
+
+### What this campaign closes and what it leaves
+
+- **ELEVEN of the TWELVE runnable mutants were killed, seven of them by exactly one clause each**
+  [COUNT CORRECTED 2026-09-08 over base `f92ce01`; this bullet read *"Ten of the eleven runnable
+  mutants were killed"* -- the enumerated ids and the arithmetic are in the correction note at the
+  top of this section] -- a single-clause kill is the strongest shape this instrument offers: the
+  clause is not vacuous and nothing else is standing in for it. **Four reddened two clauses**
+  (R1b, R1c, R2b, R4c), recorded above as reach. **SIX of the seven single-clause kills are on the
+  options-exit clauses this section is otherwise about -- R3b, R3c, R4b, R6b, R7a, R7c. The
+  seventh, R9c, is killed by N9, which is the SHIPPED-ASSET PARITY clause and a different subject;
+  it is counted here because this campaign ran it, and it is named separately here so that "seven"
+  is not read as seven exit-clause kills.**
+- **The TWELFTH survived as predicted -- R2c -- and a confirmed prediction is a different thing
+  from a hole** [COUNT CORRECTED 2026-09-08 over base `f92ce01`; this bullet read *"The eleventh
+  survived"*, and the mutant is now named so the sentence does not depend on the total being right] -- it is stated as such above, together with the line it leaves genuinely unpinned.
+- **No engine-side source changed.** Every mutant was reverted, rebuilt and re-verified, and the
+  closing control ran over the restored tree.
+- **STILL OPEN AFTER BOTH CAMPAIGNS.** The DEFERRED-TRAVEL half of the ordering bullet, above; the
+  `SeedExitAvailability`-pushes-at-show-time-only staleness recorded as a debt on 2026-09-07, which
+  is unreachable in this project and which no mutant could have reached either; the
+  `BindWidgetOptional` decision on `ReturnToTitleButton`, which no mutant in either campaign bears
+  on in either direction; and the accessor-seam candidate above.

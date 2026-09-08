@@ -139,6 +139,12 @@ namespace StratShippedOptionsExitControl
 //
 // MUTANTS -- **ONE OF THE FOUR BELOW HAS BEEN RUN, AND IT KILLED THIS CLAUSE.**
 //
+// [CORRECTED 2026-09-08, over base commit `f92ce01`, by a SECOND mutant campaign. **THE HEADING
+// IMMEDIATELY ABOVE IS FALSE, AND IT UNDER-CLAIMS: ALL FOUR HAVE NOW BEEN RUN AND ALL FOUR KILLED
+// THIS CLAUSE, EACH ALONE IN THE WHOLE SUITE.** It is quoted rather than deleted so a reader who
+// arrived by a citation to it lands on the correction. Each line at the foot of this block carries
+// its own measurement at its own site.]
+//
 // [CORRECTED 2026-09-07, over base commit `525ad5c`. THE BLOCK THAT STOOD HERE OPENED
 // *"MUTANTS -- NONE OF THE FOUR BELOW HAS BEEN RUN ... they are PREDICTIONS, not measurements"* and
 // added *"No mutant had been run against this clause as of the exported suite report
@@ -158,18 +164,41 @@ namespace StratShippedOptionsExitControl
 // revert were both clean, so the red is attributable to the mutant and not to the tree.
 //
 // MUTANTS -- THE FIRST IS NOW MEASURED; THE OTHER THREE REMAIN PREDICTIONS AND ARE MARKED AS SUCH:
+//
+// [CORRECTED 2026-09-08, over base commit `f92ce01`. **THE LINE IMMEDIATELY ABOVE IS FALSE** --
+// *"THE OTHER THREE REMAIN PREDICTIONS AND ARE MARKED AS SUCH"*. **ALL FOUR ARE NOW MEASUREMENTS
+// AND EVERY ONE OF THEM KILLED THIS CLAUSE, ALONE.** Quoted rather than deleted, so a citation to
+// it lands here. The measurements are stated INLINE -- the campaign's exported reports are
+// untracked and a path to one would be unfalsifiable from a checkout. The method was the recorded
+// one: each mutant planted ALONE, a full rebuild and a full suite run after each, then reverted,
+// with a control run before the first and after the last, both reporting zero non-success, and the
+// shipped asset restored to `sha256`
+// `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, verified in both directions.]
+//
 //   - rename the child in `WBP_Options` to anything else -- **MEASURED RED**, alone, on the subject
 //     assertion, with both controls green, so the message pointed at the asset and not at the
 //     instrument. That is precisely what this line predicted before it was run.
 //   - re-type the child from `UButton` to a `UBorder` (a shape a designer reaching for a styled
-//     control could plausibly produce) -- **PREDICTED, UNRUN**: red on the TYPE assertion. A byte
-//     scan for the name cannot see this mutant at all, which is the gap this clause was asked to
-//     close. The rename mutant above does NOT cover it -- it reds the presence assertion and
-//     retires before the type assertion is reached.
-//   - delete `ReturnToTitleButton` from `UStratOptionsWidget` -- **PREDICTED, UNRUN**: red at step
-//     (1), naming the member, rather than reporting a missing asset child.
-//   - point `kOptionsClassPath` at a class that does not exist -- **PREDICTED, UNRUN**: red at step
-//     (2), by design.
+//     control could plausibly produce) -- **MEASURED RED, ALONE, ON THE TYPE ASSERTION** (was
+//     marked *"PREDICTED, UNRUN"* until 2026-09-08). The asset child was re-typed to a `UBorder`
+//     keeping the same NAME, the same parent and the same slot, with its `ReturnToTitleLabel` child
+//     re-created. **AND ONE THING NOBODY PREDICTED, WHICH IS THE PART WORTH CARRYING: the Widget
+//     Blueprint FAILED TO COMPILE under this mutant** -- a `BindWidgetOptional TObjectPtr<UButton>`
+//     rejects a `UBorder` of that name -- **and the clause STILL REACHED its type assertion rather
+//     than dying at class load.** So the type assertion is not made redundant by the compiler: it
+//     is what turns a Blueprint compile complaint, which no headless suite reads, into a named red
+//     clause. The rename mutant does NOT cover this one, exactly as this line said: a rename reds
+//     the presence assertion and retires before the type assertion is reached.
+//   - delete `ReturnToTitleButton` from `UStratOptionsWidget` -- **MEASURED RED, ALONE, AT STEP (1)**
+//     (was *"PREDICTED, UNRUN"* until 2026-09-08). Run as a RENAME of the C++ member across the
+//     header, the widget `.cpp` and `Source/StratUI/Tests/StratOptionsWidgetDouble.h`, 16 sites in
+//     all. **THE LOOKUP KEY `kSubjectMember` WAS ASSERTED BYTE-IDENTICAL BEFORE AND AFTER**, so the
+//     clause was still hunting the original name -- had the key been renamed with the member the
+//     mutant would have passed trivially and measured nothing. The failure named the MEMBER, as
+//     this line predicted, rather than reporting a missing asset child.
+//   - point `kOptionsClassPath` at a class that does not exist -- **MEASURED RED, ALONE, AT STEP
+//     (2)** (was *"PREDICTED, UNRUN"* until 2026-09-08): pointed at `/Game/UI/WBP_NoSuchAsset`, and
+//     the clause failed naming the path rather than reporting a missing exit control.
 //
 // The corresponding correction is recorded in `Tools/architect/state/tests.md`.
 // ---------------------------------------------------------------------------------------

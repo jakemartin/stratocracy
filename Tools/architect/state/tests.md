@@ -14,6 +14,78 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-07, the `coordinator` (ACTING; OUT OF LANE, in session, over base `525ad5c` -- planted
+  and reverted the seven SOURCE mutants and ran the suite for all nine),
+  `strat-editor-builder` (ACTING -- planted and reverted the two ASSET mutants, N8 and N9, in
+  `/Game/UI/WBP_Options`), and `strat-test-author` (WRITING -- this record file and the two
+  `Tests/` headers below, and nothing else).** **NINE OF NINE CLAUSES KILLED BY THEIR OWN MUTANT.
+  NO SURVIVORS.** This entry exists because the nine clauses added in `525ad5c` were all recorded
+  here as UNPROVEN, and that is now false; the corrections are marked at the false sentences
+  themselves, further down this file, and each stale claim STAYS with what moved named beside it.
+  - **[DATE CORRECTED, same session, by `strat-test-author` on the user's correction.]** This
+    entry's own date, the THREE stamps it added below this line, and the one cross-reference that
+    points at one of those stamps were first dated ONE DAY AHEAD -- the day after this one -- because the brief carried the UTC day of the run's exported report rather
+    than the LOCAL day the work happened. Record dates in this project are LOCAL; the report was
+    stamped after 20:00 local, which reads a day ahead in UTC. The wrong day is named in words
+    rather than in date form on purpose: `strat_banner_sweep.py` collects date claims BY SHAPE,
+    so writing it out here would re-trip the very BANNER DATE FRESHNESS check that caught it.
+    No sentence's meaning depended on the wrong day -- nothing here says "the next day" or
+    "later the same day" -- so only the dates moved. The same correction was made in the two
+    `Tests/` file headers this entry names.
+  - **WHY THE MEASUREMENTS ARE STATED INLINE AND NOTHING IS CITED TO A REPORT PATH.** The run's
+    exported reports are UNTRACKED. No checkout has them, so a citation to one is unfalsifiable by
+    the reader it is written for. Everything below is therefore the measurement itself.
+  - **THE METHOD, which is what makes "RED, alone" mean anything.** Each mutant was planted ONE AT
+    A TIME, followed by a full rebuild and a full suite run, then reverted before the next. A
+    clause name is COMPILED, so a run without the rebuild would have reported old names and said
+    nothing. **CONTROLS IN BOTH DIRECTIONS:** the baseline before any mutant had all nine clauses
+    present and `Success` with no non-success result; after every mutant was reverted and the
+    asset restored, the same. The figures live in `global.md` and nowhere else. The shipped
+    asset's `sha256` returned to
+    `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, the value the `525ad5c`
+    commit message itself quotes -- so the tree the "after" baseline ran over is the tree the
+    "before" baseline ran over, byte for byte, and the reds in between are attributable to the
+    mutants.
+  - **THE PER-CLAUSE RESULTS.** Seven are stamped in place at the entries that recorded their
+    debt, further down this file; the two that carry the durable lessons are restated here.
+    - **`TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness` -- RED, AND ALONE IN THE
+      WHOLE SUITE, over `bReturnToTitleEnabled = Shell->GatherFacts().bMatchIsLive`.** The
+      liveness-only clause STAYED GREEN over that same mutant. **This is the confirmation the
+      three-state design was written for and it landed exactly as predicted:** the shortcut is
+      right on S1 and S3 and wrong only on S2, and the message named S2 in those terms -- *"the
+      exit is STILL GREYED in a live match with nowhere to send the player"*, carrying
+      `'No title level is configured.'`. A clause that had varied only `bMatchIsLive` would have
+      survived this mutant, which is precisely the entry below's argument, now measured.
+    - **`ShippedOptionsWidgetCarriesItsUnboundCaptions` -- RED, alone, over the DELETION of
+      `BackLabel` from `/Game/UI/WBP_Options` (`remove_widget`, parent `BackButton` surviving,
+      widget count 19 -> 18).** That mutant is the 2026-09-07 regression reproduced deliberately,
+      and it is the one that shipped green past every instrument in this tree. **THE CLAUSE SEES
+      THE DELETION THAT SHIPPED GREEN.** Its message named the ASSET and the consequence rather
+      than the instrument, which is what its three controls exist to buy.
+  - **TWO MUTANTS REDDENED MORE THAN THEIR TARGET, AND THAT IS A FACT ABOUT THE MUTANT'S REACH
+    RATHER THAN A DEFECT IN ANY CLAUSE.** `bReturnToTitleEnabled = true` unconditionally reddened
+    `TheOptionsExitIsDisabledWithNoMatchLive` AND
+    `TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness`.
+    `ReturnToTitleButton->SetIsEnabled(true)` reddened
+    `TheOptionsExitControlDrawsExactlyItsPushedModel` AND
+    `AnUnpushedOptionsScreenHasADisabledExit`. In both pairs the two clauses read the same bit
+    under different preconditions, so a mutant that pins that bit to a constant is visible to
+    both. **Recorded because the alternative reading -- that a clause is over-broad -- is wrong
+    here and would invite narrowing a clause that is doing its job.** The discriminating
+    measurements are the two ALONE reds above, and the alone-ness is what shows the pairs are not
+    duplicates of each other.
+  - **WHAT THIS RUN DOES NOT DISCHARGE.** The two shipped-asset clauses each list further mutants
+    that remain UNRUN, and both files now mark them `PREDICTED, UNRUN` at the site rather than in
+    the indicative. **The re-type mutants in particular are NOT covered by the two that were run:**
+    a rename or a deletion reds the PRESENCE assertion and retires before the type assertion is
+    ever reached, so nothing here says a `UButton` silently becoming a `UBorder`, or a caption
+    becoming a non-`UTextBlock`, would be caught. Blanking a caption's `Text` is likewise unrun
+    and is the one mutant a byte scan for the NAME cannot see either.
+  - **NO CODE UNDER TEST WAS EDITED BY THE WRITING LANE and no clause was added, removed or
+    weakened in this pass.** The nine mutants were planted by the two ACTING agents named at the
+    head of this entry and every one was reverted; the tree over base `525ad5c` is unchanged apart
+    from this file and the two `Tests/` headers.
+
 - **2026-09-07 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- ONE new file under
   `Source/StratUI/Tests/` and this record file, on `master` in the main tree
   `E:/MultiAgent/Stratocracy`, base commit `46321a6`, and this pass is UNCOMMITTED).** No
@@ -83,16 +155,35 @@
     has no Slate widget, so the call reads the authored value. Recorded because the same shape --
     a `U*` wrapper over an `S*` with a same-named method -- is what produced this file's
     `bSyncingBoundWidgets` correction.
-  - **THE MUTANT IS UNRUN AND THE DEBT IS OWED HERE, NOT IMPLIED AWAY.** The honest mutant is
+  - **THE MUTANT IS UNRUN AND THE DEBT IS OWED HERE, NOT IMPLIED AWAY.** [**FALSE SINCE THE MUTANT
+    RUN OVER BASE `525ad5c`: THE DELETION MUTANT WAS RUN AND THIS CLAUSE KILLED IT, ALONE. THE
+    DEBT IS DISCHARGED. SEE THE STAMP AT THE FOOT OF THIS BULLET. Everything this bullet says about
+    the negative control being STRICTLY WEAKER than the deletion mutant is untouched and still
+    true.**] The honest mutant is
     deleting a caption from `Content/UI/WBP_Options.uasset` -- the editor lane's asset, which this
     lane does not touch and did not mutate -- and this lane also ran no suite in this pass. **No
-    mutant has been run against this clause.** The file's mutant list is written in the indicative
-    because that is how a prediction reads, and it says so in terms. What CAN be said without
+    mutant has been run against this clause.** [**FALSE SINCE THE SAME RUN.**] The file's mutant list is written in the indicative
+    because that is how a prediction reads, and it says so in terms. [**STILL TRUE OF FOUR OF THE
+    FIVE ENTRIES IN THAT LIST; THE DELETION ENTRY IS NOW A MEASUREMENT.**] What CAN be said without
     leaving the lane, and it is strictly weaker: the LOOKUP instrument's discrimination is
     exercised on every run by the negative control above, so "the instrument answers every name"
     is ruled out by measurement each time. **That proves `FindWidget` can say no. It does not
     prove this clause would notice THIS asset losing THAT caption**, and the two must not be
     conflated.
+    - **[STAMPED 2026-09-07, by `strat-test-author`, over base `525ad5c`. THE DELETION MUTANT WAS
+      RUN AND THIS CLAUSE KILLED IT.]** `BackLabel` was DELETED from `/Game/UI/WBP_Options` through
+      `remove_widget`, parent `BackButton` SURVIVING, widget count 19 -> 18 -- the 2026-09-07
+      regression reproduced deliberately. Rebuilt, full suite run: **this clause RED and ALONE**,
+      with its message naming the ASSET and the consequence rather than the instrument. **THE
+      CLAUSE SEES THE DELETION THAT SHIPPED GREEN**, which is the exact question this bullet said
+      the negative control could not answer. The caption was restored, the suite re-ran clean and
+      the asset's `sha256` returned to
+      `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, the value the `525ad5c`
+      commit message itself quotes. **The measurement is stated inline and not cited to a report
+      path**, because the run's exported reports are untracked and no checkout would have them.
+      **The other four mutants in that file's list are still UNRUN and are now marked
+      `PREDICTED, UNRUN` at the site**, including blanking a caption's `Text` -- the deletion
+      mutant does not cover it, because it reds on presence and never reaches the text reader.
   - **WHAT IT DOES NOT PIN, so a later reader does not over-credit it:** the caption words;
     parentage (`BackLabel` being a child of `BackButton` is not asserted -- a caption's parent can
     legitimately move in a re-layout, and a caption under the wrong parent is visible to a human,
@@ -201,18 +292,27 @@
     declined the hard bind on its own pass and that decision stands until it revisits it.
   - **UNVERIFIED, AND THIS IS THE HONEST STATE OF THE NEW CLAUSE.** [**BOTH CLAIMS IN THE NEXT
     SENTENCE ARE FALSE SINCE LATER THE SAME DAY, AND SO IS RISK (1) BELOW; SEE THE STAMP AT THE
-    FOOT OF THIS BULLET. RISK (2), THE MUTANT DEBT, IS STILL TRUE**] It has NOT been compiled and
+    FOOT OF THIS BULLET. RISK (2), THE MUTANT DEBT, IS STILL TRUE**][**AND THAT LAST CLAUSE IS
+    ITSELF FALSE SINCE THE MUTANT RUN OVER BASE `525ad5c` -- RISK (2) IS DISCHARGED TOO: the
+    rename mutant was run against this clause and killed it, alone. See the 2026-09-07 stamp added
+    at the foot of this bullet.**] It has NOT been compiled and
     has NOT been run -- the pass was instructed not to build. Two risks are named rather than
     left to be discovered. (1) **A COMPILE RISK.** `GetWidgetTreeArchetype()` and
     `FindWidgetTreeOwningClass()` were checked against the installed engine header
     `Engine/Source/Runtime/UMG/Public/Blueprint/WidgetBlueprintGeneratedClass.h`, where both are
     `public` and `WidgetTree` itself is `private`; `FObjectPropertyBase::PropertyClass` and
     `GetObjectPropertyValue_InContainer(const void*)` were checked in `UnrealType.h` the same
-    way. Header-checked is not compiler-checked. (2) **NO MUTANT MEASURED.** Its mutants are
+    way. Header-checked is not compiler-checked. (2) **NO MUTANT MEASURED.** [**FALSE SINCE THE
+    MUTANT RUN OVER BASE `525ad5c`; SO IS THE REST OF THIS SENTENCE AND SO IS ITS CROSS-REFERENCE
+    TO THE SEVEN CLAUSES BELOW, EVERY ONE OF WHICH WAS ALSO KILLED BY ITS OWN MUTANT IN THAT RUN.**]
+    Its mutants are
     written out in the file and every one is unrun; treat its discrimination as UNPROVEN exactly
     as the seven clauses below are.
     - **[STAMPED 2026-09-07, later the same day, by `strat-test-author` over base `46321a6`.
-      THE COMPILE RISK IS DISCHARGED AND THE MUTANT DEBT IS NOT.** The build and the run were
+      THE COMPILE RISK IS DISCHARGED AND THE MUTANT DEBT IS NOT.** [**THE SECOND HALF OF THAT
+      HEADING IS FALSE SINCE THE MUTANT RUN OVER BASE `525ad5c` -- THE MUTANT DEBT IS NOW
+      DISCHARGED AS WELL. A SECOND STAMP AT THE FOOT OF THIS ONE CARRIES THE MEASUREMENT. The rest
+      of this stamp is about a run that happened and is untouched.**] The build and the run were
       performed by the `coordinator` from its own seat and not by this lane: `Build.bat` reported
       `Result: Succeeded` over 21 actions with zero diagnostics and both DLLs relinked, and the
       headless suite then ran -- cite that run by its exported `reportCreatedOn
@@ -226,7 +326,10 @@
       compiler-checked"* -- and a compiler has now checked it.
       **WHAT THIS STAMP DOES NOT DISCHARGE, SAID PLAINLY BECAUSE CORRECTING ONE OF TWO NAMED
       RISKS INVITES READING THE OTHER AS CORRECTED TOO: NO MUTANT HAS BEEN RUN AGAINST THIS
-      CLAUSE AS OF `reportCreatedOn 2026.09.07-21.25.09`.** Its four mutants are written out in
+      CLAUSE AS OF `reportCreatedOn 2026.09.07-21.25.09`.** [**THAT SENTENCE IS SCOPED TO A NAMED
+      RUN AND SO IT STAYS TRUE OF THAT RUN. THE NEXT SENTENCE IS NOT SCOPED AND IS FALSE SINCE THE
+      MUTANT RUN OVER BASE `525ad5c`: one of the four -- the asset RENAME -- is now a MEASUREMENT
+      and killed this clause, alone.**] Its four mutants are written out in
       `Source/StratUI/Tests/StratShippedOptionsExitControlParity.cpp`'s own header block and
       every one of them is a PREDICTION. A green run says the clause compiles and passes over
       correct code; it says nothing whatever about whether it would redden over broken code, and
@@ -239,6 +342,19 @@
       `TestNotNull` guard on `ExpectedControlClass` mirroring the one the subject class already
       had. Neither changes a clause's logic; both were written after that run and were not part
       of it. **]**
+    - **[STAMPED 2026-09-07, by `strat-test-author`, over base `525ad5c`. THE MUTANT DEBT THE
+      STAMP ABOVE DECLINED TO DISCHARGE IS NOW DISCHARGED.]** The asset child
+      `ReturnToTitleButton` was RENAMED to `ReturnToTitleButtonMUT` in `/Game/UI/WBP_Options`
+      through `rename_widget`; the tree was rebuilt and the full suite run. **This clause went RED
+      and ALONE**, its message naming the ASSET and the consequence rather than the instrument --
+      which is the first of its four listed mutants and confirms that line's prediction exactly.
+      The rename was reverted, the suite re-ran clean, and the asset's `sha256` returned to
+      `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, the value the `525ad5c`
+      commit message itself quotes. **The measurement is stated inline rather than cited to a
+      report path**, because the run's exported reports are untracked and no checkout would carry
+      them. **The other three mutants in that file's list remain UNRUN** and are now marked
+      `PREDICTED, UNRUN` at the site; the re-type mutant in particular is NOT covered by the
+      rename, which reds on presence and retires before the type assertion is reached.
   - **A NOTE ON READING THE EXPORTED REPORT, since this pass read one without running one.**
     `Saved/AutomationReport/index.json` is UTF-8 **with a BOM**: `json.load` on a plain `open()`
     fails with *"Expecting value: line 1 column 1"*, which reads like a corrupt file and is not.
@@ -256,9 +372,15 @@
   UNCOMMITTED options-exit work on top of it, and this pass is UNCOMMITTED).** No exception
   clause is cited and none applies. No production file is changed and none was mutated: **the
   mutant battery for this pass was never run, because the pass is BLOCKED -- see the last
-  bullet.** The subject is the `EStratShellRoute::ReturnToTitle` control the user asked for on
+  bullet [**this sentence is scoped to THIS PASS and stays true of it; the battery WAS run later,
+  over base `525ad5c`, and killed all seven -- see the second stamp at the foot of this entry**].**
+  The subject is the `EStratShellRoute::ReturnToTitle` control the user asked for on
   the options screen; the user's own ruling was RETURN TO TITLE and not quit-to-desktop.
   - **THE CLAUSES ARE WRITTEN AND ARE NOT VERIFIED. NOTHING BELOW HAS BEEN COMPILED OR RUN.**
+    [**FALSE SINCE 2026-09-07 FOR "COMPILED OR RUN" (see the stamp at the foot of this entry) AND
+    FALSE SINCE THE MUTANT RUN OVER BASE `525ad5c` FOR THE REST: ALL SEVEN CLAUSES NAMED IN THIS
+    ENTRY WERE EACH KILLED BY THEIR OWN MUTANT IN THAT RUN, WHICH IS EXACTLY THE CONDITION THE
+    NEXT SENTENCE SETS. Both stamps carry the measurements.**]
     A reader must treat every clause named here as UNPROVEN until a pass reports it green with
     its own mutant measured. The seven names are recorded anyway because the reasoning is the
     durable half and would otherwise be re-derived.
@@ -402,7 +524,11 @@
     perform: close the editor, rebuild, re-run. **A clause name is COMPILED, so a suite run
     taken without that rebuild would report the OLD names green and say nothing about these.**
     - **[STAMPED 2026-09-07, later the same day, by `strat-test-author` over base `46321a6`.
-      THE BLOCK IS LIFTED AND THE MUTANT DEBT IS NOT.** The recorded remedy was performed by the
+      THE BLOCK IS LIFTED AND THE MUTANT DEBT IS NOT.** [**THE SECOND HALF OF THAT HEADING IS
+      FALSE SINCE THE MUTANT RUN OVER BASE `525ad5c` -- ALL SEVEN CLAUSES WERE KILLED BY THEIR OWN
+      MUTANTS AND THE DEBT IS DISCHARGED. A SECOND STAMP AT THE FOOT OF THIS ONE CARRIES THE
+      PER-CLAUSE MEASUREMENTS. The rest of this stamp is about a run that happened and is
+      untouched.**] The recorded remedy was performed by the
       `coordinator`, from its own seat and not by this lane: the editor was closed, `Build.bat`
       rebuilt both DLLs and reported `Result: Succeeded` with zero diagnostics, and the headless
       suite ran clean -- cite that run by its exported `reportCreatedOn 2026.09.07-21.01.50`; the
@@ -415,10 +541,50 @@
       rendering notice and not a clause result.
       **WHAT THIS STAMP DOES NOT DISCHARGE, SAID PLAINLY BECAUSE CORRECTING TWO CLAIMS IN A
       THREE-CLAIM SENTENCE INVITES READING THE THIRD AS CORRECTED TOO: NO MUTANT HAS BEEN
-      MEASURED FOR ANY OF THESE SEVEN CLAUSES.** Each one's mutants are written out in its own
+      MEASURED FOR ANY OF THESE SEVEN CLAUSES.** [**FALSE SINCE THE MUTANT RUN OVER BASE
+      `525ad5c`, INCLUDING THE LAST SENTENCE OF THIS PARAGRAPH: SEVEN OF SEVEN WERE KILLED BY
+      THEIR OWN MUTANT AND THEIR DISCRIMINATION IS NO LONGER UNPROVEN. The paragraph's reasoning
+      -- that a green suite says nothing about whether a clause reddens over broken code -- is
+      untouched and is exactly why the run was owed.**] Each one's mutants are written out in its own
       file's block and every one of them is UNRUN. A green suite says the clauses pass over
       correct code; it says nothing about whether they would redden over broken code, which is
       the only question a mutant answers. **Treat the discrimination of all seven as UNPROVEN.**]**
+    - **[STAMPED 2026-09-07, by `strat-test-author`, over base `525ad5c`. THE MUTANT DEBT ON ALL
+      SEVEN IS DISCHARGED: SEVEN OF SEVEN KILLED BY THEIR OWN MUTANT, NO SURVIVORS.]** Each mutant
+      was planted alone, followed by a full rebuild and a full suite run, then reverted. **Stated
+      inline rather than cited to a report path**, because the run's exported reports are
+      untracked and no checkout would carry them.
+      - `TheOptionsExitIsDisabledWithNoMatchLive` -- mutant: `bReturnToTitleEnabled = true`
+        unconditionally. **RED.** Its message quoted the ORACLE against the screen: the screen
+        said `''` where `IsRoutePermitted` said *"No match in progress."* **This mutant also
+        reddened `TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness`** -- a fact about
+        the mutant's REACH, not a defect in either clause, and worth recording so a later reader
+        does not read the pair as one clause leaking into another.
+      - `TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness` -- mutant:
+        `bReturnToTitleEnabled = Shell->GatherFacts().bMatchIsLive`, the exact shortcut the
+        presenter's own comment says it refused. **RED, AND ALONE IN THE WHOLE SUITE**: the clause
+        above it STAYED GREEN. **This confirms the three-state design's prediction exactly** --
+        the shortcut is right on S1 and S3 and wrong only on S2 -- and the message named S2 in
+        those terms: *"the exit is STILL GREYED in a live match with nowhere to send the player"*,
+        carrying `'No title level is configured.'`. **This is the one measurement that shows the
+        entry above's S1/S2/S3 argument was not decoration.**
+      - `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp` -- mutant: `++ReturnToTitleRoutesTakenCount`
+        moved ABOVE the refusal's early return. **RED, alone.**
+      - `TheOptionsExitControlDrawsExactlyItsPushedModel` -- mutant:
+        `ReturnToTitleButton->SetIsEnabled(true)`. **RED.** **It also reddened
+        `AnUnpushedOptionsScreenHasADisabledExit`**, which is again the mutant's reach and not a
+        defect: both clauses read the same widget's enabled bit, one after a push and one after
+        construct.
+      - `AVolumeDragDoesNotClearTheExitAvailability` -- mutant: `ExitModel = FStratOptionsExitModel();`
+        added to `UStratOptionsWidget::SetMasterVolume`. **RED, AND ALONE IN THE WHOLE SUITE --
+        every audio clause stayed green, exactly as predicted.** This is the measurement that
+        earns the two-struct design its entry above: nothing else in the suite can see an exit
+        field parked in the rebuilt audio model.
+      - `AnUnpushedOptionsScreenHasADisabledExit` -- mutant: `SyncExitWidgetsToModel()` DELETED
+        from `NativeConstruct`. **RED, alone.**
+      - `TheOptionsExitButtonBroadcastsTheRequestAndDismissesNothing` -- mutant:
+        `OnReturnToTitleRequested.Broadcast()` removed from `HandleReturnToTitleClicked`. **RED,
+        alone.**
 
 - **2026-09-07 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- ONE new `Tests/`
   file plus three existing ones, and this record file, on `master` in the main tree

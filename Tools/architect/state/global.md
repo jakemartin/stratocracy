@@ -11,6 +11,55 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-08 (THE MUTANT CAMPAIGN'S RECORD WAS CORRECTED ACROSS THREE LANES. The campaign
+itself is recorded in the 2026-09-07 banner below and is unchanged by this.
+  `engine.md` HAD CITED A `reportCreatedOn` AS THE STANDING REPORT AND WAS CORRECT WHEN WRITTEN;
+this seat then re-ran the suite -- a newer report was owed once the test lane had edited
+test-defining sources -- and the re-run superseded the report that sentence names. So one changeset
+called a report standing in one file and stamped it superseded in another, and NEITHER WRITER WAS
+WRONG AT THE MOMENT OF WRITING. Scoped in place, with the live identity referred to this file
+rather than restated, which also makes that bullet immune to the next re-run.
+  `content.md` GAINED THE ACCOUNT OF THE TWO ASSET MUTANTS. They were planted in the shipped
+`Content/UI/WBP_Options.uasset` and reverted, and that file had said nothing about either -- so the
+only account of two mutations of a shipped LFS asset lived in two other lanes' files, and not in
+the one record whose reader most needs it, since that file carries the `BackLabel` regression story
+itself.
+  THE DATE ROLLED PAST MIDNIGHT MID-PASS AND THAT IS WHY THIS BANNER EXISTS. The campaign ran on
+the seventh local; these corrections are the eighth. A dated entry in any lane file after the roll
+would have tripped BANNER DATE FRESHNESS against the banner below, which is a real contradiction
+and not a nuisance: the sweep is right that a record dated ahead of its own banner is unexplained.
+`strat-gameplay-engineer` avoided it by correcting in place with no date token at all.
+  WHAT THIS BLOCK NO LONGER DOES, AND WHY THE DELETION IS THE POINT. It enumerated this pass's
+gate findings by number and called them the pass's only ones. This file forbids exactly that below
+-- a record must not narrate the process that is still gating it, because any closed statement
+about a moving subject is false on landing. It was: the repair to the run tally in this very file
+became a further finding in a further gate, and the enumeration could not contain it. THE GATES OF
+THIS PASS ARE IN THE TREE and a reader wanting them should open them rather than read this file's
+account: they are the `options-exit-mutant-campaign-record` reports under
+`Tools/architect/gate_reports/`, persisted verbatim by `strat-data-steward` with only a scope
+header added.
+  [CORRECTED AT THIS SENTENCE] "THE GATES OF THIS PASS ARE NOT IN THE TREE: nothing was
+  [CORRECTED] persisted ... and this pass did not discharge it." -- TRUE WHEN WRITTEN AND FALSE
+  [CORRECTED] WITHIN THE HOUR, because the debt it named was then discharged -- by
+  [CORRECTED] `strat-data-steward`, at the user's request, and NOT by this sentence's own author.
+  [CORRECTED] It is corrected here rather than deleted because the shape is the lesson: A SENTENCE
+  [CORRECTED] ABOUT WHAT A RECORD LACKS IS A CLAIM WITH AN EXPIRY, and writing one down is often
+  [CORRECTED] the thing that ends it. NO RANK IS GIVEN TO IT. An earlier draft called it the
+  [CORRECTED] FOURTH such claim in this pass, which is not derivable in either direction -- the
+  [CORRECTED] changeset's own correction blocks mark far more than four on a loose reading, and on
+  [CORRECTED] the strict one this sentence is not a member at all. The rank added nothing the
+  [CORRECTED] shape does not already carry, and it was the second uncheckable count this file
+  [CORRECTED] produced in one pass.
+THE SUITE IS **477/477**, every entry Success, zero failed, zero notRun, ONE
+succeededWithWarnings, enumerated entry by entry from the exported report with `utf-8-sig`.
+The macro census agrees at 477. THE LIVE FIGURE'S REPORT IS `reportCreatedOn
+2026.09.08-03.43.53`. NOTHING IN THIS PASS MOVED THE COUNT: no clause was added, removed or
+renamed, and the two source edits under it are comment-only, verified by a comment-stripped
+diff whose control mutation does register.
+  A NOTE ON THE REPORT'S OWN SUMMARY FIELDS, because this seat misread them twice in session
+and said so: `succeeded` is 476 and `succeededWithWarnings` is 1, and they SUM to the 477
+entries. That is not an off-by-one in the report. Enumerating every entry's state remains the
+instrument, on its own merits.)
 _Last run 2026-09-07 (A ROUND-CHANGE CUE AND A CAMERA RECENTER LAND AT THE AI HAND-BACK, AND THE
 THING WORTH READING IS THAT THE BRIEF THIS SEAT WROTE ENCODED A DEFECT AND THE LANE REFUSED IT --
 FOR THE SECOND CONSECUTIVE PASS, ON THE SAME AXIS. The user asked for a sound when the AI's turn
@@ -28,10 +77,70 @@ AND THE DEFECT WAS PINNED RATHER THAN MERELY FIXED, WHICH IS THE HALF THAT MAKES
 reset back below the call reddens EXACTLY THAT ONE CLAUSE (*"Read 1 cue(s)"* against a required
 zero) and nothing else in either ID. Four mutants were run in total and all four production files
 were restored byte-identically, sha256-verified.
+
+THE NINE CLAUSES OF THE OPTIONS-EXIT PASS HAVE NOW BEEN RUN AGAINST THEIR OWN MUTANTS, AND ALL
+NINE WERE KILLED. **2026-09-07, the `coordinator` (ACTING; OUT OF LANE, in session, over base
+`525ad5c` -- planted and reverted the seven SOURCE mutants and ran the suite for all nine),
+`strat-editor-builder` (ACTING -- planted the two ASSET mutants in `/Game/UI/WBP_Options`),
+`strat-test-author` and `strat-gameplay-engineer` (WRITING their own lanes' records), and the
+`coordinator` + steward (WRITING this file).** Each mutant was planted alone, followed by a full
+`Build.bat` and a full suite run, then reverted; THE CAMPAIGN RAN THE SUITE TWELVE TIMES -- nine
+mutants and THREE controls. ALL THREE controls reported zero non-success: a baseline before any
+mutant was planted, a mid-campaign control after the seven SOURCE mutants were reverted and
+before the two ASSET mutants began, and a final one after every revert, with the shipped asset
+restored to sha256 `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667` -- the value
+`525ad5c`'s own commit message quotes.
+  [CORRECTED AT THIS SENTENCE BY THE RE-GATE] "the campaign ran the suite ELEVEN times. BOTH
+  [CORRECTED] controls..." -- an undercount by exactly one, and the missing run is the
+  [CORRECTED] MID-CAMPAIGN control, which this seat ran and reported at the time and then left
+  [CORRECTED] out of its own tally. `engine.md` counts its own half correctly at nine; the
+  [CORRECTED] campaign-wide total was the figure that dropped it. What falsified it was the run
+  [CORRECTED] directories the campaign left behind, twelve of them, each with a distinct report
+  [CORRECTED] stamp -- AND THEY ARE UNTRACKED, so a fresh clone cannot re-run that check. The
+  [CORRECTED] count is stated here rather than left to a path no checkout resolves.
+  TWO RESULTS CARRY THE WEIGHT, AND BOTH ARE MUTANTS THAT REDDENED EXACTLY ONE CLAUSE OUT OF THE
+WHOLE SUITE. Writing `Shell->GatherFacts().bMatchIsLive` in place of the `IsRoutePermitted` call
+reddened `TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness` and NOTHING ELSE --
+`TheOptionsExitIsDisabledWithNoMatchLive` stayed green under it, because the shortcut is right in
+that state. The routing decision `engine.md` argued at the site is now MEASURED rather than
+argued. And `ExitModel = FStratOptionsExitModel();` in `SetMasterVolume` reddened
+`AVolumeDragDoesNotClearTheExitAvailability` and nothing else, every audio clause included:
+the separate-struct decision is measured too.
+  THE CAPTION CLAUSE SEES THE DELETION THAT SHIPPED. `BackLabel` was deleted from the shipped
+asset with its parent `BackButton` left standing -- the exact 2026-09-07 regression, widget count
+19 -> 18 -- and `GATE-AUDIO-SETTINGS.ShippedOptionsWidgetCarriesItsUnboundCaptions` reddened
+alone, naming the asset. The instrument that a human at the keyboard had to substitute for now
+exists and is measured.
+  TWO MUTANTS REACHED FURTHER THAN THEIR TARGET AND THAT IS A FACT ABOUT THE MUTANT, NOT A DEFECT
+IN A CLAUSE: the unconditional `= true` also reddened the tracks-both-arms clause, and
+`SetIsEnabled(true)` also reddened the unpushed-screen clause. Both are correct reads.
+  WHAT THIS DOES NOT DISCHARGE, stated here because the campaign's own headline invites the
+wrong reading. ONE mutant was run per clause. The re-type mutants on both shipped-asset clauses,
+the blank-`Text` mutant, the delete-the-C++-member mutant and the bad-class-path mutant remain
+PREDICTED AND UNRUN, and `tests.md` names them at their sites. The
+`ExecuteRoute`-before-`CloseOptionsPanel` ordering is likewise unmeasured -- no mutant swapped
+those two statements -- and `engine.md` refused the brief's claim that it had been.
+  TWO ERRORS FROM THIS SEAT WERE CAUGHT BY THE LANES AND ARE RECORDED RATHER THAN QUIETLY FIXED.
+The briefs dispatched to both writing lanes carried the WRONG DATE, a day ahead: this box records
+local dates while automation reports are stamped UTC, and after about 20:00 local the two
+disagree. `strat-gameplay-engineer` refused the date against `strat_banner_sweep.py` rather than
+taking it; `strat-test-author` had already written it and corrected it on a second pass. And this
+seat twice reported the exported report's `succeeded` field as off by one against the entry count
+-- it is not: `succeeded` excludes the single `succeededWithWarnings` entry, and the two sum to
+the total. Counting by enumerating every entry's state remains the right instrument; the reason
+given for it was wrong.
 THE SUITE IS **477/477**, every entry Success, zero failed, zero notRun, ONE
 succeededWithWarnings, read from the exported report with `utf-8-sig`. The macro census agrees at
-477, and the arithmetic closes: 468 + 9 added = 477. THE LIVE FIGURE'S REPORT IS
-`reportCreatedOn 2026.09.07-23.39.55`. The one warning is a headless `no tile mesh for terrain
+477, and the arithmetic closes: 468 + 9 added = 477. THE LIVE FIGURE'S REPORT IS NAMED IN THIS
+FILE'S TOPMOST BANNER AND IS DELIBERATELY NOT RESTATED HERE -- a historical banner that names
+the current report would have to be edited on every future re-run, and would meanwhile name a
+report postdating itself.
+  [STAMPED BY THE MUTANT CAMPAIGN] "THE LIVE FIGURE'S REPORT IS
+  [STAMPED] `reportCreatedOn 2026.09.07-23.39.55`." -- superseded because the campaign
+  [STAMPED] re-ran the suite after two comment-only edits to test-defining sources, and
+  [STAMPED] `strat_banner_sweep.py` refuses a live figure cited to a report older than the
+  [STAMPED] tree it describes. THE COUNT DID NOT MOVE; only the report backing it did.
+The one warning is a headless `no tile mesh for terrain
 Bridge, Factory, Mountains, Plains, Town, Water, Woods` notice raised inside the live-board
 fixture of `GATE-TITLEMENU.TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness`; it is a
 content-configuration notice from a `-nullrhi` world, not a diagnostic about anything under test.

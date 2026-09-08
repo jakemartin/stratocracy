@@ -50,6 +50,96 @@
 
 ## NEXT
 
+- **THE TWO CLAUSES THAT NOW GUARD `WBP_Options` WERE PROVED BY PLANTING THE CAPTION DELETION A
+  SECOND TIME -- AND THE THING WORTH READING IS THAT BOTH INSTRUMENTS THIS PASS REACHED FOR TO
+  READ THE SAVED ASSET ANSWER "ABSENT" WHILE NOT LOOKING AT ALL, WHICH IS THE EXACT SHAPE THAT LET
+  `BackLabel` SHIP.** 2026-09-07 (local; the mutants were planted at roughly 23:11 and 23:16, and the
+  automation reports for this work are stamped UTC and therefore read `2026.09.08-03.xx` -- this
+  record is dated LOCAL, as all records here are), `strat-editor-builder` (ACTING and WRITING),
+  dispatched by the coordinator, over base `525ad5c`. **UNDER NO CLAUSE:**
+  `mcp__unreal-editor-direct__execute_script` was on this agent's tool surface and answered, so the
+  lane agent reached the editor and did the work itself -- the editor-driver clause was NOT in play,
+  the coordinator did not drive the editor, and this file's fallback condition was likewise closed.
+  This entry is the SEQUEL to the entry immediately below it: that one records the regression, this
+  one records the instrument that now catches it.
+
+  **MUTANT A -- THE EXIT CONTROL'S NAME.**
+  `rename_widget("ReturnToTitleButton", "ReturnToTitleButtonMUT")` on `/Game/UI/WBP_Options`,
+  compiled and saved, against
+  `Stratocracy.StratUI.GATE-TITLEMENU.ShippedOptionsWidgetCarriesReturnToTitleButton`. **Widget
+  count UNCHANGED at 19 in BOTH directions**, which is why a rename was the mutation chosen: **no
+  `duplicate_widget` and no `remove_widget` were used, deliberately** -- those two verbs USED
+  TOGETHER, IN THAT ORDER, ON A SUBTREE WITH CHILDREN are what destroyed the original
+  `BackLabel`, as the entry below records: `duplicate_widget` clones a subtree WITHOUT renaming
+  the clone's child, so two widgets briefly share one name, and `remove_widget` addresses its
+  target BY NAME, and a name two widgets answer to cannot be aimed at. The standing instruction
+  below names `duplicate_widget` ALONE, because that is the verb which CREATES the ambiguity; it
+  does NOT forbid `remove_widget`, so Mutant B's `remove_widget("BackLabel")` in the MUTANT B
+  paragraph below is NO breach of it -- that name was unique when it ran, so the removal was
+  aimable and took exactly its target, leaving `BackButton` standing.
+  Verified two ways: by re-reading the LIVE widget tree, and by a NUL-terminated byte scan of
+  the SAVED `.uasset` carrying positive controls (`BackButton\0`, `ReturnToTitleLabel\0`) and a
+  negative control in the same pass. **RESULT: the clause reddened ALONE** -- no other clause moved
+  -- and its failure message names the ASSET and the consequence rather than the instrument. (The
+  live suite figure is `global.md`'s and is not restated here.)
+
+  **MUTANT B -- THE CAPTION, WHICH IS THE 2026-09-07 REGRESSION ITSELF, PLANTED ON PURPOSE.** The
+  rename was undone first, then `remove_widget("BackLabel")` deleted the `INVTEXT("BACK")` caption
+  while its parent `BackButton` survived -- **widget count 19 -> 18** -- against
+  `Stratocracy.StratUI.GATE-AUDIO-SETTINGS.ShippedOptionsWidgetCarriesItsUnboundCaptions`. That is
+  the same situation the entry below describes: the CHILD gone, the BUTTON kept, which is precisely
+  why the shipped-asset parity clause could not see it. **RESULT: the clause reddened ALONE. The
+  caption clause SEES the deletion that once shipped green past the whole suite, past a parity
+  clause whose positive control was the surviving PARENT, past a byte scan that probed only the
+  names being ADDED, and past three `strat-integration-reviewer` gates.**
+
+  **THE RESTORE, STATED INLINE BECAUSE THE MUTANT AND AUTOMATION REPORTS ARE UNTRACKED AND A
+  CHECKOUT CANNOT RE-RUN THEM.** The coordinator closed the editor and restored the asset with
+  `git checkout`, verified back to sha256
+  `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667` -- the value `525ad5c`'s own
+  commit message quotes. Corroborated INDEPENDENTLY by the reviewer gate, which compared the LFS
+  BLOB rather than assuming the worktree, because `git show` on an LFS path returns the POINTER and
+  not the asset. `Content/UI/WBP_Options.uasset` is byte-identical to `525ad5c`; no mutant survives
+  in the tree, and NO asset was created or modified by this pass on net.
+
+  **TWO MORE MEASURED LIMITS OF THE NEOSTACK FILE API, AND BOTH ARE THE "ANSWERS ABSENT WHILE NOT
+  LOOKING" SHAPE THIS FILE ALREADY HAS A STORY ABOUT.**
+  **`read_file` SILENTLY REFUSES A `.uasset`:** it returns EMPTY content while still reporting
+  `exists=true`, so every needle -- INCLUDING THE POSITIVE CONTROLS -- reads false and a scan built
+  on it reports a clean asset in perfect good faith. Workaround: `copy_file` to another extension
+  first, then read.
+  **`read_file(..., {encoding="binary"})` RETURNS BASE64, NOT RAW BYTES.** A scan over its output
+  without decoding returns false for every needle, controls included. One pass caught this ONLY
+  because its positive controls failed; decoding then gave a byte count matching the file's size and
+  the UE package magic `0x9E2A83C1` at the head. **In both cases the instrument is
+  indistinguishable from a truthful "not present" unless controls run in the SAME call**, which is
+  the rule the caption scan below already had to learn. **`write_file` HAS A MATCHING TRAP ON THE OTHER
+  SIDE, AND ITS CONTROL LIED FIRST -- MEASURED ON THIS VERY ENTRY, WHICH IS WHY IT IS RECORDED
+  HERE.** `{encoding="binary"}` REJECTS a plain string with `invalid base64 content`: it wants
+  base64 IN exactly as it hands base64 OUT. `{encoding="utf8"}` then passed an ASCII-only scratch
+  control at one byte per character -- **and then wrote a 298695-byte revision of this file as
+  UTF-16, 597288 bytes.**
+  UE auto-detects PER WRITE and widens the WHOLE string as soon as one character is not
+  ANSI-representable, and this file holds 28 non-ASCII runs totalling 80 bytes; **an ASCII-only
+  control cannot see that**, which is the same defect shape as the two reads above. What worked,
+  and what the next pass should use: split the content at its non-ASCII runs, write the ASCII
+  segments with `{encoding="utf8"}` and each non-ASCII run as base64 with
+  `{encoding="binary", append=true}`, then check the ON-DISK SIZE against the intended BYTE count --
+  57 writes here, landing exactly the intended count on every run -- and the check is
+  `file_info(path).size` against the Lua string's OWN length, computed before the write, because a
+  size the file reports about itself answers nothing. **No figure for this file's current size is
+  recorded here on purpose:** the entry would move its own subject with every correction. The head
+  read `IyBTdHJhdG9jcmFj` (`# Stratocrac`) rather than a UTF-16 BOM. **A pure-Lua base64 pass over a whole file of this size is NOT
+  available:** the interpreter aborts with `Script exceeded instruction limit` well below the
+  ~33000 three-byte groups such a file needs, so the split above is not a preference but the only
+  route measured to work.
+
+  **AND ONE FALSE POSITIVE, CAUGHT AND DISCARDED BY ITS AUTHOR RATHER THAN BELIEVED.** A first
+  byte-scan attempt reported the OLD name STILL PRESENT after Mutant A's rename, because its match
+  window EXCLUDED THE NUL TERMINATOR -- and `ReturnToTitleButton` is a PREFIX of
+  `ReturnToTitleButtonMUT`, so an unterminated needle matches the mutant it was meant to exclude.
+  NUL-terminating every needle is what makes a UE name scan a NAME scan and not a substring scan.
+
 - **THIS LANE DELETED `WBP_Options`'s BACK-BUTTON CAPTION AND SHIPPED IT THAT WAY -- AND THE
   THING WORTH READING IS THAT EVERY INSTRUMENT THAT PASSED WAS SCOPED TO THE CHANGE BEING MADE, SO
   NOT ONE OF THEM COULD ASK WHETHER ANYTHING HAD GONE.** 2026-09-07 (local),

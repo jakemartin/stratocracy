@@ -63,7 +63,16 @@
     `Facts.bMatchIsLive` test appears in `StratOptionsPresenter.cpp`. It would compile, would be
     right today, would be a FOURTH copy of a rule that lives in one place, and **would have
     dropped the `bTitleLevelConfigured` half of the `ReturnToTitle` arm**, which a hand-written
-    condition has no reason to remember.
+    condition has no reason to remember. **[ARGUED WHEN WRITTEN; MEASURED 2026-09-07, over base
+    `525ad5c`. The exact line this bullet refused was planted as a mutant --
+    `ExitModel.bReturnToTitleEnabled = Shell->GatherFacts().bMatchIsLive` in place of
+    `SeedExitAvailability`'s `IsRoutePermitted` call -- rebuilt, and run against the full suite. It
+    reddened `TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness` ALONE and every other
+    clause stayed green under it, `TheOptionsExitIsDisabledWithNoMatchLive` included, which the
+    hand-written condition satisfies perfectly. The failure message names *"No title level is
+    configured."* -- the `bTitleLevelConfigured` half this bullet predicted a hand-written
+    condition would drop. The prediction is no longer a prediction. See the mutant-campaign entry
+    at the end of this file.]**
   - **`BindWidgetOptional` AND NOT `BindWidget` FOR A CONTROL THAT PRODUCES A VALUE -- AN EXCEPTION
     TO THE RULE `StratOptionsWidget.h` ITSELF STATES, TAKEN FOR A MEASURED REASON AND CALLED OUT
     IN THE HEADER RATHER THAN LEFT TO BE INFERRED.** `BindWidget` is enforced by the Widget
@@ -80,6 +89,14 @@
     Model.SfxVolume, Model.MusicVolume)` -- so any field the builder does not take as an argument
     is **silently reset to its default by every slider drag**. The exit row would have gone grey
     the first time a player touched the volume, and nothing in either file would have looked wrong.
+    **[MEASURED 2026-09-07, over base `525ad5c`, AND THE WORD *INVISIBLE* IN THIS BULLET'S OWN
+    HEADING NOW NEEDS THE SCOPE IT DID NOT CARRY. The defect was planted by hand --
+    `ExitModel = FStratOptionsExitModel();` added to `UStratOptionsWidget::SetMasterVolume` --
+    rebuilt, and run against the full suite. It reddened
+    `AVolumeDragDoesNotClearTheExitAvailability` ALONE; every audio clause stayed green under it.
+    So the half of this bullet that says a reader of either file would see nothing wrong is
+    unchanged and still true, and the unqualified *INVISIBLE* is now false: the suite sees it, and
+    sees it in one clause. See the mutant-campaign entry at the end of this file.]**
   - **ORDERING IN `HandleReturnToTitleRequested`: `ExecuteRoute` FIRST, `CloseOptionsPanel`
     SECOND.** Closing first would take the screen down and THEN discover a refusal, leaving the
     player back in the match with the screen they were reading gone for nothing. The close is
@@ -87,7 +104,16 @@
     `OpenLevelBySoftObjectPtr` DEFERS the travel -- it returns with this world still standing, so
     at least one more frame is drawn, and without this line that frame shows the volume screen over
     a match the player has already left. The redundancy is one-directional (both writers close;
-    neither opens) and so cannot fight.
+    neither opens) and so cannot fight. **[PARTLY MEASURED 2026-09-07, over base `525ad5c`, AND THE
+    LIMIT MATTERS MORE THAN THE MEASUREMENT. A mutant moving `++ReturnToTitleRoutesTakenCount`
+    ABOVE the refusal's early return in `HandleReturnToTitleRequested` -- rebuilt and run against
+    the full suite -- reddened `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp` alone, so the
+    order-of-operations argument about the REFUSAL ARM is now a measurement rather than an
+    argument. WHAT NO MUTANT IN THAT CAMPAIGN TOUCHED IS THE ORDERING THIS BULLET'S HEADING
+    ACTUALLY NAMES: nothing swapped `ExecuteRoute` and `CloseOptionsPanel`, so
+    `ExecuteRoute`-first rests on the reasoning above and not on a red run. Stated rather than
+    left to be inferred from a neighbouring measurement. See the mutant-campaign entry at the end
+    of this file.]**
   - **NO SECOND SOUND CUE, AND THE ASYMMETRY WITH `HandleOptionsDismissed` BESIDE IT IS
     DELIBERATE.** That handler emits `EStratSoundCue::ButtonClick` because `CloseOptionsPanel` is
     silent and the widget cannot reach `UStratSoundDirector`. `ExecuteRoute` **already emits the
@@ -169,7 +195,18 @@
     that `strat-test-author` declined `T-UI-03` for this surface and filed under `GATE-TITLEMENU`,
     attributes that to `Source/StratUI/Tests/StratOptionsExitClauses.cpp`'s own header as the
     authority, and states in terms that those clauses are **uncompiled and unrun as of the
-    comment**. No count appears -- not in the code, not here. This file names no acceptance ID
+    comment** **[STILL A TRUE REPORT OF WHAT THE COMMENT SAYS; THE STATE IT REPORTS IS FALSE SINCE
+    2026-09-07. Those clauses have been compiled and run, and four of the exit clauses in
+    `Source/StratUI/Tests/StratOptionsExitClauses.cpp` --
+    `TheOptionsExitControlDrawsExactlyItsPushedModel`, `AnUnpushedOptionsScreenHasADisabledExit`,
+    `AVolumeDragDoesNotClearTheExitAvailability` and
+    `TheOptionsExitButtonBroadcastsTheRequestAndDismissesNothing` -- have each been proved red over
+    a mutant planted in `Source/StratUI/StratOptionsWidget.cpp` over base `525ad5c`, as have three
+    in `Source/StratPlay/Tests/StratOptionsExitRouteClauses.cpp` over mutants in
+    `Source/StratPlay/StratOptionsPresenter.cpp`. The COMMENT is not corrected by this entry: it is
+    scoped *as of the comment* and a comment-only edit is an executable-file edit this pass did not
+    make. See the mutant-campaign entry at the end of this file.]**. No count appears -- not in
+    the code, not here. This file names no acceptance ID
     for its own surface and now says why it must not: picking one is the steward's ruling and the
     test lane's clause names, never a header comment's.
   - **COMMENT-ONLY, AND THE INSTRUMENT IS NAMED WITH ITS LIMIT.** Six textual replacements, every
@@ -9862,7 +9899,137 @@ coordinator's, over the whole tree, after both lanes report.
 - **UNBUILT AND UNRUN, again, and for the same reason.** Comment-only in one header plus this
   record, so nothing here can change behaviour — an argument, not a measurement. **Discharged** by
   the coordinator's whole-tree rebuild and suite pass after both lanes report on this round.
+  **[DISCHARGED 2026-09-07, and by more than the condition asked for. The condition named one
+  rebuild and one suite pass; the 2026-09-07 mutant campaign over base `525ad5c` ran the full suite
+  NINE times -- a baseline control, seven engine-lane mutants planted one at a time, and a final
+  control over the restored tree -- with a full `Build.bat` between each, and both controls reported
+  zero non-success results. The suite's own figure is `global.md`'s to state and is not restated
+  here. The debt is closed; the sentence above is kept because it states what was owed.]**
 - **`ReturnToTitleButton` is still `BindWidgetOptional` with its (re-worded) condition MET.**
   **Discharged** by a pass that builds and runs the suite, promotes the member to `BindWidget`, and
   touches nothing else — or by a recorded decision that the compiler-enforced bind is not wanted
   here, which would need its own ground now that the evidentiary one is gone.
+
+## 2026-09-07 — seven engine-lane mutants over base `525ad5c`, and all seven were killed
+
+**2026-09-07, the coordinator (ACTING; OUT OF LANE, in session, over base `525ad5c`) and
+`strat-gameplay-engineer` (WRITING).** This entry is a RECORD CORRECTION and changes no source
+file. **THE DATE IS LOCAL AND IS ONE DAY EARLIER THAN THE DISPATCHING BRIEF'S**, which carried
+the FOLLOWING day: this box's clock reads 2026-09-07 in the evening, and this project's records
+are dated LOCAL while its automation reports are stamped UTC and therefore run a day ahead after
+about 20:00 — the same offset visible in the `reportCreatedOn` `2026.09.07-23.39.55` of
+**the report that was standing when this dispute arose, SINCE SUPERSEDED**, against that report's
+own write time of 19:39:55. **The arithmetic is the point of the citation and is unchanged; the
+identification of that report as the standing one is not, and the live report identity is
+`global.md`'s to state and is deliberately not restated here.** The supersession happened after
+this bullet was drafted and not before: the suite was re-run later the same evening because the
+gate's REPORT IDENTITY rule requires a report newer than the test sources the test lane had just
+edited, and that run replaced the one named above. So this is a claim that ROTTED UNDER ITS
+AUTHOR rather than an observation that was wrong when made — which is why it is scoped in place
+instead of deleted, the offset it demonstrates being the whole reason the bullet exists.
+The brief's date was used first and
+`strat_banner_sweep.py` refused the file with **BANNER DATE FRESHNESS**, `global.md`'s banner
+reading `_Last run 2026-09-07`. **Then this very bullet, written to explain the refusal, RE-TRIPPED
+the sweep by printing the offending date as a quotation** — the sweep collects by SHAPE, and prose
+about an exempt token is not exempt. That is why the day is named in words here and not in
+`YYYY-MM-DD` form; the workaround is a finding about the instrument and is recorded rather than
+hidden. Its subject is the engine-side half of a mutant campaign run against the clauses that landed
+with the options-screen exit; the two asset mutants planted in `/Game/UI/WBP_Options` are
+`content.md`'s and are named here only where a sentence of this file depended on them. No suite
+figure and no phase verdict appear below; both are `global.md`'s.
+
+**WHY THIS ENTRY EXISTS AT ALL.** Every design call in the 2026-09-07 exit-row entry above was
+argued from the source and from the compiler, and that entry says so in terms: *"THE SUITE WAS NOT
+RUN THIS PASS AND NO CLAIM HERE RESTS ON IT."* That was the honest state then and it is the state
+this entry closes. **Three of those arguments are now measurements, one is measured only in the
+half its heading does not name, and the record above has been corrected inline at each of them
+rather than by this entry alone** — a reader arriving at the `FStratAudioOptionsModel` bullet by
+citation must meet the correction there, which is why the annotations are in the bullets and not
+only here.
+
+### Method, and what it is worth
+
+- **Each mutant was planted in place, one at a time, in `E:\MultiAgent\Stratocracy`, followed by a
+  full `Build.bat` and a full suite run, then reverted.** In-place rather than in a copied tree,
+  because a copy reuses `Intermediate/Build` and the mutant becomes a silent no-op that reports the
+  old binary's results — the failure mode this record already carries twice. A full rebuild between
+  mutants because a clause NAME is compiled, and a stale binary reports the old names.
+- **CONTROLS IN BOTH DIRECTIONS.** The suite reported **zero non-success results before the first
+  mutant** and **zero again after the last revert**, with `Content/UI/WBP_Options.uasset` restored
+  to `sha256 2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`. The trailing
+  control is the load-bearing one: the mutant runs vouch for mutants, not for what is left behind,
+  and this record has been burned by that distinction before.
+- **WHAT A KILLED MUTANT DOES NOT PROVE.** It proves the clause is not vacuous against THAT
+  substitution. It does not prove the clause pins the requirement, and it says nothing about any
+  behaviour no mutant expressed — the `ExecuteRoute`-before-`CloseOptionsPanel` ordering, in
+  particular, is untouched by all seven and is called out as such in the bullet that argues it.
+
+**WHERE THE CLAUSE NAMES LIVE**, so the short names below are citable. The three
+`Stratocracy.StratPlay.GATE-TITLEMENU.*` clauses are in
+`Source/StratPlay/Tests/StratOptionsExitRouteClauses.cpp`; the four
+`Stratocracy.StratUI.GATE-TITLEMENU.*` clauses are in
+`Source/StratUI/Tests/StratOptionsExitClauses.cpp`. Both files are `strat-test-author`'s and
+neither was read for anything but its registered clause names.
+
+### The three mutants in `Source/StratPlay/StratOptionsPresenter.cpp`
+
+1. **`ExitModel.bReturnToTitleEnabled = true` unconditionally** → RED on
+   `TheOptionsExitIsDisabledWithNoMatchLive` **and also** on
+   `TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness`. **Two clauses, and that is a fact
+   about the mutant's reach and not a defect in either clause**: an unconditional `true` violates
+   both properties at once, so both are entitled to see it, and a mutant that reddens two clauses
+   has told you less about each of them than one that reddens exactly one. Mutant 2 is the one that
+   separates them.
+2. **`ExitModel.bReturnToTitleEnabled = Shell->GatherFacts().bMatchIsLive`** → RED on
+   `TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness` **alone**;
+   `TheOptionsExitIsDisabledWithNoMatchLive` stayed GREEN under it, as did every other clause in
+   the suite. **THIS IS THE MUTANT THAT VINDICATES THE ROUTING DECISION, AND IT IS THE ONE RESULT
+   IN THIS ENTRY WORTH THE WHOLE CAMPAIGN.** The site's own comment refused exactly this line as
+   something that *"would compile, would be right today, and would be a fourth copy of a rule that
+   lives in one place; the `ReturnToTitle` arm also refuses on `bTitleLevelConfigured`, which a
+   hand-written condition would have dropped."* The mutant IS that hand-written condition, and the
+   suite's answer is the comment's argument restated as a measurement: green wherever a match is
+   live or not is the whole question, **red only where the dropped half is the question**, with the
+   failure message naming *"No title level is configured."* An argument that a shortcut drops a
+   case is cheap; a red run that names the dropped case is not.
+3. **`++ReturnToTitleRoutesTakenCount` moved above the refusal's early return in
+   `HandleReturnToTitleRequested`** → RED on
+   `ARefusedReturnToTitleTakesNoRouteAndLeavesThePanelUp`, alone. The order-of-operations argument
+   in that function is measured **for the refusal arm**. It is not measured for
+   `ExecuteRoute`-before-`CloseOptionsPanel`, which no mutant expressed.
+
+### The four mutants in `Source/StratUI/StratOptionsWidget.cpp`
+
+4. **`ReturnToTitleButton->SetIsEnabled(true)` in `SyncExitWidgetsToModel`** → RED on
+   `TheOptionsExitControlDrawsExactlyItsPushedModel` **and also** on
+   `AnUnpushedOptionsScreenHasADisabledExit`. Two clauses again, and again a fact about reach: a
+   widget that enables the control regardless of the model is both drawing something other than
+   its model and enabling an unpushed screen, so the second clause is not redundant — mutant 6
+   reddens it alone.
+5. **`ExitModel = FStratOptionsExitModel();` added to `SetMasterVolume`** → RED on
+   `AVolumeDragDoesNotClearTheExitAvailability` **alone**; every audio clause stayed green.
+   **THIS IS THE MEASUREMENT BEHIND THE SEPARATE-STRUCT DECISION.** The 2026-09-07 entry called
+   that defect the one *"THAT WOULD HAVE BEEN INVISIBLE"*, because
+   `StratBuildAudioOptionsModel` rebuilds `FStratAudioOptionsModel` from three floats on every
+   setter and would silently reset any field it does not take as an argument. That word is now
+   scoped where it stands: invisible to a reader of either file, **visible to the suite in exactly
+   one clause**. The mutant is the defect the decision avoided, planted by hand and caught.
+6. **`SyncExitWidgetsToModel()` deleted from `NativeConstruct`** → RED on
+   `AnUnpushedOptionsScreenHasADisabledExit`, alone.
+7. **`OnReturnToTitleRequested.Broadcast()` removed from `HandleReturnToTitleClicked`** → RED on
+   `TheOptionsExitButtonBroadcastsTheRequestAndDismissesNothing`, alone.
+
+### What this closes and what it leaves open
+
+- **Five of the seven mutants reddened exactly one clause each**, which is the strongest shape
+  available from this instrument: the clause is not vacuous and no other clause is standing in for
+  it. **Two reddened two**, recorded above as reach rather than as a finding.
+- **The engine-side code was not changed by this campaign and is not changed by this entry.** Every
+  mutant was reverted and the trailing control was run over the restored tree; nothing below
+  `Source/` differs from base `525ad5c` on account of this work.
+- **STILL OPEN, and named so it is not read as closed by proximity.** No mutant expressed the
+  `ExecuteRoute`-before-`CloseOptionsPanel` ordering; no mutant expressed the
+  `SeedExitAvailability`-pushes-at-show-time-only staleness recorded as a debt on 2026-09-07 (it is
+  unreachable in this project and a mutant could not have reached it either); and
+  `ReturnToTitleButton` remains `BindWidgetOptional` by decision, which no mutant bears on in
+  either direction.

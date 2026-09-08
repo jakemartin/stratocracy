@@ -137,22 +137,41 @@ namespace StratShippedOptionsExitControl
 // player would then open Options in a live match and find no way out of it, and every one of the
 // seven exit clauses in this tree would stay green, because all seven run against a plant.
 //
-// MUTANTS -- NONE OF THE FOUR BELOW HAS BEEN RUN. They are written in the indicative because that
-// is how a predicted outcome reads; they are PREDICTIONS, not measurements. No mutant had been run
-// against this clause as of the exported suite report `reportCreatedOn 2026.09.07-21.25.09`, the
-// run in which this clause's name first appears as `Success`. Read them as the discrimination this
-// clause was DESIGNED for, and not as discrimination anyone has observed. The same debt is
-// recorded in `Tools/architect/state/tests.md`.
+// MUTANTS -- **ONE OF THE FOUR BELOW HAS BEEN RUN, AND IT KILLED THIS CLAUSE.**
 //
-// MUTANTS, and the first two are the ones that matter:
-//   - rename the child in `WBP_Options` to anything else -- red on the subject, green on both
-//     controls, so the message points at the asset and not at the instrument.
+// [CORRECTED 2026-09-07, over base commit `525ad5c`. THE BLOCK THAT STOOD HERE OPENED
+// *"MUTANTS -- NONE OF THE FOUR BELOW HAS BEEN RUN ... they are PREDICTIONS, not measurements"* and
+// added *"No mutant had been run against this clause as of the exported suite report
+// `reportCreatedOn 2026.09.07-21.25.09`"*. **BOTH SENTENCES WERE TRUE WHEN WRITTEN AND ARE FALSE AS
+// OF THE MUTANT RUN OVER BASE `525ad5c`.** They are quoted here rather than deleted so a reader who
+// arrived by a citation to them lands on the correction and not on the stale claim.]
+//
+// WHAT WAS RUN, STATED INLINE RATHER THAN CITED. The run's exported reports are untracked, so no
+// checkout has them and a path to one would be unfalsifiable. The asset child
+// `ReturnToTitleButton` was RENAMED to `ReturnToTitleButtonMUT` in `/Game/UI/WBP_Options` through
+// `rename_widget`; the tree was then rebuilt and the full suite run. **THIS CLAUSE WENT RED, AND
+// ALONE** -- no other clause in the suite moved -- and the failure message named the ASSET and the
+// consequence rather than the instrument, which is exactly what the two controls below are for. The
+// rename was then reverted, the suite re-ran clean, and the asset's `sha256` returned to
+// `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, the value the `525ad5c`
+// commit message itself quotes. A baseline before the first mutant and a baseline after the last
+// revert were both clean, so the red is attributable to the mutant and not to the tree.
+//
+// MUTANTS -- THE FIRST IS NOW MEASURED; THE OTHER THREE REMAIN PREDICTIONS AND ARE MARKED AS SUCH:
+//   - rename the child in `WBP_Options` to anything else -- **MEASURED RED**, alone, on the subject
+//     assertion, with both controls green, so the message pointed at the asset and not at the
+//     instrument. That is precisely what this line predicted before it was run.
 //   - re-type the child from `UButton` to a `UBorder` (a shape a designer reaching for a styled
-//     control could plausibly produce) -- red on the TYPE assertion. A byte scan for the name
-//     cannot see this mutant at all, which is the gap this clause was asked to close.
-//   - delete `ReturnToTitleButton` from `UStratOptionsWidget` -- red at step (1), naming the
-//     member, rather than reporting a missing asset child.
-//   - point `kOptionsClassPath` at a class that does not exist -- red at step (2), by design.
+//     control could plausibly produce) -- **PREDICTED, UNRUN**: red on the TYPE assertion. A byte
+//     scan for the name cannot see this mutant at all, which is the gap this clause was asked to
+//     close. The rename mutant above does NOT cover it -- it reds the presence assertion and
+//     retires before the type assertion is reached.
+//   - delete `ReturnToTitleButton` from `UStratOptionsWidget` -- **PREDICTED, UNRUN**: red at step
+//     (1), naming the member, rather than reporting a missing asset child.
+//   - point `kOptionsClassPath` at a class that does not exist -- **PREDICTED, UNRUN**: red at step
+//     (2), by design.
+//
+// The corresponding correction is recorded in `Tools/architect/state/tests.md`.
 // ---------------------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratShippedOptionsWidgetCarriesReturnToTitleButtonTest,

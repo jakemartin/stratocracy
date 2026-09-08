@@ -122,32 +122,55 @@
 // ---------------------------------------------------------------------------------------
 // THE MUTANT, AND ITS DISCRIMINATION IS THE WHOLE POINT OF THIS CLAUSE.
 //
-// **IT HAS NOT BEEN RUN. THE SENTENCES BELOW ARE PREDICTIONS, NOT MEASUREMENTS.** The honest
-// mutant is deleting a caption from `Content/UI/WBP_Options.uasset` -- which is the editor lane's
-// asset and not this lane's, and the test lane neither mutates it nor runs the suite. No mutant
-// had been run against this clause as of the exported report `reportCreatedOn 2026.09.07-23.24.24`.
-// The same debt is recorded in `Tools/architect/state/tests.md`. Read the list as the
-// discrimination this clause was DESIGNED for, and not as discrimination anyone has observed:
+// **IT HAS BEEN RUN. THE DELETION MUTANT WAS PLANTED IN THE SHIPPED ASSET AND THIS CLAUSE KILLED
+// IT.**
 //
-//   - delete `BackLabel` from the asset -- the exact 2026-09-07 regression -- predicted RED on the
-//     subject naming `BackLabel`, GREEN on both controls, so the message points at the asset and
-//     not at the instrument. This is the one that matters and it is the one that is unrun.
-//   - delete any of the other three -- same shape, and the other three captions still report, so
-//     a double deletion reads as two messages rather than one.
-//   - blank a caption's `Text` -- predicted RED on the non-emptiness assertion, GREEN on presence
-//     and type. A byte scan for the NAME cannot see this mutant at all.
-//   - re-type a caption to a non-`UTextBlock` -- predicted RED on the type assertion.
-//   - point `kOptionsClassPath` at a class that does not exist -- predicted RED at step (2).
+// [CORRECTED 2026-09-07, over base commit `525ad5c`. THREE SENTENCES STOOD HERE AND ALL THREE ARE
+// NOW FALSE: *"**IT HAS NOT BEEN RUN. THE SENTENCES BELOW ARE PREDICTIONS, NOT MEASUREMENTS.**"*;
+// *"No mutant had been run against this clause as of the exported report `reportCreatedOn
+// 2026.09.07-23.24.24`"*; and, on the deletion line, *"This is the one that matters and it is the
+// one that is unrun."* They were true when written and were falsified by the mutant run over base
+// `525ad5c`. They are quoted here rather than deleted so a reader who arrived by a citation to them
+// lands on the correction and not on the stale claim.]
 //
-// **WHAT CAN BE SAID WITHOUT LEAVING THIS LANE, AND WHAT IT DOES NOT PROVE.** The lookup
+// WHAT WAS RUN, STATED INLINE RATHER THAN CITED. The run's exported reports are untracked, so no
+// checkout has them and a path to one would be unfalsifiable.
+//
+//   - **THE DELETION MUTANT, WHICH IS THE ONE THAT MATTERS.** `BackLabel` was DELETED from
+//     `/Game/UI/WBP_Options` through `remove_widget`, its parent `BackButton` SURVIVING and the
+//     widget count going 19 -> 18. That is the exact shape of the 2026-09-07 regression this file
+//     exists to answer, reproduced deliberately. Rebuilt, full suite run: **THIS CLAUSE WENT RED,
+//     AND ALONE** -- no other clause in the suite moved, including the parity clause whose control
+//     is `BackButton`, which is the blindness this file's own header describes. Its message named
+//     the ASSET and the consequence rather than the instrument, which is what the three controls
+//     are for. **THE CLAUSE SEES THE DELETION THAT SHIPPED GREEN.**
+//   - The caption was then restored and the suite re-ran clean; the asset's `sha256` returned to
+//     `2bebaccbbd291a0351069a51354983903150631b113c923f4697a28293de4667`, the value the `525ad5c`
+//     commit message itself quotes. A baseline before the first mutant and a baseline after the
+//     last revert were both clean, so the red is attributable to the mutant and not to the tree.
+//
+// THE OTHER FOUR REMAIN PREDICTIONS AND ARE MARKED AS SUCH. Read them as the discrimination this
+// clause was DESIGNED for, and not as discrimination anyone has observed:
+//
+//   - delete any of the other three captions -- **PREDICTED, UNRUN**: same shape, and the other
+//     captions still report, so a double deletion reads as two messages rather than one.
+//   - blank a caption's `Text` -- **PREDICTED, UNRUN**: RED on the non-emptiness assertion, GREEN
+//     on presence and type. A byte scan for the NAME cannot see this mutant at all, and neither
+//     does the deletion mutant above, which reds on presence and never reaches the text reader.
+//   - re-type a caption to a non-`UTextBlock` -- **PREDICTED, UNRUN**: RED on the type assertion.
+//   - point `kOptionsClassPath` at a class that does not exist -- **PREDICTED, UNRUN**: RED at
+//     step (2).
+//
+// **WHAT THE STANDING NEGATIVE CONTROL PROVES, AND WHY IT IS STILL THE WEAKER THING.** The lookup
 // instrument's discrimination IS exercised on every run, by construction rather than by
 // prediction: `kAbsentCaptionName` in step (5b) is a name the asset does not carry and is
 // asserted ABSENT in the same run, on the same archetype, through the same `FindWidget` call that
 // step (6) uses. So "the instrument answers every name" is ruled out by measurement each time the
-// suite runs. **That is strictly weaker than the deletion mutant and must not be read as it**: it
-// proves `FindWidget` can say no, and says nothing about whether this clause would notice THIS
-// asset losing THAT caption. Only deleting a caption and observing the red proves that, and it is
-// owed.
+// suite runs. **That remains strictly weaker than the deletion mutant and must not be read as it**:
+// it proves `FindWidget` can say no, and says nothing on its own about whether this clause would
+// notice THIS asset losing THAT caption. Only deleting a caption and observing the red proves that
+// -- and over base `525ad5c` that was done, which is the correction above. The same correction is
+// recorded in `Tools/architect/state/tests.md`.
 //
 // ---------------------------------------------------------------------------------------
 // WHAT IT DOES **NOT** PIN.

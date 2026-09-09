@@ -14,6 +14,55 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-08, `strat-test-author` (ACTING and WRITING; in lane, over base `410c3c4`).** **A
+  CLAUSE THAT REPORTED `Success` AND STILL TURNED CI RED, BECAUSE THE THING THAT MOVED WAS NOT A
+  STATE BUT A COUNTER.** GitHub run `34273142010` over pushed `410c3c4` failed at the step `gate the
+  exported suite report` with *"every listed clause is Success, but the report's own counters
+  disagree: failed=0, notRun=0, succeededWithWarnings=1."* Nothing failed to build and no clause
+  failed. One clause --
+  `Stratocracy.StratPlay.GATE-TITLEMENU.TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness`
+  -- carried an undeclared `Warning`, and `AStratBoardActor`'s *"no tile mesh for terrain"* was the
+  warning. The fix is one `AddExpectedMessagePlain` in
+  `Source/StratPlay/Tests/StratOptionsExitRouteClauses.cpp`, on clause (2) alone.
+  - **WHAT THIS RECORDS THAT THE CODE DOES NOT SAY, and it is the reason this entry exists rather
+    than just the comment at the call site: A LOCAL SUITE READING COUNTS STATES, AND AN UNDECLARED
+    WARNING DOES NOT MOVE A STATE.** The clause's state was `Success` both before and after. The
+    `525ad5c` pass that introduced the file, and every reader after it, saw a fully green suite and
+    a fully green clause list, because the only instrument in this tree that reads
+    `succeededWithWarnings` is `Tools/architect/strat_suite_report_gate.py` -- and it is wired into
+    CI, not into a local run. **So "the suite is green" and "the report is clean" are two different
+    claims, and only the second is what CI gates on.** Anyone adding a match-starting fixture and
+    reading only a clause list will reproduce this exactly.
+  - **THE CENSUS THAT NAMED THE FILE, AND IT IS A SET DIFFERENCE A CHECKOUT CAN RE-RUN.** Every
+    fixture in this module that starts a match already declares this warning; the question was
+    whether more than one had drifted. Collect both sides with the same instrument --
+    `grep -rl "StartMatch(" Source/*/Tests/` against
+    `grep -rl "no tile mesh for terrain" Source/*/Tests/`, `comm -23` over the two sorted lists --
+    and the difference is **exactly one file**, `StratOptionsExitRouteClauses.cpp`. That agrees with
+    the CI report's own single warned entry, which is a second and independent instrument: one
+    counts declarations in the tree, the other counts warnings in a run. **Two instruments, one
+    answer, and neither derived from the other.**
+  - **IT IS ON ONE CLAUSE AND NOT ON THE FILE, AND THAT IS MEASURED RATHER THAN TIDY.**
+    `Occurrences 0` means AT LEAST ONE, not "any number including none" -- the measurement and the
+    exact failure text live in `Source/StratPlay/Tests/StratGuidanceRouteClauses.cpp` (*"did not
+    occur"*) and in `StratAiMatchClauses.cpp`'s `Match seeded from` note. Clauses (1) and (3) of
+    the exit-route file start no match, spawn no board, and would have gone RED had the
+    declaration been added file-wide. `MakeMatchLive` has exactly one caller, confirmed against
+    the tree and not taken from the brief.
+  - **WHAT THIS CHANGES ABOUT WHAT THE CLAUSE PINS: NOTHING.** No assertion was added, removed or
+    weakened, no clause was added, and the suite count is unchanged -- see `global.md`, which is
+    the only file that may carry it. The warning is now **CLAIMED** rather than suppressed: it is
+    the documented presentation split `MakeMatchLive`'s own comment already records, where the
+    bridge seeds and only the drawing half has nothing to draw. A fixture that stopped producing
+    it would now fail with *"did not occur"*, which is a slightly sharper net than before.
+  - **THE GATE IS THE VERDICT, NOT THE SUITE.** Re-run after a full rebuild -- the clause names are
+    compiled -- `python Tools/architect/strat_suite_report_gate.py --self-test` first as a control
+    (it reports `SELF-TEST: ALL FIXTURES CORRECT`, and one of its own fixtures is *"all entries
+    Success but succeededWithWarnings FAILS"*, which is this exact defect), then
+    `python Tools/architect/strat_suite_report_gate.py --not-before <the run's UTC start stamp>`,
+    which now reports `succeededWithWarnings=0` alongside `failed=0 notRun=0` and closes with
+    `SUITE REPORT GATE CLEAN`. **A green clause list is not this gate's bar and never was.**
+
 - **2026-09-08, the `coordinator` (ACTING; OUT OF LANE, in session, over base `f92ce01` -- planted
   and reverted the source and test-file mutants and ran the suite), `strat-editor-builder` (ACTING
   -- planted the four ASSET mutants), and `strat-test-author` (WRITING -- this record file and the

@@ -52,12 +52,21 @@ mutant's signature; it was proved by grepping the DLL for the renamed symbol aga
 `Source/`, and by the DLL's mtime PREDATING the reverted source. REVERTING SOURCE DOES NOT REVERT
 THE BINARY -- and, as `tests.md` records, the closing control does not guard that hole, because it
 runs after the rebuild the final revert should already have had.
-THE SUITE IS **477/477**, every entry Success, zero failed, zero notRun, ONE
-succeededWithWarnings, enumerated entry by entry from the exported report with `utf-8-sig`.
-The macro census agrees at 477. THE LIVE FIGURE'S REPORT IS `reportCreatedOn
-2026.09.08-18.37.07`. NOTHING IN THIS CAMPAIGN MOVED THE COUNT: no clause was added, removed
-or renamed, every mutant was reverted, and the only source edits standing are comment-only
-corrections in two test headers.
+THE SUITE IS **477/477**, every entry Success, zero failed, zero notRun, macro census agreeing
+at 477, enumerated entry by entry from the exported report with `utf-8-sig`. NOTHING IN THIS
+CAMPAIGN MOVED THE COUNT: no clause was added, removed or renamed, every mutant was reverted,
+and the only source edits standing are comment-only corrections in two test headers.
+~~ONE succeededWithWarnings, enumerated entry by entry from the exported
+report with `utf-8-sig`. THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.08-18.37.07`.~~
+[STAMPED -- see the CORRECTION immediately below.]
+  CORRECTION, CI run 34273142010 over base `410c3c4` went red at the exported-suite-report gate
+because that run's report showed `succeededWithWarnings 1` (the undeclared unmeshed-board
+warning from `Stratocracy.StratPlay.GATE-TITLEMENU.TheOptionsExitTracksIsRoutePermittedAndNotOnlyMatchLiveness`)
+against `strat_suite_report_gate.py`'s contradiction check. `strat-test-author` declared that
+warning on that clause alone, rebuilt, and re-ran. THE STANDING REPORT IS NOW
+`reportCreatedOn 2026.09.08-23.41.52`: **succeeded 477 / succeededWithWarnings 0 / failed 0 /
+notRun 0**, ZERO succeededWithWarnings, macro census still agrees at 477. No clause was added,
+removed or renamed by this fix; only the warning counter moved, 1 to 0.
   THE GATES OF THIS CAMPAIGN ARE IN THE TREE and a reader wanting them should open them rather
 than read this file's account: they are the `second-mutant-campaign-record` reports under
 `Tools/architect/gate_reports/`, persisted verbatim by `strat-data-steward` with only a scope

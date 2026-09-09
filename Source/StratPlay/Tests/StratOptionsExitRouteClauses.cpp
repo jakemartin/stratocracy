@@ -518,6 +518,27 @@ bool FStratOptionsExitTracksBothArmsTest::RunTest(const FString& /*Parameters*/)
 
 	AddExpectedMessage(TEXT("No game viewport was found"), ELogVerbosity::Warning,
 		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
+	// AND THE UNMESHED-BOARD WARNING, BECAUSE THIS IS THE ONE CLAUSE IN THIS FILE THAT STARTS A
+	// MATCH. `MakeMatchLive` below seeds a real match on the facts world, and this fixture has no
+	// Blueprint defaults -- so `AStratBoardActor` reports every terrain kind as unmeshed. That is
+	// the documented presentation split `MakeMatchLive`'s own comment records: the bridge is
+	// seeded and only the drawing half has nothing to draw. DECLARED RATHER THAN SUPPRESSED, with
+	// `Occurrences 0` -- the warning is CLAIMED as a known consequence of the fixture, not hidden.
+	// Every other match-starting fixture in this module does the same; the canonical spelling is
+	// `AddExpectedMessagePlain`, which matches the literal rather than a regex.
+	//
+	// IT IS ON THIS CLAUSE ALONE AND THAT IS MEASURED, NOT TIDINESS. `Occurrences 0` means AT
+	// LEAST ONE, not "any number including none" -- `StratGuidanceRouteClauses.cpp` carries the
+	// measurement and the failure text. Clauses (1) and (3) start no match, spawn no board and
+	// never fire it, so declaring it there would fail them with "did not occur."
+	//
+	// WHY IT WAS MISSING UNTIL NOW, so a reader does not read this line as decoration. Without it
+	// the clause still reported state `Success` and a local 477/477 reading -- which counts STATES
+	// -- saw nothing; only the exported report's own counter moved, to
+	// `succeededWithWarnings: 1`, and only `Tools/architect/strat_suite_report_gate.py` reads that
+	// counter. CI run 34273142010 over base `410c3c4` is where it surfaced.
+	AddExpectedMessagePlain(TEXT("no tile mesh for terrain"), ELogVerbosity::Warning,
+		EAutomationExpectedMessageFlags::Contains, /*Occurrences*/ 0);
 
 	Presenter->ConfigureOptionsPanel(UStratOptionsPanelWidgetDouble::StaticClass(), 100);
 

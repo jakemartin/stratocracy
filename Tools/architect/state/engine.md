@@ -2951,6 +2951,192 @@
     `AStratPlayerController::HandleCancelSelectionEvent`'s struck sentence, which is this defect's
     own retraction and must keep the false wording it quotes.
 
+- **2026-09-03 (local), `strat-gameplay-engineer` (ACTING and WRITING; IN LANE -- `Source/`
+  outside `Tests/` -- in the linked worktree
+  `E:/MultiAgent/Stratocracy/.claude/worktrees/quizzical-yonath-9b009a`, branch
+  `worktree-quizzical-yonath-9b009a`, base commit `283d711`. UNCOMMITTED AND UNMERGED at the
+  time of writing: nothing below has landed on `master`) -- A LOAD NOW CLEARS THE PRESENTATION
+  STATE THAT LIVES ON THE CONTROLLER, THROUGH A COUNTER THE CONTROLLER READS RATHER THAN A
+  DELEGATE THE SUBSYSTEM FIRES -- AND THE REASON FOR THAT CHOICE IS THE MOST TRANSFERABLE THING
+  IN THIS ENTRY. The live suite count and the phase verdict live in
+  `Tools/architect/state/global.md` and nowhere else; what is cited below is one clause's own
+  state.**
+  - **THE DEFECT, AND ITS SHAPE IS THE WHOLE STORY: THE CLEARING WAS ON ONE OBJECT AND THE
+    STATE WAS ON ANOTHER.** `UStratMatchSubsystem::LoadMatchFromSlot` replaces the match and
+    reaches `TearDownPresentation` through `StartMatchInternal`, and that function does clear
+    every piece of presentation state the SUBSYSTEM owns -- the AI playback tour, the reel,
+    `AppliedModel`, the receipt mark, the production menu. It cannot reach
+    `FStratSelectionMachine` or `FStratBuildAffordance`, because those are members of
+    `AStratPlayerController`. So a `DoneUnits` entry earned in the match that was loaded over
+    survived into the match that replaced it, and `DecorateViewModel` published it as
+    `FStratUnitView::bDone`, which is DRAWN and also GATES INPUT. The player-visible symptom:
+    a unit of the freshly loaded match, which has neither moved nor acted, refused with *"unit
+    N has finished this turn"*. Unit ids collide across matches, so the bit need not even land
+    on the unit that earned it.
+  - **THE SEAM: `UStratMatchSubsystem::GetMatchEpoch()`, A NUMBER THE OTHER SIDE READS.**
+    `TearDownPresentation` increments `MatchEpoch` as its first statement and is its ONLY
+    writer; that function has exactly ONE call site -- `StratMatchSubsystem.cpp:219`, inside
+    `StartMatchInternal`, unguarded -- so *"a teardown happened"* and *"this counter moved"* are
+    the same event by construction rather than by convention. **THE GUARANTEE IS ABOUT
+    TEARDOWNS AND NOT ABOUT `StartMatch` CALLS, and my first draft of this entry and of the
+    header said otherwise.** It read *"sits unconditionally at the top of `StartMatchInternal`"*,
+    which is false: `:219` is not the top, and two configuration-refusal arms return ahead of it
+    (unassigned definition tables at `:189-197`, empty `ScenarioFile` at `:199-204`). The
+    counter therefore does NOT move on a `StartMatch` refused for a bad config -- correctly, because
+    those arms tear nothing down, so a live match's selection and build focus survive a
+    misconfigured call. The corrected reading is the stronger one: **this counter counts boards
+    destroyed, not starts attempted.**
+    `AStratPlayerController::SyncPresentationToMatchEpoch` compares it against
+    `LastObservedMatchEpoch` at the top of `DecorateForPresentation` and, on a difference,
+    calls `FStratSelectionMachine::Reset()` and `FStratBuildAffordance::Reset()` on consecutive
+    statements. Incrementing at the two public entry points instead would have been two places
+    to forget -- the same reasoning that put `EndAiPlaybackTour`'s cursor retirement inside the
+    verb rather than at its callers.
+  - **WHY THE BROADCAST DELEGATE WAS REFUSED, AND THIS IS THE SHARPEST THING IN THE CHANGE
+    BECAUSE IT GENERALISES PAST IT.** The obvious shape was a second delegate beside
+    `FStratViewDecorator`, fired by the subsystem on a match boundary, with the controller
+    registering itself in `BeginPlay`. Two counts against it, and the second is fatal rather
+    than aesthetic. (1) It is EVENTED, and this project reconciles: a producer cleared by a
+    push is cleared only if the push arrived, so *"did the reset happen"* becomes a question
+    about call history instead of about current state. (2) **IT IS REACHABLE ONLY THROUGH A
+    REGISTRATION, AND A REGISTRATION IS EXACTLY WHAT A FIXTURE DOES NOT HAVE.** Every fixture
+    in `Source/StratPlay/Tests/` spawns its controller into a world whose play has not begun,
+    so `BeginPlay` never runs and `SetViewDecorator` is never called --
+    `FStratViewDecorator`'s own block already records that state as *"a world with no
+    controller in it"*. **A broadcast seam would therefore have gone green in the running game
+    and left the clause red, and the natural next move would have been to blame the clause.**
+    A read on the decorate path works in both worlds because `DecorateForPresentation` is the
+    one function every drawn model passes through and is what a fixture calls directly. THE
+    GENERAL FORM, worth more than this instance: **a seam that only a registration can reach is
+    a seam a headless fixture cannot observe** -- prefer a fact the observer pulls over a call
+    the producer pushes, whenever the observer is the thing a clause drives.
+  - **THE RESET RUNS AHEAD OF `GuidedOpening.Observe`, AND THE CONSTRAINT RUNS ONE WAY.**
+    Measured in `FStratGuidedOpening::Observe` rather than assumed: it calls
+    `PublishLocks(Model, Machine)` on EVERY path, including the inactive early return and the
+    window-closed return, and it is the single writer of the machine's lock set. So a reset
+    placed BEFORE it is fully re-armed within the same decoration, while a reset placed AFTER
+    it would wipe a lock §2.11.6 had just written and leave a frame undimmed that should have
+    dimmed a unit. It sits ahead of `TryArmGuidedOpening` as well, so no arming decision is
+    taken against a machine that is about to be emptied. The failure this ordering avoids is
+    silent -- nothing errors, a unit is simply selectable that should not be.
+  - **`Hover` AND `GuidedOpening` ARE DELIBERATELY NOT RESET, AND THE TWO REASONS ARE DIFFERENT
+    IN KIND. THEY ARE RECORDED SEPARATELY BECAUSE COLLAPSING THEM INTO "NOT NEEDED" IS HOW THE
+    WEAKER ONE STOPS BEING RE-EXAMINED.**
+    - `Hover` -- it holds a CURSOR POSITION, not a fact about a match. A load does not move the
+      mouse; the tick poll overwrites the hex before anything reads it; and the member's own
+      declaration already records it as holding nothing across a reseed. Clearing it would be
+      the reset forming an opinion about the pointer. This one is settled.
+    - `GuidedOpening` -- this is a JUDGEMENT and is carried as one. §2.11.6's onboarding is
+      scoped to the SAVE and not to the match (suppression is read from
+      `HasCompletedAMatchOnSave`), and `bGuidanceArmed`'s own declaration states that re-arming
+      *"would undo the skip §2.11.6 calls permanent"*. Resetting it here would replay the
+      tutorial after every load -- a behaviour regression traded for a tidier symmetry. The
+      residual case is real and is carried as a debt below rather than claimed absent.
+  - **A DEFECT IN MY OWN FIRST DIFF, FOUND BY THE `coordinator` AND CORRECTED IN THE SAME
+    SESSION -- RECORDED BECAUSE THE LESSON IS ABOUT EVIDENCE AND NOT ABOUT THIS FUNCTION.** The
+    log line `SyncPresentationToMatchEpoch` emits reported the previous epoch as `Epoch - 1`,
+    computed AFTER `LastObservedMatchEpoch` had already been overwritten. That is an inference
+    wearing a measurement's clothes, and it is false the moment two boundaries pass with no
+    decoration between them. **THAT SHAPE IS REACHABLE AND IT IS MEASURED, NOT FEARED:**
+    `AStratGameMode::BeginPlay` calls `UStratMatchSubsystem::StartMatch` and then, on §2.11.5's
+    Continue route after `ConsumePendingLoadSlot`, `LoadMatchFromSlot` -- two boundaries inside
+    one function, with no decoration guaranteed between them, because that same file records
+    that `BeginPlay` order between the controller and the GameMode may not be assumed. The
+    function now captures `PreviousEpoch` before the overwrite and logs the value the member
+    actually held. **WHAT MAKES IT WORTH AN ENTRY: I had quoted that exact log line to a
+    reviewer as proof the route was taken, so a number inside it that was derived rather than
+    observed was an unfalsifiable claim sitting inside a piece of load-bearing evidence.** The
+    correction cost one local.
+  - **TWO PROSE BLOCKS THIS CHANGE FALSIFIED WERE RETRACTED IN PLACE, STRUCK AND NOT DELETED.**
+    `FStratBuildAffordance::Reset`'s *"NO SHIPPING CALLER TODAY"* paragraph and the parallel
+    sentence at `FStratSelectionMachine::Reset()` both became false the instant this fix landed
+    -- and the discharging condition that paragraph had named for itself, *"a load or reseed
+    path that calls both"*, is exactly what discharged it. Both are corrected at the method, so
+    a reader arriving by citation lands on the correction. The correction is written on BOTH
+    sides deliberately: the false claim lived entirely in the affordance's header, so the
+    machine's own declaration carried no trace of the debt and a reader arriving there first
+    would have found nothing to correct. `StratGuidedOpening.h` already states this as a house
+    rule -- *"a header that still says a thing has no caller after you become its caller is the
+    defect this project has paid for repeatedly."* The sweep for other live copies was
+    WRAP-AWARE (comment leaders stripped and the file flattened before matching), because this
+    tree's own record says a per-line grep cannot see a claim spanning two comment lines.
+  - **THE CLAUSE'S OWN STATE, WHICH IS NOT A SUITE FIGURE.**
+    `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState` is `Success`
+    against this tree, `reportCreatedOn 2026.09.03-13.08.33`, and no test in that report is in
+    any other state. **THE CLAUSE AND ITS RECORD ARE `strat-test-author`'S AND NOT THIS LANE'S**
+    -- this lane wrote none of it and claims none of it; see `tests.md`, which is that lane's
+    own entry and the authority on what the clause pins. What this lane can attest is the fix,
+    the build, and that both `Reset()` bodies are byte-unchanged, which is the check that makes
+    a green here mean anything at all.
+  - **AND THE ONE THING THAT GREEN DOES NOT PROVE, STATED HERE RATHER THAN LEFT TO BE
+    DISCOVERED.** In the fixture the two epochs are adjacent, so the corrected log line is
+    BYTE-IDENTICAL to the defective one. That run therefore does not discriminate the fix from
+    the defect; the correction is warranted by reading `StratGameMode.cpp`'s two boundaries and
+    by nothing in the report.
+  - **A `strat-integration-reviewer` BLOCK ON THIS CHANGE, AND IT WAS RIGHT. RECORDED HERE
+    BECAUSE THE FAILURE MODE IS THE ONE THIS RECORD EXISTS TO CATCH AND I PRODUCED IT ANYWAY.**
+    The finding was prose, not behaviour: my `GetMatchEpoch` block asserted that
+    `TearDownPresentation` *"sits unconditionally at the top of `StartMatchInternal`"* and then
+    DERIVED from it that *"the first `StartMatch` takes it to 1 whether or not that start then
+    succeeds"*. Both halves false, verified by me against the tree before complying:
+    `StartMatchInternal` opens at `:178`, the call is at `:219`, and two refusal arms return
+    ahead of it. **THE CODE WAS RIGHT AND ONLY THE PROSE WAS WRONG** -- a start that tore
+    nothing down must not announce a boundary, or a bad config would clear a live match's
+    presentation -- so the sentence was fixed and the behaviour was not touched.
+    - **WHAT MADE IT SURVIVE MY OWN REVIEW: I INHERITED THE PHRASE RATHER THAN CHECKING IT.**
+      *"Unconditionally at the top"* was already in `TearDownPresentation`'s own declaration
+      block, where it is merely imprecise and carries no derivation. I copied it into two new
+      blocks and one of them built a false claim on top of it. **An inherited phrase is not a
+      measurement, and copying one into a block that then reasons from it converts somebody
+      else's imprecision into your own false statement.**
+    - **FOUR SITES, THREE CORRECTED, AND THE THIRD WAS NOT IN THE BLOCK REPORT.** A wrap-aware
+      sweep of `Source/` for the phrase found a site the reviewer had not named --
+      `TearDownPresentation`'s own declaration, the origin of the phrase and in this lane. It
+      is corrected too, because leaving it would have left two blocks in ONE file disagreeing
+      about one function, which is the condition that produced the finding.
+    - **THE FOURTH IS NOT MINE AND IS HANDED OFF, NOT FIXED**, in `Source/StratPlay/Tests/`.
+      See the handoff recorded in `tests.md`'s lane, not here.
+
+  - **THREE DEBTS CARRIED FORWARD, EACH WITH THE CONDITION THAT DISCHARGES IT.**
+    - **A load naming a DIFFERENT `ScenarioFile` leaves §2.11.6 armed against the previous
+      scenario's marked unit and objective hex.** `LoadMatchFromSlot` does override
+      `Config.ScenarioFile` from the payload, so the path exists in code; today the only writer
+      of that field is a slot the same session wrote. **Discharged** by giving
+      `FStratGuidedOpening` a `Reset()` that PRESERVES the permanent skip and calling it beside
+      the other two -- the day a load can legitimately change scenario in a shipped path.
+      Stated at `SyncPresentationToMatchEpoch`'s declaration.
+    - **`MatchEpoch` IS SESSION-SCOPED AND MUST NEVER BE REPURPOSED AS A PERSISTED MATCH
+      IDENTITY.** It answers *"is this the same match you last saw, in this process"* and no
+      other question; no slot carries it and nothing may try to tell two matches apart with it
+      across a process boundary. There is no condition that discharges this -- it is a
+      standing constraint, and the day a real persisted identity is needed it must be a new
+      thing rather than this one widened. Stated at `GetMatchEpoch`.
+    - **THE CORRECTED LOG LINE IS PINNED BY NOTHING.** The suite cannot reach the
+      epoch-gap-greater-than-one shape, so a regression to `Epoch - 1` would be invisible to
+      every instrument in this tree. **Discharged** by the first proposed clause below.
+  - **FOUR CLAUSES PROPOSED FOR `strat-test-author`. NONE OF THESE EXISTS. NOT ONE OF THE FOUR
+    NAMES BELOW IS DEFINED ANYWHERE IN `Source/`, AND A GREP THAT FINDS ONE IS FINDING THIS
+    PARAGRAPH.** They are named here so the proposal is legible, and they are marked this
+    emphatically because a proposed identifier greps exactly like a defined one.
+    - `Stratocracy.StratPlay.T-SAVE-04.EpochGapGreaterThanOneIsReportedAsObserved` -- PROPOSED.
+      Drive two boundaries with no decoration between them; pin that the controller resets
+      once and that `LastObservedMatchEpoch` lands on the CURRENT epoch rather than a stepped
+      one. Property: the previous value is read, not derived.
+    - `Stratocracy.StratPlay.T-SAVE-04.MatchEpochMovesExactlyOncePerBoundary` -- PROPOSED. Pin
+      that the counter advances by one across `StartMatch` and across `LoadMatchFromSlot`, and
+      does NOT move across a refresh, a model build, or a submitted command. Property: it is a
+      boundary predicate and not a general dirty bit.
+    - `Stratocracy.StratPlay.T-SAVE-04.ResetPrecedesGuidanceLockPublication` -- PROPOSED.
+      Decorate across a boundary while §2.11.6 is armed and active; assert the resulting model
+      still carries `bLockedThisTurn` on the guided unit. Property: the reset runs BEFORE
+      `GuidedOpening.Observe`. This is the only proposed clause that would catch the ordering
+      hazard, which the existing clause cannot see because its fixture selects a non-locked
+      unit by construction.
+    - `Stratocracy.StratPlay.T-SAVE-04.RepeatedDecorationWithinOneMatchPreservesDoneUnits` --
+      PROPOSED. Property: the reset is gated on the epoch CHANGING and not on being called. A
+      regression that reset on every decorate would keep the existing clause green and break
+      the game.
+
 - **2026-09-02, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `283d711`, UNCOMMITTED) -- THE EXISTENCE HOLD:
   A ROSTER DELTA FROM THE BRIDGE, TWO CURSOR-KEYED MAPS ON THE SUBSYSTEM, AND THE RULING

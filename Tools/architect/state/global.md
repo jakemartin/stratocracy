@@ -11,6 +11,30 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-10 (T-SAVE-04 LANDS ON MASTER A WEEK AFTER IT WAS WRITTEN: a load no longer
+carries the controller's selection and build-affordance state into the match it replaces. The
+fix was written 2026-09-03 over base `283d711` in the worktree `quizzical-yonath-9b009a` and was
+never committed; it was found there on 2026-09-10 while examining that worktree, committed on the
+user's instruction as `f53ca26`, and merged here. `engine.md` and `tests.md` carry the lane's own
+entries, merged in date order; nothing in either was re-authored.
+  THE BRANCH COMMIT BYPASSED THE BANNER-SWEEP HOOK, ON THE USER'S INSTRUCTION, AND THE HOOK WAS
+RIGHT TO REFUSE IT: that worktree's report predated a test file edited after it, so the fix's
+final state had never been suite-run. This merge is the first tree on which it has been. It was
+built here (`Result: Succeeded`, the two new clause files and the three changed StratPlay sources
+all compiled) and suite-run with the report pinned by `--not-before` to a stamp taken before the
+editor launched.
+  THE SEAM'S PREMISE WAS RE-CHECKED ON THE MERGED TREE, because thirty commits had landed since
+its base: `TearDownPresentation` still has exactly ONE call site and is still the ONLY writer of
+`MatchEpoch`, and master added no new state to `AStratPlayerController` that the epoch sync
+would need to clear -- one `UFUNCTION`, `RequestOptionsScreen`, and nothing else.
+THE SUITE IS **479/479**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings, macro census agreeing at 479. The count moved by exactly the two clauses
+this fix adds, `T-SAVE-04.LoadClearsControllerSidePresentationState` and
+`T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, both Success by name.
+  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.10-18.20.14`.
+  WHAT IS NOT DONE. No `strat-integration-reviewer` verdict is recorded after the BLOCK that
+`engine.md`'s entry complied with; the entry's four proposed clauses remain proposed; and the
+"fourth site" that entry hands to the test lane is still that lane's.)
 _Last run 2026-09-08 (A SECOND MUTANT CAMPAIGN RAN THE MUTANTS THE FIRST ONE LEFT PREDICTED, AND
 THE CATALOGUE IS NOW ESSENTIALLY EXHAUSTED: of the 28 mutants the four clause files predict, 27
 HAVE BEEN RUN -- 26 killed their target, ONE SURVIVED EXACTLY AS PREDICTED, and ONE CANNOT BE RUN

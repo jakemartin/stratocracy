@@ -3146,6 +3146,122 @@
     same fixture shape, not added defensively -- `Occurrences 0` FAILS a clause where the
     message never fires, so a speculative declaration is itself an assertion.
 
+- **2026-09-03 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
+  only -- in the linked worktree
+  `E:/MultiAgent/Stratocracy/.claude/worktrees/quizzical-yonath-9b009a`, branch
+  `worktree-quizzical-yonath-9b009a`, base `283d711`. UNCOMMITTED AND UNMERGED at the time of
+  writing: nothing below has landed on `master`) -- CONTROLLER-SIDE PRESENTATION STATE ACROSS A
+  LOAD IS PINNED. ONE CLAUSE, WRITTEN TO EXHIBIT A DEFECT AND CONFIRMED RED BEFORE ANY FIX
+  EXISTED. THE LIVE COUNT LIVES IN `Tools/architect/state/global.md` AND NOWHERE ELSE.**
+  - **THE CLAUSE.** `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`,
+    in `Source/StratPlay/Tests/StratLoadPresentationCarryOverClauses.cpp` (a new file). The
+    acceptance ID was ruled by the user in session; it is not derived, and it is deliberately
+    not `T-INT-05` or `T-TURN-01`.
+  - **WHAT IT PINS.** After `UStratMatchSubsystem::LoadMatchFromSlot`, the controller's
+    `FStratSelectionMachine` and `FStratBuildAffordance` answer as a pair that has been
+    `Reset()` answers. Three legs, and they are one clause rather than three because the
+    discharging condition the affordance's header named was *"a load or reseed path that calls
+    BOTH"* -- a fix that reset only the machine must leave leg (2) red:
+    - (1) every `FStratUnitView::bDone` in the model decorated after the load;
+    - (2) `FStratBuildAffordance::HasFocus()` after the load;
+    - (3) the outcome of clicking the carried unit in the LOADED match -- the selected id AND
+      the `FailureReason` -- because `HandleEvent`'s done-set gate is what turns a carried bit
+      into a unit of the new match that the player cannot select.
+  - **WHERE THE EXPECTATIONS COME FROM, AND IT IS THE POINT OF THE FILE.** Every expectation is
+    a LIVE ORACLE's answer: a second `FStratSelectionMachine` and a second
+    `FStratBuildAffordance`, driven through the same public calls over the same model and query
+    as the controller's own pair, then put through their own `Reset()`. **No `bDone`, no focus
+    flag and no refusal sentence is written down anywhere in the file** -- the module produces
+    both sides of every comparison.
+  - **THE CONSEQUENCE A FUTURE READER MUST HAVE, AND IT IS THE REASON THIS ENTRY EXISTS: THE
+    BODY OF EITHER `Reset()` IS AN OFF-LIMITS FIX SITE FOR THIS CLAUSE.** The oracle IS
+    `FStratSelectionMachine::Reset()` and `FStratBuildAffordance::Reset()`. Editing one MOVES
+    the expectation instead of being tested against it, so a change confined to a `Reset()` body
+    can turn this clause green while repairing nothing. A green here is only evidence if both
+    bodies are byte-unchanged, and that is a thing to CHECK rather than assume. The same note is
+    in the file's own header block so a reader arriving at the code lands on it too.
+  - **THE STATE IS NOT REACHED THROUGH THE DEFECT.** The done bit is planted by
+    `HandleEvent(HexPrimary)` then `HandleEvent(Wait)` -- §2.11.1's wait, the machine's own
+    public input path -- and the focus by `Observe` + `NoteHexPrimary`. Neither is a path the
+    fix changes, so the fixture does not reach its own precondition through the thing under
+    test. Fixture preconditions use plain control flow and `AddError`, never `TestTrue`: an
+    assertion used as a question reddens a clause whose subject is fine.
+  - **THE CLAUSE'S OWN STATE, WHICH IS NOT A SUITE FIGURE.** `Fail` on `283d711` with four
+    errors, all three legs red, before any fix existed; the sharpest entry was *"Expected ...
+    to be 3, but it was -1"* against a live `FailureReason` of *"unit 3 has finished this
+    turn"*. `Success` after `strat-gameplay-engineer`'s fix
+    (`AStratPlayerController::SyncPresentationToMatchEpoch`, which is **theirs and not this
+    lane's -- this lane wrote the clause and none of the fix**). THE CITATION IS THE REPORT ON
+    DISK: `reportCreatedOn 2026.09.03-12.53.49` -- the one `strat_banner_sweep.py` opens --
+    carries this clause as `Success` with `errors 0`. A checkout can re-execute that one; the
+    two this entry originally cited it could not, and they are struck below rather than
+    deleted. The both-`Reset()`-bodies-byte-untouched check was made against the TREE and not
+    against any report, so it remains re-executable whatever happens to `Saved/`.
+  - **BOTH `reportCreatedOn` CITATIONS THIS ENTRY ORIGINALLY CARRIED ARE STRUCK, 2026-09-03,
+    AND THE CAUSE IS WORTH MORE THAN THE CORRECTION.** They read:
+    STRUCK> "`reportCreatedOn 2026.09.03-12.30.55`" -- the RED run; and
+    STRUCK> "`reportCreatedOn 2026.09.03-12.44.49`, verified by the `coordinator` with both
+    STRUCK>  `Reset()` bodies byte-untouched"
+    **THERE IS ONE REPORT PATH.** `Saved/AutomationReport/index.json` is overwritten by every
+    run, so a later re-run destroys every unstamped citation of an earlier one -- here, a
+    rebuild ordered to clear a REPORT IDENTITY finding that a COMMENT-ONLY edit to the test
+    file had caused, which killed two citations written minutes earlier by the lane that had
+    just been asked for them. Neither report is on disk.
+    **THE RED RUN IS UNRECOVERABLE IN PRINCIPLE AND NOT MERELY GONE**: it was a report of a
+    tree with no fix in it, so re-creating it would mean reverting the fix. Its four error
+    messages are quoted verbatim in this entry and in the test file's own header block, and
+    THAT QUOTATION IS NOW THE ONLY SURVIVING EVIDENCE OF IT -- said out loud, because a reader
+    is entitled to know which of an entry's claims rest on an artifact and which rest on a
+    transcription.
+    **AND THE BANNER SWEEP DOES NOT CATCH THIS.** Its provenance check reads only the live
+    figure in `global.md`; a dead `reportCreatedOn` in a lane record passes it silently. So a
+    future entry here should either cite the report the sweep currently opens or stamp its
+    citation as history in the same pass that writes it.
+  - **A FIXTURE HAZARD THIS FILE MEASURED, WORTH THE NEXT AUTHOR'S TIME.**
+    `AStratPlayerController::DecorateForPresentation` arms §2.11.6's guided opening, and
+    `FStratGuidedOpening::Observe` writes the LOCK SET INTO THE VERY MACHINE THE FIXTURE
+    DRIVES. So the first unit of the side to move is locked on the opening and `HandleEvent`
+    refuses to select it. The first pass of this file failed with *"fixture: the wait did not
+    mark unit 1 done"* -- a RED clause that measured nothing. The fixture now picks its unit off
+    the decorated model's own `bLockedThisTurn` / `bDone`. Any future clause that drives a
+    controller's selection machine after a decorate inherits this.
+  - **THE SLOT IS THE FILE'S OWN AND IS NAMED ON EVERY CALL.**
+    `StratocracyAutomation_LoadPresentationClauses`, deleted on entry and on exit.
+    `FStratMatchConfig::SaveSlotName` defaults to `StratocracyMatch`, which is the PLAYER's
+    slot; an unset name there is how a prior clause wrote a developer's real save every run and
+    made the suite machine-dependent.
+  - **WHAT THE CLAUSE DOES NOT PIN.** It does not pin `FStratHoverState` across a load -- the
+    hover was not in the dispatched subject and no leg touches it. It does not pin the AI or
+    reseed paths other than by whatever they share with `LoadMatchFromSlot`'s route through
+    `StartMatchInternal`. And it says nothing about WHERE the reset is called from: any call
+    site that clears both in one place satisfies it, which is deliberate -- pinning the
+    mechanism would have made the clause go red on its own repair.
+  - **TWO CORRECTIONS THIS LANE MADE TO ITS OWN DISPATCH BRIEF, both verified against the tree
+    and both accepted.** (a) The brief stated that `FStratBuildAffordance::Reset()` was called
+    by nothing in `Source/` including `Tests/`; it WAS called, from
+    `Source/StratPlay/Tests/StratBuildAffordanceClauses.cpp` (receiver `A`, invisible to the
+    brief's call-shape grep). The true claim was NO SHIPPING CALLER, which is what the header
+    said. `FStratSelectionMachine::Reset()` had no caller at all, which agreed. (b) The brief's
+    build command named the MAIN tree's `.uproject`; run as given in a linked worktree it
+    compiles the main tree's sources and reports a green build that never saw the new file.
+    Both the build and the suite run here named this worktree's own `.uproject` and its own
+    `-ReportExportPath`. **WHAT A CHECKOUT CAN AND CANNOT CHECK ABOUT THIS BULLET, STATED
+    RATHER THAN LEFT TO BE DISCOVERED.** The SUBSTANCE of both corrections is re-executable
+    from the tree: the caller in `StratBuildAffordanceClauses.cpp` is greppable, and that a
+    linked worktree needs its own `.uproject` is checkable by running the other one. THE BRIEF
+    ITSELF IS NOT -- it is a session artifact no checkout contains, so "the brief said X" rests
+    on this lane's honesty in the same way the transcription clause's limit (1) rests on the
+    `coordinator`'s. Nothing here turns on it; the corrections stand on the tree.
+  - **PROSE AMENDED IN THIS FILE'S OWN HEADER AFTER THE FIX, 2026-09-03.** Two sentences in
+    `StratLoadPresentationCarryOverClauses.cpp` quoted the affordance header's
+    now-retracted *"NO SHIPPING CALLER TODAY"* and called `Reset()` *"uncalled"*. Both were true
+    over `283d711` and false from the fix onward. STRUCK IN PLACE under `RETRACTED>` leaders
+    with the discharge named, matching the house style the engineer used in
+    `StratBuildAffordance.h` and `StratSelectionMachine.h`; nothing deleted, no assertion and no
+    oracle setup touched. A wrap-aware sweep of the file -- comment leaders stripped and the
+    text flattened, because a per-line grep cannot see a sentence spanning two comment lines --
+    found no third copy of the claim.
+
 - **2026-09-02 (local), `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/`
   only, plus this file -- on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
   `283d711`, UNCOMMITTED, over the UNCOMMITTED `strat-gameplay-engineer` widening of

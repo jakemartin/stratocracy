@@ -3711,6 +3711,22 @@ void UStratMatchSubsystem::NotePendingMoveRoute(int32 UnitId, const TArray<FIntP
 
 void UStratMatchSubsystem::TearDownPresentation()
 {
+	// THE MATCH BOUNDARY, ANNOUNCED AS A NUMBER AND NOT AS A CALL. This is the single writer
+	// of `MatchEpoch`, and this function is where a reseed destroys the board, so "a teardown
+	// happened" and "this counter moved" are the same event by construction -- which is a
+	// claim about THIS function having one call site, and deliberately NOT a claim that every
+	// `StartMatch` reaches it. Two configuration-refusal arms return before this call and
+	// correctly announce nothing, having torn nothing down; `GetMatchEpoch` carries the
+	// measurement and the retraction of the sentence that got this wrong.
+	// What READS it -- `AStratPlayerController::SyncPresentationToMatchEpoch` --
+	// is what clears the two presentation producers this object cannot reach, because they
+	// are members of the controller and not of this class. See `GetMatchEpoch` for why the
+	// seam is a read and not a broadcast.
+	//
+	// FIRST, AND BEFORE ANYTHING IS FREED, so that no path out of this function can leave the
+	// board destroyed and the boundary unannounced.
+	++MatchEpoch;
+
 	// THE TIMER FIRST AND BEFORE ANYTHING IS FREED, for `Deinitialize`'s reason exactly:
 	// `OnAiTurnTimer` submits through a bridge a reseed is about to replace.
 	if (UWorld* const World = GetWorld())

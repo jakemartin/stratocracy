@@ -1439,6 +1439,16 @@ bool AStratPlayerController::RefreshFromMachine(FString& OutFailureReason)
 
 void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
 {
+	// BEFORE EVERYTHING, AND THE ORDER IS THE POINT RATHER THAN TIDINESS. If the subsystem
+	// has replaced the match since the last decoration, this controller's two producers hold
+	// facts about a match that is gone, and `GuidedOpening.Observe` below is the single
+	// writer of the lock set -- it republishes that set on every call, so a reset placed here
+	// is re-armed correctly in this same decoration, and one placed after it would wipe a
+	// lock §2.11.6 had just written. It sits ahead of `TryArmGuidedOpening` too, so no arming
+	// decision is taken against a machine that is about to be emptied. See the declaration
+	// for the clause this closes and for the two producers it deliberately does not touch.
+	SyncPresentationToMatchEpoch();
+
 	// ARMED FROM HERE, LAZILY, per `TryArmGuidedOpening`'s own declaration: actor `BeginPlay`
 	// order between this class and `AStratGameMode` is not something this file may assume, so
 	// arming is attempted on every decoration and returns immediately once it has taken.
@@ -1572,6 +1582,68 @@ void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
 	// and hovering an empty hex are all answers it writes unconditionally. See its
 	// declaration.
 	StratDecorateInfoPanel(Model);
+}
+
+void AStratPlayerController::SyncPresentationToMatchEpoch()
+{
+	const UStratMatchSubsystem* const Match = GetMatch();
+	if (Match == nullptr)
+	{
+		// A world with no match subsystem answers no epoch, so nothing is observed and
+		// nothing is recorded -- which leaves `LastObservedMatchEpoch` at whatever it was and
+		// makes the FIRST decoration in a world that does have one a first observation, as it
+		// should be. Silent: `BeginPlay` already says this once at Verbose, and this function
+		// runs on every decoration.
+		return;
+	}
+
+	const int32 Epoch = Match->GetMatchEpoch();
+	if (Epoch == LastObservedMatchEpoch)
+	{
+		return;
+	}
+
+	// CAPTURED BEFORE IT IS OVERWRITTEN, AND THE LOG LINE BELOW IS WHY THAT IS NOT
+	// BOOKKEEPING. This function's first version logged `Epoch - 1` for "the epoch this
+	// controller last decorated" -- a value DERIVED from the new one rather than the value
+	// the member actually held, and therefore a false statement the moment two boundaries
+	// pass with no decoration between them. THAT IS REACHABLE AND IT IS MEASURED, NOT
+	// FEARED: `AStratGameMode::BeginPlay` calls `UStratMatchSubsystem::StartMatch` and then,
+	// on Sec 2.11.5's Continue route, `LoadMatchFromSlot` with the consumed pending slot --
+	// two boundaries inside one function, and no decoration is guaranteed between them
+	// because that same file records that `BeginPlay` order between this class and the
+	// GameMode is not something either may assume.
+	//
+	// IT MATTERS MORE THAN AN ORDINARY LOG LINE BECAUSE THIS ONE IS EVIDENCE. The route
+	// through this function was proved to a reviewer by quoting exactly this sentence out of
+	// a suite run, so a number in it that is inferred rather than observed is an
+	// unfalsifiable claim wearing a measurement's clothes. One local removes the question.
+	const int32 PreviousEpoch = LastObservedMatchEpoch;
+
+	// THE FIRST OBSERVATION RECORDS AND CLEARS NOTHING. See the declaration.
+	const bool bFirstObservation = (PreviousEpoch == INDEX_NONE);
+	LastObservedMatchEpoch = Epoch;
+
+	if (bFirstObservation)
+	{
+		return;
+	}
+
+	// BOTH, IN ONE PLACE, WHICH IS THE CONDITION `FStratBuildAffordance::Reset` NAMES FOR
+	// DISCHARGING ITS OWN "NO SHIPPING CALLER" DEBT. Splitting them across two call sites is
+	// the failure that block was written to prevent: a load that reset the machine and left
+	// the focus standing would draw a BUILD control about a factory on a board that is gone,
+	// and the half that was forgotten is the half no clause names.
+	SelectionMachine.Reset();
+	BuildAffordance.Reset();
+
+	// BOTH NUMBERS ARE READ AND NEITHER IS COMPUTED. A gap greater than one is a real and
+	// legitimate reading -- two boundaries with no decoration between them -- and it is
+	// printed as what it is rather than flattened into a step of one.
+	UE_LOG(LogStratPlay, Log,
+		TEXT("%s cleared its selection machine and build affordance: the match subsystem is on "
+		     "epoch %d and this controller last decorated epoch %d."),
+		*GetName(), Epoch, PreviousEpoch);
 }
 
 void AStratPlayerController::TryArmGuidedOpening()

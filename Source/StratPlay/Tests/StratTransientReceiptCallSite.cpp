@@ -288,9 +288,13 @@ bool FStratTransientApplyViewOrderTest::RunTest(const FString& /*Parameters*/)
 // ---------------------------------------------------------------------------
 // THE MARK IS RESET WHEREVER `AppliedModel` IS, SO A NEW MATCH IS A FIRST OBSERVATION.
 //
-// THE PATH THIS DRIVES IS `TearDownPresentation`, which is private and runs unconditionally
-// at the top of `StartMatchInternal`. So a SECOND `StartMatch` in one session is the reachable
-// route to it, and it is also the real one -- a restart and a load both go through there.
+// THE PATH THIS DRIVES IS `TearDownPresentation`, which is private and has one call site: the
+// bare `TearDownPresentation();` statement in `StartMatchInternal`, unguarded once that
+// function's two configuration-refusal arms have passed -- so not on every start, because a
+// start refused for unassigned definition tables or an empty scenario file never reaches it.
+// This clause's config passes both arms. So a SECOND `StartMatch` in one session is the
+// reachable route to it, and it is also the real one -- a restart and a load both go through
+// there.
 // `Deinitialize`'s copy of the same two lines is not driven here: it runs as the world dies,
 // after which nothing is left to observe the mark with, and asserting it would need a probe
 // this lane may not add. That gap is stated rather than left to be discovered.

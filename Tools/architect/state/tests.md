@@ -14,6 +14,176 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-10, `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/` and this
+  file only -- dispatched, on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
+  `3143049`, UNCOMMITTED) -- REPAIRS THE T-SAVE-04 MERGE `d59bf9b` ON FINDINGS 2 AND 3 OF
+  `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md` (`VERDICT: BLOCK`). A CLAUSE THAT
+  LANDED WITH NO RECORD IS RECEIVED HERE, AND THE THING WORTH READING IS WHY IT HAD NONE: THE
+  AGENT THAT WROTE IT DIED ON A SERVER ERROR BETWEEN ITS `Write` AND ITS RECORD ENTRY, A SECOND
+  DISPATCH DIED BEFORE ITS FIRST TOOL CALL, AND THE UNFINISHED LIST THEY LEFT INCLUDED A FALSE
+  DERIVATION THAT STOOD ON `master` UNTIL THIS PASS. The live suite count lives in
+  `Tools/architect/state/global.md` and nowhere else.**
+  - **FINDING 3 -- THE CLAUSE, RECEIVED.**
+    `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, in
+    `Source/StratPlay/Tests/StratSelectionMachineResetClauses.cpp`, git blob `fcec6baf`,
+    identical at `f53ca26`, `d59bf9b` and `3143049`, and not touched by this pass.
+    - **What it pins.** `FStratSelectionMachine::Reset()` drops the selection (`INDEX_NONE`),
+      empties `DoneUnits` and empties `LockedUnits`. Each field is asserted separately, because
+      the three have three lifecycles -- `NotifyCommandApplied` clears the done set on an
+      `EndTurn` and deliberately leaves the locks -- and each carries an ASSERTED before-reading,
+      so a `Reset()` that cleared nothing cannot pass as a fixture that dirtied nothing. Then the
+      consequence: the unit that was done is selectable again with an empty `FailureReason`.
+      Then idempotence: a second `Reset()` changes nothing.
+    - **WHERE THE EXPECTATION COMES FROM: WRITTEN DOWN, AND THAT IS THE STATED EXCEPTION, NOT A
+      LAPSE.** `INDEX_NONE` and `false`, taken from the struct's own declaration of the method,
+      *"Drops the selection and both sets"*. No module-side value is read because the subject IS
+      the module-side value: this method is the oracle `T-SAVE-04.LoadClearsControllerSidePresentationState`
+      reads every expectation from, so asking it what it does would certify it with itself. The
+      file's header argues this at length; it is the one place in this family where the house
+      rule inverts.
+    - **WHY IT EXISTS.** The load clause's oracle was backstopped on one side only.
+      `FStratBuildAffordance::Reset()` was already pinned by
+      `T-UI-03.BuildAffordanceClearsOnEveryStatedClearPoint`; `FStratSelectionMachine::Reset()`
+      by nothing, so a regression in its body would have turned the load clause's legs (1) and
+      (3) green over the restored defect. The 2026-09-03 entry below stated that hazard
+      symmetrically, and so did the load clause's file header; both now carry the asymmetry, the
+      entry as an inline bracket at the symmetric sentence and the header as a new paragraph.
+    - **ITS INDEPENDENCE IS MEASURED, NOT CLAIMED.** Its stub `IStratRulesQuery` refuses every
+      call, so if any path the clause drives had consulted the rules, the clause would fail. No
+      world, no subsystem, no controller, no bridge.
+    - **WHAT IT DOES NOT PIN.** (a) That anything CALLS `Reset()` on a load -- that is the load
+      clause's subject, reached through `AStratPlayerController::SyncPresentationToMatchEpoch`.
+      (b) A FOURTH field: the struct holds exactly those three on this tree (read against
+      `StratSelectionMachine.h`), and a field added later that `Reset()` forgot would pass here
+      AND pass the load clause, whose oracle would forget it too. (c) `FStratHoverState`, as the
+      load clause does not either.
+    - **NO MUTANT HAS BEEN RUN AGAINST IT. PREDICTED, UNRUN:** deleting `DoneUnits.Reset();` from
+      `FStratSelectionMachine::Reset()` reddens this clause on its done-set legs and its
+      selectable-again leg, and leaves the load clause GREEN -- which is the whole asymmetry,
+      and is the one run that would prove this file does the job it was written for.
+  - **WHO WROTE ITS BYTES, AND WHAT KIND OF EVIDENCE THAT RESTS ON -- READ THIS BEFORE CITING
+    THE ATTRIBUTION.** **Nothing in any checkout says.** The file's header speaks as the test
+    lane (*"A GAP A REVIEWER FOUND RATHER THAN ONE THIS LANE PLANNED FOR"*) and names nobody;
+    `f53ca26` is authored by the user's git identity and its message says only *"Two new clause
+    files pin the reset"*. **Outside the repository**, the Claude Code session transcripts of
+    the worktree `quizzical-yonath-9b009a`'s 2026-09-03 session record ONE `Write` creating the
+    file, at 2026-09-03T13:22:57Z, issued by a subagent whose recorded type is
+    `strat-test-author` -- the same dispatch (*"Failing clause for stale load state"*) whose
+    earlier `Write` created the load clause's file -- acting on the `coordinator`'s relayed item
+    headed *"NEW CLAUSE"* and *"close the oracle gap the reviewer found"*. The content of that `Write`
+    hashes to `fcec6baf`, the committed blob, byte for byte. So: **written by `strat-test-author`,
+    in lane, per a session artifact no checkout contains.** That agent then ended twice on
+    `API Error: 529 Overloaded` before any further tool call; a second `strat-test-author`
+    dispatched to finish (*"Finish test-lane prose and run suite"*) ended four times on the same
+    error without making one. That is the whole reason this record never received the clause
+    and the reason the list below was never done. **What a reader can and cannot check:** the
+    hash match is re-runnable by anyone holding that transcript and by no one holding only a
+    checkout, and the transcript is not in `Tools/architect/` -- so this attribution rests on the
+    artifact AND on this lane's honesty in reading it, the same split the transcription clause
+    declares about its own limit (1). This pass wrote none of the file.
+  - **FINDING 2 -- THE PHRASE HANDED TO THIS LANE, SWEPT WRAP-AWARE, AND EVERY SITE'S FATE.** The
+    sweep read every `.cpp` and `.h` under `Source/*/Tests/`, comment leaders stripped and each
+    file flattened to one line, because the phrase wraps across comment lines at both named
+    sites. Controls: `StartMatchInternal` and `TearDownPresentation` each hit in the high twenties
+    before the edits and in the low thirties after, so the instrument was not mute. `Tests/` at
+    `3143049` equals `d59bf9b`'s, so the before-state is the merge's.
+    - **The handed phrase, *"runs unconditionally at the top of `StartMatchInternal`"*: TWO
+      sites, as the reviewer said, and no third.** `StratTransientReceiptCallSite.cpp`, in the
+      block headed *"THE MARK IS RESET WHEREVER `AppliedModel` IS"*, and
+      `StratSoundDirectorCallSite.cpp`, in the block headed *"GATE-AUDIO -- THE MARK DIES WITH
+      THE APPLIED MODEL"*. **FIXED, both**, to: *"has one call site: the bare
+      `TearDownPresentation();` statement in `StartMatchInternal`, unguarded once that function's
+      two configuration-refusal arms have passed -- so not on every start, because a start
+      refused for unassigned definition tables or an empty scenario file never reaches it. This
+      clause's config passes both arms."* Cited by statement, as the engineer's repair now cites
+      it, and worded so the replacement does not itself contain the phrase.
+    - **THE SAME FAMILY, NOT HANDED, FOUND BY WIDENING THE SWEEP TO `unconditional`, `at the top`
+      AND `first` BESIDE `TearDownPresentation`. FIVE MORE SITES, AND ONE WAS A FALSE
+      DERIVATION.**
+      - `StratSaveSlotClauses.cpp`, the block above `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`:
+        *"but it would have run `TearDownPresentation` first and constructed a bridge"*. **FALSE
+        WHEN WRITTEN AND FALSE NOW**: the definition-tables arm returns before both the
+        `TearDownPresentation();` statement and `Bridge = MakePimpl<FStratBridge>();`. **RETRACTED
+        IN PLACE** under a `RETRACTED>` leader, the surviving half kept. **AND IT CHANGES WHAT
+        THAT CLAUSE PINS, SAID RATHER THAN SMOOTHED:** only its *"never been configured"* leg
+        tells the refusal apart from a fall-through. Its *"definition tables"* leg would pass on a
+        fall-through, whose own sentence begins with those words, and its four trailing legs --
+        no live match, no bridge, no board, no unit actor -- hold for both refusals alike. No
+        assertion changed. This is the site the 2026-09-03 dispatch named as load-bearing and
+        that the two dead dispatches never reached.
+      - `StratSaveSlotClauses.cpp`, the T-INT-05 loaded-match block: *"the unconditional
+        `TearDownPresentation` at the top"*. Reworded to name the call, unguarded once the two
+        arms have passed and placed ahead of the spawn, with a parenthesis saying what it used
+        to say.
+      - `StratAiPlaybackClauses.cpp`, the GATE-AITURN mid-tour reseed block: *"`StartMatchInternal`
+        calls `TearDownPresentation` unconditionally"*. Reworded the same way. This is the test
+        side's twin of the `StratMatchSubsystem.cpp` sentence the engineer repaired in this same
+        round.
+      - `StratPlayerHandbackClauses.cpp`, twice (the fixture's how-it-reaches-that-state
+        paragraph and the `THE TEARDOWN` comment): *"reaches `TearDownPresentation`
+        unconditionally"*. TRUE of that fixture, whose config passes both arms; reworded to say
+        that it is the valid config that makes it so.
+      - Not touched, and not the subject: `StratProductionMenuHostClauses.cpp`'s *"calls this
+        function unconditionally"*, which is about `AStratScoreboardHUD::EndPlay` and a
+        different function.
+    - **After: zero hits** for every phrase shape. The one hit left for
+      *"`TearDownPresentation` first"* is the `RETRACTED>` line itself -- which is also the
+      positive control that the backtick-bearing patterns can speak.
+    - **WHY FIX RATHER THAN CARRY A DEBT, since the reviewer judged neither handed site builds a
+      false conclusion and that judgement is right for those two.** Because the widened sweep
+      found a site in the same family that DID build one, so the family demonstrably propagates
+      into reasoning; and because the fix is comment-only in this lane and this pass owed the
+      rebuild anyway. **No debt is carried from Finding 2.**
+    - **COMMENT-ONLY, CHECKED:** `git diff -U0 -- Source/StratPlay/Tests` holds zero changed
+      lines that do not begin with `//` after indentation, against eighty that do.
+  - **THE CLAUSE-ID CONFLICT, STATED AS OPEN AND NOT RESOLVED BY THIS LANE.** Further down this
+    file, this lane REFUSED `T-SAVE-04` for the restorability clauses, against that ID's GDD
+    sentence as quoted there -- *"refusal: any header mismatch (version/rules/data/scenario
+    hash)"*, refusing *"on the header alone"* -- on the ground that a clause riding an ID whose
+    sentence excludes its subject is unfalsifiable. **Both clauses that landed at `d59bf9b` ride
+    `T-SAVE-04` and neither subject is a header mismatch:** the load clause is about
+    presentation state after an ACCEPTED load, and the reset clause involves no load at all. By
+    the refusal's own test, both are excluded. Their warrant is *"ruled by the user in session"*,
+    in the 2026-09-03 entry and in the reset file's header; what the transcript above shows is
+    the `coordinator` RELAYING that choice to this lane (*"The user chose the acceptance ID in
+    session: T-SAVE-04"*), not the user's own words, and nothing in `decisions.md` mentions
+    `T-SAVE-04` at all. Observed too, and older than either: `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
+    is a refusal but not a header mismatch either. **Discharged only by a ruling recorded in
+    `decisions.md`** -- either one that states what `T-SAVE-04` covers in this project beyond its
+    GDD sentence, or one that moves the clauses. A clause name is compiled and cited across the
+    record, so a rename is not this lane's to make unasked. Inline `OPEN` brackets now sit at both
+    ends of the conflict in this file.
+  - **THE RUN, ON THE FINAL TREE, AND ITS FIGURES LIVE IN `global.md`.** **It was run twice,
+    because after the first run `strat-gameplay-engineer` made a comment-only pass in its own
+    lane on this entry's `DoneUnits` handoff (below), so that run's report no longer covered the
+    final tree; what follows is the second run.** First the pass was checked comment-only
+    against `HEAD` on the five files it touched (`StratSelectionMachine.h`,
+    `StratGuidedOpening.{h,cpp}`, `StratPlayerController.{h,cpp}`) by two instruments: none of
+    their 56 changed lines lacks a comment leader, and each file's comment-stripped token stream
+    is identical to `HEAD`'s. Control: the same two instruments over `f53ca26`'s
+    `StratPlayerController.{h,cpp}` flag 26 and 2 lines and find both streams different. Build
+    with the editor closed: `Target is up to date`, zero actions, `Result: Succeeded` -- the
+    engineer's own build had already relinked `UnrealEditor-StratPlay.dll` after the last source
+    write, so this lane did not watch those bytes compile. UTC stamp `2026.09.10-20.37.34` taken
+    BEFORE the headless suite launched; the exported report is
+    `reportCreatedOn 2026.09.10-20.38.51`, every entry `Success`, zero failed, zero notRun, zero
+    succeededWithWarnings, and all four `T-SAVE-04` clauses under `StratPlay` are `Success` with
+    `errors 0`, the reset clause among them. `strat_suite_report_gate.py --not-before
+    2026.09.10-20.37.34` and, separately, `--pin-to-tree` each closed `SUITE REPORT GATE CLEAN`,
+    exit 0, macro census agreeing with the report. **[STAMPED AS HISTORY IN THE PASS THAT WROTE
+    IT, 2026-09-10: there is one report path and the next run overwrites it, so that
+    `reportCreatedOn` is a record of this run and not a pointer a later reader can follow.]**
+  - **NOT MEASURED, SAID PLAINLY.** No mutant was run, so the reset clause's kill is a
+    prediction. No PIE and no editor. The gate report this entry repairs is outside the
+    repository and not under `Tools/architect/gate_reports/`, which is the steward's to
+    persist. **HANDED, AND DISCHARGED IN THE OTHER LANE:** `StratSelectionMachine.h` said of
+    `DoneUnits` *"Cleared by an accepted `EndTurn` and by nothing else"*, while `Reset()` clears
+    it too. This lane handed that to `strat-gameplay-engineer` and wrote none of the fix; that
+    agent rewrote the declaration in its own lane and records it in `engine.md`. This lane read
+    the rewrite against the code: the four writers it names are the four `DoneUnits` mutations
+    outside `Tests/`, and the one `Reset()` caller it names is the only
+    `SelectionMachine.Reset()` call outside `Tests/`. No clause pins either comment.
+
 - **2026-09-08, `strat-test-author` (ACTING and WRITING; in lane, over base `410c3c4`).** **A
   CLAUSE THAT REPORTED `Success` AND STILL TURNED CI RED, BECAUSE THE THING THAT MOVED WAS NOT A
   STATE BUT A COUNTER.** GitHub run `34273142010` over pushed `410c3c4` failed at the step `gate the
@@ -3150,13 +3320,30 @@
   only -- in the linked worktree
   `E:/MultiAgent/Stratocracy/.claude/worktrees/quizzical-yonath-9b009a`, branch
   `worktree-quizzical-yonath-9b009a`, base `283d711`. UNCOMMITTED AND UNMERGED at the time of
-  writing: nothing below has landed on `master`) -- CONTROLLER-SIDE PRESENTATION STATE ACROSS A
-  LOAD IS PINNED. ONE CLAUSE, WRITTEN TO EXHIBIT A DEFECT AND CONFIRMED RED BEFORE ANY FIX
+  writing: nothing below has landed on `master`) [STAMPED 2026-09-10 IN PLACE,
+  `strat-test-author` (ACTING and WRITING; IN LANE, main tree, base `3143049`), on Finding 3 of
+  `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md`: THAT WAS TRUE WHEN WRITTEN AND IS
+  HISTORY NOW. Everything below LANDED: committed in that worktree as `f53ca26` on the user's
+  instruction, 2026-09-10, and merged to `master` as `d59bf9b`. The worktree has since been
+  removed.] -- CONTROLLER-SIDE PRESENTATION STATE ACROSS A
+  LOAD IS PINNED. ONE CLAUSE [CORRECTED 2026-09-10 IN PLACE, same author, same base, same
+  finding: "ONE CLAUSE" WAS TRUE WHEN THIS LEDE WAS WRITTEN AND WAS FALSE BY THE TIME IT MERGED.
+  A SECOND clause file, `StratSelectionMachineResetClauses.cpp`, holding
+  `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, was
+  written in the same worktree later the same day and landed in the same commit, and this record
+  never received it. It is received by the 2026-09-10 entry at the top of this file, which also
+  says who wrote it and on what evidence. The load clause below is still exactly one clause;
+  what is false is that it was the pass's only one.], WRITTEN TO EXHIBIT A DEFECT AND CONFIRMED RED BEFORE ANY FIX
   EXISTED. THE LIVE COUNT LIVES IN `Tools/architect/state/global.md` AND NOWHERE ELSE.**
   - **THE CLAUSE.** `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`,
     in `Source/StratPlay/Tests/StratLoadPresentationCarryOverClauses.cpp` (a new file). The
     acceptance ID was ruled by the user in session; it is not derived, and it is deliberately
-    not `T-INT-05` or `T-TURN-01`.
+    not `T-INT-05` or `T-TURN-01`. **[OPEN, FLAGGED 2026-09-10 IN PLACE, `strat-test-author`
+    (ACTING and WRITING; IN LANE, main tree, base `3143049`), not resolved: this ID sits in
+    unreconciled conflict with this lane's own recorded refusal to put clauses under `T-SAVE-04`
+    when that ID's GDD sentence excludes their subject, and nothing in `decisions.md` records
+    this ruling or reconciles the two. The conflict is stated in full in the 2026-09-10 entry at
+    the top of this file. No clause has been renamed.]**
   - **WHAT IT PINS.** After `UStratMatchSubsystem::LoadMatchFromSlot`, the controller's
     `FStratSelectionMachine` and `FStratBuildAffordance` answer as a pair that has been
     `Reset()` answers. Three legs, and they are one clause rather than three because the
@@ -3178,7 +3365,20 @@
     `FStratSelectionMachine::Reset()` and `FStratBuildAffordance::Reset()`. Editing one MOVES
     the expectation instead of being tested against it, so a change confined to a `Reset()` body
     can turn this clause green while repairing nothing. A green here is only evidence if both
-    bodies are byte-unchanged, and that is a thing to CHECK rather than assume. The same note is
+    bodies are byte-unchanged, and that is a thing to CHECK rather than assume. **[CORRECTED
+    2026-09-10 IN PLACE, `strat-test-author` (ACTING and WRITING; IN LANE, main tree, base
+    `3143049`): THIS BULLET STATES THE HAZARD SYMMETRICALLY AND IT WAS NOT SYMMETRIC -- a
+    reviewer found that on 2026-09-03 and the correction never reached this record.**
+    `FStratBuildAffordance::Reset()` was ALREADY pinned by a clause whose expectation is not that
+    body -- `Stratocracy.StratPlay.T-UI-03.BuildAffordanceClearsOnEveryStatedClearPoint`, whose
+    "Reset drops the focus" leg lives in `StratBuildAffordanceClauses.cpp`.
+    `FStratSelectionMachine::Reset()` was pinned by NOTHING when this entry was written: had its
+    body stopped clearing `DoneUnits`, the oracle and the controller would have carried the same
+    stale bit and legs (1) and (3) would have gone green over the restored defect. That half is
+    now backstopped by `T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, received
+    in the 2026-09-10 entry at the top of this file. The off-limits rule itself still stands for
+    both bodies. **The file's own header block now carries the same correction, added
+    2026-09-10.]** The same note is
     in the file's own header block so a reader arriving at the code lands on it too.
   - **THE STATE IS NOT REACHED THROUGH THE DEFECT.** The done bit is planted by
     `HandleEvent(HexPrimary)` then `HandleEvent(Wait)` -- §2.11.1's wait, the machine's own
@@ -3193,7 +3393,20 @@
     (`AStratPlayerController::SyncPresentationToMatchEpoch`, which is **theirs and not this
     lane's -- this lane wrote the clause and none of the fix**). THE CITATION IS THE REPORT ON
     DISK: `reportCreatedOn 2026.09.03-12.53.49` -- the one `strat_banner_sweep.py` opens --
-    carries this clause as `Success` with `errors 0`. A checkout can re-execute that one; the
+    carries this clause as `Success` with `errors 0`. **[STAMPED 2026-09-10 IN PLACE,
+    `strat-test-author` (ACTING and WRITING; IN LANE, main tree, base `3143049`), on an
+    observation in `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md`: EVERY
+    PRESENT-TENSE CLAIM IN THIS SENTENCE AND THE NEXT IS FALSE NOW. That report is NOT on disk,
+    is NOT the one the sweep opens, and no checkout can re-execute it; it was overwritten in the worktree by the `2026.09.03-13.08.33` run
+    the same day, which the worktree's removal then took with it. And it never described the
+    pass's final state: it predates the second clause file, written later that day, so NO
+    report of that worktree ever ran both T-SAVE-04 files -- which is what the `f53ca26` commit
+    message says in its own words ("the fix's final state was never suite-run"). The first run of
+    both files was the merge's, `reportCreatedOn 2026.09.10-18.20.14`, cited in `global.md`; the
+    last is this lane's own `2026.09.10-20.38.51`, in the entry at the top of this file, where
+    this clause is `Success` with `errors 0`. Both of those are HISTORY the moment the next run
+    writes the one report path. What survives unconditionally is what never needed a report:
+    the both-`Reset()`-bodies check below, made against the tree.]** A checkout can re-execute that one; the
     two this entry originally cited it could not, and they are struck below rather than
     deleted. The both-`Reset()`-bodies-byte-untouched check was made against the TREE and not
     against any report, so it remains re-executable whatever happens to `Saved/`.
@@ -5117,7 +5330,12 @@
   is VALID AND CURRENT -- that is the entire reason the defect shipped** -- and an empty body is not
   a header mismatch under either sentence. A clause riding an ID whose sentence excludes its subject
   is the unfalsifiable shape this project has already been caught by, so they ride `GATE-TITLEMENU`,
-  which the user's 2026-08-29 ruling puts the screen and its routes on. The version arm's rule
+  which the user's 2026-08-29 ruling puts the screen and its routes on. **[OPEN, FLAGGED
+  2026-09-10 IN PLACE, `strat-test-author` (ACTING and WRITING; IN LANE, main tree, base
+  `3143049`), not resolved: two clauses that landed at merge `d59bf9b` ride `T-SAVE-04` although
+  neither subject is a header mismatch -- the ID was relayed to this lane as the user's choice in
+  session. This refusal and that choice are unreconciled; see the 2026-09-10 entry at the top of
+  this file. Nothing here was renamed.]** The version arm's rule
   remains squarely `T-SAVE-04`'s and keeps its existing clause
   (`Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAWrongSavedDataVersion`); no new clause restates it.
   Stated precisely, because a looser sentence stood in the file earlier the same day:

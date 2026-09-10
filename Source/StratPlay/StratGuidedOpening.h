@@ -369,9 +369,10 @@ public:
 	 * of two that were assumed to fall together.
 	 *
 	 * IT DOES NOT CLEAR THE LOCKS BY ITSELF. `Observe` does, on the next refresh, from the
-	 * same single place that sets them; a second clear here would be a second writer of the
-	 * lock set. The controller calls `Observe` immediately after, which is why the frame
-	 * holds.
+	 * same single place in this class that sets them; a second clear here would be a second
+	 * writer of the lock set in this class. (The one writer outside it is
+	 * `FStratSelectionMachine::Reset()`, reached on a load and not on a skip.) The controller
+	 * calls `Observe` immediately after, which is why the frame holds.
 	 *
 	 * PERMANENT. §2.11.6 says "gone for good"; there is deliberately no un-skip.
 	 */

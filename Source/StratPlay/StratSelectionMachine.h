@@ -53,12 +53,18 @@
 // and a second one in shipping code would be the substitution T-UI-02 exists to catch.
 //
 // THE THREE ENTRY POINTS ARE SPLIT ALONG WHAT CAN FAIL. `HandleEvent` decides and mutates
-// only what acceptance cannot change (which unit is selected); `NotifyCommandApplied`
-// mutates what only an ACCEPTED command may change (`bDone`, deselection, the turn reset);
-// `BuildOverlays` is const and derives the two highlight sets from the model and the query.
+// only what needs no rules module's agreement -- which unit is selected, and the one
+// `DoneUnits` entry a `Wait` earns, because a wait submits no command and there is nothing
+// to accept; `NotifyCommandApplied` mutates what only an ACCEPTED command may change (an
+// attacker's `bDone`, deselection, the turn reset); `BuildOverlays` is const and derives
+// the two highlight sets from the model and the query.
 // A single fused entry point would have had to either submit commands itself -- putting a
 // bridge inside the state machine -- or advance its state before knowing whether the rules
 // module agreed.
+// TWO FURTHER WRITERS SIT OUTSIDE THAT SPLIT because they decide nothing about a command:
+// `SetLockedThisTurn` (the guidance layer's) and `Reset()` (a reseed's, reached on a load),
+// which clears the selection and both sets with no command at all. See the two sets'
+// declarations for the full writer list of each.
 //
 // IT NAMES NO `strat::` TYPE. Hexes are `FIntPoint`, X = q and Y = r, straight out of
 // `FStratViewModel`. `FStratBridge` is forward declared here and included only from the
@@ -467,12 +473,22 @@ private:
 	 */
 	int32 SelectedUnitId = INDEX_NONE;
 
-	/** §2.11.1's DONE units this turn. Cleared by an accepted `EndTurn` and by nothing else. */
+	/**
+	 * §2.11.1's DONE units this turn. FOUR WRITERS, all in this struct: `HandleEvent`'s
+	 * `Wait` arm and `NotifyCommandApplied`'s `Attack` arm add to it; `NotifyCommandApplied`'s
+	 * `EndTurn` arm (an EndTurn this machine asked for and the rules module accepted) and
+	 * `Reset()` clear it. `Reset()`'s one shipping caller is
+	 * `AStratPlayerController::SyncPresentationToMatchEpoch`, so a LOAD clears this set too.
+	 */
 	TSet<int32> DoneUnits;
 
-	/** §2.11.6's locked units. Written only by `SetLockedThisTurn`, whose one shipping
-	 *  caller is `FStratGuidedOpening::Observe` (wave B2). Non-empty while beat 1a is
-	 *  outstanding; empty at every other moment of a match. */
+	/**
+	 * §2.11.6's locked units. TWO WRITERS: `SetLockedThisTurn`, whose one shipping caller is
+	 * `FStratGuidedOpening::Observe` (wave B2), adds and removes; `Reset()` clears, and is
+	 * reached on a load through `AStratPlayerController::SyncPresentationToMatchEpoch`, which
+	 * runs ahead of `Observe` in the same decoration so `Observe` re-publishes on that frame.
+	 * Non-empty while beat 1a is outstanding; empty at every other moment of a match.
+	 */
 	TSet<int32> LockedUnits;
 };
 

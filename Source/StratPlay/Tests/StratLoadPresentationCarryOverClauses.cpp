@@ -43,6 +43,19 @@
 // expectation instead of being tested against it, so this clause would go green on a change
 // that repaired nothing.
 //
+// AND THAT HAZARD WAS NOT SYMMETRIC, WHICH THE PARAGRAPH ABOVE DID NOT SAY UNTIL 2026-09-10.
+// `FStratBuildAffordance::Reset()` is pinned independently of this file, by
+// `Stratocracy.StratPlay.T-UI-03.BuildAffordanceClearsOnEveryStatedClearPoint` in
+// `StratBuildAffordanceClauses.cpp`, so a regression in that body reddens a clause whose
+// expectation is not that body. `FStratSelectionMachine::Reset()` had no such backstop when this
+// file was written: had its body stopped clearing `DoneUnits`, the oracle and the controller
+// would have carried the SAME stale bit and legs (1) and (3) below would have gone GREEN OVER
+// THE RESTORED DEFECT. The backstop is now
+// `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked` in
+// `StratSelectionMachineResetClauses.cpp`, which asserts that body against written-down values
+// and shares no machinery with this clause. The off-limits rule above still stands for both
+// bodies; what changed is that a regression in either now reddens a second, independent clause.
+//
 // THE STATE IS NOT REACHED THROUGH THE DEFECT. The done bit is put into the machine by
 // `HandleEvent(HexPrimary)` followed by `HandleEvent(Wait)` -- §2.11.1's wait, the machine's
 // own public input path, which `StratHotSeatReplayParity.cpp` drives the same way -- and the

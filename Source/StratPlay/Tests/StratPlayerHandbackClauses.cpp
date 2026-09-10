@@ -817,10 +817,11 @@ bool FStratCentroidRoundsAHalfTest::RunTest(const FString& /*Parameters*/)
 // old match's hand-back while their camera jumps to the old match's army.
 //
 // HOW THE FIXTURE REACHES THAT STATE. A PACED config, so `RunAiTurnsNow` leaves the flag UP and
-// a tour RUNNING -- the beat deferred, not spent. Then a second `StartMatch`, which reaches
-// `TearDownPresentation` unconditionally. Both preconditions are asserted rather than assumed:
-// a fixture whose tour had already ended would have nothing to defer and would be green over
-// the mutant.
+// a tour RUNNING -- the beat deferred, not spent. Then a second `StartMatch` on the same valid
+// config, which passes `StartMatchInternal`'s two configuration-refusal arms and so reaches
+// `TearDownPresentation` with no further guard. Both preconditions are asserted rather than
+// assumed: a fixture whose tour had already ended would have nothing to defer and would be
+// green over the mutant.
 //
 // WHY THE ONE AI SEAT MATTERS HERE TOO. With BOTH sides AI, `StratHandsBackToPlayer` refuses on
 // the seat term at teardown and the mutant emits nothing -- the clause would be green over the
@@ -934,9 +935,10 @@ bool FStratHandbackNotSpentByTeardownTest::RunTest(const FString& /*Parameters*/
 	}
 
 	// ---- THE TEARDOWN --------------------------------------------------------------------
-	// A SECOND `StartMatch` REACHES `TearDownPresentation` UNCONDITIONALLY, above everything
-	// that would clear the bridge or the applied model. This is the reseed a player performs by
-	// clicking New Match.
+	// A SECOND `StartMatch` ON THIS VALID CONFIG REACHES `TearDownPresentation` -- unguarded once
+	// `StartMatchInternal`'s two configuration-refusal arms have passed, which this config does --
+	// above everything that would clear the bridge or the applied model. This is the reseed a
+	// player performs by clicking New Match.
 	FString SecondError;
 	Match->StartMatch(Config, SecondError);
 

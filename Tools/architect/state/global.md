@@ -11,6 +11,41 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-10 (SECOND PASS, over base `3143049`: THE T-SAVE-04 MERGE `d59bf9b` WAS RE-GATED
+AND BLOCKED ON PROSE, AND THE PROSE IS REPAIRED IN BOTH LANES THAT OWNED IT. Written by the
+`coordinator`; each lane wrote its own record entry. `strat-integration-reviewer` re-gated
+`d59bf9b` read-only and returned `VERDICT: BLOCK` on three findings, none in behaviour: stale
+`StratMatchSubsystem.cpp` line citations in `StratMatchSubsystem.h` (since the fix's base the call
+had moved +24 and every cited site after it +42, so no single offset could repair them); a "fourth site" handoff that `tests.md`
+never received; and a clause file, `StratSelectionMachineResetClauses.cpp`, recorded nowhere but
+here. The report is kept OUTSIDE this repo at
+`E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md`; the BLOCK it answers was never
+persisted at all, which is why this one was.
+  `strat-gameplay-engineer` (`engine.md`) re-cited the call by statement rather than line number,
+and on a handoff from the test lane corrected every writer claim about `DoneUnits` and
+`LockedUnits` that `FStratSelectionMachine::Reset()` falsified once a load began reaching it --
+comment-only, verified by a comment-stripping diff whose control does register a code line.
+`strat-test-author` (`tests.md`) received the clause file, found the handed phrase at TWO sites in
+`Tests/` rather than one and the same claim shape at FIVE more -- one of them a false derivation in
+`StratSaveSlotClauses.cpp`, retracted in place -- and corrected all seven; it names the clause file's writer only from a transcript no
+checkout contains, and says so.
+THE SUITE IS **479/479**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings. NOTHING IN THIS PASS MOVED THE COUNT: no clause was added, removed or
+renamed. Gated with `strat_suite_report_gate.py --not-before 2026.09.10-20.37.34` and, separately,
+`--pin-to-tree`, both CLEAN.
+  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.10-20.38.51`.
+  WHAT IS NOT DONE. The four PROPOSED clauses in
+`engine.md` remain proposed. `tests.md` carries an OPEN clause-ID conflict -- both new clauses
+ride `T-SAVE-04`, whose GDD sentence covers header-mismatch refusal only, and a user ruling cited
+for that is recorded nowhere in `decisions.md` -- which needs the user's ruling. `engine.md`'s
+`### Debts taken on, 2026-09-10 (T-SAVE-04 citation repair)` lists TWO debts: `GetMatchEpoch`'s
+retraction still carries dated line numbers as evidence, and its own 2026-09-03 entry's
+*"UNCOMMITTED AND UNMERGED"* lede is unstamped and cites a report no longer on disk. Beside those,
+and NOT under that heading, one known-false comment was left unfixed and has no discharge
+condition yet: the `HexPrimary` arm's *"Unobservable today"* in `StratSelectionMachine.cpp`, false
+since wave B2. And one site of the corrected claim shape survives outside every sweep this pass
+ran: `StratUnitActor.h`'s *"calls `TearDownPresentation()` unconditionally"*, which arrived on
+master after the fix's base; its conclusion is true, and it is `strat-gameplay-engineer`'s.)
 _Last run 2026-09-10 (T-SAVE-04 LANDS ON MASTER A WEEK AFTER IT WAS WRITTEN: a load no longer
 carries the controller's selection and build-affordance state into the match it replaces. The
 fix was written 2026-09-03 over base `283d711` in the worktree `quizzical-yonath-9b009a` and was
@@ -31,10 +66,17 @@ THE SUITE IS **479/479**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings, macro census agreeing at 479. The count moved by exactly the two clauses
 this fix adds, `T-SAVE-04.LoadClearsControllerSidePresentationState` and
 `T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, both Success by name.
-  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.10-18.20.14`.
+  [STAMPED BY THE SECOND PASS, 2026-09-10] "THE LIVE FIGURE'S REPORT IS `reportCreatedOn
+  [STAMPED] 2026.09.10-18.20.14`." -- superseded: the second pass edited comments under
+  [STAMPED] `Source/`, so a newer report was owed and is cited in the banner above. The count
+  [STAMPED] did not move.
   WHAT IS NOT DONE. No `strat-integration-reviewer` verdict is recorded after the BLOCK that
 `engine.md`'s entry complied with; the entry's four proposed clauses remain proposed; and the
-"fourth site" that entry hands to the test lane is still that lane's.)
+"fourth site" that entry hands to the test lane is still that lane's.
+  [STAMPED BY THE SECOND PASS, 2026-09-10] The first and third items of that are now history:
+  [STAMPED] a reviewer verdict was recorded -- `VERDICT: BLOCK` -- and the "fourth site" was
+  [STAMPED] never one site; it was two, plus five of the same shape, all corrected by the test
+  [STAMPED] lane. The second item, the four proposed clauses, is STILL OPEN. See the banner above.)
 _Last run 2026-09-08 (A SECOND MUTANT CAMPAIGN RAN THE MUTANTS THE FIRST ONE LEFT PREDICTED, AND
 THE CATALOGUE IS NOW ESSENTIALLY EXHAUSTED: of the 28 mutants the four clause files predict, 27
 HAVE BEEN RUN -- 26 killed their target, ONE SURVIVED EXACTLY AS PREDICTED, and ONE CANNOT BE RUN

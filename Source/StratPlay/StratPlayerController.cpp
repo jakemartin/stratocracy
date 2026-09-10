@@ -1441,8 +1441,8 @@ void AStratPlayerController::DecorateForPresentation(FStratViewModel& Model)
 {
 	// BEFORE EVERYTHING, AND THE ORDER IS THE POINT RATHER THAN TIDINESS. If the subsystem
 	// has replaced the match since the last decoration, this controller's two producers hold
-	// facts about a match that is gone, and `GuidedOpening.Observe` below is the single
-	// writer of the lock set -- it republishes that set on every call, so a reset placed here
+	// facts about a match that is gone, and `GuidedOpening.Observe` below is the lock set's
+	// only writer other than that reset -- it republishes the set on every call, so a reset placed here
 	// is re-armed correctly in this same decoration, and one placed after it would wipe a
 	// lock §2.11.6 had just written. It sits ahead of `TryArmGuidedOpening` too, so no arming
 	// decision is taken against a machine that is about to be emptied. See the declaration

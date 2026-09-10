@@ -159,9 +159,11 @@ void FStratGuidedOpening::SkipGuidance()
 	// unmeasured for a day because it read like the latter.
 	bHasObjective = false;
 
-	// THE LOCKS ARE NOT CLEARED HERE. `Observe` is the single writer of the lock set and it
-	// runs on the next refresh — which the controller performs in this same call chain, so
-	// "the same frame" holds. A clear here would be a second writer of one set.
+	// THE LOCKS ARE NOT CLEARED HERE. `Observe` is this class's single writer of the lock set
+	// -- the only other shipping writer is `FStratSelectionMachine::Reset()`, reached on a
+	// load -- and it runs on the next refresh, which the controller performs in this same
+	// call chain, so "the same frame" holds. A clear here would be a second writer in this
+	// class of one set.
 	UE_LOG(LogStratPlay, Log, TEXT("Guided opening skipped by the player; it does not return."));
 }
 
@@ -176,7 +178,7 @@ void FStratGuidedOpening::Observe(const FStratViewModel& Model, FStratSelectionM
 		// STILL PUBLISHES LOCKS, and that is what makes a skip take effect. `PublishLocks`
 		// clears every lock when guidance is inactive, so the frame after `SkipGuidance` has
 		// no dimmed unit — rather than leaving the previous frame's locks standing because
-		// the early return skipped the only writer.
+		// the early return skipped the only writer that republishes them every frame.
 		PublishLocks(Model, Machine);
 		return;
 	}

@@ -2466,7 +2466,8 @@ bool FStratStepFocusesAndStopsOnTheLastTest::RunTest(const FString& /*Parameters
 // the end unless a tour is actually under way" over every reason NOT TO ARM a timer -- and said
 // nothing about the reasons to STOP one. `StopAiPlaybackTimer` cleared the clock and left the
 // cursor where it was, and two of its call sites ended a tour that way: `TearDownPresentation`
-// and `Deinitialize`. `StartMatchInternal` calls `TearDownPresentation` unconditionally and
+// and `Deinitialize`. `StartMatchInternal` calls `TearDownPresentation` from its one call site,
+// unguarded once that function's two configuration-refusal arms have passed, and
 // `LoadMatchFromSlot` reaches `StartMatchInternal` -- both verified in this tree -- so those are
 // the two routes a player takes between two matches. Start a new match or load a slot while the
 // AI's tour was running and the BRAND-NEW match began with `IsAiPlaybackRunning()` true,

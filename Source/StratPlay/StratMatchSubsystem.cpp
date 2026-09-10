@@ -3742,8 +3742,10 @@ void UStratMatchSubsystem::TearDownPresentation()
 	// THIS CALL SITE IS ONE OF THE TWO THE RESEED DEFECT CAME THROUGH, and it is fixed by
 	// `EndAiPlaybackTour` retiring rather than by anything written here -- which is the whole
 	// point of moving the guarantee into the verb. `StartMatchInternal` calls this function
-	// unconditionally and `LoadMatchFromSlot` reaches it through that, so this is the path a
-	// player takes between two matches.
+	// from its one call site, unguarded once that function's two configuration-refusal arms
+	// have passed -- so not on every start; see this function's declaration -- and
+	// `LoadMatchFromSlot` reaches it through that, so this is the path a player takes between
+	// two matches.
 	//
 	// ---- AND THE HAND-BACK FLAG COMES DOWN FIRST, FOR `Deinitialize`'S REASON AND HARDER ----
 	// It bites worse here than there, on `ReceiptMark`'s own line of argument: this path runs

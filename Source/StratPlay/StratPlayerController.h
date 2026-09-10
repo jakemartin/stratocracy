@@ -981,8 +981,9 @@ protected:
 	 * does not dispatch `BeginPlay` has none.
 	 *
 	 * CALLED FIRST FROM `DecorateForPresentation`, AND THE ORDER IS LOAD-BEARING IN ONE
-	 * DIRECTION. `FStratGuidedOpening::Observe` is the single writer of the machine's lock
-	 * set and it PUBLISHES THAT SET ON EVERY CALL, including the inactive path. So a reset
+	 * DIRECTION. `FStratGuidedOpening::Observe` is the machine's lock set's only writer other
+	 * than the `FStratSelectionMachine::Reset()` this function calls, and it PUBLISHES THAT
+	 * SET ON EVERY CALL, including the inactive path. So a reset
 	 * placed BEFORE it is re-armed correctly in the same decoration, and a reset placed AFTER
 	 * it would wipe a legitimate lock §2.11.6 had just written and dim nothing on a frame
 	 * that should have dimmed a unit. Before, therefore -- ahead of `TryArmGuidedOpening` as

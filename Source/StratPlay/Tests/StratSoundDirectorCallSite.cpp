@@ -681,9 +681,12 @@ bool FStratSoundApplyViewOrderTest::RunTest(const FString& /*Parameters*/)
 // So the next match opens with three wrong cues, on `StratTransientReceiptCallSite.cpp`'s
 // clause-2 shape exactly.
 //
-// THE PATH THIS DRIVES IS `TearDownPresentation`, which is private and runs unconditionally at
-// the top of `StartMatchInternal`. A SECOND `StartMatch` in one session is the reachable route
-// to it, and it is also the real one -- a restart and a load both go through there.
+// THE PATH THIS DRIVES IS `TearDownPresentation`, which is private and has one call site: the
+// bare `TearDownPresentation();` statement in `StartMatchInternal`, unguarded once that
+// function's two configuration-refusal arms have passed -- so not on every start, because a
+// start refused for unassigned definition tables or an empty scenario file never reaches it.
+// This clause's config passes both arms. A SECOND `StartMatch` in one session is the reachable
+// route to it, and it is also the real one -- a restart and a load both go through there.
 //
 // `Deinitialize`'S COPY OF THE SAME LINE IS **NOT** DRIVEN HERE, AND THAT GAP IS STATED RATHER
 // THAN LEFT TO BE DISCOVERED. It runs as the world dies, after which nothing is left to observe

@@ -423,7 +423,10 @@ bool FStratSlotRoundTripTest::RunTest(const FString& /*Parameters*/)
 // THE BOARD COUNT IS THE HALF THAT CATCHES THE REGRESSION THIS CLAUSE EXISTS FOR.
 // `LoadMatchFromSlot` runs `StartMatchInternal` a SECOND time in one world, and the only thing
 // standing between that and two boards -- two overlays, two sets of tiles, one of them
-// orphaned and never updated again -- is the unconditional `TearDownPresentation` at the top.
+// orphaned and never updated again -- is the `TearDownPresentation` call in
+// `StartMatchInternal`, unguarded once that function's two configuration-refusal arms have
+// passed and placed ahead of the spawn. (Worded that way since 2026-09-10; it said "at the top",
+// and the two refusal arms sit above it.)
 // A guard added to that call, or a reordering that put it after the spawn, produces a world
 // with two `AStratBoardActor`s and a screen that looks almost right. So: exactly one.
 //
@@ -871,10 +874,26 @@ bool FStratSaveOverPreservesOnboardingTest::RunTest(const FString& /*Parameters*
 //
 // THE FAILURE THIS PREVENTS IS NOT A CRASH. A `LoadMatchFromSlot` that fell through to
 // `StartMatchInternal` with a default `FStratMatchConfig` would be refused there too -- by the
-// "definition tables are not assigned" arm -- but it would have run `TearDownPresentation`
-// first and constructed a bridge, and the reason a caller got back would name the GameMode's
-// defaults rather than the missing `StartMatch`. Those have different fixes, which is the
-// whole reason the two checks are separate.
+// "definition tables are not assigned" arm -- and the reason a caller got back would name the
+// GameMode's defaults rather than the missing `StartMatch`. Those have different fixes, which is
+// the whole reason the two checks are separate.
+//
+// ONE CLAUSE OF THAT PARAGRAPH IS RETRACTED IN PLACE, 2026-09-10 (`strat-test-author`, over
+// base `3143049`). Between "arm --" and "and the reason", it used to read:
+// RETRACTED> "but it would have run `TearDownPresentation` first and constructed a bridge,"
+// FALSE WHEN WRITTEN AND FALSE NOW. In `StartMatchInternal` the definition-tables arm -- the
+// `OutFailureReason =` whose text begins "definition tables are not assigned" -- returns BEFORE
+// the bare `TearDownPresentation();` statement and before `Bridge = MakePimpl<FStratBridge>();`,
+// so a fall-through onto that arm tears nothing down and constructs nothing. Checked against
+// the tree by statement order, not by line number. The half about the WORDS survives intact.
+//
+// WHAT THAT DOES TO THE ASSERTIONS BELOW, said rather than smoothed over. Only the "never been
+// configured" leg tells this refusal apart from a fall-through. The "definition tables" leg
+// would pass on a fall-through too, because that arm's own sentence begins with those words;
+// and the four trailing legs -- no live match, no bridge, no board, no unit actor -- are true of
+// this refusal and equally true of a fall-through onto the definition-tables arm, so they do NOT
+// go red on the regression the struck clause described. They pin that nothing was seeded, which
+// both refusals guarantee. No assertion was changed by this retraction.
 //
 // SO THE CLAUSE ASSERTS THE WORDS. The refusal must name the precondition -- that `StartMatch`
 // has never run -- and not merely the tables, and it must do so on a subsystem that has NO

@@ -1098,11 +1098,16 @@ public:
 	 * RETRACTED>  whether or not that start then succeeds -- deliberately, because a start
 	 * RETRACTED>  that fails has already torn the previous match's board down and its
 	 * RETRACTED>  presentation is as stale as a successful one's."
-	 * Both halves are wrong. Measured 2026-09-03 on `StratMatchSubsystem.cpp`:
-	 * `StartMatchInternal` opens at `:178` and `TearDownPresentation()` is at `:219`, with TWO
-	 * configuration-refusal arms returning before it -- the unassigned definition tables
-	 * (`:189-197`, returning at `:196`) and the empty `ScenarioFile` (`:199-204`, returning at
-	 * `:203`). A `StartMatch` refused on either arm does NOT move this counter, and the
+	 * Both halves are wrong. In `StratMatchSubsystem.cpp`, TWO configuration-refusal arms
+	 * `return false` before `StartMatchInternal` reaches its `TearDownPresentation();`
+	 * statement -- the unassigned definition tables (the arm whose `OutFailureReason =` reads
+	 * "definition tables are not assigned on the GameMode's defaults") and the empty
+	 * `ScenarioFile` (`OutFailureReason = TEXT("ScenarioFile is empty on the GameMode's
+	 * defaults")`). Measured 2026-09-03 at commit `283d711`: the function opened at `:178`, the
+	 * arms returned at `:196` and `:203`, the call was at `:219`. Re-measured 2026-09-10 at
+	 * merge `d59bf9b`: `:202`, `:220`, `:227`, `:243` -- the same code, moved. THE STATEMENTS
+	 * ARE THE CITATION; the numbers are dated evidence and are stale after any edit above them.
+	 * A `StartMatch` refused on either arm does NOT move this counter, and the
 	 * retracted warrant was false too: those arms tear nothing down, so there is no stale
 	 * presentation for the counter to be about.
 	 *
@@ -1119,12 +1124,15 @@ public:
 	 * would clear a live match's presentation because a caller passed a bad config, which is a
 	 * defect the retracted sentence described as deliberate.
 	 *
-	 * REFUSALS THAT HAPPEN *AFTER* `:219` DO MOVE IT, AND THAT IS ALSO CORRECT: `LoadDefinitions`
-	 * (`:266`), `LoadScenarioFromFile` (`:286`) and the restore arm (`:366`) all return false
-	 * with the previous match's board already destroyed, so the presentation genuinely is
-	 * stale and the boundary genuinely happened. The counter is right on both sides of `:219`
-	 * for the same one reason, which is what makes "it counts teardowns" the whole rule rather
-	 * than a rule with exceptions.
+	 * REFUSALS THAT HAPPEN *AFTER* THE CALL DO MOVE IT, AND THAT IS ALSO CORRECT: the three
+	 * arms whose failure reason is built from `DescribeRefusal(TEXT("LoadDefinitions"), ...)`,
+	 * `DescribeRefusal(TEXT("LoadScenarioFromFile"), ...)` and
+	 * `DescribeRefusal(TEXT("RestoreFromSaveText"), ...)` (at `283d711` they returned at `:266`,
+	 * `:286`, `:366`; at `d59bf9b` at `:308`, `:328`, `:408`) all return false with the
+	 * previous match's board already destroyed, so the presentation genuinely is stale and the
+	 * boundary genuinely happened. The counter is right on both sides of the call for the same
+	 * one reason, which is what makes "it counts teardowns" the whole rule rather than a rule
+	 * with exceptions.
 	 */
 	int32 GetMatchEpoch() const { return MatchEpoch; }
 
@@ -2760,17 +2768,28 @@ private:
 	 * Destroys the board and the unit actors and clears the pacing timer.
 	 *
 	 * A NO-OP ON A FIRST `StartMatch`, which is why it needs no "is this a restart" guard at
-	 * its one call site in `StartMatchInternal` (`StratMatchSubsystem.cpp:219`): nothing is
-	 * spawned, the map is empty and the handle is invalid. It has content only on a RESTART --
-	 * a load, or a second `StartMatch` -- where without it the world would carry two boards
-	 * and the timer would fire into a freed bridge.
+	 * its one call site in `StartMatchInternal` -- the bare `TearDownPresentation();` statement
+	 * under that function's "Whatever the last match left, before anything replaces it"
+	 * banner: nothing is spawned, the map is empty and the handle is invalid. It has content
+	 * only on a RESTART -- a load, or a second `StartMatch` -- where without it the world would
+	 * carry two boards and the timer would fire into a freed bridge.
+	 *
+	 * CITED BY STATEMENT AND NOT BY LINE NUMBER, DELIBERATELY. This block first cited the call
+	 * as `StratMatchSubsystem.cpp:219`, true at `283d711` and false by merge `d59bf9b`, where
+	 * `:219` is a `UE_LOG` INSIDE the first refusal arm -- so a reader following the citation
+	 * landed in the guard this block says the call does not have. The lines above the call
+	 * moved by 24 and the lines below it by 42 between those two commits; a number here would
+	 * need re-measuring after every edit to that file, and a quoted statement does not.
 	 *
 	 * "UNGUARDED AT ITS ONE CALL SITE" AND NOT "AT THE TOP OF `StartMatchInternal`", WHICH IS
 	 * WHAT THIS BLOCK USED TO SAY. Corrected 2026-09-03 along with the two `MatchEpoch` blocks
 	 * that inherited the phrase, one of which had DERIVED A FALSE CLAIM from it -- see
-	 * `GetMatchEpoch`'s retraction for the measurement. `:219` is not the top of the function:
-	 * the unassigned-definition-tables arm (`:189-197`) and the empty-`ScenarioFile` arm
-	 * (`:199-204`) both return ahead of it, so this function is not reached on every
+	 * `GetMatchEpoch`'s retraction for the measurement. The call is not the top of the
+	 * function: the unassigned-definition-tables arm (the one whose `OutFailureReason =` reads
+	 * "definition tables are not assigned on the GameMode's defaults") and the
+	 * empty-`ScenarioFile` arm (`OutFailureReason = TEXT("ScenarioFile is empty on the
+	 * GameMode's defaults")`) both `return false` ahead of it, under the "Configuration
+	 * checks, before anything is allocated" banner, so this function is not reached on every
 	 * `StartMatch`. The property that IS load-bearing is preserved and is the one stated
 	 * above: no guard is needed at the call site, because a first start makes this a no-op on
 	 * its own.
@@ -2975,8 +2994,9 @@ private:
 	 * somebody reads rather than a broadcast somebody receives.
 	 *
 	 * WRITTEN IN EXACTLY ONE PLACE, `TearDownPresentation`, AND THAT PLACEMENT IS THE
-	 * GUARANTEE RATHER THAN A CONVENTION. That function has exactly one call site --
-	 * `StratMatchSubsystem.cpp:219`, inside `StartMatchInternal`, unguarded -- and `StartMatch`
+	 * GUARANTEE RATHER THAN A CONVENTION. That function has exactly one call site -- the
+	 * `TearDownPresentation();` statement inside `StartMatchInternal`, unguarded (cited by
+	 * statement; see that function's declaration for why not by line) -- and `StartMatch`
 	 * and `LoadMatchFromSlot` both reach it through that, so "a teardown happened" and "this
 	 * counter moved" are the same event by construction. Incrementing it at the two public
 	 * entry points instead would have been two places to forget, which is the reasoning that
@@ -2985,7 +3005,7 @@ private:
 	 * "ONE CALL SITE, UNGUARDED" AND NOT "AT THE TOP OF `StartMatchInternal`", AND THE
 	 * DIFFERENCE IS NOT PEDANTRY. This block previously said "called unconditionally from the
 	 * top of", and `GetMatchEpoch` said the same thing and then DERIVED A FALSE CLAIM from it
-	 * -- see the retraction there. `:219` is not the top: two configuration-refusal arms
+	 * -- see the retraction there. The call is not the top: two configuration-refusal arms
 	 * return ahead of it. The call is unguarded once reached; it is not reached on every call.
 	 * Both blocks are corrected together so that two descriptions of one function cannot
 	 * disagree, which is how the false derivation survived review in the first place.

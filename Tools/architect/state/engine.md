@@ -15,6 +15,138 @@
 
 ## NEXT
 
+- **2026-09-10, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, dispatched, on `master`
+  in the main tree `E:/MultiAgent/Stratocracy`, base commit `3143049`, UNCOMMITTED) -- REPAIRS
+  THE T-SAVE-04 MERGE `d59bf9b` ON FINDING 1 OF
+  `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md` (`VERDICT: BLOCK`). COMMENT-ONLY:
+  NO BEHAVIOUR CHANGED, AND THE THING WORTH READING IS THAT THE LINE NUMBERS DID NOT MOVE BY ONE
+  AMOUNT -- +24 ABOVE THE CALL AND +42 BELOW IT -- SO NO SINGLE OFFSET COULD HAVE REPAIRED
+  THEM, AND THE REPAIR IS TO STOP CITING BY NUMBER. The live suite count and the phase verdict
+  live in `Tools/architect/state/global.md` and nowhere else; no suite was run this pass.**
+  - **THE FINDING, RE-MEASURED RATHER THAN TAKEN.** `git diff d59bf9b 3143049 -- Source` is
+    empty, so `3143049`'s `Source/` is the merge's. At `d59bf9b`, in
+    `Source/StratPlay/StratMatchSubsystem.cpp`: `StartMatchInternal` opens at `:202`; the
+    definition-tables arm spans `:213-221` and returns at `:220`; the empty-`ScenarioFile` arm
+    spans `:223-228` and returns at `:227`; `TearDownPresentation();` is the only call, at
+    `:243`; the three post-call refusals return at `:308`, `:328`, `:408`. At `283d711` (read
+    with `git show`) the same statements sat at `:178`, `:196`, `:203`, `:219`, `:266`, `:286`,
+    `:366`, and the branch tip `f53ca26` agrees with `283d711`. Seven `master` commits touched the
+    file between `283d711` and `9fbfc5d`. Every reviewer figure agreed with the tree; **the brief
+    that dispatched this pass said the lines moved "by +24", which is true only above the call.**
+  - **SITES CHANGED, ALL IN `Source/StratPlay/`, ALL COMMENTS.** `git diff` over this lane's
+    files -- every `Source/` path outside a `Tests/` directory -- has zero changed lines that are
+    not comment lines (checked by stripping `*` and `//` leaders).
+    - `StratMatchSubsystem.h`, `TearDownPresentation`'s declaration: the call site is now cited
+      as *the bare `TearDownPresentation();` statement under that function's "Whatever the last
+      match left, before anything replaces it" banner*, and the two arms by their
+      `OutFailureReason =` text. A new paragraph, *"CITED BY STATEMENT AND NOT BY LINE NUMBER,
+      DELIBERATELY"*, records the old `:219`, the two commits, and the +24/+42 split -- once, in
+      the one place both other blocks point to.
+    - `StratMatchSubsystem.h`, the `MatchEpoch` member's block: the one-call-site sentence and
+      the *"`:219` is not the top"* sentence now name the statement, not a number.
+    - `StratMatchSubsystem.h`, `GetMatchEpoch`'s retraction: the dated measurement KEEPS its
+      numbers, because they are evidence, but now ties them to `283d711` and gives `d59bf9b`'s
+      beside them; the statements are named as the citation. The post-call refusals are cited
+      by their `DescribeRefusal(TEXT("LoadDefinitions"), ...)` / `LoadScenarioFromFile` /
+      `RestoreFromSaveText` literals. **A precision catch in my own first draft:** I first wrote
+      them as *"arms whose `OutFailureReason = DescribeRefusal(...)`"*, which is false of the
+      `LoadScenarioFromFile` arm -- it wraps the call in a `Printf`. Corrected before the build.
+    - `StratMatchSubsystem.cpp`, inside `TearDownPresentation`'s playback-tour comment: the
+      reviewer's non-gating observation. *"`StartMatchInternal` calls this function
+      unconditionally"* now reads *"from its one call site, unguarded once that function's two
+      configuration-refusal arms have passed -- so not on every start"*. **Fixed rather than
+      left, because it is the same phrase shape the original BLOCK traced a false derivation
+      back to, and this record already says an imprecise inherited phrase is what the next
+      block copies and reasons from.** My first wording quoted the word it replaced; that would
+      have made the corrected comment a hit for any future sweep of the phrase, so it was
+      reworded to not contain it.
+  - **EVERY ANCHOR WAS CHECKED UNIQUE IN THE `.cpp`** by fixed-string grep: `TearDownPresentation();`,
+    both banners, both arm texts and all three `DescribeRefusal(TEXT("...")` literals return
+    exactly one line each.
+  - **THE SWEEP, WRAP-AWARE.** Over `Source/` minus `Source/StratRules/` and every `Tests/`
+    directory, comment leaders stripped and each file flattened, for bare backticked `:NNN`
+    citations, `StratMatchSubsystem.cpp:NNN`, "top of `StartMatchInternal`" and "calls this
+    function unconditionally". Before: 2 filename citations and 15 bare numbers in
+    `StratMatchSubsystem.h`, 1 phrase hit in the `.cpp`, and 1 bare citation in
+    `StratCombatLog.h` that is a different subject and already a block-name anchor (the
+    positive control that the pattern speaks). After: every remaining number in
+    `StratMatchSubsystem.h` names `283d711` or `d59bf9b` in its own sentence; the three
+    "top of" hits are the pre-existing negating quotes (*"AND NOT 'AT THE TOP OF'"*) and a
+    `RETRACTED>` line; the `.cpp` phrase hit is gone.
+  - **THIS RECORD'S OWN STALE NUMBERS, CORRECTED AT THE FALSE WORDS.** The 2026-09-03 (local)
+    T-SAVE-04 entry's *"exactly ONE call site -- `StratMatchSubsystem.cpp:219`"*, its
+    *"`:189-197` ... `:199-204`"* parenthetical, and its *"opens at `:178`, the call is at
+    `:219`"* each carry an inline `[... CORRECTED 2026-09-10 IN PLACE ...]` bracket saying the
+    numbers were `283d711`'s and giving `d59bf9b`'s. The same entry's *"See the handoff recorded
+    in `tests.md`'s lane"* carries a bracket saying no such handoff exists, measured, and that
+    the merged tree has two test-side sites, not one. **That bracket does not claim the handoff
+    exists and must not be read as if it did** -- `strat-test-author` is to be dispatched after
+    this pass to write it.
+  - **BUILD.** `Build.bat StratocracyEditor Win64 Development -waitmutex`, editor closed:
+    44 actions, `UnrealEditor-StratPlay.dll` relinked, `Result: Succeeded`; the UBT
+    `Log.txt` holds zero `warning`/`error` lines.
+  - **NOT MEASURED, SAID PLAINLY.** No suite was run -- the test lane runs it once, on the final
+    tree, after its own `Tests/` edits. `strat_suite_report_gate.py --pin-to-tree` will now read
+    the existing report as STALE, because this pass edited `Source/` after it; that is expected
+    and is the test lane's re-run to clear. I did not re-sweep `Source/*/Tests/` beyond reading
+    whether the two named sites still exist (they do, wrap-aware, in
+    `StratTransientReceiptCallSite.cpp` and `StratSoundDirectorCallSite.cpp`) -- that directory
+    is not this lane's.
+  - **A SECOND COMMENT-ONLY REPAIR IN THE SAME PASS, OVER THE SAME BASE `3143049`: WRITER
+    CLAIMS ABOUT THE SELECTION MACHINE'S TWO SETS THAT `FStratSelectionMachine::Reset()`
+    FALSIFIES. FOUND BY `strat-test-author`**, handed off after its own uncommitted T-SAVE-04
+    pass, and confirmed by the `coordinator` before dispatch: the `DoneUnits` member's
+    *"Cleared by an accepted `EndTurn` and by nothing else"* dates from `ed27d5a`, and since
+    the merge `d59bf9b` a load reaches `Reset()` through
+    `AStratPlayerController::SyncPresentationToMatchEpoch`.
+    - **WRITERS RE-DERIVED FROM THE TREE**, by grep over `Source/` outside `Tests/`, not taken
+      from the handoff. `DoneUnits`: added by `HandleEvent`'s `Wait` arm and by
+      `NotifyCommandApplied`'s `Attack` arm; cleared by `NotifyCommandApplied`'s `EndTurn` arm
+      and by `Reset()`. `LockedUnits`: added and removed by `SetLockedThisTurn`, whose one
+      shipping caller is `FStratGuidedOpening::PublishLocks`, reached only from `Observe`;
+      cleared by `Reset()`. `Reset()` has one shipping caller, the epoch sync above. No
+      whole-machine assignment exists outside `Tests/`.
+    - **`StratSelectionMachine.h`, both member blocks.** `DoneUnits` now names all four
+      writers; `LockedUnits`' *"Written only by `SetLockedThisTurn`"* **had the same defect**
+      and now names both, with the ordering fact that makes a load mid-beat-1a still correct
+      (the sync runs ahead of `Observe` in one decoration).
+    - **`StratSelectionMachine.h`, the header's "THE THREE ENTRY POINTS" paragraph.** Its
+      *"`NotifyCommandApplied` mutates what only an ACCEPTED command may change (`bDone`,
+      ...)"* was falsified by `Reset()`, **and its `HandleEvent` half was already false before
+      `Reset()` existed**: the `Wait` arm adds to `DoneUnits` with no command. Both halves
+      rewritten; `SetLockedThisTurn` and `Reset()` named as writers outside the split.
+    - **FOUR "SINGLE WRITER OF THE LOCK SET" SENTENCES**, found by sweeping for the claim
+      shape (`single writer`, `second writer`, `only writer`) rather than the two phrases in the
+      handoff: in `StratGuidedOpening.cpp` (the `SkipGuidance` body's *"THE LOCKS ARE NOT
+      CLEARED HERE"* and `Observe`'s inactive-path *"skipped the only writer"*),
+      `StratGuidedOpening.h` (`SkipGuidance`'s *"IT DOES NOT CLEAR THE LOCKS BY ITSELF"*),
+      `StratPlayerController.cpp` (`DecorateForPresentation`'s opening block) and
+      `StratPlayerController.h` (`SyncPresentationToMatchEpoch`'s *"CALLED FIRST FROM
+      `DecorateForPresentation`"*). Each now scopes "single" to its class, or names `Reset()` as
+      the other writer.
+    - **NOT CHANGED, AND WHY.** `SelectedUnitId` carries no exclusive-writer claim anywhere
+      swept. The `HexPrimary` arm's *"Unobservable today -- the set is empty in every shipping
+      path"* about the lock gate is also false, but `Observe` falsified it at wave B2 and not
+      `Reset()`; outside this repair's brief and left for a later pass of this lane.
+    - **BUILD, SECOND RUN.** `Build.bat StratocracyEditor Win64 Development -project=...
+      -waitmutex`, no editor running: 32 actions, `UnrealEditor-StratPlay.dll` relinked,
+      `Result: Succeeded`, exit 0; the UBT `Log.txt`'s one `warning`/`error` hit is the
+      `-WarningsAsErrors` flag on the UHT command line. The five files' diff is 56 changed
+      lines, zero of them non-comment, with a planted code line shown passing the same filter.
+      No suite run; the test lane re-runs it on this tree.
+
+### Debts taken on, 2026-09-10 (T-SAVE-04 citation repair)
+
+- **`GetMatchEpoch`'s retraction still carries two sets of line numbers**, deliberately, as dated
+  evidence. They are stale after any edit to `StratMatchSubsystem.cpp` above them and are marked
+  as such in the block itself. **Discharged** only by a pass that decides evidence numbers in a
+  header should live in the record instead; not this pass's call to make alone.
+- **The 2026-09-03 (local) T-SAVE-04 entry's two other observations from the same gate report
+  were NOT touched**: its *"UNCOMMITTED AND UNMERGED at the time of writing"* lede is
+  time-qualified but not stamped as landed at `d59bf9b`, and its clause-state bullet cites
+  report `2026.09.03-13.08.33`, which is no longer on disk. Neither was in this dispatch's
+  brief. **Discharged** by a stamp at each, in this file, in a later pass of this lane.
+
 - **2026-09-07, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, on `master` in the main
   tree `E:/MultiAgent/Stratocracy`, base commit `46321a6`, UNCOMMITTED) -- THE OPTIONS SCREEN
   GAINS A WAY OUT OF A MATCH, AND THE THING WORTH READING IS THAT THE HARD PART WAS NOT THE EXIT
@@ -2975,13 +3107,25 @@
     on the unit that earned it.
   - **THE SEAM: `UStratMatchSubsystem::GetMatchEpoch()`, A NUMBER THE OTHER SIDE READS.**
     `TearDownPresentation` increments `MatchEpoch` as its first statement and is its ONLY
-    writer; that function has exactly ONE call site -- `StratMatchSubsystem.cpp:219`, inside
-    `StartMatchInternal`, unguarded -- so *"a teardown happened"* and *"this counter moved"* are
+    writer; that function has exactly ONE call site -- `StratMatchSubsystem.cpp:219`
+    **[LINE NUMBERS CORRECTED 2026-09-10 IN PLACE, `strat-gameplay-engineer` (ACTING and
+    WRITING; IN LANE, main tree `E:/MultiAgent/Stratocracy`, base commit `3143049`,
+    UNCOMMITTED), on Finding 1 of `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md`:
+    `:219` WAS TRUE AT `283d711`, WHERE THIS ENTRY WAS WRITTEN, AND IS FALSE ON `master` FROM
+    MERGE `d59bf9b` ONWARD -- there `:219` is the `UE_LOG` inside the first refusal arm and the
+    call is at `:243`, so a reader following this number lands inside the guard the sentence
+    says the call does not have. EVERY `StratMatchSubsystem.cpp` LINE NUMBER IN THIS ENTRY IS
+    `283d711`'s; the two `SAME CORRECTION` brackets below give `d59bf9b`'s beside them. `Source/` now cites the
+    call by its statement, `TearDownPresentation();`, rather than by any number. The structure
+    this sentence states -- one call site, unguarded -- is unchanged and re-measured true.]**,
+    inside `StartMatchInternal`, unguarded -- so *"a teardown happened"* and *"this counter moved"* are
     the same event by construction rather than by convention. **THE GUARANTEE IS ABOUT
     TEARDOWNS AND NOT ABOUT `StartMatch` CALLS, and my first draft of this entry and of the
     header said otherwise.** It read *"sits unconditionally at the top of `StartMatchInternal`"*,
     which is false: `:219` is not the top, and two configuration-refusal arms return ahead of it
-    (unassigned definition tables at `:189-197`, empty `ScenarioFile` at `:199-204`). The
+    (unassigned definition tables at `:189-197`, empty `ScenarioFile` at `:199-204`)
+    **[SAME CORRECTION, SAME PASS: `283d711`'s numbers. At `d59bf9b` the call is at `:243`
+    and the arms span `:213-221` and `:223-228`; the code is byte-identical, moved.]**. The
     counter therefore does NOT move on a `StartMatch` refused for a bad config -- correctly, because
     those arms tear nothing down, so a live match's selection and build focus survive a
     misconfigured call. The corrected reading is the stronger one: **this counter counts boards
@@ -3080,7 +3224,9 @@
     DERIVED from it that *"the first `StartMatch` takes it to 1 whether or not that start then
     succeeds"*. Both halves false, verified by me against the tree before complying:
     `StartMatchInternal` opens at `:178`, the call is at `:219`, and two refusal arms return
-    ahead of it. **THE CODE WAS RIGHT AND ONLY THE PROSE WAS WRONG** -- a start that tore
+    ahead of it **[SAME CORRECTION, SAME PASS: `283d711`'s numbers, which is the tree that
+    verification ran against. At `d59bf9b` the function opens at `:202` and the call is at
+    `:243`.]**. **THE CODE WAS RIGHT AND ONLY THE PROSE WAS WRONG** -- a start that tore
     nothing down must not announce a boundary, or a bad config would clear a live match's
     presentation -- so the sentence was fixed and the behaviour was not touched.
     - **WHAT MADE IT SURVIVE MY OWN REVIEW: I INHERITED THE PHRASE RATHER THAN CHECKING IT.**
@@ -3095,7 +3241,21 @@
       is corrected too, because leaving it would have left two blocks in ONE file disagreeing
       about one function, which is the condition that produced the finding.
     - **THE FOURTH IS NOT MINE AND IS HANDED OFF, NOT FIXED**, in `Source/StratPlay/Tests/`.
-      See the handoff recorded in `tests.md`'s lane, not here.
+      See the handoff recorded in `tests.md`'s lane, not here. **[CORRECTED 2026-09-10 IN
+      PLACE, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, main tree
+      `E:/MultiAgent/Stratocracy`, base commit `3143049`, UNCOMMITTED), on Finding 2 of
+      `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md`: THE SENTENCE BEFORE THIS
+      BRACKET POINTS AT NOTHING. NO SUCH HANDOFF HAS EVER BEEN RECORDED IN `tests.md` -- not at
+      `283d711`, not at merge `d59bf9b`, not at `3143049`. Re-measured this pass over the
+      whitespace-flattened file: the phrase "top of `StartMatchInternal`" appears 0 times; the
+      one "fourth site" is an unrelated `T-INT-05` sentence; control: the same scan finds the
+      `T-SAVE-04` clause this entry's change is pinned by. AND THE MERGED TREE HAS TWO
+      TEST-SIDE SITES, NOT ONE: `StratTransientReceiptCallSite.cpp` (this entry's "fourth") and
+      `StratSoundDirectorCallSite.cpp`, which arrived from `master` in `d80b28a` (2026-09-05),
+      after this entry's base -- so this bullet's "FOUR SITES" was true at `283d711` and is five
+      at `d59bf9b`. `strat-test-author` is to be dispatched after this pass to receive both; UNTIL
+      AN ENTRY IN `tests.md` DOES, THIS BULLET HAS NO RECEIVING RECORD, and this bracket is not
+      evidence that one now exists.]**
 
   - **THREE DEBTS CARRIED FORWARD, EACH WITH THE CONDITION THAT DISCHARGES IT.**
     - **A load naming a DIFFERENT `ScenarioFile` leaves §2.11.6 armed against the previous

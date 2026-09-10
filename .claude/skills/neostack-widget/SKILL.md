@@ -4,6 +4,7 @@ description: How to author UMG Widget Blueprints (UWidgetBlueprint) through `exe
 ---
 
 # Editing Widget Blueprints
+<!-- agent-docs:fill:purpose -->
 
 A Widget Blueprint is just a Blueprint with an extra **widget tree** layered on top. The graph/variable/event side works exactly like `neostack-blueprint` — read that first. This skill covers what's *different*:
 
@@ -15,6 +16,7 @@ A Widget Blueprint is just a Blueprint with an extra **widget tree** layered on 
 6. Export / import
 
 ## The shape of a widget task
+<!-- agent-docs:fill:model -->
 
 ```lua
 -- 1. Get the widget BP (enriched table — same as a Blueprint, with extra widget methods)
@@ -290,6 +292,7 @@ Import returns `[{name,type,is_root}, ...]` and registers each new widget in the
 Like all enriched BP tables, `bp.variables` / `bp.graphs` / `bp.components` are **snapshots** taken when you opened the BP. They do NOT auto-refresh after `add_variable` / `add_function` / `add_event_graph`. The widget-tree methods (`list_widgets`, `get_widget`, `widget_info`) DO read live state and are safe to call repeatedly. If a member-variable list looks stale, just `bp = open_asset(path)` again.
 
 ## End-to-end pattern — health bar HUD
+<!-- agent-docs:fill:tasks -->
 
 ```lua
 local path = "/Game/UI/WBP_HUD"
@@ -345,6 +348,7 @@ for _, line in ipairs(compile_log) do log(tostring(line.message or line.text or 
 ```
 
 ## Visual verification
+<!-- agent-docs:fill:patterns -->
 
 Use screenshot asset mode after meaningful layout changes. The default WidgetBlueprint capture is the clean rendered UMG preview and ignores the Designer viewport's current pan/zoom, rulers, and safe-zone chrome:
 
@@ -361,6 +365,23 @@ screenshot({
   widget_capture = "designer", -- includes editor overlays, rulers, safe-zone chrome, and current pan/zoom
 })
 ```
+
+## Gotchas
+<!-- agent-docs:fill:gotchas -->
+
+Things that get mistaken for one another. Each line is a real confusion this lane has
+produced or can produce, not a style note.
+
+- **Parenting is not layout.** A widget added to a CanvasPanel without `LayoutData` is in the
+  tree and nowhere on screen.
+- **A property binding is not an event binding.** Separate mechanisms, separate calls; reaching
+  for the wrong one fails quietly.
+- **A stale snapshot is not the current tree.** Re-open after structural changes, always.
+- **`slot` is not `slot_props`.** Setting the wrong one succeeds and does nothing.
+- **A structured return is not a success.** `configure_widget` returns structure either way —
+  read it, do not assume it.
+- **A widget that renders at your resolution is not a widget that lays out.** Anchors decide
+  that, and one screenshot cannot show it.
 
 ## Failure modes you'll actually see
 

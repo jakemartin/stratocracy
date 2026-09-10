@@ -196,6 +196,8 @@ pipes its build to `tail` or `head` will report a failed build as a pass.
 A branch is ready to merge when its own tree is green and the reviewer has passed the **rebased**
 branch — not the branch as it was written.
 
+0. **Read the lane's handoff against its tree** before anything below. See *Before you merge: the
+   handoff*. A lane that cannot fill the form has not finished, whatever its branch looks like.
 1. **Rebase in the lane tree**, never on the integration tree:
    `git -C <lane> fetch . master:master && git -C <lane> rebase master`
 2. **Rebuild and re-run the suite in that lane tree.** A rebase is a change; a green from before it
@@ -208,6 +210,50 @@ branch — not the branch as it was written.
 6. **Then the record.** The owning lane's file under `Tools/architect/state/` gets the entry;
    `state/global.md` gets the banner and the suite count — it is the only file that may carry a
    live one, enforced by the sweep's `RECORD OWNERSHIP` check.
+
+### Before you merge: the handoff
+
+Every lane fills `ue-agent-kit`'s `<plugin>/templates/handoff.md` before its work leaves the lane.
+Fill in the form itself, empty fields included, not a summary. It lives beside the lane's draft
+record entries, never in `Tools/architect/state/`, which lanes do not write. Rebase reconciles
+*bytes*. It has no opinion about whether a lane's green was measured before or after its last
+edit, and that contradiction exists only *between* lanes, where no in-lane gate runs.
+
+At the boundary, check three things against the lane's **tree**, not the handoff's wording:
+
+1. **NOT RUN is not PASS.** A blank in that field is a question, not a clearance. A field that
+   says "none" while the same form says the reviewer did not run is a false clearance.
+2. **Stale results.** For the suite, let the gate derive freshness from the lane's own tree —
+   but run the **integration tree's** copy of the gate, pointed at the lane's report and source:
+
+   ```bash
+   LANE=$(git -C <lane> rev-parse --show-toplevel)
+   cd "$(git rev-parse --show-toplevel)" && python Tools/architect/strat_suite_report_gate.py --pin-to-tree --report "$LANE/Saved/AutomationReport/index.json" --source-root "$LANE/Source"
+   ```
+
+   `--pin-to-tree` refuses the report unless it postdates every non-doc file under `Source/`,
+   committed or not. **Never gate a lane's report unpinned.** The census compares clause *names*,
+   so an edit that renames nothing is invisible to it.
+
+   **Why not the lane's own copy:** a lane cut before the gate gained `--pin-to-tree` carries the
+   old script, and step 0 runs before the rebase. Run in the lane, the command exits 2 with
+   `unrecognized arguments: --pin-to-tree` — measured 2026-09-10 on both standing slots by
+   `strat-integration-reviewer`. The integration tree's copy also stops a lane grading its own
+   report with a gate it may have edited.
+3. **The raw figure.** Compare `N/N` and `succeededWithWarnings`, not the headline.
+
+**Measured on this project's own slots, 2026-09-10** (`E:\MultiAgent\trial-2026-09-10-handoff\`):
+- An uncommitted edit to `StratPathPreviewQuery.cpp` in `slot-1` removed the moved-unit gate that
+  `T-UI-02.PathPreviewGateIsHasMovedNotDone` pins. The lane's handoff still said 334/334.
+- The unpinned gate said `SUITE REPORT GATE CLEAN`. A blind boundary reader caught the edit only
+  by deriving a pin from the newest `Source/` mtime on its own initiative; nothing here told it to.
+- The same reader found that **both** lanes' handoffs said "not merged" on 2026-09-10, when both
+  had merged on 2026-08-31 (`1576e40`, `ed09973`). "Not merged" is a claim about `master`, not about the branch:
+  ask `git rev-list --count master..<branch>`.
+
+What the pin cannot see is stated in the gate's docstring: an edit between the build and the end
+of the run, `Content/` and `Config/`, and a checkout that rewrites mtimes (a refusal, never a
+false pass). Say so in the handoff rather than letting the pin stand in for it.
 
 ### Clause counting across a merge
 
@@ -229,3 +275,6 @@ that difference.
 - [ ] No build or suite command is piped.
 - [ ] The lane does not touch `Content/`, `Source/StratRules/`, or `Data/`.
 - [ ] `strat-integration-reviewer` has statically gated the branch before it takes a build slot.
+- [ ] The prompt tells the lane to close with a filled `<plugin>/templates/handoff.md`, NOT RUN
+      and stale-results fields included. It is read at the boundary with `--pin-to-tree`, never
+      taken at its word.

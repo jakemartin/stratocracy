@@ -5,10 +5,12 @@ tags: [neostack, playtest, game-testing, unreal, pie]
 ---
 
 # Game Testing
+<!-- agent-docs:fill:purpose -->
 
 Use `execute_script` with NeoStack's `playtest_*` Lua helpers. Keep a test loop structured: start PIE, wait until ready, mark logs/screens, act, assert, stop PIE.
 
 ## Basic Loop
+<!-- agent-docs:fill:tasks -->
 
 ```lua
 playtest_start()
@@ -30,6 +32,7 @@ return {changed=changed, begin_play=begin_play}
 ```
 
 ## What To Use
+<!-- agent-docs:fill:model -->
 
 - `playtest_status()` - check PIE state.
 - `playtest_start(opts?)` / `playtest_stop()` - lifecycle.
@@ -60,12 +63,26 @@ playtest_input_mapping({mapping="Move", value={x=1,y=0}, mode="pulse"})
 ```
 
 ## Testing Rules
+<!-- agent-docs:fill:patterns -->
 
 - Keep marker variables inside one `execute_script` call; Lua state is not shared across calls.
 - Prefer logs and game state assertions over screenshots when possible.
 - Screenshot hash changes can happen from TAA, sky, particles, or camera jitter; use it as "frame changed", not proof of intent.
 - Always stop PIE on failure paths when the script started it.
 - Return structured tables with `ok`, `passed`, `message`, and useful evidence.
+
+## Gotchas
+<!-- agent-docs:fill:gotchas -->
+
+Things that get mistaken for one another. Each line is a real confusion this lane has
+produced or can produce, not a style note.
+
+- **PIE launching is not the game running.** A world that loads can still have no player pawn.
+- **No error in the log is not a passing test.** Absence of an error is absence of evidence; say
+  what you actually observed.
+- **An input sent is not an input received.** Confirm the effect, not the call.
+- **A screenshot is not a verification** unless you say what in it you checked.
+- **A test that passed once is not a test that passes.** Say which run you are reporting.
 
 ## Good Failure Report
 

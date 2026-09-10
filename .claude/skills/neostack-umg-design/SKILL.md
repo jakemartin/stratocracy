@@ -4,10 +4,12 @@ description: How to make UMG Widget Blueprints actually look good — typography
 ---
 
 # Designing UMG Widget Blueprints
+<!-- agent-docs:fill:purpose -->
 
 `neostack-widget` covers the binding — `add_widget`, `configure_widget`, slot props, events. This skill is about taste: committing to an aesthetic direction and executing it precisely with the tools UE actually gives you.
 
 ## The shape of a designed widget
+<!-- agent-docs:fill:model -->
 
 ```lua
 local bp = create_asset("/Game/UI/WBP_X", "WidgetBlueprint")
@@ -39,6 +41,7 @@ bp:configure_widget("Grid", { slot={
 ```
 
 ## The five rules nothing else matters more than
+<!-- agent-docs:fill:patterns -->
 
 1. **Commit to ONE aesthetic direction.** Terminal-brutalist. Editorial-magazine. Retro-arcade. Soft-organic. Luxury-refined. Pick one in plain language before writing any code. Half-committed designs read as generic.
 2. **One accent color, full stop.** ACCENT does ALL the attention work. Adding a second accent is where AI-slop lives. If you need to differentiate, use opacity (`A=0.5`) or a dim variant of the SAME accent — don't reach for a new hue.
@@ -329,6 +332,24 @@ inv_row("Bandage",    "Bandage",    "5")
 
 12 inventory rows in 12 lines instead of 70+ widget calls. Same pattern for weapon cards (header chip + name + ammo info + image area + 4 attachment slots), equipment slots, settings rows — anything that repeats.
 
+## Gotchas
+<!-- agent-docs:fill:gotchas -->
+
+Things that get mistaken for one another. Each line is a real confusion this lane has
+produced or can produce, not a style note.
+
+- **Omitting `Alignment` does not leave it unset.** It centers the widget, silently.
+- **`Right`/`Bottom` are not always right and bottom.** Their meaning changes with the anchor;
+  the same numbers mean different things under a stretch anchor and a point anchor.
+- **A widget that renders is not a widget that is designed.** The default button renders fine
+  and is the single clearest tell of unstyled output.
+- **Decorative layers are not layout.** Atmosphere sits on its own CanvasPanel; mixing it into
+  the content tree makes both harder to move.
+- **A font that displays is not a font at the right size.** Engine font reality bites at small
+  sizes; check against the typography scale rather than by eye.
+- **Passing the anti-pattern checklist is not good design.** It removes the tells. What is left
+  still has to be composed.
+
 ## Anti-patterns (the AI-slop checklist)
 
 | Don't | Do |
@@ -354,6 +375,7 @@ Pick ONE before writing any code. Each carries its own palette + type + composit
 - **Soft / Organic** — pastel palette (`(0.9, 0.85, 0.8)` warm bg), rounded corners (`CornerRadii=(X=12,...)`), gentle gradients via two stacked translucent Borders.
 
 ## Quick-build template
+<!-- agent-docs:fill:tasks -->
 
 A minimum brutalist HUD card — copy and reskin per direction:
 

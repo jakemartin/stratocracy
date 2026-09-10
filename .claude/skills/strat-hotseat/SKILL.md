@@ -227,6 +227,42 @@ Read `state.md` only for the recorded reasoning behind a phase that is already c
 
 If `state/global.md` records no phase for this milestone, phase 0 has not run.
 
+### Handing off, and resuming, across sessions
+
+**`global.md` records what was true when each gate passed.** It has no NOT RUN field and no
+stale-results field, and nothing here used to tell a resuming session to check it against the tree.
+One tree makes clobbering impossible. It does nothing about a claim that outlived the edit that
+invalidated it.
+
+**When a session ends mid-milestone**, the coordinator fills `ue-agent-kit`'s
+`<plugin>/templates/handoff.md` — the form itself, empty fields included, not a summary. Its
+**NOT RUN / blocked** and **stale results** fields are required. A blank is a question, not a
+clearance. `Tools/architect/` outside the record files is `strat-data-steward`'s lane, so dispatch
+it to file the handoff at `Tools/architect/handoffs/<YYYY-MM-DD>-phase-<N>.md`, **never** in `state/`.
+It is a claim about a tree that will move, not part of the record.
+
+**When a session resumes**, read `global.md` **and** the latest handoff. Then revalidate against
+the tree before advancing:
+
+1. `git status --short` and `git log -1`. Compare them with the handoff's HEAD and dirty-file
+   lines.
+2. Check the phase's suite green for freshness against every source edit since it ran:
+
+   ```bash
+   TOP=$(git rev-parse --show-toplevel)
+   cd "$TOP" && python Tools/architect/strat_suite_report_gate.py --pin-to-tree
+   ```
+
+   If the report is older than the newest non-doc file under `Source/`, that green is **gone**.
+   Carry the phase's suite result forward as NOT RUN and re-run it before the phase advances.
+3. Anything the handoff lists as NOT RUN stays NOT RUN until something actually runs it.
+
+Measured 2026-09-10 on this project's slots (`E:\MultiAgent\trial-2026-09-10-handoff\`):
+- A green carried over an uncommitted edit that removed a gate `T-UI-02` pins passed the unpinned
+  gate.
+- Handoffs written 2026-09-10 said "not merged" of lanes that had merged on 2026-08-31.
+- In both cases the claim read as current, and only the tree said otherwise.
+
 ## Crew smoke test
 
 Before phase 0, if the crew has never run, verify each agent with one dispatch. Each has a pass

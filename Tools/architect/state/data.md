@@ -15,6 +15,139 @@
 
 ## NEXT
 
+- **DONE, 2026-09-10 -- `Tools/architect/strat_suite_report_gate.py` gained `--pin-to-tree`,
+  ported from `ue-agent-kit`.** Base commit `d59bf9b` (`master` = `origin/master` at dispatch;
+  the brief that opened this pass named a stale `9fbfc5d` two commits back, and this entry
+  re-measured `master`/`origin/master` itself rather than trusting the brief -- the two commits
+  between them, `f53ca26` and `d59bf9b`, touched only `Source/StratPlay/**` and
+  `Tools/architect/state/{engine,tests,global}.md`, none of `Tools/architect/strat_*.py`,
+  `.github/` or `.claude/`, so the base does not change what was ported).
+  **THIS PASS WAS BRIEFED FROM A SEPARATE SESSION, STATED PLAINLY, PER INSTRUCTION.** The port
+  was briefed in `E:\MultiAgent\briefs\2026-09-10-strat-data-steward-pin-port.md`, written by
+  the `coordinator` from a session started in `E:\MultiAgent` where the `strat-*` agents do not
+  register at all. The user chose that separate session over dispatching this agent as a
+  stand-in for the write; that choice, and the reasoning behind it, live in the briefing
+  session's own transcript, which no checkout of this repository contains. This entry's acting
+  and writing are the same agent (`strat-data-steward`, dispatched normally in this session,
+  in lane) -- the thing worth naming is only the session split upstream of the dispatch, not any
+  attribution question in the record itself.
+  **THE CLAIMS RE-MEASURED, BOTH HELD.** `E:\ue-agent-kit` clean at `df8c1a978ce5cc223f764709f437fcef6e31b5af`
+  on `main`, level with `origin/main`.
+  (1) `git -C E:\ue-agent-kit show 7aefaff:plugins/ue-agent-kit/scripts/suite_report_gate.py`
+  against the pre-port `Tools/architect/strat_suite_report_gate.py` (508 lines),
+  `diff --strip-trailing-cr`: exactly 4 changed lines, all four renames
+  (`ue-integration-reviewer` -> `strat-integration-reviewer` x3, `ue-data-steward` ->
+  `strat-data-steward` x1), no other line moved. (2)
+  `git -C E:\ue-agent-kit log --oneline 7aefaff..HEAD -- plugins/ue-agent-kit/scripts/suite_report_gate.py`
+  lists exactly one commit, `71c0664` ("Give the suite gate a freshness pin a lane boundary can
+  actually use..."); `df8c1a9` (HEAD) did not touch the file again. Both claims held, so the
+  port is the plugin file at `HEAD` (`df8c1a9`) with the same four renames applied, taken from
+  `71c0664`'s content as it stands at `HEAD` -- verified by a full `diff --strip-trailing-cr` of
+  the renamed `HEAD` copy against `7aefaff`'s renamed copy: the diff is exactly the
+  `--pin-to-tree` additions (new docstring point 4, `utc_stamp`, `_is_doc`, `newest_file`, the
+  `pin_to_tree` parameter and its branch in `check()`, nine new self-test fixtures plus the
+  `utc_stamp(0)` epoch check, and the `--pin-to-tree` CLI flag) -- 4 lines removed (the old
+  three-argument `check()` signature, its two call sites in the self-test harness and `main()`,
+  and the self-test's `report, root, pin = build(Path(td))` unpacking line), 213 lines added,
+  nothing else.
+  **`--self-test`, RUN WITH `python -W error`.** `SELF-TEST: ALL FIXTURES CORRECT`, exit 0 --
+  every pre-existing fixture unchanged in verdict, plus the nine `--pin-to-tree` fixtures and
+  the `utc_stamp(0)` epoch check (`1970.01.01-00.00.00`), all `[OK]`.
+  **MUTANTS, EACH ON A SCRATCH COPY, NEVER IN PLACE.** All five named in the brief killed at
+  least one fixture: `edited >= created` -> `edited > created` killed the SAME-SECOND
+  fixture (expected FAIL, got PASS); counting directories as well as files (dropped
+  `path.is_file()` in `newest_file`) killed both the newer-directory-with-older-files fixture
+  and the newer-SKILL.md-under-`.claude`-still-passes fixture (both expected PASS, got FAIL);
+  `datetime.fromtimestamp(epoch)` with no UTC zone killed the `utc_stamp(0)` check itself
+  (`1969.12.31-19.00.00`, this box's local zone, not `1970.01.01-00.00.00`) plus two pin
+  fixtures; docs counted (dropping `_is_doc` from `newest_file`) killed the SKILL.md fixture.
+  **THE FLAG-IGNORED MUTANT NEEDED A LIVE INVOCATION, NOT `--self-test`**, because the self-test
+  harness calls `check()` directly and never exercises `main()`'s CLI wiring -- a mutant that
+  strips `args.pin_to_tree` out of the `check(...)` call in `main()` is invisible to every
+  fixture in the file, all of which passed unchanged. Killed instead with a scratch tree
+  (one `.cpp`, a report dated `2026.08.30-04.00.00`, the report file's own mtime pushed to
+  2025-08-30, the `.cpp` freshly touched): the unmutated script with `--pin-to-tree` printed
+  `SUITE REPORT GATE FAILED` / `STALE REPORT`, exit 1; the flag-ignored mutant with the
+  identical `--pin-to-tree` argument printed `SUITE REPORT GATE CLEAN`, exit 0. This is worth
+  recording as its own finding about mutant coverage, not only about this one flag: a fixture
+  suite that calls the checked function directly, bypassing `main()`, cannot see a defect that
+  lives in the CLI wiring itself, and this file's self-test is exactly that shape everywhere.
+  **DIFF AGAINST THE PRE-PORT FILE IS ONLY THE PIN ADDITIONS.** `git diff --stat` on the shipped
+  file: 213 insertions, 4 deletions -- the same 4 deletions being the pre-pin, three-argument
+  `check()` signature, its two call sites (the self-test harness and `main()`), and the
+  self-test's `report, root, pin = build(Path(td))` unpacking line, all replaced by the
+  four-argument form; no unrelated line moved, confirmed by the three-way diff above
+  (renamed-HEAD vs renamed-`7aefaff`) landing on exactly the pin's own hunks.
+  **LIVE CONTROLS, READ-ONLY, RE-MEASURED RATHER THAN TRUSTED.** Stratocracy main tree
+  (`E:\MultiAgent\Stratocracy`, default `--report`/`--source-root`): `--pin-to-tree` ->
+  `SUITE REPORT GATE CLEAN`, exit 0, `reportCreatedOn 2026.09.10-18.20.14`, `479/479`, newest
+  file `Source\StratPlay\StratSelectionMachine.h` at `2026.09.10-18.16.13` (UTC), which predates
+  the report -- consistent with the coordinator's caveat that this tree's suite report already
+  postdates the `d59bf9b` merge build. `E:\MultiAgent\Strat-wt\slot-1`: CLEAN, exit 0,
+  `reportCreatedOn 2026.08.31-23.11.32`, `334/334`. `E:\MultiAgent\Strat-wt\slot-2`: CLEAN, exit
+  0, `reportCreatedOn 2026.08.31-23.27.38`, `334/334`. Both slots read via `--report`/
+  `--source-root` pointed at the slot paths from this tree's copy of the script; nothing under
+  either slot was opened for writing, and `git -C` status/mtime on the touched file inside
+  slot-1 (below) confirms neither slot tree itself moved.
+  **THE SCRATCH-COPY STALE PROBE, ON A COPY, NEVER ON A SLOT.** Copied `slot-1`'s `Source/` and
+  `Saved/AutomationReport/index.json` into a scratch directory outside every repo. Unpinned
+  against the untouched copy: CLEAN, exit 0 (count-based, ignores mtimes). Then touched exactly
+  one `.cpp` in the SCRATCH COPY (`StratBridge.cpp`): unpinned re-check still CLEAN, exit 0
+  (unchanged, as expected -- the census only looks at clause names); `--pin-to-tree` on the same
+  scratch copy: `SUITE REPORT GATE FAILED` / `STALE REPORT`, exit 1, naming the touched file and
+  its mtime against `reportCreatedOn`. Confirmed the real slot-1 file was never touched:
+  `stat -c '%Y'` on the real `slot-1/Source/StratBridge/StratBridge.cpp` and on the scratch
+  copy's same-named file disagree (`1788215097` vs `1789069034`), and
+  `git -C E:\MultiAgent\Strat-wt\slot-1 status --porcelain=v1 -uno` reported nothing.
+  **CI, `.github/workflows/build-and-suite.yml`, CONFIRMED NEEDING NO EDIT.** Greped for every
+  call site: `--self-test` (unchanged signature) and `--not-before $env:SUITE_NOT_BEFORE`
+  (unchanged signature). The port adds `--pin-to-tree` as a new, optional, mutually-exclusive-
+  with-`--not-before` flag; it does not touch either existing call's arguments or behaviour.
+  **LANE NOTE.** The file's existing `# LANE NOTE, 2026-08-30.` block explains a past
+  OUT-OF-LANE write by the `coordinator`. This write is IN lane -- `strat-data-steward`,
+  dispatched normally, writing `Tools/architect/`, which is this steward's own territory -- so
+  per the brief's own instruction ("say so only if the note's shape asks for it"), no new LANE
+  NOTE block was added; the existing one is left exactly as written, since it still correctly
+  describes only the write it was written about.
+  **`Tools/architect/handoffs/` -- ACCEPTED, WITH A PRECEDENT NAMED.** The coordinator's
+  uncommitted `strat-hotseat` edit proposes a new directory in this lane,
+  `Tools/architect/handoffs/<YYYY-MM-DD>-phase-<N>.md`, for a session's handoff. Accepted as
+  proposed: `Tools/architect/gate_reports/` is the exact same shape already standing in this
+  lane -- dated files, sibling to `state/`, holding a claim about a tree that will move -- and
+  neither sweep currently reaches it, checked rather than assumed. `strat_banner_sweep.py`'s
+  `STATE_DIR` is `Tools/architect/state` only (`discover_state_files` walks `*.md` under that
+  one directory); `handoffs/` is a sibling, not a subdirectory, so it is out of scope by
+  construction, the same way `gate_reports/` already is. `strat_doc_citation_gate.py`'s
+  `DOC_ROOTS` is `(Tools/architect/state, .agents, .claude, CLAUDE.md)` -- also excludes
+  `handoffs/` as a sibling of `state/` -- and `record_units()` derives citable "record subjects"
+  only from the basenames of files under `DOC_ROOTS`/`CODE_ROOTS`, so a handoff file's own name
+  would not become a citable subject either, and a stale line-number citation written inside a
+  handoff would not be caught by this gate -- correct for the stated reason, since a handoff is
+  explicitly a dated snapshot and not a live record either gate should be reading as current.
+  Should the file naming pattern land, no code change is needed to keep it out of either
+  sweep's scope; if a future entry ever wants a handoff's CONTENT treated as live (a suite count
+  restated as current, say), that would need deliberate widening of `STATE_DIR` or `DOC_ROOTS`,
+  and should be argued for at that time rather than assumed now.
+  **NOT MEASURED THIS PASS.** Whether `plugins/ue-agent-kit/scripts/suite_report_gate.py` has
+  its own upstream self-test wired into `ue-agent-kit`'s own CI was not checked -- irrelevant to
+  this port's correctness but not verified either way. Whether any OTHER Stratocracy-side
+  script imports or shells out to `strat_suite_report_gate.py` in a way that would need updating
+  for the new flag was not swept; a plain grep for the module's own filename across `Tools/` and
+  `.github/` found only the one call site already covered above, but this was not a full
+  call-graph analysis.
+  **OPEN, UPSTREAM, NOT FILED THIS PASS.** The flag-ignored mutant's invisibility to
+  `--self-test` (above: `check()` is called directly, bypassing `main()`'s argparse wiring) is
+  not a local defect to patch here -- a fix belongs in `E:\ue-agent-kit`,
+  `plugins/ue-agent-kit/scripts/suite_report_gate.py`, as a `main()`-level fixture in its own
+  self-test, because a local-only fix would fork this file from its plugin source. It matters
+  more now that both `strat-hotseat` and `strat-parallel` make `--pin-to-tree` mandatory at
+  every boundary while `.github/workflows/build-and-suite.yml` calls only `--self-test` and
+  `--not-before` -- the CLI wiring path the crew depends on is exactly the path the self-test
+  cannot see. Relatedly, and also not built this pass: `template_sync check` lists
+  `strat_suite_report_gate.py` among "template-only scripts, NOT MEASURED," so drift between
+  this file and its plugin source is unguarded in either direction. Neither item is filed as a
+  numbered upstream request in this entry; recorded here as open so it is not lost.
+
 - **DONE, 2026-09-06 -- Two measured defects fixed in `Tools/architect/strat_banner_sweep.py`,
   base commit `f7da9ca`, branch `master`, tree dirty on top of it (the uncommitted, gated-clean
   `EStratSoundCue` `Count`-sentinel pass; nothing under `Source/` or `Tests/` touched by this

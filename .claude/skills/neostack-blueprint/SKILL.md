@@ -4,10 +4,12 @@ description: How to create and edit Unreal Blueprints through `execute_script`. 
 ---
 
 # Editing Blueprints
+<!-- agent-docs:fill:purpose -->
 
 You only have one tool: `execute_script`. It runs Lua against the live editor. Everything below is Lua you should write inside that tool's `script` argument.
 
 ## The shape of a Blueprint task
+<!-- agent-docs:fill:model -->
 
 1. **Get the BP object.** `create_asset` (new) or `open_asset` (existing) returns the *enriched table* — call methods on it directly.
 2. **Mutate.** Variables/components/functions via methods on the BP. Graph nodes via `find_nodes` → `add_node` → `connect` / `set_pin`.
@@ -127,6 +129,7 @@ Same single-connection caveat — if `begin_play.then` was already wired to some
 The field is `linked_to`, **not** `connections` — the inline help text says "connections" but the actual returned key is `linked_to`.
 
 ## End-of-script finalization
+<!-- agent-docs:fill:patterns -->
 
 `FLuaGraphFinalizer` runs once at the end of every script execution: it compiles dirty graphs and marks the asset modified. So:
 
@@ -135,6 +138,7 @@ The field is `linked_to`, **not** `connections` — the inline help text says "c
 - An in-script `read_graph` after a mutation may show the topology without all metadata populated. If something looks wrong, the most reliable verification is a *fresh script* whose first call is `read_graph`.
 
 ## End-to-end pattern
+<!-- agent-docs:fill:tasks -->
 
 ```lua
 -- 1. Create
@@ -163,6 +167,20 @@ set_pin(print_node.handle, "In String", "Hello from NSAI!")
 bp:compile()
 bp:save()
 ```
+
+## Gotchas
+<!-- agent-docs:fill:gotchas -->
+
+Things that get mistaken for one another. Each line is a real confusion this lane has
+produced or can produce, not a style note.
+
+- **A node spawned is not a node connected.** Spawning succeeds on an orphan.
+- **A script that returned success is not a compiled Blueprint.** Finalize at end of script, or
+  the asset stays dirty and the change is not real.
+- **A pin default set is not a pin wired.** A literal silently outranks the connection you meant
+  to make.
+- **A graph that reads back is not a graph that runs.** Reading confirms topology, not execution.
+- **A stale snapshot is not the current asset.** Re-open after any structural change.
 
 ## Failure modes you'll actually see
 

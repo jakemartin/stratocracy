@@ -230,13 +230,37 @@ struct STRATPLAY_API FStratBuildAffordance
 	 * after a reseed the recorded turn and seat describe a match that is over, and leaving
 	 * them would make the FIRST `Observe` of the new match see a spurious change.
 	 *
-	 * NO SHIPPING CALLER TODAY, AND THAT IS STATED RATHER THAN IMPLIED. Measured on the tree
-	 * at `fcf64d3`: `FStratSelectionMachine::Reset()` -- the method this one was written for
-	 * parity with -- is declared, defined, and called by NOTHING, in `Source/` including
-	 * `Tests/`. So the parity is with an uncalled method and this one inherits that. It is a
-	 * debt, and the condition that discharges it is a load or reseed path that calls both:
-	 * whatever eventually resets the machine must reset this in the same place, because a
-	 * focus surviving a reseed is a BUILD button about a factory on a board that is gone.
+	 * THE DEBT BELOW IS DISCHARGED. 2026-09-03: this method has a shipping caller, and it is
+	 * the one the paragraph itself specified. The retracted text is kept because the reason
+	 * this method exists is still the reason, and because a reader arriving at
+	 * `FStratSelectionMachine::Reset()` on the strength of it should find the correction
+	 * here rather than have to go looking.
+	 * RETRACTED> "NO SHIPPING CALLER TODAY, AND THAT IS STATED RATHER THAN IMPLIED. Measured
+	 * RETRACTED>  on the tree at `fcf64d3`: `FStratSelectionMachine::Reset()` -- the method
+	 * RETRACTED>  this one was written for parity with -- is declared, defined, and called by
+	 * RETRACTED>  NOTHING, in `Source/` including `Tests/`. So the parity is with an uncalled
+	 * RETRACTED>  method and this one inherits that. It is a debt, and the condition that
+	 * RETRACTED>  discharges it is a load or reseed path that calls both: whatever eventually
+	 * RETRACTED>  resets the machine must reset this in the same place, because a focus
+	 * RETRACTED>  surviving a reseed is a BUILD button about a factory on a board that is
+	 * RETRACTED>  gone."
+	 * True at `fcf64d3`; false from `283d711` + the T-SAVE-04 fix onward.
+	 *
+	 * WHAT DISCHARGED IT, AND IT MET THE STATED CONDITION EXACTLY RATHER THAN APPROXIMATELY.
+	 * `AStratPlayerController::SyncPresentationToMatchEpoch` calls
+	 * `FStratSelectionMachine::Reset()` and this method **in the same place**, on the two
+	 * statements after it observes that `UStratMatchSubsystem::GetMatchEpoch()` has moved --
+	 * which is what "a load or reseed path that calls both" named. The clause that forced it
+	 * is `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`, and its
+	 * leg (2) is this method's half: it asserts this affordance's focus after a load equals a
+	 * RESET affordance's, so a fix that reset only the machine would leave it red.
+	 *
+	 * THE PARITY IS NO LONGER WITH AN UNCALLED METHOD, which was the sharpest thing the old
+	 * paragraph said and the part most worth correcting: both are called, once, together.
+	 *
+	 * WHAT IS *NOT* RETRACTED IS THE REASON. A focus surviving a reseed is still a BUILD
+	 * button about a factory on a board that is gone; that sentence was never a claim about
+	 * callers and it stands unchanged.
 	 */
 	void Reset();
 

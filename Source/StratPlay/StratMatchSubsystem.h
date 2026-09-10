@@ -836,6 +836,88 @@ public:
 	bool HasViewDecorator() const;
 
 	/**
+	 * WHICH MATCH THIS SUBSYSTEM IS ON. A counter that changes -- and only changes -- when
+	 * one match is replaced by another.
+	 *
+	 * THE GAP IT CLOSES, MEASURED RATHER THAN ARGUED.
+	 * `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState` was RED
+	 * against `283d711`: `LoadMatchFromSlot` replaces the match, `TearDownPresentation`
+	 * clears every piece of presentation state THIS OBJECT owns, and it cannot reach
+	 * `FStratSelectionMachine` or `FStratBuildAffordance`, because those two are members of
+	 * `AStratPlayerController`. The clearing lived on one object and the state on another,
+	 * and the visible failure was a unit of the freshly loaded match refused with "unit N has
+	 * finished this turn" for a wait it made in the match before.
+	 *
+	 * A NUMBER THE OTHER SIDE READS, NOT A CALL THIS SIDE MAKES, AND THAT IS THE WHOLE
+	 * DESIGN DECISION. The obvious alternative was a second delegate beside
+	 * `FStratViewDecorator` that this class BROADCASTS on a match boundary. It was rejected
+	 * on two counts. (1) It is evented, and this project reconciles: a producer cleared by a
+	 * push is cleared only if the push arrived, so "did the reset happen" becomes a question
+	 * about call history instead of about the current state. (2) It is reachable only
+	 * through a REGISTRATION, and a registration is exactly what a controller whose
+	 * `BeginPlay` has not been dispatched does not have -- which is the condition every
+	 * fixture in `Source/StratPlay/Tests/` runs in, and the condition `FStratViewDecorator`
+	 * already records as "a world with no controller in it". A broadcast seam would have gone
+	 * green in the game and stayed unobservable in the suite.
+	 *
+	 * SO IT IS READ ON THE DECORATE PATH, by
+	 * `AStratPlayerController::SyncPresentationToMatchEpoch`, which is where the controller
+	 * already looks this subsystem up. Nothing here knows that the controller resets
+	 * anything; this class publishes a fact about ITSELF and the observer decides what that
+	 * fact means for its own members -- `FStratBuildAffordance::Observe`'s posture exactly,
+	 * one level up.
+	 *
+	 * NOT REFLECTED, AND IT MAY NOT BECOME SO. A `BlueprintCallable` epoch would let a Widget
+	 * Blueprint branch on which match it is -- a presentation decision taken from a counter
+	 * instead of from the model -- which is the second-author failure `FStratViewDecorator`
+	 * declines reflection to prevent. It appears in no view model and nothing on screen is
+	 * drawn from it, which is the same exemption
+	 * `AStratPlayerController::GetProductionTargetHex` claims on the same explicit condition.
+	 *
+	 * NOT A MATCH IDENTITY AND NOT PERSISTED. Two different matches may not be told apart by
+	 * it across a process boundary and nothing may try: it answers "is this the same match
+	 * you last saw, in this session" and no other question. A slot carries no epoch.
+	 *
+	 * 0 BEFORE ANY MATCH HAS BEEN STARTED, AND THE GUARANTEE IS ABOUT TEARDOWNS RATHER THAN
+	 * ABOUT `StartMatch` CALLS. THE SENTENCE THAT STOOD HERE FIRST WAS FALSE, AND IT IS STRUCK
+	 * RATHER THAN QUIETLY REPLACED because its derived half is the sort of thing a later
+	 * reader would reason from:
+	 * RETRACTED> "`TearDownPresentation` is the single writer and it sits unconditionally at
+	 * RETRACTED>  the top of `StartMatchInternal`, so the first `StartMatch` takes it to 1
+	 * RETRACTED>  whether or not that start then succeeds -- deliberately, because a start
+	 * RETRACTED>  that fails has already torn the previous match's board down and its
+	 * RETRACTED>  presentation is as stale as a successful one's."
+	 * Both halves are wrong. Measured 2026-09-03 on `StratMatchSubsystem.cpp`:
+	 * `StartMatchInternal` opens at `:178` and `TearDownPresentation()` is at `:219`, with TWO
+	 * configuration-refusal arms returning before it -- the unassigned definition tables
+	 * (`:189-197`, returning at `:196`) and the empty `ScenarioFile` (`:199-204`, returning at
+	 * `:203`). A `StartMatch` refused on either arm does NOT move this counter, and the
+	 * retracted warrant was false too: those arms tear nothing down, so there is no stale
+	 * presentation for the counter to be about.
+	 *
+	 * THE TRUE GUARANTEE IS THE STRONGER AND MORE USEFUL ONE. This counter moves EXACTLY WHEN
+	 * A TEARDOWN HAPPENS and never otherwise, because `TearDownPresentation` is its only
+	 * writer and that function has exactly one call site. It does not count `StartMatch`
+	 * attempts; it counts boards destroyed. Read it as "how many times has the presentation
+	 * been torn out from under an observer", which is the only question an observer of it has.
+	 *
+	 * AND THE BEHAVIOUR THAT FALLS OUT IS THE CORRECT ONE, WHICH IS WHY THE CODE WAS NOT
+	 * CHANGED TO MATCH THE OLD SENTENCE. A configuration refusal that never reached teardown
+	 * announces nothing, so a controller's selection and build focus SURVIVE a misconfigured
+	 * `StartMatch` -- there was no new match to be stale against. Announcing a boundary there
+	 * would clear a live match's presentation because a caller passed a bad config, which is a
+	 * defect the retracted sentence described as deliberate.
+	 *
+	 * REFUSALS THAT HAPPEN *AFTER* `:219` DO MOVE IT, AND THAT IS ALSO CORRECT: `LoadDefinitions`
+	 * (`:266`), `LoadScenarioFromFile` (`:286`) and the restore arm (`:366`) all return false
+	 * with the previous match's board already destroyed, so the presentation genuinely is
+	 * stale and the boundary genuinely happened. The counter is right on both sides of `:219`
+	 * for the same one reason, which is what makes "it counts teardowns" the whole rule rather
+	 * than a rule with exceptions.
+	 */
+	int32 GetMatchEpoch() const { return MatchEpoch; }
+
+	/**
 	 * Makes the world look like this model. Spawn what is here and absent, move what is
 	 * here and misplaced, destroy what is absent and present.
 	 *
@@ -2012,10 +2094,21 @@ private:
 	/**
 	 * Destroys the board and the unit actors and clears the pacing timer.
 	 *
-	 * A NO-OP ON A FIRST `StartMatch`, which is why it can sit unconditionally at the top of
-	 * `StartMatchInternal`: nothing is spawned, the map is empty and the handle is invalid.
-	 * It has content only on a RESTART -- a load, or a second `StartMatch` -- where without
-	 * it the world would carry two boards and the timer would fire into a freed bridge.
+	 * A NO-OP ON A FIRST `StartMatch`, which is why it needs no "is this a restart" guard at
+	 * its one call site in `StartMatchInternal` (`StratMatchSubsystem.cpp:219`): nothing is
+	 * spawned, the map is empty and the handle is invalid. It has content only on a RESTART --
+	 * a load, or a second `StartMatch` -- where without it the world would carry two boards
+	 * and the timer would fire into a freed bridge.
+	 *
+	 * "UNGUARDED AT ITS ONE CALL SITE" AND NOT "AT THE TOP OF `StartMatchInternal`", WHICH IS
+	 * WHAT THIS BLOCK USED TO SAY. Corrected 2026-09-03 along with the two `MatchEpoch` blocks
+	 * that inherited the phrase, one of which had DERIVED A FALSE CLAIM from it -- see
+	 * `GetMatchEpoch`'s retraction for the measurement. `:219` is not the top of the function:
+	 * the unassigned-definition-tables arm (`:189-197`) and the empty-`ScenarioFile` arm
+	 * (`:199-204`) both return ahead of it, so this function is not reached on every
+	 * `StartMatch`. The property that IS load-bearing is preserved and is the one stated
+	 * above: no guard is needed at the call site, because a first start makes this a no-op on
+	 * its own.
 	 * `Deinitialize` does the same three things plus the bridge; the duplication is
 	 * deliberate, because teardown-at-world-death and teardown-before-reseed are different
 	 * events, and collapsing them would make the shutdown path reseed-aware.
@@ -2133,6 +2226,35 @@ private:
 	 * bound object, so it is not a GC root and cannot keep a controller alive past the world.
 	 */
 	FStratViewDecorator ViewDecorator;
+
+	/**
+	 * WHICH MATCH THIS IS. See `GetMatchEpoch` for what it is for and why it is a number
+	 * somebody reads rather than a broadcast somebody receives.
+	 *
+	 * WRITTEN IN EXACTLY ONE PLACE, `TearDownPresentation`, AND THAT PLACEMENT IS THE
+	 * GUARANTEE RATHER THAN A CONVENTION. That function has exactly one call site --
+	 * `StratMatchSubsystem.cpp:219`, inside `StartMatchInternal`, unguarded -- and `StartMatch`
+	 * and `LoadMatchFromSlot` both reach it through that, so "a teardown happened" and "this
+	 * counter moved" are the same event by construction. Incrementing it at the two public
+	 * entry points instead would have been two places to forget, which is the reasoning that
+	 * put `EndAiPlaybackTour`'s cursor retirement inside the verb rather than at its callers.
+	 *
+	 * "ONE CALL SITE, UNGUARDED" AND NOT "AT THE TOP OF `StartMatchInternal`", AND THE
+	 * DIFFERENCE IS NOT PEDANTRY. This block previously said "called unconditionally from the
+	 * top of", and `GetMatchEpoch` said the same thing and then DERIVED A FALSE CLAIM from it
+	 * -- see the retraction there. `:219` is not the top: two configuration-refusal arms
+	 * return ahead of it. The call is unguarded once reached; it is not reached on every call.
+	 * Both blocks are corrected together so that two descriptions of one function cannot
+	 * disagree, which is how the false derivation survived review in the first place.
+	 *
+	 * NOT A UPROPERTY. It is not an asset reference, holds nothing for the garbage collector,
+	 * and reflecting it would publish a writable second author of the boundary.
+	 *
+	 * OVERFLOW IS NOT GUARDED AND DOES NOT MATTER: every reader compares for INEQUALITY
+	 * against the last value it saw, so a wrap would have to land exactly on an observer's
+	 * recorded value in the same session to be missed at all.
+	 */
+	int32 MatchEpoch = 0;
 
 	/** The spawned board, or null. Destroyed in `Deinitialize`. */
 	UPROPERTY(Transient)

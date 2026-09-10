@@ -926,6 +926,75 @@ protected:
 	void TryArmGuidedOpening();
 
 	/**
+	 * Puts this controller's presentation producers back to a fresh state when the subsystem
+	 * has moved on to a DIFFERENT MATCH since the last decoration.
+	 *
+	 * THE DEFECT THIS EXISTS FOR, AND IT IS A RED CLAUSE AND NOT A HYPOTHESIS.
+	 * `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState` failed
+	 * against `283d711`: `UStratMatchSubsystem::LoadMatchFromSlot` replaces the match and
+	 * `TearDownPresentation` clears everything the SUBSYSTEM owns, but `SelectionMachine` and
+	 * `BuildAffordance` are members of THIS class, so a `DoneUnits` entry earned in the match
+	 * that was loaded over survived into the one that replaced it. The reported symptom is
+	 * leg (3) of that clause: a unit of the freshly loaded match, which has neither moved nor
+	 * acted, refused with "unit N has finished this turn" -- and unit ids collide across
+	 * matches, so the bit need not even land on the unit that earned it.
+	 *
+	 * AN OBSERVATION AND NOT A NOTIFICATION. It compares
+	 * `UStratMatchSubsystem::GetMatchEpoch()` against `LastObservedMatchEpoch` and acts on
+	 * the difference; nothing calls it to tell it a match ended. That is `FStratHoverState`'s
+	 * and `FStratBuildAffordance::Observe`'s posture and it is chosen for their reason: a
+	 * producer cleared by a push is cleared only if the push arrived, so correctness would
+	 * depend on the history of calls rather than on the current state. `GetMatchEpoch`
+	 * records the second reason -- a pushed seam needs a REGISTRATION, and a fixture that
+	 * does not dispatch `BeginPlay` has none.
+	 *
+	 * CALLED FIRST FROM `DecorateForPresentation`, AND THE ORDER IS LOAD-BEARING IN ONE
+	 * DIRECTION. `FStratGuidedOpening::Observe` is the single writer of the machine's lock
+	 * set and it PUBLISHES THAT SET ON EVERY CALL, including the inactive path. So a reset
+	 * placed BEFORE it is re-armed correctly in the same decoration, and a reset placed AFTER
+	 * it would wipe a legitimate lock §2.11.6 had just written and dim nothing on a frame
+	 * that should have dimmed a unit. Before, therefore -- ahead of `TryArmGuidedOpening` as
+	 * well, so that no arming decision is taken against a machine that is about to be
+	 * emptied.
+	 *
+	 * THE FIRST OBSERVATION RECORDS AND CLEARS NOTHING, on `FStratBuildAffordance::Observe`'s
+	 * stated rule: there is nothing latched on a controller nobody has clicked with, and
+	 * treating a first look as a change would be a clear with no cause. It is a no-op either
+	 * way today -- both producers default to empty -- and it is written this way so that it
+	 * stays a no-op if either ever gains a constructed default.
+	 *
+	 * IT RESETS TWO PRODUCERS AND DELIBERATELY NOT FOUR.
+	 *   `SelectionMachine` -- yes. Its `DoneUnits` and `LockedUnits` are per-turn facts about
+	 *      units of the match that is gone, and `DecorateViewModel` publishes `DoneUnits` as
+	 *      `FStratUnitView::bDone`, which is DRAWN and also GATES INPUT.
+	 *   `BuildAffordance` -- yes, and in the same place rather than in a second one, which is
+	 *      the discharging condition `FStratBuildAffordance::Reset` names for itself in terms:
+	 *      "a load or reseed path that calls both". A focus surviving a reseed is a BUILD
+	 *      control about a factory on a board that no longer exists.
+	 *   `Hover` -- NO, and not for want of symmetry. It holds a CURSOR POSITION, not a fact
+	 *      about a match: the pointer is still over whatever hex it is over, the tick poll
+	 *      overwrites it before anything reads it, and its own declaration already records it
+	 *      as "holding nothing across a reseed". Clearing it would be this function forming
+	 *      an opinion about the mouse.
+	 *   `GuidedOpening` -- NO, and this one is a JUDGEMENT and is recorded as such. §2.11.6's
+	 *      onboarding is scoped to the SAVE and not to the match -- suppression is read from
+	 *      `HasCompletedAMatchOnSave` -- and `bGuidanceArmed`'s own declaration states that
+	 *      re-arming "would undo the skip §2.11.6 calls permanent". Resetting it here would
+	 *      replay the tutorial after every load, which is a behaviour regression traded for a
+	 *      tidier symmetry. THE RESIDUAL CASE IS WRITTEN DOWN RATHER THAN CLAIMED ABSENT: a
+	 *      load whose payload names a DIFFERENT `ScenarioFile` leaves beats armed against the
+	 *      old scenario's marked unit and objective hex. Discharged the day a load can change
+	 *      scenario in a shipped path -- today the only writer of that field is the slot the
+	 *      same session wrote -- by giving `FStratGuidedOpening` a `Reset()` that preserves
+	 *      the skip and re-arming it here.
+	 *
+	 * PRIVATE, AND IT IS A STEP RATHER THAN AN ENTRY POINT. Nothing outside this class may
+	 * decide that this controller's presentation is stale; `DecorateForPresentation` is the
+	 * one path every drawn model takes and is therefore the one place the question is asked.
+	 */
+	void SyncPresentationToMatchEpoch();
+
+	/**
 	 * Binds this class's actions on the Enhanced Input component, each behind its own null
 	 * guard. [AMENDED, wave 0: "the four actions".]
 	 *
@@ -1099,6 +1168,22 @@ private:
 	 * inactive state a scenario with no `guidedOpening` produces — see `TryArmGuidedOpening`.
 	 */
 	FStratGuidedOpening GuidedOpening;
+
+	/**
+	 * The `UStratMatchSubsystem::GetMatchEpoch()` this controller last decorated against, or
+	 * `INDEX_NONE` before the first decoration with a subsystem present. See
+	 * `SyncPresentationToMatchEpoch`.
+	 *
+	 * `INDEX_NONE` AND NOT 0, because 0 is a real epoch -- it is what a subsystem that has
+	 * never started a match answers -- and "I have not looked yet" must be distinguishable
+	 * from "I looked and no match had started". `FStratBuildAffordance`'s two observation
+	 * fields take that value for that reason and this one follows them.
+	 *
+	 * NOT A UPROPERTY, beside the four producers it is about: it holds nothing for the
+	 * garbage collector, and a reflected copy would be a second author of "which match am I
+	 * on".
+	 */
+	int32 LastObservedMatchEpoch = INDEX_NONE;
 
 	/**
 	 * Whether `TryArmGuidedOpening` has succeeded, so it is not retried every refresh.

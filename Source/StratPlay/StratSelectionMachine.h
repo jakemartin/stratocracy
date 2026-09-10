@@ -420,7 +420,38 @@ struct STRATPLAY_API FStratSelectionMachine
 
 	bool IsLockedThisTurn(int32 UnitId) const { return LockedUnits.Contains(UnitId); }
 
-	/** Drops the selection and both sets. For a reseed; a turn boundary is not this. */
+	/**
+	 * Drops the selection and both sets. For a reseed; a turn boundary is not this.
+	 *
+	 * IT HAS A SHIPPING CALLER AS OF 2026-09-03, AND SAYING SO HERE IS NOT REDUNDANT.
+	 * `FStratBuildAffordance::Reset` was written for parity with this method and recorded, in
+	 * terms, that this one was "declared, defined, and called by NOTHING, in `Source/`
+	 * including `Tests/`" at `fcf64d3`. That sentence lived in the OTHER file, so this
+	 * method's own declaration said nothing about it and a reader arriving here first would
+	 * have found no trace of the debt at all -- which is precisely why the correction is
+	 * written on both sides rather than on the one that happened to carry the claim.
+	 *
+	 * THE CALLER IS `AStratPlayerController::SyncPresentationToMatchEpoch`, which calls this
+	 * and `FStratBuildAffordance::Reset()` on consecutive statements when it observes that
+	 * `UStratMatchSubsystem::GetMatchEpoch()` has moved. That satisfies the discharging
+	 * condition the affordance's block named for both of them -- "a load or reseed path that
+	 * calls both".
+	 *
+	 * WHAT IT IS FOR HAS NOT CHANGED. A reseed, and a turn boundary is still not one:
+	 * `NotifyCommandApplied` clears `DoneUnits` on an `EndTurn` and deliberately leaves
+	 * `LockedUnits` alone, because a lock's lifecycle is beat 1a's retirement and not the
+	 * turn's end. This method drops all three because after a reseed all three describe a
+	 * match that no longer exists.
+	 *
+	 * THE FORCING CLAUSE IS
+	 * `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`, whose leg
+	 * (1) compares every `FStratUnitView::bDone` in a freshly loaded match against what a
+	 * RESET machine answers for that same id. Note what that makes this method: the clause
+	 * builds a second machine, drives it through the same public calls, and calls THIS to
+	 * produce its expectations -- so this body is the ORACLE, and changing it moves the
+	 * expectation rather than testing against it. A defect in the load path must be fixed at
+	 * the CALL and never here.
+	 */
 	void Reset();
 
 private:

@@ -1,8 +1,8 @@
-// T-SAVE-04 -- `FStratSelectionMachine::Reset()` itself, asserted directly and against nothing
+// T-INT-05 -- `FStratSelectionMachine::Reset()` itself, asserted directly and against nothing
 // else.
 //
 // WHY THIS FILE EXISTS, AND IT IS A GAP A REVIEWER FOUND RATHER THAN ONE THIS LANE PLANNED FOR.
-// `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`, in
+// `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState`, in
 // `StratLoadPresentationCarryOverClauses.cpp`, takes its ENTIRE expectation from a live oracle:
 // a second `FStratSelectionMachine` and a second `FStratBuildAffordance`, driven in lockstep
 // with the controller's own pair and then `Reset()`. That shape is deliberate and it is what
@@ -17,8 +17,8 @@
 //   - `FStratSelectionMachine::Reset()` WAS NOT PINNED BY ANYTHING. Measured on this tree: the
 //     only references to it in `Source/` were its own declaration, its own definition, the one
 //     shipping call site in `AStratPlayerController::SyncPresentationToMatchEpoch`, and the
-//     T-SAVE-04 oracle. **If this body ever stopped clearing `DoneUnits`, the oracle and the
-//     controller's machine would carry the SAME stale bit, and T-SAVE-04's legs (1) and (3)
+//     T-INT-05 oracle. **If this body ever stopped clearing `DoneUnits`, the oracle and the
+//     controller's machine would carry the SAME stale bit, and T-INT-05's legs (1) and (3)
 //     would go GREEN OVER THE RESTORED DEFECT.** A clause whose expectation is a live function
 //     is only as good as a second, independent statement about that function. This is the
 //     second statement.
@@ -34,7 +34,7 @@
 // AND IT SHARES NO MACHINERY WITH THE CLAUSE IT BACKSTOPS. No oracle, no `LoadMatchFromSlot`,
 // no `AStratPlayerController`, no `UStratMatchSubsystem`, no `FStratBridge`, no world, no PIE,
 // no data table, no save slot. A hand-built model, a stub query that refuses everything, and
-// one struct. A defect that could take out the T-SAVE-04 fixture cannot reach this file.
+// one struct. A defect that could take out the T-INT-05 fixture cannot reach this file.
 //
 // THE STUB QUERY REFUSES EVERY CALL ON PURPOSE. `HandleEvent` consults the query only to build
 // a move or an attack; selecting a friendly unit and spending a Wait consult it not at all. A
@@ -113,11 +113,18 @@ namespace StratSelectionMachineReset
 }
 
 // ---------------------------------------------------------------------------------------------
-// T-SAVE-04 -- `Reset()` empties the selection, the done set and the lock set.
+// T-INT-05 -- `Reset()` empties the selection, the done set and the lock set.
 //
-// THE ACCEPTANCE ID IS THE USER'S, RULED IN SESSION. It rides T-SAVE-04 rather than T-UI-02 or
-// T-INT-05 because what this clause protects is the LOAD clause's oracle, and an id is worth
-// more pointing at the property it defends than at the file it happens to sit beside.
+// THE ACCEPTANCE ID IS THE USER'S, RULED 2026-09-10 AND RECORDED IN `decisions.md` in the entry
+// headed "THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b` UNDER `T-SAVE-04` ARE RENAMED TO
+// `T-INT-05`, BOTH OF THEM". This paragraph is corrected in place by that ruling. It used to read:
+// RETRACTED> "THE ACCEPTANCE ID IS THE USER'S, RULED IN SESSION. It rides T-SAVE-04 rather than
+// RETRACTED> T-UI-02 or T-INT-05"
+// False on two counts: that ID was a `coordinator`'s relay and never a recorded ruling, and
+// `T-SAVE-04`'s GDD sentence is a header-mismatch refusal, which this clause is not. WHAT SURVIVES
+// IS THE REASON, and the move keeps it: what this clause protects is the LOAD clause's oracle, and
+// an id is worth more pointing at the property it defends than at the file it happens to sit
+// beside -- and the load clause moved to `T-INT-05` under the same ruling.
 //
 // THE THREE FIELDS ARE ASSERTED SEPARATELY AND NONE IS INFERRED FROM ANOTHER.
 // `FStratSelectionMachine` holds exactly `SelectedUnitId`, `DoneUnits` and `LockedUnits`, and
@@ -137,7 +144,7 @@ namespace StratSelectionMachineReset
 // ---------------------------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratSelectionMachineResetEmptiesAllThreeFieldsTest,
-	"Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked",
+	"Stratocracy.StratPlay.T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FStratSelectionMachineResetEmptiesAllThreeFieldsTest::RunTest(const FString& /*Parameters*/)
@@ -181,13 +188,13 @@ bool FStratSelectionMachineResetEmptiesAllThreeFieldsTest::RunTest(const FString
 	Machine.Reset();
 
 	TestEqual(
-		TEXT("T-SAVE-04: Reset() drops the selection -- FStratSelectionMachine declares it as "
+		TEXT("T-INT-05: Reset() drops the selection -- FStratSelectionMachine declares it as "
 		     "\"Drops the selection and both sets\", and INDEX_NONE is how \"no selection\" is "
 		     "spelled on GetSelectedUnitId"),
 		Machine.GetSelectedUnitId(), INDEX_NONE);
 
 	TestFalse(
-		TEXT("T-SAVE-04: Reset() empties DoneUnits. THIS IS THE ASSERTION THE T-SAVE-04 LOAD "
+		TEXT("T-INT-05: Reset() empties DoneUnits. THIS IS THE ASSERTION THE T-INT-05 LOAD "
 		     "CLAUSE CANNOT MAKE ABOUT ITSELF: that clause takes its whole expectation from a "
 		     "reset oracle, so a Reset() that stopped clearing the done set would leave the "
 		     "oracle and the controller carrying the SAME stale bit and turn its legs (1) and "
@@ -195,7 +202,7 @@ bool FStratSelectionMachineResetEmptiesAllThreeFieldsTest::RunTest(const FString
 		Machine.IsDone(kDoneUnitId));
 
 	TestFalse(
-		TEXT("T-SAVE-04: Reset() empties LockedUnits, which is a THIRD lifecycle and not "
+		TEXT("T-INT-05: Reset() empties LockedUnits, which is a THIRD lifecycle and not "
 		     "inferable from the other two -- NotifyCommandApplied clears DoneUnits on an "
 		     "EndTurn and deliberately leaves the locks alone, so a Reset() that had become a "
 		     "turn boundary would pass a clause that checked only the done set"),
@@ -206,10 +213,10 @@ bool FStratSelectionMachineResetEmptiesAllThreeFieldsTest::RunTest(const FString
 	for (const int32 Id : { kDoneUnitId, kLockedUnitId, kSelectedUnitId })
 	{
 		TestFalse(*FString::Printf(
-				TEXT("T-SAVE-04: no unit is done after the reset, including unit %d"), Id),
+				TEXT("T-INT-05: no unit is done after the reset, including unit %d"), Id),
 			Machine.IsDone(Id));
 		TestFalse(*FString::Printf(
-				TEXT("T-SAVE-04: no unit is locked after the reset, including unit %d"), Id),
+				TEXT("T-INT-05: no unit is locked after the reset, including unit %d"), Id),
 			Machine.IsLockedThisTurn(Id));
 	}
 
@@ -222,11 +229,11 @@ bool FStratSelectionMachineResetEmptiesAllThreeFieldsTest::RunTest(const FString
 		EStratSelectionEvent::HexPrimary, HexOf(kDoneUnitId), Model, Query);
 
 	TestEqual(
-		TEXT("T-SAVE-04: and the unit that was done is selectable again after the reset"),
+		TEXT("T-INT-05: and the unit that was done is selectable again after the reset"),
 		AfterReset.SelectedUnitId, kDoneUnitId);
 	TestEqual(
 		*FString::Printf(
-			TEXT("T-SAVE-04: with no refusal sentence -- the done-set gate is what would "
+			TEXT("T-INT-05: with no refusal sentence -- the done-set gate is what would "
 			     "produce one (got: '%s')"),
 			*AfterReset.FailureReason),
 		AfterReset.FailureReason, FString());
@@ -236,10 +243,10 @@ bool FStratSelectionMachineResetEmptiesAllThreeFieldsTest::RunTest(const FString
 	// Cheap, and it pins that `Reset()` on an already-clean machine is not a state change --
 	// `SyncPresentationToMatchEpoch` is free to call it on an epoch move that followed another.
 	Machine.Reset();
-	TestEqual(TEXT("T-SAVE-04: a second Reset() leaves the selection dropped"),
+	TestEqual(TEXT("T-INT-05: a second Reset() leaves the selection dropped"),
 		Machine.GetSelectedUnitId(), INDEX_NONE);
-	TestFalse(TEXT("T-SAVE-04: and the done set empty"), Machine.IsDone(kDoneUnitId));
-	TestFalse(TEXT("T-SAVE-04: and the lock set empty"),
+	TestFalse(TEXT("T-INT-05: and the done set empty"), Machine.IsDone(kDoneUnitId));
+	TestFalse(TEXT("T-INT-05: and the lock set empty"),
 		Machine.IsLockedThisTurn(kLockedUnitId));
 
 	return true;

@@ -15,6 +15,124 @@
 
 ## NEXT
 
+- **2026-09-10, strat-gameplay-engineer (ACTING and WRITING; IN LANE)** -- dispatched, on
+  `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit `7f0e05b`, UNCOMMITTED, no
+  lane topology standing (`Strat-wt/slot-1` and `slot-2` are merged W8 branches with clean
+  trees). **THE ENGINE LANE'S HALF OF THE `decisions.md` USER RULING HEADED *"THE TWO CLAUSES
+  THAT LANDED AT MERGE `d59bf9b` UNDER `T-SAVE-04` ARE RENAMED TO `T-INT-05`, BOTH OF THEM"*.
+  COMMENT-ONLY. FOUR COMMENTS NOW NAME
+  `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState`, AND THAT NAME IS
+  A DECLARED, REPORTED CLAUSE: `strat-test-author` RENAMED THE MACROS IN A SEPARATE DISPATCH
+  AFTER THIS ONE, AND THE MACRO STRING IN `StratLoadPresentationCarryOverClauses.cpp` READS
+  `"Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState"`.** The live suite
+  count and phase verdict are in `Tools/architect/state/global.md` and nowhere else. This pass
+  ran no suite; the measurement of the test lane's run is in the last bullet below.
+  - **SITES CHANGED, ALL IN `Source/StratPlay/`, ALL THE LOAD CLAUSE'S FULL NAME, `T-SAVE-04`
+    -> `T-INT-05` AND NOTHING ELSE ON THE LINE:**
+    - `StratBuildAffordance.h`, `FStratBuildAffordance::Reset()`'s *"WHAT DISCHARGED IT"*
+      paragraph.
+    - `StratMatchSubsystem.h`, `GetMatchEpoch`'s *"THE GAP IT CLOSES, MEASURED RATHER THAN
+      ARGUED"* paragraph.
+    - `StratSelectionMachine.h`, `FStratSelectionMachine::Reset()`'s *"THE FORCING CLAUSE IS"*
+      paragraph.
+    - `StratPlayerController.h`, `SyncPresentationToMatchEpoch`'s *"THE DEFECT THIS EXISTS FOR"*
+      paragraph.
+    **The reset clause (`SelectionMachineResetEmptiesSelectionDoneAndLocked`) is named nowhere in
+    `Source/` outside `Tests/`,** so this lane has nothing to rename for it.
+  - **SITES LEFT, EACH JUDGED ON WHAT IT REFERS TO:**
+    - `StratBridge/StratBridge.cpp`, `FStratBridge::RestoreFromSaveText`: *"`loadSave` keeps
+      GATE-SAVE-PARSE and T-SAVE-04 distinct"*. This is the REAL header-refusal ID that
+      `strat::loadSave` returns. It is not a clause name.
+    - `StratPlay/StratMatchSubsystem.cpp`, `StartMatchInternal`: *"the `T-SAVE-04` /
+      `GATE-SAVE-PARSE` / `T-SAVE-06` tag it carries"*. This is the refusal-tag list, the same
+      real ID.
+    - `StratPlay/StratBuildAffordance.h`, `FStratBuildAffordance::Reset()`'s retraction stamp:
+      *"false from `283d711` + the T-SAVE-04 fix onward"*. It names a historical EVENT, the
+      fix that merge `d59bf9b`'s own subject calls *"Merge T-SAVE-04"*, and names no clause.
+    - `Source/StratRules/` (vendored, never touched) and every `Tests/` directory
+      (`strat-test-author`'s) were outside the sweep's subject by design.
+  - **THE SWEEP, WRAP-AWARE, AND SHOWN ABLE TO SPEAK.** It covered every file under `Source/`
+    except `StratRules/` and the four `Tests/` directories (`StratBridge/Tests`,
+    `StratPlay/Tests`, `StratUI/Tests`, `Stratocracy/StratData/Tests`). That is 144 files,
+    equal to `find`'s count, and hidden directories were walked, so
+    `StratBridge/.claude/skills/stratbridge/SKILL.md` was included. Each file was matched twice:
+    once with comment leaders stripped and lines joined by one space, to catch a wrap at a word
+    boundary, and once with ALL whitespace removed, to catch a wrap mid-token. The needles
+    were `SAVE-04`, both full suffixes, the fragments `LoadClears`, `ResetEmpties`,
+    `ControllerSidePresentation` and `SelectionDoneAndLocked`, and the short forms "load
+    clause" and "reset clause". Result: seven sites, all single-line, and no wrapped hit.
+    **Controls:** (a) a planted fixture in a hidden directory, with the name split at the
+    hyphen, split mid-identifier and wrapped as "load / clause", produced three WRAPPED hits that
+    a single-line grep of the same fixture missed; (b) run over `StratPlay/Tests/`, the same
+    sweep finds both real clause macros. **A precision catch in my own first run:** the skip
+    list named a `Stratocracy/Tests` that does not exist and missed
+    `Stratocracy/StratData/Tests`. One extra file was scanned, with no hit, and the corrected
+    run's count matches `find`.
+  - **COMMENT-ONLY, PROVEN TWO WAYS.** (1) `git diff --numstat -- Source` is `1 1` for each of
+    the four files, so there was no line-ending rewrite. All eight changed lines open with the
+    `\t * ` block-comment leader. (2) Each file's C++ token stream, with comments stripped and
+    string, char and raw-string literals kept verbatim, is IDENTICAL between HEAD and the
+    working tree (99 / 1624 / 677 / 417 tokens). **Controls for (2):** a synthetic
+    comment-only change reads IDENTICAL; a synthetic code change, a code change after a `//`
+    inside a string, and a code change after a `*/` inside a raw string each read DIFFERENT;
+    and on each of the four real files, mutating the `#pragma once` token reads DIFFERENT. A
+    first mutation, `void Reset();`, did not apply in two of the four files, and the harness
+    flagged that rather than counting it as a pass. It was replaced by the `#pragma` mutation,
+    which applies in all four.
+  - **BUILD.** `"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat"
+    StratocracyEditor Win64 Development -project="E:\MultiAgent\Stratocracy\Stratocracy.uproject"
+    -waitmutex`, no editor running: 58 actions, `UnrealEditor-StratPlay.dll` relinked,
+    `Result: Succeeded`, exit 0. The UBT `Log.txt` has zero lines matching `warning C`,
+    `error C`, `error LNK` or `warning LNK`.
+  - **THIS FILE'S OWN LIVE PROSE, STAMPED IN PLACE AND NOT REWRITTEN**, per the header's
+    stamp-don't-delete rule. In the 2026-09-03 (local) entry: the bullet headed *"THE CLAUSE'S
+    OWN STATE, WHICH IS NOT A SUITE FIGURE"*, where the old full name stands and an inline
+    `[ID RENAMED ...]` bracket follows it; the same entry's 2026-09-10 bracket, where *"the
+    `T-SAVE-04` clause this entry's change is pinned by"* gains a parenthetical pointing at that
+    stamp; and the same entry's *"FOUR CLAUSES PROPOSED"* bullet (see the next point). Mentions
+    left unstamped because they name EVENTS and not a clause: *"THE T-SAVE-04 MERGE"*,
+    *"T-SAVE-04 entry"*, *"T-SAVE-04 pass"* and the heading *"Debts taken on, 2026-09-10
+    (T-SAVE-04 citation repair)"*. Also left: the 2026-08-30 W6 title/menu shell entry's *"`T-SAVE-04`
+    was **proposed and refused**"*, which is about the real ID's GDD scope and agrees with the
+    ruling. The same wrap-aware sweep was run on this file before stamping and found no wrapped
+    occurrence.
+  - **AN ADJACENT OPEN QUESTION THIS PASS DID NOT RULE ON, STAMPED WHERE IT LIVES.** The
+    2026-09-03 entry PROPOSED four clauses under `T-SAVE-04`, and none exists in `Source/`.
+    The ruling does not name them, but its first reason (`T-SAVE-04` is a header-mismatch ID)
+    applies to all four. The stamp says their ID is open and the user's to rule. The names
+    were left as written.
+  - **THE SUITE WAS RUN BY THE TEST LANE, NOT THIS ONE, AND IT COVERS THIS PASS'S BYTES.** The
+    test lane ran it after its own rename, over the final tree. Measured 2026-09-10 against the
+    report exported at `reportCreatedOn 2026.09.10-21.37.28` (UTC):
+    - `Saved/AutomationReport/index.json`, read by `fullTestPath`, lists
+      `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState` and
+      `Stratocracy.StratPlay.T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked`, both
+      `Success`, and lists NEITHER of the two `T-SAVE-04` forms of those names. **Control:** the
+      same lookup returns `Success` for `T-INT-05.NoActorHoldsPresentationBits` and ABSENT for a
+      made-up `T-INT-05` name, so it can answer either way. The report carries three other
+      `T-SAVE-04` names -- `StratPlay`'s `LoadRefusesAWrongSavedDataVersion` and
+      `LoadRefusesAnUnconfiguredSubsystem`, and `StratBridge`'s
+      `RestoreSourcesScenarioHashFromThisBridge` -- none of which is either of the two clauses
+      this rename concerns; this entry says nothing further about them.
+    - `python Tools/architect/strat_suite_report_gate.py --pin-to-tree` prints *"newest file
+      Source\StratPlay\Tests\StratSelectionMachineResetClauses.cpp at 2026.09.10-21.35.26 (UTC)
+      predates the report"* and *"SUITE REPORT GATE CLEAN"*, exit 0. So the report postdates every
+      file under `Source/`, including this pass's four headers.
+
+### Debts taken on, 2026-09-10 (`T-INT-05` rename, engine half)
+
+- **DISCHARGED: this pass's four `Source/StratPlay/` comments named a clause that base
+  `7f0e05b` declared only under `T-SAVE-04`** (`git show 7f0e05b:` of both clause files: each
+  macro string reads `"Stratocracy.StratPlay.T-SAVE-04.`). The condition was `strat-test-author`'s
+  rename dispatch landing and the suite reporting both clauses under `T-INT-05`. Both halves are
+  met: the macro strings in `StratLoadPresentationCarryOverClauses.cpp` and
+  `StratSelectionMachineResetClauses.cpp` read `T-INT-05`, and the report exported at
+  `reportCreatedOn 2026.09.10-21.37.28` (UTC) lists both `T-INT-05` names `Success` and neither
+  `T-SAVE-04` form. That is the measurement in this entry's last bullet above.
+- **The four PROPOSED `T-SAVE-04.*` clause names in the 2026-09-03 entry carry an ID no ruling
+  backs.** **Discharged** by a user ruling on their ID, or by that entry's proposals being
+  withdrawn.
+
 - **2026-09-10, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, dispatched, on `master`
   in the main tree `E:/MultiAgent/Stratocracy`, base commit `3143049`, UNCOMMITTED) -- REPAIRS
   THE T-SAVE-04 MERGE `d59bf9b` ON FINDING 1 OF
@@ -3205,7 +3323,17 @@
     WRAP-AWARE (comment leaders stripped and the file flattened before matching), because this
     tree's own record says a per-line grep cannot see a claim spanning two comment lines.
   - **THE CLAUSE'S OWN STATE, WHICH IS NOT A SUITE FIGURE.**
-    `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState` is `Success`
+    `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState` **[ID RENAMED,
+    STAMPED 2026-09-10 IN PLACE, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, main
+    tree `E:/MultiAgent/Stratocracy`, base commit `7f0e05b`, UNCOMMITTED): this clause is
+    `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState` under the
+    `decisions.md` user ruling headed *"THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b` UNDER
+    `T-SAVE-04` ARE RENAMED TO `T-INT-05`, BOTH OF THEM"*. The ID moved and the body did not.
+    The old name is left standing here because it is the name the report cited in this
+    sentence carried. At base `7f0e05b` the macro string in `Tests/` still reads `T-SAVE-04`;
+    renaming it is `strat-test-author`'s. This stamp does NOT discharge the debt headed
+    "Debts taken on, 2026-09-10 (T-SAVE-04 citation repair)" about this bullet's report no
+    longer being on disk.]** is `Success`
     against this tree, `reportCreatedOn 2026.09.03-13.08.33`, and no test in that report is in
     any other state. **THE CLAUSE AND ITS RECORD ARE `strat-test-author`'S AND NOT THIS LANE'S**
     -- this lane wrote none of it and claims none of it; see `tests.md`, which is that lane's
@@ -3249,7 +3377,9 @@
       `283d711`, not at merge `d59bf9b`, not at `3143049`. Re-measured this pass over the
       whitespace-flattened file: the phrase "top of `StartMatchInternal`" appears 0 times; the
       one "fourth site" is an unrelated `T-INT-05` sentence; control: the same scan finds the
-      `T-SAVE-04` clause this entry's change is pinned by. AND THE MERGED TREE HAS TWO
+      `T-SAVE-04` clause this entry's change is pinned by (renamed to `T-INT-05` by the
+      2026-09-10 user ruling; stamped by `strat-gameplay-engineer` over base `7f0e05b`, and the
+      full stamp is at this entry's "THE CLAUSE'S OWN STATE" bullet). AND THE MERGED TREE HAS TWO
       TEST-SIDE SITES, NOT ONE: `StratTransientReceiptCallSite.cpp` (this entry's "fourth") and
       `StratSoundDirectorCallSite.cpp`, which arrived from `master` in `d80b28a` (2026-09-05),
       after this entry's base -- so this bullet's "FOUR SITES" was true at `283d711` and is five
@@ -3277,7 +3407,16 @@
   - **FOUR CLAUSES PROPOSED FOR `strat-test-author`. NONE OF THESE EXISTS. NOT ONE OF THE FOUR
     NAMES BELOW IS DEFINED ANYWHERE IN `Source/`, AND A GREP THAT FINDS ONE IS FINDING THIS
     PARAGRAPH.** They are named here so the proposal is legible, and they are marked this
-    emphatically because a proposed identifier greps exactly like a defined one.
+    emphatically because a proposed identifier greps exactly like a defined one. **[STAMPED
+    2026-09-10, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, main tree
+    `E:/MultiAgent/Stratocracy`, base commit `7f0e05b`, UNCOMMITTED): THE `T-SAVE-04` IN ALL FOUR
+    NAMES BELOW IS THIS LANE'S 2026-09-03 PROPOSAL AND WAS NEVER RULED.** The `decisions.md`
+    user ruling headed *"THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b` UNDER `T-SAVE-04` ARE
+    RENAMED TO `T-INT-05`, BOTH OF THEM"* renamed two existing clauses and does not name these
+    four. Its first reason, that `T-SAVE-04`'s GDD sentence is about a header mismatch, applies
+    to them equally, since none of the four tests a header. The ID any of them would land under
+    is open, and it is the user's to rule, not this lane's. The names are left as written so
+    that this proposal stays the record of what was proposed.]**
     - `Stratocracy.StratPlay.T-SAVE-04.EpochGapGreaterThanOneIsReportedAsObserved` -- PROPOSED.
       Drive two boundaries with no decoration between them; pin that the controller resets
       once and that `LastObservedMatchEpoch` lands on the CURRENT epoch rather than a stepped

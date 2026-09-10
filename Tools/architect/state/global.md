@@ -11,6 +11,32 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-10 (THIRD PASS, over base `7f0e05b`: THE TWO CLAUSES THAT LANDED AT `d59bf9b`
+UNDER `T-SAVE-04` NOW RIDE `T-INT-05`, BY USER RULING. Written by the `coordinator`; each lane
+wrote its own record entry, dispatched one at a time. The user was offered three IDs (`T-INT-05`
+for both; a new local gate; a split) and two routes (dispatch the lanes, or the `coordinator` in
+session), and chose `T-INT-05` for both and DISPATCH. `strat-data-steward` recorded the ruling in
+`decisions.md` under the entry headed *"RULED, 2026-09-10, BY THE USER -- THE TWO CLAUSES THAT
+LANDED AT MERGE `d59bf9b` UNDER `T-SAVE-04` ARE RENAMED TO `T-INT-05`, BOTH OF THEM."*;
+`strat-gameplay-engineer` (`engine.md`) repointed the four `Source/StratPlay/` header comments that
+named the load clause, comment-only; `strat-test-author` (`tests.md`) renamed both macros, their
+assertion-message prefixes and the `Tests/` comments naming them, and stamped the clause-ID
+conflict closed for these two. The clauses are now
+`Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState` and
+`Stratocracy.StratPlay.T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked`; bodies and
+assertions did not move.
+THE SUITE IS **479/479**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings. THE RENAME MOVED NO COUNT: the exported report's clause names and the
+tree's are set-equal in both directions, both new names Success, neither old name present.
+Rebuilt before the run, because a clause name is compiled. Gated with
+`strat_suite_report_gate.py --not-before 2026.09.10-21.36.16` and, separately, `--pin-to-tree`,
+both CLEAN.
+  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.10-21.37.28`.
+  WHAT IS NOT DONE. `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem` is a refusal but not a header
+mismatch either; the user was not asked about it and it stays open, as the ruling says. The four
+PROPOSED clauses in `engine.md` still carry `T-SAVE-04` names that no ruling backs, and `engine.md`
+now says so. Every other item in the second pass's WHAT IS NOT DONE, below, is untouched by this
+pass and still open.)
 _Last run 2026-09-10 (SECOND PASS, over base `3143049`: THE T-SAVE-04 MERGE `d59bf9b` WAS RE-GATED
 AND BLOCKED ON PROSE, AND THE PROSE IS REPAIRED IN BOTH LANES THAT OWNED IT. Written by the
 `coordinator`; each lane wrote its own record entry. `strat-integration-reviewer` re-gated
@@ -33,11 +59,18 @@ THE SUITE IS **479/479**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings. NOTHING IN THIS PASS MOVED THE COUNT: no clause was added, removed or
 renamed. Gated with `strat_suite_report_gate.py --not-before 2026.09.10-20.37.34` and, separately,
 `--pin-to-tree`, both CLEAN.
-  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.10-20.38.51`.
+  [STAMPED BY THE THIRD PASS, 2026-09-10] "THE LIVE FIGURE'S REPORT IS `reportCreatedOn
+  [STAMPED] 2026.09.10-20.38.51`." -- superseded: the third pass renamed two compiled clause
+  [STAMPED] names, so a newer report was owed and is cited in the banner above. The count did
+  [STAMPED] not move.
   WHAT IS NOT DONE. The four PROPOSED clauses in
 `engine.md` remain proposed. `tests.md` carries an OPEN clause-ID conflict -- both new clauses
 ride `T-SAVE-04`, whose GDD sentence covers header-mismatch refusal only, and a user ruling cited
-for that is recorded nowhere in `decisions.md` -- which needs the user's ruling. `engine.md`'s
+for that is recorded nowhere in `decisions.md` -- which needs the user's ruling.
+  [STAMPED BY THE THIRD PASS, 2026-09-10] The clause-ID conflict above is CLOSED for both
+  [STAMPED] clauses: the user ruled them onto `T-INT-05`, recorded in `decisions.md`, and they
+  [STAMPED] were renamed. See the banner above. Everything else in this paragraph stands.
+  `engine.md`'s
 `### Debts taken on, 2026-09-10 (T-SAVE-04 citation repair)` lists TWO debts: `GetMatchEpoch`'s
 retraction still carries dated line numbers as evidence, and its own 2026-09-03 entry's
 *"UNCOMMITTED AND UNMERGED"* lede is unstamped and cites a report no longer on disk. Beside those,
@@ -66,6 +99,8 @@ THE SUITE IS **479/479**, every entry Success, zero failed, zero notRun, zero
 succeededWithWarnings, macro census agreeing at 479. The count moved by exactly the two clauses
 this fix adds, `T-SAVE-04.LoadClearsControllerSidePresentationState` and
 `T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, both Success by name.
+  [STAMPED BY THE THIRD PASS, 2026-09-10] Both names above are history: the clauses now ride
+  [STAMPED] `T-INT-05` under the same suffixes, by user ruling. See the topmost banner.
   [STAMPED BY THE SECOND PASS, 2026-09-10] "THE LIVE FIGURE'S REPORT IS `reportCreatedOn
   [STAMPED] 2026.09.10-18.20.14`." -- superseded: the second pass edited comments under
   [STAMPED] `Source/`, so a newer report was owed and is cited in the banner above. The count

@@ -1051,7 +1051,7 @@ public:
 	 * one match is replaced by another.
 	 *
 	 * THE GAP IT CLOSES, MEASURED RATHER THAN ARGUED.
-	 * `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState` was RED
+	 * `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState` was RED
 	 * against `283d711`: `LoadMatchFromSlot` replaces the match, `TearDownPresentation`
 	 * clears every piece of presentation state THIS OBJECT owns, and it cannot reach
 	 * `FStratSelectionMachine` or `FStratBuildAffordance`, because those two are members of

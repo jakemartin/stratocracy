@@ -1,4 +1,4 @@
-// T-SAVE-04 -- controller-side PRESENTATION state across `UStratMatchSubsystem::LoadMatchFromSlot`.
+// T-INT-05 -- controller-side PRESENTATION state across `UStratMatchSubsystem::LoadMatchFromSlot`.
 //
 // WHAT THIS FILE COVERS THAT NO OTHER ONE DOES. `StratSaveSlotClauses.cpp` pins where a save
 // LIVES and that a loaded match reaches the saved canonical state hash;
@@ -51,7 +51,7 @@
 // file was written: had its body stopped clearing `DoneUnits`, the oracle and the controller
 // would have carried the SAME stale bit and legs (1) and (3) below would have gone GREEN OVER
 // THE RESTORED DEFECT. The backstop is now
-// `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked` in
+// `Stratocracy.StratPlay.T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked` in
 // `StratSelectionMachineResetClauses.cpp`, which asserts that body against written-down values
 // and shares no machinery with this clause. The off-limits rule above still stands for both
 // bodies; what changed is that a regression in either now reddens a second, independent clause.
@@ -273,7 +273,7 @@ namespace StratLoadPresentationCarryOver
 }
 
 // ---------------------------------------------------------------------------------------------
-// T-SAVE-04 -- a load leaves the controller's presentation pair answering as a RESET pair does.
+// T-INT-05 -- a load leaves the controller's presentation pair answering as a RESET pair does.
 //
 // THE PROPERTY, IN ONE SENTENCE. `UStratMatchSubsystem::LoadMatchFromSlot` replaces the match;
 // `FStratSelectionMachine::DoneUnits` and `FStratBuildAffordance`'s focus describe the match it
@@ -311,7 +311,7 @@ namespace StratLoadPresentationCarryOver
 // ---------------------------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratLoadClearsControllerSidePresentationStateTest,
-	"Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState",
+	"Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FStratLoadClearsControllerSidePresentationStateTest::RunTest(const FString& /*Parameters*/)
@@ -479,7 +479,7 @@ bool FStratLoadClearsControllerSidePresentationStateTest::RunTest(const FString&
 		}
 	}
 	TestTrue(*FString::Printf(
-			TEXT("T-SAVE-04: every unit of the LOADED match is drawn with the bDone a reset "
+			TEXT("T-INT-05: every unit of the LOADED match is drawn with the bDone a reset "
 			     "selection machine gives it. Units where the decorated model and the reset "
 			     "oracle disagree: %s. A bDone carried across LoadMatchFromSlot is a unit of "
 			     "the new match greyed out for something it did in the old one -- and unit ids "
@@ -489,7 +489,7 @@ bool FStratLoadClearsControllerSidePresentationStateTest::RunTest(const FString&
 
 	// ---- LEG (2): the build affordance -------------------------------------------------------
 	TestEqual(
-		TEXT("T-SAVE-04: the build affordance's focus after the load is a reset affordance's "
+		TEXT("T-INT-05: the build affordance's focus after the load is a reset affordance's "
 		     "focus. StratBuildAffordance.h names the discharging condition for its own Reset() "
 		     "as a load path that calls BOTH, so a focus surviving here is a BUILD button about "
 		     "a factory on a board that is gone"),
@@ -518,7 +518,7 @@ bool FStratLoadClearsControllerSidePresentationStateTest::RunTest(const FString&
 
 	TestEqual(
 		*FString::Printf(
-			TEXT("T-SAVE-04: clicking unit %d in the LOADED match selects whatever a reset "
+			TEXT("T-INT-05: clicking unit %d in the LOADED match selects whatever a reset "
 			     "machine selects. It has neither moved nor acted on this turn, and "
 			     "HandleEvent's done-set gate is what would refuse it"),
 			WaitedUnitId),
@@ -526,7 +526,7 @@ bool FStratLoadClearsControllerSidePresentationStateTest::RunTest(const FString&
 
 	TestEqual(
 		*FString::Printf(
-			TEXT("T-SAVE-04: and it produces the refusal sentence a reset machine produces for "
+			TEXT("T-INT-05: and it produces the refusal sentence a reset machine produces for "
 			     "that same click -- neither the sentence nor its absence is written down in "
 			     "this file (live: '%s')"),
 			*LiveClick.FailureReason),

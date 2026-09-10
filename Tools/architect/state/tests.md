@@ -15,6 +15,122 @@
 > file was split; completed 2026-08-22, no meaning changed.)
 
 - **2026-09-10, `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/` and this
+  file only -- dispatched, on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `7f0e05b`,
+  no worktree or wave in flight, UNCOMMITTED) -- THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b`
+  UNDER `T-SAVE-04` NOW RIDE `T-INT-05`, BY THE USER'S RULING. THE THING WORTH READING IS WHERE
+  THIS PASS WENT WRONG: IN TWO PLACES, BOTH IN ASSERTION MESSAGE BYTES, WHICH NO COMPILER, NO
+  CLAUSE AND NO SUITE GATE READS. A names-only diff classifier caught both before the build. The
+  live suite count lives in `Tools/architect/state/global.md` and nowhere else.**
+  - **THE RULING.** `decisions.md`, the entry headed *"RULED, 2026-09-10, BY THE USER -- THE TWO
+    CLAUSES THAT LANDED AT MERGE `d59bf9b` UNDER `T-SAVE-04` ARE RENAMED TO `T-INT-05`, BOTH OF
+    THEM."* It discharges this lane's item headed **"THE CLAUSE-ID CONFLICT, STATED AS OPEN AND
+    NOT RESOLVED BY THIS LANE"** in the entry below, which is stamped CLOSED in place, as are
+    the two inline `OPEN` brackets that item says sit at both ends of the conflict.
+  - **THE RENAME.** `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`
+    -> `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState`
+    (`StratLoadPresentationCarryOverClauses.cpp`), and
+    `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked` ->
+    `Stratocracy.StratPlay.T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked`
+    (`StratSelectionMachineResetClauses.cpp`). Bodies, legs, suffixes and every check are unchanged.
+    **No class name moved:** `FStratLoadClearsControllerSidePresentationStateTest` and
+    `FStratSelectionMachineResetEmptiesAllThreeFieldsTest` carry no ID, and both are plain
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` classes. Measured, not asserted: each name is the first
+    argument of its `IMPLEMENT_SIMPLE_AUTOMATION_TEST(` in both the `HEAD` blob and the working
+    file, each occurs twice under `Source/` on both sides, and neither occurs on any changed line
+    of `git diff` for the two files. **Control, showing the search could speak:** the same search,
+    given the phrase *"AND NOT `T-SAVE-04`"*, returns its one known hit in
+    `Source/StratPlay/Tests/StratSaveSlotClauses.cpp`; and the same changed-line filter, given
+    `FStrat`, returns 4 lines, the old and new forms of the two that name
+    `FStratSelectionMachine`.
+  - **ASSERTION MESSAGES: CHANGED, AND THAT IS A DECISION, NOT A SIDE EFFECT.** Every message
+    prefix `T-SAVE-04:` in the two files now reads `T-INT-05:`. That is four lines in the load
+    file and ten in the reset file, one of which also carries *"THE T-INT-05 LOAD CLAUSE"*.
+    A failure message is read beside the clause's name in the report, so a `T-SAVE-04:` under a
+    `T-INT-05` clause would send the reader of a red run to the header-refusal sentence in §4.10.
+    Only the ID token changed. No check and no expectation moved.
+  - **ONE COMMENT REWORDED RATHER THAN RENAMED, BECAUSE THE RENAME MADE IT FALSE.** In the reset
+    file, the paragraph that began *"THE ACCEPTANCE ID IS THE USER'S, RULED IN SESSION. It rides
+    T-SAVE-04 rather than T-UI-02 or T-INT-05"* is retracted in place under a `RETRACTED>`
+    leader. The retraction says why it was false: the ID came from a `coordinator` relay, and
+    `T-SAVE-04`'s sentence is a header-mismatch refusal. It keeps the surviving reason: the
+    clause protects the load clause's oracle, which moved to `T-INT-05` under the same ruling.
+  - **NAMES-ONLY, MEASURED, NOT ASSERTED.** A classifier compared each file line by line with its
+    `HEAD` blob and asked whether each changed line equals the old line with `T-SAVE-04` ->
+    `T-INT-05` applied. **Twenty-five changed lines differ from `HEAD` by exactly that: 8 in the
+    load file and 17 in the reset file.** Nothing else changed except that one paragraph, which
+    went from 3 lines to 10. `git diff --numstat` agrees: `8 8` and `27 20`. Control: the same
+    classifier, run over a `HEAD` copy with one dropped space and one added trailing space,
+    reported 2 non-name lines and 0 name-only. EOL: `core.autocrlf=true`, and `git ls-files
+    --eol` shows `i/lf w/crlf` on both files AND on the untouched `StratSaveSlotClauses.cpp`, so
+    the CRLF in the working bytes is the checkout's, not this pass's.
+  - **THE TWO SLIPS, AND WHY THEY ARE AN INSTRUMENT CAVEAT FOR THIS LANE.** **The `Edit` tool drops
+    trailing whitespace from `new_string` and not from `old_string`.** I measured that across
+    three edits in this pass. (a) A replace-all of `TEXT("T-SAVE-04: ` (trailing space) with
+    `TEXT("T-INT-05: ` produced `"T-INT-05:Reset() drops..."`. (b) The repair, a replace of
+    `"T-INT-05:and ` (trailing space) with `"T-INT-05: and`, matched the space and put none back,
+    producing `"T-INT-05: andthe done set empty"` on four lines. Both are message bytes. Both
+    compile, and both would have run green under every clause and gate in this tree. The
+    classifier above caught both, and the fix was to anchor on the next word instead of on a
+    space. **So a rename in this lane is proven by a names-only diff check, not by the build and
+    not by the suite.**
+  - **THE SWEEP, WRAP-AWARE.** 115 `.cpp`/`.h` files under `Source/*/Tests/`, with comment leaders
+    stripped and each file flattened to one line, so `T-` / `SAVE-` / `04.` / suffix match across
+    line breaks. Controls: a planted fixture holding both old full names, one split mid-token
+    across two comment lines, returned both. The live `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
+    returned 1 before and after. **Before: `T-SAVE-04` 71, old full names 2 and 2, new full
+    names 0 and 0. After: 47, 0 and 0, 2 and 2.** The arithmetic closes, recounted from
+    `git diff` against `HEAD` with the names-only classifier above: 26 occurrences renamed (8 on 8 lines in
+    the load file; 18 on 17 lines in the reset file, where one line carries two), 1 removed with
+    the retracted three-line paragraph, and 3 added inside the new correction paragraph.
+    71 - 26 - 1 + 3 = 47. A plain per-line count over `Source/*/Tests/` agrees at both ends: 71 in
+    `HEAD`, 47 in the working tree.
+  - **EVERY `T-SAVE-04` LEFT IN `Tests/`, AND WHY.**
+    - `StratBridgeRestoreParity.cpp`, 20: all header-refusal. The §4.10 file block,
+      GATE-SAVE-PARSE vs `T-SAVE-04` distinctness, `refuse("T-SAVE-04", ...)` read back as an id,
+      and `T-SAVE-04.RestoreSourcesScenarioHashFromThisBridge`. This is the ID's own subject.
+    - `StratSaveSlotClauses.cpp`, 17: the file header naming the IDs the file rides;
+      `T-SAVE-04.LoadRefusesAWrongSavedDataVersion`, its block and its messages (the version arm,
+      squarely `T-SAVE-04`'s); `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`, its block and its
+      messages, **which the ruling states it does not cover**; and the block beginning
+      *"AND NOT `T-SAVE-04`, FOR THE REASON RECORDED IN `StratShellRouteClauses.cpp`"*, which is
+      the refusal itself.
+    - `StratShellRouteClauses.cpp`, 5: the refusal block *"`T-SAVE-04` was proposed and IS
+      REFUSED HERE"*, its citations of the version clause, and a `RETRACTED>` quote already
+      stamped 2026-08-30.
+    - `StratLoadPresentationCarryOverClauses.cpp`, 2: *"`strat-gameplay-engineer`'s T-SAVE-04 fix
+      onward"* and *"false from the T-SAVE-04 fix onward"*. These name A FIX by the label its merge
+      commit carries (`d59bf9b`, *"Merge T-SAVE-04"*). They do not name the clause. Renaming them
+      would invent a "T-INT-05 fix" that no commit is called. `strat-gameplay-engineer` left the
+      same phrase in `StratBuildAffordance.h` in its own pass this session.
+    - `StratSelectionMachineResetClauses.cpp`, 3, all new and all inside the correction
+      paragraph: the ruling's heading quoted, the `RETRACTED>` quote, and the sentence saying why
+      `T-SAVE-04` was wrong. None of them is a full clause name, so a full-name sweep stays at zero.
+  - **BUILD AND RUN.** Editor closed, with no `UnrealEditor*` process. The build compiled both
+    renamed files and relinked `UnrealEditor-StratPlay.dll`, `Result: Succeeded`. UTC stamp
+    `2026.09.10-21.36.16` taken BEFORE the headless suite launched. Exported report
+    `reportCreatedOn 2026.09.10-21.37.28`. **The gate refuses `--not-before` and `--pin-to-tree`
+    in one invocation** (*"--not-before and --pin-to-tree are two answers to one question; pass
+    one."*, exit 1), so each was run separately, as the entry below also did. Each closed
+    `SUITE REPORT GATE CLEAN`, exit 0, with the macro census agreeing with the report's counters.
+    Name sets, collected by one parser from `HEAD` and from the working tree: `HEAD`'s declared
+    names with the two renamed equal the report's names, and the difference is empty both
+    ways. Both new names are `Success`, both old names are absent, and every entry is `Success`.
+    **The entry count equals `HEAD`'s macro census and equals the pre-rename report's
+    (`reportCreatedOn 2026.09.10-20.38.51`), so the rename moved no count.** The figure itself
+    is in `global.md`. **[STAMPED AS HISTORY IN THE PASS THAT WROTE IT, 2026-09-10: there is one
+    report path and the next run overwrites it, so that `reportCreatedOn` is a record of this
+    run and not a pointer a later reader can follow.]**
+  - **NO MUTANT, AND NONE IS OWED.** The change is name-only: no check, expectation or fixture
+    moved, so there is no new kill to demonstrate. The reset clause's kill is still the
+    PREDICTED, UNRUN one recorded in the entry below.
+  - **WHAT THIS DOES NOT CLOSE.** `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem` is a refusal but
+    not a header mismatch. It stays OPEN, outside the ruling, as the item below already records.
+    **The old names in older entries of this file stay as written, because they were the
+    compiled names then.** The five sites that name either clause by its old full name (found
+    by the same wrap-aware sweep and by grep, which agree) each carry an inline `RENAMED`
+    bracket pointing here, so a reader arriving by citation is told at the name.
+
+- **2026-09-10, `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/` and this
   file only -- dispatched, on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
   `3143049`, UNCOMMITTED) -- REPAIRS THE T-SAVE-04 MERGE `d59bf9b` ON FINDINGS 2 AND 3 OF
   `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md` (`VERDICT: BLOCK`). A CLAUSE THAT
@@ -27,6 +143,9 @@
     `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, in
     `Source/StratPlay/Tests/StratSelectionMachineResetClauses.cpp`, git blob `fcec6baf`,
     identical at `f53ca26`, `d59bf9b` and `3143049`, and not touched by this pass.
+    **[RENAMED 2026-09-10 to `Stratocracy.StratPlay.T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked`
+    by the user's ruling. The file's working blob is now `a79a5b07`, uncommitted, and it is no
+    longer `fcec6baf`. See the rename entry at the top of this file.]**
     - **What it pins.** `FStratSelectionMachine::Reset()` drops the selection (`INDEX_NONE`),
       empties `DoneUnits` and empties `LockedUnits`. Each field is asserted separately, because
       the three have three lifecycles -- `NotifyCommandApplied` clears the done set on an
@@ -38,7 +157,8 @@
       LAPSE.** `INDEX_NONE` and `false`, taken from the struct's own declaration of the method,
       *"Drops the selection and both sets"*. No module-side value is read because the subject IS
       the module-side value: this method is the oracle `T-SAVE-04.LoadClearsControllerSidePresentationState`
-      reads every expectation from, so asking it what it does would certify it with itself. The
+      **[RENAMED 2026-09-10 to `T-INT-05.LoadClearsControllerSidePresentationState`; see the
+      rename entry at the top of this file]** reads every expectation from, so asking it what it does would certify it with itself. The
       file's header argues this at length; it is the one place in this family where the house
       rule inverts.
     - **WHY IT EXISTS.** The load clause's oracle was backstopped on one side only.
@@ -136,7 +256,14 @@
       rebuild anyway. **No debt is carried from Finding 2.**
     - **COMMENT-ONLY, CHECKED:** `git diff -U0 -- Source/StratPlay/Tests` holds zero changed
       lines that do not begin with `//` after indentation, against eighty that do.
-  - **THE CLAUSE-ID CONFLICT, STATED AS OPEN AND NOT RESOLVED BY THIS LANE.** Further down this
+  - **THE CLAUSE-ID CONFLICT, STATED AS OPEN AND NOT RESOLVED BY THIS LANE.** **[CLOSED
+    2026-09-10, STAMPED IN PLACE, `strat-test-author` (ACTING and WRITING; IN LANE, base
+    `7f0e05b`), for the two clauses that landed at `d59bf9b`. The user's ruling in `decisions.md`,
+    the entry headed *"THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b` UNDER `T-SAVE-04` ARE
+    RENAMED TO `T-INT-05`, BOTH OF THEM"*, is the second of the two discharges this item names,
+    the one that moves the clauses. Both now ride `T-INT-05`, carried out in the rename entry at
+    the top of this file. NOT CLOSED: the `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
+    observation below, which that ruling states it does not cover. That half stays OPEN.]** Further down this
     file, this lane REFUSED `T-SAVE-04` for the restorability clauses, against that ID's GDD
     sentence as quoted there -- *"refusal: any header mismatch (version/rules/data/scenario
     hash)"*, refusing *"on the header alone"* -- on the ground that a clause riding an ID whose
@@ -147,7 +274,9 @@
     in the 2026-09-03 entry and in the reset file's header; what the transcript above shows is
     the `coordinator` RELAYING that choice to this lane (*"The user chose the acceptance ID in
     session: T-SAVE-04"*), not the user's own words, and nothing in `decisions.md` mentions
-    `T-SAVE-04` at all. Observed too, and older than either: `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
+    `T-SAVE-04` at all. **[TRUE WHEN WRITTEN; FALSE FROM 2026-09-10, when the ruling named in
+    this item's CLOSED stamp was recorded there. STAMPED IN PLACE, same author, base `7f0e05b`.]**
+    Observed too, and older than either: `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
     is a refusal but not a header mismatch either. **Discharged only by a ruling recorded in
     `decisions.md`** -- either one that states what `T-SAVE-04` covers in this project beyond its
     GDD sentence, or one that moves the clauses. A clause name is compiled and cited across the
@@ -3329,13 +3458,17 @@
   LOAD IS PINNED. ONE CLAUSE [CORRECTED 2026-09-10 IN PLACE, same author, same base, same
   finding: "ONE CLAUSE" WAS TRUE WHEN THIS LEDE WAS WRITTEN AND WAS FALSE BY THE TIME IT MERGED.
   A SECOND clause file, `StratSelectionMachineResetClauses.cpp`, holding
-  `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, was
+  `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`
+  **[RENAMED 2026-09-10 to `T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked`; see the
+  rename entry at the top of this file]**, was
   written in the same worktree later the same day and landed in the same commit, and this record
   never received it. It is received by the 2026-09-10 entry at the top of this file, which also
   says who wrote it and on what evidence. The load clause below is still exactly one clause;
   what is false is that it was the pass's only one.], WRITTEN TO EXHIBIT A DEFECT AND CONFIRMED RED BEFORE ANY FIX
   EXISTED. THE LIVE COUNT LIVES IN `Tools/architect/state/global.md` AND NOWHERE ELSE.**
-  - **THE CLAUSE.** `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`,
+  - **THE CLAUSE.** `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`
+    **[RENAMED 2026-09-10 to `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState`;
+    see the rename entry at the top of this file]**,
     in `Source/StratPlay/Tests/StratLoadPresentationCarryOverClauses.cpp` (a new file). The
     acceptance ID was ruled by the user in session; it is not derived, and it is deliberately
     not `T-INT-05` or `T-TURN-01`. **[OPEN, FLAGGED 2026-09-10 IN PLACE, `strat-test-author`
@@ -3343,7 +3476,15 @@
     unreconciled conflict with this lane's own recorded refusal to put clauses under `T-SAVE-04`
     when that ID's GDD sentence excludes their subject, and nothing in `decisions.md` records
     this ruling or reconciles the two. The conflict is stated in full in the 2026-09-10 entry at
-    the top of this file. No clause has been renamed.]**
+    the top of this file. No clause has been renamed.]** **[CLOSED 2026-09-10, STAMPED IN PLACE,
+    `strat-test-author` (ACTING and WRITING; IN LANE, base `7f0e05b`): the user ruled the move
+    (`decisions.md`, the entry headed *"THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b` UNDER
+    `T-SAVE-04` ARE RENAMED TO `T-INT-05`, BOTH OF THEM"*), and this clause is now
+    `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState`. Two sentences
+    here are false from that pass and are stamped where they stand. *"No clause has been
+    renamed"* was true when written. *"The acceptance ID was ruled by the user in session ...
+    deliberately not `T-INT-05`"* was false even then: the ID was relayed, not ruled. The clause
+    now rides exactly the ID that sentence excluded.]**
   - **WHAT IT PINS.** After `UStratMatchSubsystem::LoadMatchFromSlot`, the controller's
     `FStratSelectionMachine` and `FStratBuildAffordance` answer as a pair that has been
     `Reset()` answers. Three legs, and they are one clause rather than three because the
@@ -3375,7 +3516,9 @@
     `FStratSelectionMachine::Reset()` was pinned by NOTHING when this entry was written: had its
     body stopped clearing `DoneUnits`, the oracle and the controller would have carried the same
     stale bit and legs (1) and (3) would have gone green over the restored defect. That half is
-    now backstopped by `T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked`, received
+    now backstopped by `T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked` **[RENAMED
+    2026-09-10 to `T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked`; see the rename
+    entry at the top of this file]**, received
     in the 2026-09-10 entry at the top of this file. The off-limits rule itself still stands for
     both bodies. **The file's own header block now carries the same correction, added
     2026-09-10.]** The same note is
@@ -5335,7 +5478,14 @@
   `3143049`), not resolved: two clauses that landed at merge `d59bf9b` ride `T-SAVE-04` although
   neither subject is a header mismatch -- the ID was relayed to this lane as the user's choice in
   session. This refusal and that choice are unreconciled; see the 2026-09-10 entry at the top of
-  this file. Nothing here was renamed.]** The version arm's rule
+  this file. Nothing here was renamed.]** **[CLOSED 2026-09-10 FOR THOSE TWO CLAUSES, STAMPED IN
+  PLACE, `strat-test-author` (ACTING and WRITING; IN LANE, base `7f0e05b`). The user's ruling in
+  `decisions.md`, the entry headed *"THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b` UNDER
+  `T-SAVE-04` ARE RENAMED TO `T-INT-05`, BOTH OF THEM"*, moved both to `T-INT-05`, so this refusal
+  and those two are reconciled. *"Nothing here was renamed"* stays true of THIS block's clauses,
+  which ride `GATE-TITLEMENU` and are untouched. `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
+  is not a header mismatch either, is not covered by that ruling, and remains the one standing
+  exception to this refusal.]** The version arm's rule
   remains squarely `T-SAVE-04`'s and keeps its existing clause
   (`Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAWrongSavedDataVersion`); no new clause restates it.
   Stated precisely, because a looser sentence stood in the file earlier the same day:

@@ -251,7 +251,7 @@ struct STRATPLAY_API FStratBuildAffordance
 	 * `FStratSelectionMachine::Reset()` and this method **in the same place**, on the two
 	 * statements after it observes that `UStratMatchSubsystem::GetMatchEpoch()` has moved --
 	 * which is what "a load or reseed path that calls both" named. The clause that forced it
-	 * is `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`, and its
+	 * is `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState`, and its
 	 * leg (2) is this method's half: it asserts this affordance's focus after a load equals a
 	 * RESET affordance's, so a fix that reset only the machine would leave it red.
 	 *

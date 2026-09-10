@@ -962,7 +962,7 @@ protected:
 	 * has moved on to a DIFFERENT MATCH since the last decoration.
 	 *
 	 * THE DEFECT THIS EXISTS FOR, AND IT IS A RED CLAUSE AND NOT A HYPOTHESIS.
-	 * `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState` failed
+	 * `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState` failed
 	 * against `283d711`: `UStratMatchSubsystem::LoadMatchFromSlot` replaces the match and
 	 * `TearDownPresentation` clears everything the SUBSYSTEM owns, but `SelectionMachine` and
 	 * `BuildAffordance` are members of THIS class, so a `DoneUnits` entry earned in the match

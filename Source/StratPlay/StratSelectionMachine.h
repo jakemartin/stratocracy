@@ -450,7 +450,7 @@ struct STRATPLAY_API FStratSelectionMachine
 	 * match that no longer exists.
 	 *
 	 * THE FORCING CLAUSE IS
-	 * `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState`, whose leg
+	 * `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState`, whose leg
 	 * (1) compares every `FStratUnitView::bDone` in a freshly loaded match against what a
 	 * RESET machine answers for that same id. Note what that makes this method: the clause
 	 * builds a second machine, drives it through the same public calls, and calls THIS to

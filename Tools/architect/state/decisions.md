@@ -1102,3 +1102,48 @@
     `state/global.md`'s topmost banner cites, linked rather than restated.
   - This entry does not state a suite count or a phase verdict -- see `state/global.md` for the
     live figure.
+
+- **RULED, 2026-09-10, BY THE USER -- THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b` UNDER
+  `T-SAVE-04` ARE RENAMED TO `T-INT-05`, BOTH OF THEM.**
+  `2026-09-10, strat-data-steward (ACTING and WRITING; IN LANE)`, over base `7f0e05b`, no worktree
+  or wave in flight.
+  - **The rename.**
+    `Stratocracy.StratPlay.T-SAVE-04.LoadClearsControllerSidePresentationState` ->
+    `Stratocracy.StratPlay.T-INT-05.LoadClearsControllerSidePresentationState`, and
+    `Stratocracy.StratPlay.T-SAVE-04.SelectionMachineResetEmptiesSelectionDoneAndLocked` ->
+    `Stratocracy.StratPlay.T-INT-05.SelectionMachineResetEmptiesSelectionDoneAndLocked`. The ID
+    moves; the clause bodies do not. **No class name moved, because neither carried an ID to
+    begin with:** `FStratLoadClearsControllerSidePresentationStateTest` and
+    `FStratSelectionMachineResetEmptiesAllThreeFieldsTest` are plain
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` classes and never carried one.
+  - **The menu the user ruled from.** Three options for the ID: `T-INT-05` for both (CHOSEN); a
+    new local gate `GATE-LOADRESET`; a split, load clause on `T-INT-05` and reset clause on a
+    local gate. A separate question asked whether the rename is dispatched to the lanes or done
+    by the `coordinator` in session; the user chose DISPATCH.
+  - **WHY.** `T-SAVE-04`'s GDD sentence (§4.10) reads, quoted normalised: *"any header mismatch
+    (version/rules/data/scenario hash) -> load refused with a reason; state untouched"*. Neither
+    clause's subject is a header mismatch. `T-INT-05`'s (§4.9) is *"presentation statelessness:
+    after any event sequence, rebuilding all widgets/actors from the current view-model alone"*
+    -- that view-model, per `Source/StratRules/Ui.h`'s `UiPresentationUnit`, carries the
+    selection machine's `done` bit and the guidance layer's `lockedThisTurn` bit -- that is
+    presentation-block state, which is what both clauses pin. The earlier warrant
+    for `T-SAVE-04` was a `coordinator` relay of an in-session choice, never a user ruling -- no
+    entry in this file before this one names `T-SAVE-04` at all. Precedent for renaming an ID by
+    ruling without touching a clause body: the entries headed "FILED UPSTREAM 2026-08-27 ... W3's
+    End Turn surface and idle-unit count" and "FILED UPSTREAM 2026-08-27 ... W2's hex info panel
+    and unit stat line" each carry a `[AMENDED 2026-08-29 BY USER RULING ...]` bracket moving
+    `T-UI-05` to `T-INT-05` on the same mechanism -- ID moves, clause unchanged.
+  - **WHAT THIS RULING DOES NOT COVER.** `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
+    (`StratSaveSlotClauses.cpp`) also rides `T-SAVE-04` without being a header mismatch. The user
+    was not asked about it in this session. It stays open.
+  - **Discharges** `tests.md`'s entry based at `3143049`, the bullet headed "THE CLAUSE-ID
+    CONFLICT, STATED AS OPEN AND NOT RESOLVED BY THIS LANE."
+  - **STATE: RULED AND CARRIED OUT**, each in its own separate dispatch -- by
+    `strat-test-author` (`tests.md`'s entry headed *"THE TWO CLAUSES THAT LANDED AT MERGE
+    `d59bf9b` UNDER `T-SAVE-04` NOW RIDE `T-INT-05`, BY THE USER'S RULING"*, renaming both
+    `IMPLEMENT_SIMPLE_AUTOMATION_TEST` string arguments and the `T-SAVE-04:` assertion-message
+    prefixes) and `strat-gameplay-engineer` (engine.md's `## NEXT` bullet headed *"2026-09-10,
+    strat-gameplay-engineer (ACTING and WRITING; IN LANE)"*, renaming the four non-`Tests/`
+    comments naming the old full clause name in `StratMatchSubsystem.h`,
+    `StratPlayerController.h`, `StratSelectionMachine.h` and `StratBuildAffordance.h`). No suite
+    count or phase verdict stated here -- see `state/global.md`.

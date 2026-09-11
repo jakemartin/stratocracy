@@ -1,0 +1,20 @@
+{
+  "ports": {
+    "strat_banner_sweep.py": {
+      "plugin": "banner_sweep.py",
+      "plugin_sha256": "ae3c007301df0498e255512a52926f812830aab733b3aaa382900cf6d2ff510d",
+      "port_sha256": "9247a1da9dfa1e5d9f49625d226456518785e31be89f0272d68c7884720573bf"
+    },
+    "strat_doc_citation_gate.py": {
+      "plugin": "doc_citation_gate.py",
+      "plugin_sha256": "b872a18dc3c86444ab93d3a7a2620d312a1aec76212b390fe9787d53eb111581",
+      "port_sha256": "b380919ab414fcd21fd76a1ab19d91cf6be927f2122de0c74349565398c2d907"
+    },
+    "strat_suite_report_gate.py": {
+      "plugin": "suite_report_gate.py",
+      "plugin_sha256": "2cfc8e798ec5f39834a3a210430c670f10e9236a46954ff11317863243af9665",
+      "port_sha256": "16ad0cb53ad2f2dae33012388ff1a2470e66605daef6b4525a814293cbaf01a4"
+    }
+  },
+  "prefix": "strat_"
+}

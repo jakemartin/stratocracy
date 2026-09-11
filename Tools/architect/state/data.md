@@ -15,6 +15,54 @@
 
 ## NEXT
 
+- **DONE, 2026-09-11 -- follow-up: the plugin-port ledger reconciled against `ue-agent-kit`
+  `ac792af`, all 3 ports certified.** Base commit `7e65587` (= `origin/master` at follow-up
+  start). Ledger: `Tools/architect/plugin_ports.json`. Re-check with
+  `python E:/ue-agent-kit/scripts/template_sync.py ports --project E:/MultiAgent/Stratocracy --prefix strat_`
+  (always against the `E:\ue-agent-kit` checkout at that commit; another checkout at another
+  version reads as PLUGIN moved).
+  Classification per port: **`strat_banner_sweep.py`** (167 lines) — the divergence is (a)
+  project-specific naming (`strat_` script names, `strat-data-steward` /
+  `strat-integration-reviewer` in comments, kept over the plugin's generic `ue-` forms) and (b)
+  `UE_REPO`/`UE_STATE_DIR`/`--state-dir` env-and-flag generalization the plugin added for
+  installed-elsewhere distribution — not needed here since this script lives in-tree and
+  `_HERE`-derived defaults already resolve correctly; no port. One PROJECT-SIDE FIX the plugin
+  lacks: this file's own 2026-09-11 LIVE COUNT MISSING two-cause message and its fixture
+  (`data.md`'s prior entry, above). **[CORRECTED 2026-09-11, gate G, Finding 1 -- the sentence
+  originally continued "filed upstream below," and nothing below it files anything. This is an
+  OPEN UPSTREAM REQUEST, NOT FILED BY THIS FILE: port the two-cause LIVE COUNT MISSING message
+  and the `_LIVE_COUNT_MISSING_BY_STAMP` fixture into `E:\ue-agent-kit`,
+  `plugins/ue-agent-kit/scripts/banner_sweep.py`. Routed 2026-09-11 by the `coordinator` to the
+  `ue-agent-kit` coordinator session -- that session, not this file, carries it from here. The
+  divergence this fix describes is already CERTIFIED ACCEPTED in
+  `Tools/architect/plugin_ports.json` (this same entry, above), so `template_sync.py ports` will
+  NOT raise it again until the plugin is re-vendored; this sentence is the only reminder that the
+  request is still open. Discharged when `plugins/ue-agent-kit/scripts/banner_sweep.py` carries
+  the fix and `accept-ports` is re-run against the updated plugin.]** **`strat_doc_citation_gate.py`**
+  (27 lines) — name references plus a `UE_VENDORED_DIR` env-override generalization; same
+  reasoning, no port needed. **`strat_suite_report_gate.py`** (originally 54 lines before this
+  pass, 15 after) — the named candidate: the plugin's `main(argv)` plus main()-level self-test
+  fixtures (`_main_level_cases`), added 2026-09-10 after a mutant dropping `--pin-to-tree` in
+  `main()` survived every `check()`-level fixture. **PORTED.** Added `contextlib`/`io` imports,
+  `main(argv: list[str] | None = None)`, `_main_level_cases`, wired into `self_test()`. Proved a
+  mutant (`main()` passing `False` for `pin_to_tree` instead of `args.pin_to_tree`) goes red:
+  `--self-test` on the mutant printed exactly one `[BAD]`, at
+  `main --pin-to-tree over a file edited after the report exits 1: expected exit 1, got 0`, exit
+  1. Real file: `--self-test` exit 0 (`SELF-TEST: ALL FIXTURES CORRECT`); `--pin-to-tree` against
+  the real report exit 0 (`479/479 clauses Success`, `Source\StratPlay\Tests\...` as newest
+  file — `--pin-to-tree`'s default `--source-root Source` does not reach `Tools/`, so this
+  change to a `Tools/` file is invisible to it, as expected).
+  **`accept-ports`** printed, before writing: `banner_sweep.py: 167 line(s) differ`,
+  `doc_citation_gate.py: 27 line(s) differ`, `suite_report_gate.py: 15 line(s) differ` — then
+  certified all three into `Tools/architect/plugin_ports.json`. `ports` re-check: same three
+  line counts, `PORTS IN STEP`, exit 0. **Control (never on the real tree):** copied
+  `Tools/architect/` into a scratchpad project, appended one comment line to the scratch copy's
+  `strat_banner_sweep.py`, ran `ports` against the scratch project — `168 line(s) differ`,
+  `[port-drift] strat_banner_sweep.py: PORT moved since the divergence was accepted`,
+  `PORT DRIFT -- 1 finding(s)`, exit 1. Scratch directory then deleted. Real tree re-checked
+  after: `ports` still exits 0, `git status --porcelain Tools/architect` shows only the intended
+  `strat_suite_report_gate.py` modification and the new `plugin_ports.json`.
+
 - **DONE, 2026-09-11 -- close-out lane 1: ten 2026-09-10 gate reports persisted into
   `Tools/architect/gate_reports/`, and `strat_banner_sweep.py`'s LIVE COUNT MISSING message now
   names the stamp-window cause, not only the reporting-verb one.** Base commit `a94c2c4` (=
@@ -197,6 +245,15 @@
   `strat_suite_report_gate.py` among "template-only scripts, NOT MEASURED," so drift between
   this file and its plugin source is unguarded in either direction. Neither item is filed as a
   numbered upstream request in this entry; recorded here as open so it is not lost.
+  **[STAMPED 2026-09-11, follow-up -- both halves of this item are now resolved.** The
+  main()-level fixture this item asked for upstream is in `E:\ue-agent-kit` at `ac792af`
+  (`main(argv)` plus `_main_level_cases`) and is now in the port too (this same file's 2026-09-11
+  entry above, "**PORTED**": `strat_suite_report_gate.py` gained `main(argv: list[str] | None =
+  None)` and `_main_level_cases`, proved to kill the `pin_to_tree` mutant). The drift-unguarded
+  half is closed by `python E:/ue-agent-kit/scripts/template_sync.py ports` plus
+  `Tools/architect/plugin_ports.json`, which now certifies and re-checks all three
+  `strat_*.py` ports mechanically, superseding the "unguarded in either direction" reading above.
+  Nothing further to file on this item.]**
 
 - **DONE, 2026-09-06 -- Two measured defects fixed in `Tools/architect/strat_banner_sweep.py`,
   base commit `f7da9ca`, branch `master`, tree dirty on top of it (the uncommitted, gated-clean

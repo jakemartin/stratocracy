@@ -83,6 +83,8 @@ clauses in it is a FAILURE, never a skip.
 from __future__ import annotations
 
 import argparse
+import contextlib
+import io
 import json
 import os
 import re
@@ -603,11 +605,52 @@ def self_test() -> int:
                       f"{'PASS' if should_pass else 'FAIL'}, got "
                       f"{'PASS' if got_pass else 'FAIL'}")
 
+    bad += _main_level_cases(names, ok)
+
     if bad:
         print(f"SELF-TEST: {bad} FIXTURE(S) WRONG")
         return 1
     print("SELF-TEST: ALL FIXTURES CORRECT")
     return 0
+
+
+def _main_level_cases(names: list[str], ok: list[tuple[str, str]]) -> int:
+    """Fixtures that go through `main()`'s ARGUMENT HANDLING, not straight into `check()`.
+
+    Every case above calls `check()` with the flag already decided, so a `main()` that parsed
+    `--pin-to-tree` and then dropped it on the floor passed all of them -- the self-test could
+    not see the one wiring a caller actually uses. Found 2026-09-10 in `ue-agent-kit` while
+    mutation-testing the `--pin-to-tree` port: a mutant passing `False` for the flag survived.
+    So these run argv through `main()` and read its EXIT CODE, the thing CI and a coordinator
+    actually branch on.
+    """
+    bad = 0
+    stale = ("2026.08.30-04.00.00", "2026.08.30-03.00.00", "2026.08.30-05.00.00")
+
+    def run(label: str, want: int, extra: list[str], edit_after: bool) -> None:
+        nonlocal bad
+        with tempfile.TemporaryDirectory() as td:
+            t = Path(td)
+            report = _fixture_report(t, ok, stale[0])
+            root = _age(_fixture_tree(t, names), stale[1])
+            if edit_after:
+                _edit_after(root, stale[2])
+            argv = ["--report", str(report), "--source-root", str(root), *extra]
+            with contextlib.redirect_stdout(io.StringIO()):
+                got = main(argv)
+        if got == want:
+            print(f"    [OK] main {label}: expected exit {want}, got {got}")
+        else:
+            bad += 1
+            print(f"    [BAD] main {label}: expected exit {want}, got {got}")
+
+    run("--pin-to-tree over a file edited after the report exits 1", 1,
+        ["--pin-to-tree"], True)
+    run("the same stale tree WITHOUT --pin-to-tree exits 0 (the control)", 0, [], True)
+    run("--pin-to-tree over a fresh tree exits 0", 0, ["--pin-to-tree"], False)
+    run("--not-before later than the report exits 1", 1,
+        ["--not-before", "2026.08.30-04.00.01"], False)
+    return bad
 
 
 def _write(path: Path, text: str) -> Path:
@@ -674,7 +717,7 @@ def _complex_tree(tmp: Path, names: list[str]) -> Path:
     return root
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--report", default=os.path.join("Saved", "AutomationReport", "index.json"))
     ap.add_argument("--source-root", default="Source")
@@ -692,7 +735,7 @@ def main() -> int:
              "--not-before stamp exists.",
     )
     ap.add_argument("--self-test", action="store_true")
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
 
     if args.self_test:
         return self_test()

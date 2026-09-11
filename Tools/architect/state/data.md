@@ -38,7 +38,10 @@
   `Tools/architect/plugin_ports.json` (this same entry, above), so `template_sync.py ports` will
   NOT raise it again until the plugin is re-vendored; this sentence is the only reminder that the
   request is still open. Discharged when `plugins/ue-agent-kit/scripts/banner_sweep.py` carries
-  the fix and `accept-ports` is re-run against the updated plugin.]** **`strat_doc_citation_gate.py`**
+  the fix and `accept-ports` is re-run against the updated plugin. **DISCHARGED 2026-09-11:**
+  `ue-agent-kit` `88adb7f` (plugin `1.2.4`) carries the two-cause message and
+  `_LIVE_COUNT_MISSING_BY_STAMP`, confirmed to add nothing the port lacks, and `accept-ports`
+  was re-run against it.]** **`strat_doc_citation_gate.py`**
   (27 lines) — name references plus a `UE_VENDORED_DIR` env-override generalization; same
   reasoning, no port needed. **`strat_suite_report_gate.py`** (originally 54 lines before this
   pass, 15 after) — the named candidate: the plugin's `main(argv)` plus main()-level self-test

@@ -44,35 +44,32 @@ Stratocracy ─┴──▶ StratBridge ──▶ StratUI ──▶ StratPlay
 Each arrow is load-bearing and each has a recorded reason. Read the `.Build.cs` header block
 before you change one.
 
-**This table flattens dependency STRENGTH, and on `StratPlay` the strength is itself load-bearing** —
-verified against `StratPlay.Build.cs` on 2026-08-14, not restated from an earlier reading.
-`StratBridge` is `Private` there *deliberately*: it was moved Public → Private closing a phase-3
-gate finding, because nothing in this module's headers names `FStratBridge` beyond a forward
-declaration, so `Public` re-exported the arrow to every dependent for no caller's benefit. It is
-named at all — rather than arriving transitively through `StratUI`, which declares it `Public` —
-because of a measurement recorded in that file: **4 × `LNK2019`** on `UnrealEditor-StratPlay.dll`,
-naming `__imp_?LoadDefinitions@FStratBridge@@`, `__imp_?LoadScenarioFromFile@FStratBridge@@`, and
-the imported constructor and destructor. The transitive arrow carried the include paths; it did
-not carry `UnrealEditor-StratBridge.lib` onto the link line. **A module that CALLS a symbol
-declares the module that exports it.** Note which methods did *not* appear in that error —
-`IsSeeded()` and `GetBridge()` are inline in the header and linked fine, which is exactly how the
-omission would survive a smaller caller. `EnhancedInput` is likewise `Private`: `AStratPlayerController`
-is the only file including an Enhanced Input header, and the six asset properties are
-forward-declared `TObjectPtr`s.
+**Module-scoped detail lives with the module, as a directory-scoped skill, since 2026-09-11** (user
+ruling, recorded in `Tools/architect/state/decisions.md`). This file keeps the arrows and the
+project-wide constraints; each module's own reasoning is in its skill:
 
-**`InputCore` is absent from `StratPlay` deliberately, and one `FKey` call brings it back.**
-`FKey::ToString` and `FKey::IsGamepadKey` are `INPUTCORE_API` rather than inline; omitting the
-module was measured as 2 × `LNK2019` then `LNK1120`. The declarations resolve fine —
-`InputCoreTypes.h` arrives transitively through `Engine` — so the failure is a *link* failure and
-reads as a missing function rather than a missing module.
+| Module | Skill | Carries |
+|---|---|---|
+| `StratBridge` | `Source/StratBridge/.claude/skills/stratbridge/SKILL.md` | the two API layers, the refusal contract, the single projection, parity tests |
+| `StratPlay` | `Source/StratPlay/.claude/skills/stratplay/SKILL.md` | why each dependency has its STRENGTH (`StratBridge` Private and named; `EnhancedInput` Private; `InputCore` absent) with the link errors measured |
+| `StratUI` | `Source/StratUI/.claude/skills/stratui/SKILL.md` | no widget-side arithmetic (`T-UI-03`); no `Stratocracy` dependency |
+| `Stratocracy` | `Source/Stratocracy/.claude/skills/stratocracy/SKILL.md` | the baked row-struct path; `DT_Units` row order load-bearing, `DT_Terrain` not |
 
-**`StratBridge → Stratocracy` is deliberate, not a mistake.** `FUnitRow` / `FTerrainRow` bake
-`/Script/Stratocracy.UnitRow` into `DT_Units` and `DT_Terrain`, so the row structs cannot move
-without asset surgery. An audit that flags this arrow as a layering violation has bad ground
-truth — it is correct as drawn.
+A directory-scoped skill registers when a session first touches a path under its module, not at
+session start. A subagent without that registration reads the path above directly.
 
-**`StratUI` deliberately does NOT depend on `Stratocracy`.** It binds to the projected view
-model, not to DataTable rows. `StratUI.Build.cs` records this under "NOTE ON WHAT IS NOT HERE".
+**This table flattens dependency STRENGTH, and on `StratPlay` the strength is itself
+load-bearing.** The reasons and measurements are in the `stratplay` skill. In one line: **a module
+that CALLS a symbol declares the module that exports it** — a transitive arrow carries include
+paths, not the import library.
+
+**`StratBridge → Stratocracy` is deliberate, not a mistake.** The row structs bake
+`/Script/Stratocracy.UnitRow` into `DT_Units` and `DT_Terrain` and cannot move without asset
+surgery. An audit that flags this arrow as a layering violation has bad ground truth — it is
+correct as drawn. (Detail: the `stratocracy` skill.)
+
+**`StratUI` deliberately does NOT depend on `Stratocracy`.** `StratUI.Build.cs` records this under
+"NOTE ON WHAT IS NOT HERE".
 
 **New modules must be registered in `Stratocracy.uproject`'s `Modules` array.** A module that
 no C++ depends on — one reached only from asset data, like a GameMode Blueprint — will not be
@@ -82,7 +79,8 @@ alongside a **green** build.
 **With one exception, and it is not optional: a directory with no `IMPLEMENT_MODULE` must NOT be
 listed.** `Source/StratRules/` is deliberately absent from that array — it holds vendored C++ that
 declares no module object, and listing it once **made the editor abort at startup** with *"The game
-module 'StratRules' could not be successfully initialized"*. Recorded at `StratBridge.cpp:10-14`.
+module 'StratRules' could not be successfully initialized"*. Recorded in the comment above
+`StratBridge.cpp`'s `IMPLEMENT_MODULE` line.
 Before adding a directory to `Modules`, confirm it carries `IMPLEMENT_MODULE`. An audit that flags
 `StratRules` as an unregistered module has this backwards.
 
@@ -159,48 +157,16 @@ is safe, record the measurement — do not drop the setting quietly.
 
 ### No widget-side arithmetic
 
-Every number a widget draws equals **exactly one** `strat::UiSnapshot` field. No sums, no
-ratios, no derived values. This is `T-UI-03`'s defining clause, and it is what keeps the screen
-and the rules from drifting.
+Every number a widget draws equals **exactly one** `strat::UiSnapshot` field. This is `T-UI-03`'s
+defining clause. The rule and its consequences are in the `stratui` skill.
 
 ### `DT_Units` row order is load-bearing. `DT_Terrain` row order is not. Do not conflate them.
 
-**Units.** A §4.10 Build command carries a `defIndex` in its `unitId` field, and `applyCommand`
-uses it as a **raw, bounds-checked-only index** into the definitions vector — no name lookup
-(`strat::applyCommand`'s `SaveCommandKind::Build` arm, which bounds-checks `c.unitId` against
-`t.units->size()` and indexes with it). So `DT_Units` in a different order than the headless loader's
-resolves the same replay log to a **different unit type, silently**. Row order is taken from the
-table and then *asserted* equal to `strat::loadUnits` over the same vendored CSV by
-`GATE-BRIDGE-DEFS` — never assumed.
-
-The fixture carries 22 Build commands, each with a raw `defIndex`, so a mis-ordered `DT_Units`
-**would** move `T-INT-02`'s canonical state hash. `GATE-BRIDGE-DEFS` is therefore no longer the
-only net under that failure — but it remains the sharper one, because it names the offending row
-directly instead of surfacing as an opaque hash mismatch three hundred commands later. Keep the
-test; fix the rationale. (`StratBridgeParity.cpp:158-162`.)
-
-**Terrain.** Ruled not load-bearing, on evidence, phase 0 / 2026-08-12. No `SaveCommand` field
-carries a terrain index (the `SaveCommand` struct in `Save.h` — its fields are
-`{turn, side, kind, unitId, hex, hasHex, hasUnit}` and no terrain among them); seeding resolves
-every hex's terrain **by name** (`strat::seedFromScenario`'s terrain-id resolution loop, which
-matches `sc.terrainId[i]` against each loaded row's `id`); and `canonicalStateBytes` — what `FStratBridge::StateHash()` actually
-hashes via `strat::canonicalStateHash` — emits no terrain field at all, not even the
-`terrainIndex` an `Objective` carries. Terrain indices are live *within* a build and never
-externalized, so any order is self-consistent. `T-DATA-05.TerrainTableMatchesCsv`'s name-keyed
-field parity is sufficient and no positional terrain test is needed.
-
-**Do not reach for `stateHash` in `Driver.h` to reason about this.** That is the debug driver's
-own digest over `Session`, it *does* fold raw terrain indices (`strat::stateHash`'s accumulator
-appends `s.terrain` element by element), and it is a different function over a different type —
-`Save.h`'s file-header note *"THE CANONICAL STATE HASH IS NOT DEFINED HERE"* disclaims the
-conflation explicitly, naming `Driver.h`'s `stateHash` as "the debug driver's own digest
-(GATE-DRV-06) and a different thing".
-Mistaking the two makes terrain order look transitively proven when it is not proven at all; it
-simply does not need to be.
-
-**What would flip the terrain ruling:** a save format that serialized board state, or a snapshot
-cached across builds. Either externalizes a terrain index, and terrain would then need a
-`GATE-BRIDGE-DEFS`-shaped positional test of its own.
+`DT_Units` order is asserted equal to `strat::loadUnits` by `GATE-BRIDGE-DEFS`, because a Build
+command's `defIndex` is a raw index. `DT_Terrain` order was ruled not load-bearing on evidence on
+2026-08-12, because no externalised field carries a terrain index. The evidence, the
+`stateHash`-versus-`canonicalStateHash` trap, and what would flip the terrain ruling are in the
+`stratocracy` skill.
 
 ### Never write a `/Game/` path literal into *gameplay* C++
 
@@ -286,8 +252,10 @@ tail, and a `GLog->Flush()` in the capture's own settle step is itself enough to
 drain. The override routes the device to `UnbufferedOutputDevices` (`:440-447`), fed only by the
 synchronous broadcast inside the emitting `UE_LOG` (`:905`), so the window it sees equals the
 object's lifetime by construction rather than by timing. Engine precedent:
-`AutomationTest.h:1345`, `:1396`. All four captures in `Source/StratPlay/Tests/` carry it; a
-fifth without it reintroduces the flake. Note the lock guards the append only — every read of the
+`AutomationTest.h:1345`, `:1396`. Every such capture under `Source/*/Tests/` carries it (this
+line said "all four captures in `Source/StratPlay/Tests/`" until 2026-09-11, when files carrying
+the override were found in the `StratBridge`, `StratPlay` and `StratUI` test directories); a new
+capture without it reintroduces the flake. Note the lock guards the append only — every read of the
 line array is unlocked and game-thread-only, which is safe solely because every `STRAT-*` emitter
 is on the game thread, and **nothing pins that**.
 

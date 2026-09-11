@@ -263,6 +263,21 @@ that difference.
 
 ---
 
+## Gotchas
+
+- **After an API 529 storm, audit every file the dead agent wrote for a missing record entry,
+  and match by blob hash, not by filename.** A lane agent can die after its `Write` and before its
+  record entry. What merges then is a file no lane record names, which a checkout cannot tell
+  apart from an out-of-lane write. On 2026-09-10 `Source/StratPlay/Tests/StratSelectionMachineResetClauses.cpp`
+  was found in merge `d59bf9b` with no lane entry, and it was a verdict block at the re-gate. The
+  writer was a `strat-test-author` dispatch in the lane's worktree that died on 529s after one
+  `Write`, and the one dispatched to finish died with zero tool calls. The worktree's session
+  transcript, whose content hashed to the committed blob `fcec6baf`, named the writer. Do this
+  audit before the merge boundary: the file you noticed is rarely the only one the dead agent
+  wrote.
+
+---
+
 ## Checklist before dispatching any lane
 
 - [ ] `git -C <tree> status --short` is clean in **every** tree.

@@ -742,10 +742,15 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 			// computation, which is why the location above was hoisted over this branch rather
 			// than copied into it.
 			//
-			// IT COSTS NOTHING AT THE SHIPPED DEFAULT. `MoveTweenSeconds` is zero in C++, so
+			// IT COSTS NOTHING AT THE C++ FIELD DEFAULT. `MoveTweenSeconds` is zero in C++, so
 			// with no Blueprint override this is a redundant `SetActorLocation` a few
 			// microseconds before the one `ApplyUnitView` makes -- which is also why it does
 			// not disturb any clause that reads `GetActorLocation()` after `ApplyView`.
+			// [REWORDED 2026-09-11, strat-gameplay-engineer; this attributed the zero to the
+			// shipped game. HERE AND AT EVERY "C++ FIELD DEFAULT" IN THIS FILE, that default is the path the
+			// automation fixtures take and NOT the shipped game's: `BP_StratUnit` overrides
+			// `MoveTweenSeconds`, and both shipped GameMode Blueprints override
+			// `AiPlaybackStepSeconds`. See that field's block in the header.]
 			Spawned->SnapToWorldLocation(Where);
 
 			Existing = &UnitActors.Add(View.UnitId, Spawned);
@@ -1141,7 +1146,7 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// be a second answer to "is a tour about to voice these", and the two would disagree the
 	// first time either moved.
 	//
-	// WITH NO TOUR ARMED -- the shipped `AiPlaybackStepSeconds <= 0`, and every headless
+	// WITH NO TOUR ARMED -- the C++ field default `AiPlaybackStepSeconds <= 0`, and every headless
 	// fixture -- the gate is DOWN and this one refresh voices one cue of each kind for the
 	// whole hand-over. That is correct rather than a degradation: there is no step sequence to
 	// synchronise to, so the alternative is silence.
@@ -1760,7 +1765,7 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 		// PASSED UNCONDITIONALLY AND NOT GATED ON `AiPlaybackStepSeconds`, WHICH IS A CHOICE
 		// AND WAS ONCE HALF OF A DEFECT. Recording costs a few structs and makes
 		// `GetAiPlaybackStepCount()` answer "what did the AI just do" in every configuration,
-		// including the shipped default where no tour runs -- which is worth having. What was
+		// including the C++ field default, where no tour runs -- which is worth having. What was
 		// wrong was never this line: it was that nothing then told the reel it would not be
 		// toured, so a filled reel with an un-advanced cursor read as a tour in progress.
 		// `BeginAiPlayback` closes that below by retiring the reel whenever it declines to arm
@@ -1882,7 +1887,7 @@ bool UStratMatchSubsystem::RunAiTurnsNow(FString& OutFailureReason)
 	bPlayerHandbackPending = true;
 	BeginAiPlayback();
 
-	// AND SPENT HERE ON THE SHIPPED CONFIGURATION AND IN EVERY AUTOMATION FIXTURE, where
+	// AND SPENT HERE AT THE C++ FIELD DEFAULT, WHICH EVERY AUTOMATION FIXTURE RUNS AT, where
 	// `AiPlaybackStepSeconds` is zero, no tour is armed and there is no `EndAiPlaybackTour`
 	// still to come. With a tour armed this call returns having consumed nothing and the tour's
 	// own end plays the beat -- see `NotePlayerTurnBeganIfDue`, which owns that decision.
@@ -2055,7 +2060,7 @@ bool UStratMatchSubsystem::WillAiPlaybackRun() const
 
 	if (ActiveConfig.AiPlaybackStepSeconds <= 0.0f)
 	{
-		// THE SHIPPED DEFAULT, AND ORDINARY. See the field: zero plays nothing, so every
+		// THE C++ FIELD DEFAULT, AND ORDINARY. See the field: zero plays nothing, so every
 		// existing caller and every automation test runs down the path it always did -- which
 		// now includes the input path, because a retired reel consumes no click.
 		return false;
@@ -2104,7 +2109,7 @@ void UStratMatchSubsystem::BeginAiPlayback()
 	// IT IS A DEFECT FIX AND THE DEFECT IS WORTH NAMING RATHER THAN QUIETLY REPAIRING. The
 	// reel is filled on EVERY hand-over -- `RunAiTurnsNow` passes it to the runner
 	// unconditionally, deliberately, so `GetAiPlaybackStepCount()` answers whatever the
-	// configuration -- while only the timer was gated. So at the shipped
+	// configuration -- while only the timer was gated. So at the C++ field default
 	// `AiPlaybackStepSeconds` of zero the reel ended each hand-over non-empty with the cursor
 	// at 0, `IsAiPlaybackRunning()` read true, `SkipAiPlayback()` succeeded, and
 	// `AStratPlayerController::HandleSelectionEvent` consumed the first click or Esc after
@@ -2176,7 +2181,7 @@ void UStratMatchSubsystem::BeginAiPlayback()
 	// step arms a slide. See `PreParkPicturesForTour`.
 	//
 	// **BELOW ALL THREE GUARDS, WHICH IS THE PLACEMENT AND NOT A READING ORDER.** A non-positive
-	// `AiPlaybackStepSeconds` -- the shipped default and every automation fixture -- an empty
+	// `AiPlaybackStepSeconds` -- the C++ field default, which every automation fixture runs at -- an empty
 	// reel and a missing world have all returned above, so none of them parks anything and each
 	// stays bit-identical to the tour that shipped before this. AND BEFORE `OnAiPlaybackTimer`,
 	// which is the other half of the placement: that call shows step one, and a park applied
@@ -2239,8 +2244,8 @@ void UStratMatchSubsystem::ArmNextPlaybackStep()
 	// THE PACE PLUS THE PICTURE, AND THE SECOND TERM IS THE ACTOR'S OWN ANSWER. See
 	// `LastArmedSlideSeconds`: `AStratUnitActor::PlayRouteSlide` returns how long it armed and
 	// this class stores it, rather than multiplying `MoveTweenSeconds` by a route length --
-	// which `AiPlaybackStepSeconds`' block forbids in as many words. At the shipped
-	// `MoveTweenSeconds <= 0` default the second term is zero on every step and this interval is
+	// which `AiPlaybackStepSeconds`' block forbids in as many words. At the C++
+	// `MoveTweenSeconds <= 0` field default the second term is zero on every step and this interval is
 	// bit-identical to the constant the loop used to run at.
 	const float Interval = ActiveConfig.AiPlaybackStepSeconds + LastArmedSlideSeconds;
 
@@ -2260,7 +2265,7 @@ bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
 		// NOTHING AT THE CURSOR. Three ways to be here and all are ordinary: the last
 		// `Advance()` ran off the end, `SkipAiPlayback` moved the cursor there between two
 		// ticks, or `BeginAiPlayback` retired the reel because no tour was ever going to run
-		// -- which is the shipped default and is how this reads for a caller that hand-drives
+		// -- which is the C++ field default and is how this reads for a caller that hand-drives
 		// a subsystem nobody configured for playback.
 		//
 		// STOPS THE TIMER ANYWAY. Usually there is none, and clearing an unarmed handle is
@@ -2316,7 +2321,7 @@ bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
 	// `OnAiPlaybackTimer`, precisely so that a clause hand-driving this function on a world that
 	// is never ticked touches no timer at all.
 	//
-	// AT THE SHIPPED `AStratUnitActor::MoveTweenSeconds <= 0` DEFAULT THIS RETURNS 0 HAVING
+	// AT THE C++ `AStratUnitActor::MoveTweenSeconds <= 0` FIELD DEFAULT THIS RETURNS 0 HAVING
 	// WRITTEN NOTHING, so every automation fixture leaves this line with the state it had before
 	// it and the tour is bit-identical to the one that shipped before slides existed.
 	//
@@ -2344,7 +2349,7 @@ bool UStratMatchSubsystem::AdvanceAiPlaybackOneStep()
 	//
 	// IT DOES NOT GATE ON `PlayMoveSlideForStep`'S RETURN, AND THAT IS THE ONE MISTAKE THIS
 	// PLACEMENT IS WRITTEN AGAINST. That function refuses SIX ways -- see its own block -- and
-	// one of them is the shipped `AStratUnitActor::MoveTweenSeconds <= 0`, which is EVERY
+	// one of them is the C++ field default `AStratUnitActor::MoveTweenSeconds <= 0`, which is EVERY
 	// headless fixture. A move with no slide still happened, and tying the sound to the
 	// animation would make the cue unobservable in exactly the configuration the suite runs in.
 	// It is placed after that call rather than before only so the ordering block above stays
@@ -2618,8 +2623,8 @@ void UStratMatchSubsystem::EndAiPlaybackTour()
 	// reopen the hazard.
 	//
 	// A NO-OP AT MOST OF THE SIX SITES AND AT EVERY AUTOMATION FIXTURE. `CancelRouteSlide`
-	// writes a relative zero the actor already holds when nothing is sliding, and at the shipped
-	// `AStratUnitActor::MoveTweenSeconds <= 0` default nothing can ever slide.
+	// writes a relative zero the actor already holds when nothing is sliding, and at the C++
+	// `AStratUnitActor::MoveTweenSeconds <= 0` field default nothing can ever slide.
 	//
 	// UNCONDITIONAL OVER EVERY ACTOR, AND THE COST IS NAMED: a PLAYER's slide still in flight is
 	// hard-cut too. Telling the two apart would need this class to remember which pictures it

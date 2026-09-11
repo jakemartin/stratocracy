@@ -14,6 +14,34 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-11, strat-test-author (ACTING and WRITING; IN LANE, on master in E:/MultiAgent/Stratocracy,
+  base commit a94c2c4, UNCOMMITTED) -- TWO HANDOFFS CLOSED, AND A RE-RUN OVER THE TREE THAT HOLDS
+  `strat-gameplay-engineer`'s COMMENT-ONLY PASS OF THIS DATE.**
+  - **`StratBoardPicking.cpp`, comment only.** The "NOT ASSERTED HERE" item that said the board
+    *"exposes two overlays and a lookup"* was false against `StratBoardActor.h`, which declares
+    `ReachOverlay`, `TargetOverlay`, `ObjectiveOverlay` and `BuildPulseOverlay`. It is count-free
+    now, with a `CORRECTED` bracket at the sentence. No clause pins it.
+  - **Gate-report stamps.** Every sentence in this file that placed a gate report outside the
+    repository names `2026-09-10-gate-B-t-save-04-regate.md`. A copy now sits under
+    `Tools/architect/gate_reports/`, and its sha256 is identical to the `E:\MultiAgent\briefs\`
+    copy. That is four sites, and each is stamped where it stands. No sentence here cited the BLOCK
+    that preceded gate A, and none is claimed persisted.
+  - **Red control first.** The report that existed before this pass, `reportCreatedOn
+    2026.09.11-00.00.39`, was tested with `--pin-to-tree` against this tree. The gate returned
+    `SUITE REPORT GATE FAILED` / *"STALE REPORT"*, exit 1.
+  - **Build and run.** No `UnrealEditor*` process was running. The build compiled
+    `StratBoardPicking.cpp`, relinked `UnrealEditor-StratPlay.dll`, and ended `Result: Succeeded`,
+    exit 0. The UTC stamp `2026.09.11-20.33.02` was taken before launch. The exported report is
+    `reportCreatedOn 2026.09.11-20.34.29` **[STAMPED AS HISTORY IN THE PASS THAT WROTE IT: the
+    next run overwrites that report]**. Every entry is `Success`, and failed, notRun and
+    succeededWithWarnings are all zero. The count is unchanged from the `00.00.39` report. That
+    is expected, because no clause was added or renamed.
+  - **The gate was run twice**, once with `--pin-to-tree` and once with `--not-before
+    2026.09.11-20.33.02`. Both ended `SUITE REPORT GATE CLEAN`, exit 0, with the macro census
+    agreeing with the counters. The report's names and the tree's `IMPLEMENT_SIMPLE_AUTOMATION_TEST`
+    names are set-equal in both directions. Control: with one name swapped for a planted one, the
+    difference reported both.
+
 - **2026-09-10, `strat-test-author` (ACTING and WRITING; IN LANE), base `72bb24b`, `master` in the
   main tree, no wave in flight, UNCOMMITTED -- `LoadRefusesAnUnconfiguredSubsystem` NOW RIDES
   `T-INT-05`, BY THE USER'S RULING. The live suite count lives in `global.md` and nowhere else.**
@@ -165,7 +193,9 @@
 - **2026-09-10, `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/` and this
   file only -- dispatched, on `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit
   `3143049`, UNCOMMITTED) -- REPAIRS THE T-SAVE-04 MERGE `d59bf9b` ON FINDINGS 2 AND 3 OF
-  `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md` (`VERDICT: BLOCK`). A CLAUSE THAT
+  `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md` (`VERDICT: BLOCK`) **[IN THE
+  REPOSITORY FROM 2026-09-11 as `Tools/architect/gate_reports/2026-09-10-gate-B-t-save-04-regate.md`,
+  sha256-identical; stamped in place, `strat-test-author`, base `a94c2c4`]**. A CLAUSE THAT
   LANDED WITH NO RECORD IS RECEIVED HERE, AND THE THING WORTH READING IS WHY IT HAD NONE: THE
   AGENT THAT WROTE IT DIED ON A SERVER ERROR BETWEEN ITS `Write` AND ITS RECORD ENTRY, A SECOND
   DISPATCH DIED BEFORE ITS FIRST TOOL CALL, AND THE UNFINISHED LIST THEY LEFT INCLUDED A FALSE
@@ -343,7 +373,10 @@
   - **NOT MEASURED, SAID PLAINLY.** No mutant was run, so the reset clause's kill is a
     prediction. No PIE and no editor. The gate report this entry repairs is outside the
     repository and not under `Tools/architect/gate_reports/`, which is the steward's to
-    persist. **HANDED, AND DISCHARGED IN THE OTHER LANE:** `StratSelectionMachine.h` said of
+    persist. **[TRUE WHEN WRITTEN; FALSE FROM 2026-09-11. The report is
+    `Tools/architect/gate_reports/2026-09-10-gate-B-t-save-04-regate.md`, persisted by
+    `strat-data-steward` and sha256-identical to the `E:\MultiAgent\briefs\` copy this entry's
+    lede names. STAMPED IN PLACE, `strat-test-author`, base `a94c2c4`.]** **HANDED, AND DISCHARGED IN THE OTHER LANE:** `StratSelectionMachine.h` said of
     `DoneUnits` *"Cleared by an accepted `EndTurn` and by nothing else"*, while `Reset()` clears
     it too. This lane handed that to `strat-gameplay-engineer` and wrote none of the fix; that
     agent rewrote the declaration in its own lane and records it in `engine.md`. This lane read
@@ -3489,7 +3522,9 @@
   `worktree-quizzical-yonath-9b009a`, base `283d711`. UNCOMMITTED AND UNMERGED at the time of
   writing: nothing below has landed on `master`) [STAMPED 2026-09-10 IN PLACE,
   `strat-test-author` (ACTING and WRITING; IN LANE, main tree, base `3143049`), on Finding 3 of
-  `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md`: THAT WAS TRUE WHEN WRITTEN AND IS
+  `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md` **[in the repository from
+  2026-09-11 as `Tools/architect/gate_reports/2026-09-10-gate-B-t-save-04-regate.md`,
+  sha256-identical; stamped in place, `strat-test-author`, base `a94c2c4`]**: THAT WAS TRUE WHEN WRITTEN AND IS
   HISTORY NOW. Everything below LANDED: committed in that worktree as `f53ca26` on the user's
   instruction, 2026-09-10, and merged to `master` as `d59bf9b`. The worktree has since been
   removed.] -- CONTROLLER-SIDE PRESENTATION STATE ACROSS A
@@ -3576,7 +3611,9 @@
     DISK: `reportCreatedOn 2026.09.03-12.53.49` -- the one `strat_banner_sweep.py` opens --
     carries this clause as `Success` with `errors 0`. **[STAMPED 2026-09-10 IN PLACE,
     `strat-test-author` (ACTING and WRITING; IN LANE, main tree, base `3143049`), on an
-    observation in `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md`: EVERY
+    observation in `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md` [in the
+    repository from 2026-09-11 as `Tools/architect/gate_reports/2026-09-10-gate-B-t-save-04-regate.md`,
+    sha256-identical; stamped in place, `strat-test-author`, base `a94c2c4`]: EVERY
     PRESENT-TENSE CLAIM IN THIS SENTENCE AND THE NEXT IS FALSE NOW. That report is NOT on disk,
     is NOT the one the sweep opens, and no checkout can re-execute it; it was overwritten in the worktree by the `2026.09.03-13.08.33` run
     the same day, which the worktree's removal then took with it. And it never described the

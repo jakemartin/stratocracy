@@ -23,6 +23,11 @@ the engine asks them for answers and never decides an outcome itself.
 ## Where the detail lives
 
 - **Architecture, module arrows, and the reason for each** → `.agents/ue-project-context.md`
+- **One module's own reasoning** → that module's directory-scoped skill,
+  `Source/<Module>/.claude/skills/<module>/SKILL.md`, for `StratBridge`, `StratPlay`, `StratUI`
+  and `Stratocracy` (none for `StratRules`, which is vendored). Split out on 2026-09-11 by user
+  ruling. This file keeps only what binds every module and every lane. A module skill registers
+  when a session first touches a path under that module, not at session start.
 - **What is built and what is next** → `Tools/architect/state/` — the live record, one file per
   owning agent. `global.md` carries the banner and milestone status and is **the only file that
   may state a suite count or a phase verdict**; the others link to it rather than restating it,

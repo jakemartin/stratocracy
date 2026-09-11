@@ -218,6 +218,15 @@ Read **`Tools/architect/state/global.md`** to learn which phase is current. Afte
 returns `PASS`, dispatch `strat-data-steward` to update it: the phase completed, the exit
 criterion met, and anything newly deferred.
 
+**When the banner restates a lane's open items, quote them from the lane file's own debts
+heading, never from the lane's report.** They are two documents even when one agent wrote both,
+and they classify the same item differently. On 2026-09-10 the T-SAVE-04 repair's code and lane
+records gated clean. The one BLOCK left was the coordinator's `global.md` banner. It said
+`engine.md` carried one debt, a lock-gate comment. `engine.md`'s `### Debts taken on, 2026-09-10`
+listed two debts, and neither was that one. The engineer's report had listed the comment under
+"Debts taken on", but the file filed it under "NOT CHANGED, AND WHY". So grep the lane file for its
+debts heading, quote from there, and count by the lane's own classification.
+
 **CORRECTED 2026-08-20 — this section used to send a fresh session to
 `Tools/architect/state.md`, and after the record split that is the wrong file in both
 directions.** It is frozen history, so it cannot tell you what is current; and it must not be
@@ -275,6 +284,18 @@ condition a plausible-but-wrong agent fails:
 | `strat-editor-builder` | Report NeoStack status, then read `WBP_Scoreboard`'s graph | **Editor closed:** one clean diagnostic, no retry loop, no invented Lua. **Editor open:** the actual graph. Test both ways. |
 | `strat-data-steward` | Prove `DT_Units` row order equals `units.csv` | A real comparison *or* an explicit escalation — both pass. A guess fails. |
 | `strat-gameplay-engineer` | Add `FStratBridge::Reachable` and build | Green build; diff touches only `StratBridge.h/.cpp`; no `Tests/` file touched |
+
+## Gotchas
+
+- **After an API 529 storm, audit every file the dead agent wrote for a missing record entry,
+  and match by blob hash, not by filename.** A subagent can die after its `Write` and before its
+  record entry. What is left is a file no lane record names, and in a checkout that looks exactly
+  like an out-of-lane write. On 2026-09-10 `Source/StratPlay/Tests/StratSelectionMachineResetClauses.cpp`
+  was found in merge `d59bf9b` with no lane entry, and it was a verdict block at the re-gate. The
+  writer was a `strat-test-author` dispatch that died on 529s after one `Write`, and the one
+  dispatched to finish died with zero tool calls. The session transcript, whose content hashed to
+  the committed blob `fcec6baf`, is what named the writer. No checkout can. The receiving entry
+  must say inline that the attribution rests on that transcript.
 
 ## What you do not do
 

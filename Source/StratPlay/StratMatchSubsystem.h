@@ -542,7 +542,17 @@ struct FStratMatchConfig
 	 *
 	 * ZERO PLAYS NOTHING AND IS THE DEFAULT, for `AiTurnDelaySeconds`' reason exactly: the
 	 * synchronous path is the tested one and an automation test has no ticking world to step a
-	 * camera in. So this ships inert and a Blueprint default turns it on.
+	 * camera in. So the C++ field default is inert and a Blueprint default turns it on.
+	 *
+	 * AND A BLUEPRINT DEFAULT DOES: THE SHIPPED GAME IS NOT AT THIS ZERO. [REWORDED 2026-09-11,
+	 * strat-gameplay-engineer: this sentence attributed the inert zero to the shipped game,
+	 * which was false.]
+	 * Both shipped GameMode Blueprints, `BP_StratGameMode` and `BP_StratGameMode_AiVsAi`,
+	 * serialise an override of this field, and `BP_StratUnit` serialises one of
+	 * `AStratUnitActor::MoveTweenSeconds`; the values are the content lane's record, not this
+	 * file's. So throughout this file, "the C++ field default" or "`<= 0`" names the path
+	 * every automation fixture takes -- a fixture builds the C++ struct -- and NOT the path
+	 * the shipped game takes. Read every inert-at-zero sentence below that way.
 	 *
 	 * §2.11.2's 0.5 IS NOT WRITTEN HERE, AND THE OMISSION IS DELIBERATE RATHER THAN AN
 	 * OVERSIGHT. A C++ default of 0.5 would be a second place the pace is stated, and the
@@ -571,9 +581,9 @@ struct FStratMatchConfig
 	 * picture the day a Blueprint changes that property, silently and with a green build.
 	 *
 	 * It is listed beside these two so that a reader tuning the
-	 * game's pace finds all three from one place instead of two. It ships at zero for this
-	 * field's own argument, restated locally in its block: the switch is in C++, the setting
-	 * goes on `BP_StratUnit`.
+	 * game's pace finds all three from one place instead of two. Its C++ default is zero for
+	 * this field's own argument, restated locally in its block: the switch is in C++, the
+	 * setting goes on `BP_StratUnit`, which overrides it.
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stratocracy|AI")
 	float AiPlaybackStepSeconds = 0.0f;
@@ -584,13 +594,14 @@ struct FStratMatchConfig
 	 * Whether play coming back to a human seat re-centres the camera over that seat's units.
 	 *
 	 * WHAT IT IS FOR. After an AI hand-over the player's attention is wherever the tour left
-	 * it -- or, on the shipped unpaced configuration, wherever they parked it several minutes
+	 * it -- or, on an unpaced configuration (`AiPlaybackStepSeconds <= 0`, the C++ field
+	 * default and not the shipped one), wherever they parked it several minutes
 	 * ago. `UStratMatchSubsystem::RecenterCameraOnViewingSide` puts it back over their own
 	 * army, once, at the moment the turn becomes theirs.
 	 *
 	 * **IT DEFAULTS TRUE AND `AiPlaybackStepSeconds` DEFAULTS ZERO, AND THE ASYMMETRY IS THE
-	 * WHOLE REASON THIS BLOCK EXISTS.** That field's own block argues at length that it ships
-	 * inert because a positive value ARMS A TIMER and a headless fixture has no ticking world
+	 * WHOLE REASON THIS BLOCK EXISTS.** That field's own block argues at length that its C++
+	 * default is inert because a positive value ARMS A TIMER and a headless fixture has no ticking world
 	 * to step one in -- so an on-by-default there would change the path every existing test
 	 * runs down. **None of that reasoning reaches this field.** Re-centring arms nothing: it is
 	 * a `SetActorLocation` in the same synchronous stack frame as the hand-back that caused it,
@@ -1103,10 +1114,11 @@ public:
 	 * statement -- the unassigned definition tables (the arm whose `OutFailureReason =` reads
 	 * "definition tables are not assigned on the GameMode's defaults") and the empty
 	 * `ScenarioFile` (`OutFailureReason = TEXT("ScenarioFile is empty on the GameMode's
-	 * defaults")`). Measured 2026-09-03 at commit `283d711`: the function opened at `:178`, the
-	 * arms returned at `:196` and `:203`, the call was at `:219`. Re-measured 2026-09-10 at
-	 * merge `d59bf9b`: `:202`, `:220`, `:227`, `:243` -- the same code, moved. THE STATEMENTS
-	 * ARE THE CITATION; the numbers are dated evidence and are stale after any edit above them.
+	 * defaults")`). Measured 2026-09-03 at commit `283d711` and re-measured 2026-09-10 at merge
+	 * `d59bf9b`: the same code, moved. THE STATEMENTS ARE THE CITATION. The line numbers both
+	 * measurements took are dated evidence and live in the engine record
+	 * (`Tools/architect/state/engine.md`), not here, because a number in this block goes stale
+	 * after any edit above it and a quoted statement does not (moved there 2026-09-11).
 	 * A `StartMatch` refused on either arm does NOT move this counter, and the
 	 * retracted warrant was false too: those arms tear nothing down, so there is no stale
 	 * presentation for the counter to be about.
@@ -1127,8 +1139,7 @@ public:
 	 * REFUSALS THAT HAPPEN *AFTER* THE CALL DO MOVE IT, AND THAT IS ALSO CORRECT: the three
 	 * arms whose failure reason is built from `DescribeRefusal(TEXT("LoadDefinitions"), ...)`,
 	 * `DescribeRefusal(TEXT("LoadScenarioFromFile"), ...)` and
-	 * `DescribeRefusal(TEXT("RestoreFromSaveText"), ...)` (at `283d711` they returned at `:266`,
-	 * `:286`, `:366`; at `d59bf9b` at `:308`, `:328`, `:408`) all return false with the
+	 * `DescribeRefusal(TEXT("RestoreFromSaveText"), ...)` all return false with the
 	 * previous match's board already destroyed, so the presentation genuinely is stale and the
 	 * boundary genuinely happened. The counter is right on both sides of the call for the same
 	 * one reason, which is what makes "it counts teardowns" the whole rule rather than a rule
@@ -2149,8 +2160,8 @@ public:
 	 * IT ANSWERS "IS A TOUR RUNNING" AND NOT "DID THE AI DO ANYTHING", AND FOR ONE DIFF IT
 	 * ANSWERED THE SECOND. [CORRECTED 2026-08-29, and the correction is in the code rather
 	 * than only here -- see `BeginAiPlayback`.] This is a cursor-versus-count read, and the
-	 * reel is filled on EVERY hand-over whatever the configuration, so at the shipped
-	 * `AiPlaybackStepSeconds` of zero it returned true for a tour that was never armed and
+	 * reel is filled on EVERY hand-over whatever the configuration, so at the C++ field
+	 * default `AiPlaybackStepSeconds` of zero it returned true for a tour that was never armed and
 	 * never would be. `SkipAiPlayback` then succeeded and `HandleSelectionEvent` consumed the
 	 * first click or Esc after every AI turn in the default configuration. Measured by the
 	 * test author and confirmed at the source before the fix.
@@ -2223,7 +2234,7 @@ public:
 	 * timer and not a tour.
 	 *
 	 * It also does not check `AiPlaybackStepSeconds`: the
-	 * cursor is retired at the shipped default (see `BeginAiPlayback`), so at that default
+	 * cursor is retired at the C++ field default (see `BeginAiPlayback`), so at that default
 	 * this returns false because there is nothing at the cursor, and not because it asked.
 	 *
 	 * SAFE TO CALL AT ANY TIME. Nothing here submits a command, touches `FStratBridge` or
@@ -2329,8 +2340,8 @@ private:
 	 * they are named: this function arms, `EndAiPlaybackTour` disarms.**]
 	 *
 	 * [ADDED 2026-08-29 AS A DEFECT FIX AND NOT AS TIDYING. Before it, the reel was filled on
-	 * every hand-over while only the TIMER was gated, so at the shipped `AiPlaybackStepSeconds`
-	 * of zero the cursor sat at 0 with a non-empty reel: `IsAiPlaybackRunning()` was true,
+	 * every hand-over while only the TIMER was gated, so at the C++ field default
+	 * `AiPlaybackStepSeconds` of zero the cursor sat at 0 with a non-empty reel: `IsAiPlaybackRunning()` was true,
 	 * `SkipAiPlayback()` succeeded, and `AStratPlayerController::HandleSelectionEvent`
 	 * consumed the first click or Esc after EVERY AI hand-over in the default configuration.
 	 * Gating `SkipAiPlayback` on the config was the alternative and was rejected: it fixes the
@@ -2340,13 +2351,13 @@ private:
 	 *
 	 * RETIRING IS NOT CLEARING, AND THE DIFFERENCE IS LOAD-BEARING. `SkipToEnd` moves the
 	 * cursor and keeps `Steps`, so `GetAiPlaybackStepCount()` still reports what the AI did
-	 * even at the shipped default -- which is the one discriminator between "a tour was cut
+	 * even at the C++ field default -- which is the one discriminator between "a tour was cut
 	 * short" and "a reel was never filled", and the thing a clause asserting the skip landed
 	 * needs in order to tell them apart.
 	 *
 	 * DOES NOTHING WITH AN EMPTY REEL, WITH A NON-POSITIVE `AiPlaybackStepSeconds`, OR WITH NO
 	 * WORLD. Each is an ordinary state and none is reported: the first is an AI that did
-	 * nothing, the second is the shipped default, and the third is a headless test. All three
+	 * nothing, the second is the C++ field default, and the third is a headless test. All three
 	 * now leave the reel retired rather than merely un-toured.
 	 */
 	void BeginAiPlayback();
@@ -2461,7 +2472,8 @@ private:
 	 *
 	 * CALLED WHERE `BeginAiPlayback` HAS ALREADY PASSED ALL THREE OF ITS GUARDS, WHICH IS THE
 	 * PLACEMENT AND NOT AN ACCIDENT OF READING ORDER. A non-positive `AiPlaybackStepSeconds`
-	 * -- the shipped default and every automation fixture -- an empty reel, and a missing world
+	 * -- the C++ field default, which every automation fixture runs at -- an empty reel, and a
+	 * missing world
 	 * all return before this runs, so each of those paths parks nothing and stays bit-identical
 	 * to the tour that shipped before slides existed. `AStratUnitActor::ParkPictureAt` refuses a
 	 * second time on `MoveTweenSeconds <= 0`, so the inertness does not depend on this call
@@ -2584,7 +2596,7 @@ private:
 	 *
 	 * A NO-OP AT MOST OF THE SIX SITES, AND THAT IS THE POINT RATHER THAN A COST.
 	 * `AStratUnitActor::CancelRouteSlide` writes a zero this actor already holds whenever no
-	 * slide is running, and at the shipped `AStratUnitActor::MoveTweenSeconds <= 0` default no
+	 * slide is running, and at the C++ `AStratUnitActor::MoveTweenSeconds <= 0` field default no
 	 * slide can ever run, so every automation fixture pays one loop over `UnitActors` and
 	 * nothing else.
 	 *
@@ -2703,7 +2715,7 @@ private:
 	 * WHY THERE IS A FLAG AND NOT A HOOK. This class has no event, no delegate and no verb for
 	 * "the player's turn began", and the moment lands in TWO different places depending on one
 	 * configuration value. With `AiPlaybackStepSeconds` positive a Sec 2.11.2 tour plays and
-	 * the turn is handed back when the tour STOPS; at the shipped default of zero no tour runs
+	 * the turn is handed back when the tour STOPS; at the C++ field default of zero no tour runs
 	 * at all and control simply returns out of `RunAiTurnsNow`. `EndAiPlaybackTour` alone is
 	 * not the hook: THREE of its six call sites are not hand-backs, including `RunAiTurnsNow`'s
 	 * own pre-refill stop. `bPlayerHandbackPending` is what tells those apart, and this
@@ -3157,8 +3169,8 @@ private:
 	 * sentence true.
 	 *
 	 * NOT A `UPROPERTY` AND NOT A MIRROR OF ANYTHING, on `AiPlaybackReel`'s line: a float
-	 * describing how long a picture will take to finish moving. Zero at the shipped
-	 * `MoveTweenSeconds` default and on every refusal, so the tour's interval collapses to
+	 * describing how long a picture will take to finish moving. Zero at the C++
+	 * `MoveTweenSeconds` field default and on every refusal, so the tour's interval collapses to
 	 * `AiPlaybackStepSeconds` with no special case anywhere.
 	 */
 	float LastArmedSlideSeconds = 0.0f;

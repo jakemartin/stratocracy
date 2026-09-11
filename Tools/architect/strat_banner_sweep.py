@@ -1146,6 +1146,15 @@ def check_live_count_present(result: SweepResult) -> None:
     `160/160` at 132 of 766 plant sites in `## NEXT`, and each time the script printed
     `SWEEP CLEAN`, exit 0, having compared nothing. A guard that cannot find its subject has
     to say so; silence is the one answer it must never give.
+
+    TWO CAUSES, NOT ONE, AND THE MESSAGE NAMES BOTH. A reporting verb near the figure is one
+    way to read it as quoted rather than live; a `reportCreatedOn` (or other stamp marker)
+    within `_STAMP_WINDOW` characters is a SEPARATE way, and `is_stamped` checks it FIRST,
+    outranking an explicit live verb -- measured 2026-08-29 when `global.md`'s own W4/W5
+    banner cited its certifying report next to the figure it certified and this check fired
+    while the figure was genuinely live and correctly worded. The message used to name only
+    the reporting-verb cause, which sent whoever hit the stamp-window shape hunting for a verb
+    that was never there.
     """
     if GLOBAL_DOC not in result.docs:
         return                                   # not sweeping the owner file; nothing to say
@@ -1156,9 +1165,15 @@ def check_live_count_present(result: SweepResult) -> None:
         "LIVE COUNT MISSING",
         f"{GLOBAL_DOC} carries no LIVE suite count ({len(quoted)} claim(s) there, all read as "
         f"stamped or quoted), so every suite comparison in this run passed with nothing to "
-        f"compare. Either the banner has lost its figure, or the wording around it -- a "
-        f"reporting verb such as 'reads', 'claim' or 'defect' in the figure's own sentence -- "
-        f"is hiding it from this sweep. Run with --explain and reword, do not ignore this",
+        f"compare. Either the banner has lost its figure, or the wording around it is hiding "
+        f"it from this sweep -- TWO DIFFERENT CAUSES READ THE SAME WAY. (1) A reporting verb "
+        f"such as 'reads', 'claim' or 'defect' in the figure's own sentence. (2) A STAMP "
+        f"MARKER -- including a bare `reportCreatedOn` timestamp, no other wording needed -- "
+        f"within {_STAMP_WINDOW} characters of the figure; `is_stamped` is tested FIRST and "
+        f"outranks an explicit live verb, so placing a certifying report's `reportCreatedOn` "
+        f"beside the figure it certifies marks that figure as history even when the sentence "
+        f"reads as present tense (measured 2026-08-29, `global.md`'s own W4/W5 banner). Run "
+        f"with --explain, find which of the two applies, and reword -- do not ignore this",
     ))
 
 
@@ -2393,6 +2408,21 @@ _Last run 2026-08-19 (suite was **107/107** at that pass, and the corpus is DISC
 """
 
 
+# THE OTHER WAY TO REACH "NO LIVE CLAIM": NOT A LOST FIGURE, A STAMP THAT SWALLOWS THE ONLY ONE
+# THERE IS. Measured 2026-08-29 against the real `global.md` (see that entry's own account): a
+# present-tense banner sentence citing its OWN certifying `reportCreatedOn` right next to the
+# figure reads that figure as historical, because `is_stamped` is checked first and outranks the
+# live verb. The figure here is genuinely the CURRENT one -- there is no other banner, no other
+# claim, nothing superseding it -- so this is not `_NO_LIVE_COUNT`'s shape (a figure that is
+# honestly absent); it is a figure that is PRESENT and wrongly read as absent. `_STAMP_WINDOW`
+# characters separate the citation from the figure by design, not by accident of wording, so this
+# fixture stays a regression pin on the mechanism rather than on one paragraph's phrasing.
+_LIVE_COUNT_MISSING_BY_STAMP = """# global
+
+_Last run 2026-09-10 (suite is now **108/108**, reportCreatedOn 2026.09.10-00.00.00.)_
+"""
+
+
 # THE BANNER REGION IS A STACK OF BANNERS, NEWEST FIRST -- the real `global.md` carries eleven
 # `_Last run` blocks above its first heading, each true on its day. The pair below is the
 # falsifiability control for that rule in both directions: the older banner's figure must not
@@ -2862,6 +2892,8 @@ def check_self_test() -> tuple[bool, str]:
         ("a reporting verb in the figure's OWN sentence still exempts it", _VERB_SAME_SENTENCE, True),
         ("a banner quoted VERBATIM inside a code span is not a live claim", _VERBATIM_QUOTE, True),
         ("an owner file with NO live suite count at all FAILS", _NO_LIVE_COUNT, False),
+        ("an owner file whose ONLY figure is swallowed by its own adjacent reportCreatedOn "
+         "stamp FAILS (LIVE COUNT MISSING, not silence)", _LIVE_COUNT_MISSING_BY_STAMP, False),
         ("a SUPERSEDED banner's own older figure PASSES", _BANNER_STACK, True),
         ("a stale figure in the CURRENT banner still FAILS with older banners below it",
          _BANNER_STACK_STALE, False),
@@ -3163,6 +3195,54 @@ def check_self_test() -> tuple[bool, str]:
                  f"`newest_source_mtime` also sees the production-only file ({_source_mtime}), "
                  f"on a directory holding exactly one of each -- the regression that pins the "
                  f"2026-09-06 production-blind-spot fix itself")
+
+    # THE LIVE COUNT MISSING MESSAGE ITSELF, PINNED ON WORDING -- not only on pass/fail via
+    # `_LIVE_COUNT_MISSING_BY_STAMP` above. That fixture proves the check FIRES on a stamp-
+    # adjacent figure; it says nothing about whether the message tells the reader WHY, which
+    # is the 2026-08-29 lesson this pass is closing: the message used to name only the
+    # reporting-verb cause, so a maintainer who hit the stamp-window shape went hunting for a
+    # verb that was never there (`global.md`'s own account, same date). The number in the
+    # message must be DERIVED from `_STAMP_WINDOW`, never a literal that can drift from it --
+    # asserted here by checking the constant's own current value appears, not a hardcoded 220.
+    with tempfile.TemporaryDirectory() as _lcm_d:
+        _lcm_p = os.path.join(_lcm_d, "global.md")
+        with io.open(_lcm_p, "w", encoding="utf-8", newline="\n") as _lcm_fh:
+            _lcm_fh.write(_LIVE_COUNT_MISSING_BY_STAMP)
+        _lcm_res = run_sweep(_lcm_p, check_tree=False)
+    _lcm_findings = [f for f in _lcm_res.findings if f.check == "LIVE COUNT MISSING"]
+    _lcm_msg = _lcm_findings[0].detail if _lcm_findings else ""
+    good = (
+        len(_lcm_findings) == 1
+        and "reportCreatedOn" in _lcm_msg
+        and str(_STAMP_WINDOW) in _lcm_msg
+        and "reporting verb" in _lcm_msg
+    )
+    ok = ok and good
+    lines.append(f"    [{'OK' if good else '**WRONG**'}] LIVE COUNT MISSING names BOTH causes "
+                 f"-- the reporting verb AND a `reportCreatedOn`/stamp within `_STAMP_WINDOW` "
+                 f"({_STAMP_WINDOW}) characters, the number read from the constant itself, not "
+                 f"a literal -- on the stamp-adjacent fixture's own message")
+
+    # OLD MESSAGE TEXT MUST FAIL THIS SAME ASSERTION -- the falsifiability control the harness
+    # asks for: reproduce the pre-fix wording (reporting-verb cause only, no stamp-window
+    # explanation) and confirm the assertion above would have caught it going red, not merely
+    # gone green by coincidence on unrelated wording.
+    _old_msg = (
+        f"{GLOBAL_DOC} carries no LIVE suite count (1 claim(s) there, all read as stamped or "
+        f"quoted), so every suite comparison in this run passed with nothing to compare. "
+        f"Either the banner has lost its figure, or the wording around it -- a reporting verb "
+        f"such as 'reads', 'claim' or 'defect' in the figure's own sentence -- is hiding it "
+        f"from this sweep. Run with --explain and reword, do not ignore this"
+    )
+    old_would_have_failed = not (
+        "reportCreatedOn" in _old_msg
+        and str(_STAMP_WINDOW) in _old_msg
+        and "reporting verb" in _old_msg
+    )
+    ok = ok and old_would_have_failed
+    lines.append(f"    [{'OK' if old_would_have_failed else '**WRONG**'}] the PRE-FIX message "
+                 f"text (reporting-verb cause only) fails this same assertion, proving it is a "
+                 f"real regression pin and not a vacuously-true check")
 
     provenance_ok, provenance_lines = check_provenance_self_test()
     ok = ok and provenance_ok

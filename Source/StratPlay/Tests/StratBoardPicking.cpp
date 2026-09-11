@@ -62,8 +62,13 @@
 //   the mapping and not the art.
 // - `HexAtWorldLocation`. It is deliberately absent from the class; see the header block
 //   there. A test for it would be a test for a method whose non-existence is the feature.
-// - The cursor, hover and selection. Phase 4 owns input; this actor exposes two overlays
-//   and a lookup, and that is the whole of its surface.
+// - The cursor, hover and selection. Phase 4 owns input; this actor exposes overlays it is
+//   handed hexes to draw, and lookups between hexes and positions -- nothing on its surface
+//   takes input.
+//   [CORRECTED 2026-09-11, strat-test-author: this said "exposes two overlays and a lookup,
+//   and that is the whole of its surface". `StratBoardActor.h` declares `ObjectiveOverlay`
+//   and `BuildPulseOverlay` beside `ReachOverlay` and `TargetOverlay`, so the count was
+//   false; it is count-free now, as that header's own `BoardRoot` correction chose to be.]
 
 #include "Misc/AutomationTest.h"
 

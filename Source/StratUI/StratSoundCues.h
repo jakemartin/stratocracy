@@ -126,7 +126,10 @@ enum class EStratSoundCue : uint8
 	 *  SOUND, on this enum's own rule: it is "it is your go again", which a bank may fill with
 	 *  a horn, a drum, or nothing at all. NOT A SECOND SPELLING OF `TurnEnded` -- that one
 	 *  fires on EVERY (Turn, SideToMove) change including a hot-seat human -> human swap, and
-	 *  on the shipped unpaced configuration BOTH sound for one hand-back. That is intended and
+	 *  on an unpaced configuration (`AiPlaybackStepSeconds <= 0`, the C++ field default, which
+	 *  both shipped GameMode Blueprints override; reworded 2026-09-11 by
+	 *  strat-gameplay-engineer, as this called that configuration the shipped one) BOTH sound
+	 *  for one hand-back. That is intended and
 	 *  is a USER DECISION rather than an oversight: they are different occasions, and a
 	 *  designer who wants only one leaves the other's bank slot empty. There is deliberately no
 	 *  C++ anywhere that suppresses either on account of the other.

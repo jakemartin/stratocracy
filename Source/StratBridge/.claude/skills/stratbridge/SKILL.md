@@ -91,3 +91,10 @@ Things that get mistaken for one another in this module.
 - **`Tables()` is not owned.** It is borrowed and const. Storing it outlives what it points at.
 - **A vendored header in front of UHT is not a warning.** It is a build failure, and the fix is
   never to edit the vendored bytes.
+- **The `Vendored/*.strat.cpp` compile-in is not unconditional.** It holds only in a modular
+  (editor) build. A monolithic Game target already links the rules through the game module, so
+  compiling them here too put every `strat::` symbol in the binary twice: measured 2026-08-31 as
+  110 × `LNK2005` then `LNK1169`, while the editor build was green. `STRAT_VENDORED_RULES_IN_BRIDGE`
+  and `StratBridge.Build.cs` switch both halves on one `Target.LinkType` expression. Both branches
+  are reasoned in `.agents/ue-project-context.md` under "AND THAT COMPILE-IN IS CONDITIONAL", which
+  the reviewer's checklist cites. It stays there because it spans two modules' `.Build.cs` files.

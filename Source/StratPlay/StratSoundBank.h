@@ -95,9 +95,12 @@ public:
 
 	/** `EStratSoundCue::PlayerTurnBegan`. DECLARED IN ENUM ORDER, beside `TurnEnded` and above
 	 *  `UnitMoved`, because the details panel's reading order is this file's declaration order
-	 *  and a slot list that does not match the enum makes an author check twice. ON THE SHIPPED
-	 *  UNPACED CONFIGURATION THIS AND `TurnEnded` BOTH SOUND FOR ONE HAND-BACK; that is
-	 *  intended, and leaving one of the two slots empty is how a designer picks. */
+	 *  and a slot list that does not match the enum makes an author check twice. ON AN UNPACED
+	 *  CONFIGURATION (`AiPlaybackStepSeconds <= 0`, THE C++ FIELD DEFAULT -- both shipped
+	 *  GameMode Blueprints override it) THIS AND `TurnEnded` BOTH SOUND FOR ONE HAND-BACK; that
+	 *  is intended, and leaving one of the two slots empty is how a designer picks.
+	 *  [REWORDED 2026-09-11, strat-gameplay-engineer: this called the unpaced configuration the
+	 *  shipped one.] */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Sound")
 	TObjectPtr<USoundBase> PlayerTurnBegan;
 

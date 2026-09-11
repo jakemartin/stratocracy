@@ -236,9 +236,12 @@ FStratSelectionOutcome FStratSelectionMachine::HandleEvent(EStratSelectionEvent 
 
 			if (LockedUnits.Contains(Clicked->UnitId))
 			{
-				// §2.11.6's lock. Unobservable today -- the set is empty in every shipping
-				// path -- and written now because a guidance layer would otherwise have to
-				// add a rule to a state machine it does not own.
+				// §2.11.6's lock, written here because a guidance layer would otherwise have to
+				// add a rule to a state machine it does not own. [CORRECTED 2026-09-11 IN PLACE,
+				// strat-gameplay-engineer. The withdrawn claim, false since wave B2:]
+				// RETRACTED> "Unobservable today -- the set is empty in every shipping path"
+				// REACHABLE IN THE SHIPPED GAME: `FStratGuidedOpening::Observe` fills this set
+				// through `SetLockedThisTurn` while beat 1a is outstanding (see `LockedUnits`).
 				Outcome.FailureReason = FString::Printf(
 					TEXT("unit %d is locked this turn"), Clicked->UnitId);
 				break;

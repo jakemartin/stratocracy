@@ -181,8 +181,9 @@ Any new `Source/<Module>/` directory carrying `IMPLEMENT_MODULE` must appear in
 
 **`Source/StratRules/` is deliberately absent from that array and must stay absent.** It holds
 vendored C++ with no `IMPLEMENT_MODULE`, and listing it once made the editor abort at startup —
-*"The game module 'StratRules' could not be successfully initialized"*, recorded at
-`StratBridge.cpp:10-14`. Flagging it as unregistered is a false positive that costs a startup
+*"The game module 'StratRules' could not be successfully initialized"*, recorded in the comment
+above `StratBridge.cpp`'s `IMPLEMENT_MODULE` line (cited as lines 10-14 until 2026-09-11, when it
+was found to have moved). Flagging it as unregistered is a false positive that costs a startup
 abort to discover. Check for `IMPLEMENT_MODULE` before you report a missing registration.
 
 **7. `Source/Stratocracy/` untouched.**

@@ -481,8 +481,8 @@ public:
 	 * what a park with nothing running is. `CancelRouteSlide` is the same shape with a rest
 	 * offset of zero.
 	 *
-	 * IT REFUSES AT `MoveTweenSeconds <= 0`, WHICH IS NOT AN OPTIMISATION. That is the shipped
-	 * C++ default and the configuration every automation fixture runs at; nothing slides there,
+	 * IT REFUSES AT `MoveTweenSeconds <= 0`, WHICH IS NOT AN OPTIMISATION. That is the C++
+	 * field default and the configuration every automation fixture runs at; nothing slides there,
 	 * so a park would displace a picture that no step would ever move back and the tour would
 	 * end with a unit drawn hexes from where the model says it is. A caller cannot get this
 	 * wrong because this function will not do it.
@@ -523,7 +523,7 @@ public:
 	 * continuous derivative at zero phase -- the identical property `MoveTweenEaseFraction`
 	 * argues for the trapezoid, from a different curve.
 	 *
-	 * A NO-OP AT `DamageFlashSeconds <= 0`, WHICH IS THE SHIPPED C++ DEFAULT. Nothing is armed,
+	 * A NO-OP AT `DamageFlashSeconds <= 0`, WHICH IS THE C++ FIELD DEFAULT. Nothing is armed,
 	 * no tick is enabled, no material is touched and `Shake` is not written -- so the tree is
 	 * behaviourally identical to one in which this function does not exist, which is what keeps
 	 * every existing fixture on the path it was written against. The switch-not-a-setting
@@ -743,7 +743,7 @@ protected:
 	 * a transform that can move while the thing above it does not. No mesh, no collision,
 	 * nothing drawn, and nothing to reintroduce a blocker in front of the cursor.
 	 *
-	 * ITS RELATIVE LOCATION IS EXACTLY ZERO AT REST AND ON EVERY PATH AT THE SHIPPED
+	 * ITS RELATIVE LOCATION IS EXACTLY ZERO AT REST AND ON EVERY PATH AT THE C++ FIELD DEFAULT
 	 * `DamageFlashSeconds <= 0`. Nothing writes it but `TickDamageFlash` and
 	 * `FinishDamageFlash`, and the second writes zero verbatim.
 	 */
@@ -1157,6 +1157,15 @@ protected:
 	 * making. So this ships as THE SWITCH AND NOT THE SETTING: the shipped duration goes on
 	 * `BP_StratUnit`, which is the content lane's and not this file's.
 	 *
+	 * AND `BP_StratUnit` DOES SET IT, SO THE ZERO IS NOT THE SHIPPED STATE. [ADDED 2026-09-11,
+	 * strat-gameplay-engineer, discharging a debt in the engine record.]
+	 * `BP_StratUnit` serialises an override of this field and of `DamageFlashSeconds`, and both
+	 * shipped GameMode Blueprints override `FStratMatchConfig::AiPlaybackStepSeconds`; the
+	 * values are the content lane's record, not this file's. So throughout this file, "the C++
+	 * field default" or "`<= 0`" names the path every automation fixture takes -- a fixture
+	 * spawns the C++ class -- and NOT the path the shipped game takes. Several blocks here
+	 * attributed that zero to the shipped game; they now say "the C++ field default".
+	 *
 	 * AT `<= 0` THE PATH IS BIT-IDENTICAL TO THE ONE THAT SHIPPED BEFORE THIS FIELD EXISTED.
 	 * `ApplyUnitView` writes no offset, enables no tick, and leaves `Body`'s relative location
 	 * at the zero the constructor gave it. `bStartWithTickEnabled` is false, so an actor whose
@@ -1169,9 +1178,14 @@ protected:
 	 * same discipline that makes `ApplyUnitView` take a world location instead of computing
 	 * one. Any constant written here would be a magic number this file cannot derive, and the
 	 * failure it would guard -- a unit sliding across the whole board -- cannot occur on any
-	 * path today, because `UStratMatchSubsystem::StartMatchInternal` calls
-	 * `TearDownPresentation()` unconditionally and that destroys every unit actor, so after a
-	 * load or a reseed every actor is NEW and takes `SnapToWorldLocation`.
+	 * path today, because every start or load that replaces the board passes through the one
+	 * `TearDownPresentation();` statement in `UStratMatchSubsystem::StartMatchInternal`, and
+	 * that destroys every unit actor, so after a load or a reseed every actor is NEW and takes
+	 * `SnapToWorldLocation`. A start refused by one of that function's two
+	 * configuration-refusal arms returns ahead of the teardown, but it also builds no board, so
+	 * no actor is moved either. [REWORDED 2026-09-11, strat-gameplay-engineer: this sentence
+	 * said the teardown ran on every start, which those two arms make false; the conclusion
+	 * was already true and is unchanged. See `TearDownPresentation`'s declaration block.]
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Unit")
 	float MoveTweenSeconds = 0.0f;
@@ -1399,8 +1413,8 @@ private:
 	 * IT WRITES EXACTLY `TweenRestOffset` rather than letting a curve converge to anything, AND
 	 * IT EMPTIES BOTH ARRAYS rather than leaving a spent polyline behind. **`TweenRestOffset` IS
 	 * ZERO ON EVERY PATH THAT DOES NOT PARK**, so this is byte-for-byte the old behaviour for
-	 * `ApplyUnitView`'s tween, for `SnapToWorldLocation`, and at the shipped
-	 * `MoveTweenSeconds <= 0` default; the writers of a non-zero rest offset are
+	 * `ApplyUnitView`'s tween, for `SnapToWorldLocation`, and at the C++
+	 * `MoveTweenSeconds <= 0` field default; the writers of a non-zero rest offset are
 	 * `PlayRouteSlide` and `ParkPictureAt`, and there are no others. The "no state the model
 	 * holds" claim in the header block rested on the
 	 * terminal value BEING zero, and it is RE-SCOPED rather than weakened: see `TweenRestOffset`,

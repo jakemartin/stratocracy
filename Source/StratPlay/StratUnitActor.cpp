@@ -211,7 +211,7 @@ void AStratUnitActor::BeginPlay()
 	// only place the project can tell the two apart. Exactly the discriminator
 	// `ConfigureMarker`'s block records for the three markers.
 	//
-	// GATED ON `DamageFlashSeconds > 0` SO THE SHIPPED DEFAULT IS SILENT. At the C++ default
+	// GATED ON `DamageFlashSeconds > 0` SO THE C++ FIELD DEFAULT IS SILENT. At the C++ default
 	// nothing arms, so an unset material is not a gap: there is no flash it could have coloured.
 	// Logging there would put a line on every unit actor in every fixture reporting the absence
 	// of a feature that is switched off, which is noise that trains a reader to skip the log.
@@ -380,7 +380,13 @@ void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& W
 
 	// AND THEN THE PICTURE IS PUT BACK WHERE IT WAS, TO CATCH UP ON ITS OWN CLOCK.
 	//
-	// `MoveTweenSeconds <= 0` IS THE SHIPPED C++ DEFAULT AND TAKES THE OLD PATH EXACTLY: no
+	// [REWORDED 2026-09-11, strat-gameplay-engineer. HERE AND AT EVERY "C++ FIELD DEFAULT" IN
+	// THIS FILE, that zero is the path the automation fixtures take and NOT the shipped
+	// game's: `BP_StratUnit` overrides both `MoveTweenSeconds` and `DamageFlashSeconds`, and
+	// both shipped GameMode Blueprints override `AiPlaybackStepSeconds`. Those
+	// sites attributed the zero to the shipped game. See `MoveTweenSeconds`' block in the
+	// header.]
+	// `MoveTweenSeconds <= 0` IS THE C++ FIELD DEFAULT AND TAKES THE OLD PATH EXACTLY: no
 	// offset is written, no tick is enabled, `Body`'s relative location keeps the zero the
 	// constructor gave it. The guard is `<= 0` and not `== 0` because a negative duration is a
 	// mis-authored Blueprint default and "no animation" is the safe reading of it -- never a
@@ -533,7 +539,7 @@ void AStratUnitActor::ApplyUnitView(const FStratUnitView& View, const FVector& W
 		// zero, so the gentler-looking option is the one that pops. `CancelRouteSlide` retires
 		// immediately and `Body` is home in the same call.
 		//
-		// THE SECOND TERM IS WHAT KEEPS THE SHIPPED DEFAULT BIT-IDENTICAL. At
+		// THE SECOND TERM IS WHAT KEEPS THE C++ FIELD DEFAULT BIT-IDENTICAL. At
 		// `MoveTweenSeconds <= 0` no slide ever arms and no park is ever written, so both terms
 		// are false, this branch is not entered, and no automation fixture executes a line of it.
 		CancelRouteSlide();
@@ -674,7 +680,7 @@ float AStratUnitActor::PlayRouteSlide(const TArray<FVector>& RouteWorldPoints,
 	// arm a polyline of one element, which `Tick` retires on its own guard anyway. Refused
 	// early so the answer is 0 seconds and not "0 seconds after some writes".
 	//
-	// NOTHING IS WRITTEN ON ANY REFUSAL PATH, WHICH IS WHAT MAKES THE SHIPPED DEFAULT
+	// NOTHING IS WRITTEN ON ANY REFUSAL PATH, WHICH IS WHAT MAKES THE C++ FIELD DEFAULT
 	// BIT-IDENTICAL TO A TREE WITHOUT THIS FUNCTION. `MoveTweenSeconds <= 0` is the C++ default
 	// and every automation fixture runs at it, so every call from `UStratMatchSubsystem`'s tour
 	// returns here having touched nothing, the tour's interval collapses to
@@ -806,7 +812,7 @@ void AStratUnitActor::CancelRouteSlide()
 
 void AStratUnitActor::ParkPictureAt(const FVector& ParkWorldPoint, const FVector& AnchorWorldPoint)
 {
-	// THE SHIPPED DEFAULT PARKS NOTHING, AND THIS GUARD IS WHY THE FIX CANNOT REACH AN
+	// THE C++ FIELD DEFAULT PARKS NOTHING, AND THIS GUARD IS WHY THE FIX CANNOT REACH AN
 	// AUTOMATION FIXTURE. At `MoveTweenSeconds <= 0` no step of any tour will ever move a
 	// picture back, so a park here would leave a unit drawn hexes from where the model says it
 	// is for the whole tour. `<= 0` and not `== 0` on `ApplyUnitView`'s reasoning: a negative
@@ -959,7 +965,7 @@ void AStratUnitActor::FinishTween()
 		// `TweenRestOffset` AND NOT A ZERO LITERAL SINCE 2026-09-02, AND THE FIELD IS ZERO ON
 		// EVERY PATH BUT THE TWO THAT PARK -- `PlayRouteSlide` and `ParkPictureAt` -- so this is
 		// the old value for `ApplyUnitView`'s tween, for `SnapToWorldLocation`, for
-		// `CancelRouteSlide` and at the shipped `MoveTweenSeconds <= 0` default. See
+		// `CancelRouteSlide` and at the C++ `MoveTweenSeconds <= 0` field default. See
 		// `TweenRestOffset`, which names its three zeroing writers and why a tour is what
 		// guarantees one of them always runs.
 		//
@@ -1003,7 +1009,7 @@ void AStratUnitActor::FinishTween()
 
 void AStratUnitActor::PlayDamageFlash()
 {
-	// THE SHIPPED DEFAULT ARMS NOTHING AND WRITES NOTHING, WHICH IS WHAT MAKES THE TREE
+	// THE C++ FIELD DEFAULT ARMS NOTHING AND WRITES NOTHING, WHICH IS WHAT MAKES THE TREE
 	// BEHAVIOURALLY IDENTICAL TO ONE WITHOUT THIS FEATURE. `DamageFlashSeconds <= 0` is the C++
 	// default and the configuration every automation fixture runs at, so every call from
 	// `UStratMatchSubsystem` returns here having touched no clock, no tick flag, no material and

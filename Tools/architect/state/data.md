@@ -15,6 +15,56 @@
 
 ## NEXT
 
+- **DONE, 2026-09-11 -- close-out lane 1: ten 2026-09-10 gate reports persisted into
+  `Tools/architect/gate_reports/`, and `strat_banner_sweep.py`'s LIVE COUNT MISSING message now
+  names the stamp-window cause, not only the reporting-verb one.** Base commit `a94c2c4` (=
+  `origin/master`), tree otherwise clean apart from the untracked `HOW_TO_PLAY.md`, not this
+  steward's. Menus and their confirmation are recorded in `decisions.md`; this entry is the
+  mechanical follow-through, not the ruling.
+  **(1) PERSISTED, BYTE-IDENTICAL, `cp` NOT `Write`.** All ten reports named in the brief --
+  `2026-09-10-gate-A-pin-port.md`, `-A2-pin-port-regate.md`, `-B-t-save-04-regate.md`,
+  `-C-t-save-04-repair.md`, `-D-t-int-05-rename.md`, `-D2-t-int-05-rename-regate.md`,
+  `-D3-t-int-05-rename-regate.md`, `-D4-t-int-05-rename-regate.md`,
+  `-E-loadrefuses-t-int-05.md`, `-E2-E3-loadrefuses-t-int-05-regates.md` -- copied from
+  `E:\MultiAgent\briefs\` into `Tools/architect/gate_reports/`, same filenames. `sha256sum`
+  computed on both source and destination for all ten, printed side by side: every pair matches
+  exactly (no autocrlf rewrite; `cp` does not run a git filter). This closes `global.md`'s own
+  2026-09-10 sentence naming the gate-B report as kept OUTSIDE this repo -- stamped there, in
+  `global.md`, not restated here, per this record's ownership rule. **What it does NOT close,
+  because it would be inventing rather than finding it:** the BLOCK that gate-B itself answers,
+  from the pass before gate A, was never persisted anywhere, in this repo or out of it, and
+  copying these ten reports does not create that missing record.
+  **(2) `strat_banner_sweep.py`'s `check_live_count_present` MESSAGE, TWO CAUSES NAMED, ONE
+  DERIVED.** The message named only "a reporting verb ... in the figure's own sentence" as the
+  reason a live claim reads as absent. Measured 2026-08-29 (this file's own record, and
+  `global.md`'s account of that pass) and still true today: a `reportCreatedOn` (or other stamp
+  marker) within `_STAMP_WINDOW` characters of the figure is a SEPARATE cause -- `is_stamped` is
+  checked first and outranks an explicit live verb -- and the old message sent a reader hunting
+  for a verb that was never there. The message now names both, and the character count is read
+  from `_STAMP_WINDOW` itself (`f"...within {_STAMP_WINDOW} characters..."`), never a literal, so
+  the two cannot drift apart. The docstring above the function carries the same two-cause
+  explanation.
+  **SELF-TEST, NEW FIXTURE, PROVEN TO GO RED.** `_LIVE_COUNT_MISSING_BY_STAMP` -- a one-banner
+  document whose only figure sits beside its own `reportCreatedOn`, genuinely current, nothing
+  superseding it -- added to the case list (expected FAIL, `LIVE COUNT MISSING`, not silence) and
+  to a direct message-content assertion: the fired finding's own text must contain
+  `reportCreatedOn`, the string form of `_STAMP_WINDOW`'s live value, and `reporting verb`. **Run
+  against the OLD message text on the identical assertion, not only against new wording**: the
+  pre-fix string (reporting-verb cause only) fails the same three-part check, proving the pin is a
+  real regression guard and not vacuously true. `python
+  Tools/architect/strat_banner_sweep.py --self-test`: `SELF-TEST: ALL FIXTURES CORRECT`, exit 0 --
+  both new checks `[OK]` alongside every pre-existing fixture unchanged in verdict, including the
+  older `_NO_LIVE_COUNT` fixture (the OTHER way to reach zero live claims -- an honestly absent
+  figure -- which this new fixture does not overlap: its banner's figure is present and wrongly
+  read as history, not missing).
+  **`--explain` AGAINST THE REAL RECORD.** `python Tools/architect/strat_banner_sweep.py --explain`
+  (default target, all six files): prints the full stamped/quoted claim table (`global.md` and
+  `tests.md` entries, none new) and ends `SWEEP CLEAN -- no self-contradiction found`, exit 0 --
+  the message change and the new fixture do not alter the live record's verdict, only the
+  diagnostic text a maintainer would read on a future stamp-window miss.
+  **NOTHING ELSE IN THE FILE TOUCHED.** No other function, marker set or constant was edited;
+  `_STAMP_WINDOW` itself is unchanged at `220`.
+
 - **DONE, 2026-09-10 -- `Tools/architect/strat_suite_report_gate.py` gained `--pin-to-tree`,
   ported from `ue-agent-kit`.** Base commit `d59bf9b` (`master` = `origin/master` at dispatch;
   the brief that opened this pass named a stale `9fbfc5d` two commits back, and this entry

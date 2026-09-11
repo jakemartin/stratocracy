@@ -15,6 +15,56 @@
 
 ## NEXT
 
+- **2026-09-11, strat-gameplay-engineer (ACTING and WRITING; IN LANE, on master in
+  E:/MultiAgent/Stratocracy, base commit a94c2c4, UNCOMMITTED) -- CLOSEOUT OF THIS LANE'S
+  STALE-COMMENT DEBTS. COMMENT-ONLY.** No suite was run by this pass and none is claimed.
+  - **FILES.** `Source/StratPlay/`: `StratSelectionMachine.cpp`, `StratUnitActor.h`,
+    `StratUnitActor.cpp`, `StratMatchSubsystem.h`, `StratMatchSubsystem.cpp`,
+    `StratSoundBank.h`; `Source/StratUI/StratSoundCues.h`; and this file.
+  - **COMMENT-ONLY, MEASURED.** For each of the seven files, the C++ token stream with
+    comments stripped and literals kept is IDENTICAL between HEAD and the working tree. Control:
+    changing `MoveTweenSeconds = 0.0f` to `0.1f` in a copy reads DIFFERENT. Line endings are
+    unchanged per file.
+  - **DISCHARGED:**
+    - The `HexPrimary` arm's lock comment in `StratSelectionMachine.cpp`. The claim is now a
+      `RETRACTED>` line, and the path that reaches the lock (`Observe` through
+      `SetLockedThisTurn`) is named beside it.
+    - `MoveTweenSeconds`' no-distance-clamp paragraph in `StratUnitActor.h`. It now cites the
+      `TearDownPresentation();` statement and names the two refusal arms that return ahead of
+      it. The conclusion is unchanged.
+    - `GetMatchEpoch`'s line numbers. **The call: move them out of the header, not re-anchor
+      them.** The header already cited each statement by quoted text, so the numbers were only
+      evidence, and the evidence already lives here in full. Keeping them meant one more stale
+      header sentence after every edit to the `.cpp`.
+    - The 2026-09-03 (local) T-SAVE-04 entry: the lede is stamped as landed at `d59bf9b`, and
+      the clause-state bullet is stamped as citing a report no longer on disk.
+    - The four PROPOSED names. Their ID is ruled `T-INT-05` and they stay unwritten. Stamped
+      at the proposals bullet, at this file's 2026-09-10 bullet that called their ID open, and
+      at the debt that named it.
+    - The shipped-default debt, including `IsAiPlaybackRunning`. It now says "the C++ field
+      default" at every enumerated site, and each of the four files says once that the shipped
+      Blueprints override both fields. No value is stated in `Source/`. The same wrap-aware
+      sweep reached two sites outside the enumeration, which call the unpaced configuration the
+      shipped one: `StratSoundBank.h`'s `PlayerTurnBegan` block and `StratSoundCues.h`'s
+      `PlayerTurnBegan` cue. It also reached the four `DamageFlashSeconds` sites in
+      `StratUnitActor.h`/`.cpp`, which `content.md` records as overridden on `BP_StratUnit`'s CDO.
+      All were reworded.
+  - **LEFT OPEN, WITH THE REASON:**
+    - "two overlays" in `Source/StratPlay/Tests/StratBoardPicking.cpp`'s header. The file is
+      in `Tests/`, so it belongs to `strat-test-author`, and this pass handed it off without
+      editing it.
+    - A new debt this sweep found but did not rule. `StratSoundBank.h`'s *"NULL IS FINE AND IS
+      THE SHIPPED DEFAULT UNTIL CONTENT SETS ONE"* and *"AN UNSET MAP IS THE SHIPPED DEFAULT"*,
+      and `StratSoundDirector.h`'s *"the shipped and the fixture default"*, call the sound-bank
+      slots unset in the shipped game. This pass took no reading of what the shipped bank
+      holds. **Discharged** by a pass that reads it and rewords those three sentences.
+    - Every debt that needs a behaviour change: `ExecuteRoute`'s travelling tail, `LayerFor`'s
+      null mesh, and the W5/W9 polish. None of them was touched.
+  - **BUILD.** The line from the brief, run twice with no editor process (checked with
+    `Get-Process`, with `explorer` as the control). The second run followed the last source
+    edit: 35 actions, `UnrealEditor-StratPlay.dll` relinked, `Result: Succeeded`, exit 0. The
+    captured output has zero `warning C`/`error C`/`LNK` lines.
+
 - **2026-09-10, strat-gameplay-engineer (ACTING and WRITING; IN LANE)** -- dispatched, on
   `master` in the main tree `E:/MultiAgent/Stratocracy`, base commit `7f0e05b`, UNCOMMITTED, no
   lane topology standing (`Strat-wt/slot-1` and `slot-2` are merged W8 branches with clean
@@ -99,7 +149,9 @@
   - **AN ADJACENT OPEN QUESTION THIS PASS DID NOT RULE ON, STAMPED WHERE IT LIVES.** The
     2026-09-03 entry PROPOSED four clauses under `T-SAVE-04`, and none exists in `Source/`.
     The ruling does not name them, but its first reason (`T-SAVE-04` is a header-mismatch ID)
-    applies to all four. The stamp says their ID is open and the user's to rule. The names
+    applies to all four. The stamp says their ID is open and the user's to rule. **[RULED
+    2026-09-11: the user ruled `T-INT-05`, record only, so "open" is no longer true; stamped
+    at the proposals bullet by `strat-gameplay-engineer`, base commit `a94c2c4`.]** The names
     were left as written.
   - **THE SUITE WAS RUN BY THE TEST LANE, NOT THIS ONE, AND IT COVERS THIS PASS'S BYTES.** The
     test lane ran it after its own rename, over the final tree. Measured 2026-09-10 against the
@@ -129,9 +181,11 @@
   `StratSelectionMachineResetClauses.cpp` read `T-INT-05`, and the report exported at
   `reportCreatedOn 2026.09.10-21.37.28` (UTC) lists both `T-INT-05` names `Success` and neither
   `T-SAVE-04` form. That is the measurement in this entry's last bullet above.
-- **The four PROPOSED `T-SAVE-04.*` clause names in the 2026-09-03 entry carry an ID no ruling
-  backs.** **Discharged** by a user ruling on their ID, or by that entry's proposals being
-  withdrawn.
+- **[DISCHARGED 2026-09-11, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, base commit
+  `a94c2c4`), BY USER RULING: their ID is `T-INT-05`, record only; the four stay unwritten
+  proposals. Stamped at the proposals bullet.]** ~~The four PROPOSED `T-SAVE-04.*` clause names
+  in the 2026-09-03 entry carry an ID no ruling backs.~~ **Discharged** by a user ruling on
+  their ID, or by that entry's proposals being withdrawn.
 
 - **2026-09-10, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, dispatched, on `master`
   in the main tree `E:/MultiAgent/Stratocracy`, base commit `3143049`, UNCOMMITTED) -- REPAIRS
@@ -245,7 +299,9 @@
     - **NOT CHANGED, AND WHY.** `SelectedUnitId` carries no exclusive-writer claim anywhere
       swept. The `HexPrimary` arm's *"Unobservable today -- the set is empty in every shipping
       path"* about the lock gate is also false, but `Observe` falsified it at wave B2 and not
-      `Reset()`; outside this repair's brief and left for a later pass of this lane.
+      `Reset()`; outside this repair's brief and left for a later pass of this lane. **[REPAIRED
+      2026-09-11 by `strat-gameplay-engineer`, base commit `a94c2c4`: the claim is now a
+      `RETRACTED>` line with the reachable path named beside it.]**
     - **BUILD, SECOND RUN.** `Build.bat StratocracyEditor Win64 Development -project=...
       -waitmutex`, no editor running: 32 actions, `UnrealEditor-StratPlay.dll` relinked,
       `Result: Succeeded`, exit 0; the UBT `Log.txt`'s one `warning`/`error` hit is the
@@ -255,12 +311,17 @@
 
 ### Debts taken on, 2026-09-10 (T-SAVE-04 citation repair)
 
-- **`GetMatchEpoch`'s retraction still carries two sets of line numbers**, deliberately, as dated
-  evidence. They are stale after any edit to `StratMatchSubsystem.cpp` above them and are marked
+- **[DISCHARGED 2026-09-11, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, base commit
+  `a94c2c4`): the numbers are moved out of the header, which now keeps the dates and commits
+  and cites the statements only. The numbers themselves stay in this file, in the 2026-09-10
+  entry's *"THE FINDING, RE-MEASURED RATHER THAN TAKEN"* bullet.]** ~~`GetMatchEpoch`'s
+  retraction still carries two sets of line numbers~~, deliberately, as dated evidence. They are stale after any edit to `StratMatchSubsystem.cpp` above them and are marked
   as such in the block itself. **Discharged** only by a pass that decides evidence numbers in a
   header should live in the record instead; not this pass's call to make alone.
-- **The 2026-09-03 (local) T-SAVE-04 entry's two other observations from the same gate report
-  were NOT touched**: its *"UNCOMMITTED AND UNMERGED at the time of writing"* lede is
+- **[DISCHARGED 2026-09-11, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, base commit
+  `a94c2c4`): both are now stamped in place -- the lede as landed at merge `d59bf9b`, the
+  clause-state bullet as citing a report no longer on disk.]** **The 2026-09-03 (local)
+  T-SAVE-04 entry's two other observations from the same gate report were NOT touched**: its *"UNCOMMITTED AND UNMERGED at the time of writing"* lede is
   time-qualified but not stamped as landed at `d59bf9b`, and its clause-state bullet cites
   report `2026.09.03-13.08.33`, which is no longer on disk. Neither was in this dispatch's
   brief. **Discharged** by a stamp at each, in this file, in a later pass of this lane.
@@ -2963,7 +3024,11 @@
     still changes that translation unit's inputs, so it is rebuild-then-run-then-record; this
     pass performed no build and no suite run and claims neither, and doing them is the discharging
     pass's work, not a record repair's.
-    **DISCHARGED WHEN** the next pass that compiles this module rewrites those blocks to say "the
+    **[DISCHARGED 2026-09-11, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, base commit
+    `a94c2c4`, COMMENT-ONLY, BUILT): every enumerated site, `IsAiPlaybackRunning`'s included,
+    now says "the C++ field default", and each of the four files states once that the shipped
+    Blueprints override both fields. The 2026-09-11 entry at the top of this file
+    lists what else the same sweep reached.]** **DISCHARGED WHEN** the next pass that compiles this module rewrites those blocks to say "the
     C++ field default" and states, once per file, that both fields are overridden on the shipped
     Blueprints -- at which point this bullet is stamped, not deleted. **[SCOPE AMENDED
     2026-09-03 ON THE SECOND RE-GATE'S F6: this condition is NOT satisfied by rewriting only the
@@ -3030,7 +3095,10 @@
     field. **The condition above is a CONJUNCTION -- the `AiPlaybackStepSeconds` blocks AND
     these three -- and NEITHER conjunct is fully satisfied: the first not at all, the second two
     sites out of three. So it is not satisfied.** A reader arriving at this bullet must not stamp it: the discharging pass is the
-    one that rewrites the `AiPlaybackStepSeconds` blocks, and it has not run.
+    one that rewrites the `AiPlaybackStepSeconds` blocks, and it has not run. **[THAT PASS RAN
+    2026-09-11 -- `strat-gameplay-engineer`, base commit `a94c2c4` -- and rewrote those blocks
+    and `IsAiPlaybackRunning`'s, so both conjuncts are now met. Stamped at the DISCHARGED WHEN
+    sentence above.]**
   - **THE ORIGINAL SWEEP WAS PINNED TO A TOKEN AND NOT TO A SHAPE, WHICH IS WHY IT WAS BLIND.
     RE-RUN WIDENED 2026-09-03, WITH THE PATTERN WRITTEN OUT SO THE WIDENING IS CHECKABLE RATHER
     THAN CLAIMED.** The original required the literal word `default` within 120 characters of a
@@ -3205,7 +3273,10 @@
   outside `Tests/` -- in the linked worktree
   `E:/MultiAgent/Stratocracy/.claude/worktrees/quizzical-yonath-9b009a`, branch
   `worktree-quizzical-yonath-9b009a`, base commit `283d711`. UNCOMMITTED AND UNMERGED at the
-  time of writing: nothing below has landed on `master`) -- A LOAD NOW CLEARS THE PRESENTATION
+  time of writing: nothing below has landed on `master` **[LANDED, STAMPED 2026-09-11 IN
+  PLACE, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, base commit `a94c2c4`): this
+  work reached `master` at merge `d59bf9b`, whose second parent `f53ca26` descends from
+  `283d711`, measured by `git merge-base --is-ancestor`.]**) -- A LOAD NOW CLEARS THE PRESENTATION
   STATE THAT LIVES ON THE CONTROLLER, THROUGH A COUNTER THE CONTROLLER READS RATHER THAN A
   DELEGATE THE SUBSYSTEM FIRES -- AND THE REASON FOR THAT CHOICE IS THE MOST TRANSFERABLE THING
   IN THIS ENTRY. The live suite count and the phase verdict live in
@@ -3334,7 +3405,11 @@
     renaming it is `strat-test-author`'s. This stamp does NOT discharge the debt headed
     "Debts taken on, 2026-09-10 (T-SAVE-04 citation repair)" about this bullet's report no
     longer being on disk.]** is `Success`
-    against this tree, `reportCreatedOn 2026.09.03-13.08.33`, and no test in that report is in
+    against this tree, `reportCreatedOn 2026.09.03-13.08.33` **[REPORT GONE, STAMPED 2026-09-11
+    IN PLACE, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, base commit `a94c2c4`):
+    that report is no longer on disk -- `Saved/AutomationReport/` holds one `index.json`, with
+    a different `reportCreatedOn`. This sentence is now history of that run and cannot be
+    re-checked; nothing here puts a later run in its place.]**, and no test in that report is in
     any other state. **THE CLAUSE AND ITS RECORD ARE `strat-test-author`'S AND NOT THIS LANE'S**
     -- this lane wrote none of it and claims none of it; see `tests.md`, which is that lane's
     own entry and the authority on what the clause pins. What this lane can attest is the fix,
@@ -3415,8 +3490,14 @@
     RENAMED TO `T-INT-05`, BOTH OF THEM"* renamed two existing clauses and does not name these
     four. Its first reason, that `T-SAVE-04`'s GDD sentence is about a header mismatch, applies
     to them equally, since none of the four tests a header. The ID any of them would land under
-    is open, and it is the user's to rule, not this lane's. The names are left as written so
-    that this proposal stays the record of what was proposed.]**
+    is open, and it is the user's to rule, not this lane's. **[RULED, STAMPED 2026-09-11 IN
+    PLACE, `strat-gameplay-engineer` (ACTING and WRITING; IN LANE, base commit `a94c2c4`): THE
+    PREVIOUS SENTENCE IS NO LONGER TRUE. The user ruled their ID `T-INT-05`, record only -- see
+    the `decisions.md` entry headed *"RULED, 2026-09-11, BY THE USER -- the four PROPOSED
+    `T-SAVE-04.*` clauses"*. So each name below would be `Stratocracy.StratPlay.T-INT-05.<same
+    suffix>`. ALL FOUR REMAIN UNWRITTEN PROPOSALS: the ruling writes nothing into `Source/`,
+    and a grep that finds one of these names is still finding this paragraph.]** The names are
+    left as written so that this proposal stays the record of what was proposed.]**
     - `Stratocracy.StratPlay.T-SAVE-04.EpochGapGreaterThanOneIsReportedAsObserved` -- PROPOSED.
       Drive two boundaries with no decoration between them; pin that the controller resets
       once and that `LastObservedMatchEpoch` lands on the CURRENT epoch rather than a stepped

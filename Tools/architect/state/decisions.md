@@ -19,6 +19,28 @@
 
 ## NEXT
 
+- **RULED, 2026-09-11, BY THE USER -- the four PROPOSED `T-SAVE-04.*` clauses in `engine.md`'s
+  2026-09-03 entry take `T-INT-05`, RECORD ONLY; nothing is written.** Ruled in the "Claude-of-
+  Tanks close-out" `coordinator` session (cwd `E:\MultiAgent`), relayed to this repo's session by
+  `E:\MultiAgent\briefs\2026-09-11-closeout-stratocracy.md`, and CONFIRMED BY THE USER directly to
+  this Stratocracy `coordinator` session on 2026-09-11 ("Yes, all of it") in answer to a direct
+  question. The menu offered was three options: (a) take `T-INT-05`, record only; (b) take
+  `T-INT-05` and write the clauses now; (c) withdraw the four proposals. The user chose (a). **What
+  this closes and what it does not**: the four clauses' ID question is settled -- they ride
+  `T-INT-05` if and when they are ever written -- but they stay proposals; no test file is touched
+  by this ruling and none of the four exists in `Source/` today. Recorded here per this file's own
+  remit (scope/ID rulings); `engine.md` is the four proposals' own file and is not touched by this
+  entry.
+
+- **RULED, 2026-09-11, BY THE USER -- the Stratocracy doc migration (splitting `CLAUDE.md` /
+  `.agents/ue-project-context.md` module-scoped content into per-module skills) is CHOSEN.** Same
+  session, same relay and confirmation as the ruling above. The menu offered was two options: split
+  the module-scoped content into per-module skills now, or decline and record the decision. The
+  user chose the split. **This entry records the ruling only.** The split itself is a separate,
+  later piece of work in this same close-out run; its outcome is not stated here and this entry
+  makes no claim about whether it has happened, is in progress, or what it produced. (See
+  `global.md`'s banner for that claim.)
+
 - **RULED, 2026-09-07 -- the player-handback sound cue rides `GATE-AUDIO`; the handback moment and
   the camera recenter ride a newly minted `GATE-HANDBACK`.** Over base `6d882a3` (clean),
   record-only, no suite run. Full reasoning, the quoted authorizing text of every ID considered

@@ -11,6 +11,58 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-11 (FIFTH PASS, over base `a94c2c4`: THE FOUR PROPOSED CLAUSES TAKE `T-INT-05`
+RECORD ONLY, THE DOC SPLIT IS DONE, AND CLOSEOUT HOUSEKEEPING IS RUN. The `coordinator` ran this
+pass (ACTING); each lane wrote its own record entry, dispatched one at a time. This banner is
+WRITTEN BY `strat-data-steward`.
+RULINGS. Both made in the "Claude-of-Tanks close-out" `coordinator` session (cwd
+`E:\MultiAgent`), relayed by `E:\MultiAgent\briefs\2026-09-11-closeout-stratocracy.md`, and
+CONFIRMED BY THE USER directly to this session ("Yes, all of it"). Recorded in `decisions.md`
+under the two entries headed *"RULED, 2026-09-11, BY THE USER -- the four PROPOSED
+`T-SAVE-04.*` clauses in `engine.md`'s 2026-09-03 entry take `T-INT-05`, RECORD ONLY; nothing is
+written"* and *"RULED, 2026-09-11, BY THE USER -- the Stratocracy doc migration ... is CHOSEN."*
+`engine.md` stamped its own proposals bullet and its 2026-09-10 debt to match the first ruling.
+DOC SPLIT, DONE BY THE `coordinator` IN ITS OWN LANE (`.claude/skills/`, `.agents/`, `CLAUDE.md`
+-- no agent owns these). Three new directory-scoped skills
+(`Source/StratPlay/.claude/skills/stratplay/SKILL.md`, `Source/StratUI/.claude/skills/stratui/SKILL.md`,
+`Source/Stratocracy/.claude/skills/stratocracy/SKILL.md`), a gotcha added to the existing
+`stratbridge` skill, module-scoped detail in `.agents/ue-project-context.md` replaced by
+pointers, one `CLAUDE.md` pointer bullet added. `CLAUDE.md` held no module-scoped content beyond
+non-negotiables 2-4, which stay project-wide per the ruling. The monolithic compile-in
+subsection stays in `ue-project-context.md`, cited there by
+`strat-integration-reviewer`'s own definition. Registration of the new `SKILL.md` files is
+UNVERIFIED this pass -- it happens by touch in a later session, per this project's own recorded
+lesson that registration is not a session-start listing.
+HOUSEKEEPING. Slot worktrees and `feat/w8-*` branches removed, stashes dropped, one archived as
+`archive/banner-sweep-foreign-tree-draft`. Re-measured, not taken on the brief's word: `git
+worktree list` shows only this tree at `a94c2c4` on `master`; `git branch -a` shows no `w8` or
+`slot` branch and exactly `archive/banner-sweep-foreign-tree-draft` under `archive/`.
+STEWARD LANE (this session's earlier pass). Ten 2026-09-10 gate reports persisted byte-identical
+into `Tools/architect/gate_reports/`; the BLOCK before gate A was never persisted anywhere and
+stays unrecorded, named rather than invented. `strat_banner_sweep.py`'s LIVE COUNT MISSING
+message now names the stamp-window cause as well as the reporting-verb one, with a self-test
+fixture proven to go red on the old message. See `data.md`'s 2026-09-11 entry.
+ENGINE LANE, COMMENT-ONLY, BUILD GREEN. `engine.md`'s 2026-09-11 entry's own "LEFT OPEN, WITH THE
+REASON" heading carries what is still open, quoted from that heading and not restated from any
+report: `StratSoundBank.h`'s *"NULL IS FINE AND IS THE SHIPPED DEFAULT UNTIL CONTENT SETS ONE"*
+and *"AN UNSET MAP IS THE SHIPPED DEFAULT"*, and `StratSoundDirector.h`'s *"the shipped and the
+fixture default"* -- three sentences a reading of the shipped sound bank would discharge, not
+done this pass; and *"every debt that needs a behaviour change: `ExecuteRoute`'s travelling
+tail, `LayerFor`'s null mesh, and the W5/W9 polish. None of them was touched."* The "two
+overlays" debt in `StratPlay/Tests/StratBoardPicking.cpp`'s header, handed off to
+`strat-test-author` by this same heading, IS closed -- see the test lane below.
+TEST LANE. `StratBoardPicking.cpp`'s "two overlays" comment corrected, count-free now. Four
+`tests.md` sentences that placed the `2026-09-10-gate-B-t-save-04-regate.md` report outside the
+repository are stamped, now that a copy sits in `Tools/architect/gate_reports/` with a matching
+sha256. Suite re-run after the rebuild, over the tree holding the engineer's pass and this pass's own
+fix, this steward's own eyes on the exported file. THE SUITE IS **479/479**, every entry
+Success, zero failed, zero notRun, zero succeededWithWarnings; the figure held steady across the
+rebuild. Report and tree clause names set-equal both ways. `strat_suite_report_gate.py --pin-to-tree` and `--not-before 2026.09.11-20.33.02` both
+CLEAN.
+  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.11-20.34.29` (UTC; local date 2026-09-11).
+  WHAT IS NOT DONE. The engine-lane items named above, from `engine.md`'s own 2026-09-11 debts
+heading. Every other open item carried in the third and second passes' WHAT IS NOT DONE, below,
+is untouched by this pass. Skill registration for the three new `SKILL.md` files is unverified.)
 _Last run 2026-09-10 (FOURTH PASS, over base `72bb24b`: `LoadRefusesAnUnconfiguredSubsystem` NOW
 RIDES `T-INT-05` TOO, BY USER RULING. Written by the `coordinator`; each lane wrote its own record
 entry, dispatched one at a time. Before ruling, the user was shown that this clause's subject is a
@@ -28,10 +80,15 @@ succeededWithWarnings. THE RENAME MOVED NO COUNT: report and tree clause names s
 directions, the new name Success, the old one absent. Rebuilt before the run. Gated with
 `strat_suite_report_gate.py --not-before 2026.09.10-23.59.34` and, separately, `--pin-to-tree`,
 both CLEAN.
-  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.11-00.00.39` (UTC; local date 2026-09-10).
+  [STAMPED BY `strat-data-steward`, FIFTH PASS, 2026-09-11] "THE LIVE FIGURE'S REPORT IS `reportCreatedOn
+  [STAMPED] 2026.09.11-00.00.39` (UTC; local date 2026-09-10)." -- superseded: the fifth pass
+  [STAMPED] re-ran the suite after the engineer's comment-only closeout and the test-author's
+  [STAMPED] `StratBoardPicking.cpp` fix; a newer report was owed and is cited in the banner
+  [STAMPED] above. The count did not move.
   WHAT IS NOT DONE. The four PROPOSED clauses in `engine.md` still carry `T-SAVE-04` names that no
-ruling backs. Every other open item in the third and second passes' WHAT IS NOT DONE, below, is
-untouched by this pass.)
+ruling backs. [STAMPED BY `strat-data-steward`, FIFTH PASS, 2026-09-11] The sentence above is no longer true: the
+[STAMPED] user ruled `T-INT-05`, record only, on 2026-09-11; see the banner above. Every other
+open item in the third and second passes' WHAT IS NOT DONE, below, is untouched by this pass.)
 _Last run 2026-09-10 (THIRD PASS, over base `7f0e05b`: THE TWO CLAUSES THAT LANDED AT `d59bf9b`
 UNDER `T-SAVE-04` NOW RIDE `T-INT-05`, BY USER RULING. Written by the `coordinator`; each lane
 wrote its own record entry, dispatched one at a time. The user was offered three IDs (`T-INT-05`
@@ -73,6 +130,17 @@ never received; and a clause file, `StratSelectionMachineResetClauses.cpp`, reco
 here. The report is kept OUTSIDE this repo at
 `E:\MultiAgent\briefs\2026-09-10-gate-B-t-save-04-regate.md`; the BLOCK it answers was never
 persisted at all, which is why this one was.
+**[STAMPED 2026-09-11 BY `strat-data-steward`, DISCHARGED -- NAMING THE DIRECTORY, NOT INVENTING
+THE MISSING HALF.** This report, and nine siblings from the same 2026-09-10 run
+(`gate-A-pin-port`, `gate-A2-pin-port-regate`, `gate-C-t-save-04-repair`, `gate-D-t-int-05-rename`,
+`gate-D2`/`D3`/`D4-t-int-05-rename-regate`, `gate-E-loadrefuses-t-int-05`, and
+`gate-E2-E3-loadrefuses-t-int-05-regates`), are now ALSO persisted, byte-identical, at
+`Tools/architect/gate_reports/2026-09-10-gate-*.md` -- verified by `sha256` equality against
+the `E:\MultiAgent\briefs\` originals, both hashes read and matching for all ten. **What this
+does NOT close, stated plainly rather than left to be assumed:** the BLOCK named in the sentence
+above it -- the one this gate-B report answers, from the pass that preceded gate A -- was never
+persisted anywhere, in this repo or out of it, and finding these ten reports does not create
+that missing record. It stays exactly as open as the sentence above already says.]**
   `strat-gameplay-engineer` (`engine.md`) re-cited the call by statement rather than line number,
 and on a handoff from the test lane corrected every writer claim about `DoneUnits` and
 `LockedUnits` that `FStratSelectionMachine::Reset()` falsified once a load began reaching it --

@@ -14,6 +14,32 @@
 > than deleting it, exactly as `state.md` did. (This sentence was truncated mid-clause when the
 > file was split; completed 2026-08-22, no meaning changed.)
 
+- **2026-09-10, `strat-test-author` (ACTING and WRITING; IN LANE), base `72bb24b`, `master` in the
+  main tree, no wave in flight, UNCOMMITTED -- `LoadRefusesAnUnconfiguredSubsystem` NOW RIDES
+  `T-INT-05`, BY THE USER'S RULING. The live suite count lives in `global.md` and nowhere else.**
+  - **THE RULING.** `decisions.md`, the entry headed *"RULED, 2026-09-10, BY THE USER --
+    `Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem` ... Only the ID moves."*
+    It records that the fit is WEAKER than for the two clauses in the entry below, and why.
+  - **THE RENAME,** in `Source/StratPlay/Tests/StratSaveSlotClauses.cpp`: `T-SAVE-04` -> `T-INT-05`
+    in the macro's name, in the clause's five assertion-message prefixes and in its comment
+    header's ID -- the same decisions as the entry below. Class name, checks, expectations and
+    fixtures unchanged. No retraction was owed: the header names the ID once and argues for none.
+    Untouched: `T-SAVE-04.LoadRefusesAWrongSavedDataVersion`, the "AND NOT `T-SAVE-04`" block,
+    and the file header's ID list, where `T-SAVE-04` still belongs.
+  - **NAMES-ONLY, MEASURED.** Line classifier against the `HEAD` blob: 7 changed lines, 7 name-only,
+    0 other; `git diff --numstat` `7 7`. Control, a copy with one space dropped and one trailing
+    space added on renamed lines: 2 other, 5 name-only. Wrap-aware sweep of the 116 `.cpp`/`.h`
+    under `Source/**/Tests/`: old full name 1 -> 0, new 0 -> 1, plain `T-SAVE-04` 47 -> 40.
+    Control, a planted fixture with both names split across comment lines: 1 and 1.
+  - **BUILD AND RUN.** No `UnrealEditor*` process. `Result: Succeeded`, `UnrealEditor-StratPlay.dll`
+    relinked. UTC stamp `2026.09.10-23.59.34` before launch; `reportCreatedOn 2026.09.11-00.00.39`
+    (UTC) **[STAMPED AS HISTORY IN THE PASS THAT WROTE IT: the next run overwrites that report]**.
+    The gate, once with `--not-before` and once with `--pin-to-tree`: `SUITE REPORT GATE CLEAN`,
+    exit 0, both. `HEAD`'s names with this one renamed equal the report's, both ways; the new name
+    is `Success`, the old is absent, and the entry count equals `HEAD`'s macro census.
+  - **STILL NOT PINNED:** only its "never been configured" leg tells the refusal from a fall-through
+    onto the definition-tables arm. No mutant. **Stamped at the false sentence:** five sites below.
+
 - **2026-09-10, `strat-test-author` (ACTING and WRITING; IN LANE -- `Source/*/Tests/` and this
   file only -- dispatched, on `master` in the main tree `E:/MultiAgent/Stratocracy`, base `7f0e05b`,
   no worktree or wave in flight, UNCOMMITTED) -- THE TWO CLAUSES THAT LANDED AT MERGE `d59bf9b`
@@ -91,7 +117,10 @@
     - `StratSaveSlotClauses.cpp`, 17: the file header naming the IDs the file rides;
       `T-SAVE-04.LoadRefusesAWrongSavedDataVersion`, its block and its messages (the version arm,
       squarely `T-SAVE-04`'s); `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`, its block and its
-      messages, **which the ruling states it does not cover**; and the block beginning
+      messages, **which the ruling states it does not cover** **[NO LONGER LEFT, 2026-09-10: a
+      later user ruling moved this clause and its seven `T-SAVE-04` tokens to `T-INT-05`; see the
+      entry at the top of this file headed "`LoadRefusesAnUnconfiguredSubsystem` NOW RIDES
+      `T-INT-05`". Stamped in place, `strat-test-author`, base `72bb24b`.]**; and the block beginning
       *"AND NOT `T-SAVE-04`, FOR THE REASON RECORDED IN `StratShellRouteClauses.cpp`"*, which is
       the refusal itself.
     - `StratShellRouteClauses.cpp`, 5: the refusal block *"`T-SAVE-04` was proposed and IS
@@ -125,6 +154,9 @@
     PREDICTED, UNRUN one recorded in the entry below.
   - **WHAT THIS DOES NOT CLOSE.** `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem` is a refusal but
     not a header mismatch. It stays OPEN, outside the ruling, as the item below already records.
+    **[FALSE FROM 2026-09-10: closed by a later user ruling that moved it to `T-INT-05`; see the
+    entry at the top of this file headed "`LoadRefusesAnUnconfiguredSubsystem` NOW RIDES
+    `T-INT-05`". Stamped in place, `strat-test-author`, base `72bb24b`.]**
     **The old names in older entries of this file stay as written, because they were the
     compiled names then.** The five sites that name either clause by its old full name (found
     by the same wrap-aware sweep and by grep, which agree) each carry an inline `RENAMED`
@@ -263,7 +295,10 @@
     RENAMED TO `T-INT-05`, BOTH OF THEM"*, is the second of the two discharges this item names,
     the one that moves the clauses. Both now ride `T-INT-05`, carried out in the rename entry at
     the top of this file. NOT CLOSED: the `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
-    observation below, which that ruling states it does not cover. That half stays OPEN.]** Further down this
+    observation below, which that ruling states it does not cover. That half stays OPEN.]**
+    **[THAT HALF IS CLOSED TOO, 2026-09-10, by a later user ruling that moved the clause to
+    `T-INT-05`; see the entry at the top of this file headed "`LoadRefusesAnUnconfiguredSubsystem`
+    NOW RIDES `T-INT-05`". Stamped in place, `strat-test-author`, base `72bb24b`.]** Further down this
     file, this lane REFUSED `T-SAVE-04` for the restorability clauses, against that ID's GDD
     sentence as quoted there -- *"refusal: any header mismatch (version/rules/data/scenario
     hash)"*, refusing *"on the header alone"* -- on the ground that a clause riding an ID whose
@@ -279,7 +314,10 @@
     Observed too, and older than either: `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
     is a refusal but not a header mismatch either. **Discharged only by a ruling recorded in
     `decisions.md`** -- either one that states what `T-SAVE-04` covers in this project beyond its
-    GDD sentence, or one that moves the clauses. A clause name is compiled and cited across the
+    GDD sentence, or one that moves the clauses. **[DISCHARGED FOR THIS CLAUSE TOO, 2026-09-10:
+    a ruling of the second kind now moves it to `T-INT-05`; see the entry at the top of this file
+    headed "`LoadRefusesAnUnconfiguredSubsystem` NOW RIDES `T-INT-05`". Stamped in place,
+    `strat-test-author`, base `72bb24b`.]** A clause name is compiled and cited across the
     record, so a rename is not this lane's to make unasked. Inline `OPEN` brackets now sit at both
     ends of the conflict in this file.
   - **THE RUN, ON THE FINAL TREE, AND ITS FIGURES LIVE IN `global.md`.** **It was run twice,
@@ -5485,7 +5523,10 @@
   and those two are reconciled. *"Nothing here was renamed"* stays true of THIS block's clauses,
   which ride `GATE-TITLEMENU` and are untouched. `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
   is not a header mismatch either, is not covered by that ruling, and remains the one standing
-  exception to this refusal.]** The version arm's rule
+  exception to this refusal.]** **[FALSE FROM 2026-09-10: that clause is no longer an exception
+  here; a later user ruling moved it to `T-INT-05`. See the entry at the top of this file headed
+  "`LoadRefusesAnUnconfiguredSubsystem` NOW RIDES `T-INT-05`". Stamped in place,
+  `strat-test-author`, base `72bb24b`.]** The version arm's rule
   remains squarely `T-SAVE-04`'s and keeps its existing clause
   (`Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAWrongSavedDataVersion`); no new clause restates it.
   Stated precisely, because a looser sentence stood in the file earlier the same day:

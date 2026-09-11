@@ -11,6 +11,27 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-10 (FOURTH PASS, over base `72bb24b`: `LoadRefusesAnUnconfiguredSubsystem` NOW
+RIDES `T-INT-05` TOO, BY USER RULING. Written by the `coordinator`; each lane wrote its own record
+entry, dispatched one at a time. Before ruling, the user was shown that this clause's subject is a
+precondition refusal rather than presentation rebuilding, so it fits `T-INT-05` less well than the
+two clauses before it; offered `T-INT-05`, a local gate, or keeping `T-SAVE-04` under a wider
+reading, and dispatch or in-session, the user chose `T-INT-05` and DISPATCH. `strat-data-steward`
+recorded the ruling and that caveat in `decisions.md`, under the entry whose heading begins
+*"RULED, 2026-09-10, BY THE USER -- `Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`"*;
+`strat-test-author` (`tests.md`) renamed the macro, the clause's assertion-message prefixes and its
+comment header in `StratSaveSlotClauses.cpp`, and stamped the `tests.md` sentences that said the
+clause stayed on `T-SAVE-04`. The clause is now
+`Stratocracy.StratPlay.T-INT-05.LoadRefusesAnUnconfiguredSubsystem`; its body did not move.
+THE SUITE IS **479/479**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings. THE RENAME MOVED NO COUNT: report and tree clause names set-equal in both
+directions, the new name Success, the old one absent. Rebuilt before the run. Gated with
+`strat_suite_report_gate.py --not-before 2026.09.10-23.59.34` and, separately, `--pin-to-tree`,
+both CLEAN.
+  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.11-00.00.39` (UTC; local date 2026-09-10).
+  WHAT IS NOT DONE. The four PROPOSED clauses in `engine.md` still carry `T-SAVE-04` names that no
+ruling backs. Every other open item in the third and second passes' WHAT IS NOT DONE, below, is
+untouched by this pass.)
 _Last run 2026-09-10 (THIRD PASS, over base `7f0e05b`: THE TWO CLAUSES THAT LANDED AT `d59bf9b`
 UNDER `T-SAVE-04` NOW RIDE `T-INT-05`, BY USER RULING. Written by the `coordinator`; each lane
 wrote its own record entry, dispatched one at a time. The user was offered three IDs (`T-INT-05`
@@ -31,9 +52,14 @@ tree's are set-equal in both directions, both new names Success, neither old nam
 Rebuilt before the run, because a clause name is compiled. Gated with
 `strat_suite_report_gate.py --not-before 2026.09.10-21.36.16` and, separately, `--pin-to-tree`,
 both CLEAN.
-  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.10-21.37.28`.
+  [STAMPED BY THE FOURTH PASS, 2026-09-10] "THE LIVE FIGURE'S REPORT IS `reportCreatedOn
+  [STAMPED] 2026.09.10-21.37.28`." -- superseded: the fourth pass renamed a compiled clause name,
+  [STAMPED] so a newer report was owed and is cited in the banner above. The count did not move.
   WHAT IS NOT DONE. `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem` is a refusal but not a header
-mismatch either; the user was not asked about it and it stays open, as the ruling says. The four
+mismatch either; the user was not asked about it and it stays open, as the ruling says.
+  [STAMPED BY THE FOURTH PASS, 2026-09-10] The sentence above is no longer true: the user then
+  [STAMPED] ruled that clause onto `T-INT-05` too, and it was renamed. See the banner above.
+  The four
 PROPOSED clauses in `engine.md` still carry `T-SAVE-04` names that no ruling backs, and `engine.md`
 now says so. Every other item in the second pass's WHAT IS NOT DONE, below, is untouched by this
 pass and still open.)

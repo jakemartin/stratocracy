@@ -1135,7 +1135,14 @@
     `T-UI-05` to `T-INT-05` on the same mechanism -- ID moves, clause unchanged.
   - **WHAT THIS RULING DOES NOT COVER.** `T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
     (`StratSaveSlotClauses.cpp`) also rides `T-SAVE-04` without being a header mismatch. The user
-    was not asked about it in this session. It stays open.
+    was not asked about it in this session. It stays open. **[SUPERSEDED 2026-09-10, SAME DAY, BY
+    A SECOND USER RULING, stamped here rather than rewritten: this item is closed by the entry
+    below headed "RULED, 2026-09-10, BY THE USER --
+    `Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem` ... is renamed to
+    ... `T-INT-05` ... Only the ID moves." Both "also rides `T-SAVE-04` without being a header
+    mismatch" and "It stays open" were true when written -- the clause did ride `T-SAVE-04` at
+    the time this bullet was written -- and neither is true now: the clause was renamed to
+    `T-INT-05` by the entry below, so it no longer rides `T-SAVE-04` at all.]**
   - **Discharges** `tests.md`'s entry based at `3143049`, the bullet headed "THE CLAUSE-ID
     CONFLICT, STATED AS OPEN AND NOT RESOLVED BY THIS LANE."
   - **STATE: RULED AND CARRIED OUT**, each in its own separate dispatch -- by
@@ -1147,3 +1154,23 @@
     comments naming the old full clause name in `StratMatchSubsystem.h`,
     `StratPlayerController.h`, `StratSelectionMachine.h` and `StratBuildAffordance.h`). No suite
     count or phase verdict stated here -- see `state/global.md`.
+
+- **RULED, 2026-09-10, BY THE USER -- `Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem`
+  (`StratSaveSlotClauses.cpp`) is renamed to `Stratocracy.StratPlay.T-INT-05.LoadRefusesAnUnconfiguredSubsystem`.
+  Only the ID moves.**
+  `2026-09-10, strat-data-steward (ACTING and WRITING; IN LANE)`, over base `72bb24b`, no worktree
+  or wave in flight. This closes the entry above's "WHAT THIS RULING DOES NOT COVER" item, which
+  said this clause "stays open" -- that sentence was true when written and is superseded here,
+  stamped, not rewritten. **The fit is WEAKER than for the two clauses above, and the user was shown that before
+  ruling:** this clause's own header
+  (`StratSaveSlotClauses.cpp`, the block whose comment reads "an unconfigured subsystem refuses a
+  load by name") names its subject as a PRECONDITION REFUSAL --
+  `StartMatch` never ran, so the refusal names that rather than seeding -- not presentation
+  rebuilding, which is `T-INT-05`'s GDD §4.9 "presentation statelessness" sentence. Only the
+  trailing no-board/no-unit-actor legs touch presentation, and that same header says those legs
+  "do NOT go red on the regression," i.e. do not discriminate. Menu offered: `T-INT-05` as ruled
+  (CHOSEN); a new local `GATE-LOADPRECOND`; or keep `T-SAVE-04` under a wider reading. Route
+  offered: dispatch (CHOSEN) or the `coordinator` in session.
+  - **STATE: RULED AND CARRIED OUT** by `strat-test-author`: see `tests.md`'s entry whose heading
+    contains "`LoadRefusesAnUnconfiguredSubsystem` NOW RIDES `T-INT-05`, BY THE USER'S RULING". No
+    suite count here -- see `state/global.md`.

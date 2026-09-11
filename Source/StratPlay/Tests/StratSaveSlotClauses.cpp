@@ -865,7 +865,7 @@ bool FStratSaveOverPreservesOnboardingTest::RunTest(const FString& /*Parameters*
 }
 
 // ---------------------------------------------------------------------------
-// T-SAVE-04 -- an unconfigured subsystem refuses a load by name, and does not invent a
+// T-INT-05 -- an unconfigured subsystem refuses a load by name, and does not invent a
 // configuration to load with.
 //
 // `StratMatchSubsystem.h`: "SO IT REQUIRES A CONFIGURED SUBSYSTEM. `StartMatch` must have run
@@ -905,7 +905,7 @@ bool FStratSaveOverPreservesOnboardingTest::RunTest(const FString& /*Parameters*
 // ---------------------------------------------------------------------------
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FStratLoadRefusesUnconfiguredSubsystemTest,
-	"Stratocracy.StratPlay.T-SAVE-04.LoadRefusesAnUnconfiguredSubsystem",
+	"Stratocracy.StratPlay.T-INT-05.LoadRefusesAnUnconfiguredSubsystem",
 	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
 bool FStratLoadRefusesUnconfiguredSubsystemTest::RunTest(const FString& /*Parameters*/)
@@ -985,22 +985,22 @@ bool FStratLoadRefusesUnconfiguredSubsystemTest::RunTest(const FString& /*Parame
 	}
 
 	FString Reason;
-	TestFalse(TEXT("T-SAVE-04: an unconfigured subsystem refuses a load"),
+	TestFalse(TEXT("T-INT-05: an unconfigured subsystem refuses a load"),
 		Subsystem->LoadMatchFromSlot(FString(kTestSlotName), Reason));
 
 	TestTrue(
 		*FString::Printf(
-			TEXT("T-SAVE-04: and the reason names the PRECONDITION -- that this subsystem has "
+			TEXT("T-INT-05: and the reason names the PRECONDITION -- that this subsystem has "
 			     "never been configured -- rather than blaming the GameMode's table properties, "
 			     "which is a different fix. It was: %s"),
 			*Reason),
 		Reason.Contains(TEXT("never been configured"), ESearchCase::CaseSensitive));
-	TestTrue(TEXT("T-SAVE-04: and it says what is missing, in the subsystem's own words"),
+	TestTrue(TEXT("T-INT-05: and it says what is missing, in the subsystem's own words"),
 		Reason.Contains(TEXT("definition tables"), ESearchCase::CaseSensitive));
 
 	// ---- and it did not seed from a default-constructed config ----------------
-	TestFalse(TEXT("T-SAVE-04: no match came into existence"), Subsystem->IsMatchLive());
-	TestNull(TEXT("T-SAVE-04: and no bridge was constructed on the way to the refusal"),
+	TestFalse(TEXT("T-INT-05: no match came into existence"), Subsystem->IsMatchLive());
+	TestNull(TEXT("T-INT-05: and no bridge was constructed on the way to the refusal"),
 		Subsystem->GetBridge());
 	TestEqual(TEXT("T-INT-05: nothing was drawn either"), LiveBoardCount(Scope.World), 0);
 	TestEqual(TEXT("T-INT-05: and no unit actor was spawned"),

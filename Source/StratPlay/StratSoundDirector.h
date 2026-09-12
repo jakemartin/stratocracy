@@ -17,8 +17,30 @@
 // cooldown, not for a missing world. Each of those produces a record with its own disposition
 // and then declines to play. An `if (Bank == nullptr) { return; }` at the top would be one line
 // that reads like defensive hygiene and would make EVERY clause in the phase-B suite vacuous at
-// once, because the shipped state of this project has no bank -- a green suite over a feature
-// that records nothing. The four dispositions ARE the error handling; there is no other.
+// once, because every fixture in this tree builds its own `FStratMatchConfig` with no
+// `SoundBank` -- a green suite over a feature that records nothing. The four dispositions ARE
+// the error handling; there is no other.
+//
+// THAT SENTENCE SAID "the shipped state of this project has no bank" UNTIL 2026-09-12, AND
+// TWELVE MORE SITES IN PRODUCTION CODE SAID THE SAME THING IN THEIR OWN WORDS: FOUR MORE IN
+// THIS HEADER, THREE IN `StratSoundDirector.cpp`, TWO IN `StratSoundBank.h`, TWO IN
+// `StratMatchSubsystem.cpp` AND ONE IN `StratMatchSubsystem.h`. THIRTEEN IN ALL, and the count
+// is the one a Python census over joined comment blocks returned -- these phrases wrap, and a
+// line-oriented grep undercounts them. [The first draft of this stamp read "AND SO DID THREE
+// MORE BELOW AND TWO IN THE .cpp", counting only the sites using this sentence's exact words;
+// `strat-integration-reviewer` found that `EmitCue`'s "vacuous in the shipped configuration"
+// -- the other shape of the same claim -- was left uncorrected under an enumeration a reader
+// takes as the scope. It is corrected at its own words below, and this stamp now counts CLAIMS
+// rather than PHRASINGS.] Each is corrected AT ITS OWN WORDS rather than only here, because a
+// reader arriving at one of them does not arrive here. `Content/StratAudio/`
+// ships `DA_StratSoundBank` and nine `MS_Strat_*` sources, and
+// `Stratocracy.StratPlay.GATE-AUDIO.EveryShippedGameModeNamesTheSameSoundBank` reads a bank off
+// three shipped GameMode CDOs -- so the true subject of every one of those sentences was THE
+// FIXTURES, which is what they now say. WHAT IS STILL NOT KNOWN, stated rather than folded into
+// either verdict: no suite ran on 2026-09-12 and no by-value read of the bank's own slots was
+// available, the editor MCP having refused connection for three consecutive sessions. Every
+// corrected sentence therefore claims only the C++ field default, which is a property of this
+// code and is true whatever the assets hold.
 //
 // A `UWorldSubsystem` AND NOT A MEMBER OF `UStratMatchSubsystem`, WHICH WAS THE OTHER SHAPE.
 // The title map has no match and never will -- `AStratShellGameMode` starts no match, and
@@ -129,9 +151,10 @@ enum class EStratSoundDisposition : uint8
 	 *  request reached the engine, which is the strongest claim this class is entitled to. */
 	Played UMETA(DisplayName = "Played"),
 
-	/** No `UStratSoundBank` has been adopted. THE SHIPPED STATE UNTIL A GAMEMODE BLUEPRINT
-	 *  POINTS AT ONE, and therefore the disposition every phase-B clause will assert against.
-	 *  A director in this state is fully functional as a recorder. */
+	/** No `UStratSoundBank` has been adopted. THE C++ FIELD DEFAULT, and therefore the
+	 *  disposition every phase-B clause -- each of which adopts no bank -- asserts against.
+	 *  See the header block's 2026-09-12 stamp for why this no longer says "the shipped
+	 *  state". A director in this state is fully functional as a recorder. */
 	NoBank UMETA(DisplayName = "No bank"),
 
 	/** A bank is adopted and its slot for this cue is null. An authoring state, not a fault. */
@@ -214,7 +237,7 @@ enum class EStratVolumeDisposition : uint8
 	NoSettings UMETA(DisplayName = "No settings (unity applied)"),
 
 	/** No `UStratSoundBank` has been adopted, so there is no mix and no class to name. Zero
-	 *  calls made. THE SHIPPED STATE UNTIL A GAMEMODE BLUEPRINT POINTS AT A BANK, and the arm
+	 *  calls made. THE C++ FIELD DEFAULT (see the header block's 2026-09-12 stamp), and the arm
 	 *  `OnWorldBeginPlay`'s own first application lands on by construction -- a world subsystem
 	 *  begins play BEFORE any actor, so the bank cannot yet be adopted at that moment. */
 	NoBank UMETA(DisplayName = "No bank"),
@@ -324,15 +347,21 @@ public:
 	 *
 	 * RECORDS FIRST, PLAYS SECOND, AND HAS NO EARLY RETURN ON ANY PATH. The header block states
 	 * why at length; the short form is that an early return on a null bank makes every clause
-	 * in this feature vacuous in the shipped configuration.
+	 * in this feature vacuous in the configuration every fixture in this tree runs in -- the
+	 * C++ field default, which is what each fixture's `FStratMatchConfig` leaves the bank at.
+	 * [CORRECTED 2026-09-12: this read "vacuous in the shipped configuration", which asserted a
+	 * null bank of the shipped game; `Content/StratAudio/` ships `DA_StratSoundBank`. Missed by
+	 * that date's first pass and found by `strat-integration-reviewer`; the header block's
+	 * stamp records why its own enumeration had excluded this site.]
 	 *
 	 * THE COOLDOWN IS MEASURED AGAINST `UWorld::GetTimeSeconds`, AND WHAT THAT MEANS FOR A
 	 * FIXTURE IS STATED HERE RATHER THAN DISCOVERED. An automation world that is never ticked
 	 * has a clock that does not advance, so two emissions in one such fixture are AT THE SAME
-	 * TIME and the second is suppressed if a minimum is configured. With no bank -- the shipped
-	 * and the fixture default -- there is no minimum and the arm is unreachable, so this affects
-	 * only a fixture that adopts a bank AND authors `MinSecondsBetween`. A clause wanting to
-	 * drive `SuppressedByCooldown` must do both; a clause wanting to avoid it must do neither.
+	 * TIME and the second is suppressed if a minimum is configured. With no bank -- the C++
+	 * field default, and the fixture default -- there is no minimum and the arm is unreachable,
+	 * so this affects only a fixture that adopts a bank AND authors `MinSecondsBetween`. A
+	 * clause wanting to drive `SuppressedByCooldown` must do both; a clause wanting to avoid it
+	 * must do neither.
 	 *
 	 * THE COOLDOWN CLOCK IS STAMPED ONLY ON A `Played` EMISSION. A suppressed request does not
 	 * push the window forward, so a burst of ten clicks in one second yields one sound and nine

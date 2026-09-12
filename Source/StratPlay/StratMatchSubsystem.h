@@ -346,8 +346,13 @@ struct FStratMatchConfig
 	TSubclassOf<AStratUnitActor> UnitActorClass;
 
 	/**
-	 * The AUDIO milestone's cue assets for this match. Null means the match runs silent, which
-	 * is the shipped state until a GameMode Blueprint points at a bank.
+	 * The AUDIO milestone's cue assets for this match. Null means the match runs silent, and
+	 * NULL IS THE C++ FIELD DEFAULT AND IS NOT THE SHIPPED STATE. [CORRECTED 2026-09-12: this
+	 * read "which is the shipped state until a GameMode Blueprint points at a bank".
+	 * `Content/StratAudio/` ships `DA_StratSoundBank`, and the stamp at the foot of this block
+	 * already named the clause that reads a bank off three shipped GameMode CDOs -- the stamp
+	 * was right and this opening sentence was not, which is why the correction is made here
+	 * rather than added below it.]
 	 *
 	 * A POINTER SET ON A BLUEPRINT DEFAULT AND NEVER A `/Game/` LITERAL, per CLAUDE.md #4 and
 	 * the pattern `StratGameMode.h` states: this struct is the object that HAS the map's asset

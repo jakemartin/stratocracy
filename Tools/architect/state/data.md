@@ -27,7 +27,7 @@
   `UE_REPO`/`UE_STATE_DIR`/`--state-dir` env-and-flag generalization the plugin added for
   installed-elsewhere distribution — not needed here since this script lives in-tree and
   `_HERE`-derived defaults already resolve correctly; no port. One PROJECT-SIDE FIX the plugin
-  lacks: this file's own 2026-09-11 LIVE COUNT MISSING two-cause message and its fixture
+  lacked: this file's own 2026-09-11 LIVE COUNT MISSING two-cause message and its fixture
   (`data.md`'s prior entry, above). **[CORRECTED 2026-09-11, gate G, Finding 1 -- the sentence
   originally continued "filed upstream below," and nothing below it files anything. This is an
   OPEN UPSTREAM REQUEST, NOT FILED BY THIS FILE: port the two-cause LIVE COUNT MISSING message

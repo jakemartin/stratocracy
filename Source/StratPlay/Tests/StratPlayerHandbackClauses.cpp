@@ -222,7 +222,8 @@ namespace StratPlayerHandbackClauses
 		Out.BoardActorClass = AStratBoardActor::StaticClass();
 		Out.UnitActorClass  = AStratUnitActor::StaticClass();
 
-		// NO `SoundBank`, WHICH IS THE SHIPPED CONFIGURATION. Every emission this file observes
+		// NO `SoundBank`, WHICH IS THIS FIXTURE'S CHOICE AND NOT A CLAIM ABOUT WHAT THE SHIPPED
+		// GameMode Blueprints carry. Every emission this file observes
 		// therefore records `EStratSoundDisposition::NoBank`, which is a full named answer --
 		// `UStratSoundDirector::EmitCue` records first and plays second, with no early return
 		// on any path, and `StratSoundDirectorCallSite.cpp`'s first clause is what keeps that

@@ -9190,3 +9190,144 @@ live in `Tools/architect/state/global.md`; nothing is restated here.**
     engineer measured the premise instead of accepting it, which is what caught it. **When a
     record says a path is unreachable, that claim is a mutant away from being checkable and
     should be checked before it is cited.**
+
+
+## Audio comments that asserted the SHIPPED state without ever reading it
+
+**2026-09-12, strat-test-author (ACTING and WRITING; IN LANE, on master in
+E:/MultiAgent/Stratocracy, base commit 83f33bf, UNCOMMITTED)**
+
+Comment-only. Nine sentences across three fixture files said the game ships with no sound bank,
+or that `DA_StratSoundBank`'s mix slots are unset. `Content/StratAudio/` holds seventeen assets
+including `DA_StratSoundBank.uasset`, `SMX_Strat_Base.uasset` and the three `SCL_Strat_*` sound
+classes, and `StratShippedSoundBankParity.cpp` in the same directory already reads that bank's
+cues by value. Each sentence is now scoped to the FIXTURE it describes, or to the C++ field
+default, and claims nothing about shipped content.
+
+**WHAT IS STILL NOT READ, AND IT IS THE POINT OF THE ENTRY.** No clause anywhere in this tree
+opens `BaseMix`, `MasterSoundClass`, `SfxSoundClass`, `MusicSoundClass` or `Concurrency` **on the
+shipped `DA_StratSoundBank`** — `StratShippedSoundBankParity.cpp` reads that bank's CUES, and
+each cue's own `SoundClass`, not those five slots. So the replacement wording does NOT say those
+slots are set; it says they are unread. The by-value read that would settle it was **NOT RUN this
+pass**: the `unreal-editor-direct` MCP refused connection for this session and the two before it,
+so there is no route to the asset's property values. Anyone citing "the shipped bank has a base
+mix" is citing nothing in this directory.
+
+**A SECOND UNREAD CLAIM, ON A DIFFERENT SUBJECT.** `StratSoundDirectorCallSite.cpp`'s tour clause
+called `AStratUnitActor::MoveTweenSeconds <= 0` *"the shipped default"*. That is the **C++**
+default — which is what the same clause's own property (1) forty lines below already said — and
+what `BP_StratUnit` sets was never read. The clause now says C++ default, matching its own
+better-worded half.
+
+**WHAT THIS PASS DID NOT DO.** No assertion changed and no clause behaviour moved. **Three** edits
+were to **message strings** rather than comments, all in `StratSoundDirectorCallSite.cpp` — the
+`TestNull` message that read "which is the shipped configuration", and the two `TestEqual`
+messages that read *"and recorded with the shipped disposition"* and *"recorded with the shipped
+disposition"*, both now naming the disposition **this fixture's unset bank** produces. In all
+three the value asserted, the clause name and the outcome are untouched. Two `GATE-AUDIO` clauses
+proposed by the engineer to close the by-value gap are **PROPOSED ONLY** — no ruling mints or
+authorizes those IDs, and nothing was written for them.
+
+**THE SITE LIST WAS WIDER THAN THE HANDOFF, AND THE FIRST CENSUS THAT SAID SO WAS ITSELF SHORT.**
+The handoff named five sentences in two files. A **sentence-level** Python census of
+`Source/*/Tests` found nine in three: the third file is `StratPlayerHandbackClauses.cpp`
+(*"NO `SoundBank`, WHICH IS THE SHIPPED CONFIGURATION"*), plus two residual sentences in
+`StratAudioVolumeClauses.cpp`'s own header and disposition table that called the unconfigured
+state "shipped". **That census read COMMENT BLOCKS ONLY and therefore could not see a string
+literal, which is how two `TestEqual` messages in `StratSoundDirectorCallSite.cpp` survived a
+pass whose whole subject they were** — and unlike a comment, a message literal reaches the suite
+output on a red run. `strat-integration-reviewer` found both; they are corrected above.
+
+**THE RE-CENSUS, AND ITS SCOPE STATED BECAUSE AN EMPTY RESULT FROM THE WRONG TREE LOOKS CLEAN.**
+Re-run over **115 files** — every `.cpp`/`.h`/`.hpp`/`.inl` under `Source/<Module>/Tests/` for
+every module, walked recursively, which is this lane's whole surface and **excludes production
+code, whose separate count is the engineer's and must not be added to this one**. Two channels
+this time, each joined across line breaks before matching: runs of consecutive `//` lines and
+`/* */` blocks, **and runs of adjacent string literals**, the second channel being the one the
+first census lacked. A small C++ lexer does the split, so a `//` inside a literal is not a comment
+and a quote inside a comment is not a literal. Raw: **921** occurrences of `ship*`. Narrowed to
+those whose joined context also names the bank subject (`bank`, `disposition`, `unconfigured`,
+`unset`) and with occurrences inside identifiers such as `StratShippedSoundBankParity` excluded:
+**65 sites, every one read**. **Residuals of this defect's shape after the two corrections above:
+ZERO** — not one surviving site calls the fixture's bank-less state the shipped one.
+`StratShippedSoundBankParity.cpp` says "shipped" because its subject IS the shipped asset, read by
+value; `StratAudioVolumeClauses.cpp` and `StratPlayerHandbackClauses.cpp` say it only to DISCLAIM
+it; and `StratGuidedOpeningVisuals.cpp` quotes the phrase as a sentence already retracted in that
+header on 2026-08-23. **One of the 65 is a near relative on a different subject and is reported,
+not corrected, in the next paragraph.**
+
+**THE ZERO WAS TAKEN WITH A CONTROL, because an absence measured by an instrument never shown to
+speak is not a finding.** The same literal channel was run against `git show
+HEAD:Source/StratPlay/Tests/StratSoundDirectorCallSite.cpp` — the file as it stood **before** the
+two corrections — and returned **exactly those two literals** and no others. So the channel that
+reports zero on the current tree is demonstrably the channel that would have caught them, which is
+the thing the first census could not say about itself.
+
+**ONE SITE OF THE SAME SHAPE ON A DIFFERENT SUBJECT, REPORTED RATHER THAN CHANGED.**
+`StratBuildPulseDrawClauses.cpp`'s header states *"`BuildPulseMaterial` SHIPS UNSET, so a lit
+factory currently draws in `OverlayMesh`'s own material."* That is a claim about a Blueprint-
+settable property made without opening the Blueprint — the same species this pass exists to
+correct, and this project's record already carries it as a named trap (*a comment describes the
+C++ default, not shipped content*). It is NOT corrected here: settling it needs a by-value read of the board
+Blueprint that could set that slot, which this lane has no route to, and guessing either way would
+substitute one unread claim for another. **Whoever gets the by-value route should read that slot and this one in
+the same pass.**
+
+**Git Bash `grep` cannot find any of these reliably** — every phrase wraps across a line break and
+`grep` is line-scoped, CR is invisible to it on this box, and `grep -o -i -F` aborts. Census this
+subject with Python that joins both comment blocks **and** literal runs before matching, or the
+count comes back short — as it did once already, above.
+
+**THE SUITE WAS RE-RUN AFTER THE REWORDING, BECAUSE THE EXPORTED REPORT PREDATED THE TREE.** The
+report on disk had been written before three fixture files were edited, so `strat_banner_sweep.py`
+and this lane's own report both refused it as ground truth. Rebuilt `StratocracyEditor` first — a
+clause name is compiled, and a stale binary reports old names green — with no editor running,
+measured against a control lookup that did find processes. The build relinked
+`UnrealEditor-StratPlay.dll` **after** the newest edited fixture's mtime, which is the check that
+the rewording was actually in the binary the suite then loaded; the three edited files all live in
+`Source/StratPlay/Tests/`, so no other module needed to move. Fresh report at **reportCreatedOn
+2026.09.12-03.24.21**, zero failed, zero notRun, zero succeededWithWarnings. **The count did not
+move** — it is the same figure `global.md` carried before this pass, and `global.md` remains the
+only file that states it.
+
+**THE NAME SETS WERE CHECKED IN BOTH DIRECTIONS, AGAINST THE TREE RATHER THAN THE OLD REPORT.**
+The prior report was **overwritten by this run** — `-ReportExportPath` writes in place and nothing
+had preserved a copy, so a report-to-report diff was not available and is not what was done. The
+comparison run instead was the report's `fullTestPath` set against every name the tree's
+`IMPLEMENT_*_AUTOMATION_TEST` macros declare, collected by one Python walk of `Source/` so both
+sides come from the same collector: empty in source-not-in-report, empty in report-not-in-source,
+no duplicate declarations. A `git diff` restricted to macro and `Stratocracy.`-prefixed lines in
+the three edited files returned nothing, which is the independent confirmation that no clause name
+could have moved. **If a future pass wants a true report-to-report diff, it has to copy
+`index.json` aside BEFORE re-running**; this lane could not, and says so rather than implying it
+did.
+
+**BOTH GATES CLEAN**, run unpiped because piping a native command's output on this box masks the
+exit code. `python Tools/architect/strat_suite_report_gate.py --pin-to-tree` exited 0 —
+*"newest file Source\StratPlay\Tests\StratAudioVolumeClauses.cpp at 2026.09.12-03.20.48 (UTC)
+predates the report"*, and *"every one is a name the tree declares."* The same gate with
+`--not-before` against a UTC stamp taken **before** the suite launched exited 0 on
+`2026.09.12-03.23.08`. **That flag takes the UE `YYYY.MM.DD-HH.MM.SS` stamp, not ISO-8601**: the
+first attempt passed `2026-09-12T03:23:08Z` and the gate exited 1 with
+*"is not a `YYYY.MM.DD-HH.MM.SS` UTC stamp"* — the same instant, refused on format. That failure
+is worth keeping, because it is also the gate demonstrating it can go red on demand.
+
+**THE RUN ABOVE IS HISTORY; THE TWO `TestEqual` MESSAGE CORRECTIONS WERE COMPILED AND RE-RUN
+AFTER IT.** The report at `reportCreatedOn` **2026.09.12-03.24.21** described the tree as it stood
+before those two literals were fixed, and is superseded — **[STAMPED 2026-09-12]**. **A message
+literal is compiled**, so the correction was not in any binary until a rebuild: `Build.bat
+StratocracyEditor Win64 Development` exited 0 having recompiled exactly
+`StratSoundDirectorCallSite.cpp` and relinked `UnrealEditor-StratPlay.dll`, with **no
+`UnrealEditor` process running** — measured with a control lookup that did find processes, so the
+zero was an instrument that could speak. Fresh report at `reportCreatedOn`
+**2026.09.12-03.51.28**, **zero failed, zero notRun, zero succeededWithWarnings**; the count did
+not move and, as before, `Tools/architect/state/global.md` is the only file that states it. The
+report's `fullTestPath` set and every name the tree's `IMPLEMENT_*_AUTOMATION_TEST` macros declare
+were compared in **both** directions by one Python walk of `Source/`: empty both ways, no
+duplicate declarations.
+
+**BOTH GATES CLEAN AGAINST THAT REPORT**, again unpiped. `--pin-to-tree` exited 0 —
+*"newest file Source\StratPlay\Tests\StratSoundDirectorCallSite.cpp at 2026.09.12-03.47.43 (UTC)
+predates the report"*, and *"every one is a name the tree declares."* `--not-before
+2026.09.12-03.50.17`, a UTC stamp taken **before** the suite launched, exited 0 on *"fresh:
+>= 2026.09.12-03.50.17"*. Both printed **SUITE REPORT GATE CLEAN**.

@@ -16,12 +16,18 @@
 // ---------------------------------------------------------------------------------------
 // THE ONE PROPERTY THE WHOLE FILE RESTS ON, AND IT IS ASSERTED FIRST FOR THAT REASON.
 //
-// NO SOUND ASSET IS SET ANYWHERE IN THIS PROJECT. No `UStratSoundBank` exists yet -- phase C
-// authors the assets and phase D pins what the Blueprints carry -- so every cue this suite ever
-// observes is recorded with `EStratSoundDisposition::NoBank`. That is not a limitation of the
-// fixture; it is the SHIPPED state, and `UStratSoundDirector` was written so that the shipped
-// state is fully observable: `EmitCue` RECORDS FIRST AND PLAYS SECOND, with no early return on
-// any path, and every outcome gets a named disposition.
+// NO FIXTURE IN THIS FILE ASSIGNS A SOUND BANK. No config below sets
+// `FStratMatchConfig::SoundBank` and no clause adopts one, so every cue THIS FILE observes is
+// recorded with `EStratSoundDisposition::NoBank`. That is a FIXTURE CHOICE, and the file is
+// built on it: `UStratSoundDirector` was written so that the unconfigured state is fully
+// observable -- `EmitCue` RECORDS FIRST AND PLAYS SECOND, with no early return on any path, and
+// every outcome gets a named disposition.
+//
+// AND IT IS NOT A CLAIM ABOUT THE SHIPPED GAME. An earlier draft of this block read "no sound
+// asset is set anywhere in this project" and called the unconfigured state "the SHIPPED state".
+// `Content/StratAudio/DA_StratSoundBank.uasset` ships, and `StratShippedSoundBankParity.cpp`
+// next door reads it by value. Nothing in THIS file opens a shipped asset, so it asserts
+// nothing either way about what the shipped Blueprints assign.
 //
 // SO A SINGLE `if (Bank == nullptr) { return; }` AT THE TOP OF `EmitCue` WOULD MAKE EVERY OTHER
 // CLAUSE IN THIS FILE VACUOUS AT ONCE -- a green suite over a feature that records nothing, and
@@ -146,9 +152,10 @@ namespace StratSoundDirectorCallSite
 		Out.BoardActorClass = AStratBoardActor::StaticClass();
 		Out.UnitActorClass  = AStratUnitActor::StaticClass();
 
-		// NO `SoundBank`, AND THAT IS THE SHIPPED CONFIGURATION RATHER THAN AN OMISSION. See
-		// the header block: with no bank every record lands on `NoBank`, which is a full named
-		// answer and is what these clauses assert against.
+		// NO `SoundBank`, AND THAT IS THIS FIXTURE'S CHOICE RATHER THAN AN OMISSION -- it is not
+		// a claim about what the shipped Blueprints carry. See the header block: with no bank
+		// every record lands on `NoBank`, which is a full named answer and is what these clauses
+		// assert against.
 		return true;
 	}
 
@@ -406,10 +413,10 @@ bool FStratSoundEmitRecordsWithNoBankTest::RunTest(const FString& /*Parameters*/
 		return false;
 	}
 
-	// THE PRECONDITION, AND IT IS THE SHIPPED STATE OF THIS PROJECT rather than a fixture
-	// choice: no `UStratSoundBank` asset exists yet.
-	if (!TestNull(TEXT("CONTROL: no sound bank is adopted, which is the shipped configuration "
-	                   "and the state every other clause in this file runs in"),
+	// THE PRECONDITION, AND IT IS A PROPERTY OF THIS FIXTURE rather than of the shipped game: a
+	// director acquired in a world where no match has started has adopted no bank.
+	if (!TestNull(TEXT("CONTROL: no sound bank is adopted, which is the state every other clause "
+	                   "in this file runs in"),
 			Director->GetSoundBank()))
 	{
 		return false;
@@ -559,8 +566,8 @@ bool FStratSoundFirstApplyViewIsSilentTest::RunTest(const FString& /*Parameters*
 // `StratDecideSoundCues` and `StratSoundMarkFromView` and every refresh compares the model
 // against ITSELF: no cue can ever fire again, for the life of the game. AND THAT FAILURE IS
 // SILENT IN THE MOST LITERAL POSSIBLE SENSE -- a match that makes no noise is indistinguishable
-// from a match with no sound assets configured, which is also the shipped state today. Nothing
-// goes red, nothing logs, and the feature is simply absent.
+// from a match with no sound assets configured, which is the state every fixture in this file
+// runs in. Nothing goes red, nothing logs, and the feature is simply absent.
 //
 // THE THREE APPLIES ARE WHAT MAKES THE ORDER SEPARABLE, and no shorter fixture does it.
 //   1. `StartMatch` runs its own `ApplyView` and leaves the mark seeded at the opening. That is
@@ -648,7 +655,7 @@ bool FStratSoundApplyViewOrderTest::RunTest(const FString& /*Parameters*/)
 	}
 	TestEqual(TEXT("GATE-AUDIO: naming the unit that moved, off the model that was applied"),
 		Director->GetEmissions()[0].UnitId, Opening.Units[0].UnitId);
-	TestEqual(TEXT("GATE-AUDIO: and recorded with the shipped disposition"),
+	TestEqual(TEXT("GATE-AUDIO: and recorded with the disposition this fixture's unset bank produces"),
 		static_cast<int32>(Director->GetEmissions()[0].Disposition),
 		static_cast<int32>(EStratSoundDisposition::NoBank));
 
@@ -1091,7 +1098,9 @@ bool FStratSoundSkipIsSilentTest::RunTest(const FString& /*Parameters*/)
 // cues sit AFTER `PlayMoveSlideForStep` in `AdvanceAiPlaybackOneStep`. Gate them on that
 // function's RETURN -- which reads like an obvious tidy, since the sound belongs with the
 // animation -- and the whole tour goes silent at `AStratUnitActor::MoveTweenSeconds <= 0`,
-// which is the shipped default and is EVERY headless fixture. A move with no slide still
+// which is the C++ default and is EVERY headless fixture. (What the shipped unit Blueprint sets
+// is not read here; property (1) below states the C++ default and nothing wider.) A move with
+// no slide still
 // happened. That mutant makes the total emission count zero and is red on this clause's first
 // assertion.
 //
@@ -1564,7 +1573,7 @@ bool FStratSoundRefusedButtonStillClicksTest::RunTest(const FString& /*Parameter
 	TestEqual(TEXT("GATE-AUDIO: it is the click cue"),
 		static_cast<int32>(Director->GetEmissions()[0].Cue),
 		static_cast<int32>(EStratSoundCue::ButtonClick));
-	TestEqual(TEXT("GATE-AUDIO: recorded with the shipped disposition"),
+	TestEqual(TEXT("GATE-AUDIO: recorded with the disposition this fixture's unset bank produces"),
 		static_cast<int32>(Director->GetEmissions()[0].Disposition),
 		static_cast<int32>(EStratSoundDisposition::NoBank));
 	TestEqual(TEXT("GATE-AUDIO: a click is about the interface and names no side"),

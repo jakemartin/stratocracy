@@ -11,6 +11,80 @@
 > Everything under `## NEXT` is swept as live; stamp an entry that has become history rather
 > than deleting it, exactly as `state.md` did.
 
+_Last run 2026-09-12 (SIXTH PASS, over base `83f33bf` (= `origin/master`), UNCOMMITTED: THE
+"SHIPPED HAS NO SOUND BANK" COMMENTS ARE CORRECTED ACROSS `Source/StratPlay/` AND `Tests/`, AND
+THE DOC-CITATION GATE'S BLIND SPOT IS DECLINED TO A PROJECT-SIDE FIX AND ROUTED UPSTREAM. Origin:
+a residual-findings brief relayed by another `coordinator` session,
+`E:\MultiAgent\briefs\2026-09-12-residual-findings-stratocracy.md`, CONFIRMED BY THE USER directly
+in this session. The `coordinator` ran this pass (ACTING) and dispatched three lanes one at a
+time; each lane wrote its own record entry. This banner is WRITTEN BY `strat-data-steward`.
+DATA LANE (this steward, earlier this pass). `data.md`'s port-ledger entry's lead sentence moved
+to past tense ("the plugin lacked"), since `ue-agent-kit` `88adb7f`/plugin `1.2.4` already carries
+the fix; the `[CORRECTED ...]` bracket and its `DISCHARGED 2026-09-11` stamp are untouched,
+verbatim. Port ledger unaffected by the kit's later bump to `86a8894`/plugin `1.2.5`:
+`template_sync.py ports --project E:/MultiAgent/Stratocracy --prefix strat_` still prints
+`PORTS IN STEP -- every port's divergence is the one the ledger accepted`, exit 0.
+DECLINED, NOT OPEN. The doc-citation gate's `DOC_ROOTS` do not scan `Source/*/.claude`,
+`handoffs/` or `gate_reports/` (114 documents, 110 of them gate reports) -- `strat_doc_citation_gate.py`
+run this pass still prints `DOC CITATION GATE CLEAN`, exit 0, over the narrower scope. The cause
+is the KIT's own `DOC_ROOTS`; a project-side patch would create a divergence the port ledger
+carries forever, so this is routed to the `ue-agent-kit` lane, not fixed here. Caveat carried with
+the route: `gate_reports/` quotes stale claims verbatim by design, so widening the roots naively
+would make the gate fire forever -- it needs an exemption rule, not a longer root list. Also open
+there: whether the `Source/` citation ban leaves the three module `SKILL.md` files unable to cite
+at all.
+ENGINE LANE, COMMENT-ONLY. `engine.md`'s 2026-09-12 entry corrected **THIRTEEN** sites across five
+`Source/StratPlay/` files (`StratSoundDirector.h` 5, `StratSoundDirector.cpp` 3, `StratSoundBank.h`
+2, `StratMatchSubsystem.cpp` 2, `StratMatchSubsystem.h` 1) that asserted the SHIPPED game has no
+sound bank -- **this is a count over production code, minus every `Tests/` directory and minus
+vendored `Source/StratRules/`, and ZERO message literals in production code carry the claim; it is
+a DIFFERENT SCOPE from the test lane's count below and the two must not be added together** --
+while
+`Content/StratAudio/` ships seventeen assets including `DA_StratSoundBank` and
+`Config/DefaultEngine.ini` names `SMX_Strat_Base` as `DefaultBaseSoundMix`. Measured comment-only
+by token-stream identity against a mutant control; this pass states plainly that **"no suite was
+run by this pass and none is claimed"** and no build line is stated either -- neither is asserted
+here beyond what that entry itself says. Quoted from `engine.md`'s own 2026-09-12 entry, still
+NOT RUN: a by-value read of `DA_StratSoundBank`'s `Concurrency` and `MinSecondsBetween` slots --
+`unreal-editor-direct` refused connection for three sessions running -- and, unchanged from the
+prior pass, "every debt that needs a behaviour change: `ExecuteRoute`'s travelling tail,
+`LayerFor`'s null mesh, and the W5/W9 polish." Two `GATE-AUDIO` clauses the engineer proposed to
+close the by-value gap are UNWRITTEN with no ruling backing their IDs.
+TEST LANE. `tests.md`'s 2026-09-12 entry first rescoped nine comment sentences across THREE
+`Source/*/Tests/` files (one more than the handoff named -- a sentence-level Python census found
+the third, `StratPlayerHandbackClauses.cpp`) plus one `TestNull` message literal in
+`StratSoundDirectorCallSite.cpp`, but that first census read comment blocks only and missed two
+`TestEqual` message literals in the same file calling the fixture's unset bank "the shipped
+disposition" -- `strat-integration-reviewer` found both and this lane corrected them. **The lane
+then re-censused itself separately, joining comment blocks AND string-literal runs: 115 files
+under every `Source/*/Tests/` directory, 65 bank-subject sites read, ZERO residuals of this
+defect's shape, confirmed with a control against the pre-edit file that returns exactly the two
+literals just fixed. This is a count over `Tests/` only and is a DIFFERENT SCOPE from the engine
+lane's production-code count above; the two must not be added together.** No assertion, clause
+name or outcome moved. Then rebuilt `StratocracyEditor` (measured to relink
+`UnrealEditor-StratPlay.dll` after the newest edited fixture's mtime) and re-ran the suite, this
+steward's own eyes on the exported file.
+THE SUITE IS **479/479**, every entry Success, zero failed, zero notRun, zero
+succeededWithWarnings; **THE COUNT DID NOT MOVE** from the fifth pass's figure below. Report and
+tree clause names set-equal both ways (a Python walk of `Source/`'s `IMPLEMENT_*_AUTOMATION_TEST`
+macros against the report's `fullTestPath` set, both directions empty). A report-to-report diff
+was NOT AVAILABLE -- the prior report was overwritten in place by this run, not preserved, so this
+says NOT RUN rather than implying a comparison that did not happen. Both gates CLEAN, run
+unpiped: `strat_suite_report_gate.py --pin-to-tree` and `--not-before 2026.09.12-03.23.08`.
+  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.12-03.24.21` (UTC; local date 2026-09-11
+late evening -- this file dates local, the report stamps UTC).
+  [STAMPED BY `strat-data-steward`, SIXTH PASS, 2026-09-12] superseded: the two `TestEqual`
+  [STAMPED] message-literal corrections in `StratSoundDirectorCallSite.cpp` (test lane, above)
+  [STAMPED] landed after this report was written; a rebuild relinked `UnrealEditor-StratPlay.dll`
+  [STAMPED] and the suite was re-run. THE LIVE FIGURE'S REPORT IS NOW `reportCreatedOn
+  [STAMPED] 2026.09.12-03.51.28` (UTC; local date 2026-09-11 late evening). The count did not
+  [STAMPED] move -- still 479/479, zero failed, zero notRun, zero succeededWithWarnings -- and
+  [STAMPED] both gates ran clean against it, unpiped: `--pin-to-tree` and `--not-before
+  [STAMPED] 2026.09.12-03.50.17`.
+  WHAT IS NOT DONE. The by-value sound-bank read named above, from `engine.md`'s own 2026-09-12
+entry; the two `GATE-AUDIO` clause IDs, unwritten; the doc-citation-gate route, open in the
+`ue-agent-kit` lane. Every other open item carried in the fifth pass and earlier, below, is
+untouched by this pass.)
 _Last run 2026-09-11 (FIFTH PASS, over base `a94c2c4`: THE FOUR PROPOSED CLAUSES TAKE `T-INT-05`
 RECORD ONLY, THE DOC SPLIT IS DONE, AND CLOSEOUT HOUSEKEEPING IS RUN. The `coordinator` ran this
 pass (ACTING); each lane wrote its own record entry, dispatched one at a time. This banner is
@@ -59,7 +133,10 @@ fix, this steward's own eyes on the exported file. THE SUITE IS **479/479**, eve
 Success, zero failed, zero notRun, zero succeededWithWarnings; the figure held steady across the
 rebuild. Report and tree clause names set-equal both ways. `strat_suite_report_gate.py --pin-to-tree` and `--not-before 2026.09.11-20.33.02` both
 CLEAN.
-  THE LIVE FIGURE'S REPORT IS `reportCreatedOn 2026.09.11-20.34.29` (UTC; local date 2026-09-11).
+  [STAMPED BY `strat-data-steward`, SIXTH PASS, 2026-09-12] "THE LIVE FIGURE'S REPORT IS
+  [STAMPED] `reportCreatedOn 2026.09.11-20.34.29` (UTC; local date 2026-09-11)." -- superseded:
+  [STAMPED] the sixth pass re-ran the suite after the engineer's and test-author's comment-only
+  [STAMPED] rewording and the count did not move; a newer report is cited in the banner above.
   WHAT IS NOT DONE. The engine-lane items named above, from `engine.md`'s own 2026-09-11 debts
 heading. Every other open item carried in the third and second passes' WHAT IS NOT DONE, below,
 is untouched by this pass. Skill registration for the three new `SKILL.md` files is unverified.)

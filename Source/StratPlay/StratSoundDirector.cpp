@@ -4,7 +4,9 @@
 // The header block says why at length; the reason it is restated at the top of the .cpp is
 // that a future reader tidying this function will be looking at the code and not at the
 // header, and adding a guard clause here is the single change that would make the whole
-// feature unobservable in its shipped configuration.
+// feature unobservable in the configuration every fixture in this tree runs in. [CORRECTED
+// 2026-09-12: this read "in its shipped configuration". `Content/StratAudio/` ships a bank; the
+// header block of `StratSoundDirector.h` carries the correction and what is still not known.]
 //
 // THE SAME CLAIM NOW HOLDS FOR `ApplyVolumes`, AND IT IS STATED AS A SECOND CLAIM RATHER THAN
 // BY WIDENING THE FIRST. The two functions are separately editable and a reader tidying one is
@@ -92,9 +94,10 @@ void UStratSoundDirector::EmitCue(const EStratSoundCue Cue,
 	}
 	else if (SoundBank == nullptr)
 	{
-		// THE SHIPPED STATE UNTIL A GAMEMODE BLUEPRINT POINTS AT A BANK, and therefore the arm
-		// almost every phase-B clause will land on. It is a full, named answer rather than an
-		// absence, which is the whole design.
+		// THE C++ FIELD DEFAULT UNTIL A GAMEMODE BLUEPRINT'S BANK IS ADOPTED, and therefore the
+		// arm almost every phase-B clause lands on -- each builds an `FStratMatchConfig` with no
+		// `SoundBank`. It is a full, named answer rather than an absence, which is the whole
+		// design. [CORRECTED 2026-09-12: read "THE SHIPPED STATE UNTIL...".]
 		Record.Disposition = EStratSoundDisposition::NoBank;
 	}
 	else
@@ -352,8 +355,9 @@ void UStratSoundDirector::ApplyVolumes(const UStratAudioSettings* const Settings
 	}
 	else if (SoundBank == nullptr)
 	{
-		// THE SHIPPED STATE UNTIL A GAMEMODE BLUEPRINT POINTS AT A BANK, and the state
-		// `OnWorldBeginPlay`'s own application lands in by construction.
+		// THE C++ FIELD DEFAULT UNTIL A GAMEMODE BLUEPRINT'S BANK IS ADOPTED, and the state
+		// `OnWorldBeginPlay`'s own application lands in by construction. [CORRECTED 2026-09-12:
+		// read "THE SHIPPED STATE UNTIL...".]
 		Record.Disposition = EStratVolumeDisposition::NoBank;
 	}
 	else if (SoundBank->BaseMix == nullptr)

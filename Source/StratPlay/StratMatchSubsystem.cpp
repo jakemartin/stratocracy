@@ -1107,8 +1107,9 @@ void UStratMatchSubsystem::ApplyView(const FStratViewModel& Model)
 	// THE AUDIO MILESTONE'S CUES, ON THE RECEIPTS' OWN SHAPE AND IN THEIR ORDER: DECIDE FROM
 	// THE PREVIOUS READING, THEN RE-MARK. Swapping the two lines compares the model against
 	// itself and no cue can ever fire again -- and that failure is SILENT, because a match
-	// that makes no noise is indistinguishable from a match with no sound assets configured,
-	// which is also the shipped state. `StratTransientReceiptCallSite.cpp` records the
+	// that makes no noise is indistinguishable from a match with no sound assets configured --
+	// the configuration every fixture in this tree builds, and NOT the shipped one: see
+	// `StratSoundDirector.h`'s 2026-09-12 stamp. `StratTransientReceiptCallSite.cpp` records the
 	// identical hazard for the receipts and is why the order is stated rather than assumed.
 	TArray<FStratSoundEmission> Cues;
 	TArray<int32> Damaged;
@@ -2882,8 +2883,11 @@ void UStratMatchSubsystem::NotePlayerTurnBeganIfDue()
 	// ---- THE CAMERA, ABOVE THE DIRECTOR LOOKUP AND OUTSIDE IT --------------
 	// **THIS PLACEMENT IS THE POINT AND NOT THE ORDER THE FEATURE WAS DESCRIBED IN.** Commit
 	// `4a01418` landed the exact opposite in this file: a VISUAL damage alert written inside
-	// `if (FindSoundDirector())`, so a missing sound bank -- which is the shipped state --
-	// silently disabled a picture. Written here, restoring that defect is a MOVE in a diff
+	// `if (FindSoundDirector())`, so a missing sound bank -- the C++ field default, and what
+	// every fixture in this tree runs on -- silently disabled a picture. [CORRECTED 2026-09-12:
+	// that parenthetical read "which is the shipped state"; `Content/StratAudio/` ships a bank.
+	// The defect and this placement's reason are unchanged by that.] Written here, restoring
+	// that defect is a MOVE in a diff
 	// rather than one level of indentation, which is the only protection available: a Game or
 	// PIE world always has a director by `UStratSoundDirector::DoesSupportWorldType`, so no
 	// reachable world has a camera pawn and no director, and no clause can see the mutant.

@@ -136,8 +136,16 @@ public:
 	 * own rule gets a per-slot concurrency the day one does, and that is a second property, not
 	 * a rework.
 	 *
-	 * NULL IS FINE AND IS THE SHIPPED DEFAULT UNTIL CONTENT SETS ONE. `PlaySound2D` accepts a
-	 * null concurrency and applies the engine's default behaviour.
+	 * NULL IS FINE AND IS THE C++ FIELD DEFAULT. `PlaySound2D` accepts a null concurrency and
+	 * applies the engine's default behaviour.
+	 *
+	 * WHETHER THE SHIPPED `DA_StratSoundBank` LEAVES THIS SLOT NULL IS NOT KNOWN, and that is
+	 * the honest answer rather than either verdict. [CORRECTED 2026-09-12: this read "IS THE
+	 * SHIPPED DEFAULT UNTIL CONTENT SETS ONE", which was a claim about an asset nobody had
+	 * read.] `Content/StratAudio/SC_StratCues` exists on disk; nothing in `Source/` reads this
+	 * property's shipped value; and no by-value read of the asset was available on that date,
+	 * the editor MCP having refused connection. The neighbouring asset's PRESENCE proves
+	 * nothing about this slot -- only an absence would decide it.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Sound")
 	TObjectPtr<USoundConcurrency> Concurrency;
@@ -159,9 +167,15 @@ public:
 	 * see `UStratSoundDirector::EmitCue`, which states what that makes observable and what it
 	 * does not.
 	 *
-	 * AN UNSET MAP IS THE SHIPPED DEFAULT AND MEANS EVERY CUE MAY REPEAT FREELY. That is the
-	 * behaviour this project had before audio existed, which is the state a phase adding a
-	 * feature should default to.
+	 * AN UNSET MAP MEANS EVERY CUE MAY REPEAT FREELY, AND THAT IS THE C++ FIELD DEFAULT. That
+	 * is the behaviour this project had before audio existed, which is the state a phase adding
+	 * a feature should default to.
+	 *
+	 * WHAT THE SHIPPED `DA_StratSoundBank` AUTHORS HERE IS NOT KNOWN AND IS PINNED BY NOTHING.
+	 * [CORRECTED 2026-09-12: this read "AN UNSET MAP IS THE SHIPPED DEFAULT".]
+	 * `Source/StratPlay/Tests/StratShippedSoundBankParity.cpp` says in its own words that it
+	 * does not pin `MinSecondsBetween` or the `SuppressedByCooldown` arm, and no by-value read
+	 * of the asset was available on that date.
 	 */
 	UPROPERTY(EditDefaultsOnly, Category = "Stratocracy|Sound")
 	TMap<EStratSoundCue, float> MinSecondsBetween;

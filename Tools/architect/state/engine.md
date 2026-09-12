@@ -15,6 +15,100 @@
 
 ## NEXT
 
+- **2026-09-12, strat-gameplay-engineer (ACTING and WRITING; IN LANE, on master in
+  E:/MultiAgent/Stratocracy, base commit 83f33bf, UNCOMMITTED) -- THE "SHIPPED STATE HAS NO
+  SOUND BANK" SENTENCES, CORRECTED AT EACH SITE. COMMENT-ONLY.** No suite was run by either
+  pass and none is claimed. **TWO PASSES ON ONE DATE OVER ONE BASE, recorded as one entry
+  because they have one subject**: the first corrected twelve sites, and the second — after
+  `strat-integration-reviewer` returned BLOCK on a thirteenth — corrected that one, re-ran the
+  census over a widened needle set, and rewrote the sentences below that the first pass had made
+  false. Where a bullet distinguishes them it says "the first pass" or "the second".
+  - **FILES.** `Source/StratPlay/`: `StratSoundDirector.h` (5 sites), `StratSoundDirector.cpp`
+    (3), `StratMatchSubsystem.cpp` (2), `StratMatchSubsystem.h` (1), `StratSoundBank.h` (2);
+    and this file.
+  - **THE CENSUS, AND IT WAS WRONG ONCE BEFORE IT WAS RIGHT.** The brief named six sites. This
+    entry first said *"a phrase census found twelve in production code, and the count is the
+    measured one"* — presented as measured-and-complete, which is what tells the next reader the
+    subject is closed. `strat-integration-reviewer` then found a thirteenth: `EmitCue`'s
+    *"vacuous in the shipped configuration"* in `StratSoundDirector.h`, three lines above a
+    paragraph the same pass had edited. **THE MEASURED COUNT IS THIRTEEN**, twelve corrected on
+    the first pass and the thirteenth on the second, and the first census undercounted because
+    it collected the sentences using the phrase *"the shipped state"* rather than every sentence
+    making the CLAIM. The re-census that returns thirteen is a Python pass over comment blocks
+    JOINED ACROSS LINE BREAKS — every one of these phrases wraps, and a line-oriented grep here
+    cannot see them (and on this box `grep -o -i -F` aborts and `grep` cannot see CR at all).
+    Scope stated because an empty result from the wrong tree is indistinguishable from a clean
+    one: all of `Source/`, **minus every `Tests/` directory** (`strat-test-author`'s lane, which
+    carries residuals of its own) and minus vendored `Source/StratRules/`; 143 files.
+    **String and message literals were collected separately by the same instrument and searched
+    with the same needles: ZERO carry the claim in production code.** Six bank-adjacent
+    "shipped" sentences survive the census unstamped and each was read and deliberately kept —
+    `StratAudioSettings.h`'s and this header's are about the SAVE SLOT, `StratSoundBank.h`'s is
+    about `AiPlaybackStepSeconds` and carries its own 2026-09-11 stamp, and two
+    (`StratSoundDirector.cpp`'s *"the shipped path takes TWO records per world"*, this header's
+    *"CALLED TWICE PER SESSION ON THE SHIPPED PATH"*) are claims about ORDERING that hold
+    whatever the assets contain. Correcting any of them would be wrong.
+  - **THE HEADER STAMP NOW COUNTS CLAIMS RATHER THAN PHRASINGS.** `StratSoundDirector.h`'s stamp
+    read *"AND SO DID THREE MORE BELOW AND TWO IN THE .cpp"*, an enumeration the missed site
+    falsified for a reader taking it as the correction's scope — and whose ".cpp" figure of two
+    disagreed with this entry's three for the same reason. It now names thirteen sites with the
+    per-file split above, so the two records agree, and it says in its own words why its first
+    draft excluded the site it excluded.
+  - **WHAT WAS FALSE.** Each corrected sentence asserted that the SHIPPED project has no sound
+    bank -- e.g. *"because the shipped state of this project has no bank"* and *"a missing sound
+    bank -- which is the shipped state"*. `Content/StratAudio/` ships `DA_StratSoundBank`, nine
+    `MS_Strat_*` sources, two submixes, three sound classes, `SC_StratCues` and `SMX_Strat_Base`;
+    `Config/DefaultEngine.ini` names `SMX_Strat_Base` as `DefaultBaseSoundMix`. The sentences'
+    true subject was THE FIXTURES -- every clause in this tree builds an `FStratMatchConfig` with
+    no `SoundBank` -- and that is what they now say. Where the reasoning only needs the null path,
+    they say **C++ field default**, which is a property of the code whatever the assets hold.
+  - **NOT RUN, and deliberately not folded into either verdict.** Nothing this pass read the
+    bank's own slots by value. The `unreal-editor-direct` MCP refused connection for this session
+    and the two before it, so no editor read was available, and no suite ran. Two slots therefore
+    stay genuinely unknown and now say so in the header:
+    `UStratSoundBank::Concurrency` (`SC_StratCues` exists on disk, which proves nothing about
+    whether the bank points at it -- only an absence would decide it) and
+    `UStratSoundBank::MinSecondsBetween`, which `StratShippedSoundBankParity.cpp` states in its
+    own words that it does not pin.
+  - **WHAT DOES NOT NEED AN EDITOR, and is why the reword is defensible without one.** The
+    director's own `SoundBank` is `UPROPERTY(Transient)` and private with no editable specifier,
+    so it has no Blueprint default to read at all; it is assigned only by `AdoptSoundBank`, from
+    `FStratMatchConfig::SoundBank` or `AStratShellGameMode::SoundBank`. Those three GameMode
+    Blueprint defaults are already read by
+    `Stratocracy.StratPlay.GATE-AUDIO.EveryShippedGameModeNamesTheSameSoundBank`, a committed
+    clause -- which this pass did not run.
+  - **COMMENT-ONLY, MEASURED, AND RE-MEASURED AFTER THE THIRTEENTH SITE LANDED.** For each of
+    the five source files, the C++ token stream with comments stripped and string/char literals
+    kept byte-exact is IDENTICAL between HEAD `83f33bf` and the working tree. Controls, one per
+    pass, each a single token: `StratSoundDirector.cpp`'s
+    `EStratSoundDisposition::NoBank` -> `::NoWorld`, and `StratSoundDirector.h`'s
+    `EmitCue(..., int32 Turn)` -> `int32 TurnNo`. Both read DIFFER through the same instrument
+    that reads the real edit IDENTICAL, so it can speak. Per-file line endings unchanged
+    (`StratMatchSubsystem.*` are CRLF here, the other three LF; `StratSoundDirector.h` measured
+    from the bytes as 0 CRLF / 575 LF after the second pass, not with `grep`, which cannot see
+    CR on this box).
+  - **BUILD, GREEN, AND RECORDED THIS TIME.** `Build.bat StratocracyEditor Win64 Development`
+    with the absolute engine path and the call operator, `-project=` absolute, `-waitmutex`:
+    `Result: Succeeded`, `$LASTEXITCODE` 0, 17 actions, `UnrealEditor-StratPlay.dll` relinked.
+    No `UnrealEditor` process was running, measured with a control — the same `Get-Process`
+    query returned three `powershell` rows, so an empty `UnrealEditor*` result is an absence and
+    not a blind instrument. The first pass took this measurement and did not write it down,
+    which `strat-integration-reviewer` recorded as a recordkeeping debt rather than a finding;
+    this is its discharge. **A build is not a suite and nothing here claims one** — no suite ran
+    on either pass.
+  - **DISCHARGES, IN PART, THIS LANE'S OWN 2026-09-11 DEBT** -- the one whose discharge condition
+    reads *"Discharged by a pass that reads it and rewords those three sentences."* All three
+    named sentences are reworded. **THE READ WAS NOT DONE**, so the debt is half-paid and the
+    condition is restated rather than struck: **discharged by a pass that reads
+    `DA_StratSoundBank`'s `Concurrency` and `MinSecondsBetween` by value.**
+  - **HANDOFF, NOT ACTED ON.** `Source/StratPlay/Tests/StratSoundDirectorCallSite.cpp` and
+    `Source/StratPlay/Tests/StratAudioVolumeClauses.cpp` carry the same stale claim in their own
+    prose. `Tests/` is not this lane's and nothing there was touched. The second pass's census
+    deliberately EXCLUDES `Tests/` for the same reason, so its thirteen is a count over
+    production code and says nothing about that lane's total — `strat-integration-reviewer`
+    separately names two surviving `TestEqual` message literals calling `NoBank` *"the shipped
+    disposition"*, which reach suite output on a red run and are `strat-test-author`'s.
+
 - **2026-09-11, strat-gameplay-engineer (ACTING and WRITING; IN LANE, on master in
   E:/MultiAgent/Stratocracy, base commit a94c2c4, UNCOMMITTED) -- CLOSEOUT OF THIS LANE'S
   STALE-COMMENT DEBTS. COMMENT-ONLY.** No suite was run by this pass and none is claimed.

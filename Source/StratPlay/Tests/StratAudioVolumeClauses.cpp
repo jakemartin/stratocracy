@@ -10,7 +10,7 @@
 // THE ONE PROPERTY THE WHOLE FILE RESTS ON, ASSERTED FIRST FOR THAT REASON.
 //
 // `ApplyVolumes` HAS NO `return` ON ANY PATH AND FIVE NAMED DISPOSITIONS. That is the same
-// discipline `EmitCue` was written under and it is what makes the shipped, unconfigured state
+// discipline `EmitCue` was written under and it is what makes the UNCONFIGURED state
 // observable rather than silent: a single `if (SoundBank == nullptr) { return; }` at the top
 // would make every other clause here vacuous at once, and would read like defensive hygiene.
 // `ApplyVolumesRecordsEveryDisposition` is written first, placed first, and is the clause to
@@ -60,10 +60,14 @@
 //     `SCL_Strat_Master`, and whether `SMX_Strat_Base` is the default base mix, are asset facts
 //     with no C++ author; the 2026-09-05 ruling names that subject and explicitly does not
 //     quantify over it. No clause here reads a parent class.
-//   - THE SHIPPED `DA_StratSoundBank`'s MIX PROPERTIES. `BaseMix`, `MasterSoundClass`,
-//     `SfxSoundClass` and `MusicSoundClass` are unset on the shipped asset as this file is
-//     written, so a shipped-asset parity clause for them would be red today and would be red for
-//     a content reason rather than a code one. It belongs after the asset pass, and this
+//   - THE SHIPPED `DA_StratSoundBank`'s MIX PROPERTIES, AND THEY ARE UNREAD RATHER THAN KNOWN.
+//     No clause anywhere in this tree opens `BaseMix`, `MasterSoundClass`, `SfxSoundClass`,
+//     `MusicSoundClass` or `Concurrency` ON THE SHIPPED ASSET; `StratShippedSoundBankParity.cpp`
+//     reads that bank's CUES and not these slots. So whether they are set is UNKNOWN HERE and is
+//     asserted nowhere. An earlier draft of this sentence said they were "unset on the shipped
+//     asset"; that was never a by-value read and is WITHDRAWN -- the asset ships, and the
+//     by-value read that would settle it is NOT RUN, because the editor connection this tree
+//     would need to perform it has refused. The clause belongs after that read, and this
 //     sentence is the debt. THE BANKS BELOW ARE FIXTURES BUILT IN THIS FILE, so nothing here
 //     asserts anything about what ships.
 // ---------------------------------------------------------------------------------------
@@ -187,9 +191,10 @@ namespace StratAudioVolumeFixture
 // THE FIVE FIXTURES, AND EACH ONE IS A DIFFERENT DELETION OF THE CONFIGURATION:
 //   NoWorld    -- a director whose outer is not a world. The first branch, and the only one
 //                 reached before the bank is consulted.
-//   NoBank     -- a world director that adopted nothing. THE SHIPPED STATE of every fixture in
-//                 this directory that predates the audio milestone.
-//   NoMix      -- a bank with no `BaseMix`. THE SHIPPED STATE of `DA_StratSoundBank` today.
+//   NoBank     -- a world director that adopted nothing. THE STATE every fixture in this
+//                 directory that predates the audio milestone runs in.
+//   NoMix      -- a bank THIS FILE constructs and leaves with no `BaseMix`. What the shipped
+//                 `DA_StratSoundBank` carries in that slot is not read here or anywhere.
 //   NoSettings -- a full bank, `ApplyVolumes(nullptr)`. The distinction that matters most: it
 //                 still applies, at unity, and says so.
 //   Applied    -- a full bank and real settings.
@@ -288,8 +293,8 @@ bool FStratApplyVolumesRecordsEveryDispositionTest::RunTest(const FString& /*Par
 	}
 
 	// ---- NoMix --------------------------------------------------------------
-	// A bank with nothing on it: the shipped `DA_StratSoundBank`'s mix configuration as this
-	// clause is written.
+	// A bank with nothing on it, constructed here. This is a FIXTURE and not a reading of the
+	// shipped `DA_StratSoundBank`, whose `BaseMix` no clause in this tree opens.
 	{
 		UStratSoundBank* const MixlessBank = NewObject<UStratSoundBank>();
 		if (MixlessBank == nullptr)
